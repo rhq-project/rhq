@@ -2560,4 +2560,100 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </service>
 
+    <service name="JCA"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The Java EE Connector Architecture (JCA) subsystem providing general configuration for resource adapters"
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jca" readOnly="true"/>
+        </plugin-configuration>
+
+        <service name="ArchiveValidation"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="Archive validation for resource adapters."
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="archive-validation"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether archive validation is enabled. The default value is true."/>
+                <c:simple-property name="fail-on-error" required="false" type="boolean" readOnly="false" defaultValue="true" description="Should an archive validation error report fail the deployment. The default value is true."/>
+                <c:simple-property name="fail-on-warn" required="false" type="boolean" readOnly="false" defaultValue="false" description="Should an archive validation warning report fail the deployment. The default value is false."/>
+            </resource-configuration>
+        </service>
+
+        <service name="BeanValidation"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="Bean validation (JSR-303) for resource adapters."
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="bean-validation"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether bean validation is enabled. The default value is true."/>
+            </resource-configuration>
+        </service>
+
+        <service name="BootstrapContext"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="Bootstrap context for resource adapters."
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="bootstrap-context"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the BootstrapContext"/>
+                <c:simple-property name="workmanager" required="false" type="string" readOnly="false" description="The WorkManager instance for the BootstrapContext"/>
+            </resource-configuration>
+        </service>
+
+        <service name="Workmanager"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="Bootstrap context for resource adapters."
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="workmanager"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the WorkManager"/>
+            </resource-configuration>
+        </service>
+        
+        <service name="CachedConnectionManager"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="Cached connection manager for resource adapters."
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="cached-connection-manager"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="debug" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable debug information logging. The default value is false."/>
+                <c:simple-property name="error" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable error information logging. The default value is false."/>
+                <c:simple-property name="install" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable the cached connection manager valve and interceptor. The default value is false."/>
+            </resource-configuration>
+        </service>     
+     </service>
+
 </plugin>

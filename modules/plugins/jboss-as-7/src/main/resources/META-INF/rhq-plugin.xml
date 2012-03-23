@@ -2610,8 +2610,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <service name="BootstrapContext"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Bootstrap context for resource adapters."
-                 singleton="true">
+                 description="Bootstrap context for resource adapters.">
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="bootstrap-context"/>
@@ -2626,8 +2625,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <service name="Workmanager"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Bootstrap context for resource adapters."
-                 singleton="true">
+                 description="WorkManager for resource adapters.">
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="workmanager"/>

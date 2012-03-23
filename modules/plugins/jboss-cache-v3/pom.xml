@@ -299,56 +299,6 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>surefire-it</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${maven.test.skip}</skip>
-                          <excludedGroups>jbosscache3-test</excludedGroups>
-                            <useSystemClassLoader>false</useSystemClassLoader>
-                            <additionalClasspathElements>
-                               <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
-                            </additionalClasspathElements>
-                            <systemProperties>
-                                <property>
-                                    <name>project.artifactId</name>
-                                    <value>${project.artifactId}</value>
-                                </property>
-                                <property>
-                                    <name>project.version</name>
-                                    <value>${project.version}</value>
-                                </property>
-                                  <property>
-                                    <name>principal</name>
-                                    <value>admin</value>
-                                </property>
-                                <property>
-                                    <name>credentials</name>
-                                    <value>admin</value>
-                                </property>
-                                <property>
-                                     <name>testJarPath</name>
-                                     <value>${project.build.testSourceDirectory}/../jars/TestEar.ear</value>
-                                 </property>
-                                 <property>
-                                     <name>xmlFilePath</name>
-                                     <value>${project.build.testSourceDirectory}/../resources/test-service.xml</value>
-                                 </property>
-                            </systemProperties>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
 
@@ -358,7 +308,7 @@
            <id>integration-tests</id>
            <activation>
               <property>
-                 <name>maven.test.skip</name>
+                 <name>skipTests</name>
                  <value>!true</value>
               </property>
            </activation>
@@ -372,9 +322,6 @@
                        <execution>
                           <phase>pre-integration-test</phase>
                           <configuration>
-                          <additionalClasspathElements>
-                                   <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
-                          </additionalClasspathElements>
                              <tasks>
                                 <echo>Setting up plugin dependencies...</echo>
                                 <property name="settings.localRepository" location="${user.home}/.m2/repository" />
@@ -383,8 +330,8 @@
                                 <mkdir dir="target/itest/lib" />
                                 <copy toDir="target/itest/plugins" flatten="true">
                                    <fileset dir="${settings.localRepository}/">
-                                      <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
-                                      <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />
+                                      <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                      <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
                                       <include name="org/jboss/on/jopr-jboss-as-5-plugin/${project.version}/jopr-jboss-as-5-plugin-${project.version}.jar" />
                                    </fileset>
                                    <fileset dir="${project.build.directory}">
@@ -430,7 +377,7 @@
                              <goal>test</goal>
                           </goals>
                           <configuration>
-                             <skip>${maven.test.skip}</skip>
+                             <skipTests>${skipTests}</skipTests>
                              <parallel>false</parallel>
                              <useSystemClassLoader>false</useSystemClassLoader>
                              <additionalClasspathElements>

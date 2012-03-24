@@ -219,7 +219,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    ExportModalWindow exportModalWindow = new ExportModalWindow("inventorySummary");
+                    ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("inventorySummary");
                     exportModalWindow.show();
                 }
 

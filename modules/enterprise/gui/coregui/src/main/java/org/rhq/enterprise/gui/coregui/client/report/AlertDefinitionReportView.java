@@ -114,7 +114,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = new ExportModalWindow("alertDefinitions");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("alertDefinitions");
                 exportModalWindow.show();
             }
 

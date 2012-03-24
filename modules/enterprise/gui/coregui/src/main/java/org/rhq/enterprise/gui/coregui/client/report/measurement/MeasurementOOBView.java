@@ -74,7 +74,7 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = new ExportModalWindow("suspectMetrics");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("suspectMetrics");
                 exportModalWindow.show();
             }
 

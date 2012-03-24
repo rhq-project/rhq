@@ -27,7 +27,7 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = new ExportModalWindow("recentAlerts");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("recentAlerts");
                 exportModalWindow.show();
             }
 

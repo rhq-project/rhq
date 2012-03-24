@@ -26,40 +26,71 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+
+import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
- * @todo: change to builder pattern
+ *
  * @author Mike Thompson
  */
 public class ExportModalWindow {
 
     //@todo:pull from message bundle
     private static String BASE_URL = "http://localhost:7080/rest/1/reports/";
-    
+
     private String reportUrl;
 
     PopupWindow exportWindow;
+
+    private boolean showDetail;
 
     // optional Fields
 
     /**
      * For recent Alerts.
      */
-    AlertPriority recentAlertPriority;
+    List<AlertPriority> alertPriorityList;
+    /**
+     * For Recent Operations.
+     */
+    List<OperationRequestStatus> operationRequestStatusList;
 
-    public ExportModalWindow( String reportUrl){
+    private ExportModalWindow(String reportUrl) {
         this.reportUrl = reportUrl;
         createDialogWindow();
     }
 
+    public static ExportModalWindow createStandardExportWindow(String reportUrl) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        return newExportDialog;
+    }
 
-    private void createDialogWindow(){
+    public static ExportModalWindow createExportWindowForRecentDrift(String reportUrl) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        return newExportDialog;
+    }
+
+    public static ExportModalWindow createExportWindowForRecentAlerts(String reportUrl, List<AlertPriority> alertPriorityList) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        newExportDialog.setAlertPriorityList(alertPriorityList);
+        return newExportDialog;
+    }
+
+    public static ExportModalWindow createExportWindowForRecentOperations(String reportUrl, List<OperationRequestStatus> operationRequestStatus) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        newExportDialog.setOperationRequestStatusList(operationRequestStatus);
+        return newExportDialog;
+    }
+
+    private void createDialogWindow() {
         exportWindow = new PopupWindow("exportSettings", null);
 
         VLayout layout = new VLayout();
@@ -81,9 +112,17 @@ public class ExportModalWindow {
 
         DynamicForm form = new DynamicForm();
 
-        //SelectItem formatsList = new SelectItem("Format", "Format");
-        ////formatsList.setValueMap("CSV", "XML");
-        // form.setItems(formatsList);
+        SelectItem formatsList = new SelectItem("Format", "Format");
+        formatsList.setValueMap("CSV", "XML");
+
+//        CheckboxItem detailCheckboxItem = new CheckboxItem();
+//        detailCheckboxItem.setTitle("Show Detail");
+//        if(showDetail){
+//            detailCheckboxItem.show();
+//        }else {
+//            detailCheckboxItem.hide();
+//        }
+        form.setItems(formatsList);
 
         formLayout.addMember(form);
         layout.addMember(formLayout);
@@ -104,15 +143,22 @@ public class ExportModalWindow {
         exportWindow.addItem(layout);
     }
 
-    public void setRecentAlertPriority(AlertPriority recentAlertPriority) {
-        this.recentAlertPriority = recentAlertPriority;
+    public void setAlertPriorityList(List<AlertPriority> alertPriorityList) {
+        this.alertPriorityList = alertPriorityList;
     }
 
-    public String calculateUrl(){
-        return BASE_URL+reportUrl+".csv";
+    public void setOperationRequestStatusList(List<OperationRequestStatus> operationRequestStatusList) {
+        this.operationRequestStatusList = operationRequestStatusList;
     }
 
-    public void show(){
+    public String calculateUrl() {
+        return BASE_URL + reportUrl + ".csv";
+    }
+
+    public boolean  isShowDetail(){
+        return showDetail;
+    }
+    public void show() {
         exportWindow.show();
     }
 

@@ -52,7 +52,7 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = new ExportModalWindow("recentOperations");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentOperations("recentOperations",null);
                 exportModalWindow.show();
             }
 

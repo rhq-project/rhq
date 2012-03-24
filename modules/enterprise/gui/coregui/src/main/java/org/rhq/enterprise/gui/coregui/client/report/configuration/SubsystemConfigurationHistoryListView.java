@@ -27,7 +27,7 @@ public class SubsystemConfigurationHistoryListView extends ResourceConfiguration
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = new ExportModalWindow("configurationHistory");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("configurationHistory");
                 exportModalWindow.show();
             }
 

@@ -23,6 +23,8 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,9 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     protected PropertyDefinitionMap() {
     }
 
+    /**
+     * @return The <name,propDef> Mapping. This guarantees no ordering.
+     */
     @NotNull
     public Map<String, PropertyDefinition> getPropertyDefinitions() {
         if (this.map == null) {
@@ -83,6 +88,23 @@ public class PropertyDefinitionMap extends PropertyDefinition {
 
     public void setPropertyDefinitions(@NotNull Map<String, PropertyDefinition> propertyDefinitions) {
         this.map = propertyDefinitions;
+    }
+
+    /**
+     * Convenience routine.
+     * 
+     * @return Not Null. The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     */
+    public List<PropertyDefinition> getOrderedPropertyDefinitions() {
+        final List<PropertyDefinition> propDefs = new ArrayList<PropertyDefinition>(getPropertyDefinitions().values());
+
+        Collections.sort(propDefs, new Comparator<PropertyDefinition>() {
+            public int compare(PropertyDefinition o1, PropertyDefinition o2) {
+                return Integer.valueOf(o1.getOrder()).compareTo(o2.getOrder());
+            }
+        });
+
+        return propDefs;
     }
 
     /**

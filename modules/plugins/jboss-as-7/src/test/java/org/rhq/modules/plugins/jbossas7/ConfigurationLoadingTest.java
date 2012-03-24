@@ -483,11 +483,10 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         assert pm.getMap().size() == 2;
         PropertySimple ps = pm.getSimple("name:0");
         assert ps != null : "No property with name 'name:0' was found";
-        assert ps.getStringValue() != null;
-        assert ps.getStringValue().equals("in-vm");
+        Assert.assertEquals(ps.getStringValue(), "in-vm", "Unexpected value for " + ps);
         ps = pm.getSimple("backup:1");
-        assert ps != null;
-        assert ps.getStringValue() == null;
+        assert ps != null : "No property with name 'backup:1' was found";
+        Assert.assertNull(ps.getStringValue(), "Unexpected value for " + ps);
     }
 
     public void testListOfPlainMaps() throws Exception {

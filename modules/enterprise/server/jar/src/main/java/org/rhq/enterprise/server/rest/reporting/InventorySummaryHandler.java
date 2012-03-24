@@ -31,9 +31,13 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -59,6 +63,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean includeDetails,
         final List<Integer> resourceTypeIds) {
         final List<ResourceInstallCount> results = getSummaryCounts();
+        final MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
         if (includeDetails) {
             return new OutputDetailedInventorySummary(results, new TreeSet<Integer>(resourceTypeIds));
@@ -66,19 +71,36 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
-                    stream.write((getHeader() + "\n").getBytes());
+                    if (mediaType.toString().equals(MediaType.APPLICATION_XML)) {
+                        try {
+                            JAXBContext context = JAXBContext.newInstance(ResourceInstallCount.class);
+                            Marshaller marshaller = context.createMarshaller();
+                            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+                            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-                    if (resourceTypeIds.isEmpty()) {
-                        for (ResourceInstallCount installCount : results) {
-                            String record = toCSV(installCount) + "\n";
-                            stream.write(record.getBytes());
+                            stream.write("<collection>".getBytes());
+                            for (ResourceInstallCount installCount : results) {
+                                marshaller.marshal(installCount, stream);
+                            }
+                            stream.write("</collection>".getBytes());
+                        } catch (JAXBException e) {
+                            throw new WebApplicationException(e);
                         }
-                    } else {
-                        Set<Integer> ids = new TreeSet<Integer>(resourceTypeIds);
-                        for (ResourceInstallCount installCount : results) {
-                            if (ids.contains(installCount.getTypeId())) {
+                    } else if (mediaType.toString().equals("text/csv")) {
+                        stream.write((getHeader() + "\n").getBytes());
+
+                        if (resourceTypeIds.isEmpty()) {
+                            for (ResourceInstallCount installCount : results) {
                                 String record = toCSV(installCount) + "\n";
                                 stream.write(record.getBytes());
+                            }
+                        } else {
+                            Set<Integer> ids = new TreeSet<Integer>(resourceTypeIds);
+                            for (ResourceInstallCount installCount : results) {
+                                if (ids.contains(installCount.getTypeId())) {
+                                    String record = toCSV(installCount) + "\n";
+                                    stream.write(record.getBytes());
+                                }
                             }
                         }
                     }

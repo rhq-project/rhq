@@ -22,11 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -35,14 +30,9 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.*;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -56,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -67,6 +58,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
  * 
@@ -77,11 +73,9 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     public static final ViewName VIEW_ID = new ViewName("AlertDefinitions",
         MSG.view_reports_alertDefinitions(), IconEnum.ALERT_DEFINITIONS);
 
-    private TableAction exportAction;
 
-    public AlertDefinitionReportView(String locatorId, TableAction exportAction) {
+    public AlertDefinitionReportView(String locatorId ) {
         super(locatorId);
-        this.exportAction = exportAction;
         setDataSource(new DataSource());
     }
 
@@ -107,9 +101,26 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                 }
             }
         });
+        addExportAction();
 
-        addTableAction("export", "Export", exportAction);
     }
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ExportModalWindow exportModalWindow = new ExportModalWindow("alertDefinitions");
+                exportModalWindow.show();
+            }
+
+        });
+    }
+
 
     @Override
     public ViewName getViewName() {

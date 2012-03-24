@@ -19,7 +19,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.operation;
 
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 
@@ -29,18 +31,33 @@ import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
  */
 public class SubsystemOperationHistoryListView extends OperationHistoryView {
 
-    private TableAction exportAction;
 
-    public SubsystemOperationHistoryListView(String locatorId, boolean hasControlPermission, TableAction exportAction) {
+    public SubsystemOperationHistoryListView(String locatorId, boolean hasControlPermission ) {
         super(locatorId, OperationHistoryView.SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(),
             hasControlPermission);
-        this.exportAction = exportAction;
+        addExportAction();
     }
 
     @Override
     protected void configureTable() {
         super.configureTable();
-        addTableAction("export", "Export", exportAction);
     }
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ExportModalWindow exportModalWindow = new ExportModalWindow("recentOperations");
+                exportModalWindow.show();
+            }
+
+        });
+    }
+
 
 }

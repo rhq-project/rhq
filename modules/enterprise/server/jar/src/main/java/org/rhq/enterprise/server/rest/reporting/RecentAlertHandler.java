@@ -47,7 +47,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             @Override
                             public PageList<Alert> execute(AlertCriteria criteria) {
 
-                                return alertManager.findAlertsByCriteria(subjectMgr.getOverlord(), criteria);
+                                return alertManager.findAlertsByCriteria(caller, criteria);
                             }
                         };
 

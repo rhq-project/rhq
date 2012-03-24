@@ -22,38 +22,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceLinkField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -63,8 +45,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A tabular report that shows the types of resources are installed and how many
@@ -78,13 +62,10 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private ResourceSearchView resourceList;
 
-    private TableAction exportAction;
-
-    public ResourceInstallReport(String locatorId, TableAction exportAction) {
+    public ResourceInstallReport(String locatorId ) {
         super(locatorId);
         setHeight100();
         setWidth100();
-        this.exportAction = exportAction;
     }
 
     @Override
@@ -161,17 +142,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
-
-            ListGridField fieldExport = new ListGridField("export", "Export");
-            fieldExport.setCanToggle(true);
-            fieldExport.setCanEdit(true);
+            ListGridField fieldExport = new ListGridField("export", "Export?");
 
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
             fieldCategory.setWidth(70);
             fieldVersion.setWidth("*");
             fieldCount.setWidth(60);
-            //fieldExport.setEditorType(new CheckboxEditableFormItem());
+            fieldExport.setEditorType(new CheckboxEditableFormItem());
 
             // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
             //                       uncomment these lines to allow grouping by the plugin or category fields.
@@ -229,33 +207,25 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             });
 
             setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldExport);
-            getListGrid().setEditEvent(ListGridEditEvent.CLICK);
-            addTableAction("export", "Export", exportAction);
+            addExportAction();
+        }
 
-            getListGrid().addCellClickHandler(new CellClickHandler() {
+        private void addExportAction() {
+            addTableAction("Export", "Export", new TableAction() {
                 @Override
-                public void onCellClick(CellClickEvent event) {
-                    if (event.getColNum() != 5) {
-                        return;
-                    }
-                    ListGridRecord record = event.getRecord();
-                    boolean export = record.getAttributeAsBoolean("export");
-                    record.setAttribute("export", !export);
-                    getListGrid().setEditValue(event.getRowNum(), 5, !export);
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return true;
                 }
+
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    ExportModalWindow exportModalWindow = new ExportModalWindow("inventorySummary");
+                    exportModalWindow.show();
+                }
+
             });
-
         }
 
-        @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new LocatableListGrid(locatorId) {
-                @Override
-                public void setEditValue(int rowNum, int colNum, Record record) {
-                    record.getAttribute("export");
-                }
-            };
-        }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {
             String url = null;
@@ -281,25 +251,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public static final String TYPEID = "typeId"; // int
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
-                public static final String EXPORT = "export";
-            }
-
-            public DataSource() {
-                DataSourceLinkField name = new DataSourceLinkField(Field.TYPENAME);
-                DataSourceTextField plugin = new DataSourceTextField(Field.TYPEPLUGIN);
-                DataSourceImageField category = new DataSourceImageField(Field.CATEGORY);
-                DataSourceTextField version = new DataSourceTextField(Field.VERSION);
-                DataSourceIntegerField count = new DataSourceIntegerField(Field.COUNT);
-                DataSourceBooleanField export = new DataSourceBooleanField(Field.EXPORT);
-
-                setFields(name, plugin, category, version, count, export);
             }
 
             @Override
             public ResourceInstallCount copyValues(Record from) {
-                return null;
+                return (ResourceInstallCount) from.getAttributeAsObject(DataSource.Field.OBJECT);
             }
 
+            @Override
             public ListGridRecord copyValues(ResourceInstallCount from) {
                 ListGridRecord record = new ListGridRecord();
 
@@ -310,7 +269,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
                 record.setAttribute(Field.OBJECT, from);
-                record.setAttribute(Field.EXPORT, false);
+                record.setAttribute("export", false);
 
                 return record;
             }
@@ -342,13 +301,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                         processResponse(request.getRequestId(), response);
                     }
                 });
-            }
-
-            @Override
-            protected void executeUpdate(Record editedRecord, Record oldRecord, DSRequest request,
-                DSResponse response) {
-//                editedRecord.setAttribute(Field.EXPORT, true);
-//                sendSuccessResponse(request, response, editedRecord);
             }
         }
     }

@@ -22,29 +22,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
-import java.util.ArrayList;
-
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+
+import java.util.ArrayList;
 
 /**
  * @author Greg Hinkle
@@ -53,11 +41,8 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
-    private TableAction exportAction;
-
-    public MeasurementOOBView(String locatorId, TableAction exportAction) {
+    public MeasurementOOBView(String locatorId) {
         super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
-        this.exportAction = exportAction;
         setDataSource(new MeasurementOOBDataSource());
     }
 
@@ -66,7 +51,7 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
         super.configureTable();
-        addTableAction("export", "Export", exportAction);
+        addExportAction();
     }
 
     @Override
@@ -77,6 +62,23 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
+    }
+
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ExportModalWindow exportModalWindow = new ExportModalWindow("suspectMetrics");
+                exportModalWindow.show();
+            }
+
+        });
     }
 
 }

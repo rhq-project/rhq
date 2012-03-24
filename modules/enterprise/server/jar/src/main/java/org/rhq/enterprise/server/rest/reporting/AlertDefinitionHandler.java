@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -61,11 +62,18 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
                 }
                 private String toCSV(AlertDefinition alertDefinition) {
-                    return cleanForCSV(alertDefinition.getName()) + "," + cleanForCSV(alertDefinition.getDescription()) + "," +
-                            alertDefinition.getEnabled() + "," + alertDefinition.getPriority()
-                            + "," + cleanForCSV(alertDefinition.getResource().getParentResource().getName())
-                            + "," + cleanForCSV(alertDefinition.getResource().getAncestry());
+                    return cleanForCSV(alertDefinition.getName()) + ","
+                            + cleanForCSV(alertDefinition.getDescription()) + ","
+                            + alertDefinition.getEnabled() + ","
+                            + alertDefinition.getPriority() + ","
+                            + cleanForCSV(getParentName(alertDefinition.getResource())) + ","
+                            + cleanForCSV(alertDefinition.getResource().getAncestry());
                 }
+
+                private String getParentName(Resource resource){
+                    return null != resource.getParentResource()  ? resource.getParentResource().getName() : "";
+                }
+
 
                 private String getHeader(){
                    return "Name,Description,Enabled,Priority,Parent,Ancestry";

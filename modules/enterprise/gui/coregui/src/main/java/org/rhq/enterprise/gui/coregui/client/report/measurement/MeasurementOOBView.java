@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
-import java.util.ArrayList;
-
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -43,15 +41,13 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
+        super(locatorId);
         setDataSource(new MeasurementOOBDataSource());
     }
 
     @Override
     protected void configureTable() {
-        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
-        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        super.configureTable();
+        setListGridFields(getDataSource().getListGridFields().toArray(new ListGridField[0]));
         addExportAction();
     }
 

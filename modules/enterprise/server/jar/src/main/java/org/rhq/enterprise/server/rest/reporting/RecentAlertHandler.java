@@ -1,5 +1,20 @@
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -10,14 +25,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
@@ -33,13 +40,16 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    public StreamingOutput recentAlerts(@QueryParam("alertPriority") @DefaultValue("High") final String alertPriority, @Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
+    public StreamingOutput recentAlerts(
+        @QueryParam("alertPriority") @DefaultValue("high") final String alertPriority,
+        @Context UriInfo uriInfo,
+        @Context Request request, @Context HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 final AlertCriteria criteria = new AlertCriteria();
                 if(alertPriority != null){
-                   criteria.addFilterPriorities(AlertPriority.valueOf(alertPriority));
+                   criteria.addFilterPriorities(AlertPriority.valueOf(alertPriority.toUpperCase()));
                 }
 
                 CriteriaQueryExecutor<Alert, AlertCriteria> queryExecutor =

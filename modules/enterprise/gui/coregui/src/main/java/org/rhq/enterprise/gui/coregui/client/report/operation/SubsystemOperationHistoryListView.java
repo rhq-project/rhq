@@ -35,12 +35,12 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
     public SubsystemOperationHistoryListView(String locatorId, boolean hasControlPermission ) {
         super(locatorId, OperationHistoryView.SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(),
             hasControlPermission);
-        addExportAction();
     }
 
     @Override
     protected void configureTable() {
         super.configureTable();
+        addExportAction();
     }
 
     private void addExportAction() {

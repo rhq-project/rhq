@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.List;
+
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -30,11 +32,10 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-
-import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -112,7 +113,7 @@ public class ExportModalWindow {
 
         DynamicForm form = new DynamicForm();
 
-        SelectItem formatsList = new SelectItem("Format", "Format");
+        final SelectItem formatsList = new SelectItem("Format", "Format");
         formatsList.setValueMap("CSV", "XML");
 
 //        CheckboxItem detailCheckboxItem = new CheckboxItem();
@@ -134,7 +135,7 @@ public class ExportModalWindow {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 exportWindow.hide();
-                Window.open(calculateUrl(), "download", null);
+                Window.open(calculateUrl(formatsList.getValueAsString()), "download", null);
             }
         });
         buttonBar.addMember(finishButton);
@@ -151,8 +152,8 @@ public class ExportModalWindow {
         this.operationRequestStatusList = operationRequestStatusList;
     }
 
-    public String calculateUrl() {
-        return BASE_URL + reportUrl + ".csv";
+    public String calculateUrl(String format) {
+        return BASE_URL + reportUrl + "." + format.toLowerCase();
     }
 
     public boolean  isShowDetail(){

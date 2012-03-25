@@ -30,12 +30,11 @@ public class ApacheAugeasTest {
 	       * There are three files one main file one which is included from main file and one which is included from 
 	       * included file and which is declared in IfModule. All of them must be discovered.
 	       */
-	      boolean found=false;
 	      for (File confFile : configFiles){
-	          found = false;
+	          boolean found = false;
 	          for (String fileName : ApacheTestConstants.CONFIG_FILE_NAMES){
 	            if (!confFile.getName().equals(fileName))
-	                found= true;
+	                found = true;
 	          }
 	          assert found;
 	      }

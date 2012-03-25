@@ -206,9 +206,14 @@ public abstract class ConfigurationUtility {
             if (propertyDefinition instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple = parentPropertyMap.getSimple(propertyDefinition.getName());
                 String value = propertySimple.getStringValue();
-                if ((value != null) && (value.length() > PropertySimple.MAX_VALUE_LENGTH)) {
-                    // Truncate the value to the max length allowed by the DB schema.
-                    propertySimple.setStringValue(value.substring(0, PropertySimple.MAX_VALUE_LENGTH));
+                if (value != null) {
+                    if (value.equals("")) {
+                        // Normalize "" to null, since Oracle will do the same upon persistence.
+                        propertySimple.setStringValue(null);
+                    } else if (value.length() > PropertySimple.MAX_VALUE_LENGTH) {
+                        // Truncate the value to the max length allowed by the DB schema.
+                        propertySimple.setStringValue(value.substring(0, PropertySimple.MAX_VALUE_LENGTH));
+                    }
                 }
             }
 

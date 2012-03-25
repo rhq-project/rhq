@@ -54,6 +54,7 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentOperations("recentOperations",null);
                 exportModalWindow.show();
+                refreshTableInfo();
             }
 
         });

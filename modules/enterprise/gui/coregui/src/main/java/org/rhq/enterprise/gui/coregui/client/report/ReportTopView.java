@@ -22,15 +22,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.*;
+import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
@@ -42,9 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBVi
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The Reports top-level view.
@@ -171,7 +176,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
              new ViewFactory() {
             public Canvas createView() {
-                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()) );
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()), true);
             }
         });
 

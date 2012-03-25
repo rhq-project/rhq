@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
+import java.util.HashMap;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -30,10 +33,20 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.*;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -44,9 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * A tweaked version of the InventorySummary report that narrows the relevant types to those that support Drift
@@ -60,12 +70,8 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
 
     private ResourceSearchView resourceList;
 
-    private TableAction exportAction;
-
     public DriftComplianceReport(String locatorId ) {
         super(locatorId);
-
-        this.exportAction = exportAction;
         setHeight100();
         setWidth100();
     }
@@ -218,8 +224,25 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
             });
 
             setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance);
-            addTableAction("export", "Export", exportAction);
+            addExportAction();
         }
+
+        private void addExportAction() {
+            addTableAction("Export", "Export", new TableAction() {
+                @Override
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return true;
+                }
+
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("driftCompliance");
+                    exportModalWindow.show();
+                    refreshTableInfo();
+                }
+            });
+        }
+
         private String getResourceTypeTableUrl(ListGridRecord selected) {
             String url = null;
             if (selected != null) {

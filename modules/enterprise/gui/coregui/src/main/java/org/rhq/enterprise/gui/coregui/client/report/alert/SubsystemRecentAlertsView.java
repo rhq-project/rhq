@@ -7,7 +7,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
-
     public SubsystemRecentAlertsView(String locatorId, boolean hasWriteAccess) {
         super(locatorId, hasWriteAccess);
     }
@@ -29,10 +28,9 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("recentAlerts");
                 exportModalWindow.show();
+                refreshTableInfo();
             }
-
         });
     }
-
 
 }

@@ -32,9 +32,16 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
                 List<AlertPriority> alertPriorityList = new ArrayList<AlertPriority>(3);
-                alertPriorityList.add(AlertPriority.HIGH);
-                alertPriorityList.add(AlertPriority.MEDIUM);
-                alertPriorityList.add(AlertPriority.LOW);
+                String[] priorities = priorityFilter.getValues();
+                for (String priority : priorities) {
+                   if(priority.equals(AlertPriority.HIGH.getDisplayName())){
+                        alertPriorityList.add(AlertPriority.HIGH);
+                    } else if(priority.equals(AlertPriority.MEDIUM.getDisplayName())){
+                        alertPriorityList.add(AlertPriority.MEDIUM);
+                    } else if(priority.equals(AlertPriority.LOW.getDisplayName())){
+                        alertPriorityList.add(AlertPriority.LOW);
+                    }
+                }
                 ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentAlerts("recentAlerts",alertPriorityList);
                 exportModalWindow.show();
                 refreshTableInfo();

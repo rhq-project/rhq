@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -32,14 +28,12 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -48,6 +42,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -66,6 +64,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
+    protected SelectItem statusFilter;
+    
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
@@ -129,7 +129,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusIcons.put(OperationRequestStatus.FAILURE.name(),
             ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
 
-        SelectItem statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
+        statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
         statusFilter.setWidth(325);
 

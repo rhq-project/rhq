@@ -1,23 +1,29 @@
 /*
- * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
- * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ *  * RHQ Management Platform
+ *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * All rights reserved.
+ *  *
+ *  * This program is free software; you can redistribute it and/or modify
+ *  * it under the terms of the GNU General Public License as published by
+ *  * the Free Software Foundation version 2 of the License.
+ *  *
+ *  * This program is distributed in the hope that it will be useful,
+ *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  * GNU General Public License for more details.
+ *  *
+ *  * You should have received a copy of the GNU General Public License
+ *  * along with this program; if not, write to the Free Software
+ *  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.DateRange;
 import com.smartgwt.client.data.RelativeDate;
@@ -34,11 +40,10 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-
-import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -49,6 +54,10 @@ public class ExportModalWindow {
 
     //@todo:pull from message bundle
     private static String BASE_URL = "http://localhost:7080/rest/1/reports/";
+
+    private static final String FORMAT_FIELD = "format";
+    private static final String DETAILS_FIELD = "details";
+    private static final String DATE_RANGE_FIELD = "dri";
 
     private String reportUrl;
 
@@ -127,18 +136,20 @@ public class ExportModalWindow {
         HLayout formLayout = new HLayout();
         formLayout.setAlign(VerticalAlignment.TOP);
 
-        DynamicForm form = new DynamicForm();
+        final DynamicForm form = new DynamicForm();
 
-        final SelectItem formatsList = new SelectItem("Format", "Format");
-        formatsList.setValueMap("CSV", "XML");
-        formatsList.setDefaultValue("CSV");
+        final SelectItem formatsList = new SelectItem(FORMAT_FIELD, "Format");
+        LinkedHashMap<String, String> formats = new LinkedHashMap<String, String>();
+        formats.put("csv", "CSV");
+        formats.put("xml", "XML");
+        formatsList.setValueMap(formats);
+        formatsList.setDefaultValue("csv");
 
-        CheckboxItem detailCheckboxItem = new CheckboxItem();
-        detailCheckboxItem.setTitle("Show Detail");
+        CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
         detailCheckboxItem.setDisabled(!showDetail);
         detailCheckboxItem.setValue(false);
 
-        DateRangeItem dateRangeItem = new DateRangeItem("dri", "Date Range");
+        DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
         dateRangeItem.setAllowRelativeDates(true);
         DateRange dateRange = new DateRange();
         dateRange.setRelativeStartDate(new RelativeDate("-1m"));
@@ -157,7 +168,7 @@ public class ExportModalWindow {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 exportWindow.hide();
-                Window.open(calculateUrl(formatsList.getValueAsString()), "download", null);
+                Window.open(calculateUrl(form), "download", null);
             }
         });
         buttonBar.addMember(finishButton);
@@ -174,8 +185,14 @@ public class ExportModalWindow {
         this.operationRequestStatusList = operationRequestStatusList;
     }
 
-    public String calculateUrl(String format) {
-        return BASE_URL + reportUrl + "." + format.toLowerCase();
+    public String calculateUrl(DynamicForm form) {
+        String format = form.getValueAsString(FORMAT_FIELD);
+        StringBuilder queryString = new StringBuilder();
+
+        if (showDetail) {
+            queryString.append("?details").append(form.getValueAsString(DETAILS_FIELD));
+        }
+        return URL.encode(BASE_URL + reportUrl + "." + format  + queryString);
     }
 
     public boolean  isShowDetail(){

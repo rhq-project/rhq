@@ -236,7 +236,8 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
 
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("driftCompliance");
+                    ExportModalWindow exportModalWindow =
+                        ExportModalWindow.createExportWindowForInventorySummary("driftCompliance");
                     exportModalWindow.show();
                     refreshTableInfo();
                 }

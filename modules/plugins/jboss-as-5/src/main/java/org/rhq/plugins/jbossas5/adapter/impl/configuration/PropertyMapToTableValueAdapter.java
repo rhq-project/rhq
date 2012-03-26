@@ -58,7 +58,7 @@ public class PropertyMapToTableValueAdapter extends AbstractPropertyMapAdapter i
         if (metaValue != null)
         {
             TableValueSupport tableValueSupport = (TableValueSupport)metaValue;
-            Map<String, PropertyDefinition> map = propertyDefinition.getPropertyDefinitions();
+            Map<String, PropertyDefinition> map = propertyDefinition.getMap();
             Map<String, Property> properties = property.getMap();
             for (String key : map.keySet())
             {

@@ -31,6 +31,7 @@ import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
@@ -46,7 +47,8 @@ import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BO
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 
-public class ManageDriftDefinitionsTest extends DriftServerTest {
+@Test(dependsOnGroups = "pinning")
+public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
     private final String DRIFT_NOT_SUPPORTED_TYPE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE_TYPE";
 
@@ -320,4 +322,5 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
 
         return driftDefs.get(0);
     }
+
 }

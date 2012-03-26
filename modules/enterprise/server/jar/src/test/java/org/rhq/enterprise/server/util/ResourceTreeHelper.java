@@ -166,6 +166,10 @@ public class ResourceTreeHelper {
     }
 
     public static void deleteResource(EntityManager entityManager, Resource doomedResource) {
+        if (null == doomedResource) {
+            return;
+        }
+
         for (Availability avail : doomedResource.getAvailability()) {
             entityManager.remove(avail);
         }

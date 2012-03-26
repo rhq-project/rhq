@@ -62,8 +62,8 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey", MSG
-            .dataSource_traits_field_primaryKey());
+        DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey",
+            MSG.dataSource_traits_field_primaryKey());
         primaryKeyField.setPrimaryKey(true);
         primaryKeyField.setHidden(true);
         fields.add(primaryKeyField);
@@ -78,8 +78,8 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
 
         // TODO: Include description from metric def?
 
-        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, MSG
-            .common_title_value());
+        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE,
+            MSG.common_title_value());
         fields.add(valueField);
 
         DataSourceDateTimeField timestampField = new DataSourceDateTimeField(
@@ -141,7 +141,6 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
             }
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

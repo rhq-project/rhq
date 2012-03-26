@@ -374,12 +374,19 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
      * @param mode mode and thus command line switch to look for
      * @return the config or the default for the mode if no config was passed on the command line.
      */
-    String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
+    private String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
         String configArg = mode.getConfigArg();
-        for (String line : commandLine) {
-            if (line.startsWith(configArg))
-                return line.substring(configArg.length() + 1);
+
+        for (int index = 0; index < commandLine.length; index++) {
+            if (commandLine[index].startsWith(configArg)) {
+                if (index + 1 < commandLine.length) {
+                    return commandLine[index + 1];
+                } else {
+                    break;
+                }
+            }
         }
+
         return mode.getDefaultXmlFile();
     }
 

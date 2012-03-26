@@ -19,11 +19,13 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -45,7 +47,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Tests loading configurations
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest {
 
     @BeforeSuite
@@ -421,7 +423,6 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
     }
 
-
     public void test12() throws Exception {
 
         String resultString = loadJsonFromFile("expressionTest.json");
@@ -437,24 +438,91 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
         Configuration config = delegate.loadResourceConfiguration();
         Collection<Property> properties = config.getProperties();
-        assert properties.size()==3;
+        assert properties.size() == 3;
         PropertySimple foo = config.getSimple("foo:expr");
         PropertySimple foo2 = config.getSimple("foo2:expr");
         PropertySimple bar = config.getSimple("bar");
 
-        assert foo !=null;
+        assert foo != null;
         assert foo2 != null;
         assert bar != null;
 
         Integer tmp = foo.getIntegerValue();
-        assert tmp !=null;
-        assert tmp ==123;
+        assert tmp != null;
+        assert tmp == 123;
         String stringValue = foo2.getStringValue();
-        assert stringValue !=null;
+        assert stringValue != null;
         assert stringValue.equals("${foo2:42}");
         tmp = bar.getIntegerValue();
-        assert tmp !=null;
-        assert tmp ==456;
+        assert tmp != null;
+        assert tmp == 456;
 
+    }
+
+    public void test13() throws Exception {
+        String resultString = loadJsonFromFile("collapsedMapTest.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test13");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        assert properties.size() == 1;
+        Iterator<Property> iterator = properties.iterator();
+        Property p = iterator.next();
+        assert p instanceof PropertyMap;
+        PropertyMap pm = (PropertyMap) p;
+        assert pm.getMap().size() == 2;
+        PropertySimple ps = pm.getSimple("name:0");
+        assert ps != null : "No property with name 'name:0' was found";
+        Assert.assertEquals(ps.getStringValue(), "in-vm", "Unexpected value for " + ps);
+        ps = pm.getSimple("backup:1");
+        assert ps != null : "No property with name 'backup:1' was found";
+        Assert.assertNull(ps.getStringValue(), "Unexpected value for " + ps);
+    }
+
+    public void testListOfPlainMaps() throws Exception {
+        String resultString = loadJsonFromFile("listofplainmaps.json");
+
+        ConfigurationDefinition definition = loadDescriptor("listOfPlainMaps");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        Assert.assertEquals(properties.size(), 1);
+
+        PropertyList propertyList = (PropertyList) properties.iterator().next();
+
+        Assert.assertNotNull(propertyList);
+
+        int index = 1;
+        for (Property property : propertyList.getList()) {
+
+            PropertyMap map = (PropertyMap) property;
+
+            PropertySimple nameProperty = (PropertySimple) map.get("name:0");
+            Assert.assertEquals(nameProperty.getStringValue(), "test" + index);
+            index++;
+
+            PropertySimple valueProperty = (PropertySimple) map.get("value:1");
+            Assert.assertEquals(valueProperty.getStringValue(), "test" + index);
+            index++;
+        }
     }
 }

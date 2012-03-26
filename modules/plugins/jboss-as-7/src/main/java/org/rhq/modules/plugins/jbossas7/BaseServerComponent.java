@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -47,8 +48,10 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -76,23 +79,31 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
             return tmp;
         }
+
+        context.getAvailabilityContext().requestAvailabilityCheck();
+
+        return startServer(mode);
+    }
+
+    protected boolean waitUntilDown(OperationResult tmp) throws InterruptedException {
         boolean down=false;
         int count=0;
         while (!down) {
-            count++;
-            Thread.sleep(1000); // Wait 1s
             Operation op = new ReadAttribute(new Address(),"release-version");
             Result res = getASConnection().execute(op);
             if (!res.isSuccess()) { // If op succeeds, server is not down
                 down=true;
-            }
-            if (count > 20) {
+            } else if (count > 20) {
                 tmp.setErrorMessage("Was not able to shut down the server");
-                return tmp;
+                return true;
             }
+            if (!down) {
+                Thread.sleep(1000); // Wait 1s
+            }
+            count++;
         }
-
-        return startServer(mode);
+        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down");
+        return false;
     }
 
     /**
@@ -156,8 +167,35 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         } else if (results.getExitCode()!=null) {
             operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
         } else {
+
+            // Lets try to connect to the server
+            boolean up=false;
+            int count=0;
+            while (!up) {
+                Operation op = new ReadAttribute(new Address(),"release-version");
+                Result res = getASConnection().execute(op);
+                if (res.isSuccess()) { // If op succeeds, server is not down
+                    up=true;
+                } else if (count > 20) {
+                    operationResult.setErrorMessage("Was not able to start the server");
+                    return operationResult;
+                }
+                if (!up) {
+                    try {
+                        Thread.sleep(1000); // Wait 1s
+                    } catch (InterruptedException e) {
+                        ; // Ignore
+                    }
+                }
+                count++;
+            }
+
             operationResult.setSimpleResult("Success");
         }
+
+
+
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
 
@@ -274,6 +312,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         result.setSimpleResult("User/Password set or updated");
         log.info("Installed management user [" + user + "].");
 
+        context.getAvailabilityContext().requestAvailabilityCheck();
+
         return result;
     }
 
@@ -282,8 +322,15 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         Set<MeasurementScheduleRequest> requests = metrics;
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
+        Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for (MeasurementScheduleRequest req: requests) {
+            if (req.getName().startsWith("_skm:"))
+                skmRequests.add(req);
+        }
+
         for (MeasurementScheduleRequest request: requests) {
-            if (request.getName().equals("startTime")) {
+            String requestName = request.getName();
+            if (requestName.equals("startTime")) {
                 String path = getPath();
                 if (context.getResourceType().getName().contains("Host Controller")) {
                     if (path!=null)
@@ -303,8 +350,40 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
                     report.addData(data);
                 }
             }
-            else {
+            else if (!requestName.startsWith("_skm:")) { // handled below
                 leftovers.add(request);
+            }
+
+        }
+
+        // Now handle the skm
+        if (skmRequests.size()>0) {
+            Address address = new Address();
+            ReadResource op = new ReadResource(address);
+            op.includeRuntime(true);
+            ComplexResult res = getASConnection().executeComplex(op);
+            if (res.isSuccess()) {
+                Map<String,Object> props = res.getResult();
+
+                for (MeasurementScheduleRequest request: skmRequests) {
+                    String requestName = request.getName();
+                    String realName = requestName.substring(requestName.indexOf(':') + 1);
+                    String val=null;
+                    if (props.containsKey(realName)) {
+                        val = getStringValue( props.get(realName) );
+                    }
+
+                    if ("null".equals(val)) {
+                        if (realName.equals("product-name"))
+                            val = "JBoss AS";
+                        else if (realName.equals("product-version"))
+                            val = getStringValue(props.get("release-version"));
+                        else
+                            log.debug("Value for " + realName + " was 'null' and no replacement found");
+                    }
+                    MeasurementDataTrait data = new MeasurementDataTrait(request,val);
+                    report.addData(data);
+                }
             }
         }
 

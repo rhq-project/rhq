@@ -53,7 +53,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Stefan Negrea
  */
 @SuppressWarnings("rawtypes")
-@Test(groups = "modcluster-plugin")
+@Test(groups = "modcluster.plugin")
 public class ModClusterPluginIntegrationTest {
     private Log log = LogFactory.getLog(this.getClass());
     private static final String PLUGIN_NAME = "mod_cluster";

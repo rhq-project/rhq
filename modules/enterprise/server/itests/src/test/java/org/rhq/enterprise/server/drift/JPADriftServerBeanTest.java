@@ -38,6 +38,7 @@ import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
@@ -54,7 +55,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
-public class JPADriftServerBeanTest extends DriftServerTest {
+@Test(dependsOnGroups = "pinning")
+public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
     private JPADriftServerLocal jpaDriftServer;
 

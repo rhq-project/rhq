@@ -39,14 +39,12 @@ import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(groups = "jbosscache3-test")
 public class CacheComponentTest {
 
 	public static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 10000;
@@ -70,7 +68,7 @@ public class CacheComponentTest {
 	public static String searchString = "*:*,jmx-resource=";
 	private String REGEX = "(,|:)jmx-resource=[^,]*(,|\\z)";
 
-	@Test
+	@Test(groups = "jbosscache3.test")
 	public void testDiscovery() throws Exception {
 		PluginContainer.getInstance().getInventoryManager()
 				.executeServiceScanImmediately();
@@ -136,7 +134,7 @@ public class CacheComponentTest {
 		assert isTestExamplePresent;
 	}
 
-	@Test
+    @Test(groups = "jbosscache3.test")
 	public void testMetrics() {
 		try {
 			PluginContainer.getInstance().getInventoryManager()
@@ -204,7 +202,7 @@ public class CacheComponentTest {
 		}
 	}
 
-	@Test
+    @Test(groups = "jbosscache3.test")
 	public void testOperations() {
 		try {
 			PluginContainer.getInstance().getInventoryManager()
@@ -217,7 +215,7 @@ public class CacheComponentTest {
 		}
 	}
 
-	@BeforeSuite(groups = "jbosscache3-test")
+	@BeforeSuite(groups = "jbosscache3.test")
 	@Parameters( { "principal", "credentials", "testJarPath", "xmlFilePath" })
 	public void start(@Optional String principal, @Optional String credentials,
 			@Optional String testJarPath, String xmlFilePath) {
@@ -233,17 +231,20 @@ public class CacheComponentTest {
 
 			PluginContainer.getInstance().getInventoryManager()
 					.executeServiceScanImmediately();
-
 		} catch (java.lang.IllegalStateException e) {
-			log.info("Object allready deployed.");
-			remoteClientTest.runTest();
+			if (remoteClientTest != null) {
+                log.info("Object already deployed (" + e + ").");
+			    remoteClientTest.runTest();
+            } else {
+                throw e;
+            }
 		} catch (Exception e) {
 			org.testng.Assert.fail("Failed to start PC...", e);
 			log.error("Failed to start PC...", e);
 		}
 	}
 
-	@AfterSuite(groups = "jbosscache3-test")
+	@AfterSuite(groups = "jbosscache3.test")
 	public void stop() {
 		try {
 			log.info("Stopping PC...");

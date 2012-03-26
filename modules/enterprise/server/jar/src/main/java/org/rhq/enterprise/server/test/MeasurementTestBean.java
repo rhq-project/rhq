@@ -117,8 +117,8 @@ public class MeasurementTestBean implements MeasurementTestLocal {
                 // send 10 data points per schedule
                 for (int i = 0; i < 10; i++) {
                     long dat = cal.getTimeInMillis();
-                    MeasurementDataNumeric mdn = new MeasurementDataNumeric(new MeasurementDataPK(dat, s
-                        .getScheduleId()), (double) i);
+                    MeasurementDataNumeric mdn = new MeasurementDataNumeric(new MeasurementDataPK(dat,
+                        s.getScheduleId()), (double) i);
                     report.addData(mdn);
                     cal.add(Calendar.SECOND, -1);
                 }
@@ -130,7 +130,7 @@ public class MeasurementTestBean implements MeasurementTestLocal {
 
     public void addProblemResource() {
         Resource res = setupFakePlatformIfNeeded();
-        Availability ava = new Availability(res, new Date(), AvailabilityType.UP);
+        Availability ava = new Availability(res, AvailabilityType.UP);
         entityManager.persist(ava);
 
         if ((res.getSchedules().size() == 0) && (res.getResourceType().getMetricDefinitions().size() > 0)) {

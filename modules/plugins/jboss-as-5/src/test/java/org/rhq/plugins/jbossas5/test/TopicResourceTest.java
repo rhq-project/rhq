@@ -34,7 +34,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  * @author Noam Malki
  */
-@Test(groups = { "as5-plugin", "as5-plugin-topic" })
+@Test(groups = { "as5.plugin", "as5.plugin.topic" })
 public class TopicResourceTest extends AbstractDestinationTest {
 
 	
@@ -49,7 +49,7 @@ public class TopicResourceTest extends AbstractDestinationTest {
 	}
 	
 	
-    @BeforeTest(groups = "as5-plugin-topic" )
+    @BeforeTest(groups = "as5.plugin.topic" )
     public void setup() throws Exception {
         System.out.println("Running Topic test...");
         

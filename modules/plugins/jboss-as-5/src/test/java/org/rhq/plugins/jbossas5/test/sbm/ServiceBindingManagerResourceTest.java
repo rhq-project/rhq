@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = {"as5-plugin", "as5-plugin-sbm"})
+@Test(groups = {"as5.plugin", "as5.plugin.sbm"})
 public class ServiceBindingManagerResourceTest extends AbstractServiceBindingTest {
 
     protected String getResourceTypeName() {

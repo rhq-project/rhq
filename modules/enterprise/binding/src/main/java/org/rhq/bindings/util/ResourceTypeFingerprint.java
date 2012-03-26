@@ -172,7 +172,7 @@ public class ResourceTypeFingerprint {
 
     private static void addRepresentation(PropertyDefinitionMap pm, StringBuilder bld) {
         bld.append(pm.getName());
-        addRepresentation(pm.getPropertyDefinitions(), bld);
+        addRepresentation(pm.getMap(), bld);
     }
 
     private static void addRepresentation(PropertyDefinitionList pl, StringBuilder bld) {

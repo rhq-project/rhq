@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
@@ -64,6 +65,8 @@ public interface ResourceGWTService extends RemoteService {
         PageControl pc) throws RuntimeException;
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) throws RuntimeException;
+
+    ResourceAvailabilitySummary getResourceAvailabilitySummary(int resourceId) throws RuntimeException;
 
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 

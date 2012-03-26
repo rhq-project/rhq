@@ -25,9 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -153,7 +154,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource resource composite for resource [" + resourceId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     setRefreshing(false);
                 }
 
@@ -202,9 +203,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                             @Override
                                             public void onFailure(Throwable caught) {
-                                                Log
-                                                    .debug("Error retrieving recent metrics charting data for resource ["
-                                                        + resourceId + "]:" + caught.getMessage());
+                                                Log.debug("Error retrieving recent metrics charting data for resource ["
+                                                    + resourceId + "]:" + caught.getMessage());
                                                 setRefreshing(false);
                                             }
 
@@ -273,6 +273,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         //have link launch modal window on click
                                                         LinkItem link = AbstractActivityView.newLinkItem(title,
                                                             destination);
+                                                        link.setTitleVAlign(VerticalAlignment.TOP);
+                                                        link.setAlign(Alignment.LEFT);
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -305,8 +307,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     }
                                                     if (!someChartedData) {// when there are results but no chartable entries.
                                                         LocatableDynamicForm row = AbstractActivityView
-                                                            .createEmptyDisplayRow(recentMeasurementsContent
-                                                                .extendLocatorId("None"),
+                                                            .createEmptyDisplayRow(
+                                                                recentMeasurementsContent.extendLocatorId("None"),
                                                                 AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                         column.addMember(row);
                                                     } else {
@@ -322,8 +324,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     BrowserUtility.graphSparkLines();
                                                 } else {
                                                     LocatableDynamicForm row = AbstractActivityView
-                                                        .createEmptyDisplayRow(recentMeasurementsContent
-                                                            .extendLocatorId("None"),
+                                                        .createEmptyDisplayRow(
+                                                            recentMeasurementsContent.extendLocatorId("None"),
                                                             AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                     column.addMember(row);
                                                 }

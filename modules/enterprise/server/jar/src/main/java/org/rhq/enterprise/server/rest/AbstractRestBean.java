@@ -62,6 +62,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * For the cache and its evicion policies see rhq-cache-service.xml
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unchecked")
 @javax.annotation.Resource(name="cache",type= TreeCacheMBean.class,mappedName = "RhqCache")
 public class AbstractRestBean {
 

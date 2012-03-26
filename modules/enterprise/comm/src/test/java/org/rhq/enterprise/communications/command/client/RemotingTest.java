@@ -38,7 +38,7 @@ import org.rhq.enterprise.communications.CommTestConstants;
  * @author John Mazzitelli
  */
 public class RemotingTest implements ServerInvocationHandler {
-    @Test(groups = "comm-client")
+    @Test(groups = "comm.client")
     public void testShutdownRestart() throws Throwable {
         if (true) {
             System.out.println("!!!!!!!!!!!!! RUN THIS TEST ONLY WHEN JBREM-745 IS FIXED");
@@ -73,7 +73,7 @@ public class RemotingTest implements ServerInvocationHandler {
         }
     }
 
-    @Test(groups = "comm-client")
+    @Test(groups = "comm.client")
     public void testShutdownRestartWithJBossRemotingRemoteCommunicator() throws Throwable {
         String locatorString1 = "socket://127.0.0.1:11112/?force_remote=true";
 

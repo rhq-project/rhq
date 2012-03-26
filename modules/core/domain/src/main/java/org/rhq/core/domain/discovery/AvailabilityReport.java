@@ -55,7 +55,7 @@ public class AvailabilityReport implements Serializable {
 
         public Datum(Availability availability) {
             this.resourceId = availability.getResource().getId();
-            this.startTime = availability.getStartTime().getTime();
+            this.startTime = availability.getStartTime();
             this.availabilityType = availability.getAvailabilityType();
         }
 

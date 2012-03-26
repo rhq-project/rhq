@@ -65,7 +65,7 @@ import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
-public class DriftTemplateManagerBeanTest extends DriftServerTest {
+public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
     private static final String TEST_CREATE_TEMPLATE = "test-createTemplateForNegativeUpdateTests";
     private static final String TEST_PIN_TEMPLATE = "test-pinTemplate";
@@ -83,7 +83,6 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     public void initClass() {
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
-
     }
 
     @Override
@@ -115,6 +114,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         };
     }
 
+    @Test(dependsOnGroups = "pinning")
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName("test-createNewTemplate");
@@ -146,6 +146,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         });
     }
 
+    @Test(groups = "negativeUpdate")
     public void createTemplateForNegativeUpdateTests() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName(TEST_CREATE_TEMPLATE);
@@ -156,10 +157,13 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
 
-        assertNotNull("Failed to load template", loadTemplate(definition.getName()));
+        DriftDefinitionTemplate template = loadTemplate(definition.getName());
+        assertNotNull("Failed to load template", template);
+        getEntityManager().clear();
+        System.out.println("Created " + template.toString(false));
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
+    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
     @InitDB(false)
     public void doNotAllowBaseDirToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
@@ -169,7 +173,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
+    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
     @InitDB(false)
     public void doNotAllowFiltersToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
@@ -179,7 +183,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
+    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
     @InitDB(false)
     public void doNotAllowTemplateNameToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
@@ -188,7 +192,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*template name must be unique.*")
+    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*template name must be unique.*")
     @InitDB(false)
     public void doNotAllowDuplicateTemplateNames() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -201,6 +205,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
     }
 
+    @Test(dependsOnGroups = "pinning")
     public void createAndUpdateTemplate() {
         // create the template
         DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -263,6 +268,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         }
     }
 
+    @Test(groups = "pinning", dependsOnGroups = "negativeUpdate")
     public void pinTemplate() throws Exception {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
@@ -328,7 +334,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(dependsOnMethods = "pinTemplate")
+    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void persistChangeSetWhenTemplateGetsPinned() throws Exception {
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
@@ -361,7 +367,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
-    @Test(dependsOnMethods = "pinTemplate")
+    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void updateAttachedDefinitionsWhenTemplateGetsPinned() throws Exception {
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
@@ -378,7 +384,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertDefinitionIsPinned(attachedDefs.get(1));
     }
 
-    @Test(dependsOnMethods = "pinTemplate")
+    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned() throws Exception {
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
@@ -395,6 +401,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertDefinitionIsNotPinned(detachedDefs.get(1));
     }
 
+    @Test(dependsOnGroups = "pinning")
     public void deleteTemplate() throws Exception {
         // first create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
@@ -566,6 +573,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         criteria.addFilterResourceTypeId(resourceType.getId());
         criteria.addFilterName(name);
         criteria.fetchDriftDefinitions(true);
+        criteria.fetchResourceType(true);
 
         PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(getOverlord(), criteria);
         if (verifyResultsUnique) {

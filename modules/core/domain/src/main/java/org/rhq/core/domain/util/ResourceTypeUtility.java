@@ -16,17 +16,46 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.util;
+package org.rhq.core.domain.util;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * TODO: Move these method to a utils module.
+ * A set of utility methods for working with {@link ResourceType}s.
+ *
+ * @author Ian Springer
  */
 public abstract class ResourceTypeUtility {
 
+    /**
+     * Returns the set of MeasurementDefinition defined by the given Resource type, which are accepted by the specified
+     * filter. If the filter is null, all of the type's MeasurementDefinitions will be returned.
+     *
+     * @param type the Resource type
+     * @param filter the filter; may be null
+     *
+     * @return the set of MeasurementDefinition defined by the given Resource type, which are accepted by the specified
+     *         filter, or, if the filter is null, all of the type's MeasurementDefinitions
+     */
+    public static Set<MeasurementDefinition> getMeasurementDefinitions(ResourceType type,
+                                                                       MeasurementDefinitionFilter filter) {        
+        if (filter == null) {
+            return type.getMetricDefinitions();
+        }
+        Set<MeasurementDefinition> acceptedMetricDefs = new LinkedHashSet<MeasurementDefinition>();
+        for (MeasurementDefinition metricDef : type.getMetricDefinitions()) {
+            if (filter.accept(metricDef)) {
+                acceptedMetricDefs.add(metricDef);
+            }
+        }
+        return acceptedMetricDefs;
+    }
+    
     public static MeasurementDefinition getMeasurementDefinition(ResourceType type, String metricName) {
         for (MeasurementDefinition metricDefinition : type.getMetricDefinitions()) {
             if (metricDefinition.getName().equals(metricName)) {

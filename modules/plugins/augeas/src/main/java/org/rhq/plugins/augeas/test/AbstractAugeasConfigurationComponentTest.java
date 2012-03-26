@@ -33,6 +33,7 @@ import net.augeas.jna.Aug;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -155,14 +156,12 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             Configuration updatedResourceConfig = getUpdatedResourceConfig();
             ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(0, updatedResourceConfig,
                 resource.getId());
-            configurationManager.updateResourceConfiguration(updateRequest);
+            configurationManager.executeUpdateResourceConfigurationImmediately(updateRequest);
 
             if (isResourceConfigSupported()) {
-                // Give the component and the managed resource some time to properly persist the update.
-                Thread.sleep(500);
-
                 Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-                assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                assert resourceConfig.equals(updatedResourceConfig) :
+                        "Unexpected Resource configuration - \nExpected:\n\t"
                     + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
             }
         }

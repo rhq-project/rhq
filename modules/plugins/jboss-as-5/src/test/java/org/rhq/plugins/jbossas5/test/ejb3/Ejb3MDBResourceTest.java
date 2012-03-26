@@ -33,14 +33,14 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = {"as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-mdb"})
+@Test(groups = {"as5.plugin", "as5.plugin.ejb3", "as5.plugin.ejb3.mdb"})
 public class Ejb3MDBResourceTest extends AbstractEjb3MessageDrivenBeanResourceTest {
 
     private static final int MESSAGES_SENT = 10;
     private static final String QUEUE_NAME = "queue/tutorial/example";
     private static final String MDB_NAME = "ExampleMDB";
     
-    @BeforeGroups(groups = "as5-plugin-ejb3", dependsOnMethods="deployTestJars")
+    @BeforeGroups(groups = "as5.plugin.ejb3", dependsOnMethods="deployTestJars")
     public void setup() {
         try {
             JMSQueueUtil.sendMessages(QUEUE_NAME, MESSAGES_SENT);

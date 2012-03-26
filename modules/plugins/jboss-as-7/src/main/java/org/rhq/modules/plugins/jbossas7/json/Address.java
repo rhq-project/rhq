@@ -45,7 +45,7 @@ public class Address {
      */
     public Address(String key, String value) {
         this();
-        add(key,value);
+        add(key, value);
     }
 
     /**
@@ -54,7 +54,7 @@ public class Address {
      */
     public Address(Address other) {
         this();
-        if (other!=null && other.path!=null)
+        if (other != null && other.path != null)
             path.addAll(other.path);
     }
 
@@ -65,7 +65,7 @@ public class Address {
      */
     Address(List<PROPERTY_VALUE> property_values) {
         this();
-        if (property_values!=null)
+        if (property_values != null)
             path.addAll(property_values);
     }
 
@@ -75,9 +75,10 @@ public class Address {
      */
     public Address(String path) {
         this();
-        if (path==null || path.isEmpty())
+        if (path == null || path.isEmpty())
             return;
-        String[] components = path.split(",");
+        // strips / from the start or end of the key if it happens to be there and
+        String[] components = path.split("[,/]+");
         for (String component : components) {
             String tmp = component.trim();
 
@@ -96,9 +97,6 @@ public class Address {
      * @return A path
      */
     private PROPERTY_VALUE pathFromSegment(String segment) {
-        if (segment.startsWith("/"))
-            segment = segment.substring(1);
-
         String[] pair = segment.split("=");
         return new PROPERTY_VALUE(pair[0], pair[1]);
     }
@@ -109,7 +107,7 @@ public class Address {
      * @param value Value part of this path element
      */
     public void add(String key, String value) {
-        path.add(new PROPERTY_VALUE(key,value));
+        path.add(new PROPERTY_VALUE(key, value));
     }
 
     public void addSegment(String segment) {
@@ -122,9 +120,8 @@ public class Address {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder( "Address{" +
-            "path: " );
-        if (path!=null) {
+        StringBuilder builder = new StringBuilder("Address{" + "path: ");
+        if (path != null) {
             Iterator<PROPERTY_VALUE> iterator = path.iterator();
             while (iterator.hasNext()) {
                 PROPERTY_VALUE pv = iterator.next();
@@ -132,8 +129,7 @@ public class Address {
                 if (iterator.hasNext())
                     builder.append(',');
             }
-        }
-        else {
+        } else {
             builder.append("-empty-");
         }
 
@@ -165,7 +161,7 @@ public class Address {
      * @see #Address(Address)
      */
     public void add(Address address) {
-        if (address!=null && address.path!=null)
+        if (address != null && address.path != null)
             this.path.addAll(address.path);
     }
 
@@ -205,10 +201,10 @@ public class Address {
     public Address getParent() {
         Address tmp = new Address();
         int l = path.size();
-        if (l<1)
+        if (l < 1)
             return tmp;
 
-        for (int i = 0; i < l-1 ; i++) {
+        for (int i = 0; i < l - 1; i++) {
             tmp.path.add(path.get(i));
         }
 

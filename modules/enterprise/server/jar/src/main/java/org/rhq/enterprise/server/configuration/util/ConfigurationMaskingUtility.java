@@ -129,7 +129,7 @@ public class ConfigurationMaskingUtility {
     }
 
     private static void maskPropertyMap(AbstractPropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             maskProperty(childPropertyDefinition, propertyMap);
         }

@@ -34,6 +34,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.jaxb.WebServiceMapAdapter;
@@ -49,6 +50,20 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceManagerRemote {
+
+    /**
+     * Returns a summary object that provides information about a resource's
+     * past availability history.
+     *
+     * @param subject
+     * @param resourceId
+     *
+     * @return summary POJO
+     */
+    @WebMethod
+    ResourceAvailabilitySummary getAvailabilitySummary( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Returns the availability of the resource with the specified id.

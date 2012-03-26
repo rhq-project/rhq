@@ -210,12 +210,17 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
                                                       ResourceDiscoveryContext discoveryContext)
             throws InvalidPluginConfigurationException {
-        
+
+        String type = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE).getStringValue();
+        if (type.equals(PARENT_TYPE)) {
+            throw new InvalidPluginConfigurationException("'" + PARENT_TYPE + "' is not a valid type for a manually added JVM.");
+        }
+
         String connectorAddress = pluginConfig.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
         if (connectorAddress == null) {
-            throw new InvalidPluginConfigurationException("A connector address must be specified when manually adding a JMX Server.");
+            throw new InvalidPluginConfigurationException("A connector address must be specified when manually adding a JVM.");
         }
-        
+
         ConnectionProvider connectionProvider;
         EmsConnection connection;
         try {

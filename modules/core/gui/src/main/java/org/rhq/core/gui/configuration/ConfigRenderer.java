@@ -113,8 +113,8 @@ public class ConfigRenderer extends Renderer {
             UIComponent initInputsJavaScriptComponent = configurationComponent.findComponent(id);
             if (initInputsJavaScriptComponent != null) {
                 FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
-                PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-                    .isFullyEditable(), true);
+                PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id,
+                    configurationComponent.isFullyEditable(), true);
             }
         }
     }
@@ -206,8 +206,8 @@ public class ConfigRenderer extends Renderer {
                     : configurationComponent.getNullConfigurationStyle();
                 HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
                     configurationComponent, styleClass);
-                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
-                    .getNullConfigurationDefinitionMessage());
+                FacesComponentUtility.addVerbatimText(messagePanel,
+                    configurationComponent.getNullConfigurationDefinitionMessage());
             }
             return;
         }
@@ -216,14 +216,14 @@ public class ConfigRenderer extends Renderer {
             if (configurationComponent.getNullConfigurationMessage() != null) {
                 HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
                     configurationComponent, "WarnBlock");
-                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
-                    .getNullConfigurationMessage());
+                FacesComponentUtility.addVerbatimText(messagePanel,
+                    configurationComponent.getNullConfigurationMessage());
             }
             return;
         }
 
-        ConfigurationUtility.normalizeConfiguration(configurationComponent.getConfiguration(), configurationComponent
-            .getConfigurationDefinition());
+        ConfigurationUtility.normalizeConfiguration(configurationComponent.getConfiguration(),
+            configurationComponent.getConfigurationDefinition());
 
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent) configurationComponent;
@@ -255,8 +255,8 @@ public class ConfigRenderer extends Renderer {
         }
 
         String id = getInitInputsJavaScriptComponentId(configurationComponent);
-        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-            .isFullyEditable(), false);
+        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id,
+            configurationComponent.isFullyEditable(), false);
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {
@@ -324,14 +324,17 @@ public class ConfigRenderer extends Renderer {
             String listMemberComponentId = PropertyIdGeneratorUtility.getIdentifier(propertyList.getList()
                 .get(oldIndex), oldIndex, AbstractPropertyBagUIComponentTreeFactory.PANEL_ID_SUFFIX);
             UIComponent listMemberComponent = config.findComponent(listMemberComponentId);
-            String newListMemberComponentId = PropertyIdGeneratorUtility.getIdentifier(propertyList.getList().get(
-                newIndex), newIndex, AbstractPropertyBagUIComponentTreeFactory.PANEL_ID_SUFFIX);
+            String newListMemberComponentId = PropertyIdGeneratorUtility.getIdentifier(
+                propertyList.getList().get(newIndex), newIndex,
+                AbstractPropertyBagUIComponentTreeFactory.PANEL_ID_SUFFIX);
             listMemberComponent.setId(newListMemberComponentId);
-            String listIndexParamComponentId = PropertyIdGeneratorUtility.getIdentifier(propertyList.getList().get(
-                oldIndex), oldIndex, AbstractPropertyBagUIComponentTreeFactory.PARAM_ID_SUFFIX);
+            String listIndexParamComponentId = PropertyIdGeneratorUtility.getIdentifier(
+                propertyList.getList().get(oldIndex), oldIndex,
+                AbstractPropertyBagUIComponentTreeFactory.PARAM_ID_SUFFIX);
             UIParameter listIndexParam = (UIParameter) config.findComponent(listIndexParamComponentId);
-            String newListIndexParamComponentId = PropertyIdGeneratorUtility.getIdentifier(propertyList.getList().get(
-                newIndex), newIndex, AbstractPropertyBagUIComponentTreeFactory.PARAM_ID_SUFFIX);
+            String newListIndexParamComponentId = PropertyIdGeneratorUtility.getIdentifier(
+                propertyList.getList().get(newIndex), newIndex,
+                AbstractPropertyBagUIComponentTreeFactory.PARAM_ID_SUFFIX);
             listIndexParam.setId(newListIndexParamComponentId);
             listIndexParam.setValue(newIndex);
         }
@@ -473,8 +476,7 @@ public class ConfigRenderer extends Renderer {
             .getPropertyDefinitionList(listName).getMemberDefinition();
         String mapName = mapDefinition.getName();
         PropertyMap newMap = new PropertyMap(mapName);
-        Map<String, PropertyDefinition> mapMemberDefinitions = mapDefinition.getPropertyDefinitions();
-        for (PropertyDefinition mapMemberDefinition : mapMemberDefinitions.values()) {
+        for (PropertyDefinition mapMemberDefinition : mapDefinition.getPropertyDefinitions()) {
             PropertyDefinitionSimple simpleDefinition = (PropertyDefinitionSimple) mapMemberDefinition;
             newMap.put(new PropertySimple(simpleDefinition.getName(), (simpleDefinition.isRequired()) ? "" : null));
         }
@@ -564,8 +566,8 @@ public class ConfigRenderer extends Renderer {
         //propertySet.getAttributes().put(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE,
         //            "#{EditTestConfigurationUIBean.configurationSet.groupConfiguration.map['String1'].stringValue}");
 
-        propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE, configurationSetComponent
-            .getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
+        propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE,
+            configurationSetComponent.getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
 
         addPropSetButtons(configurationSetComponent, propSetForm);
 

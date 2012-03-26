@@ -16,13 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.util;
+package org.rhq.core.domain.util;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * TODO: Move these method to a utils module.
+ * A set of utility methods for working with {@link Resource}s.
+ *
+ * @author Ian Springer
  */
 public abstract class ResourceUtility {
 

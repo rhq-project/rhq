@@ -38,7 +38,7 @@ import org.rhq.core.system.windows.RegistryEntry.Root;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "native-system")
+@Test(groups = "native.system")
 public class WindowsTest {
     @AfterMethod
     @BeforeMethod

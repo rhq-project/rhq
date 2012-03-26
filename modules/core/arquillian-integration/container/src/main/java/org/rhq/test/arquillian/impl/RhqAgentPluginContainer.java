@@ -131,20 +131,24 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     }
     
     public static PluginContainer switchPluginContainer(String deploymentName) throws Exception {
+        PluginContainer oldInstance = PluginContainer.getInstance();
         Method setInstance = PluginContainer.class.getMethod("setContainerInstance", String.class);
         setInstance.invoke(null, deploymentName);
-              
-        Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
-        
-        if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
-            SystemInfoFactory.disableNativeSystemInfo();
-        } else {
-            SystemInfoFactory.enableNativeSystemInfo();
+        PluginContainer newInstance = PluginContainer.getInstance();
+
+        if (newInstance != oldInstance) {
+            Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
+
+            if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
+                SystemInfoFactory.disableNativeSystemInfo();
+            } else {
+                SystemInfoFactory.enableNativeSystemInfo();
+            }
+
+            LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
         }
         
-        LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
-        
-        return PluginContainer.getInstance();
+        return newInstance;
     }
 
     public static PluginContainer getPluginContainer(String deploymentName) throws Exception {
@@ -240,10 +244,12 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
         File pluginDeploymentPath = getDeploymentPath(plugin);
 
-        if (!pluginDeploymentPath.delete()) {
+        if (pluginDeploymentPath.exists() && !pluginDeploymentPath.delete()) {
             if (File.separatorChar == '/') {
-                throw new DeploymentException("Could not delete the RHQ plugin '" + plugin.getName());
+                // Unix
+                throw new DeploymentException("Could not delete the RHQ plugin jar " + plugin.getName());
             } else {
+                // Windows
                 // TODO: file locking, probably due to 
                 // http://management-platform.blogspot.com/2009/01/classloaders-keeping-jar-files-open.html,
                 // is not allowing deletion. Perhaps this can be fixed at some point.                

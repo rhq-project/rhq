@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.pc.inventory.getnativeprocess;
 
 import java.io.IOException;
@@ -82,7 +81,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         }
     }
 
-    @Test
+    @Test(groups = "pc.itest.native")
     public void testProcessInfoAccurateAfterProcessRestart() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
@@ -105,7 +104,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         Assert.assertNotEquals(beforePid, afterPid, "The process info should have refreshed");
     }
     
-    @Test
+    @Test(groups = "pc.itest.native")
     public void testProcessInfoAccurateWhenProcessStopped() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
@@ -129,7 +128,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         startTestProcess();
     }
     
-    @Test
+    @Test(groups = "pc.itest.native")
     public void testProcessInfoAccurateAfterProcessStarted() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         

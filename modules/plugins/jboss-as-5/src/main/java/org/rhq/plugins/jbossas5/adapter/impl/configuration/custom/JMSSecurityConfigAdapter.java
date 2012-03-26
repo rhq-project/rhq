@@ -22,6 +22,16 @@
  */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration.custom;
 
+import org.jboss.metatype.api.types.CompositeMetaType;
+import org.jboss.metatype.api.types.MapCompositeMetaType;
+import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.types.SimpleMetaType;
+import org.jboss.metatype.api.values.CompositeValue;
+import org.jboss.metatype.api.values.CompositeValueSupport;
+import org.jboss.metatype.api.values.MapCompositeValueSupport;
+import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
+
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -34,16 +44,6 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToMapCompositeValueSupportAdapter;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
-
-import org.jboss.metatype.api.types.CompositeMetaType;
-import org.jboss.metatype.api.types.MapCompositeMetaType;
-import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.types.SimpleMetaType;
-import org.jboss.metatype.api.values.CompositeValue;
-import org.jboss.metatype.api.values.CompositeValueSupport;
-import org.jboss.metatype.api.values.MapCompositeValueSupport;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
 
 /**
  * This class provides code that maps back and forth between a {@link PropertyList} of {@link PropertyMap}s and a {@link
@@ -76,54 +76,47 @@ public class JMSSecurityConfigAdapter extends AbstractPropertyListAdapter {
     }
 
     public void populateMetaValueFromProperty(PropertyList propertyList, MetaValue metaValue,
-                                              PropertyDefinitionList propertyDefinitionList)
-    {
-        MapCompositeValueSupport securityConfigCompositeValue = (MapCompositeValueSupport)metaValue;
+        PropertyDefinitionList propertyDefinitionList) {
+        MapCompositeValueSupport securityConfigCompositeValue = (MapCompositeValueSupport) metaValue;
         // First clear out all existing values from the MapCompositeValue.
-        for (String key : securityConfigCompositeValue.getMetaType().keySet())
-        {
+        for (String key : securityConfigCompositeValue.getMetaType().keySet()) {
             securityConfigCompositeValue.remove(key);
         }
         // Now re-populate it with the values from the PropertyList.
-        PropertyDefinitionMap memberPropDefMap = (PropertyDefinitionMap)propertyDefinitionList.getMemberDefinition();
-        for (Property memberProperty : propertyList.getList())
-        {
-            PropertyMap memberPropMap = (PropertyMap)memberProperty;
+        PropertyDefinitionMap memberPropDefMap = (PropertyDefinitionMap) propertyDefinitionList.getMemberDefinition();
+        for (Property memberProperty : propertyList.getList()) {
+            PropertyMap memberPropMap = (PropertyMap) memberProperty;
             String roleName = memberPropMap.getSimple("name").getStringValue();
-            CompositeValueSupport roleCompositeValue = (CompositeValueSupport)createCompositeValue(memberPropDefMap);
+            CompositeValueSupport roleCompositeValue = (CompositeValueSupport) createCompositeValue(memberPropDefMap);
             populateMetaValueFromProperty(memberPropMap, roleCompositeValue, memberPropDefMap);
             securityConfigCompositeValue.put(roleName, roleCompositeValue);
         }
     }
 
     public void populatePropertyFromMetaValue(PropertyList propertyList, MetaValue metaValue,
-                                              PropertyDefinitionList propertyDefinitionList)
-    {
-        CompositeValue compositeValue = (CompositeValue)metaValue;
+        PropertyDefinitionList propertyDefinitionList) {
+        CompositeValue compositeValue = (CompositeValue) metaValue;
         CompositeMetaType compositeMetaType = compositeValue.getMetaType();
-        PropertyDefinitionMap memberPropertyDefinitionMap = (PropertyDefinitionMap)propertyDefinitionList.getMemberDefinition();
+        PropertyDefinitionMap memberPropertyDefinitionMap = (PropertyDefinitionMap) propertyDefinitionList
+            .getMemberDefinition();
         PropertyMapToMapCompositeValueSupportAdapter mapToMapCompositeValueAdapter = new PropertyMapToMapCompositeValueSupportAdapter();
-        for (String memberName : compositeMetaType.itemSet())
-        {
+        for (String memberName : compositeMetaType.itemSet()) {
             MetaValue memberMetaValue = compositeValue.get(memberName);
-            PropertyMap memberPropertyMap = mapToMapCompositeValueAdapter.convertToProperty(memberMetaValue, memberPropertyDefinitionMap);
+            PropertyMap memberPropertyMap = mapToMapCompositeValueAdapter.convertToProperty(memberMetaValue,
+                memberPropertyDefinitionMap);
             memberPropertyMap.put(new PropertySimple("name", memberName)); // add a simple for the role name to the map
             propertyList.add(memberPropertyMap);
         }
     }
 
     // NOTE: We can't just leverage PropertyMapToCompositeValueSupportAdapter, because we have to skip the "name" map member.
-    private CompositeValue createCompositeValue(PropertyDefinitionMap propDefMap)
-    {
-        String name = (propDefMap != null) ?
-                propDefMap.getName() : "CompositeMetaType";
-        String desc = (propDefMap != null && propDefMap.getDescription() != null) ?
-                propDefMap.getDescription() : "none";
+    private CompositeValue createCompositeValue(PropertyDefinitionMap propDefMap) {
+        String name = (propDefMap != null) ? propDefMap.getName() : "CompositeMetaType";
+        String desc = (propDefMap != null && propDefMap.getDescription() != null) ? propDefMap.getDescription()
+            : "none";
         MutableCompositeMetaType compositeMetaType = new MutableCompositeMetaType(name, desc);
-        if (propDefMap != null)
-        {
-            for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions().values())
-            {
+        if (propDefMap != null) {
+            for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions()) {
                 if (mapMemberPropDef.getName().equals("name"))
                     continue;
                 String mapMemberDesc = (propDefMap.getDescription() != null) ? propDefMap.getDescription() : "none";
@@ -135,24 +128,23 @@ public class JMSSecurityConfigAdapter extends AbstractPropertyListAdapter {
     }
 
     // NOTE: We can't just leverage PropertyMapToCompositeValueSupportAdapter, because we have to skip the "name" map member.
-    private void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap)
-    {
-        CompositeValueSupport compositeValue = (CompositeValueSupport)metaValue;
-        for (String mapMemberPropName : propMap.getMap().keySet())
-        {
+    private void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue,
+        PropertyDefinitionMap propDefMap) {
+        CompositeValueSupport compositeValue = (CompositeValueSupport) metaValue;
+        for (String mapMemberPropName : propMap.getMap().keySet()) {
             if (mapMemberPropName.equals("name"))
                 continue;
             Property mapMemberProp = propMap.get(mapMemberPropName);
             PropertyDefinition mapMemberPropDef = propDefMap.get(mapMemberPropName);
             MetaType mapMemberMetaType = compositeValue.getMetaType().getType(mapMemberPropName);
-            if (mapMemberMetaType == null)
-            {
+            if (mapMemberMetaType == null) {
                 // this will occur when new map properties are added since they are not present
                 // in the original metaValue which we are using
                 mapMemberMetaType = SimpleMetaType.STRING;
             }
             PropertyAdapter adapter = PropertyAdapterFactory.getPropertyAdapter(mapMemberMetaType);
-            MetaValue mapMemberMetaValue = adapter.convertToMetaValue(mapMemberProp, mapMemberPropDef, mapMemberMetaType);
+            MetaValue mapMemberMetaValue = adapter.convertToMetaValue(mapMemberProp, mapMemberPropDef,
+                mapMemberMetaType);
             compositeValue.set(mapMemberPropName, mapMemberMetaValue);
         }
     }

@@ -93,9 +93,10 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
             record.setAttribute(FIELD_READONLY, MSG.common_val_na());
         } else {
             if (parentId != null && parentId.intValue() != 0) {
-                record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesEditLink(
-                    AlertDefinitionTemplateTypeView.VIEW_ID.getName(), this.resource.getResourceType().getId())
-                    + "/" + parentId);
+                record.setAttribute(
+                    FIELD_PARENT,
+                    LinkManager.getAdminTemplatesEditLink(AlertDefinitionTemplateTypeView.VIEW_ID.getName(),
+                        this.resource.getResourceType().getId()) + "/" + parentId);
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()
@@ -142,7 +143,6 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
             }
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

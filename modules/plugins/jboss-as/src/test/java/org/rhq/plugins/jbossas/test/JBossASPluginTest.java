@@ -50,7 +50,7 @@ import org.rhq.core.pc.util.InventoryPrinter;
 /**
  * @author Greg Hinkle
  */
-@Test(groups = "jboss-plugin")
+@Test(groups = "jboss.plugin")
 public class JBossASPluginTest {
     private Log log = LogFactory.getLog(JBossASPluginTest.class);
 

@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -31,20 +30,11 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "domain", singleThreaded = true)
+@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    public static final String RESOURCE_KEY = "DomainController";
-
-    private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
-    private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
-    private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
-    private static final String START_TIME_TRAIT_NAME = "startTime";
-
-    private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
-    private static final String START_OPERATION_NAME = "start";
+    public static final String RESOURCE_KEY = "DomainController";    
 
     @Override
     protected ResourceType getServerResourceType() {
@@ -56,61 +46,30 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
-    @Override
-    @Test
     @RunDiscovery
-    public void testAutoDiscovery() throws Exception {
+    @Test(priority = 20, groups = "discovery")
+    public void testDomainServerDiscovery() throws Exception {
         super.testAutoDiscovery();
     }
 
-    // ******************************* TRAITS ******************************* //
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testReleaseCodenameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), RELEASE_CODENAME_TRAIT_NAME);
+    // ******************************* METRICS ******************************* //
+    @Override
+    @Test(priority = 21, enabled = true)
+    public void testMetricsHaveNonNullValues() throws Exception {
+        super.testMetricsHaveNonNullValues();
     }
 
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Override
+    @Test(priority = 21, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
-        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        Assert.assertEquals(releaseVersion, System.getProperty("jboss.version"),
-                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductNameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductNameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_NAME_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductVersionTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_VERSION_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testStartTimeTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartTimeTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
+        super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
-        // Restart the server, so the rest of the tests don't fail.
-        testStartOperation();
-    }
-
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testShutdownOperation", enabled = false)
-    public void testStartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
+    @Test(priority = 22, enabled = false)
+    public void testDomainServerShutdownAndStartOperations() throws Exception {
+        super.testShutdownAndStartOperations();
     }
 
 }

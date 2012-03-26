@@ -16,8 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.integrationTests.jbossas7plugin;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -41,32 +42,33 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * Integration test for deploying datasources and installing jdbc drivers
+ *
  * @author Heiko W. Rupp
  */
 @Test(enabled = UploadAndDeployTest.isEnabled)
 public class DatasourceDeployTest extends AbstractIntegrationTest {
+
     private static final String POSTGRES = "postgres";
 
-//    private final Log log = LogFactory.getLog(DatasourceDeployTest.class);
-
-    private String DRIVER = "postgresql-9.0-801.jdbc4.jar";
+    private File DRIVER_FILE = new File(MAVEN_REPO_LOCAL,
+            "postgresql/postgresql/9.1-901.jdbc4/postgresql-9.1-901.jdbc4.jar");
+    private String DRIVER_FILENAME = DRIVER_FILE.getName();
 
     public void uploadOnly() throws Exception {
-
-        String sha1 = uploadToAs(DRIVER);
+        String sha1 = uploadToAs(DRIVER_FILE.getPath());
         assert sha1!=null;
-
     }
 
     public void deployToDomain() throws Exception {
-        String sha = uploadToAs(DRIVER);
-        Operation addDeployment = addDeployment(DRIVER,sha);
+        String sha = uploadToAs(DRIVER_FILE.getPath());
+        Operation addDeployment = addDeployment(DRIVER_FILENAME, sha);
 
         ASConnection conn = getASConnection();
 
         Result res = conn.execute(addDeployment);
         assert res != null;
-        assert res.isSuccess() : " Was not able to add the uploaded file " + DRIVER + " to /deployment";
+        assert res.isSuccess() : " Was not able to add the uploaded file " + DRIVER_FILENAME + " to /deployment: "
+                + res.getFailureDescription();
 
         Operation op = new ReadChildrenNames(null,"deployment");
         res = conn.execute(op);
@@ -74,7 +76,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         assert res != null;
         assert res.isSuccess();
         List<String> result = (List<String>) res.getResult();
-        assert result.contains(DRIVER): "Driver not found in deployments";
+        assert result.contains(DRIVER_FILENAME): "Driver " + DRIVER_FILENAME + " not found in deployments";
 
         cleanupDomainDeployment(conn);
     }
@@ -85,7 +87,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
      * about as7 is still correct.
      */
     public void AS7DomainAssumptions() {
-
         ASConnection connection = getASConnection();
         Operation op = new ReadResource("host","master");
         Result res = connection.execute(op);
@@ -105,17 +106,14 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         assert result.containsKey("group");
         assert result.get("group").equals("main-server-group");
 
-        Address defautProfile = new Address("profile","default");
+        Address defaultProfile = new Address("profile","default");
         op = new ReadResource(address);
         res = connection.execute(op);
         assert res!=null;
         assert res.isSuccess() : "Did not find a 'default' profile";
-
     }
 
-
     public void deployDriverToServerGroup() throws Exception {
-
         ASConnection conn = getASConnection();
 
         uploadDriverToDomain(conn);
@@ -139,14 +137,13 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         boolean found = false;
         for (Map<String,Object> map : list) {
             assert map.containsKey("driver-name");
-            if (!map.get("driver-name").equals(DRIVER))
+            if (!map.get("driver-name").equals(DRIVER_FILENAME))
                 continue;
             found=true;
             assert map.containsKey("deployment-name");
-            assert map.get("deployment-name").equals(DRIVER);
+            assert map.get("deployment-name").equals(DRIVER_FILENAME);
         }
         assert found : "Did not find the driver";
-
 
         // Now clean up
         cleanupSGDeployment(conn,sgAddress);
@@ -154,7 +151,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
     }
 
     public void createDatasource() throws Exception {
-
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
         Result res;
@@ -169,16 +165,16 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         // clean up
 
         cleanupDatasource(conn,dsAddress);
         cleanupSGDeployment(conn,sgAddress);
         cleanupDomainDeployment(conn);
-
     }
 
     public void createXADatasource() throws Exception {
-
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
         Result res;
@@ -193,13 +189,14 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         // clean up
 
         cleanupDatasource(conn,dsAddress);
         cleanupSGDeployment(conn,sgAddress);
         cleanupDomainDeployment(conn);
     }
-
 
     public void updateDatasource() throws Exception {
         ASConnection conn = getASConnection();
@@ -216,6 +213,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         op = new WriteAttribute(dsAddress,"max-pool-size",20);
         res = conn.execute(op);
         assert res != null;
@@ -224,7 +223,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDatasource(conn,dsAddress);
         cleanupSGDeployment(conn,sgAddress);
         cleanupDomainDeployment(conn);
-
     }
 
     public void deployDatasourceViaOperation() throws Exception {
@@ -242,10 +240,10 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("name",name));
-        parameters.put(new PropertySimple("driver-name",DRIVER));
+        parameters.put(new PropertySimple("driver-name",DRIVER_FILENAME));
         parameters.put(new PropertySimple("pool-name","pgPool"));
         parameters.put(new PropertySimple("connection-url","jdbc:postgresql:foo@localhost:5432"));
-        parameters.put(new PropertySimple("jndi-name","postgresDS"));
+        parameters.put(new PropertySimple("jndi-name","java:jboss/postgresDS"));
         OperationResult operationResult = dc.invokeOperation("addDatasource",parameters);
         assert operationResult != null;
         assert operationResult.getSimpleResult()!=null;
@@ -256,24 +254,21 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         dsAddress.add("subsystem","datasources");
         dsAddress.add("data-source",name);
 
-
         System.out.println("Deployed new datasource at " + dsAddress.toString());
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         cleanupDatasource(conn, dsAddress);
         cleanupSGDeployment(conn, sgAddress);
         cleanupDomainDeployment(conn);
-
-
     }
 
     public void deployXADatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
-        Result res;
         Address sgAddress = addDriverToMainServerGroup(conn);
-        Operation op;
 
         // Now create the data source in the profile, that main-server-group is using.
 
@@ -285,11 +280,11 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("name",name));
-        parameters.put(new PropertySimple("driver-name",DRIVER));
+        parameters.put(new PropertySimple("driver-name",DRIVER_FILENAME));
         parameters.put(new PropertySimple("pool-name","pgPool"));
         parameters.put(new PropertySimple("connection-url","jdbc:postgresql:foo@localhost:5432"));
-        parameters.put(new PropertySimple("jndi-name","postgresDS"));
-        parameters.put(new PropertySimple("xa-data-source-class","org.postgres.XA.driver"));
+        parameters.put(new PropertySimple("jndi-name","java:jboss/postgresDS"));
+        parameters.put(new PropertySimple("xa-datasource-class","org.postgres.XA.driver"));
         OperationResult operationResult = dc.invokeOperation("addXADatasource",parameters);
         assert operationResult != null;
         assert operationResult.getSimpleResult()!=null ;
@@ -300,63 +295,31 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         dsAddress.add("subsystem","datasources");
         dsAddress.add("xa-data-source",name);
 
-
         System.out.println("Deployed new xa-datasource at " + dsAddress.toString());
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         cleanupDatasource(conn, dsAddress);
         cleanupSGDeployment(conn, sgAddress);
         cleanupDomainDeployment(conn);
-
-
     }
 
-    public void flushDSviaOperation() throws Exception {
-        // This test executes the "fall through" operation in the DatasourceComponent
-
-        String theOperation = "flush-all-connection-in-pool";
-
-        ASConnection conn = getASConnection();
-        uploadDriverToDomain(conn);
-        Address sgAddress = addDriverToMainServerGroup(conn);
-
-        // Now create the data source in the profile, that main-server-group is using.
-        Address dsAddress = createDatasource(conn, false);
-
-        System.out.println("Deployed new datasource at " + dsAddress.toString());
-
-        Thread.sleep(1000L); // give some time to settle
-
-        // Now invoke the operation
-        DatasourceComponent dc = new DatasourceComponent();
-        dc.setPath("profile=default,subsystem=datasources,data-source=" + POSTGRES);
-        dc.setConnection(conn);
-
-        Configuration parameters = new Configuration();
-        // Operation takes no parameters
-        try {
-            OperationResult operationResult = dc.invokeOperation(theOperation,parameters);
-            assert operationResult != null;
-            assert operationResult.getSimpleResult()!=null : "Simple result was null, result was " + operationResult;
-            assert operationResult.getErrorMessage()==null;
-        } finally {
-
-            cleanupDatasource(conn,dsAddress);
-            cleanupSGDeployment(conn,sgAddress);
-            cleanupDomainDeployment(conn);
-        }
-
+    private void checkForResourceAt(Address address) {
+        Operation op = new ReadResource(address);
+        Result res = getASConnection().execute(op);
+        assert res.isSuccess() : "Read-Resource(" + address.toString() +") failed: " + res.getFailureDescription();
     }
 
     private void cleanupDomainDeployment(ASConnection conn) {
         Operation op;
         Result res;
-        Address deployment = new Address("deployment",DRIVER);
+        Address deployment = new Address("deployment", DRIVER_FILENAME);
         op = new Remove(deployment);
         res = conn.execute(op);
         assert res != null;
-        assert res.isSuccess() : "Could not remove driver from /deployment";
+        assert res.isSuccess() : "Could not remove driver from /deployment: " + res.getFailureDescription();
     }
 
     private void cleanupSGDeployment(ASConnection conn, Address sgAddress) {
@@ -364,7 +327,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         op = new Remove(sgAddress);
         res = conn.execute(op);
         assert res != null;
-        assert res.isSuccess() : "Could not remove driver from server group @ " + sgAddress;
+        assert res.isSuccess() : "Could not remove driver from server group @ " + sgAddress + ": "
+                + res.getFailureDescription();
     }
 
     private void cleanupDatasource(ASConnection conn, Address dsAddress) {
@@ -372,7 +336,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         op = new Remove(dsAddress);
         res = conn.execute(op);
         assert res != null;
-        assert res.isSuccess() : "Could not remove datasource from profile @ " + dsAddress;
+        assert res.isSuccess() : "Could not remove datasource from profile @ " + dsAddress + ": "
+                + res.getFailureDescription();
     }
 
     private Address createDatasource(ASConnection conn, boolean isXa) {
@@ -386,12 +351,12 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
             dsAddress.add("data-source", POSTGRES);
 
         op = new Operation("add",dsAddress);
-        op.addAdditionalProperty("driver-name",DRIVER);
-        op.addAdditionalProperty("jndi-name","postgresDS");
+        op.addAdditionalProperty("driver-name",DRIVER_FILENAME);
+        op.addAdditionalProperty("jndi-name","java:jboss/postgresDS");
         op.addAdditionalProperty("pool-name","pgPool");
         op.addAdditionalProperty("connection-url","jdbc:postgresql://127.0.0.1:5432/rhqdev");
         if (isXa) {
-            op.addAdditionalProperty("xa-data-source-class","org.postgresql.xa.PGXADataSource");
+            op.addAdditionalProperty("xa-datasource-class","org.postgresql.xa.PGXADataSource");
             Map<String,String> map = new HashMap<String, String>(1); // TODO AS7-1209
             map.put("key","value");
             op.addAdditionalProperty("xa-data-source-properties",map);
@@ -407,7 +372,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         Result res;// then add the driver to the server-group we want to have the DS on
         Address sgAddress = new Address();
         sgAddress.add("server-group", "main-server-group");
-        sgAddress.add("deployment", DRIVER);
+        sgAddress.add("deployment", DRIVER_FILENAME);
 
         Operation op = new Operation("add",sgAddress);
         op.addAdditionalProperty("enabled",true);
@@ -419,11 +384,12 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
     private void uploadDriverToDomain(ASConnection conn) throws IOException {
         // first upload driver and add to /deployment
-        String sha = uploadToAs(DRIVER);
-        Operation addDeployment = addDeployment(DRIVER,sha);
+        String sha = uploadToAs(DRIVER_FILE.getPath());
+        Operation addDeployment = addDeployment(DRIVER_FILENAME, sha);
         Result res = conn.execute(addDeployment);
         assert res != null;
-        assert res.isSuccess() : " Was not able to add the uploaded file " + DRIVER + " to /deployment";
+        assert res.isSuccess() : " Was not able to add the uploaded file " + DRIVER_FILE + " to /deployment: "
+                + res.getFailureDescription();
     }
 
 }

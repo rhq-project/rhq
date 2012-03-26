@@ -212,8 +212,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add availabilities
                 for (long timestamp = 0L; timestamp < 2000L; timestamp += 2L) {
                     Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1L);
-                    assert newAvail.getStartTime().getTime() == timestamp : "bad avail persisted:" + newAvail;
-                    assert newAvail.getEndTime().getTime() == (timestamp + 1L) : "bad avail persisted:" + newAvail;
+                    assert newAvail.getStartTime() == timestamp : "bad avail persisted:" + newAvail;
+                    assert newAvail.getEndTime() == (timestamp + 1L) : "bad avail persisted:" + newAvail;
                     assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
                     if (timestamp % 50L == 0) {
                         em.flush();
@@ -262,9 +262,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             Set<AlertConditionLog> clogs = ad.getConditions().iterator().next().getConditionLogs();
             assert clogs.size() == 0 : "didn't purge condition logs: " + clogs.size();
 
-            // check availabilities
+            // check availabilities, remember, a new resource gets one initial avail record 
             List<Availability> avails = res.getAvailability();
-            assert avails.size() == 0 : "didn't purge availabilities";
+            assert avails.size() == 1 : "didn't purge availabilities";
 
             // check events
             EventSource es = res.getEventSources().iterator().next();
@@ -425,9 +425,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     private Availability createNewAvailability(EntityManager em, Resource res, long start, long end) {
-        Availability a = new Availability(res, new Date(start), AvailabilityType.UP);
+        Availability a = new Availability(res, start, AvailabilityType.UP);
         if (end > 0) {
-            a.setEndTime(new Date(end));
+            a.setEndTime(end);
         }
         em.persist(a);
         return a;

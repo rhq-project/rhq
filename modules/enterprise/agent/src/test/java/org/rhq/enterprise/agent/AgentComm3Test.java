@@ -50,7 +50,7 @@ import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryE
  *
  * @author John Mazzitelli
  */
-@Test(groups = "agent-comm")
+@Test(groups = "agent.comm")
 public class AgentComm3Test extends AgentCommTestBase {
     private static final boolean ENABLE_TESTS = true;
 

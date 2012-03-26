@@ -89,7 +89,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             // somewhere else.
         }
 
-//        entityManager.flush();
+        //        entityManager.flush();
 
         /*
          * Now update / delete contained groups We need to be careful here, as groups are present in PropertyDefinition
@@ -119,7 +119,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             entityManager.remove(group);
         }
 
-//        entityManager.flush();
+        //        entityManager.flush();
 
         // update existing groups that stay
         for (PropertyGroupDefinition group : toUpdate) {
@@ -139,11 +139,11 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
 
             // delete outdated properties of this group
-            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingDefinition
-                .getPropertiesInGroup(groupName));
+            removeNoLongerUsedProperties(newDefinition, existingDefinition,
+                existingDefinition.getPropertiesInGroup(groupName));
         }
 
-//        entityManager.flush();
+        //        entityManager.flush();
 
         // persist new groups
         for (PropertyGroupDefinition group : toPersist) {
@@ -323,32 +323,47 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         if (existingProperty instanceof PropertyDefinitionMap) {
             if (newProperty instanceof PropertyDefinitionMap) {
-                // remove outdated maps
+
+                // alter existingPropDefs to reflect newPropDefs                
                 Map<String, PropertyDefinition> existingPropDefs = ((PropertyDefinitionMap) existingProperty)
-                    .getPropertyDefinitions();
-                Set<String> existingKeys = existingPropDefs.keySet();
-                Set<String> newKeys = ((PropertyDefinitionMap) newProperty).getPropertyDefinitions().keySet();
-                for (String key : existingKeys) {
-                    if (!newKeys.contains(key)) {
-                        entityManager.remove(existingPropDefs.get(key));
-                        existingPropDefs.remove(key);
+                    .getMap();
+
+                Map<String, PropertyDefinition> newPropDefs = ((PropertyDefinitionMap) newProperty)
+                    .getMap();
+                Set<String> newKeys = newPropDefs.keySet();
+
+                // remove obsolete propDefs
+                List<String> doomedKeys = new ArrayList<String>();
+                for (String existingKey : existingPropDefs.keySet()) {
+                    if (!newKeys.contains(existingKey)) {
+                        doomedKeys.add(existingKey);
+                    }
+                }
+                for (String doomedKey : doomedKeys) {
+                    PropertyDefinition doomed = existingPropDefs.get(doomedKey);
+                    existingPropDefs.remove(doomedKey);
+                    entityManager.remove(entityManager.getReference(PropertyDefinition.class, doomed.getId()));
+                }
+
+                int order = 0;
+                for (String key : newKeys) {
+                    PropertyDefinition existingPropDef = existingPropDefs.get(key);
+                    PropertyDefinition newPropDef = newPropDefs.get(key);
+                    if (null == existingPropDef) {
+                        newPropDef.setOrder(order++);
+                        newPropDef.setParentPropertyMapDefinition((PropertyDefinitionMap) existingProperty);
+                        entityManager.persist(newPropDef);
+                        existingPropDefs.put(key, newPropDef);
+                    } else {
+                        existingPropDef.setOrder(order++);
+                        updatePropertyDefinition(existingPropDef, newPropDef);
                     }
                 }
 
-                // store update new ones
-                for (PropertyDefinition newChild : ((PropertyDefinitionMap) newProperty).getPropertyDefinitions()
-                    .values()) {
-                    PropertyDefinition existingChild = ((PropertyDefinitionMap) existingProperty).get(newChild
-                        .getName());
-                    if (existingChild != null) {
-                        updatePropertyDefinition(existingChild, newChild);
-                    } else {
-                        ((PropertyDefinitionMap) existingProperty).put(newChild);
-                        entityManager.persist(newChild);
-                    }
-                }
-            } else // different type
-            {
+                entityManager.merge(existingProperty);
+
+            } else { // different type
+
                 replaceProperty(existingProperty, newProperty);
             }
         } else if (existingProperty instanceof PropertyDefinitionList) {
@@ -401,7 +416,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <constraint> [0..*]
 
-//                entityManager.flush();
+                //                entityManager.flush();
                 Set<Constraint> exCon = existingPDS.getConstraints();
                 if (exCon.size() > 0) {
                     for (Constraint con : exCon) {
@@ -443,7 +458,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         entityManager.remove(existingProperty);
         entityManager.merge(configDef);
-//        entityManager.flush();
+        //        entityManager.flush();
     }
 
     /**
@@ -457,8 +472,9 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
     private void replaceListProperty(PropertyDefinitionList exList, PropertyDefinitionList newList) {
         PropertyDefinition doomedMemberDef = null;
 
-        if (newList.getMemberDefinition()==null) {
-            log.error("\n\n!! Member definition for new list property [" + newList.getName() + "] is null - check and fix the plugin descriptor\n");
+        if (newList.getMemberDefinition() == null) {
+            log.error("\n\n!! Member definition for new list property [" + newList.getName()
+                + "] is null - check and fix the plugin descriptor\n");
             return;
         }
 
@@ -466,7 +482,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         // we need to add it now
         // only remove the existing member if it is a different entity
         PropertyDefinition exListMemberDefinition = exList.getMemberDefinition();
-        if (exListMemberDefinition !=null && exListMemberDefinition.getId() != newList.getMemberDefinition().getId()) {
+        if (exListMemberDefinition != null && exListMemberDefinition.getId() != newList.getMemberDefinition().getId()) {
             doomedMemberDef = exListMemberDefinition;
         }
 
@@ -486,7 +502,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.merge(exList);
-//        entityManager.flush();
+        //        entityManager.flush();
     }
 
     /**

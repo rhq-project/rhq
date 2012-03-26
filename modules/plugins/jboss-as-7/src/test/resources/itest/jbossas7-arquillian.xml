@@ -6,11 +6,13 @@
 
   <!-- JBoss AS 7 -->
   <container qualifier="jboss-as" default="true">
+    <!-- NOTE: Default values for the system properties referenced below are defined in this module's pom and can be
+               overridden via the mvn command line. -->
     <configuration>
-      <property name="jbossHome">${jboss.home}</property>
-      <!-- Listen on 127.0.0.201, rather than the default of 127.0.0.1 -->
-      <property name="javaVmArguments">-Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=127.0.0.201 -Djboss.bind.address=127.0.0.201 -Djboss.bind.address.unsecure=127.0.0.201</property>
-      <property name="managementAddress">127.0.0.201</property>
+      <property name="jbossHome">${jboss7.home}</property>
+      <property name="javaVmArguments">-Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=${jboss.standalone.bindAddress} -Djboss.bind.address=${jboss.standalone.bindAddress} -Djboss.bind.address.unsecure=${jboss.standalone.bindAddress} -Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</property>
+      <property name="managementAddress">${jboss.standalone.bindAddress}</property>
+      <property name="managementPort">${jboss.standalone.nativeManagementPort}</property>
     </configuration>
   </container>
 

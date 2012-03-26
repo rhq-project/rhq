@@ -214,7 +214,7 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
             }
 
             System.out.println("Map Property [" + propDef.getName() + "]");
-            for (PropertyDefinition p : ((PropertyDefinitionMap) propDef).getPropertyDefinitions().values()) {
+            for (PropertyDefinition p : ((PropertyDefinitionMap) propDef).getMap().values()) {
                 prettyPrintPropertyDefinition(p, indent + 1);
             }
         } else if (propDef instanceof PropertyDefinitionSimple) {

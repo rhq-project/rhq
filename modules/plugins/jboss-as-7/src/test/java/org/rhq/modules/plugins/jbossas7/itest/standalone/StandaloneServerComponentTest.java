@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.util.FileUtils;
@@ -32,23 +33,14 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "standalone", singleThreaded = true)
+@Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
 public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
     // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss.home"));
-
-    private static final String SERVER_STATE_TRAIT_NAME = "server-state";
-    private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
-    private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
-    private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
-    private static final String START_TIME_TRAIT_NAME = "startTime";
+    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home"));
 
     private static final String RELOAD_OPERATION_NAME = "reload";
-    private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
-    private static final String START_OPERATION_NAME = "start";
     private static final String RESTART_OPERATION_NAME = "restart";
 
     @Override
@@ -61,93 +53,46 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
-    @Override
-    @Test
+    @Test(priority = 10, groups = "discovery")
     @RunDiscovery
-    public void testAutoDiscovery() throws Exception {
+    public void testStandaloneServerDiscovery() throws Exception {
         super.testAutoDiscovery();
     }
 
-    // ******************************* TRAITS ******************************* //
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testServerStateTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testServerStateTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), SERVER_STATE_TRAIT_NAME);
+    // ******************************* METRICS ******************************* //
+    @Override
+    @Test(priority = 11, enabled = true)
+    public void testMetricsHaveNonNullValues() throws Exception {
+        super.testMetricsHaveNonNullValues();
     }
 
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testReleaseCodenameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), RELEASE_CODENAME_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Override
+    @Test(priority = 11, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
-        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        String eap6Version = System.getProperty( "eap6.version" );
-        String expectedReleaseVersion;
-        if (eap6Version != null) {
-            // TODO: Use a static final Map for this.
-            if (eap6Version.equals("6.0.0.Beta1")) {
-                expectedReleaseVersion = "7.1.0.Final-redhat-1";
-            } else {
-                expectedReleaseVersion = "TODO";
-            }
-        } else {
-            expectedReleaseVersion = System.getProperty("jboss.version");
-        }
-        Assert.assertEquals(releaseVersion, expectedReleaseVersion,
-                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductNameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductNameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_NAME_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductVersionTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_VERSION_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testStartTimeTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartTimeTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
+        super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable once fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
+    @Test(priority = 12, enabled = false)
     public void testReloadOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReloadOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
-        // Restart the server, so the rest of the tests don't fail.
-        testStartOperation();
-    }
-
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testShutdownOperation", enabled = false)
-    public void testStartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
+    @Test(priority = 13, enabled = false)
+    public void testStandaloneServerShutdownAndStartOperations() throws Exception {
+        super.testShutdownAndStartOperations();
     }
 
     // TODO: Re-enable once fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
+    @Test(priority = 13, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testRestartOperation...");
+        AvailabilityType avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
     }
 
 }

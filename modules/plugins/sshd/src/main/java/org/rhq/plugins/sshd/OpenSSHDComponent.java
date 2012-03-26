@@ -143,8 +143,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         }
     }
 
-    protected Configuration getConfig(ConfigurationDefinition resourceConfigurationDefinition,
-            String sshdPath, Augeas augeas) throws Exception {
+    protected Configuration getConfig(ConfigurationDefinition resourceConfigurationDefinition, String sshdPath,
+        Augeas augeas) throws Exception {
         List<String> matches = augeas.match(sshdPath + "*");
         if (matches.size() == 0) {
             throw new Exception("Unable to load sshd_config data from augeas");
@@ -173,7 +173,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 PropertyDefinitionList listDef = ((PropertyDefinitionList) p);
                 PropertyDefinitionMap mapDef = ((PropertyDefinitionMap) listDef.getMemberDefinition());
                 PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions()
-                    .values().iterator().next();
+                    .get(0);
                 String name = simpleDef.getName();
 
                 List<String> allValues = new ArrayList<String>();
@@ -207,8 +207,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
                 report.addData(new MeasurementDataNumeric(request, (double) val));
             } else if (request.getName().startsWith("Process.")) {
-                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring(
-                    "Process.".length()));
+                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo,
+                    request.getName().substring("Process.".length()));
                 report.addData(new MeasurementDataNumeric(request, value));
             }
         }

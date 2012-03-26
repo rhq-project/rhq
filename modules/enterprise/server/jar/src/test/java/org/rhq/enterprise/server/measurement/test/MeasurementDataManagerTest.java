@@ -31,7 +31,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
@@ -108,10 +107,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             for (MeasurementSchedule sched : resource1.getSchedules()) {
                 em.remove(sched);
             }
-            for (Availability avail : resource1.getAvailability()) {
-                em.remove(avail);
-            }
-            em.remove(resource1);
+            ResourceTreeHelper.deleteResource(em, resource1);
 
             resource2 = em.merge(resource2);
             for (MeasurementSchedule sched : resource2.getSchedules()) {

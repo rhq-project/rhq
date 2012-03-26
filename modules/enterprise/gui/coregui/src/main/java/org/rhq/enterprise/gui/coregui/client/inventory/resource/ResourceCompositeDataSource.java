@@ -173,7 +173,6 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
     @Override
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.setPageControl(getPageControl(request));
 
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));

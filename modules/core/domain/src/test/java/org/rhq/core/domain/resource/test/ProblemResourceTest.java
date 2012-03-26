@@ -37,10 +37,10 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
-import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -136,7 +136,7 @@ public class ProblemResourceTest extends AbstractEJB3Test {
 
             ResourceAvailability resourceAvail = new ResourceAvailability(platform, AvailabilityType.DOWN);
             entityManager.persist(resourceAvail);
-            Availability avail = new Availability(platform, null, AvailabilityType.DOWN);
+            Availability avail = new Availability(platform, AvailabilityType.DOWN);
             entityManager.persist(avail);
 
             //commitAndBegin();

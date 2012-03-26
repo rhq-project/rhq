@@ -52,16 +52,16 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 /**
  * Class that deals with getting data about resources
@@ -81,20 +81,18 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     AlertManagerLocal alertManager;
 
     @Override
-    public Response getResource(int id, @Context Request request, @Context HttpHeaders headers,
-                         @Context UriInfo uriInfo) {
+    public Response getResource(int id, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         Resource res;
         res = fetchResource(id);
 
         long mtime = res.getMtime();
-        EntityTag eTag = new EntityTag(Long.toOctalString(res.hashCode()+ mtime)); // factor in mtime in etag
-        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(mtime),eTag);
+        EntityTag eTag = new EntityTag(Long.toOctalString(res.hashCode() + mtime)); // factor in mtime in etag
+        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(mtime), eTag);
 
-        if (builder!=null) {
+        if (builder != null) {
             return builder.build();
         }
-
 
         ResourceWithType rwt = fillRWT(res, uriInfo);
 
@@ -103,24 +101,22 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder = Response.ok(renderTemplate("resourceWithType", rwt), mediaType);
-        }
-        else {
+        } else {
             builder = Response.ok(rwt);
         }
 
         return builder.build();
     }
 
-
     @Override
-    public Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
-                         @Context UriInfo uriInfo) {
+    public Response getPlatforms(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         PageControl pc = new PageControl();
-        List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
+        List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
+            InventoryStatus.COMMITTED, pc);
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
-        for (Resource r: ret) {
-            putToCache(r.getId(),Resource.class,r);
+        for (Resource r : ret) {
+            putToCache(r.getId(), Resource.class, r);
             ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
         }
@@ -130,9 +126,9 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
-        }
-        else {
-            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+        } else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
+            };
             builder = Response.ok(list);
         }
 
@@ -160,16 +156,17 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     ResourceWithChildren getHierarchy(Resource baseResource) {
-        ResourceWithChildren rwc = new ResourceWithChildren(""+baseResource.getId(),baseResource.getName());
+        ResourceWithChildren rwc = new ResourceWithChildren("" + baseResource.getId(), baseResource.getName());
 
         PageControl pc = new PageControl();
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,baseResource,InventoryStatus.COMMITTED,pc);
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller, baseResource,
+            InventoryStatus.COMMITTED, pc);
         if (!ret.isEmpty()) {
             List<ResourceWithChildren> resList = new ArrayList<ResourceWithChildren>(ret.size());
             for (Resource res : ret) {
                 ResourceWithChildren child = getHierarchy(res);
                 resList.add(child);
-                putToCache(res.getId(),Resource.class,res);
+                putToCache(res.getId(), Resource.class, res);
             }
             if (!resList.isEmpty())
                 rwc.setChildren(resList);
@@ -182,75 +179,69 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
         AvailabilityRest availabilityRest;
-        if (avail.getAvailabilityType()!=null)
-            availabilityRest = new AvailabilityRest(avail.getAvailabilityType(),avail.getStartTime().getTime(),
-                avail.getResource().getId());
+        if (avail.getAvailabilityType() != null)
+            availabilityRest = new AvailabilityRest(avail.getAvailabilityType(), avail.getStartTime(), avail
+                .getResource().getId());
         else
-            availabilityRest = new AvailabilityRest(avail.getStartTime().getTime(),resourceId);
+            availabilityRest = new AvailabilityRest(avail.getStartTime(), resourceId);
         return availabilityRest;
     }
 
     @Override
     public void reportAvailability(int resourceId, AvailabilityRest avail) {
-        if (avail.getResourceId()!=resourceId)
+        if (avail.getResourceId() != resourceId)
             throw new IllegalArgumentException("Resource Ids do not match");
 
         Resource resource = obtainResource(resourceId);
 
         AvailabilityType at;
-            at = AvailabilityType.valueOf(avail.getType());
+        at = AvailabilityType.valueOf(avail.getType());
 
-        AvailabilityReport report = new AvailabilityReport(true,resource.getAgent().getName());
-        Availability availability = new Availability(resource, new Date(avail.getSince()),at);
+        AvailabilityReport report = new AvailabilityReport(true, resource.getAgent().getName());
+        Availability availability = new Availability(resource, avail.getSince(), at);
         report.addAvailability(availability);
 
         availMgr.mergeAvailabilityReport(report);
     }
 
-
-    public Response getSchedules(int resourceId,
-                                             String scheduleType,
-                                             boolean enabledOnly,
-                                             String name,
-                                          @Context Request request,
-                                          @Context HttpHeaders headers,
-                                          @Context UriInfo uriInfo) {
+    public Response getSchedules(int resourceId, String scheduleType, boolean enabledOnly, String name,
+        @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         // allow metric as input
         if (scheduleType.equals("metric"))
-            scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
+            scheduleType = DataType.MEASUREMENT.toString().toLowerCase();
 
         Resource res = resMgr.getResource(caller, resourceId); // Don't fetch(), as this would yield a LazyLoadException
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
         for (MeasurementSchedule schedule : schedules) {
-            putToCache(schedule.getId(),MeasurementSchedule.class,schedule);
+            putToCache(schedule.getId(), MeasurementSchedule.class, schedule);
             MeasurementDefinition definition = schedule.getDefinition();
 
             // user can opt to e.g. only get "measurement" or "trait" metrics
 
-            if ("all".equals(scheduleType) ||
-                    scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase()) ) {
-                if (!enabledOnly || (enabledOnly && schedule.isEnabled() )) {
-                    if (name==null || (name!=null && name.equals(definition.getName()))) {
-                        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                                definition.getDataType().toString());
+            if ("all".equals(scheduleType)
+                || scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase())) {
+                if (!enabledOnly || (enabledOnly && schedule.isEnabled())) {
+                    if (name == null || (name != null && name.equals(definition.getName()))) {
+                        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(),
+                            definition.getDisplayName(), schedule.isEnabled(), schedule.getInterval(), definition
+                                .getUnits().toString(), definition.getDataType().toString());
                         UriBuilder uriBuilder;
                         URI uri;
-                        if (definition.getDataType()== DataType.MEASUREMENT) {
+                        if (definition.getDataType() == DataType.MEASUREMENT) {
                             uriBuilder = uriInfo.getBaseUriBuilder();
                             uriBuilder.path("/metric/data/{id}");
                             uri = uriBuilder.build(schedule.getId());
-                            Link metricLink = new Link("metric",uri.toString());
+                            Link metricLink = new Link("metric", uri.toString());
                             ms.addLink(metricLink);
                         }
                         // create link to the resource
                         uriBuilder = uriInfo.getBaseUriBuilder();
                         uriBuilder.path("resource/" + schedule.getResource().getId());
                         uri = uriBuilder.build();
-                        Link link = new Link("resource",uri.toString());
+                        Link link = new Link("resource", uri.toString());
                         ms.addLink(link);
 
                         ret.add(ms);
@@ -265,24 +256,24 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder = Response.ok(renderTemplate("listMetricSchedule", ret), mediaType);
-        }
-        else {
-            GenericEntity<List<MetricSchedule>> list = new GenericEntity<List<MetricSchedule>>(ret){};
-            builder = Response.ok(list,mediaType);
+        } else {
+            GenericEntity<List<MetricSchedule>> list = new GenericEntity<List<MetricSchedule>>(ret) {
+            };
+            builder = Response.ok(list, mediaType);
         }
 
         return builder.build();
     }
 
     @Override
-    public Response getChildren(int id, @Context Request request, @Context HttpHeaders headers,
-                         @Context UriInfo uriInfo) {
+    public Response getChildren(int id, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
         PageControl pc = new PageControl();
         Resource parent;
         parent = fetchResource(id);
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller, parent, InventoryStatus.COMMITTED,
+            pc);
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
-        for (Resource r: ret) {
+        for (Resource r : ret) {
             ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
         }
@@ -293,9 +284,9 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
-        }
-        else {
-            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+        } else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
+            };
             builder = Response.ok(list);
         }
 
@@ -304,23 +295,22 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     private Resource obtainResource(int resourceId) {
-        Resource resource = getFromCache(resourceId,Resource.class);
-        if (resource==null) {
-            resource = resMgr.getResource(caller,resourceId);
-            if (resource!=null)
-                putToCache(resourceId,Resource.class,resource);
+        Resource resource = getFromCache(resourceId, Resource.class);
+        if (resource == null) {
+            resource = resMgr.getResource(caller, resourceId);
+            if (resource != null)
+                putToCache(resourceId, Resource.class, resource);
         }
         return resource;
     }
-
 
     @Override
     public List<Link> getAlertsForResource(int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
-        List<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
+        List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
         List<Link> links = new ArrayList<Link>(alerts.size());
-        for (Alert al: alerts) {
+        for (Alert al : alerts) {
             Link link = new Link();
             link.setRel("alert");
             link.setHref("/alert/" + al.getId());
@@ -331,11 +321,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
     private Resource fetchResource(int resourceId) {
         Resource res;
-        res = getFromCache(resourceId,Resource.class);
-        if (res==null) {
+        res = getFromCache(resourceId, Resource.class);
+        if (res == null) {
             res = resMgr.getResource(caller, resourceId);
-            if (res!=null)
-                putToCache(resourceId, Resource.class,res);
+            if (res != null)
+                putToCache(resourceId, Resource.class, res);
             else
                 throw new StuffNotFoundException("Resource with id " + resourceId);
         }

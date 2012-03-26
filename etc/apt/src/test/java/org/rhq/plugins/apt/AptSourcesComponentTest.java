@@ -34,7 +34,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 /**
  * @author Jason Dobies
  */
-@Test(groups = "apt-plugin")
+@Test(groups = "apt.plugin")
 public class AptSourcesComponentTest {
 
     private AptSourcesComponent component = new AptSourcesComponent();

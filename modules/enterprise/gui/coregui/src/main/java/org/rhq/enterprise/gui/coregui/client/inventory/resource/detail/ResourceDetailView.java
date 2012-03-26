@@ -64,6 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -434,8 +435,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.monitoringTab, this.monitorAvail, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new FullHTMLPane(monitorAvail.extendLocatorId("View"),
-                    "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId());
+                return new ResourceAvailabilityView(monitoringTab.extendLocatorId("AvailView"), resourceComposite);
             }
         });
 

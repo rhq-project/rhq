@@ -43,7 +43,7 @@ public class Result {
     @JsonIgnore
     private Throwable rhqThrowable;
 
-    /** Record throwsables during low level processing */
+    /** Record throwables during low level processing */
     @JsonIgnore
     private Map<String,Object> throwable;
 
@@ -70,6 +70,19 @@ public class Result {
         this.outcome = outcome;
         if (outcome.equalsIgnoreCase(SUCCESS))
             success = true;
+    }
+
+    @JsonIgnore
+    public boolean isReloadRequired() {
+        if (responseHeaders==null)
+            return false;
+        if (responseHeaders instanceof Map) {
+            Map<String,Object> map = (Map<String, Object>) responseHeaders;
+            if (map.containsKey("process-state") && map.get("process-state").equals("reload-required")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isSuccess() {

@@ -71,7 +71,7 @@ public class PackageBits implements Serializable {
      *  typically be replaced with the actual streamed content bits...<br>
      *  Note: This is a String and not a byte[] because gwt can't handle String.getBytes(). 
      */
-    public static final String EMPTY_BLOB = "EmptyBlob";
+    public static final String EMPTY_BLOB = " ";
 
     private static final long serialVersionUID = 1L;
 

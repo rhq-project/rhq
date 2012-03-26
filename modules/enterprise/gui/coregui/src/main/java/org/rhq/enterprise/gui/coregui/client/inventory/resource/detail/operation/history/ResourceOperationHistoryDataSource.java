@@ -97,7 +97,6 @@ public class ResourceOperationHistoryDataSource extends
             criteria.addFilterGroupOperationHistoryId(groupOperationHistoryId);
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

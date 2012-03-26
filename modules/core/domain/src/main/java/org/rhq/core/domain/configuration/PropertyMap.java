@@ -58,9 +58,10 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyMap extends Property implements AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
-    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
+    // use the prop name as the map key
     @MapKey(name = "name")
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
+    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
     private Map<String, Property> map = new LinkedHashMap<String, Property>();
 

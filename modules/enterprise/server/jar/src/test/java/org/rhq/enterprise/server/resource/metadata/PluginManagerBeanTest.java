@@ -13,8 +13,13 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
+import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
+import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * Unit tests for {@link PluginManagerBean}.
+ */
 public class PluginManagerBeanTest extends MetadataBeanTest {
 
     SubjectManagerLocal subjectMgr;
@@ -42,6 +47,17 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     public void registerPlugins() throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
+
+        List<Plugin> plugins = getEntityManager().createQuery("from Plugin where name IN ('PluginManagerBeanTestPlugin1', 'PluginManagerBeanTestPlugin2', 'PluginManagerBeanTestPlugin3')").getResultList();
+        if (!plugins.isEmpty()) {
+            System.out.println("Purging plugins " + plugins + "...");
+            for (Plugin plugin : plugins) {
+                pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
+                pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin.getId()));
+            }
+            new PurgeResourceTypesJob().execute(null);
+            new PurgePluginsJob().execute(null);
+        }
 
         createPlugin("test-plugin1", "1.0", "plugin_1.xml");
         createPlugin("test-plugin2", "1.0", "plugin_2.xml");

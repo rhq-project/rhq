@@ -40,7 +40,7 @@ import org.rhq.enterprise.agent.AgentMain;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "agent-plugin")
+@Test(groups = "agent.plugin")
 public class AgentPluginTest {
     private static final String PLUGIN_NAME = "RHQAgent";
     private static final String AGENT_RESOURCE_TYPE_NAME = "RHQ Agent";

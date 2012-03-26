@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
  * Specifically tests the logic to ensure the query to find what packages can be installed on a resource.
@@ -307,7 +308,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
                 packageType1 = em.find(PackageType.class, packageType1.getId());
                 em.remove(packageType1);
 
-                em.remove(resource);
+                ResourceTreeHelper.deleteResource(em, resource);
 
                 repo1 = em.find(Repo.class, repo1.getId());
                 em.remove(repo1);

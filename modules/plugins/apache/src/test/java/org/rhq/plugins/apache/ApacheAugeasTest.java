@@ -19,11 +19,10 @@ import org.rhq.plugins.apache.util.AugeasNodeSearch;
 public class ApacheAugeasTest {
 	  
   	  /**
-	   * Tests if all included configuration files were loaded. 
-	   * @return
+	   * Tests if all included configuration files were loaded.
 	   */
 	  public void testFiles(AugeasProxy augeas){
-	      System.out.println("Test if all included cofiguration files was discovered and loaded.");
+	      System.out.print("Test if all included configuration files was discovered and loaded.");
 	      AugeasConfigurationApache config = (AugeasConfigurationApache)augeas.getConfiguration();
 	      List<File> configFiles = config.getAllConfigurationFiles();
 	      
@@ -31,15 +30,15 @@ public class ApacheAugeasTest {
 	       * There are three files one main file one which is included from main file and one which is included from 
 	       * included file and which is declared in IfModule. All of them must be discovered.
 	       */
-	      boolean found=false;
 	      for (File confFile : configFiles){
-	          found = false;
+	          boolean found = false;
 	          for (String fileName : ApacheTestConstants.CONFIG_FILE_NAMES){
 	            if (!confFile.getName().equals(fileName))
-	                found= true;
+	                found = true;
 	          }
 	          assert found;
 	      }
+          System.out.println(" [success!]");
 	  }
       /**
        * Tests mapping of augeas tree to configuration and back.
@@ -70,7 +69,7 @@ public class ApacheAugeasTest {
 	  * @throws Exception
 	  */
 	 public void testLoadConfig(AugeasTree tree,PluginContainer container)throws Exception{
-	      System.out.println("Test mapping of augeas tree to rhq configuration.");
+	      System.out.print("\tTest mapping of augeas tree to rhq configuration.");
 	      ApacheConfigurationUtil util = new ApacheConfigurationUtil();
 	        for (Components component : Components.values()){
 	            //get nodes for each component
@@ -79,11 +78,14 @@ public class ApacheAugeasTest {
 	                  String key = AugeasNodeSearch.getNodeKey(nodes.get(i), tree.getRootNode());
 	                  Configuration config = ApacheConfigurationUtil.componentToConfiguration(container, component, key, tree);
 	                  //load configuration for related component and augeas node from tempfolder
-	                  Configuration conf = util.loadConfiguration(ApacheTestConstants.getConfigFilesPathForLoad()+
+	                  Configuration expectedConfig = util.loadConfiguration(ApacheTestConstants.getConfigFilesPathForLoad()+
 	                                                     File.separator+component.getComponentName()+String.valueOf(i));
-	                  assert config.equals(conf);	                      
+                      assert config.equals(expectedConfig) :
+                              "Unexpected Resource configuration - \nExpected:\n\t"
+                              + expectedConfig.toString(true) + "\nActual:\n\t" + config.toString(true);
 	              }
-	          }	      
+	          }
+         System.out.println(" [success!]");
 	  }
 	 
 	  /**
@@ -93,7 +95,7 @@ public class ApacheAugeasTest {
 	   * @throws Exception
 	   */
 	  public void testSaveConfig(PluginContainer container)throws Exception{
-	         System.out.println("Test mapping of rhq configuration to augeas tree.");
+	         System.out.print("Test mapping of rhq configuration to augeas tree.");
 	         ApacheAugeasUtil apacheUtil = new ApacheAugeasUtil();	         
 	         //load augeas tree from temporary folder
 	         String path = ApacheTestConstants.getApacheConfigFilesPath();
@@ -121,6 +123,7 @@ public class ApacheAugeasTest {
 	         treeUpdate.save();
              //test if the updated augeas tree can be mapped to configuration stored at files in "loadconfig" temporary directory 
 	         testLoadConfig(treeUpdate, container);
+             System.out.println(" [success!]");
 	  }
 	  
 	  public boolean isAugeasInstalled(){

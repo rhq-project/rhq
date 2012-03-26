@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.test.arquillian;
 
 import java.lang.reflect.Field;
@@ -61,6 +60,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * 
  * @author Lukas Krejci
  */
+// TODO (ips): Why don't we just make this implement DiscoveryServerService and use it as the actual server service?
 public class FakeServerInventory {
 
     private static final Log LOG = LogFactory.getLog(FakeServerInventory.class);
@@ -412,7 +412,11 @@ public class FakeServerInventory {
             removeResource(child);
         }
     }
-    
+
+    public Map<String, Resource> getResourceStore() {
+        return resourceStore;
+    }
+
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
@@ -426,18 +430,18 @@ public class FakeServerInventory {
             }
             persisted.setId(++counter);
             persisted.setUuid(agentSideResource.getUuid());
+            persisted.setAgent(agentSideResource.getAgent());
+            persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());
+            persisted.setDescription(agentSideResource.getDescription());
+            persisted.setName(agentSideResource.getName());
+            persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
+            persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
+            persisted.setVersion(agentSideResource.getVersion());
+            persisted.setInventoryStatus(requiredInventoryStatus);
+            persisted.setResourceKey(agentSideResource.getResourceKey());
+            persisted.setResourceType(agentSideResource.getResourceType());
             resourceStore.put(persisted.getUuid(), persisted);
         }
-        persisted.setAgent(agentSideResource.getAgent());
-        persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());
-        persisted.setDescription(agentSideResource.getDescription());
-        persisted.setName(agentSideResource.getName());
-        persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
-        persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
-        persisted.setVersion(agentSideResource.getVersion());
-        persisted.setInventoryStatus(requiredInventoryStatus);
-        persisted.setResourceKey(agentSideResource.getResourceKey());
-        persisted.setResourceType(agentSideResource.getResourceType());
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {

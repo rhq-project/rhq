@@ -23,11 +23,9 @@
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -657,7 +655,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } else {
             log.error("No ResourceContainer exists for " + resource + ".");
         }
-        return new Availability(resource, new Date(), availType);
+        return new Availability(resource, availType);
     }
 
     public void requestAvailabilityCheck(Resource resource) {
@@ -2063,7 +2061,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (this.platform != null && this.platform.getResourceType() == type) {
             return this.platform;
         }
-        Resource platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
+        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource platform = new Resource(childResources);
+        platform.setResourceKey("testkey" + configuration.getContainerName());
+        platform.setName("testplatform");
+        platform.setResourceType(type);
         platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(this.agent);
         return platform;
@@ -2241,7 +2243,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             availabilityExecutor.sendFullReportNextTime();
         }
 
-        availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
+        if (!availabilityThreadPoolExecutor.isShutdown()) {
+            availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void requestFullAvailabilityReport() {
@@ -2716,7 +2720,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // Replace the stripped-down ResourceType that came from the Server with the full ResourceType - it's critical
         // to do this before merging the Resource, because the plugin container and plugins rely on the type being fully
         // initialized.
-        if (!hydrateResourceType(resourceFromServer)) { return; }
+        if (!hydrateResourceType(resourceFromServer)) {
+            return;
+        }
 
         // Find the Resource's parent in our inventory.
         Resource parentResource;
@@ -2741,9 +2747,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // This should never happen, but add a check so we'll know if it ever does.
             log.error("Existing platform [" + this.platform + "] has different Resource type and/or Resource key than "
                 + "platform in Server inventory: " + resourceFromServer);
-        }         
+        }
         boolean pluginConfigUpdated;
-        
+
         Resource mergedResource;
         ResourceContainer resourceContainer;
         this.inventoryLock.writeLock().lock();
@@ -2794,8 +2800,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private boolean hydrateResourceType(Resource resourceFromServer) {
-        ResourceType fullResourceType =
-            this.pluginManager.getMetadataManager().getType(resourceFromServer.getResourceType());
+        ResourceType fullResourceType = this.pluginManager.getMetadataManager().getType(
+            resourceFromServer.getResourceType());
         if (fullResourceType == null) {
             log.error(resourceFromServer + " being synced from Server has an unknown type ["
                 + resourceFromServer.getResourceType() + "] - the [" + resourceFromServer.getResourceType().getPlugin()

@@ -70,9 +70,9 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
         PropertyDefinitionMap mapDef = (PropertyDefinitionMap) listMemberPropDef;
 
         //now count how many properties there are in the member map
-        int propCnt = mapDef.getPropertyDefinitions().size();
+        int propCnt = mapDef.getMap().size();
         //don't count the auxiliary "_index" property
-        if (mapDef.getPropertyDefinitions().containsKey(ApacheServerComponent.AUXILIARY_INDEX_PROP))
+        if (mapDef.getMap().containsKey(ApacheServerComponent.AUXILIARY_INDEX_PROP))
             propCnt -= 1;
 
         //get all the directives
@@ -85,7 +85,7 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
                 int idx = i;
                 PropertyMap map = new PropertyMap(mapDef.getName());
                 propList.add(map);
-                for (PropertyDefinition def : mapDef.getPropertyDefinitions().values()) {
+                for (PropertyDefinition def : mapDef.getPropertyDefinitions()) {
                     if (ApacheServerComponent.AUXILIARY_INDEX_PROP.equals(def.getName())) {
                         map.put(new PropertySimple(ApacheServerComponent.AUXILIARY_INDEX_PROP, directiveNode.getSeq()));
                     } else {

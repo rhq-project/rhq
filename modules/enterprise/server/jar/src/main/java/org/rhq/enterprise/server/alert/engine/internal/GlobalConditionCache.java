@@ -277,7 +277,7 @@ class GlobalConditionCache extends AbstractConditionCache {
 
                 List<AvailabilityCacheElement> cacheElements = lookupAvailabilityCacheElements(resource.getId());
 
-                processCacheElements(cacheElements, availabilityType, availability.getStartTime().getTime(), stats);
+                processCacheElements(cacheElements, availabilityType, availability.getStartTime(), stats);
 
                 // Avail Duration conditions are evaluated in two parts:
                 // 1) First, an avail change to the that starts the clock ticking.

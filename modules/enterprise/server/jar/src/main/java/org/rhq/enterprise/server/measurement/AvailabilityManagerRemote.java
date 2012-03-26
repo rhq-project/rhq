@@ -26,6 +26,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -46,7 +47,9 @@ public interface AvailabilityManagerRemote {
      * @param pc
      * @return
      * @throws FetchException
+     * @Deprecated use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      */
+    @Deprecated
     @WebMethod
     public PageList<Availability> findAvailabilityForResource( //
         @WebParam(name = "subject") Subject subject, //
@@ -69,4 +72,7 @@ public interface AvailabilityManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
 
+    PageList<Availability> findAvailabilityByCriteria( //
+        Subject subject, //
+        AvailabilityCriteria criteria);
 }

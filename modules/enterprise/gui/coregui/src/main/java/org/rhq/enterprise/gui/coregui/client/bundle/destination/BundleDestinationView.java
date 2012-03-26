@@ -34,7 +34,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.bundle.Bundle;
@@ -124,11 +123,10 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         form.setGroupTitle(MSG.common_title_summary());
         form.setPadding(5);
 
-        LinkItem bundleName = new LinkItem("bundle");
+        StaticTextItem bundleName = new StaticTextItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
-        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
-        bundleName.setTarget("_self");
+        bundleName.setValue("<a href=\"" + LinkManager.getBundleLink(bundle.getId()) + "\">"
+            + StringUtility.escapeHtml(bundle.getName()) + "</a>");
 
         CanvasItem actionItem = new CanvasItem("actions");
         actionItem.setColSpan(1);
@@ -139,11 +137,10 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
         created.setValue(new Date(destination.getCtime()));
 
-        LinkItem destinationGroup = new LinkItem("group");
+        StaticTextItem destinationGroup = new StaticTextItem("group");
         destinationGroup.setTitle(MSG.view_bundle_dest_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(destination.getGroup()));
-        destinationGroup.setLinkTitle(StringUtility.escapeHtml(destination.getGroup().getName()));
-        destinationGroup.setTarget("_self");
+        destinationGroup.setValue("<a href=\"" + LinkManager.getResourceGroupLink(destination.getGroup()) + "\">"
+            + StringUtility.escapeHtml(destination.getGroup().getName()) + "</a>");
 
         StaticTextItem baseDirName = new StaticTextItem("baseDir", MSG.view_bundle_dest_baseDirName());
         baseDirName.setValue(destination.getDestinationBaseDirectoryName());

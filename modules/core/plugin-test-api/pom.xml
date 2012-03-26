@@ -24,20 +24,6 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- TODO: This is a workaround for the Javac bug requiring annotations to be
-                 available when compiling dependent classes. It is fixed in JDK 7. -->
-      <!-- JPA annotations -->
-      <dependency>        
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-      </dependency>
-      <!-- Hibernate annotations -->
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-      </dependency>
-    
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>test-utils</artifactId>

@@ -72,6 +72,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 @Test
 public class ContentManagerBeanTest extends AbstractEJB3Test {
@@ -1548,7 +1549,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 packageType4 = em.find(PackageType.class, packageType4.getId());
                 em.remove(packageType4);
 
-                em.remove(resource1);
+                ResourceTreeHelper.deleteResource(em, resource1);
 
                 resourceType1 = em.find(ResourceType.class, resourceType1.getId());
                 em.remove(resourceType1);

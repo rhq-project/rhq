@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -118,6 +119,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      *
      * @throws Exception if failed to create and prepare the report
      */
+    @Nullable
     public AvailabilityReport call() throws Exception {
         AvailabilityReport availabilityReport;
 
@@ -143,7 +145,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 //log.debug("Scan Starting: " + new Date(start));
             }
 
-            checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
+            try {
+                checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
+            } catch (RuntimeException e) {
+                if (Thread.interrupted()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Exception occurred during availability check, but this thread has been interrupted, "
+                                + "so most likely the plugin container is shutting down: " + e);
+                    }
+                    return availabilityReport;
+                }
+            }
 
             scan.setEndTime(System.currentTimeMillis());
 
@@ -307,7 +319,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         boolean availChanged = (previous == null) || (previous.getAvailabilityType() != current);
 
         if (availChanged || scan.isFull) {
-            Availability availability = null;
+            Availability availability;
 
             if (availChanged) {
                 ++scan.numAvailabilityChanges;
@@ -322,7 +334,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 }
             } else {
                 // avoid the overhead of updating the resource container, the avail type did not change
-                availability = new Availability(resource, new Date(), current);
+                availability = new Availability(resource, current);
             }
 
             // update the report

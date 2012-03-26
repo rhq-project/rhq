@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -39,7 +38,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -110,9 +108,6 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
     @Override
     protected AlertCriteria getFetchCriteria(DSRequest request) {
         AlertCriteria criteria = new AlertCriteria();
-        //initialize to only five for quick queries.
-        criteria.setPageControl(new PageControl(0, Integer
-            .valueOf(PortletConfigurationEditorComponent.Constant.RESULT_COUNT_DEFAULT)));
 
         //retrieve previous settings from portlet config
         if ((portlet != null) && (this.portlet instanceof DashboardPortlet)) {
@@ -173,8 +168,8 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
                         int lastN = property.getIntegerValue();
                         property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
                         int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                            .valueOf(lastUnits));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
+                            Integer.valueOf(lastUnits));
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }

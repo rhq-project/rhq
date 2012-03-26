@@ -19,7 +19,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -37,6 +40,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -60,10 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
 
 /**
  * @author Jay Shaughnessy
@@ -112,8 +112,8 @@ public class OperationHistoryDataSource extends
         ListGridField startTimeField = createStartedTimeField();
         fields.add(startTimeField);
 
-        ListGridField opNameField = new ListGridField(Field.OPERATION_NAME, MSG
-            .view_operationHistoryDetails_operation());
+        ListGridField opNameField = new ListGridField(Field.OPERATION_NAME,
+            MSG.view_operationHistoryDetails_operation());
         fields.add(opNameField);
 
         ListGridField subjectField = new ListGridField(Field.SUBJECT, MSG.view_operationHistoryDetails_requestor());
@@ -126,8 +126,7 @@ public class OperationHistoryDataSource extends
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
@@ -160,8 +159,8 @@ public class OperationHistoryDataSource extends
     }
 
     protected ListGridField createStartedTimeField() {
-        ListGridField startedTimeField = new ListGridField(Field.STARTED_TIME, MSG
-            .view_operationHistoryDetails_dateSubmitted());
+        ListGridField startedTimeField = new ListGridField(Field.STARTED_TIME,
+            MSG.view_operationHistoryDetails_dateSubmitted());
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
         startedTimeField.setCellFormatter(new TimestampCellFormatter() {
@@ -352,8 +351,7 @@ public class OperationHistoryDataSource extends
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
@@ -386,7 +384,6 @@ public class OperationHistoryDataSource extends
             break;
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 
@@ -419,8 +416,9 @@ public class OperationHistoryDataSource extends
     public ResourceOperationHistory copyValues(Record from) {
         Resource resource = new Resource();
         resource.setId(from.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null, from
-            .getAttribute(Field.SUBJECT), (OperationDefinition) from.getAttributeAsObject(Field.OPERATION_DEFINITION),
+        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null,
+            from.getAttribute(Field.SUBJECT),
+            (OperationDefinition) from.getAttributeAsObject(Field.OPERATION_DEFINITION),
             (Configuration) from.getAttributeAsObject(Field.PARAMETERS), resource, null);
         resourceOperationHistory.setId(from.getAttributeAsInt(Field.ID));
         return resourceOperationHistory;

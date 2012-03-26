@@ -1,4 +1,4 @@
-package org.rhq.modules.integrationTests.jbossas7plugin;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import java.util.List;
 import java.util.Map;
@@ -20,9 +20,9 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 
 /**
  * Tests related to configurations
+ *
  * @author Heiko W. Rupp
  */
-@Test
 public class ConfigurationTest extends AbstractIntegrationTest{
 
 //    private final Log log = LogFactory.getLog(ConfigurationTest.class);
@@ -32,9 +32,9 @@ public class ConfigurationTest extends AbstractIntegrationTest{
         super.loadPluginDescriptor();
     }
 
-
+    // TODO: Re-enable if appropriate.
+    @Test(enabled = false)
     public void readSocketBindings() throws Exception {
-
         ConfigurationDefinition configDef = loadServiceDescriptor("SocketBindingGroupDomain");
 
         Address a = new Address("socket-binding-group=standard-sockets");
@@ -65,13 +65,12 @@ public class ConfigurationTest extends AbstractIntegrationTest{
                 assert portProp.getStringValue()!=null;
                 assert "8080".equals(portProp.getStringValue()) : "Http port property was not 8080, but " + portProp.getStringValue();
             }
-
         }
-
     }
 
+    // TODO: Re-enable if appropriate.
+    @Test(enabled = false)
     public void readUpdateSocketBindings() throws Exception {
-
         ConfigurationDefinition configDef = loadServiceDescriptor("SocketBindingGroupDomain");
 
         Address a = new Address("socket-binding-group=standard-sockets");
@@ -144,6 +143,6 @@ public class ConfigurationTest extends AbstractIntegrationTest{
         report = new ConfigurationUpdateReport(conf);
         cwd.updateResourceConfiguration(report);
         assert report.getStatus() == ConfigurationUpdateStatus.SUCCESS;
-
     }
+
 }

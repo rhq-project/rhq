@@ -72,7 +72,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Test for {@link OperationManagerBean} SLSB.
  */
-@Test(groups = "operation-manager")
+@Test(groups = "operation.manager")
 public class OperationManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;

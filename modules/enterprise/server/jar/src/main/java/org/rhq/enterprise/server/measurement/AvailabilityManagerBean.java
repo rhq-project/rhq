@@ -41,6 +41,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -63,6 +64,8 @@ import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * Manager for availability related tasks.
@@ -132,7 +135,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 log.warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
                 retAvailability = availList.get(availList.size() - 1);
             } else {
-                retAvailability = new Availability(resource, new Date(), AvailabilityType.UNKNOWN);
+                retAvailability = new Availability(resource, AvailabilityType.UNKNOWN);
             }
         }
 
@@ -188,8 +191,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         try {
             if (context.type == EntityContext.Type.Resource) {
-                availabilities = findAvailabilityWithinInterval(context.resourceId, fullRangeBeginDate,
-                    fullRangeEndDate);
+                AvailabilityCriteria c = new AvailabilityCriteria();
+                c.addFilterResourceId(context.resourceId);
+                c.addFilterInterval(fullRangeBeginTime, fullRangeEndTime);
+                c.addSortStartTime(PageOrdering.ASC);
+                availabilities = findAvailabilityByCriteria(subject, c);
+                //availabilities = findAvailabilityWithinInterval(context.resourceId, fullRangeBeginDate,
+                //    fullRangeEndDate);
             } else if (context.type == EntityContext.Type.ResourceGroup) {
                 availabilities = findResourceGroupAvailabilityWithinInterval(context.groupId, fullRangeBeginDate,
                     fullRangeEndDate);
@@ -223,24 +231,24 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // we can end up with periods without avail data.
         if (availabilities.size() > 0) {
             Availability earliestAvailability = availabilities.get(0);
-            if (earliestAvailability.getStartTime().getTime() > fullRangeBeginDate.getTime()) {
+            if (earliestAvailability.getStartTime() > fullRangeBeginDate.getTime()) {
                 Availability surrogateAvailability = new Availability(earliestAvailability.getResource(),
-                    fullRangeBeginDate, null);
+                    fullRangeBeginDate.getTime(), null);
                 surrogateAvailability.setEndTime(earliestAvailability.getStartTime());
                 availabilities.add(0, surrogateAvailability); // add at the head of the list
             }
         } else {
             Resource surrogateResource = context.type == EntityContext.Type.Resource ? entityManager.find(
                 Resource.class, context.resourceId) : new Resource(-1);
-            Availability surrogateAvailability = new Availability(surrogateResource, fullRangeBeginDate, null);
-            surrogateAvailability.setEndTime(fullRangeEndDate);
+            Availability surrogateAvailability = new Availability(surrogateResource, fullRangeBeginDate.getTime(), null);
+            surrogateAvailability.setEndTime(fullRangeEndDate.getTime());
             availabilities.add(surrogateAvailability); // add as the only element
         }
 
         // Now check if the date range passed in by the user extends into the future. If so, finish the last
         // availability at now and add a surrogate after it, as we know nothing about the future.
-        Date now = new Date();
-        if (fullRangeEndDate.getTime() > now.getTime()) {
+        long now = System.currentTimeMillis();
+        if (fullRangeEndDate.getTime() > now) {
             Availability latestAvailability = availabilities.get(availabilities.size() - 1);
             latestAvailability.setEndTime(now);
             Availability unknownFuture = new Availability(latestAvailability.getResource(), now, null);
@@ -274,7 +282,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             }
 
             Availability currentAvailability = availabilities.get(currentAvailabilityIndex);
-            long availabilityStartBarrier = currentAvailability.getStartTime().getTime();
+            long availabilityStartBarrier = currentAvailability.getStartTime();
 
             // the start of the data point comes first or at same time as availability record (remember, we are going 
             // backwards in time)
@@ -436,8 +444,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // translate data into Availability objects for downstream processing
         List<Availability> availabilities = new ArrayList<Availability>(report.getResourceAvailability().size());
         for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
-            availabilities.add(new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
-                datum.getAvailabilityType()));
+            availabilities.add(new Availability(new Resource(datum.getResourceId()), datum.getStartTime(), datum
+                .getAvailabilityType()));
         }
 
         // We will alert only on the avails for enabled resources. Keep track of any that are disabled. 
@@ -491,7 +499,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         }
                     }
 
-                    if (reported.getStartTime().getTime() >= latest.getStartTime().getTime()) {
+                    if (reported.getStartTime() >= latest.getStartTime()) {
                         //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
 
                         // the new availability data is for a time after our last known state change
@@ -726,13 +734,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 return null;
             }
 
-            old.setEndTime(startDate);
+            old.setEndTime(startDate.getTime());
         }
 
         Resource resource = new Resource();
         resource.setId(record.getResourceId());
 
-        Availability newAvail = new Availability(resource, startDate, aType);
+        Availability newAvail = new Availability(resource, startDate.getTime(), aType);
         entityManager.persist(newAvail);
 
         return newAvail;
@@ -755,7 +763,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // get the existing availability interval where the new availability will be shoe-horned in
         Query query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE_AND_DATE);
         query.setParameter("resourceId", toInsert.getResource().getId());
-        query.setParameter("aTime", toInsert.getStartTime().getTime());
+        query.setParameter("aTime", toInsert.getStartTime());
 
         Availability existing;
 
@@ -792,14 +800,14 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             // semantics of this method is that it is never called if we are inserting in the last interval
             query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE_AND_DATE);
             query.setParameter("resourceId", toInsert.getResource().getId());
-            query.setParameter("aTime", existing.getEndTime().getTime() + 1);
+            query.setParameter("aTime", existing.getEndTime() + 1);
             Availability afterExisting = (Availability) query.getSingleResult();
 
             if (toInsert.getAvailabilityType() == afterExisting.getAvailabilityType()) {
                 // the inserted avail type is the same as the following avail type, we don't need to
                 // insert a new avail record, just adjust the start/end times of the existing records.
 
-                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                if (existing.getStartTime() == toInsert.getStartTime()) {
                     // Edge Case: If the insertTo start time equals the existing start time
                     // just remove the existing record and let afterExisting cover the interval.
                     entityManager.remove(existing);
@@ -814,7 +822,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // the inserted avail type is NOT the same as the following avail type, we likely need to
                 // insert a new avail record.
 
-                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                if (existing.getStartTime() == toInsert.getStartTime()) {
                     // Edge Case: If the insertTo start time equals the existing end time
                     // just update the existing avail type to be the new avail type and keep the same boundary.                    
                     existing.setAvailabilityType(toInsert.getAvailabilityType());
@@ -840,8 +848,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
      * @param  endDate    end date of the desired interval
      *
      * @return A list of availabilities that cover at least the given date range
+     * @Deprecated used in portal war EventsView.jsp.  Use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate) {
         Query q = entityManager.createNamedQuery(Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL);
         q.setParameter("resourceId", resourceId);
@@ -849,6 +859,20 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         q.setParameter("end", endDate.getTime());
         List<Availability> results = q.getResultList();
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "resource", subject.getId());
+        }
+
+        CriteriaQueryRunner<Availability> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        PageList<Availability> result = queryRunner.execute();
+        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -861,6 +885,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return results;
     }
 
+    /**
+     * @Deprecated used in portal war, should probably go away when portal war goes away
+     */
     @SuppressWarnings("unchecked")
     private List<Availability> findAutoGroupAvailabilityWithinInterval(int parentResourceId, int resourceTypeId,
         Date startDate, Date endDate) {
@@ -873,7 +900,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return results;
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * @Deprecated used in portal war ListAvailabilityHistoryUIBEan.  Use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
+     * Note that this methods uses startTime DESC sorting, which must be explicitly set in AvailabilityCriteria. 
+     */
+    @Deprecated
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User [" + subject

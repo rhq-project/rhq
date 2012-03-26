@@ -87,6 +87,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestAgentClient;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
  * @author John Mazzitelli
@@ -240,6 +241,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(ResourceGroup.class, ((ResourceGroup) removeMe).getId()));
+            }
+
+            // remove Resources in test groups
+            q = em.createQuery("SELECT r FROM Resource r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                ResourceTreeHelper.deleteResource(em, em.getReference(Resource.class, ((Resource) removeMe).getId()));
             }
 
             // remove ResourceTypes which cascade remove BundleTypes

@@ -74,6 +74,7 @@ import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposit
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
@@ -120,6 +121,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
@@ -269,6 +271,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //ALERTDEFINITIONMANAGER: END ----------------------------------
 
     //AVAILABILITYMANAGER: BEGIN ----------------------------------
+    public PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria) {
+        return availabilityManager.findAvailabilityByCriteria(subject, criteria);
+    }
+
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc) {
         return availabilityManager.findAvailabilityForResource(subject, resourceId, pc);
     }
@@ -958,8 +964,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
+
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         return resourceManager.findResourceLineage(subject, resourceId);
+    }
+
+    @Override
+    public ResourceAvailabilitySummary getAvailabilitySummary(Subject subject, int resourceId) {
+        return resourceManager.getAvailabilitySummary(subject, resourceId);
     }
 
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {

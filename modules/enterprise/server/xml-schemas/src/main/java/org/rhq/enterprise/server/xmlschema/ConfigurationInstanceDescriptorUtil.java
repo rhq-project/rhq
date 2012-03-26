@@ -74,9 +74,9 @@ public class ConfigurationInstanceDescriptorUtil {
 
     public static final String NS_CONFIGURATION_INSTANCE = "urn:xmlns:rhq-configuration-instance";
     public static final String NS_CONFIGURATION = "urn:xmlns:rhq-configuration";
-    
-    private static final Log LOG  = LogFactory.getLog(ConfigurationInstanceDescriptorUtil.class);
-    
+
+    private static final Log LOG = LogFactory.getLog(ConfigurationInstanceDescriptorUtil.class);
+
     private ConfigurationInstanceDescriptorUtil() {
 
     }
@@ -85,8 +85,8 @@ public class ConfigurationInstanceDescriptorUtil {
         public Configuration configuration;
         public ConfigurationDefinition definition;
     }
-    
-    protected static QName getTagName(ConfigurationProperty descriptor) {        
+
+    protected static QName getTagName(ConfigurationProperty descriptor) {
         if (descriptor instanceof SimplePropertyInstanceDescriptor) {
             return new QName(NS_CONFIGURATION_INSTANCE, "simple-property");
         } else if (descriptor instanceof ListPropertyInstanceDescriptor) {
@@ -100,10 +100,10 @@ public class ConfigurationInstanceDescriptorUtil {
         } else if (descriptor instanceof MapProperty) {
             return new QName(NS_CONFIGURATION, "map-property");
         }
-        
+
         throw new IllegalArgumentException("Unknown descriptor type: " + descriptor.getClass());
     }
-    
+
     private static QName getTagName(ComplexValueDescriptor value) {
         if (value instanceof ComplexValueSimpleDescriptor) {
             return new QName(NS_CONFIGURATION_INSTANCE, "simple-value");
@@ -112,45 +112,46 @@ public class ConfigurationInstanceDescriptorUtil {
         } else if (value instanceof ComplexValueMapDescriptor) {
             return new QName(NS_CONFIGURATION_INSTANCE, "map-value");
         }
-        
+
         throw new IllegalArgumentException("Unknown value descriptor type: " + value.getClass());
     }
-        
+
     private static class ToDescriptor {
-        
+
         public static ConfigurationInstanceDescriptor createConfigurationInstance(ConfigurationDefinition definition,
             Configuration configuration) {
 
             ConfigurationInstanceDescriptor ret = new ConfigurationInstanceDescriptor();
-            
+
             addAll(ret.getConfigurationProperty(), definition.getPropertyDefinitions(), configuration.getMap());
-                    
+
             return ret;
         }
-        
-        private static void addAll(List<JAXBElement<?>> descriptors, Map<String, PropertyDefinition> defs, Map<String, Property> props) {
-            for(Map.Entry<String, PropertyDefinition> e : defs.entrySet()) {
+
+        private static void addAll(List<JAXBElement<?>> descriptors, Map<String, PropertyDefinition> defs,
+            Map<String, Property> props) {
+            for (Map.Entry<String, PropertyDefinition> e : defs.entrySet()) {
                 String propName = e.getKey();
                 PropertyDefinition def = e.getValue();
                 Property prop = props.get(propName);
-                
+
                 addSingle(descriptors, def, prop);
             }
         }
-        
+
         private static void addSingle(List<JAXBElement<?>> descriptors, PropertyDefinition def, Property prop) {
             ConfigurationProperty descriptor = null;
             QName tagName = null;
-            
+
             descriptor = createDescriptor(def, prop);
             tagName = getTagName(descriptor);
-            
+
             addToJAXBElementList(descriptors, Object.class, descriptor, tagName);
         }
-        
+
         private static ConfigurationProperty createDescriptor(PropertyDefinition def, Property prop) {
             ConfigurationProperty ret = null;
-            
+
             if (def instanceof PropertyDefinitionSimple) {
                 ret = createSimple((PropertyDefinitionSimple) def, (PropertySimple) prop);
             } else if (def instanceof PropertyDefinitionList) {
@@ -158,14 +159,14 @@ public class ConfigurationInstanceDescriptorUtil {
             } else if (def instanceof PropertyDefinitionMap) {
                 ret = createMap((PropertyDefinitionMap) def, (PropertyMap) prop);
             }
-            
+
             return ret;
         }
-        
+
         private static SimplePropertyInstanceDescriptor createSimple(PropertyDefinitionSimple def, PropertySimple prop) {
             SimplePropertyInstanceDescriptor ret = new SimplePropertyInstanceDescriptor();
             setCommonProps(ret, def, true);
-            
+
             //these are prohibited, because they make no sense on the property instance
             //ret.setDefaultValue(def.getDefaultValue());
             //ret.setInitialValue(prop.getStringValue());
@@ -173,72 +174,75 @@ public class ConfigurationInstanceDescriptorUtil {
             ret.setPropertyOptions(convert(def.getEnumeratedValues()));
             ret.setType(convert(def.getType()));
             ret.setUnits(convert(def.getUnits()));
-            
+
             if (prop != null) {
                 ret.setValue(prop.getStringValue());
             }
-            
+
             return ret;
         }
-        
+
         private static ListPropertyInstanceDescriptor createList(PropertyDefinitionList def, PropertyList prop) {
             ListPropertyInstanceDescriptor ret = new ListPropertyInstanceDescriptor();
-            
+
             setCommonProps(ret, def, true);
-            
+
             ConfigurationProperty memberDef = convertDefinition(def.getMemberDefinition());
-            ret.setConfigurationProperty(new JAXBElement<ConfigurationProperty>(getTagName(memberDef), ConfigurationProperty.class, memberDef));
-            
+            ret.setConfigurationProperty(new JAXBElement<ConfigurationProperty>(getTagName(memberDef),
+                ConfigurationProperty.class, memberDef));
+
             if (prop != null) {
                 PropertyValuesDescriptor values = new PropertyValuesDescriptor();
-                
+
                 ret.setValues(values);
-                
-                for(Property el : prop.getList()) {
+
+                for (Property el : prop.getList()) {
                     ComplexValueDescriptor value = convertValue(el);
-                    
+
                     //we don't need the property-name in lists, because the list has just a single member definition
                     value.setPropertyName(null);
-                    
+
                     addToJAXBElementList(values.getComplexValue(), Object.class, value, getTagName(value));
                 }
             }
-            
+
             return ret;
         }
-        
+
         private static MapPropertyInstanceDescriptor createMap(PropertyDefinitionMap def, PropertyMap prop) {
             MapPropertyInstanceDescriptor ret = new MapPropertyInstanceDescriptor();
-            
+
             setCommonProps(ret, def, true);
-            
-            for(PropertyDefinition mem : def.getPropertyDefinitions().values()) {
+
+            for (PropertyDefinition mem : def.getPropertyDefinitions()) {
                 ConfigurationProperty memDef = convertDefinition(mem);
-                
-                addToJAXBElementList(ret.getConfigurationProperty(), ConfigurationProperty.class, memDef, getTagName(memDef));
+
+                addToJAXBElementList(ret.getConfigurationProperty(), ConfigurationProperty.class, memDef,
+                    getTagName(memDef));
             }
-            
+
             if (prop != null) {
                 PropertyValuesDescriptor values = new PropertyValuesDescriptor();
-                
+
                 ret.setValues(values);
-        
-                for(Property el : prop.getMap().values()) {
+
+                for (Property el : prop.getMap().values()) {
                     ComplexValueDescriptor value = convertValue(el);
                     addToJAXBElementList(values.getComplexValue(), Object.class, value, getTagName(value));
                 }
             }
-            
+
             return ret;
         }
-        
-        private static void setCommonProps(ConfigurationProperty target, PropertyDefinition source, boolean creatingInstance) {
+
+        private static void setCommonProps(ConfigurationProperty target, PropertyDefinition source,
+            boolean creatingInstance) {
             target.setName(source.getName());
             //let's always use long description
             //target.setDescription(source.getDescription());
             target.setLongDescription(source.getDescription());
             target.setDisplayName(source.getDisplayName());
-            
+
             //these are prohibited on the instance because they make no sense there
             if (!creatingInstance) {
                 target.setRequired(source.isRequired());
@@ -246,69 +250,71 @@ public class ConfigurationInstanceDescriptorUtil {
                 target.setSummary(source.isSummary());
             }
         }
-        
+
         private static PropertyOptions convert(List<PropertyDefinitionEnumeration> options) {
             if (options.isEmpty()) {
                 return null;
             }
-            
+
             PropertyOptions ret = new PropertyOptions();
-            
+
             ArrayList<PropertyDefinitionEnumeration> opts = new ArrayList<PropertyDefinitionEnumeration>(options);
-            
+
             Collections.sort(opts, new Comparator<PropertyDefinitionEnumeration>() {
                 public int compare(PropertyDefinitionEnumeration o1, PropertyDefinitionEnumeration o2) {
                     return o1.getOrderIndex() - o2.getOrderIndex();
                 }
             });
-            
-            for(PropertyDefinitionEnumeration option : opts) {            
+
+            for (PropertyDefinitionEnumeration option : opts) {
                 ret.getOption().add(convert(option));
             }
-            
+
             return ret;
         }
-        
+
         private static Option convert(PropertyDefinitionEnumeration option) {
             Option ret = new Option();
             ret.setName(option.getName());
-            ret.setValue(option.getValue());        
+            ret.setValue(option.getValue());
             return ret;
         }
-        
+
         private static PropertyType convert(PropertySimpleType type) {
             if (type == null) {
                 return null;
             }
-            
-            try {            
+
+            try {
                 return PropertyType.valueOf(type.name());
             } catch (IllegalArgumentException e) {
-                LOG.warn("Failed to convert a PropertySimpleType instance '" + type.name() + "' into a PropertyType.", e);
+                LOG.warn("Failed to convert a PropertySimpleType instance '" + type.name() + "' into a PropertyType.",
+                    e);
                 throw e;
             }
         }
-        
-        private static MeasurementUnitsDescriptor convert(MeasurementUnits unit) {        
+
+        private static MeasurementUnitsDescriptor convert(MeasurementUnits unit) {
             //XXX there actually are some differences in the available values for these
             //two enums:
             //Missing in MeasurementUnitsDescriptor:
             //MeasurementUnits.JIFFY, MeasurementUnits.PETA_BYTES
-            
+
             if (unit == null) {
                 return null;
             }
-            
+
             String value = unit.name();
-            
+
             try {
                 return MeasurementUnitsDescriptor.valueOf(value);
             } catch (IllegalArgumentException e) {
-                LOG.warn("Failed to convert a MeasurementUnits instance '" + unit.getName() + "' into a MeasurementUnitsDescriptor.", e);
+                LOG.warn("Failed to convert a MeasurementUnits instance '" + unit.getName()
+                    + "' into a MeasurementUnitsDescriptor.", e);
                 throw e;
             }
         }
-        
+
         private static ConfigurationProperty convertDefinition(PropertyDefinition def) {
             if (def instanceof PropertyDefinitionSimple) {
                 return convertSimple((PropertyDefinitionSimple) def);
@@ -317,10 +323,10 @@ public class ConfigurationInstanceDescriptorUtil {
             } else if (def instanceof PropertyDefinitionMap) {
                 return convertMap((PropertyDefinitionMap) def);
             }
-            
+
             throw new IllegalArgumentException("Unsupported property definition type: " + def.getClass());
         }
-        
+
         private static SimpleProperty convertSimple(PropertyDefinitionSimple def) {
             SimpleProperty ret = new SimpleProperty();
             setCommonProps(ret, def, false);
@@ -328,33 +334,34 @@ public class ConfigurationInstanceDescriptorUtil {
             ret.setPropertyOptions(convert(def.getEnumeratedValues()));
             ret.setType(convert(def.getType()));
             ret.setUnits(convert(def.getUnits()));
-            
+
             return ret;
         }
-        
+
         private static ListProperty convertList(PropertyDefinitionList def) {
             ListProperty ret = new ListProperty();
             setCommonProps(ret, def, false);
             ConfigurationProperty memberDefinition = convertDefinition(def.getMemberDefinition());
-            ret.setConfigurationProperty(new JAXBElement<ConfigurationProperty>(getTagName(memberDefinition), ConfigurationProperty.class, memberDefinition));
-            
+            ret.setConfigurationProperty(new JAXBElement<ConfigurationProperty>(getTagName(memberDefinition),
+                ConfigurationProperty.class, memberDefinition));
+
             return ret;
         }
-        
+
         private static MapProperty convertMap(PropertyDefinitionMap def) {
             MapProperty ret = new MapProperty();
             setCommonProps(ret, def, false);
-            
+
             List<JAXBElement<? extends ConfigurationProperty>> elements = ret.getConfigurationProperty();
-            for(PropertyDefinition el : def.getPropertyDefinitions().values()) {
+            for (PropertyDefinition el : def.getPropertyDefinitions()) {
                 ConfigurationProperty prop = convertDefinition(el);
                 QName tagName = getTagName(prop);
                 addToJAXBElementList(elements, ConfigurationProperty.class, prop, tagName);
             }
-            
+
             return ret;
         }
-        
+
         private static ComplexValueDescriptor convertValue(Property prop) {
             if (prop instanceof PropertySimple) {
                 return convertSimpleValue((PropertySimple) prop);
@@ -363,118 +370,123 @@ public class ConfigurationInstanceDescriptorUtil {
             } else if (prop instanceof PropertyMap) {
                 return convertMapValue((PropertyMap) prop);
             }
-            
-            throw new IllegalArgumentException("Unsupported property type to convert to a value descriptor: " + prop.getClass());
+
+            throw new IllegalArgumentException("Unsupported property type to convert to a value descriptor: "
+                + prop.getClass());
         }
-        
+
         private static ComplexValueSimpleDescriptor convertSimpleValue(PropertySimple prop) {
             ComplexValueSimpleDescriptor ret = new ComplexValueSimpleDescriptor();
             ret.setPropertyName(prop.getName());
             ret.setValue(prop.getStringValue());
-            
+
             return ret;
         }
-        
+
         private static ComplexValueListDescriptor convertListValue(PropertyList prop) {
             ComplexValueListDescriptor ret = new ComplexValueListDescriptor();
             ret.setPropertyName(prop.getName());
-            
-            for(Property el : prop.getList()) {
+
+            for (Property el : prop.getList()) {
                 ComplexValueDescriptor value = convertValue(el);
                 addToJAXBElementList(ret.getComplexValue(), Object.class, value, getTagName(value));
             }
-            
+
             return ret;
         }
-        
+
         private static ComplexValueMapDescriptor convertMapValue(PropertyMap prop) {
             ComplexValueMapDescriptor ret = new ComplexValueMapDescriptor();
             ret.setPropertyName(prop.getName());
-            
+
             for (Property el : prop.getMap().values()) {
                 ComplexValueDescriptor value = convertValue(el);
                 addToJAXBElementList(ret.getComplexValue(), Object.class, value, getTagName(value));
             }
-            
+
             return ret;
         }
-        
-        private static <T> void addToJAXBElementList(List<JAXBElement<? extends T>> list, Class<T> baseClass, T property, QName tagName) {
+
+        private static <T> void addToJAXBElementList(List<JAXBElement<? extends T>> list, Class<T> baseClass,
+            T property, QName tagName) {
             JAXBElement<? extends T> el = new JAXBElement<T>(tagName, baseClass, property);
             list.add(el);
-        }    
+        }
     }
-    
+
     private static class ToConfigurationAndDefinition {
-        
-        public static ConfigurationAndDefinition createConfigurationAndDefinition(ConfigurationInstanceDescriptor descriptor) {
+
+        public static ConfigurationAndDefinition createConfigurationAndDefinition(
+            ConfigurationInstanceDescriptor descriptor) {
             ConfigurationAndDefinition ret = new ConfigurationAndDefinition();
             Configuration configuration = new Configuration();
             ConfigurationDefinition definition = new ConfigurationDefinition(null, null);
-            
+
             ret.configuration = configuration;
             ret.definition = definition;
-            
-            for(JAXBElement<?> el : descriptor.getConfigurationProperty()) {
+
+            for (JAXBElement<?> el : descriptor.getConfigurationProperty()) {
                 Object childDescriptor = el.getValue();
                 add(definition, configuration, null, null, childDescriptor);
             }
-            
-            return ret;            
-        }        
-        
-        private static void add(ConfigurationDefinition configurationDefinition, Configuration configuration, PropertyDefinition parentDef, Property parentProp, Object propertyInstance) {
+
+            return ret;
+        }
+
+        private static void add(ConfigurationDefinition configurationDefinition, Configuration configuration,
+            PropertyDefinition parentDef, Property parentProp, Object propertyInstance) {
             Property prop = null;
             PropertyDefinition def = null;
-            
+
             if (propertyInstance instanceof SimplePropertyInstanceDescriptor) {
-                def = convert((ConfigurationProperty)propertyInstance);
-                def.setConfigurationDefinition(configurationDefinition);                       
+                def = convert((ConfigurationProperty) propertyInstance);
+                def.setConfigurationDefinition(configurationDefinition);
 
                 SimplePropertyInstanceDescriptor simpleInstance = (SimplePropertyInstanceDescriptor) propertyInstance;
-                
+
                 PropertySimple simpleProp = new PropertySimple(simpleInstance.getName(), simpleInstance.getValue());
                 prop = simpleProp;
             } else if (propertyInstance instanceof ListPropertyInstanceDescriptor) {
-                def = convert((ConfigurationProperty)propertyInstance);
-                def.setConfigurationDefinition(configurationDefinition);                       
+                def = convert((ConfigurationProperty) propertyInstance);
+                def.setConfigurationDefinition(configurationDefinition);
 
                 ListPropertyInstanceDescriptor listInstance = (ListPropertyInstanceDescriptor) propertyInstance;
-                PropertyList listProp = new PropertyList(listInstance.getName());                 
-                
-                PropertyDefinition memberDefinition = ((PropertyDefinitionList)def).getMemberDefinition();
-                
+                PropertyList listProp = new PropertyList(listInstance.getName());
+
+                PropertyDefinition memberDefinition = ((PropertyDefinitionList) def).getMemberDefinition();
+
                 if (listInstance.getValues() != null) {
-                    for(JAXBElement<?> val : listInstance.getValues().getComplexValue()) {
+                    for (JAXBElement<?> val : listInstance.getValues().getComplexValue()) {
                         ComplexValueDescriptor valDesc = (ComplexValueDescriptor) val.getValue();
                         Property child = convert(memberDefinition, valDesc);
                         listProp.add(child);
                     }
                 }
-                
+
                 prop = listProp;
             } else if (propertyInstance instanceof MapPropertyInstanceDescriptor) {
-                def = convert((ConfigurationProperty)propertyInstance);
-                def.setConfigurationDefinition(configurationDefinition);                       
-                
+                def = convert((ConfigurationProperty) propertyInstance);
+                def.setConfigurationDefinition(configurationDefinition);
+
                 MapPropertyInstanceDescriptor mapInstance = (MapPropertyInstanceDescriptor) propertyInstance;
                 PropertyMap mapProp = new PropertyMap(mapInstance.getName());
-                
+
                 if (mapInstance.getValues() != null) {
-                    for(JAXBElement<?> val : mapInstance.getValues().getComplexValue()) {
+                    for (JAXBElement<?> val : mapInstance.getValues().getComplexValue()) {
                         ComplexValueDescriptor valueDesc = (ComplexValueDescriptor) val.getValue();
-                        PropertyDefinition valueDefinition = ((PropertyDefinitionMap)def).get(valueDesc.getPropertyName());
-                        
+                        PropertyDefinition valueDefinition = ((PropertyDefinitionMap) def).get(valueDesc
+                            .getPropertyName());
+
                         Property child = convert(valueDefinition, valueDesc);
                         mapProp.put(child);
                     }
                 }
-                
+
                 prop = mapProp;
             } else {
                 throw new IllegalArgumentException("Unsupported property instance type: " + propertyInstance.getClass());
             }
-            
+
             if (parentDef != null) {
                 if (parentDef instanceof PropertyDefinitionList) {
                     def.setParentPropertyListDefinition((PropertyDefinitionList) parentDef);
@@ -484,7 +496,7 @@ public class ConfigurationInstanceDescriptorUtil {
             } else {
                 configurationDefinition.put(def);
             }
-            
+
             prop.setConfiguration(configuration);
             if (parentProp != null) {
                 if (parentProp instanceof PropertyList) {
@@ -496,63 +508,65 @@ public class ConfigurationInstanceDescriptorUtil {
                 configuration.put(prop);
             }
         }
-                
+
         private static PropertyDefinition convert(ConfigurationProperty def) {
             try {
                 ConfigurationDescriptor tmp = new ConfigurationDescriptor();
-                tmp.getConfigurationProperty().add(new JAXBElement<ConfigurationProperty>(getTagName(def), ConfigurationProperty.class, def));
+                tmp.getConfigurationProperty().add(
+                    new JAXBElement<ConfigurationProperty>(getTagName(def), ConfigurationProperty.class, def));
                 ConfigurationDefinition configDef = ConfigurationMetadataParser.parse(null, tmp);
-                
+
                 return configDef.getPropertyDefinitions().values().iterator().next();
             } catch (InvalidPluginDescriptorException e) {
                 throw new IllegalArgumentException(e);
             }
         }
-        
+
         private static Property convert(PropertyDefinition definition, ComplexValueDescriptor value) {
             Property ret = null;
-            
+
             if (value instanceof ComplexValueSimpleDescriptor) {
                 ret = new PropertySimple(value.getPropertyName(), ((ComplexValueSimpleDescriptor) value).getValue());
             } else if (value instanceof ComplexValueListDescriptor) {
                 ComplexValueListDescriptor listValue = (ComplexValueListDescriptor) value;
-                
+
                 PropertyDefinitionList listDefinition = (PropertyDefinitionList) definition;
-                
+
                 PropertyList list = new PropertyList(value.getPropertyName());
-                
-                for(JAXBElement<?> val : listValue.getComplexValue()) {
-                    Property child = convert(listDefinition.getMemberDefinition(), (ComplexValueDescriptor) val.getValue());
-                    
+
+                for (JAXBElement<?> val : listValue.getComplexValue()) {
+                    Property child = convert(listDefinition.getMemberDefinition(),
+                        (ComplexValueDescriptor) val.getValue());
+
                     list.add(child);
                 }
                 ret = list;
             } else if (value instanceof ComplexValueMapDescriptor) {
                 ComplexValueMapDescriptor mapValue = (ComplexValueMapDescriptor) value;
-                
+
                 PropertyMap map = new PropertyMap(value.getPropertyName());
                 PropertyDefinitionMap mapDefinition = (PropertyDefinitionMap) definition;
-                
-                for(JAXBElement<?> val : mapValue.getComplexValue()) {
+
+                for (JAXBElement<?> val : mapValue.getComplexValue()) {
                     ComplexValueDescriptor childDesc = (ComplexValueDescriptor) val.getValue();
-                    
+
                     PropertyDefinition childDefinition = mapDefinition.get(childDesc.getPropertyName());
-                    
+
                     Property child = convert(childDefinition, childDesc);
                     map.put(child);
                 }
-                
+
                 ret = map;
             }
-            
+
             if (ret.getName() == null) {
                 ret.setName(definition.getName());
             }
-            
+
             return ret;
         }
     }
-    
+
     /**
      * A configuration instance is a combination of a configuration definition and a concrete
      * configuration instance with defined values. This is used during the config synchronization
@@ -567,8 +581,8 @@ public class ConfigurationInstanceDescriptorUtil {
         Configuration configuration) {
         return ToDescriptor.createConfigurationInstance(definition, configuration);
     }
-    
+
     public static ConfigurationAndDefinition createConfigurationAndDefinition(ConfigurationInstanceDescriptor descriptor) {
         return ToConfigurationAndDefinition.createConfigurationAndDefinition(descriptor);
-    }    
+    }
 }

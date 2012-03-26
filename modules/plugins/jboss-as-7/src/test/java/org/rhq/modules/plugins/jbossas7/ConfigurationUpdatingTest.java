@@ -24,6 +24,7 @@ import java.util.Map;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
+import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -41,7 +42,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
  * Test updating the AS7 configuration
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest {
 
     ObjectMapper mapper ;
@@ -544,5 +545,107 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert additionalProperties.get("name").equals("bar");
         assert additionalProperties.get("value").equals("456");
 
+    }
+
+
+    public void test13() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test13");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("collapsedMapTest.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+
+        PropertyMap pm = new PropertyMap("connector:collapsed");
+        PropertySimple ps = new PropertySimple("name:0","in-vm");
+        pm.put(ps);
+        ps = new PropertySimple("backup:1","hulla-hoo");
+        pm.put(ps);
+        conf.put(pm);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop != null;
+        assert cop.numberOfSteps()==1;
+        Operation step = cop.step(0);
+        assert step!=null;
+        assert step.getOperation().equals("write-attribute") : "Step name was " + step.getOperation();
+        Map<String, Object> additionalProperties = step.getAdditionalProperties();
+        assert additionalProperties !=null;
+        assert additionalProperties.size()==2;
+        assert additionalProperties.get("name").equals("connector");
+        Object value = additionalProperties.get("value");
+        assert value instanceof Map;
+        Map <String,Object> map = (Map<String, Object>) value;
+        assert map.containsKey("in-vm");
+        assert map.containsValue("hulla-hoo");
+    }
+
+    public void testListOfPlainMaps() throws Exception {
+        String resultString = loadJsonFromFile("listofplainmaps.json");
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDefinition definition = loadDescriptor("listOfPlainMaps");
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        int index = 1;
+        PropertyList list = new PropertyList("properties");
+        for (int i = 0; i < 3; i++) {
+            PropertyMap map = new PropertyMap("property:collapsed");
+
+            PropertySimple nameProperty = new PropertySimple("name:0", "test" + index);
+            map.put(nameProperty);
+            index++;
+
+            PropertySimple valueProperty = new PropertySimple("value:1", "test" + index);
+            map.put(valueProperty);
+            index++;
+
+            list.add(map);
+        }
+
+        Configuration conf = new Configuration();
+        conf.put(list);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        Assert.assertNotNull(cop);
+        Assert.assertEquals(cop.numberOfSteps(), 1);
+        Assert.assertEquals(cop.step(0).getOperation(), "write-attribute", "Step name was "
+            + cop.step(0).getOperation());
+
+        Map<String, Object> additionalProperties = cop.step(0).getAdditionalProperties();
+        Assert.assertEquals(additionalProperties.size(), 2);
+        Assert.assertEquals(additionalProperties.get("name"), "properties");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> value = (List<Map<String, Object>>) additionalProperties.get("value");
+        Assert.assertEquals(value.size(), 3);
+
+        index = 1;
+        for (Map<String, Object> map : value) {
+            Assert.assertTrue(map.containsKey("test" + index));
+            index++;
+            Assert.assertTrue(map.containsValue("test" + index));
+            index++;
+
+            Assert.assertEquals(map.size(), 1);
+        }
     }
 }

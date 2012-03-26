@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-embedded-slsb" })
+@Test(groups = { "as5.plugin", "as5.plugin.ejb3", "as5.plugin.ejb3.embedded.slsb" })
 public class Ejb3EmbeddedSLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
     
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
@@ -61,7 +61,7 @@ public class Ejb3EmbeddedSLSBResourceTest extends AbstractEjb3SessionBeanResourc
         super(new TestTemplate());
     }
     
-    @BeforeGroups(groups = "as5-plugin-ejb3", dependsOnMethods = "deployTestJars")
+    @BeforeGroups(groups = "as5.plugin.ejb3", dependsOnMethods = "deployTestJars")
     public void setupBean() {
         super.setupBean();
     }

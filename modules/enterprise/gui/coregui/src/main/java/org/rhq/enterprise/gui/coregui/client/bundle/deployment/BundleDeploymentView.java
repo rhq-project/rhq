@@ -34,10 +34,8 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
@@ -79,7 +77,6 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -151,11 +148,10 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         form.setGroupTitle(MSG.common_title_summary());
         form.setPadding(5);
 
-        LinkItem bundleName = new LinkItem("bundle");
+        StaticTextItem bundleName = new StaticTextItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
-        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
-        bundleName.setTarget("_self");
+        bundleName.setValue("<a href=\"" + LinkManager.getBundleLink(bundle.getId()) + "\">"
+            + StringUtility.escapeHtml(bundle.getName()) + "</a>");
 
         CanvasItem actionItem = new CanvasItem("actions");
         actionItem.setColSpan(1);
@@ -163,12 +159,11 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         actionItem.setShowTitle(false);
         actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
 
-        LinkItem bundleVersionName = new LinkItem("bundleVersion");
+        StaticTextItem bundleVersionName = new StaticTextItem("bundleVersion");
         bundleVersionName.setTitle(MSG.view_bundle_bundleVersion());
-        bundleVersionName.setValue(LinkManager.getBundleVersionLink(bundle.getId(), deployment.getBundleVersion()
-            .getId()));
-        bundleVersionName.setLinkTitle(deployment.getBundleVersion().getVersion());
-        bundleVersionName.setTarget("_self");
+        bundleVersionName.setValue("<a href=\""
+            + LinkManager.getBundleVersionLink(bundle.getId(), deployment.getBundleVersion().getId()) + "\">"
+            + StringUtility.escapeHtml(deployment.getBundleVersion().getVersion()) + "</a>");
 
         StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
         deployed.setValue(TimestampCellFormatter.format(deployment.getCtime(),
@@ -177,11 +172,11 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
         deployedBy.setValue(deployment.getSubjectName());
 
-        LinkItem destinationGroup = new LinkItem("group");
+        StaticTextItem destinationGroup = new StaticTextItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup()));
-        destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
-        destinationGroup.setTarget("_self");
+        destinationGroup.setValue("<a href=\""
+            + LinkManager.getResourceGroupLink(deployment.getDestination().getGroup()) + "\">"
+            + StringUtility.escapeHtml(deployment.getDestination().getGroup().getName()) + "</a>");
 
         StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
         destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
@@ -343,7 +338,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
         table.setShowFooterRefresh(false);
 
-        TitleBar titleBar = new TitleBar(this,MSG.view_bundle_deploy_selectARow());
+        TitleBar titleBar = new TitleBar(this, MSG.view_bundle_deploy_selectARow());
         table.setTitleBar(titleBar);
 
         // resource icon field

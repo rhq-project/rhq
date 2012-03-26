@@ -28,7 +28,6 @@ import com.smartgwt.client.data.RelativeDate;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -41,6 +40,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 
 import java.util.LinkedHashMap;
@@ -129,13 +129,8 @@ public class ExportModalWindow {
         HLayout headerLayout = new HLayout();
         headerLayout.setHeight(25);
         headerLayout.setAlign(Alignment.CENTER);
-        Label header = new Label();
-        header.setContents("Export Settings");
-        header.setWidth100();
-        header.setHeight(20);
-        header.setPadding(5);
-        //header.setStyleName("HeaderLabel");
-        headerLayout.addMember(header);
+        TitleBar titleBar = new TitleBar(exportWindow, "Export Settings", IconEnum.REPORT.getIcon24x24Path());
+        headerLayout.addMember(titleBar);
         dialogLayout.addMember(headerLayout);
 
         HLayout formLayout = new HLayout();
@@ -162,7 +157,7 @@ public class ExportModalWindow {
         dateRangeItem.setValue(dateRange);
 
 
-        form.setItems(formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
+        form.setItems(new SpacerItem(),formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
         formLayout.addMember(form);
         dialogLayout.addMember(formLayout);
 

@@ -20,10 +20,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.DateRange;
@@ -38,13 +35,17 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.DateRangeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -54,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 public class ExportModalWindow {
 
     //@todo:pull from message bundle
-    private static String BASE_URL = "http://localhost:7080/rest/1/reports/";
+    private static String BASE_URL = GWT.getHostPageBaseURL() + "rest/1/reports/";
 
     private static final String FORMAT_FIELD = "format";
     private static final String DETAILS_FIELD = "details";
@@ -121,17 +122,18 @@ public class ExportModalWindow {
 
     private void createDialogWindow() {
         exportWindow = new PopupWindow("exportSettings", null);
-        exportWindow.setTitle("Export Settings");
+        exportWindow.setTitle("Export Dialog");
 
         VLayout dialogLayout = new VLayout();
 
         HLayout headerLayout = new HLayout();
+        headerLayout.setHeight(25);
         headerLayout.setAlign(Alignment.CENTER);
         Label header = new Label();
         header.setContents("Export Settings");
         header.setWidth100();
-        header.setHeight(40);
-        header.setPadding(10);
+        header.setHeight(20);
+        header.setPadding(5);
         //header.setStyleName("HeaderLabel");
         headerLayout.addMember(header);
         dialogLayout.addMember(headerLayout);
@@ -160,7 +162,7 @@ public class ExportModalWindow {
         dateRangeItem.setValue(dateRange);
 
 
-        form.setItems(formatsList, detailCheckboxItem, dateRangeItem);
+        form.setItems(formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
         formLayout.addMember(form);
         dialogLayout.addMember(formLayout);
 

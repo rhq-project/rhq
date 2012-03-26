@@ -84,8 +84,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     // ******************************* OPERATIONS ******************************* //
-    // TODO: Re-enable once fixed.
-    @Test(priority = 12, enabled = false)
+    @Test(priority = 12)
     public void testReloadOperation() throws Exception {
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }

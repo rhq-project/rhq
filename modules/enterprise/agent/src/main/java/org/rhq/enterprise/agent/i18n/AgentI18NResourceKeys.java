@@ -540,7 +540,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The agent has been configured with server auto-detection enabled; however, the multicast detector communications service has been disabled. Auto-detection needs that multicast detector in order to work. Auto-detection will, therefore, be disabled.")
     String WEIRD_AUTO_DETECT_CONFIG = "AgentMain.weird-auto-detect-config";
 
-    @I18NMessage("Neither server auto-detection nor polling is enabled - the client will be allowed to start sending commands immediately, but when the server is offline, be prepared for alot of errors to be logged")
+    @I18NMessage("Server auto-detection is not enabled - starting the poller immediately")
     String NO_AUTO_DETECT = "AgentMain.no-auto-detect";
 
     @I18NMessage("Native system info is enabled, but the system info API is not accessible on this platform "
@@ -2116,4 +2116,16 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("The config file already has a security token defined. The original security token will be thrown away.")
     String NOT_RESTORING_SECURITY_TOKEN = "AgentMain.not-restoring-security-token";
+
+    @I18NMessage("Starting polling to determine sender status")
+    String PING_EXECUTOR_STARTING_POLLING = "AgentMain.ping-executor.starting-polling";
+
+    @I18NMessage("Stopping polling and resuming pinging")
+    String PING_EXECUTOR_STOPPING_POLLING_RESUME_PING = "AgentMain.ping-executor.stop-polling-resume-ping";
+
+    @I18NMessage("Starting polling to determine sender status (server ping failed)")
+    String PING_EXECUTOR_STARTING_POLLING_AFTER_EXCEPTION = "AgentMain.ping-executor.start-polling-after-exception";
+
+    @I18NMessage("Server ping failed")
+    String PING_EXECUTOR_SERVER_PING_FAILED = "AgentMain.ping-executor.server-ping-failed";
 }

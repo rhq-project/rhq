@@ -20,9 +20,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.DateRange;
@@ -40,10 +37,12 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -146,7 +145,7 @@ public class ExportModalWindow {
         formatsList.setDefaultValue("csv");
 
         CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
-        detailCheckboxItem.setDisabled(!showDetail);
+        detailCheckboxItem.setVisible(showDetail);
         detailCheckboxItem.setValue(false);
 
         DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
@@ -163,6 +162,16 @@ public class ExportModalWindow {
 
         ToolStrip buttonBar = new ToolStrip();
         buttonBar.setAlign(Alignment.RIGHT);
+        buttonBar.setPadding(5);
+        buttonBar.setMembersMargin(10);
+
+        IButton cancelButton = new IButton("Cancel", new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                exportWindow.hide();
+            }
+        });
+        buttonBar.addMember(cancelButton);
 
         IButton finishButton = new IButton("Export", new ClickHandler() {
             @Override
@@ -172,6 +181,7 @@ public class ExportModalWindow {
             }
         });
         buttonBar.addMember(finishButton);
+
         dialogLayout.addMember(buttonBar);
 
         exportWindow.addItem(dialogLayout);

@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.List;
-
 import com.google.gwt.user.client.Window;
+import com.smartgwt.client.data.DateRange;
+import com.smartgwt.client.data.RelativeDate;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.IButton;
@@ -28,14 +28,17 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.DateRangeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+
+import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -68,9 +71,15 @@ public class ExportModalWindow {
         this.reportUrl = reportUrl;
         createDialogWindow();
     }
+    private ExportModalWindow(String reportUrl, boolean showDetail) {
+        this.reportUrl = reportUrl;
+        this.showDetail = showDetail;
+        createDialogWindow();
+    }
 
     public static ExportModalWindow createStandardExportWindow(String reportUrl) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        newExportDialog.setShowDetail(false);
         return newExportDialog;
     }
 
@@ -91,11 +100,16 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
+    public static ExportModalWindow createInventorySummaryExportWindow(String reportUrl) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, true);
+        return newExportDialog;
+    }
+
     private void createDialogWindow() {
         exportWindow = new PopupWindow("exportSettings", null);
+        exportWindow.setTitle("Export Settings");
 
-        VLayout layout = new VLayout();
-        layout.setTitle("Export Settings");
+        VLayout dialogLayout = new VLayout();
 
         HLayout headerLayout = new HLayout();
         headerLayout.setAlign(Alignment.CENTER);
@@ -106,7 +120,7 @@ public class ExportModalWindow {
         header.setPadding(10);
         //header.setStyleName("HeaderLabel");
         headerLayout.addMember(header);
-        layout.addMember(headerLayout);
+        dialogLayout.addMember(headerLayout);
 
         HLayout formLayout = new HLayout();
         formLayout.setAlign(VerticalAlignment.TOP);
@@ -115,18 +129,24 @@ public class ExportModalWindow {
 
         final SelectItem formatsList = new SelectItem("Format", "Format");
         formatsList.setValueMap("CSV", "XML");
+        formatsList.setDefaultValue("CSV");
 
-//        CheckboxItem detailCheckboxItem = new CheckboxItem();
-//        detailCheckboxItem.setTitle("Show Detail");
-//        if(showDetail){
-//            detailCheckboxItem.show();
-//        }else {
-//            detailCheckboxItem.hide();
-//        }
-        form.setItems(formatsList);
+        CheckboxItem detailCheckboxItem = new CheckboxItem();
+        detailCheckboxItem.setTitle("Show Detail");
+        detailCheckboxItem.setDisabled(!showDetail);
+        detailCheckboxItem.setValue(false);
 
+        DateRangeItem dateRangeItem = new DateRangeItem("dri", "Date Range");
+        dateRangeItem.setAllowRelativeDates(true);
+        DateRange dateRange = new DateRange();
+        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
+        dateRange.setRelativeEndDate(RelativeDate.TODAY);
+        dateRangeItem.setValue(dateRange);
+
+
+        form.setItems(formatsList, detailCheckboxItem, dateRangeItem);
         formLayout.addMember(form);
-        layout.addMember(formLayout);
+        dialogLayout.addMember(formLayout);
 
         ToolStrip buttonBar = new ToolStrip();
         buttonBar.setAlign(Alignment.RIGHT);
@@ -139,9 +159,9 @@ public class ExportModalWindow {
             }
         });
         buttonBar.addMember(finishButton);
-        layout.addMember(buttonBar);
+        dialogLayout.addMember(buttonBar);
 
-        exportWindow.addItem(layout);
+        exportWindow.addItem(dialogLayout);
     }
 
     public void setAlertPriorityList(List<AlertPriority> alertPriorityList) {
@@ -159,6 +179,11 @@ public class ExportModalWindow {
     public boolean  isShowDetail(){
         return showDetail;
     }
+
+    public void setShowDetail(boolean showDetail) {
+        this.showDetail = showDetail;
+    }
+
     public void show() {
         exportWindow.show();
     }

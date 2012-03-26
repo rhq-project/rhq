@@ -436,6 +436,8 @@
             -  can still shut down the servers fired up.
             -->
             <configuration>
+              <skipTests>false</skipTests>
+              <skipITs>false</skipITs>
               <includes>
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
                 <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>

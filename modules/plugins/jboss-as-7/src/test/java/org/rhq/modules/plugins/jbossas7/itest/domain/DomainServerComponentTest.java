@@ -46,6 +46,16 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
+    @Override
+    protected String getBindAddressSystemPropertyName() {
+        return "jboss.domain.bindAddress";
+    }
+
+    @Override
+    protected String getPortOffsetSystemPropertyName() {
+        return "jboss.domain.portOffset";
+    }
+
     @RunDiscovery
     @Test(priority = 20, groups = "discovery")
     public void testDomainServerDiscovery() throws Exception {

@@ -54,6 +54,16 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
+    @Override
+    protected String getBindAddressSystemPropertyName() {
+        return "jboss.standalone.bindAddress";
+    }
+
+    @Override
+    protected String getPortOffsetSystemPropertyName() {
+        return "jboss.standalone.portOffset";
+    }
+
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery
     public void testStandaloneServerDiscovery() throws Exception {

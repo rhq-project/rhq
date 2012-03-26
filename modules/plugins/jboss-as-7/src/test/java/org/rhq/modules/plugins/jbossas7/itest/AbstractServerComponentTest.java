@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7.itest;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -71,8 +72,27 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         assertNotNull(getServerResource(),
                 getServerResourceType() + " Resource with key [" + getServerResourceKey() + "] was not discovered.");
         System.out.println("===== Discovered: " + getServerResource());
-        System.out.println("---------- " + getServerResource().getPluginConfiguration().toString(true));
+        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+        System.out.println("---------- " + pluginConfig.toString(true));
+        validatePluginConfiguration(pluginConfig);
     }
+
+    private void validatePluginConfiguration(Configuration pluginConfig) {
+        String hostname = pluginConfig.getSimpleValue("hostname", null);
+        String expectedHostname = System.getProperty(getBindAddressSystemPropertyName());
+        assertEquals(hostname, expectedHostname, "Plugin config prop [hostname].");
+
+        String portString = pluginConfig.getSimpleValue("port", null);
+        Integer port = (portString != null) ? Integer.valueOf(portString) : null;
+        String portOffsetString = System.getProperty(getPortOffsetSystemPropertyName());
+        int portOffset = (portOffsetString != null) ? Integer.valueOf(portOffsetString) : 0;
+        Integer expectedPort = portOffset + 9990;        
+        assertEquals(port, expectedPort, "Plugin config prop [port].");
+    }
+
+    protected abstract String getBindAddressSystemPropertyName();
+    
+    protected abstract String getPortOffsetSystemPropertyName();
 
     public void testMetricsHaveNonNullValues() throws Exception {
         assertAllNumericMetricsAndTraitsHaveNonNullValues(getServerResource());

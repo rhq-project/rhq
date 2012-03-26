@@ -2647,4 +2647,27 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
      </service>
 
+     <service name="JAXR"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JAXR subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jaxr" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="connection-factory" required="false" type="string" readOnly="false" description="The JNDI name for the ConnectionFactory"/>
+            <c:simple-property name="publish-url" required="false" type="string" readOnly="false" description="The jUDDI server publish URL"/>
+            <c:simple-property name="query-url" required="false" type="string" readOnly="false" description="The jUDDI server query URL"/>
+        </resource-configuration>
+
+     </service>
+
 </plugin>

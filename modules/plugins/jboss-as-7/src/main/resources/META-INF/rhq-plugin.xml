@@ -957,7 +957,7 @@
 
     </server>
 
-    <server name="Transactions Subsystem"
+    <service name="Transactions Subsystem"
             discovery="SubsystemDiscovery"
             class="BaseComponent"
             singleton="true"

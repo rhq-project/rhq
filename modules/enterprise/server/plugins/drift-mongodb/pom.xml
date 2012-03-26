@@ -15,13 +15,13 @@
     <description>Server side plugin providing MongoDB Backend for drift management</description>
 
     <properties>
-      <!-- 
+      <!--
         skipping mongodb tests by default for dev builds since a MongoDB
         server install is not a prerequisite for development environment.
         MongoDB is however is installed on jenkins and MongoDB tests will
         run in jenkins builds.
       -->
-      <skip.mongodb.tests>true</skip.mongodb.tests</skip.mongodb.tests>       
+      <skip.mongodb.tests>true</skip.mongodb.tests>
     </properties>
 
     <dependencies>

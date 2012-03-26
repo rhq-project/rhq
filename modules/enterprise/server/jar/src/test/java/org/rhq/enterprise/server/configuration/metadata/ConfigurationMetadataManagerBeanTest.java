@@ -153,7 +153,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
         String propertyName = "myMap";
         PropertyDefinitionMap map = originalConfigDef.getPropertyDefinitionMap(propertyName);
-        Map<String, PropertyDefinition> propDefs = map.getPropertyDefinitions();
+        Map<String, PropertyDefinition> propDefs = map.getMap();
         assertEquals("Expected three properties in unchanged map", 2, propDefs.size());
         assertEquals("Expected property to be kept", "property1ToKeep", propDefs.get("property1ToKeep").getName());
         assertEquals("Expected property to be kept", "property2ToKeep", propDefs.get("property2ToKeep").getName());
@@ -167,7 +167,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
         String propertyName = "myMap";
         PropertyDefinitionMap map = originalConfigDef.getPropertyDefinitionMap(propertyName);
-        Map<String, PropertyDefinition> propDefs = map.getPropertyDefinitions();
+        Map<String, PropertyDefinition> propDefs = map.getMap();
         assertEquals("Expected three properties in updated map", 3, propDefs.size());
         assertEquals("Expected property to be kept", "property1ToKeep", propDefs.get("property1ToKeep").getName());
         assertEquals("Expected property to be added", "propertyToAdd", propDefs.get("propertyToAdd").getName());
@@ -195,7 +195,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         assertPropertyDefinitionMatches("Expected property who is a child of map to get updated and remain in the map",
             expected, actual, ignoredProperties);
 
-        assertEquals("Expected order_index to be 0", 0, actualMap.getPropertyDefinitions().get("propertyToUpdate")
+        assertEquals("Expected order_index to be 0", 0, actualMap.getMap().get("propertyToUpdate")
             .getOrder());
     }
 

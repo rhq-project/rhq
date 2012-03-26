@@ -22,18 +22,18 @@
  */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
+import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.values.CompositeValue;
+import org.jboss.metatype.api.values.CompositeValueSupport;
 import org.jboss.metatype.api.values.EnumValue;
+import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
+
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
-
-import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.values.CompositeValue;
-import org.jboss.metatype.api.values.CompositeValueSupport;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
 
 /**
  * This class provides code that maps back and forth between a {@link PropertyMap} and a {@link CompositeValueSupport}.
@@ -42,14 +42,11 @@ import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
  *
  * @author Ian Springer
  */
-public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyMapToCompositeValueAdapter
-        implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
-{
-    protected void putValue(CompositeValue compositeValue, String key, MetaValue value)
-    {
-        CompositeValueSupport compositeValueSupport = (CompositeValueSupport)compositeValue;
-        if ((value instanceof EnumValue) && (((EnumValue) value).getValue() == null))
-        {
+public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyMapToCompositeValueAdapter implements
+    PropertyAdapter<PropertyMap, PropertyDefinitionMap> {
+    protected void putValue(CompositeValue compositeValue, String key, MetaValue value) {
+        CompositeValueSupport compositeValueSupport = (CompositeValueSupport) compositeValue;
+        if ((value instanceof EnumValue) && (((EnumValue) value).getValue() == null)) {
             // set() does not accept EnumValues with an inner value of null (it throws a nasty
             // IllegalArgumentException), so in such a case, pass null as the value instead.
             value = null;
@@ -57,23 +54,18 @@ public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyM
         compositeValueSupport.set(key, value);
     }
 
-    protected CompositeValue createCompositeValue(PropertyDefinitionMap propDefMap, MetaType metaType)
-    {
+    protected CompositeValue createCompositeValue(PropertyDefinitionMap propDefMap, MetaType metaType) {
         MutableCompositeMetaType compositeMetaType;
         if (metaType != null)
-            compositeMetaType = (MutableCompositeMetaType)metaType;
-        else
-        {
+            compositeMetaType = (MutableCompositeMetaType) metaType;
+        else {
             // TODO: See if this else block is actually necessary (I think it is needed for creates).
-            String name = (propDefMap != null) ?
-                    propDefMap.getName() : "CompositeMetaType";
-            String desc = (propDefMap != null && propDefMap.getDescription() != null) ?
-                    propDefMap.getDescription() : "none";
+            String name = (propDefMap != null) ? propDefMap.getName() : "CompositeMetaType";
+            String desc = (propDefMap != null && propDefMap.getDescription() != null) ? propDefMap.getDescription()
+                : "none";
             compositeMetaType = new MutableCompositeMetaType(name, desc);
-            if (propDefMap != null)
-            {
-                for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions().values())
-                {
+            if (propDefMap != null) {
+                for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions()) {
                     String mapMemberDesc = (propDefMap.getDescription() != null) ? propDefMap.getDescription() : "none";
                     MetaType mapMemberMetaType = ConversionUtils.convertPropertyDefinitionToMetaType(mapMemberPropDef);
                     compositeMetaType.addItem(mapMemberPropDef.getName(), mapMemberDesc, mapMemberMetaType);

@@ -725,7 +725,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private void validateMapDefinition(PropertyDefinitionMap propertyDefinitionMap) {
-        for (PropertyDefinition mapMemberPropertyDefinition : propertyDefinitionMap.getPropertyDefinitions().values()) {
+        for (PropertyDefinition mapMemberPropertyDefinition : propertyDefinitionMap.getMap().values()) {
             if (!(mapMemberPropertyDefinition instanceof PropertyDefinitionSimple)) {
                 throw new IllegalStateException("Only maps of simple properties are supported.");
             }

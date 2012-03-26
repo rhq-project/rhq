@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,7 +44,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 import org.rhq.rhqtransform.NameMap;
-
 
 /**
  * Basic implementation of Augeas mapping to RHQ configuration based on property names.
@@ -97,7 +97,8 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
         return prop;
     }
 
-    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException {
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node)
+        throws AugeasRhqException {
         Object value;
         value = node.getValue();
         return new PropertySimple(propDefSimple.getName(), value);
@@ -105,7 +106,7 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
 
     public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
             propMap.put(loadProperty(mapEntryPropDef, node));
         }
         return propMap;

@@ -326,10 +326,10 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // alter existingPropDefs to reflect newPropDefs                
                 Map<String, PropertyDefinition> existingPropDefs = ((PropertyDefinitionMap) existingProperty)
-                    .getPropertyDefinitions();
+                    .getMap();
 
                 Map<String, PropertyDefinition> newPropDefs = ((PropertyDefinitionMap) newProperty)
-                    .getPropertyDefinitions();
+                    .getMap();
                 Set<String> newKeys = newPropDefs.keySet();
 
                 // remove obsolete propDefs

@@ -282,7 +282,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             propertyMap.put(additionalNameProperty);
         }
 
-        List<PropertyDefinition> propDefs = propDefMap.getOrderedPropertyDefinitions();
+        List<PropertyDefinition> propDefs = propDefMap.getPropertyDefinitions();
 
         if (propDefName.endsWith(":collapsed")) {
             // The result is a map of {" a" : " b" }, while the propdef is in the form

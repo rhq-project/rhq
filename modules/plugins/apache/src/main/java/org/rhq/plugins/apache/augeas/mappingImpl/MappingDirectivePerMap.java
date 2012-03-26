@@ -70,12 +70,11 @@ public class MappingDirectivePerMap extends AugeasToConfigurationSimple {
         PropertyMap map = new PropertyMap(directiveName);
 
         int idx = 0;
-        for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions().values()) {
+        for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions()) {
             if (propDef instanceof PropertyDefinitionSimple) {
-            	if (params.size()>idx)
-                {
-            	String value = params.get(idx);
-                map.put(Util.createPropertySimple((PropertyDefinitionSimple) propDef, value));
+                if (params.size() > idx) {
+                    String value = params.get(idx);
+                    map.put(Util.createPropertySimple((PropertyDefinitionSimple) propDef, value));
                 }
             }
             idx++;

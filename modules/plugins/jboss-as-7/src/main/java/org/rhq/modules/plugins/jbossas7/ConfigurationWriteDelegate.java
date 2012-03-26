@@ -262,7 +262,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
         String first=null;
         String second=null;
-        for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getPropertyDefinitions().entrySet()) {
+        for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getMap().entrySet()) {
             PropertyDefinition def = entry.getValue();
             if (!def.getName().contains(":"))
                 throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
@@ -422,7 +422,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
     private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef, Address address) {
-        Map<String,PropertyDefinition> memberDefinitions = mapDef.getPropertyDefinitions();
+        Map<String,PropertyDefinition> memberDefinitions = mapDef.getMap();
 
         Map<String,Object> results = new HashMap<String,Object>();
         for (String name : memberDefinitions.keySet()) {

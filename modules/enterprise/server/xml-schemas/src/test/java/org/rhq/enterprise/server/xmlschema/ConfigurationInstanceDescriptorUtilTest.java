@@ -342,7 +342,7 @@ public class ConfigurationInstanceDescriptorUtilTest {
         PropertyDefinitionMap mapDef = (PropertyDefinitionMap) propDef;
         PropertyMap mapProp = (PropertyMap) prop;
 
-        assertEquals(mapDef.getPropertyDefinitions().size(), 2, "Unexpected number of map member definitions");
+        assertEquals(mapDef.getMap().size(), 2, "Unexpected number of map member definitions");
         assertEquals(mapProp.getMap().size(), 2, "Unexpected number of map members");
         
         PropertyDefinition m1Def = mapDef.get("m1");

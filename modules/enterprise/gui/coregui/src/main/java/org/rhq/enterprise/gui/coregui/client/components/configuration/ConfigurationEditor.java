@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
@@ -310,8 +309,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            Log.debug("ConfigDef retrieved in: "
-                                + (System.currentTimeMillis() - start));
+                            Log.debug("ConfigDef retrieved in: " + (System.currentTimeMillis() - start));
                             configurationDefinition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (configurationDefinition == null) {
                                 loadingLabel.hide();
@@ -773,8 +771,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableVLayout layout = new LocatableVLayout(parentLocatorId + "_Layout");
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
-        LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(), propertyDefinitionMapFinal
-            .getPropertyDefinitions().values(), propertyMap);
+        LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(),
+            propertyDefinitionMapFinal.getPropertyDefinitions(), propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
@@ -825,8 +823,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             buttonBar.addMember(deleteControlsLayout);
 
             final SelectItem selectItem = new SelectItem();
-            selectItem.setValueMap(propertyDefinitionMap.getPropertyDefinitions().keySet()
-                .toArray(new String[propertyDefinitionMap.getPropertyDefinitions().size()]));
+            selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
+                .toArray(new String[propertyDefinitionMap.getMap().size()]));
             selectItem.setMultiple(true);
             selectItem.setMultipleAppearance(MultipleAppearance.GRID);
             selectItem.setTitle(MSG.common_button_delete());
@@ -894,7 +892,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private static boolean isDynamic(PropertyDefinitionMap propertyDefinitionMap) {
-        Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getMap();
         return memberPropertyDefinitions.isEmpty();
     }
 
@@ -933,9 +931,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setRecordEnabledProperty(null);
 
         List<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        final List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
-            memberPropertyDefinitionMap.getPropertyDefinitions().values());
-        Collections.sort(propertyDefinitions, new PropertyDefinitionComparator());
+        final List<PropertyDefinition> propertyDefinitions = memberPropertyDefinitionMap
+            .getPropertyDefinitions();
 
         List<PropertyDefinition> summaryPropertyDefinitions = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition subDef : propertyDefinitions) {
@@ -1562,14 +1559,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                     IntegerRangeValidator validator = new IntegerRangeValidator();
                     if (integerConstraint.getMinimum() != null) {
                         validator.setMin(integerConstraint.getMinimum().intValue());
-                    }
-                    else {
+                    } else {
                         validator.setMin(Integer.MIN_VALUE);
                     }
                     if (integerConstraint.getMaximum() != null) {
                         validator.setMax(integerConstraint.getMaximum().intValue());
-                    }
-                    else {
+                    } else {
                         validator.setMax(Integer.MAX_VALUE);
                     }
 
@@ -1601,9 +1596,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList,
         PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap, final boolean mapReadOnly) {
 
-        final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(memberMapDefinition
-            .getPropertyDefinitions().values());
-        Collections.sort(memberDefinitions, new PropertyDefinitionComparator());
+        final List<PropertyDefinition> memberDefinitions = memberMapDefinition.getPropertyDefinitions();
 
         final boolean newRow = (memberMap == null);
         final PropertyMap workingMap = (newRow) ? new PropertyMap(memberMapDefinition.getName()) : memberMap

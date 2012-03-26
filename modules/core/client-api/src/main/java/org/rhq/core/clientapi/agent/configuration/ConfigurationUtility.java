@@ -160,7 +160,7 @@ public abstract class ConfigurationUtility {
             if (propertyDefinition instanceof PropertyDefinitionMap) {
                 property = new PropertyMap(propertyDefinition.getName());
                 Map<String, PropertyDefinition> childPropertyDefinitions = ((PropertyDefinitionMap) propertyDefinition)
-                    .getPropertyDefinitions();
+                    .getMap();
                 for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
                     createDefaultProperty(childPropertyDefinition, (PropertyMap) property);
                 }
@@ -260,7 +260,7 @@ public abstract class ConfigurationUtility {
 
     private static void normalizePropertyMap(AbstractPropertyMap propertyMap,
         PropertyDefinitionMap propertyDefinitionMap) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             normalizeProperty(childPropertyDefinition, propertyMap);
         }
@@ -314,7 +314,7 @@ public abstract class ConfigurationUtility {
 
     private static void validatePropertyMap(AbstractPropertyMap propertyMap,
         PropertyDefinitionMap propertyDefinitionMap, List<String> errorMessages) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             validateProperty(childPropertyDefinition, propertyMap, errorMessages);
         }

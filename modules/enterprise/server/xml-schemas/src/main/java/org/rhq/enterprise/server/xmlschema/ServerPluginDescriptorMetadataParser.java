@@ -259,7 +259,7 @@ public class ServerPluginDescriptorMetadataParser {
 
             // the callback data will contain all simple properties in the schedule job map
             Properties callbackData = new Properties();
-            Map<String, PropertyDefinition> allPropDefs = jobMapDef.getPropertyDefinitions();
+            Map<String, PropertyDefinition> allPropDefs = jobMapDef.getMap();
             for (PropertyDefinition currentPropDef : allPropDefs.values()) {
                 if (currentPropDef instanceof PropertyDefinitionSimple) {
                     String currentPropDefName = currentPropDef.getName();

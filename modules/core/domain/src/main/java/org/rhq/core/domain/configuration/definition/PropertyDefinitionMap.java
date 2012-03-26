@@ -78,7 +78,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
      * @return The <name,propDef> Mapping. This guarantees no ordering.
      */
     @NotNull
-    public Map<String, PropertyDefinition> getPropertyDefinitions() {
+    public Map<String, PropertyDefinition> getMap() {
         if (this.map == null) {
             this.map = new HashMap<String, PropertyDefinition>();
         }
@@ -86,17 +86,17 @@ public class PropertyDefinitionMap extends PropertyDefinition {
         return map;
     }
 
-    public void setPropertyDefinitions(@NotNull Map<String, PropertyDefinition> propertyDefinitions) {
-        this.map = propertyDefinitions;
+    public void setMap(@NotNull Map<String, PropertyDefinition> map) {
+        this.map = map;
     }
 
     /**
-     * Convenience routine.
+     * Convenience routine to get the ordered properties from the Map. 
      * 
      * @return Not Null. The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
      */
-    public List<PropertyDefinition> getOrderedPropertyDefinitions() {
-        final List<PropertyDefinition> propDefs = new ArrayList<PropertyDefinition>(getPropertyDefinitions().values());
+    public List<PropertyDefinition> getPropertyDefinitions() {
+        final List<PropertyDefinition> propDefs = new ArrayList<PropertyDefinition>(getMap().values());
 
         Collections.sort(propDefs, new Comparator<PropertyDefinition>() {
             public int compare(PropertyDefinition o1, PropertyDefinition o2) {
@@ -118,7 +118,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     @NotNull
     public List<PropertyDefinition> getSummaryPropertyDefinitions() {
         List<PropertyDefinition> summaryDefinitions = new ArrayList<PropertyDefinition>();
-        for (PropertyDefinition propertyDefinition : getPropertyDefinitions().values()) {
+        for (PropertyDefinition propertyDefinition : getMap().values()) {
             if (propertyDefinition.isSummary()) {
                 summaryDefinitions.add(propertyDefinition);
             }
@@ -126,7 +126,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
 
         if (summaryDefinitions.isEmpty()) {
             // No properties were defined as summary properties - return the full list of properties.
-            summaryDefinitions.addAll(getPropertyDefinitions().values());
+            summaryDefinitions.addAll(getMap().values());
         }
 
         return summaryDefinitions;
@@ -145,7 +145,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     }
 
     public PropertyDefinition get(String name) {
-        return getPropertyDefinitions().get(name);
+        return getMap().get(name);
     }
 
     /**
@@ -155,7 +155,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
      * @param propertyDefinition
      */
     public void put(PropertyDefinition propertyDefinition) {
-        getPropertyDefinitions().put(propertyDefinition.getName(), propertyDefinition);
+        getMap().put(propertyDefinition.getName(), propertyDefinition);
         propertyDefinition.setParentPropertyMapDefinition(this);
     }
 }

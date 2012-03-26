@@ -2473,7 +2473,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     handlePDS(subject, pds);
                 } else if (memberDef instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
-                    for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                    for (PropertyDefinition inner : pdm.getPropertyDefinitions()) {
                         if (inner instanceof PropertyDefinitionSimple) {
                             handlePDS(subject, (PropertyDefinitionSimple) inner);
                         }
@@ -2485,7 +2485,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             } else if (pd instanceof PropertyDefinitionMap) {
                 PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
-                for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                for (PropertyDefinition inner : pdm.getPropertyDefinitions()) {
                     if (inner instanceof PropertyDefinitionSimple) {
                         handlePDS(subject, (PropertyDefinitionSimple) inner);
                     } else {

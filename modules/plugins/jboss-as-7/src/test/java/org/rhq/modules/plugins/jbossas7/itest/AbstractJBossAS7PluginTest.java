@@ -30,7 +30,6 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
-import org.rhq.test.arquillian.RunDiscovery;
 
 /**
  * The base class for all jboss-as-7 plugin integration tests.

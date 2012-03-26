@@ -29,7 +29,6 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
-import org.testng.Assert;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -69,6 +68,8 @@ import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
+
+import static org.testng.Assert.*;
 
 /**
  * The base class for an Agent plugin integration test class.
@@ -177,7 +178,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceType resourceType = resource.getResourceType();
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
                 operationName);
-        Assert.assertNotNull(operationDefinition, "No operation named [" + operationName
+        assertNotNull(operationDefinition, "No operation named [" + operationName
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
 
         long timeout = getDefaultTimeout(resource.getResourceType(), operationName);        
@@ -235,7 +236,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 metricsWithNullValues.add(metricDef.getName());
             }            
         }
-        Assert.assertEquals(metricsWithNullValues.size(), 0, "Null values were collected for the following metrics: "
+        assertTrue(metricsWithNullValues.isEmpty(), "Null values were collected for the following metrics: "
                 + metricsWithNullValues);
     }
     
@@ -246,7 +247,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         if (report.getNumericData().isEmpty()) {
             return null;
         }
-        Assert.assertEquals(report.getNumericData().size(), 1,
+        assertEquals(report.getNumericData().size(), 1,
                 "Requested a single metric but plugin returned more than one datum: " + report.getNumericData());
         MeasurementDataNumeric datum = report.getNumericData().iterator().next();
         // Normalize NaN or infinite to null, as the PC does.
@@ -263,7 +264,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         if (report.getTraitData().isEmpty()) {
             return null;
         }
-        Assert.assertEquals(report.getTraitData().size(), 1,
+        assertEquals(report.getTraitData().size(), 1,
                 "Requested a single trait but plugin returned more than one datum: " + report.getTraitData());
         MeasurementDataTrait datum = report.getTraitData().iterator().next();
         String value = datum.getValue();
@@ -286,7 +287,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceType resourceType = resource.getResourceType();
         MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
                 metricName);
-        Assert.assertNotNull(measurementDefinition, "No metric named [" + metricName
+        assertNotNull(measurementDefinition, "No metric named [" + metricName
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
                
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
@@ -334,7 +335,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected void assertOperationSucceeded(String operationName, Configuration params, OperationResult result) {
         String paramsString = (params != null) ? params.toString(true) : String.valueOf(params);
-        Assert.assertNull(result.getErrorMessage(), "Operation [" + operationName + "] with parameters " 
+        assertNull(result.getErrorMessage(), "Operation [" + operationName + "] with parameters "
                 + paramsString + " returned an error: " + result.getErrorMessage());
     }
     

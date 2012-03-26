@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -27,6 +26,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
+
+import static org.testng.Assert.*;
 
 /**
  * Test discovery and facets of the "JBossAS7 Standalone Server" Resource type.
@@ -89,10 +90,10 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @Test(priority = 13, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
         AvailabilityType avail = getAvailability(getServerResource());
-        Assert.assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
-        Assert.assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, AvailabilityType.UP);
     }
 
 }

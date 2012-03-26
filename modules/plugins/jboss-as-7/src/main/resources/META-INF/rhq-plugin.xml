@@ -2670,4 +2670,25 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
      </service>
 
+     <service name="JPA"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JPA subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+           <c:simple-property name="default-datasource" required="false" type="string" readOnly="false" description="The name of the default global datasource."/>
+        </resource-configuration>
+
+     </service>
+
 </plugin>

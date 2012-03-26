@@ -44,8 +44,6 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -64,7 +62,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -147,6 +144,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     class ResourceInstallReportTable extends Table<ResourceInstallReportTable.DataSource> {
 
+        private ExportChangeHandler exportChangeHandler;
+
         public ResourceInstallReportTable(String locatorId) {
             super(locatorId);
             setDataSource(new DataSource());
@@ -161,8 +160,12 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
             ListGridField fieldExport = new ListGridField("export", "Export");
 
+            exportChangeHandler = new ExportChangeHandler(getListGrid(), DataSource.Field.TYPEID,
+                DataSource.Field.EXPORT);
+
             fieldExport.setCanToggle(true);
             fieldExport.setCanEdit(true);
+            fieldExport.addChangedHandler(exportChangeHandler);
 
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
@@ -227,31 +230,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
             setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldExport);
             getListGrid().setEditEvent(ListGridEditEvent.CLICK);
+            getListGrid().setEditByCell(true);
             addExportAction();
-
-            getListGrid().addCellClickHandler(new CellClickHandler() {
-                @Override
-                public void onCellClick(CellClickEvent event) {
-                    if (event.getColNum() != 5) {
-                        return;
-                    }
-                    ListGridRecord record = event.getRecord();
-                    boolean export = record.getAttributeAsBoolean("export");
-                    record.setAttribute("export", !export);
-                    getListGrid().setEditValue(event.getRowNum(), 5, !export);
-                }
-            });
-        }
-
-        @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new LocatableListGrid(locatorId) {
-                @Override
-                public void setEditValue(int rowNum, int colNum, Record record) {
-                    boolean export = record.getAttributeAsBoolean("export");
-                    record.setAttribute("export", !export);
-                }
-            };
         }
 
         private void addExportAction() {
@@ -263,7 +243,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForInventorySummary("inventorySummary");
+                    ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForInventorySummary(
+                        "inventorySummary", exportChangeHandler.getResourceTypeIdsForExport());
                     exportModalWindow.show();
                     refreshTableInfo();
                 }

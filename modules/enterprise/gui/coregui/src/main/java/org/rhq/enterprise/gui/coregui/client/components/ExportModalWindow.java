@@ -20,6 +20,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.DateRange;
@@ -37,12 +41,10 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-
-import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -75,16 +77,17 @@ public class ExportModalWindow {
      */
     List<OperationRequestStatus> operationRequestStatusList;
 
-
+    Set<Integer> resourceTypeIdsForExport;
 
 
     private ExportModalWindow(String reportUrl) {
         this.reportUrl = reportUrl;
         createDialogWindow();
     }
-    private ExportModalWindow(String reportUrl, boolean showDetail) {
+    private ExportModalWindow(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
         this.reportUrl = reportUrl;
         this.showDetail = showDetail;
+        resourceTypeIdsForExport = resourceTypeIds;
         createDialogWindow();
     }
 
@@ -110,8 +113,9 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, true);
+    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl,
+        Set<Integer> resourceTypeIdsForExport) {
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, true, resourceTypeIdsForExport);
         return newExportDialog;
     }
 

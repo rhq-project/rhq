@@ -38,6 +38,7 @@ public enum IconEnum {
     // Inventory Tab
     /////////////////////////////
 
+    INVENTORY("global/Inventory_16.png","global/Inventory_24.png"),
     DISCOVERY_QUEUE("global/AutoDiscovery_16.png","global/AutoDiscovery_24.png"),
     ALL_RESOURCES("resources/all_resources.png"),
     PLATFORMS("types/Platform_up_16.png","types/Platform_up_24.png"),
@@ -55,6 +56,7 @@ public enum IconEnum {
     // Reports Tab
     /////////////////////////////
     TAGS("global/Tag_16.png","global/Tag_24.png" ),
+    REPORT("subsystems/report/Document_16.png","subsystems/report/Document_24.png" ),
     SUSPECT_METRICS("subsystems/monitor/Monitor_failed_16.png","subsystems/monitor/Monitor_failed_24.png"),
     CONFIGURATION_HISTORY("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
     RECENT_OPERATIONS("subsystems/control/Operation_16.png","subsystems/control/Operation_24.png"),
@@ -65,9 +67,21 @@ public enum IconEnum {
     INVENTORY_SUMMARY("subsystems/inventory/Inventory_16.png", "subsystems/inventory/Inventory_24.png"),
     PLATFORM_UTILIZATION("types/Platform_up_16.png", "types/Platform_up_24.png"),
     DRIFT_COMPLIANCE("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png"),
+
+    /////////////////////////////
+    //  HELP Tab
+    /////////////////////////////
+    HELP("global/Help_16.png", "global/Help_24.png"),
+
+    /////////////////////////////
+    //  Bundle Tab
+    /////////////////////////////
+    BUNDLE("subsystems/bundle/Bundle_16.png", "subsystems/bundle/Bundle_24.png"),
+
     /////////////////////////////
     //  Administration Tab
     /////////////////////////////
+    ADMIN("global/Admin_16.png", "global/Admin_24.png"),
     USERS("global/User_16.png", "global/User_24.png"),
     ROLES("global/Role_16.png", "global/Role_24.png"),
     CONFIGURE("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),

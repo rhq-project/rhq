@@ -102,7 +102,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * component refresh is needed to perform an availability check. That duration is set
      * to 15 minutes.
      */
-    private static final long AVAIL_REFRESH_INTERVAL = 1000 * 60 * 15;  // 15 minutes
+    private static final long AVAIL_REFRESH_INTERVAL = 1000 * 60 * 15; // 15 minutes
 
     /**
      * The ManagedComponent is fetched from the server in {@link #getManagedComponent} throughout
@@ -113,7 +113,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * perform an availability check.
      */
     private long lastComponentRefresh = 0L;
-    
+
     private long availRefreshInterval = AVAIL_REFRESH_INTERVAL;
 
     private RunState runState = RunState.UNKNOWN;
@@ -127,9 +127,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
         if (timeSinceComponentRefresh > availRefreshInterval) {
             if (log.isDebugEnabled()) {
-                log.debug("The availability refresh interval for [resourceKey: " + getResourceContext().getResourceKey()
-                        + ", type: " + componentType + ", name: " + componentName + "] has been exceeded by " +
-                        (timeSinceComponentRefresh - availRefreshInterval) + " ms. Reloading managed component.");
+                log.debug("The availability refresh interval for [resourceKey: "
+                    + getResourceContext().getResourceKey() + ", type: " + componentType + ", name: " + componentName
+                    + "] has been exceeded by " + (timeSinceComponentRefresh - availRefreshInterval)
+                    + " ms. Reloading managed component.");
             }
             getManagedComponent();
         }
@@ -138,8 +139,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             return AvailabilityType.UP;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(componentType + " component '" + componentName + "' was not running, state was : " +
-                        runState);
+                log.debug(componentType + " component '" + componentName + "' was not running, state was : " + runState);
             }
             return AvailabilityType.DOWN;
         }
@@ -252,6 +252,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         // Convert result MetaValue to corresponding Property type.
         ConversionUtils.convertManagedOperationResults(managedOperation, resultMetaValue, result.getComplexResults(),
             operationDefinition);
+        // If this is a lifecycle operation ask for an avail check
+        boolean availCheck = name.toLowerCase().equals("stop") || name.toLowerCase().contains("start");
+        if (availCheck) {
+            getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
+        }
+
         return result;
     }
 
@@ -273,7 +279,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                     log.error("Failed to collect metric for " + request, e);
                 } else {
                     log.debug("Failed to collect metric for " + request
-                            + ", but managed component is not in the RUNNING state.", e);
+                        + ", but managed component is not in the RUNNING state.", e);
                 }
             }
         }
@@ -430,12 +436,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         } catch (Exception e) {
             runState = RunState.UNKNOWN;
             throw new RuntimeException("Failed to load [" + this.componentType + "] ManagedComponent ["
-                    + this.componentName + "].", e);
+                + this.componentName + "].", e);
         }
         if (managedComponent == null) {
             runState = RunState.UNKNOWN;
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
-                    + this.componentName + "].");
+                + this.componentName + "].");
         }
         if (log.isTraceEnabled()) {
             log.trace("Retrieved " + toString(managedComponent) + ".");
@@ -458,7 +464,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     @NotNull
     private ManagedOperation getManagedOperation(ManagedComponent managedComponent,
-                                                 OperationDefinition operationDefinition) {
+        OperationDefinition operationDefinition) {
         Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations) {
             ConfigurationDefinition paramsConfigDef = operationDefinition.getParametersConfigurationDefinition();
@@ -506,14 +512,14 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
         if (component == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName() +
-                        ". Using default component refresh interval, " + AVAIL_REFRESH_INTERVAL + " ms");
+                log.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName()
+                    + ". Using default component refresh interval, " + AVAIL_REFRESH_INTERVAL + " ms");
             }
             return;
         }
 
-        String interval = component.getResourceContext().getPluginConfiguration().getSimpleValue(
-                "serviceAvailabilityRefreshInterval", Long.toString(AVAIL_REFRESH_INTERVAL));
+        String interval = component.getResourceContext().getPluginConfiguration()
+            .getSimpleValue("serviceAvailabilityRefreshInterval", Long.toString(AVAIL_REFRESH_INTERVAL));
         availRefreshInterval = Long.parseLong(interval) * 1000 * 60;
     }
 }

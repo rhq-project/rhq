@@ -71,12 +71,12 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion, Bundle
         DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.common_title_name());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, MSG
-            .common_title_description());
+        DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION,
+            MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceIntegerField fileCountField = new DataSourceIntegerField(FIELD_FILECOUNT, MSG
-            .view_bundle_bundleFiles());
+        DataSourceIntegerField fileCountField = new DataSourceIntegerField(FIELD_FILECOUNT,
+            MSG.view_bundle_bundleFiles());
         fields.add(fileCountField);
 
         return fields;
@@ -104,7 +104,6 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion, Bundle
         BundleVersionCriteria criteria = new BundleVersionCriteria();
         criteria.fetchBundleFiles(true);
         criteria.fetchBundle(true);
-        criteria.setPageControl(getPageControl(request));
 
         if (request.getCriteria().getValues().get("bundleId") != null) {
             criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues()

@@ -16,10 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.test.arquillian;
 
 import org.mockito.Mockito;
+import org.mockito.exceptions.misusing.NotAMockException;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -35,7 +35,7 @@ import org.rhq.core.pc.ServerServices;
 
 /**
  * An example server service extension that sets up the various server services
- * using mockito mocks.
+ * using Mockito mocks.
  *
  * @author Lukas Krejci
  */
@@ -55,15 +55,24 @@ public class MockingServerServices extends ServerServices {
     }
     
     public void resetMocks() {
-        Mockito.reset(getBundleServerService());
-        Mockito.reset(getConfigurationServerService());
-        Mockito.reset(getContentServerService());
-        Mockito.reset(getCoreServerService());
-        Mockito.reset(getDiscoveryServerService());
-        Mockito.reset(getDriftServerService());
-        Mockito.reset(getEventServerService());
-        Mockito.reset(getMeasurementServerService());
-        Mockito.reset(getOperationServerService());
-        Mockito.reset(getResourceFactoryServerService());
+        resetIfMock(getBundleServerService());
+        resetIfMock(getConfigurationServerService());
+        resetIfMock(getContentServerService());
+        resetIfMock(getCoreServerService());
+        resetIfMock(getDiscoveryServerService());
+        resetIfMock(getDriftServerService());
+        resetIfMock(getEventServerService());
+        resetIfMock(getMeasurementServerService());
+        resetIfMock(getOperationServerService());
+        resetIfMock(getResourceFactoryServerService());
     }
+
+    private void resetIfMock(Object mock) {
+        try {
+            Mockito.reset(mock);
+        } catch (NotAMockException e) {
+            // ignore (assume the test developer decided not to use a mock for this server service)
+        }
+    }
+
 }

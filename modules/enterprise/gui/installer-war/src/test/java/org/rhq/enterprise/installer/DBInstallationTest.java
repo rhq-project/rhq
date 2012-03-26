@@ -79,30 +79,6 @@ public class DBInstallationTest {
     }
 
     @Test
-    public void overwriteJON230Schema() throws Exception {
-        installSchemaAndData("2.3.0");
-        installer.createNewDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
-    public void upgradeJON230Schema() throws Exception {
-        installSchemaAndData("2.3.0");
-        installer.upgradeExistingDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
-    public void overwriteJON231Schema() throws Exception {
-        installSchemaAndData("2.3.1");
-        installer.createNewDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
-    public void upgradeJON231Schema() throws Exception {
-        installSchemaAndData("2.3.1");
-        installer.upgradeExistingDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
     public void overwriteJON240Schema() throws Exception {
         installSchemaAndData("2.4.0");
         installer.createNewDatabaseSchema(getInstallProperties());
@@ -126,6 +102,18 @@ public class DBInstallationTest {
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
 
+    @Test
+    public void upgradeRHQ420Schema() throws Exception {
+        installSchemaAndData("rhq-4.2.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
+    @Test
+    public void upgradeRHQ430Schema() throws Exception {
+        installSchemaAndData("rhq-4.3.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+    
     private void initLogDirectory() {
         File logDir = new File(LOG_DIRECTORY);
         if (logDir.exists()) {

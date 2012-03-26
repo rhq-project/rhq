@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
  * Test some measurement subsystem functionality
@@ -66,7 +67,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
     private Subject overlord;
 
-    private Resource resource1,resource2;
+    private Resource resource1, resource2;
     private MeasurementDefinition definitionCt1;
     private MeasurementDefinition definitionCt2;
     private ResourceType theResourceType;
@@ -86,7 +87,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         }
     }
 
-
     @AfterMethod
     public void afterMethod() {
 
@@ -100,20 +100,20 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             resourceIds.add(resource1.getId());
             resourceIds.add(resource2.getId());
             Query q = em.createNamedQuery(CallTimeDataKey.QUERY_DELETE_BY_RESOURCES);
-            q.setParameter("resourceIds",resourceIds);
+            q.setParameter("resourceIds", resourceIds);
             q.executeUpdate();
 
             resource1 = em.merge(resource1);
             for (MeasurementSchedule sched : resource1.getSchedules()) {
                 em.remove(sched);
             }
-            em.remove(resource1);
+            ResourceTreeHelper.deleteResource(em, resource1);
 
             resource2 = em.merge(resource2);
             for (MeasurementSchedule sched : resource2.getSchedules()) {
                 em.remove(sched);
             }
-            em.remove(resource2);
+            ResourceTreeHelper.deleteResource(em, resource2);
 
             definitionCt1 = em.merge(definitionCt1);
             em.remove(definitionCt1);
@@ -127,13 +127,11 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             em.remove(theAgent);
 
             commitAndClose(em);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
-
 
     @Test
     public void bz658491() throws Exception {
@@ -143,12 +141,12 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
             setupResources(em);
 
-            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1,resource1);
+            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
             em.persist(schedule1);
             definitionCt1.addSchedule(schedule1);
             resource1.addSchedule(schedule1);
 
-            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt1,resource2);
+            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt1, resource2);
             em.persist(schedule2);
             definitionCt1.addSchedule(schedule2);
             resource2.addSchedule(schedule2);
@@ -162,8 +160,8 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             CallTimeData data1 = new CallTimeData(request1);
             CallTimeData data2 = new CallTimeData(request2);
 
-            data1.addCallData("/foo", new Date(),100);
-            data2.addCallData("/bar", new Date(),200);
+            data1.addCallData("/foo", new Date(), 100);
+            data2.addCallData("/bar", new Date(), 200);
 
             MeasurementReport report = new MeasurementReport();
             report.addData(data1);
@@ -177,17 +175,16 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             // and the sleep "guarantees" that data is actually hitting the db
             Thread.sleep(10000);
 
-            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
-                now-DELTA,System.currentTimeMillis()+DELTA,new PageControl());
-            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule2.getId(),
-                now-DELTA,System.currentTimeMillis()+DELTA,new PageControl());
+            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,
+                schedule1.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
+            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataForResource(overlord,
+                schedule2.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
 
             assert list1 != null;
             assert list2 != null;
 
             assert list1.size() == 1 : "List 1 returned " + list1.size() + " entries, expected was 1";
             assert list2.size() == 1 : "List 2 returned " + list2.size() + " entries, expected was 1";
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -203,12 +200,12 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
             setupResources(em);
 
-            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1,resource1);
+            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
             em.persist(schedule1);
             definitionCt1.addSchedule(schedule1);
             resource1.addSchedule(schedule1);
 
-            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt2,resource1);
+            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt2, resource1);
             em.persist(schedule2);
             definitionCt1.addSchedule(schedule2);
             resource2.addSchedule(schedule2);
@@ -222,8 +219,8 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             CallTimeData data1 = new CallTimeData(request1);
             CallTimeData data2 = new CallTimeData(request2);
 
-            data1.addCallData("/foo", new Date(),100);
-            data2.addCallData("/bar", new Date(),200);
+            data1.addCallData("/foo", new Date(), 100);
+            data2.addCallData("/bar", new Date(), 200);
 
             MeasurementReport report = new MeasurementReport();
             report.addData(data1);
@@ -237,10 +234,10 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             // and the sleep "guarantees" that data is actually hitting the db
             Thread.sleep(10000);
 
-            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
-                now- DELTA,System.currentTimeMillis()+ DELTA,new PageControl());
-            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule2.getId(),
-                now- DELTA,System.currentTimeMillis()+ DELTA,new PageControl());
+            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,
+                schedule1.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
+            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataForResource(overlord,
+                schedule2.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
 
             assert list1 != null;
             assert list2 != null;
@@ -248,13 +245,11 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             assert list1.size() == 1 : "List 1 returned " + list1.size() + " entries, expected was 1";
             assert list2.size() == 1 : "List 2 returned " + list2.size() + " entries, expected was 1";
 
-
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
     }
-
 
     /**
      * Just set up two resources plus measurement definitions
@@ -270,15 +265,14 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         em.persist(theResourceType);
 
         definitionCt1 = new MeasurementDefinition("CT-Def1", MeasurementCategory.PERFORMANCE,
-            MeasurementUnits.MILLISECONDS, DataType.CALLTIME,true,60000, DisplayType.SUMMARY);
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 60000, DisplayType.SUMMARY);
         definitionCt1.setResourceType(theResourceType);
         em.persist(definitionCt1);
 
         definitionCt2 = new MeasurementDefinition("CT-Def2", MeasurementCategory.PERFORMANCE,
-            MeasurementUnits.MILLISECONDS, DataType.CALLTIME,true,60000, DisplayType.SUMMARY);
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 60000, DisplayType.SUMMARY);
         definitionCt2.setResourceType(theResourceType);
         em.persist(definitionCt2);
-
 
         resource1 = new Resource("test-platform-key1", "test-platform-name", theResourceType);
         resource1.setUuid("" + new Random().nextInt());

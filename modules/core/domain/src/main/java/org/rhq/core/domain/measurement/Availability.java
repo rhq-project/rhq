@@ -57,12 +57,13 @@ import org.rhq.core.domain.resource.Resource;
  * @author John Mazzitelli
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = Availability.FIND_CURRENT_BY_RESOURCE, query = "" //
-    + "  SELECT av " //
-    + "    FROM Availability av " //
-    + "   WHERE av.resource.id = :resourceId " //
-    + "     AND av.endTime IS NULL " //
-    + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
+@NamedQueries({
+    @NamedQuery(name = Availability.FIND_CURRENT_BY_RESOURCE, query = "" //
+        + "  SELECT av " //
+        + "    FROM Availability av " //
+        + "   WHERE av.resource.id = :resourceId " //
+        + "     AND av.endTime IS NULL " //
+        + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
     @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "" //
         + "  SELECT av " //
         + "    FROM Availability av " //
@@ -72,15 +73,25 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT av " //
         + "  FROM Availability av " //
         + " WHERE av.resource.id = :resourceId "), //
-
-    // get all current resource availabilities for those that do not match a given availability type
-    @NamedQuery(name = Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE, query = "" //
+    // get platform resource avail (i.e. most recent avail) for agent not matching given availability type
+    @NamedQuery(name = Availability.FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) " //
         + "  FROM Availability av " //
         + " WHERE av.resource.agent.id = :agentId " //
+        + "   AND av.resource.parentResource IS NULL " //
         + "   AND ((av.availabilityType <> :availabilityType AND :availabilityType IS NOT NULL) " //
         + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) " //
-        + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL))" //
+        + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL)) " //
+        + "   AND av.endTime IS NULL"), //
+    // get child resource avail (i.e. most recent avail) for agent not matching given availability type
+    @NamedQuery(name = Availability.FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) " //
+        + "  FROM Availability av " //
+        + " WHERE av.resource.agent.id = :agentId " //
+        + "   AND av.resource.parentResource IS NOT NULL " //        
+        + "   AND ((av.availabilityType <> :availabilityType AND av.availabilityType <> :disabled AND :availabilityType IS NOT NULL) " //
+        + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) " //
+        + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL)) " //
         + "   AND av.endTime IS NULL"), //
     @NamedQuery(name = Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL, query = "" //
         + "SELECT av FROM Availability av " //
@@ -112,7 +123,13 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND ( av.endTime >= :aTime OR av.endTime IS NULL ) "), //
     @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "" //
         + " DELETE Availability a " //
-        + "  WHERE a.resource.id IN ( :resourceIds )") })
+        + "  WHERE a.resource.id IN ( :resourceIds )"),
+    @NamedQuery(name = Availability.FIND_FOR_AGENT_PLATFORM, query = "" //
+        + "SELECT av FROM Availability av " //
+        + " WHERE av.resource.id = " //
+        + "   ( SELECT res.id FROM Resource res " //
+        + "      WHERE res.agent.id = :agentId " //
+        + "        AND res.parentResource.id IS NULL )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 @XmlRootElement
@@ -122,12 +139,14 @@ public class Availability implements Serializable {
     public static final String FIND_CURRENT_BY_RESOURCE = "Availability.findCurrentByResource";
     public static final String FIND_BY_RESOURCE = "Availability.findByResource";
     public static final String FIND_BY_RESOURCE_NO_SORT = "Availability.findByResourceNoSort";
-    public static final String FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE = "Availability.findNonmatchingWithResourceIdByAgentAndType";
+    public static final String FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE = "Availability.findPlatformCompositeByAgentAndNonmatchingType";
+    public static final String FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE = "Availability.findChildCompositeByAgentAndNonmatchingType";
     public static final String FIND_FOR_RESOURCE_WITHIN_INTERVAL = "Availability.findForResourceWithinInterval";
     public static final String FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL = "Availability.findForResourceGroupWithinInterval";
     public static final String FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL = "Availability.findForAutoGroupWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";
     public static final String QUERY_DELETE_BY_RESOURCES = "Availability.deleteByResources";
+    public static final String FIND_FOR_AGENT_PLATFORM = "Availability.findForAgentPlatform";
 
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 
@@ -140,7 +159,7 @@ public class Availability implements Serializable {
      * Start time of this availability state
      */
     @Column(name = "START_TIME", nullable = false)
-    private long startTime;
+    private Long startTime;
 
     /**
      * End time of this availability state (which is the start of the next availability time period)
@@ -151,7 +170,7 @@ public class Availability implements Serializable {
     /**
      * Availability state for this time period
      */
-    @Column(name = "AVAILABILITY_TYPE", nullable = true)
+    @Column(name = "AVAILABILITY_TYPE", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AvailabilityType availabilityType;
 
@@ -164,20 +183,30 @@ public class Availability implements Serializable {
     }
 
     /**
+     * StartTime defaults to current time
+     *
+     * @param resource
+     * @param type
+     */
+    public Availability(Resource resource, AvailabilityType type) {
+        this(resource, System.currentTimeMillis(), type);
+    }
+
+    /**
      * Constructor for {@link Availability}. If <code>type</code> is <code>null</code>, it will be considered unknown.
      *
      * @param resource
-     * @param startTime
+     * @param startTime if null set to current time
      * @param type
      */
-    public Availability(Resource resource, Date startTime, AvailabilityType type) {
+    public Availability(Resource resource, Long startTime, AvailabilityType type) {
         if (resource == null) {
             throw new IllegalArgumentException("resource==null");
         }
 
         this.resource = resource;
         this.availabilityType = type;
-        this.startTime = (startTime != null) ? startTime.getTime() : new Date().getTime();
+        this.startTime = (startTime != null) ? startTime : System.currentTimeMillis();
         this.endTime = null;
     }
 
@@ -189,12 +218,12 @@ public class Availability implements Serializable {
         return resource;
     }
 
-    public Date getStartTime() {
-        return new Date(startTime);
+    public Long getStartTime() {
+        return startTime;
     }
 
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime.getTime();
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 
     /**
@@ -203,36 +232,26 @@ public class Availability implements Serializable {
      *
      * @return end of the availability period
      */
-    public Date getEndTime() {
-        return (endTime != null) ? new Date(endTime.longValue()) : null;
+    public Long getEndTime() {
+        return endTime;
     }
 
-    public void setEndTime(Date endTime) {
-        this.endTime = (endTime != null) ? endTime.getTime() : null;
+    public void setEndTime(Long endTime) {
+        this.endTime = endTime;
     }
 
-    /**
-     * Indicates the availability status as either UP or DOWN; if <code>null</code> is returned, the status is unknown.
-     *
-     * @return availability status
-     */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
     }
 
-    /**
-     * Sets the availability status. This can be <code>null</code> to indicate an "unknown" availability status.
-     *
-     * @param availabilityType
-     */
     public void setAvailabilityType(AvailabilityType availabilityType) {
         this.availabilityType = availabilityType;
     }
 
     @Override
     public String toString() {
-        return "Availability[id=" + id + ",type=" + this.availabilityType + ",start-time=" + getStartTime()
-            + ",end-time=" + getEndTime() + "]";
+        return "Availability[id=" + id + ",type=" + this.availabilityType + ",start-time=" + new Date(getStartTime())
+            + ",end-time=" + ((null != getEndTime()) ? new Date(getEndTime()) : null) + "]";
     }
 
     @Override

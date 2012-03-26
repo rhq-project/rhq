@@ -32,6 +32,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -318,28 +319,21 @@ public class Deployer {
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
-        // If we are to fully manage the deployment dir, then we need to delete everything we find here.
-        // Any old files do not belong here - only our bundle files should live here now.
         if (this.deploymentData.isManageRootDir()) {
-            File destDir = this.deploymentData.getDestinationDir();
-            log.info(buildLogMessage("Will be managing the deploy dir[", destDir,
-                "]; backing up and purging any obsolete content existing in there"));
-            if (destDir.isDirectory()) {
-                int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
-                backupFiles(diff, deploymentId, destDir, dryRun, null, true);
-                if (!dryRun) {
-                    // we want to purge everything that is originally in here, but we backed up the files in here
-                    // so make sure we don't delete our metadata directory, which is where the backed up files are
-                    File[] doomedFiles = destDir.listFiles(new FilenameFilter() {
-                        @Override
-                        public boolean accept(File dir, String name) {
-                            return !DeploymentsMetadata.METADATA_DIR.equals(name);
-                        }
-                    });
-                    for (File doomedFile : doomedFiles) {
-                        FileUtil.purge(doomedFile, true);
-                    }
-                }
+            // We are to fully manage the deployment dir, so we need to delete everything we find there.
+            // Any old files do not belong here - only our bundle files should live here now.
+            File dir = this.deploymentData.getDestinationDir();
+            backupAndPurgeDirectory(diff, dir, dryRun, null);
+        } else {
+            // We are not to manage files in the root deployment directory. However, we always manage
+            // subdirectories that the bundle wants to deploy. So look in subdirectories that our bundles
+            // plan to use and remove files that found there.
+            // Note that we do the same thing here as we did above for the root dest dir, only we do it
+            // for all the immediate subdirectories that our bundle wants to manage.
+            Set<File> managedSubdirs = findManagedSubdirectories();
+            for (File managedSubdir : managedSubdirs) {
+                File dir = new File(this.deploymentData.getDestinationDir(), managedSubdir.getPath());
+                backupAndPurgeDirectory(diff, dir, dryRun, managedSubdir.getPath() + File.separatorChar);
             }
         }
 
@@ -531,6 +525,86 @@ public class Deployer {
 
         debug("Update deployment finished. dryRun=", dryRun);
         return newFileHashCodeMap;
+    }
+
+    private Set<File> findManagedSubdirectories() throws Exception {
+        final Set<File> managedSubdirs = new HashSet<File>();
+
+        // get top-most subdirectory for any raw file that is to be deployed in a subdirectory under the deploy dir
+        for (File rawFile : this.deploymentData.getRawFiles().values()) {
+            File parentDir = getTopMostParentDirectory(rawFile);
+            if (parentDir != null) {
+                managedSubdirs.add(parentDir);
+            }
+        }
+
+        // Loop through each zip and get all top-most subdirectories that the exploded zip files will have.
+        Set<File> zipFilesToAnalyze = new HashSet<File>(this.deploymentData.getZipFiles());
+        // We only have to do this analysis for those zips that we explode - remove from the list those we won't explode
+        Iterator<File> iter = zipFilesToAnalyze.iterator();
+        while (iter.hasNext()) {
+            File zipFile = iter.next();
+            // if the zip file is not found in the zips-exploded map (get()==null), we assume true (i.e. we will explode it)
+            // if the zip file is found in the zips-exploded map, see if we will explode it (i.e see if the boolean is true)
+            if (Boolean.FALSE.equals(this.deploymentData.getZipsExploded().get(zipFile))) {
+                iter.remove(); // we won't be exploding this zip, we can skip it from the analysis
+            }
+        }
+        for (File zipFileToAnalyze : zipFilesToAnalyze) {
+            ZipUtil.walkZipFile(zipFileToAnalyze, new ZipEntryVisitor() {
+                @Override
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    String relativePath = entry.getName();
+                    int firstPathSep = relativePath.indexOf('/'); // regardless of platform, zip always uses /
+                    if (firstPathSep != -1) {
+                        String topParentDir = relativePath.substring(0, firstPathSep);
+                        managedSubdirs.add(new File(topParentDir));
+                    }
+                    return true;
+                }
+            });
+        }
+
+        return managedSubdirs;
+    }
+
+    /**
+     * @param file a file with a relative path - null will be returned for files with absolute paths
+     * @return the top-most parent for the given file - null if there is no parent file or file is null itself
+     */
+    private File getTopMostParentDirectory(File file) {
+        if (file != null && !file.isAbsolute() && file.getParentFile() != null) {
+            File parentDir = file.getParentFile();
+            while (parentDir.getParentFile() != null) { // walk up the parents to get to the top most one
+                parentDir = parentDir.getParentFile();
+            }
+            return parentDir;
+        }
+        return null;
+    }
+
+    private void backupAndPurgeDirectory(DeployDifferences diff, File dir, boolean dryRun, String relativeTo)
+        throws Exception {
+        log.info(buildLogMessage("Will be managing the directory [", dir,
+            "]; backing up and purging any obsolete content existing in there"));
+        if (dir.isDirectory()) {
+            int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
+            backupFiles(diff, deploymentId, dir, dryRun, relativeTo, true);
+            if (!dryRun) {
+                // we want to purge everything that is originally in here, but we backed up the files in here
+                // so make sure we don't delete our metadata directory, which is where the backed up files are
+                File[] doomedFiles = dir.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return !DeploymentsMetadata.METADATA_DIR.equals(name);
+                    }
+                });
+                for (File doomedFile : doomedFiles) {
+                    FileUtil.purge(doomedFile, true);
+                }
+            }
+        }
+        return;
     }
 
     private void backupFile(DeployDifferences diff, int deploymentId, final String fileToBackupPath, boolean dryRun,

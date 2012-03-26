@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 
 /**

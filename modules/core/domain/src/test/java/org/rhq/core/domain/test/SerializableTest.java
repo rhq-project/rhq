@@ -35,7 +35,6 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -44,6 +43,7 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -72,9 +72,9 @@ public class SerializableTest {
     public void testSerialization() {
         List<Serializable> objects = new ArrayList<Serializable>();
         Serializable[] simpleObjects = new Serializable[] { new AvailabilityReport("fakeAgent"), new PackageType(),
-            new Architecture(), new Repo(), new ContentServiceRequest(),
-            new ContentSource(), new ContentSourceType(), new InstalledPackage(), new Package(),
-            new PackageInstallationStep(), new PackageType(), new PackageVersion() };
+            new Architecture(), new Repo(), new ContentServiceRequest(), new ContentSource(), new ContentSourceType(),
+            new InstalledPackage(), new Package(), new PackageInstallationStep(), new PackageType(),
+            new PackageVersion() };
         objects.addAll(Arrays.asList(simpleObjects));
 
         ResourceType resourceType = new ResourceType("name", "plugin", ResourceCategory.PLATFORM, null);
@@ -120,17 +120,17 @@ public class SerializableTest {
         AvailabilityReport report;
 
         report = new AvailabilityReport("the-agent-name");
-        report.addAvailability(new Availability(new Resource(), new Date(), AvailabilityType.UP));
+        report.addAvailability(new Availability(new Resource(), AvailabilityType.UP));
         assert ensureSerializable(report).getResourceAvailability().size() == 1;
 
         report = new AvailabilityReport("the-agent-name");
-        report.addAvailability(new Availability(new Resource(), new Date(), null));
+        report.addAvailability(new Availability(new Resource(), null));
         assert ensureSerializable(report).getResourceAvailability().size() == 1;
 
         report = new AvailabilityReport("the-agent-name");
-        report.addAvailability(new Availability(new Resource(), new Date(), AvailabilityType.UP));
-        report.addAvailability(new Availability(new Resource(), new Date(), AvailabilityType.DOWN));
-        report.addAvailability(new Availability(new Resource(), new Date(), null));
+        report.addAvailability(new Availability(new Resource(), AvailabilityType.UP));
+        report.addAvailability(new Availability(new Resource(), AvailabilityType.DOWN));
+        report.addAvailability(new Availability(new Resource(), null));
         assert ensureSerializable(report).getResourceAvailability().size() == 3;
     }
 

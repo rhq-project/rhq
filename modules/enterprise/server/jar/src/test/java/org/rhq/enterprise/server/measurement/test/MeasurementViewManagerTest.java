@@ -7,7 +7,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -21,6 +20,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 public class MeasurementViewManagerTest extends AbstractEJB3Test {
 
@@ -125,9 +125,10 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
                 removeDefinitions.executeUpdate();
             }
 
-            Query removeResources = em.createQuery("delete from Resource res where res.id IN ( :ids ) ");
-            removeResources.setParameter("ids", resourceIds);
-            removeResources.executeUpdate();
+            for (int resourceId : resourceIds) {
+                Resource r = em.find(Resource.class, resourceId);
+                ResourceTreeHelper.deleteResource(em, r);
+            }
 
             if (type != null) {
                 type = em.find(ResourceType.class, type.getId());

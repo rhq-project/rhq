@@ -23,7 +23,9 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +35,6 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -50,16 +51,14 @@ import org.jetbrains.annotations.NotNull;
 @DiscriminatorValue("map")
 @Entity(name = "PropertyDefinitionMap")
 @XmlRootElement(name = "PropertyDefinitionMap")
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
+@XmlSeeAlso({ PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyDefinitionMap extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
+    // use the propDef name as the map key
     @MapKey(name = "name")
     @OneToMany(mappedBy = "parentPropertyMapDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    // Tell Hibernate to use a temporally-ordered map, whose order corresponds to the order the member properties were
-    // specified in the plugin descriptor (because we initialize the map as a LinkedHashMap).
-    @OrderBy
     private Map<String, PropertyDefinition> map;
 
     public PropertyDefinitionMap(@NotNull String name, String description, boolean required,
@@ -75,17 +74,37 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     protected PropertyDefinitionMap() {
     }
 
+    /**
+     * @return The <name,propDef> Mapping. This guarantees no ordering.
+     */
     @NotNull
-    public Map<String, PropertyDefinition> getPropertyDefinitions() {
+    public Map<String, PropertyDefinition> getMap() {
         if (this.map == null) {
-            this.map = new LinkedHashMap<String, PropertyDefinition>();
+            this.map = new HashMap<String, PropertyDefinition>();
         }
 
         return map;
     }
 
-    public void setPropertyDefinitions(@NotNull Map<String, PropertyDefinition> propertyDefinitions) {
-        this.map = propertyDefinitions;
+    public void setMap(@NotNull Map<String, PropertyDefinition> map) {
+        this.map = map;
+    }
+
+    /**
+     * Convenience routine to get the ordered properties from the Map. 
+     * 
+     * @return Not Null. The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     */
+    public List<PropertyDefinition> getPropertyDefinitions() {
+        final List<PropertyDefinition> propDefs = new ArrayList<PropertyDefinition>(getMap().values());
+
+        Collections.sort(propDefs, new Comparator<PropertyDefinition>() {
+            public int compare(PropertyDefinition o1, PropertyDefinition o2) {
+                return Integer.valueOf(o1.getOrder()).compareTo(o2.getOrder());
+            }
+        });
+
+        return propDefs;
     }
 
     /**
@@ -99,7 +118,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     @NotNull
     public List<PropertyDefinition> getSummaryPropertyDefinitions() {
         List<PropertyDefinition> summaryDefinitions = new ArrayList<PropertyDefinition>();
-        for (PropertyDefinition propertyDefinition : getPropertyDefinitions().values()) {
+        for (PropertyDefinition propertyDefinition : getMap().values()) {
             if (propertyDefinition.isSummary()) {
                 summaryDefinitions.add(propertyDefinition);
             }
@@ -107,7 +126,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
 
         if (summaryDefinitions.isEmpty()) {
             // No properties were defined as summary properties - return the full list of properties.
-            summaryDefinitions.addAll(getPropertyDefinitions().values());
+            summaryDefinitions.addAll(getMap().values());
         }
 
         return summaryDefinitions;
@@ -126,11 +145,17 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     }
 
     public PropertyDefinition get(String name) {
-        return getPropertyDefinitions().get(name);
+        return getMap().get(name);
     }
 
+    /**
+     * If an order index is not set on the propertyDefinition it will be set to the current number
+     * of propDefs for the map. So, adding props to the map in the desired order will  
+     * the 
+     * @param propertyDefinition
+     */
     public void put(PropertyDefinition propertyDefinition) {
-        getPropertyDefinitions().put(propertyDefinition.getName(), propertyDefinition);
+        getMap().put(propertyDefinition.getName(), propertyDefinition);
         propertyDefinition.setParentPropertyMapDefinition(this);
     }
 }

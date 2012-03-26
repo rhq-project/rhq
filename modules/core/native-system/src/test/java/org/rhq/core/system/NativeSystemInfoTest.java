@@ -48,7 +48,7 @@ import org.testng.annotations.Test;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "native-system")
+@Test(groups = "native.system")
 public class NativeSystemInfoTest {
     private static final boolean ENABLED = true;
 

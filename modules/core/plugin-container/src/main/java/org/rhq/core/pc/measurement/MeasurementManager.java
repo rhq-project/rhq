@@ -347,6 +347,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             if (resourceContainer != null) {
                 //                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
@@ -578,7 +579,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     /**
      * Given the name of a trait, this will find the value of that trait for the given resource.
      * 
-     * @param resource the resource whose trait value is to be obtained
+     * @param container the container of the resource whose trait value is to be obtained
      * @param traitName the name of the trait whose value is to be obtained
      *
      * @return the value of the trait, or <code>null</code> if unknown

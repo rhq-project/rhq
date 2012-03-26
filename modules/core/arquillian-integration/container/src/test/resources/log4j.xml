@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 
 <!-- ===================================================================== -->
@@ -10,8 +11,8 @@
 <!-- $Id: log4j.xml 8776 2008-01-23 05:13:06Z ispringer $ -->
 
 <!--
-   | For more configuration infromation and examples see the Jakarta Log4j
-   | owebsite: http://jakarta.apache.org/log4j
+   | For more configuration information and examples see the Jakarta Log4j
+   | website: http://jakarta.apache.org/log4j
  -->
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="true">
@@ -25,7 +26,7 @@
          <!--
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
          -->
-         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n"/>
+         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} [%t] (%F:%M:%L)  -%m%n"/>
       </layout>
    </appender>
 
@@ -42,6 +43,10 @@
          <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n"/>
       </layout>
    </appender>
+
+   <category name="Sigar">
+      <priority value="WARN"/>
+   </category>
 
    <root>
       <appender-ref ref="CONSOLE"/>

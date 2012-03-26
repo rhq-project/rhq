@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -33,11 +37,12 @@ import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeV
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.*;
+import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The Administration top-level view.
@@ -97,7 +102,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         vLayout.setWidth100();
 
         // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
+        TitleBar titleBar = new TitleBar (this, MSG.view_admin_administration(), IconEnum.ADMIN.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
@@ -112,15 +117,15 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSecuritySection() {
         NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(UsersView.VIEW_ID,
-                    new UsersView(extendLocatorId("Users"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY)));
+                return new UsersView(extendLocatorId("Users"),
+                    getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 
         NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(RolesView.VIEW_ID,
-                    new RolesView(extendLocatorId("Roles"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY)));
+                return new RolesView(extendLocatorId("Roles"),
+                    getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 
@@ -134,43 +139,38 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(PAGE_SERVERS_VIEW_ID,
-                        new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
-                        "/rhq/ha/listServers-plain.xhtml?nomenu=true"));
+                    return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
+                        "/rhq/ha/listServers-plain.xhtml?nomenu=true");
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(PAGE_AGENTS_VIEW_ID,
-                    new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID.getName()),
-                    "/rhq/ha/listAgents-plain.xhtml?nomenu=true"));
+                return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID.getName()),
+                    "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(PAGE_AFFINITY_GROUPS_VIEW_ID,
-                    new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
-                        "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true"));
+                    return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
+                        "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(PAGE_PARTITION_EVENTS_VIEW_ID,
-                        new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
-                        "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true"));
+                    return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
+                        "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(RemoteAgentInstallView.VIEW_ID,
-                        new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall")));
+                    return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
@@ -189,8 +189,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem systemSettingsItem = new NavigationItem(SystemSettingsView.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(SystemSettingsView.VIEW_ID,
-                        new SystemSettingsView(extendLocatorId(SystemSettingsView.VIEW_ID.getName())));
+                    return new SystemSettingsView(extendLocatorId(SystemSettingsView.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
@@ -224,24 +223,21 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(DownloadsView.VIEW_ID,
-                        new DownloadsView(extendLocatorId(DownloadsView.VIEW_ID.getName())));
+                    return new DownloadsView(extendLocatorId(DownloadsView.VIEW_ID.getName()));
                 }
             });
 
         NavigationItem agentPluginsItem = new NavigationItem(AgentPluginTableView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(AgentPluginTableView.VIEW_ID,
-                        new AgentPluginTableView(extendLocatorId(AgentPluginTableView.VIEW_ID.getName())));
+                    return new AgentPluginTableView(extendLocatorId(AgentPluginTableView.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem serverPluginsItem = new NavigationItem(ServerPluginTableView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(ServerPluginTableView.VIEW_ID,
-                        new ServerPluginTableView(extendLocatorId(ServerPluginTableView.VIEW_ID.getName())));
+                    return new ServerPluginTableView(extendLocatorId(ServerPluginTableView.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
@@ -253,18 +249,16 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem contentSourcesItem = new NavigationItem(PAGE_CONTENT_SOURCES_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(PAGE_CONTENT_SOURCES_VIEW_ID,
-                        new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
-                        "/rhq/content/listContentProviders-plain.xhtml"));
+                    return new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
+                        "/rhq/content/listContentProviders-plain.xhtml");
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_REPOSITORIES));
 
         NavigationItem reposItem = new NavigationItem(PAGE_REPOS_VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(PAGE_REPOS_VIEW_ID,
-                    new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
-                        "/rhq/content/listRepos-plain.xhtml"));
+                    return new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
+                        "/rhq/content/listRepos-plain.xhtml");
                 }
             });
 

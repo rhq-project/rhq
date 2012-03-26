@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "native-system")
+@Test(groups = "native.system")
 public class JavaTest {
     @AfterMethod
     @BeforeMethod

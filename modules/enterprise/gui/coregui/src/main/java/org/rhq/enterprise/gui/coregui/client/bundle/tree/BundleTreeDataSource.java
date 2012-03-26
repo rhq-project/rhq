@@ -96,7 +96,6 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             // get the top nodes (the bundles)
             BundleCriteria criteria = new BundleCriteria();
             criteria.fetchDestinations(true);
-            criteria.setPageControl(getPageControl(request));
 
             bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
                 public void onFailure(Throwable caught) {

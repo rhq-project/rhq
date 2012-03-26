@@ -49,7 +49,7 @@ import org.rhq.core.domain.cloud.Server;
  * A JON agent.
  */
 @Entity(name = "Agent")
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Agent.QUERY_FIND_BY_NAME, query = "SELECT a FROM Agent a WHERE a.name = :name"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_ADDRESS_AND_PORT, query = "SELECT a FROM Agent a WHERE a.address = :address AND a.port = :port"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_AGENT_TOKEN, query = "SELECT a FROM Agent a WHERE a.agentToken = :agentToken"),
@@ -62,11 +62,11 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_REMOVE_SERVER_REFERENCE, query = "UPDATE Agent a SET a.server.id = NULL WHERE a.server.id = :serverId "),
     @NamedQuery(name = Agent.QUERY_COUNT_ALL, query = "SELECT count(a.id) FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_FOR_AGENT, query = "SELECT r.id FROM Resource r WHERE r.agent.id = :agentId"),
-    @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite "
+    @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite "
         + "       ( "
-        + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityReport,a.backFilled "
+        + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityPing,a.backFilled "
         + "       ) "
-        + "  FROM Agent a " + " WHERE a.lastAvailabilityReport < :dateThreshold "),
+        + "  FROM Agent a " + " WHERE a.lastAvailabilityPing < :dateThreshold "),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS_BY_SERVER, query = "" //
         + "SELECT a.id " //
         + "  FROM Agent a " //
@@ -196,6 +196,9 @@ public class Agent implements Serializable {
 
     @Column(name = "LAST_AVAILABILITY_REPORT")
     private Long lastAvailabilityReport;
+
+    @Column(name = "LAST_AVAILABILITY_PING")
+    private Long lastAvailabilityPing;
 
     @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -361,6 +364,25 @@ public class Agent implements Serializable {
     }
 
     /**
+     * Sets the timestamp when this agent last performed an availability ping.
+     *
+     * @param lastAvailabilityPing when the last availability ping was received by this agent
+     */
+    public void setLastAvailabilityPing(Long lastAvailabilityPing) {
+        this.lastAvailabilityPing = lastAvailabilityPing;
+    }
+
+    /**
+     * Returns the timestamp when this agent last performed an availability ping. If <code>null</code>, then this agent
+     * has yet to perform its very first availability ping.
+     *
+     * @return timestamp when the last availability ping was received from this agent
+     */
+    public Long getLastAvailabilityPing() {
+        return lastAvailabilityPing;
+    }
+
+    /**
      * Returns the {@link AffinityGroup} this agent currently belongs to.
      * 
      * @return the {@link AffinityGroup} this agent currently belongs to
@@ -508,7 +530,7 @@ public class Agent implements Serializable {
     @Override
     public String toString() {
         return "Agent[id=" + id + ",name=" + this.name + ",address=" + this.address + ",port=" + this.port
-            + ",remote-endpoint=" + this.remoteEndpoint + ",last-availability-report=" + this.lastAvailabilityReport
-            + "]";
+            + ",remote-endpoint=" + this.remoteEndpoint + ",last-availability-ping=" + this.lastAvailabilityPing
+            + ",last-availability-report=" + this.lastAvailabilityReport + "]";
     }
 }

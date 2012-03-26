@@ -20,17 +20,17 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.core.domain.measurement.test;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -69,24 +69,27 @@ public class CompositeLoadingTest extends AbstractEJB3Test {
                     + " WHERE a.endTime IS NULL AND a.resource.id = res.id AND res.id IN (:ids) ");
             q.setParameter("ids", ids);
             List<ResourceWithAvailability> rwas = q.getResultList();
-            assert rwas.size() == ids.size();
+            // multiple by 2 as each will have an initial UNKNOWN avail
+            Assert.assertEquals(rwas.size(), (ids.size() * 2),
+                "Incorrect number of ResourceWithAvailability entities returned - rwas=" + rwas + ", ids=" + ids);
 
             rwas.clear();
             em.clear();
-            q = em.createQuery("SELECT res,a.availabilityType " // 
+            q = em.createQuery("SELECT res, a.availabilityType " // 
                 + " FROM Resource res LEFT JOIN  res.availability a "
                 + " WHERE a.endTime IS NULL AND a.resource.id = res.id AND res.id IN (:ids) " //
                 + " ORDER BY res.name");
             q.setParameter("ids", ids);
             List<Object[]> rwas2 = q.getResultList();
-            assert rwas2.size() == ids.size();
+            Assert.assertEquals(rwas2.size(), (ids.size() * 2)); // multiple by 2 as each will have an initial UNKNOWN avail
+
             for (Object[] ob : rwas2) {
                 Resource r = (Resource) ob[0];
                 AvailabilityType at = (AvailabilityType) ob[1];
                 ResourceWithAvailability rwa = new ResourceWithAvailability(r, at);
                 rwas.add(rwa);
             }
-            assert rwas.size() == ids.size();
+            Assert.assertEquals(rwas.size(), (ids.size() * 2)); // multiple by 2 as each will have an initial UNKNOWN avail
 
         } finally {
             getTransactionManager().rollback();
@@ -100,23 +103,24 @@ public class CompositeLoadingTest extends AbstractEJB3Test {
         ResourceType resourceType = new ResourceType("fake platform", "fake plugin", ResourceCategory.PLATFORM, null);
         em.persist(resourceType);
         Resource platform = new Resource("org.jboss.on.TestPlatfor", "Fake Platform", resourceType);
-        platform.setUuid("" + new Random().nextInt());
+        platform.setUuid(UUID.randomUUID().toString());
         em.persist(platform);
-        Availability a = new Availability(platform, date, AvailabilityType.UP);
+        Availability a = new Availability(platform, date.getTime(), AvailabilityType.UP);
         ids.add(platform.getId());
         Resource platform2 = new Resource("org.jboss.on.TestPlatform2", "Fake Platform2", resourceType);
-        platform2.setUuid("" + new Random().nextInt());
+        platform2.setUuid(UUID.randomUUID().toString());
         em.persist(platform2);
-        Availability a2 = new Availability(platform2, date, AvailabilityType.UP);
+        Availability a2 = new Availability(platform2, date.getTime(), AvailabilityType.UP);
         ids.add(platform2.getId());
         Resource platform3 = new Resource("org.jboss.on.TestPlatform3", "Fake Platform3", resourceType);
-        platform3.setUuid("" + new Random().nextInt());
+        platform3.setUuid(UUID.randomUUID().toString());
         em.persist(platform3);
-        Availability a3 = new Availability(platform3, date, AvailabilityType.UP);
+        Availability a3 = new Availability(platform3, date.getTime(), AvailabilityType.UP);
         ids.add(platform3.getId());
         em.persist(a);
         em.persist(a2);
         em.persist(a3);
         return ids;
     }
+
 }

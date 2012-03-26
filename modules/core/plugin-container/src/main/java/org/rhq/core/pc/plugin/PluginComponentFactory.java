@@ -81,7 +81,8 @@ public class PluginComponentFactory implements ContainerService {
         }
 
         PluginManager pluginMgr = getPluginManager();
-        String className = pluginMgr.getMetadataManager().getDiscoveryClass(resourceType);
+        PluginMetadataManager metadataManager = pluginMgr.getMetadataManager();
+        String className = metadataManager.getDiscoveryClass(resourceType);
         String typeName = resourceType.getName();
         String pluginName = resourceType.getPlugin();
 

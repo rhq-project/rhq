@@ -1,13 +1,33 @@
-/**
- * 
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.test.arquillian.impl;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.jboss.arquillian.container.spi.Container;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
@@ -28,7 +48,9 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.test.arquillian.impl.util.SigarInstaller;
 import org.rhq.test.shrinkwrap.FilteredView;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
@@ -40,28 +62,45 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     private static final AtomicInteger CONTAINER_COUNT = new AtomicInteger(0);
     private static final File DEPLOYMENT_ROOT;
-
+    private static final File ROOT;
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
-
+    
+    private static final Map<String, Boolean> NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC = new HashMap<String, Boolean>();
+    
     static {
-        File f = null;
+        File root;
+        File deployments;
+        File sigar;
         try {
-            f = FileUtil.createTempDirectory("TEST_RHQ_PC_DEPLOYMENTS", null, null);
+            root = FileUtil.createTempDirectory("TEST_RHQ_PC_DEPLOYMENTS", null, null);
+            deployments = new File(root, "pcs");
+            deployments.mkdir();
+            
+            sigar = new File(root, "sigar");
+            sigar.mkdir();
         } catch (IOException e) {
-            f = null;
+            root = null;
+            deployments = null;
             throw new IllegalStateException(
                 "Could not create the root directory for RHQ plugin container test deployments");
         }
 
-        DEPLOYMENT_ROOT = f;
+        ROOT = root;
+        DEPLOYMENT_ROOT = deployments;
+        
+        //install sigar if available
+        SigarInstaller installer = new SigarInstaller(sigar);
+        if (installer.isSigarAvailable()) {
+            installer.installSigarNativeLibraries();
+        }
     }
 
     private static class ExcludeDirectory implements Filter<ArchivePath> {
 
         private ArchivePath root;
-        
+
         public ExcludeDirectory(ArchivePath root) {
             this.root = root;
         }
@@ -70,44 +109,58 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         public boolean include(ArchivePath object) {
             return !object.get().startsWith(root.get());
         }
-        
+
     }
-    
+
+    private static final Log LOG = LogFactory.getLog(RhqAgentPluginContainer.class);
+
     private RhqAgentPluginContainerConfiguration configuration;
     private File deploymentDirectory;
-
+    
     @Inject
     private Instance<Container> container;
-        
+
     @Override
     public Class<RhqAgentPluginContainerConfiguration> getConfigurationClass() {
         return RhqAgentPluginContainerConfiguration.class;
     }
 
+    public static void init() {
+        //this is just a dummy method that other classes can call to force the static
+        //initialization of this class.
+    }
+    
     public static PluginContainer switchPluginContainer(String deploymentName) throws Exception {
+        PluginContainer oldInstance = PluginContainer.getInstance();
         Method setInstance = PluginContainer.class.getMethod("setContainerInstance", String.class);
         setInstance.invoke(null, deploymentName);
+        PluginContainer newInstance = PluginContainer.getInstance();
+
+        if (newInstance != oldInstance) {
+            Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
+
+            if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
+                SystemInfoFactory.disableNativeSystemInfo();
+            } else {
+                SystemInfoFactory.enableNativeSystemInfo();
+            }
+
+            LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
+        }
         
-        return PluginContainer.getInstance();
+        return newInstance;
     }
-    
+
     public static PluginContainer getPluginContainer(String deploymentName) throws Exception {
         Method getInstance = PluginContainer.class.getMethod("getContainerInstance", String.class);
-        
+
         return (PluginContainer) getInstance.invoke(null, deploymentName);
     }
-    
+
     @Override
     public void setup(RhqAgentPluginContainerConfiguration configuration) {
         this.configuration = configuration;
         finalizeConfiguration(this.configuration);
-
-        try {
-            //just try it out early
-            switchPcInstance();
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not instantiate a modified PluginContainer");
-        }        
     }
 
     @Override
@@ -118,6 +171,9 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         } catch (Exception e) {
             throw new LifecycleException("Failed to switch plugin container.", e);
         }
+        
+        LOG.info("Starting PluginContainer " + container.get().getName());
+        
         startPc();
     }
 
@@ -128,6 +184,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         } catch (Exception e) {
             throw new LifecycleException("Failed to switch plugin container.", e);
         }
+        
+        LOG.info("Stopping PluginContainer " + container.get().getName());
         
         stopPc();
 
@@ -143,12 +201,14 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     @Override
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
+        LOG.info("Deploying " + archive + " to PluginContainer " + container.get().getName());
+        
         try {
             switchPcInstance();
         } catch (Exception e) {
             throw new DeploymentException("Failed to switch plugin container.", e);
         }
-        
+
         RhqAgentPluginArchive plugin = archive.as(RhqAgentPluginArchive.class);
 
         Node descriptor = plugin.get(ArchivePaths.create("META-INF/rhq-plugin.xml"));
@@ -164,30 +224,43 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             startPc();
         }
 
+        LOG.info("Done deploying " + archive + " to PluginContainer " + container.get().getName());
+        
         return new ProtocolMetaData();
     }
 
     @Override
     public void undeploy(Archive<?> archive) throws DeploymentException {
+        LOG.info("Undeploying " + archive + " from PluginContainer " + container.get().getName());
         try {
             switchPcInstance();
         } catch (Exception e) {
             throw new DeploymentException("Failed to switch plugin container.", e);
         }
-        
+
         RhqAgentPluginArchive plugin = archive.as(RhqAgentPluginArchive.class);
 
         boolean wasStarted = stopPc();
 
         File pluginDeploymentPath = getDeploymentPath(plugin);
 
-        if (!pluginDeploymentPath.delete()) {
-            throw new DeploymentException("Could not delete the RHQ plugin '" + plugin.getName());
+        if (pluginDeploymentPath.exists() && !pluginDeploymentPath.delete()) {
+            if (File.separatorChar == '/') {
+                // Unix
+                throw new DeploymentException("Could not delete the RHQ plugin jar " + plugin.getName());
+            } else {
+                // Windows
+                // TODO: file locking, probably due to 
+                // http://management-platform.blogspot.com/2009/01/classloaders-keeping-jar-files-open.html,
+                // is not allowing deletion. Perhaps this can be fixed at some point.                
+            }
         }
 
         if (wasStarted) {
             startPc();
         }
+        
+        LOG.info("Done undeploying " + archive + " from PluginContainer " + container.get().getName());        
     }
 
     @Override
@@ -203,17 +276,18 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     public RhqAgentPluginContainerConfiguration getConfiguration() {
         return configuration;
     }
-    
+
     private File getDeploymentPath(Archive<?> plugin) {
         return new File(configuration.getPluginDirectory(), plugin.getName());
     }
 
     private void finalizeConfiguration(RhqAgentPluginContainerConfiguration config) {
-        String deploymentName = container.get().getName();
-        String subDir = deploymentName == null ? UUID.randomUUID().toString() : deploymentName;
-        config.setContainerName(deploymentName);
-        
-        deploymentDirectory = new File(DEPLOYMENT_ROOT, subDir);
+        String arquillianContainerName = container.get().getName();
+        String pluginContainerName = (arquillianContainerName) != null ? arquillianContainerName : UUID.randomUUID()
+            .toString();
+        config.setContainerName(pluginContainerName);
+
+        deploymentDirectory = new File(DEPLOYMENT_ROOT, pluginContainerName);
 
         File pluginsDir = new File(deploymentDirectory, PLUGINS_DIR_NAME);
         pluginsDir.mkdirs();
@@ -225,12 +299,14 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         config.setPluginDirectory(pluginsDir);
         config.setDataDirectory(dataDir);
         config.setTemporaryDirectory(tmpDir);
-        
+
+        NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.put(arquillianContainerName, config.isNativeSystemInfoEnabled());
+                
         if (config.getServerServicesImplementationClassName() != null) {
             try {
                 Class<?> serverServicesClass = Class.forName(config.getServerServicesImplementationClassName());
                 ServerServices serverServices = (ServerServices) serverServicesClass.newInstance();
-                
+
                 config.setServerServices(serverServices);
             } catch (Exception e) {
                 throw new IllegalArgumentException("The serverServicesImplementationClassName property is invalid", e);
@@ -239,7 +315,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     }
 
     private static void purgePcDeployments() {
-        FileUtil.purge(DEPLOYMENT_ROOT, true);
+        FileUtil.purge(ROOT, true);
     }
 
     /**
@@ -247,6 +323,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if the plugin container needed to be started (i.e. was not running before), false otherwise.
      */
     private boolean startPc() {
+        LOG.debug("Starting PluginContainer on demand");
+        
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
             return false;
@@ -255,7 +333,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         //always refresh the plugin finder so that it reports all the plugins
         //each time (and doesn't remember the plugins from previous PC runs)
         configuration.setPluginFinder(new FileSystemPluginFinder(configuration.getPluginDirectory()));
-        
+
         pc.setConfiguration(configuration);
         pc.initialize();
         return true;
@@ -266,6 +344,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if PC was running before this call, false otherwise
      */
     private boolean stopPc() {
+        LOG.debug("Stopping PluginContainer on demand");
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
             pc.shutdown();
@@ -287,7 +366,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         plugin.as(FilteredView.class).filterContents(new ExcludeDirectory(plugin.getRequiredPluginsPath()))
             .as(ZipExporter.class).exportTo(pluginDeploymentPath, true);
     }
-    
+
     private PluginContainer switchPcInstance() throws Exception {
         return switchPluginContainer(container.get().getName());
     }

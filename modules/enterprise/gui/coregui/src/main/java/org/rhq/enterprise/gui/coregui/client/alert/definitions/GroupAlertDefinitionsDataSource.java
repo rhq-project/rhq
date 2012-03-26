@@ -60,7 +60,6 @@ public class GroupAlertDefinitionsDataSource extends AbstractAlertDefinitionsDat
             }
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

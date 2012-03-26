@@ -615,7 +615,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                seconds.
                -->
                <!--
-               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="300"/>
+               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="30"/>
                -->
 
                <!--

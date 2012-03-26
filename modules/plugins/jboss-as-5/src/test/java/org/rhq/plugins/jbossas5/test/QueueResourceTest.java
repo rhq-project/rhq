@@ -33,7 +33,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  * @author Noam Malki
  */
-@Test(groups = {"as5-plugin", "as5-plugin-queue"})
+@Test(groups = {"as5.plugin", "as5.plugin.queue"})
 public class QueueResourceTest extends AbstractDestinationTest {
 	
 	//private Integer nOfMessages = 10;
@@ -52,7 +52,7 @@ public class QueueResourceTest extends AbstractDestinationTest {
 	}
 	
 
-	@BeforeTest(groups = "as5-plugin-queue")
+	@BeforeTest(groups = "as5.plugin.queue")
 	public void setup() throws Exception{
 		System.out.println("Running Queue test...");
 		

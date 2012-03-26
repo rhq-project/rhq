@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.logging.Log;
@@ -50,12 +51,12 @@ import org.rhq.core.clientapi.descriptor.configuration.PropertyOptions;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
 import org.rhq.core.clientapi.descriptor.configuration.RegexConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 import org.rhq.core.domain.configuration.PropertyDynamicType;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ActivationPolicy;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -88,7 +89,7 @@ public class ConfigurationMetadataParser {
         }
 
         ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
-                descriptor.getNotes());
+            descriptor.getNotes());
         configurationDefinition.setConfigurationFormat(getConfigurationFormat(descriptor));
 
         if (configurationDefinition.getConfigurationFormat() == RAW) {
@@ -116,9 +117,12 @@ public class ConfigurationMetadataParser {
         }
 
         switch (descriptor.getConfigurationFormat()) {
-            case STRUCTURED: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
-            case RAW: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
-            default: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED_AND_RAW;
+        case STRUCTURED:
+            return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
+        case RAW:
+            return org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
+        default:
+            return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED_AND_RAW;
         }
     }
 
@@ -158,8 +162,8 @@ public class ConfigurationMetadataParser {
             int propertyOrderIndex = 0;
             for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : groupProperties) {
                 ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-                PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, defaultConfiguration
-                );
+                PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex,
+                    defaultConfiguration);
                 if (configurationDefinition != null) {
                     propertyDefinition.setPropertyGroupDefinition(groupDef);
                     configurationDefinition.put(propertyDefinition);
@@ -171,8 +175,8 @@ public class ConfigurationMetadataParser {
         int propertyOrderIndex = 0;
         for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : properties) {
             ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, defaultConfiguration
-            );
+            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex,
+                defaultConfiguration);
             if (configurationDefinition != null) {
                 configurationDefinition.put(propertyDefinition);
                 propertyOrderIndex++;
@@ -182,8 +186,8 @@ public class ConfigurationMetadataParser {
 
     private static ConfigurationTemplate parseTemplate(ConfigurationTemplateDescriptor templateDescripter)
         throws InvalidPluginDescriptorException {
-        ConfigurationTemplate template = new ConfigurationTemplate(templateDescripter.getName(), templateDescripter
-            .getDescription());
+        ConfigurationTemplate template = new ConfigurationTemplate(templateDescripter.getName(),
+            templateDescripter.getDescription());
         Configuration templateConfiguration = new Configuration();
         template.setConfiguration(templateConfiguration);
 
@@ -196,9 +200,8 @@ public class ConfigurationMetadataParser {
         return parseProperty(uncastedProperty, orderIndex, null);
     }
 
-    private static PropertyDefinition parseProperty(ConfigurationProperty uncastedProperty,
-                                                    int orderIndex, AbstractPropertyMap defaultConfigurationParentMap)
-            throws InvalidPluginDescriptorException {
+    private static PropertyDefinition parseProperty(ConfigurationProperty uncastedProperty, int orderIndex,
+        AbstractPropertyMap defaultConfigurationParentMap) throws InvalidPluginDescriptorException {
         PropertyDefinition property = null;
         if (uncastedProperty instanceof SimpleProperty) {
             property = parseSimpleProperty((SimpleProperty) uncastedProperty, defaultConfigurationParentMap);
@@ -249,14 +252,14 @@ public class ConfigurationMetadataParser {
             OptionSource source = simpleProperty.getOptionSource();
             optionsSource.setTarget(source.getTarget().toString());
             optionsSource.setLinkToTarget(source.isLinkToTarget());
-            if (source.getFilter()!=null && source.getFilter().length()>40) {
+            if (source.getFilter() != null && source.getFilter().length() > 40) {
                 throw new IllegalArgumentException("Filter expression must be less than 40 chars long");
             }
             optionsSource.setFilter(source.getFilter());
             String expression = source.getExpression();
-            if (expression ==null || expression.isEmpty())
+            if (expression == null || expression.isEmpty())
                 throw new IllegalArgumentException("Expression must not be empty");
-            if (expression.length()>400)
+            if (expression.length() > 400)
                 throw new IllegalArgumentException("Expression must be less than 400 chars long");
             optionsSource.setExpression(expression);
             property.setOptionsSource(optionsSource);
@@ -268,12 +271,12 @@ public class ConfigurationMetadataParser {
     private static PropertyDefinitionDynamic parseDynamicProperty(DynamicProperty dynamicProperty)
         throws InvalidPluginDescriptorException {
         String description = parseMultiValue(dynamicProperty.getDescription(), dynamicProperty.getLongDescription());
-        String displayName = (dynamicProperty.getDisplayName() != null) ? dynamicProperty.getDisplayName() : StringUtils
-            .deCamelCase(dynamicProperty.getName());
+        String displayName = (dynamicProperty.getDisplayName() != null) ? dynamicProperty.getDisplayName()
+            : StringUtils.deCamelCase(dynamicProperty.getName());
 
         PropertyDefinitionDynamic property = new PropertyDefinitionDynamic(dynamicProperty.getName(), description,
-            dynamicProperty.isRequired(), PropertyDynamicType.DATABASE,
-            dynamicProperty.getDatabaseBacking().getKey().value());
+            dynamicProperty.isRequired(), PropertyDynamicType.DATABASE, dynamicProperty.getDatabaseBacking().getKey()
+                .value());
 
         property.setReadOnly(dynamicProperty.isReadOnly());
         property.setSummary(dynamicProperty.isSummary());
@@ -293,7 +296,9 @@ public class ConfigurationMetadataParser {
             }
 
             if (option.isDefault()) {
-                log.warn("!!\nFor simple-property [" + parentProperty.getName() + "], attribute 'default' on c:option is useless and deprecated.\n   Please use the 'default' attribute on the c:simple-property.\n   The deprecated attribute will be removed in the future.\n!!");
+                log.warn("!!\nFor simple-property ["
+                    + parentProperty.getName()
+                    + "], attribute 'default' on c:option is useless and deprecated.\n   Please use the 'default' attribute on the c:simple-property.\n   The deprecated attribute will be removed in the future.\n!!");
             }
 
             PropertyDefinitionEnumeration enumeration = new PropertyDefinitionEnumeration(name, option.getValue());
@@ -312,8 +317,8 @@ public class ConfigurationMetadataParser {
         PropertyDefinition memberDefinition = (memberProperty != null) ? parseProperty(memberProperty.getValue(), 0)
             : null;
 
-        PropertyDefinitionList list = new PropertyDefinitionList(listProperty.getName(), description, listProperty
-            .isRequired(), memberDefinition);
+        PropertyDefinitionList list = new PropertyDefinitionList(listProperty.getName(), description,
+            listProperty.isRequired(), memberDefinition);
 
         String displayName = (listProperty.getDisplayName() != null) ? listProperty.getDisplayName() : StringUtils
             .deCamelCase(listProperty.getName());
@@ -332,12 +337,11 @@ public class ConfigurationMetadataParser {
     }
 
     private static PropertyDefinitionMap parseMapProperty(MapProperty mapProperty,
-                                                          AbstractPropertyMap defaultConfigurationParentMap)
-        throws InvalidPluginDescriptorException {
+        AbstractPropertyMap defaultConfigurationParentMap) throws InvalidPluginDescriptorException {
         String description = parseMultiValue(mapProperty.getDescription(), mapProperty.getLongDescription());
 
-        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(mapProperty.getName(), description, mapProperty
-            .isRequired());
+        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(mapProperty.getName(), description,
+            mapProperty.isRequired());
 
         String displayName = (mapProperty.getDisplayName() != null) ? mapProperty.getDisplayName() : StringUtils
             .deCamelCase(mapProperty.getName());
@@ -359,7 +363,7 @@ public class ConfigurationMetadataParser {
         int propertyOrderIndex = 0;
         for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : nestedProperties) {
             ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, propMap);
+            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex++, propMap);
             propDefMap.put(propertyDefinition);
         }
         return propDefMap;

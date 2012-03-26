@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
@@ -195,8 +194,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String url = LinkManager
-                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, value.toString(), null);
                 }
             });
@@ -299,8 +297,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
@@ -334,7 +331,6 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         }
 
         AlertCriteria criteria = new AlertCriteria();
-        criteria.setPageControl(getPageControl(request));
         // There's no need to add a priorities filter to the criteria if the user specified all priorities.
         if (prioritiesFilter.length != AlertPriority.values().length) {
             criteria.addFilterPriorities(prioritiesFilter);
@@ -350,8 +346,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         String sortField;
         if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
             sortField = "alertDefinition.resource.ancestry";
-        }
-        else if ("status".equals(columnName)) {
+        } else if ("status".equals(columnName)) {
             sortField = "acknowledgeTime";
         } else {
             sortField = super.getSortFieldForColumn(columnName);

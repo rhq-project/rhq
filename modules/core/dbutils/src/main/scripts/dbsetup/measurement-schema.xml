@@ -187,7 +187,7 @@
       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
       <column name="START_TIME" type="LONG" required="true" />
       <column name="END_TIME" type="LONG" required="false" />
-      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false" />
+      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="true" />
       <index name="RHQ_AVAIL_RESOURCE_START_IDX">
          <field ref="RESOURCE_ID"/>
          <field ref="START_TIME"/>
@@ -202,7 +202,7 @@
    <table name="RHQ_RESOURCE_AVAIL">
       <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)" ondelete="cascade"/>
-      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false" />
+      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="true" />
       <index name="RHQ_RESOURCE_AVAIL_IDX">
          <field ref="RESOURCE_ID" />
       </index>

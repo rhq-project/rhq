@@ -210,7 +210,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         //owns the relationship. Let's make sure we don't change the assigned roles here.
         group.getRoles().clear();
         group.getRoles().addAll(attachedGroup.getRoles());
-        
+
         if (changeType == null) {
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
@@ -1156,9 +1156,16 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             try {
                 while (rs.next()) {
                     long explicitCount = rs.getLong(1);
-                    double explicitAvail = rs.getDouble(2);
+                    long explicitUpCount = rs.getLong(2);
+                    //double explicitAvail = rs.getDouble(2);
                     long implicitCount = rs.getLong(3);
-                    double implicitAvail = rs.getDouble(4);
+                    long implicitUpCount = rs.getLong(4);
+                    //double implicitAvail = rs.getDouble(4);
+                    // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
+                    // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of an indication
+                    // of UP vs DOWN it is now UP vs NOT UP (not up is every other avail). 
+                    double explicitAvail = (explicitCount > 0) ? (explicitUpCount / explicitCount) : 0D;
+                    double implicitAvail = (implicitCount > 0) ? (implicitUpCount / implicitCount) : 0D;
                     int groupKey = rs.getInt(5);
                     Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey };
                     rawResults.add(next);
@@ -1358,12 +1365,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         String queryString = "SELECT \n" //
             + "  (SELECT count(er) "
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
-            + "  (SELECT avg(er.currentAvailability.availabilityType) "
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
+            + "  (SELECT count(er) "
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "        AND er.currentAvailability.availabilityType = 1 ),\n"
             + "  (SELECT count(ir) "
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
-            + "  (SELECT avg(ir.currentAvailability.availabilityType) "
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
+            + "  (SELECT count(ir) "
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "        AND ir.currentAvailability.availabilityType = 1 ), g \n"
             + "FROM ResourceGroup g where g.id = :groupId";
 
         Query query = entityManager.createQuery(queryString);
@@ -1389,12 +1398,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         ResourceGroupComposite composite = null;
         if (((Number) data[2]).longValue() > 0) {
-            composite = new ResourceGroupComposite( //
-                ((Number) data[0]).longValue(), //
-                data[1] == null ? 0.0 : ((Number) data[1]).doubleValue(), //
-                ((Number) data[2]).longValue(), //
-                data[3] == null ? 0.0 : ((Number) data[3]).doubleValue(), //
-                group, facets);
+            long explicitCount = ((Number) data[0]).longValue();
+            long explicitUpCount = ((Number) data[1]).longValue();
+            long implicitCount = ((Number) data[2]).longValue();
+            long implicitUpCount = ((Number) data[3]).longValue();
+            // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
+            // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of an indication
+            // of UP vs DOWN it is now UP vs NOT UP (not up is every other avail). 
+            double explicitAvail = (explicitCount > 0) ? (explicitUpCount / explicitCount) : 0D;
+            double implicitAvail = (implicitCount > 0) ? (implicitUpCount / implicitCount) : 0D;
+
+            composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount, implicitAvail, group,
+                facets);
         } else {
             composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }

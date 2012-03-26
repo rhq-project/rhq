@@ -142,7 +142,7 @@ public class EnrichmentHook {
         }
         
         try {
-            PluginContainer pc = RhqAgentPluginContainer.getPluginContainer(container.getName());
+            PluginContainer pc = RhqAgentPluginContainer.switchPluginContainer(container.getName());
             pluginContainer.set(pc);
                         
             if (container.getDeployableContainer() instanceof RhqAgentPluginContainer) {

@@ -58,8 +58,8 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     //ui attributes/properties/indentifiers
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
 
-    private String unlimited = MSG.common_label_unlimited();
-    private String defaultValue = unlimited;
+    private String unlimited = "-1";
+    private String unlimitedString = MSG.common_label_unlimited();
 
     // set on initial configuration, the window for this portlet view. 
     private PortletWindow portletWindow;
@@ -89,23 +89,25 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
             return;
         }
 
-        // loads/retrieves initial portlet settings for datasource
-        String retrieved = null;
+        // load/retrieve initial portlet settings for datasource
+        String retrieved = unlimited;
 
-        //if settings already exist for this portlet
-        if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
-            //retrieve and translate to int
-            retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
-            retrieved = defaultValue;
-        }
+        // use existing setting or create new one with default of unlimited
+        PropertySimple property = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX);
 
-        if (retrieved.equals(unlimited)) {
-            getDataSource().setMaximumPlatformsToDisplay(-1);
+        if ((property != null) && (property.getStringValue() != null)) {
+            retrieved = property.getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                retrieved = unlimited;
+            }
         } else {
-            getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+            storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, unlimited));
         }
+
+        getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
     }
 
     public Canvas getHelpCanvas() {
@@ -131,7 +133,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumPlatformsComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] displayValues = { "1", "2", "5", "10", unlimited };
+        String[] displayValues = { "1", "2", "5", "10", unlimitedString };
         maximumPlatformsComboBox.setValueMap(displayValues);
         //set width of dropdown display region
         maximumPlatformsComboBox.setWidth(100);
@@ -148,18 +150,21 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         row.addMember(item);
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
-        String selectedValue = defaultValue;
         PropertySimple simpleProperty = null;
+        String retrieved = unlimited;
+
         if ((simpleProperty = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX)) != null) {
-            String retrieved = simpleProperty.getStringValue();
-            if (retrieved.equals(unlimited)) {
-                selectedValue = unlimited;
-            } else {
-                selectedValue = String.valueOf(retrieved);
+            retrieved = simpleProperty.getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                retrieved = unlimited;
             }
         }
 
         //prepopulate the combobox with the previously stored selection
+        String selectedValue = retrieved.equals(unlimited) ? unlimitedString : retrieved;
         maximumPlatformsComboBox.setDefaultValue(selectedValue);
 
         form.addChild(row);
@@ -168,11 +173,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             //specify submit action.
             public void onSubmitValues(SubmitValuesEvent event) {
+                String value = (String) form.getValue(AUTODISCOVERY_PLATFORM_MAX);
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? unlimited : value;
 
-                if (form.getValue(AUTODISCOVERY_PLATFORM_MAX) != null) {
                     //persist this value to configuration
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, form.getValue(AUTODISCOVERY_PLATFORM_MAX)));
+                    storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, value));
 
                     configure(portletWindow, storedPortlet);
 

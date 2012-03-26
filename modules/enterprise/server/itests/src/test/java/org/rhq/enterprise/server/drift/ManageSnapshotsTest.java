@@ -57,13 +57,14 @@ import org.rhq.core.server.EntitySerializer;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
-public class ManageSnapshotsTest extends DriftServerTest {
+@Test(dependsOnGroups = "pinning")
+public class ManageSnapshotsTest extends AbstractDriftServerTest {
 
     private DriftManagerLocal driftMgr;
 
     private DriftTemplateManagerLocal templateMgr;
 
-    @BeforeClass(inheritGroups = true)
+    @BeforeClass
     public void initClass() throws Exception {
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();

@@ -3942,7 +3942,7 @@
             
             <schemaSpec version="2.117">
                 <!-- Remove an obsolete drift table that may be hanging around -->
-                <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" />
+                <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" ignoreError="true" />
                 
                 <!-- Remove an unwanted null constraint -->
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_DEFINITION_ID" nullable="TRUE" />                
@@ -3965,7 +3965,44 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+            
+            <schemaSpec version="2.120">
+                <!-- RHQ_AGENT changes -->                
+                <schema-addColumn   table="RHQ_AGENT" column="LAST_AVAILABILITY_PING" columnType="LONG"/>
+                <schema-directSQL>
+                    <statement desc="RHQ_AGENT: init last_availability_ping to last_availability_report">
+                        UPDATE RHQ_AGENT SET LAST_AVAILABILITY_PING = LAST_AVAILABILITY_REPORT 
+                    </statement>
+                </schema-directSQL>
 
+                <!-- Drop agent quiet time (i.e. suspect agent time) from 15 to 5 minutes -->
+                <schema-directSQL>
+                    <statement desc="Changing AGENT_MAX_QUIET_TIME_ALLOWED to 5 minutes from 15 minutes">
+                        UPDATE RHQ_SYSTEM_CONFIG 
+                           SET PROPERTY_VALUE = '300000', DEFAULT_PROPERTY_VALUE = '300000' 
+                         WHERE PROPERTY_KEY = 'AGENT_MAX_QUIET_TIME_ALLOWED'
+                    </statement>
+                </schema-directSQL>
+                
+                <!-- set null availabilities to UNKNOWN -->
+                <schema-directSQL>
+                    <statement desc="Changing NULL RHQ_AVAILABILITY.AVAILABILITY_TYPE to UNKNOWN">
+                        UPDATE RHQ_AVAILABILITY
+                           SET AVAILABILITY_TYPE = 2 
+                         WHERE AVAILABILITY_TYPE IS NULL
+                    </statement>
+                    <statement desc="Changing NULL RHQ_RESOURCE_AVAIL.AVAILABILITY_TYPE to UNKNOWN">
+                        UPDATE RHQ_RESOURCE_AVAIL
+                           SET AVAILABILITY_TYPE = 2 
+                         WHERE AVAILABILITY_TYPE IS NULL
+                    </statement>
+                </schema-directSQL>
+
+                <schema-alterColumn table="RHQ_AVAILABILITY"   column="AVAILABILITY_TYPE" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>                    
+                
+            </schemaSpec>
+        
         </dbupgrade>
     </target>
 </project>

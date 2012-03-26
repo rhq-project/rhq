@@ -30,10 +30,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -88,8 +86,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
-        // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title());
+        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title(), IconEnum.REPORT.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_reportsTop_description());
@@ -102,8 +99,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSubsystemsSection() {
         NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(TaggedView.VIEW_ID,
-                        new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName())));
+                return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
             }
         });
 
@@ -118,49 +114,41 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
             ResourceConfigurationHistoryListView.VIEW_ID,  new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(ResourceConfigurationHistoryListView.VIEW_ID,
-                            new ResourceConfigurationHistoryListView(
-                                    extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
-                                    .contains(Permission.MANAGE_INVENTORY)));
-
+                    return new ResourceConfigurationHistoryListView(extendLocatorId(
+                        ResourceConfigurationHistoryListView.VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(OperationHistoryView.SUBSYSTEM_VIEW_ID,
-                            new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
-                                    .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY)));
+                    return new SubsystemOperationHistoryListView(extendLocatorId(
+                        OperationHistoryView.SUBSYSTEM_VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar( AlertHistoryView.SUBSYSTEM_VIEW_ID,
-                            new SubsystemResourceAlertView(
-                                    extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
-                                    Permission.MANAGE_INVENTORY)));
+                    return new SubsystemResourceAlertView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem alertDefinitionsItem = new NavigationItem(AlertDefinitionReportView.VIEW_ID,
                  new ViewFactory() {
             public Canvas createView() {
-
-                return decorateWithTitleBar(AlertDefinitionReportView.VIEW_ID,
-                        new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName())));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
         });
 
         NavigationItem recentDriftsItem = new NavigationItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(DriftHistoryView.SUBSYSTEM_VIEW_ID,
-                            new SubsystemResourceDriftView(
-                                    extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
-                                    Permission.MANAGE_INVENTORY)));
+                    return new SubsystemResourceDriftView(extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
@@ -180,24 +168,21 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar( ResourceInstallReport.VIEW_ID,
-                    new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName())));
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
              new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(PlatformSummaryPortlet.VIEW_ID,
-                        new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName())));
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
             }
         });
 
         NavigationItem driftComplianceItem = new NavigationItem(DriftComplianceReport.VIEW_ID,
                 new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(DriftComplianceReport.VIEW_ID,
-                new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName())));
+                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()));
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 

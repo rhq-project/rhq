@@ -71,6 +71,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
@@ -180,8 +181,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // make sure we have nothing yet
             PageList<ContentSourceSyncResults> list;
-            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(), PageControl
-                .getUnlimitedInstance());
+            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(),
+                PageControl.getUnlimitedInstance());
             assert list.size() == 0 : "-->" + list;
 
             // create our first INPROGRESS result
@@ -190,8 +191,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert results != null;
 
             // make sure it persisted
-            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(), PageControl
-                .getUnlimitedInstance());
+            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(),
+                PageControl.getUnlimitedInstance());
             assert list.size() == 1 : "-->" + list;
             assert list.get(0).getId() == results.getId() : "-->" + list;
 
@@ -201,8 +202,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert another == null : "Not allowed to have two INPROGRESS results persisted";
 
             // verify that we really did not persist a second one
-            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(), PageControl
-                .getUnlimitedInstance());
+            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(),
+                PageControl.getUnlimitedInstance());
             assert list.size() == 1 : "-->" + list;
             assert list.get(0).getId() == results.getId() : "-->" + list;
 
@@ -214,8 +215,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert another != null : "Allowed to have two results persisted if only one is INPROGRESS";
 
             // verify that we really did persist a second one
-            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(), PageControl
-                .getUnlimitedInstance());
+            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(),
+                PageControl.getUnlimitedInstance());
             assert list.size() == 2 : "-->" + list;
             assert list.get(0).getId() == another.getId() : "-->" + list;
             assert list.get(1).getId() == results.getId() : "-->" + list;
@@ -223,8 +224,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // delete the content source and make sure we cascade delete the results
             contentSourceManager.deleteContentSource(overlord, contentSource.getId());
 
-            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(), PageControl
-                .getUnlimitedInstance());
+            list = contentSourceManager.getContentSourceSyncResults(overlord, contentSource.getId(),
+                PageControl.getUnlimitedInstance());
             assert list.size() == 0 : "-->" + list;
 
             contentSourceMetadataManager.registerTypes(new HashSet<ContentSourceType>());
@@ -1101,7 +1102,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 packageType4 = em.find(PackageType.class, packageType4.getId());
                 em.remove(packageType4);
 
-                em.remove(resource1);
+                ResourceTreeHelper.deleteResource(em, resource1);
 
                 resourceType1 = em.find(ResourceType.class, resourceType1.getId());
                 em.remove(resourceType1);

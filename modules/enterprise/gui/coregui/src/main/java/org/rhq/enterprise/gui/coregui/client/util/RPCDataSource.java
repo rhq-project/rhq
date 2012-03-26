@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.Criteria;
@@ -61,6 +60,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
@@ -121,9 +121,9 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             case FETCH:
                 C criteria = getFetchCriteria(request);
                 if (criteria != null) {
-                    // unsure if this is the right thing to do - we are always going to supply a PageControl, but reading
-                    // the javadoc for setPageControl, it says this overrides addSortField, which is used by our criteria objects.
-                    // I still think this is OK, but if you are reading this as part of debugging a problem, investigate this.
+                    // we are always going to supply a PageControl due to https://bugzilla.redhat.com/show_bug.cgi?id=682304.
+                    // This can cause some subtle issues with Criteria handling, it's important that code overriding
+                    // getFetchCriteria() take a close look at the jdoc.
                     if (criteria.getPageControlOverrides() == null) {
                         criteria.setPageControl(getPageControl(request));
                     }
@@ -132,7 +132,8 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                             + "] for fetch request.");
                     }
                 } else {
-                    Log.warn(getClass().getName() + ".getFetchCriteria() returned null - no paging of results will be done.");
+                    Log.warn(getClass().getName()
+                        + ".getFetchCriteria() returned null - no paging of results will be done.");
                 }
                 executeFetch(request, response, criteria);
                 break;
@@ -239,8 +240,8 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         SortSpecifier[] sortSpecifiers = request.getSortBy();
         if (sortSpecifiers != null) {
             for (SortSpecifier sortSpecifier : sortSpecifiers) {
-                PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
-                    PageOrdering.ASC : PageOrdering.DESC;
+                PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ? PageOrdering.ASC
+                    : PageOrdering.DESC;
                 String columnName = sortSpecifier.getField();
                 String sortField = getSortFieldForColumn(columnName);
                 if (sortField != null) {
@@ -299,7 +300,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
         String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        response.setData(new Record[]{record});
+        response.setData(new Record[] { record });
         processResponse(request.getRequestId(), response);
         if (viewPath != null) {
             CoreGUI.goToView(viewPath, message);
@@ -422,6 +423,18 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     /**
      * Given a request, this returns a criteria object that should be used to fetch data that the request
      * is asking for. If a particular data source subclass does not use criteria, this can return <code>null</code>.
+     * <br/><br/>
+     * IMPORTANT!  If the criteria returned does not include a PageControl it will be assigned the PageControl
+     * of the DSRequest. (See https://bugzilla.redhat.com/show_bug.cgi?id=682304 for more on why we do this.) This
+     * is important because it means that this criteria object will completely ignore calls made to
+     * setPaging(pageNumber, pageSize) as well as addSortField(fieldName), see
+     * {@link org.rhq.core.domain.criteria.Criteria#setPageControl(PageControl)}.  So, when overriding this
+     * method, the preferred way to set specific paging or sorting is to manipulate the provided
+     * PageControl in the DSRequest. The DSRequest can be implicitly manipulated by using InitialSortSpecifiers in
+     * {@link Table} construction, or it can be manipulated manually.  It is not necessary to call
+     * {@link org.rhq.core.domain.criteria.Criteria#setPageControl(PageControl)} since it will be applied
+     * automatically at fetch-time (by this class).  To completely override the request's PageControl
+     * you can create a new one and set it on the Criteria, but remember that you may lose paging/sorting state.
      * 
      * @param request the request being made for data
      * @return a criteria object that is to be used when fetching for the requested data, or <code>null</code> if not used
@@ -671,14 +684,12 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
             if (minValue != null) {
                 integerRangeValidator.setMin(minValue);
-            }
-            else {
+            } else {
                 integerRangeValidator.setMin(Integer.MIN_VALUE);
             }
             if (maxValue != null) {
                 integerRangeValidator.setMax(maxValue);
-            }
-            else {
+            } else {
                 integerRangeValidator.setMax(Integer.MAX_VALUE);
             }
 

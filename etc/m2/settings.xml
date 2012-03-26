@@ -53,9 +53,9 @@
             <!-- tells the dbutils tests not to fail -->
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
-            <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
-                 some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
-            <rhq.testng.excludedGroups>agent-comm,comm-client,native-system,postgres-plugin</rhq.testng.excludedGroups>
+            <!-- Test groups that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
+                 some possible values: agent.comm,comm.client,native.system,postgres.plugin -->
+            <rhq.testng.excludedGroups>agent.comm,comm.client,native.system,postgres.plugin</rhq.testng.excludedGroups>
 
             <!-- *** enforcer plugin settings *** -->
             <!--<enforcer.skip>true</enforcer.skip>-->
@@ -66,6 +66,10 @@
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
             <!--<surefire.useFile>false</surefire.useFile>-->
+
+            <!-- *** animal sniffer plugin settings *** -->
+            <!-- tell animal sniffer plugin to skip Java API checks -->
+            <!--<animal.sniffer.skip>true</animal.sniffer.skip>-->
 
             <!-- *** release plugin settings *** -->
             <!-- Set the below properties to your fedorahosted.org username and
@@ -244,13 +248,17 @@
          </properties>
       </profile>
 
-      <!-- This can be used to build RHQ using JDK6, while still enforcing that
-           only Java 5 APIs are used. -->
       <profile>
+         <!-- Enable this profile if you want to compile RHQ using JDK7 javac, while still enforcing use of only Java 6 API's. -->
          <id>check-java-api</id>
+
+         <activation>
+            <jdk>[1.7,)</jdk>
+         </activation>
+
          <properties>
-            <!-- Set this to your a JRE5 installation dir (e.g. /usr/java/jdk-1.5.0_21/jre). -->
-            <java5.home>/usr/java/jdk-1.5.0_21/jre</java5.home>
+            <!-- Set this to your a JRE6 installation dir (e.g. /usr/lib/jvm/jre-1.6.0). -->
+            <java6.home>/usr/lib/jvm/jre-1.6.0</java6.home>
          </properties>
       </profile>
 
@@ -265,6 +273,23 @@
                  for your dev container, then set the below prop to the desired location. -->
             <!--<rhq.containerDir>C:/home/bob/rhq-dev-container</rhq.containerDir>-->
 
+             <!-- set browser(s) to compile the GWT stuff for
+               ~~ See http://rhq-project.org/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
+               ~~ for details and browser versions
+               ~~ Possible values are: ie6,ie8,ie9,gecko,gecko1_8,safari,opera
+             -->
+             <gwt.userAgent>SET_ME</gwt.userAgent>
+             <!-- Only gwt-compile JavaScript for FF2 and later. -->
+             <!--<gwt.userAgent>gecko1_8</gwt.userAgent>-->
+             <!-- Enable faster, but less-optimized, gwt compilations. -->
+             <gwt.draftCompile>true</gwt.draftCompile>
+             <!-- Make sure GWT-generated JavaScript code is not obfuscated. -->
+             <gwt.style>DETAILED</gwt.style>
+             <!-- Only compile the default locale. -->
+             <gwt.locale>default</gwt.locale>
+             <!-- If user specifies an unsupported locale, fallback to the default locale. -->
+             <gwt.fallback.locale>default</gwt.fallback.locale>
+
             <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the admin console WAR.
                  e.g.: C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production -->
             <jbas4.configDir>SET_ME</jbas4.configDir>
@@ -272,20 +297,6 @@
                  e.g.: C:/opt/jboss-5.0.0.CR1/server/default -->
             <jbas5.configDir>SET_ME</jbas5.configDir>
 
-             <!-- set browser(s) to compile the GWT stuff for
-               ~~ See http://rhq-project.org/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
-               ~~ for details and browser versions
-               ~~ Possible engines are ie6,ie8,gecko,gecko1_8,safari,opera
-             -->
-             <gwt.userAgent>SET_ME</gwt.userAgent>
-             <!-- Only gwt-compile JavaScript for FF2 and later. -->
-             <!--<gwt.userAgent>gecko1_8</gwt.userAgent>-->
-             <!-- Enable faster, but less-optimized, gwt compilations. -->
-             <gwt.draftCompile>true</gwt.draftCompile>
-             <!-- Only compile the default locale. -->
-             <gwt.locale>default</gwt.locale>
-             <!-- If user specifies an unsupported locale, fallback to the default locale. -->
-             <gwt.fallback.locale>default</gwt.fallback.locale>
          </properties>
       </profile>
 

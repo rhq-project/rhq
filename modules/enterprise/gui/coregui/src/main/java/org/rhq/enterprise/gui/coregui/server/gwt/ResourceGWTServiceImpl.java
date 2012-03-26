@@ -41,6 +41,7 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
@@ -119,6 +120,16 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     }
 
     public ResourceGWTServiceImpl() {
+    }
+
+    public ResourceAvailabilitySummary getResourceAvailabilitySummary(int resourceId) throws RuntimeException {
+        try {
+            ResourceAvailabilitySummary result;
+            result = resourceManager.getAvailabilitySummary(getSessionSubject(), resourceId);
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
     public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException {
@@ -235,8 +246,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     public List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException {
         try {
-            return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
-                "ResourceService.uninventoryResources");
+            return resourceManager.uninventoryResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -304,6 +314,22 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public List<Integer> disableResources(int[] resourceIds) throws RuntimeException {
+        try {
+            return resourceManager.disableResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public List<Integer> enableResources(int[] resourceIds) throws RuntimeException {
+        try {
+            return resourceManager.enableResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException {
         try {
@@ -327,8 +353,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
-                .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
+            return SerialUtility.prepare(
+                discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet.copyOf(statuses), pc),
+                "ResourceService.getQueuedPlatformsAndServers");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

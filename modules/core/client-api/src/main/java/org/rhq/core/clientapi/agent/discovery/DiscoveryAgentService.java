@@ -22,6 +22,8 @@
  */
 package org.rhq.core.clientapi.agent.discovery;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
@@ -33,7 +35,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * The interface to a RHQ Agent's Resource discovery subsystem.
@@ -122,6 +123,11 @@ public interface DiscoveryAgentService {
      */
     @NotNull
     Availability getCurrentAvailability(Resource resource);
+
+    /**
+     * This call will request that the agent produce a full availability report on its next availability scan. 
+     */
+    void requestFullAvailabilityReport();
 
     /**
      * Manually discover the resource of the specified type using the specified plugin configuration (i.e. connection

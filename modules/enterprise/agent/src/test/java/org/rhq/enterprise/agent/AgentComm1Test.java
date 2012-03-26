@@ -38,7 +38,7 @@ import org.rhq.enterprise.communications.command.impl.generic.GenericCommand;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "agent-comm")
+@Test(groups = "agent.comm")
 public class AgentComm1Test extends AgentCommTestBase {
     private static final boolean ENABLE_TESTS = true;
 

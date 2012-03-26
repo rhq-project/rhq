@@ -42,7 +42,7 @@ import org.testng.annotations.Parameters;
  */
 public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
 
-    @BeforeGroups(groups = "as5-plugin-ejb2")
+    @BeforeGroups(groups = "as5.plugin.ejb2")
     @Parameters("ejb2.test.jars.path")
     public void deployEjb2TestJars(String jarPaths) {
         try {
@@ -59,7 +59,7 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
         }
     }
 
-    @AfterGroups(groups = "as5-plugin-ejb2")
+    @AfterGroups(groups = "as5.plugin.ejb2")
     @Parameters("ejb2.test.jars.path")
     public void undeployEjb2TestJars(String jarPaths) {
         try {

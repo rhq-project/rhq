@@ -31,7 +31,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  * Test composite operations
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class CompositeOperationTest {
 
     public void serializationTest() throws Exception {

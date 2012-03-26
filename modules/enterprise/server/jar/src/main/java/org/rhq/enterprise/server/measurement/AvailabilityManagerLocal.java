@@ -27,9 +27,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 
 /**
  * Manager that is used to determine a resource's availability over a span of time.
@@ -38,7 +35,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
  * @author John Mazzitelli
  */
 @Local
-public interface AvailabilityManagerLocal {
+public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
     /**
      * Purges all availabilities that are old. The <code>oldest</code> time is the epoch milliseconds of the oldest
      * availability that is to be retained. The {@link Availability#getEndTime() end time} is the time that is examined.
@@ -136,32 +133,20 @@ public interface AvailabilityManagerLocal {
     void updateLastAvailabilityReport(int agentId);
 
     /**
-     * Sets all availabilities for all resources managed by the given agent to the given availability type (which may be
-     * <code>null</code> to indicate unknown).
+     * Update availabilities for all resources managed by the given agent to the given availability type (which may be
+     * <code>null</code> to indicate unknown).  NOTE: This does not include the top-level platform resource for
+     * the agent. To update a single resource avail see {@link #updateResourceAvailability(Subject, Availability)}.
      *
-     * @param agentId          all resources managed by this agent will have their availabilities changed
-     * @param availabilityType the type that all of the agent's resources will have
+     * @param agentId all resources managed by this agent will have their availabilities changed
+     * @param platformAvailabilityType the type that the agent's top level platform resource will have 
+     * @param childAvailabilityType the type that the agent's child resources will have
      */
-    void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType);
+    void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailabilityType,
+        AvailabilityType childAvailabilityType);
 
+    /**
+     * @Deprecated use {@link #findAvailabilityByCriteria(Subject, org.rhq.core.domain.criteria.AvailabilityCriteria)}
+     */
+    @Deprecated
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * #see {@link AvailabilityManagerRemote#getAvailabilityForResource(Subject, int, PageControl)
-     */
-    PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc);
-
-    /**
-     * #see {@link AvailabilityManagerRemote#getCurrentAvailabilityForResource(Subject, int)
-     * @throws FetchException TODO
-     * @see #getCurrentAvailabilityTypeForResource(Subject, int)
-     * @see ResourceAvailabilityManagerLocal
-     */
-    Availability getCurrentAvailabilityForResource(Subject subject, int resourceId);
 }

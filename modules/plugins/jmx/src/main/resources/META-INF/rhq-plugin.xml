@@ -20,7 +20,7 @@
          <c:simple-property name="type" type="string" default="LocalVMTypeDescriptor"
                             description="The EMS connection type for this JMX Server">
             <c:property-options>
-               <c:option value="LocalVMTypeDescriptor" name="Local"/>
+               <c:option value="org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor" name="Local"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.JDMKConnectionTypeDescriptor" name="JDMK"/>
@@ -151,7 +151,10 @@
                  property="CommittedVirtualMemorySize"
                  description="Size of virtual memory used by this process"
                  units="bytes"/>
-
+         <metric displayName="Open Files"
+                 category="utilization"        
+                 property="OpenFileDescriptorCount"
+                 description="The number of files opened by this process. Note that this metric is not supported on Windows." />                 
       </service>
 
       <service name="Threading" discovery="MBeanResourceDiscoveryComponent" class="ThreadDataMeasurementComponent"

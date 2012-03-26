@@ -831,24 +831,24 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
 
                     if (def.getName().equals("map4")) {
                         PropertyDefinitionMap map = (PropertyDefinitionMap) def;
-                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        Map<String, PropertyDefinition> children = map.getMap();
                         assert children.size() == 1 : "Map4 should have 1 child";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         map = (PropertyDefinitionMap) children.get("map4:2");
                         assert map != null : "Child map4:2 not found";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         map = (PropertyDefinitionMap) children.get("map4:2:3");
                         assert map != null : "Child map4:2:3 not found";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("simple");
                         assert simple != null : "Child simple not found";
                     }
 
                     if (def.getName().equals("map5")) {
                         PropertyDefinitionMap map = (PropertyDefinitionMap) def;
-                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        Map<String, PropertyDefinition> children = map.getMap();
                         assert children.size() == 1 : "Map4 should have 1 child";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("hugo");
                         assert simple.getDescription().equals("foo");
                     }
@@ -893,16 +893,16 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
 
                     if (def.getName().equals("map4")) {
                         PropertyDefinitionMap map = (PropertyDefinitionMap) def;
-                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        Map<String, PropertyDefinition> children = map.getMap();
                         assert children.size() == 1 : "Map4 should have 1 child, but has " + children.size();
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         map = (PropertyDefinitionMap) children.get("map4:2+");
                         assert map != null : "Child map4:2 not found";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         assert children.size() == 1 : "Map4:2 should have 1 child, but has " + children.size();
                         map = (PropertyDefinitionMap) children.get("map4:2:3");
                         assert map != null : "Child map4:2:3 not found";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         assert children.size() == 2 : "Map4:2:3 should have 1 child, but has " + children.size();
                         PropertyDefinitionList list = (PropertyDefinitionList) children.get("list");
                         assert list != null : "Child list not found";
@@ -912,9 +912,9 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
 
                     if (def.getName().equals("map5")) {
                         PropertyDefinitionMap map = (PropertyDefinitionMap) def;
-                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        Map<String, PropertyDefinition> children = map.getMap();
                         assert children.size() == 1 : "Map5 should have 1 child";
-                        children = map.getPropertyDefinitions();
+                        children = map.getMap();
                         PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("hugo");
                         assert simple.getDescription().equals("bar") : "Map5:hugo should have 'bar' in v2";
                     }

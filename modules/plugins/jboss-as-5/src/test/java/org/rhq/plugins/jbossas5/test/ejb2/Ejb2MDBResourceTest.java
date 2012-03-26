@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-mdb" })
+@Test(groups = { "as5.plugin", "as5.plugin.ejb2", "as5.plugin.ejb2.mdb" })
 public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
 
     private static final int MESSAGES_SENT = 10;
@@ -59,7 +59,7 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
         return "EJB2 Message-Driven Bean";
     }
 
-    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
+    @BeforeGroups(groups = "as5.plugin.ejb2", dependsOnMethods = "deployEjb2TestJars")
     public void setupBean() {
         try {
             JMSQueueUtil.sendMessages(QUEUE_NAME, MESSAGES_SENT);

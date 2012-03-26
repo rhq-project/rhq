@@ -46,11 +46,13 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.clientapi.server.core.AgentVersion;
+import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
+import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
@@ -184,6 +186,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         server_bootstrap.removeDownedAgent(downedAgent.getRemoteEndpoint());
         log.info("Agent with name [" + agentName + "] just went down");
 
+        agentManager.backfillAgent(subjectManager.getOverlord(), agentName, downedAgent.getId());
         return;
     }
 
@@ -215,10 +218,10 @@ public class AgentManagerBean implements AgentManagerLocal {
     public void checkForSuspectAgents() {
         log.debug("Checking to see if there are agents that we suspect are down...");
 
-        long maximumQuietTimeAllowed = 900000L;
+        long maximumQuietTimeAllowed = 300000L;
         try {
-            String prop = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
-                RHQConstants.AgentMaxQuietTimeAllowed);
+            String prop = systemManager.getSystemSettings(subjectManager.getOverlord()).get(
+                SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }
@@ -226,7 +229,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             log.warn("Agent quiet time config is invalid in DB, defaulting to: " + maximumQuietTimeAllowed, e);
         }
 
-        List<AgentLastAvailabilityReportComposite> records;
+        List<AgentLastAvailabilityPingComposite> records;
 
         long nowEpoch = System.currentTimeMillis();
 
@@ -236,8 +239,8 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         ServerCommunicationsServiceMBean serverComm = null;
 
-        for (AgentLastAvailabilityReportComposite record : records) {
-            long lastReport = record.getLastAvailabilityReport();
+        for (AgentLastAvailabilityPingComposite record : records) {
+            long lastReport = record.getLastAvailabilityPing();
             long timeSinceLastReport = nowEpoch - lastReport;
 
             // Only show this message a few times so we do not flood the log with the same message if the agent is down a long time
@@ -261,23 +264,49 @@ public class AgentManagerBean implements AgentManagerLocal {
             // about a downed agent once, at the time it is first backfilled.
             if (!record.isBackFilled()) {
                 log.info("Have not heard from agent [" + record.getAgentName() + "] since ["
-                    + new Date(record.getLastAvailabilityReport())
-                    + "]. Will be backfilled since we suspect it is down");
+                    + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
 
-                // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
-                AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
-                try {
-                    agentManager.setAgentBackfilled(record.getAgentId(), true);
-                    availabilityManager.setAllAgentResourceAvailabilities(record.getAgentId(), AvailabilityType.DOWN);
-                } finally {
-                    AvailabilityReportSerializer.getSingleton().unlock(record.getAgentName());
-                }
+                agentManager.backfillAgent(subjectManager.getOverlord(), record.getAgentName(), record.getAgentId());
             }
         }
 
         log.debug("Finished checking for suspected agents");
 
         return;
+    }
+
+    public void backfillAgent(Subject subject, String agentName, int agentId) {
+        // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency
+        // problems
+        AvailabilityReportSerializer.getSingleton().lock(agentName);
+        try {
+            // This marks the Agent as backfilled=true
+            agentManager.setAgentBackfilled(agentId, true);
+
+            // This marks the top-level platform DOWN since we have not heard from it and all
+            // child resources UNKNOWN since they are not reporting and may very well be up            
+            availabilityManager.updateAgentResourceAvailabilities(agentId, AvailabilityType.DOWN,
+                AvailabilityType.UNKNOWN);
+
+        } finally {
+            AvailabilityReportSerializer.getSingleton().unlock(agentName);
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setAgentBackfilled(int agentId, boolean backfilled) {
+        Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        query.setParameter("backfilled", backfilled);
+        query.executeUpdate();
+    }
+
+    public boolean isAgentBackfilled(int agentId) {
+        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
+        Query query = entityManager.createNamedQuery(Agent.QUERY_IS_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        Long backfilledCount = (Long) query.getSingleResult();
+        return backfilledCount != 0L;
     }
 
     @SuppressWarnings("unchecked")
@@ -545,20 +574,40 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agentDownloadDir;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setAgentBackfilled(int agentId, boolean backfilled) {
-        Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
-        query.setParameter("agentId", agentId);
-        query.setParameter("backfilled", backfilled);
-        query.executeUpdate();
+    @Override
+    public PingRequest handlePingRequest(PingRequest request) {
+
+        // set the ping time without delay, so the return time is as close to the request time as possible,
+        // for clock sync reasons. 
+        long now = System.currentTimeMillis();
+
+        if (request.isRequestUpdateAvailability()) {
+            updateLastAvailabilityPing(request.getAgentName(), now);
+            request.setReplyUpdateAvailability(true);
+        }
+
+        if (request.isRequestServerTimestamp()) {
+            request.setReplyServerTimestamp(now);
+        }
+
+        return request;
     }
 
-    public boolean isAgentBackfilled(int agentId) {
-        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
-        Query query = entityManager.createNamedQuery(Agent.QUERY_IS_AGENT_BACKFILLED);
-        query.setParameter("agentId", agentId);
-        Long backfilledCount = (Long) query.getSingleResult();
-        return backfilledCount != 0L;
+    private void updateLastAvailabilityPing(String agentName, long now) {
+        /*
+         * since we already know we have to update the agent row with the last avail ping time, might as well 
+         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
+         */
+        String updateStatement = "" //
+            + "UPDATE Agent " //
+            + "   SET lastAvailabilityPing = :now, backFilled = FALSE " //
+            + " WHERE name = :agentName ";
+
+        Query query = entityManager.createQuery(updateStatement);
+        query.setParameter("now", now);
+        query.setParameter("agentName", agentName);
+
+        query.executeUpdate();
     }
 
     @ExcludeDefaultInterceptors

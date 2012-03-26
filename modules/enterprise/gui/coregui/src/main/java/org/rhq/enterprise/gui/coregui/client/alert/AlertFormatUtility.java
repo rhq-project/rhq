@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -50,14 +51,54 @@ public class AlertFormatUtility {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
-            str.append(MSG.view_alert_common_tab_conditions_type_availability());
+            str.append(MSG.common_title_availability());
             str.append(" [");
-            if ("up".equalsIgnoreCase(condition.getOption())) {
-                str.append(MSG.view_alert_common_tab_conditions_type_availability_up());
-            } else {
-                str.append(MSG.view_alert_common_tab_conditions_type_availability_down());
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_GOES_DISABLED:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesDisabled());
+                break;
+            case AVAIL_GOES_DOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesDown());
+                break;
+            case AVAIL_GOES_UNKNOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesUnknown());
+                break;
+            case AVAIL_GOES_UP:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesUp());
+                break;
+            case AVAIL_GOES_NOT_UP:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesNotUp());
+                break;
+            default:
+                str.append("*ERROR*");
             }
             str.append("]");
+
+            break;
+        }
+        case AVAIL_DURATION: {
+            str.append(MSG.view_alert_definition_condition_editor_availabilityDuration());
+            str.append(" [");
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_DURATION_DOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_durationDown());
+                break;
+            case AVAIL_DURATION_NOT_UP:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_durationNotUp());
+                break;
+            default:
+                str.append("*ERROR*");
+            }
+            str.append(" For ");
+
+            // value is stored in seconds but should be presented in minutes
+            String value = String.valueOf(Integer.valueOf(condition.getOption()) / 60);
+            String formatted = MeasurementConverterClient.format(value, MeasurementUnits.MINUTES);
+            str.append(formatted);
+            str.append("]");
+
             break;
         }
         case THRESHOLD: {

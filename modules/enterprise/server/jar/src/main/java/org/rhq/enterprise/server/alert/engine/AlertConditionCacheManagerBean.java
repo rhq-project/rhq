@@ -37,6 +37,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposite;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
@@ -74,6 +75,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCacheCoordinator.getInstance().checkConditions(availabilities);
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(AvailabilityDurationComposite... composites) {
+        AlertConditionCacheStats stats;
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(composites);
         return stats;
     }
 

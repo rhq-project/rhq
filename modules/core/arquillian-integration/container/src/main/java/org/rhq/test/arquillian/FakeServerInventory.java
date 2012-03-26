@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.test.arquillian;
 
 import java.lang.reflect.Field;
@@ -34,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -59,14 +60,93 @@ import org.rhq.core.domain.resource.ResourceType;
  * 
  * @author Lukas Krejci
  */
+// TODO (ips): Why don't we just make this implement DiscoveryServerService and use it as the actual server service?
 public class FakeServerInventory {
+
+    private static final Log LOG = LogFactory.getLog(FakeServerInventory.class);
+
+    /**
+     * You can {@link #waitForDiscoveryComplete()} on an instance of this class
+     * for the complete discovery to finish in case your
+     * fake server commits some resources (which starts off
+     * asynchronous discovery of children).
+     * 
+     *
+     * @author Lukas Krejci
+     */
+    public static class CompleteDiscoveryChecker {
+        private boolean depthReached;
+        private final int expectedDepth;
+        private final Object sync = new Object();
+
+        public CompleteDiscoveryChecker(int expectedDepth) {
+            this.expectedDepth = expectedDepth;
+        }
+
+        public void waitForDiscoveryComplete() throws InterruptedException {
+            waitForDiscoveryComplete(0);
+        }
+
+        public void waitForDiscoveryComplete(long timeoutMillis) throws InterruptedException {
+            synchronized (sync) {
+                if (!depthReached) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Waiting for the discovery to complete on " + this);
+                    }
+                    sync.wait(timeoutMillis);
+                } else {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Discovery already complete... no need to wait on " + this);
+                    }
+                }
+            }
+        }
+
+        private void setDepth(int resourceTreeDepth) {
+            synchronized (sync) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Current tree depth is " + resourceTreeDepth + ", while this checker is waiting for "
+                        + expectedDepth + " on " + this);
+                }
+                if (!depthReached && resourceTreeDepth >= expectedDepth) {
+                    depthReached = true;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                //just way some more to give the PC time to really finish
+                                //the handling of the inventory report.
+                                //I know this sucks and is prone to races but we cannot
+                                //properly implement this without modifying the plugin container.
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Ad-hoc wait for discovery to really complete...");
+                                }
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                //well, we are going to finish in a few anyway
+                            } finally {
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
+                                }
+                                synchronized (sync) {
+                                    sync.notifyAll();
+                                }
+                            }
+                        }
+                    }).start();
+                }
+            }
+        }
+    }
 
     private Resource platform;
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
     private boolean failing;
     private boolean failUpgrade;
-    
+
+    private CompleteDiscoveryChecker discoveryChecker;
+
     private static final Comparator<Resource> ID_COMPARATOR = new Comparator<Resource>() {
         @Override
         public int compare(Resource o1, Resource o2) {
@@ -96,27 +176,62 @@ public class FakeServerInventory {
             fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
         }
     }
-    
+
+    public CompleteDiscoveryChecker createAsyncDiscoveryCompletionChecker(int expectedResourceTreeDepth) {
+        discoveryChecker = new CompleteDiscoveryChecker(expectedResourceTreeDepth);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Created a new discovery complete checker with tree depth " + expectedResourceTreeDepth + ": "
+                + discoveryChecker);
+        }
+        return discoveryChecker;
+    }
+
     public synchronized Answer<ResourceSyncInfo> mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new Answer<ResourceSyncInfo>() {
             @Override
             public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
-                    throwIfFailing();
-    
                     InventoryReport inventoryReport = (InventoryReport) invocation.getArguments()[0];
-    
-                    for (Resource res : inventoryReport.getAddedRoots()) {
-                        Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
-    
-                        if (res.getParentResource() == Resource.ROOT) {
-                            platform = persisted;
+
+                    try {
+                        throwIfFailing();
+
+                        for (Resource res : inventoryReport.getAddedRoots()) {
+                            Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
+
+                            if (res.getParentResource() == Resource.ROOT) {
+                                platform = persisted;
+                            }
+                        }
+                        return getSyncInfo();
+                    } finally {
+                        if (discoveryChecker != null && !inventoryReport.getAddedRoots().isEmpty()) {
+                            discoveryChecker.setDepth(getResourceTreeDepth());
                         }
                     }
-                    return getSyncInfo();
                 }
             }
         };
+    }
+
+    public synchronized int getResourceTreeDepth() {
+        if (platform == null) {
+            return 0;
+        }
+
+        return getTreeDepth(platform);
+    }
+
+    private static int getTreeDepth(Resource root) {
+        int maxDepth = 0;
+        for (Resource c : root.getChildResources()) {
+            int childDepth = getTreeDepth(c);
+            if (maxDepth < childDepth) {
+                maxDepth = childDepth;
+            }
+        }
+
+        return maxDepth + 1;
     }
 
     public synchronized Answer<ResourceSyncInfo> clearPlatform() {
@@ -297,7 +412,11 @@ public class FakeServerInventory {
             removeResource(child);
         }
     }
-    
+
+    public Map<String, Resource> getResourceStore() {
+        return resourceStore;
+    }
+
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
@@ -311,18 +430,18 @@ public class FakeServerInventory {
             }
             persisted.setId(++counter);
             persisted.setUuid(agentSideResource.getUuid());
+            persisted.setAgent(agentSideResource.getAgent());
+            persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());
+            persisted.setDescription(agentSideResource.getDescription());
+            persisted.setName(agentSideResource.getName());
+            persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
+            persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
+            persisted.setVersion(agentSideResource.getVersion());
+            persisted.setInventoryStatus(requiredInventoryStatus);
+            persisted.setResourceKey(agentSideResource.getResourceKey());
+            persisted.setResourceType(agentSideResource.getResourceType());
             resourceStore.put(persisted.getUuid(), persisted);
         }
-        persisted.setAgent(agentSideResource.getAgent());
-        persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());
-        persisted.setDescription(agentSideResource.getDescription());
-        persisted.setName(agentSideResource.getName());
-        persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
-        persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
-        persisted.setVersion(agentSideResource.getVersion());
-        persisted.setInventoryStatus(requiredInventoryStatus);
-        persisted.setResourceKey(agentSideResource.getResourceKey());
-        persisted.setResourceType(agentSideResource.getResourceType());
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {

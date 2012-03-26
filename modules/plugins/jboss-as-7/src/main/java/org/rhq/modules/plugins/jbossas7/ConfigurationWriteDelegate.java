@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -221,23 +222,70 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // Normal cases
             Property prop = conf.get(propDefName);
 
-            if (prop instanceof PropertySimple) {
-                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef, baseAddress);
+            if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
+                updateHandlePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef, baseAddress);
             }
-            else if (prop instanceof PropertyList) {
+            else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
                 updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef, baseAddress);
             }
-            else {
+            else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
                 updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef, baseAddress);
+            }
+            else {
+                String s = "Property and definition are not matching:\n";
+                s += "Property: " + prop + "\n";
+                s += "PropDef : " + propDef;
+                throw new IllegalArgumentException(s);
             }
         }
     }
 
     private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                          Address address) {
-        Map<String,Object> results = updateHandleMap(prop,propDef, address);
-        Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
+
+        String propName = prop.getName();
+        Operation writeAttribute;
+        Map<String,Object> results;
+        if (propName.endsWith(":collapsed")) {
+            String realName = propName.substring(0, propName.indexOf(':'));
+            results = handleCollapsedMap(prop, propDef);
+            writeAttribute = new WriteAttribute(address, realName,results);
+        }
+        else {
+            results = updateHandleMap(prop,propDef, address);
+            writeAttribute = new WriteAttribute(address, propName,results);
+        }
         cop.addStep(writeAttribute);
+    }
+
+    private Map<String, Object> handleCollapsedMap(PropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
+
+        String first=null;
+        String second=null;
+        for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getMap().entrySet()) {
+            PropertyDefinition def = entry.getValue();
+            if (!def.getName().contains(":"))
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+
+            Property prop = propertyMap.get(def.getName());
+            if (prop==null) {
+                throw new IllegalArgumentException("Property " + def.getName() + " was null - must not happen");
+            }
+
+            PropertySimple ps = (PropertySimple) prop;
+            if (def.getName().endsWith(":0"))
+                first = ps.getStringValue();
+            else if (def.getName().endsWith(":1"))
+                second = ps.getStringValue(); // TODO other types?
+            else
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+        }
+
+
+        Map<String,Object> resultMap = new HashMap<String,Object>();
+        resultMap.put(first, second);
+
+        return resultMap;
     }
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
@@ -249,40 +297,69 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         String key= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
 
 
+        Operation operation;
         Address addr = new Address(address);
         addr.add(type,key);
-        for (Map.Entry<String,Object> entry : results.entrySet()) {
 
-            if (entry.getValue().equals(key))
-                continue; // skip TODO always or only in the case of degenerated props?
+        if (!addNewChildren || existingPropNames.contains(key)) {
+            // update existing entry
+            if (addDeleteModifiedChildren) {
 
-
-            Operation operation;
-            if (!addNewChildren || existingPropNames.contains(key)) {
-                // update existing entry
-                if (addDeleteModifiedChildren) {
-                    operation = new Remove(addr);
-                    cop.addStep(operation);
-                    operation = new Operation("add",addr);
-                    operation.addAdditionalProperty("name",key);
-                    operation.addAdditionalProperty("value",entry.getValue());
-
-                }
-                else {
-                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
-                }
-            }
-            else {
-                // write new child ( :name+ case )
+                operation = new Remove(addr);
+                cop.addStep(operation);
 
                 operation = new Operation("add",addr);
-                operation.addAdditionalProperty("name",key);
-                operation.addAdditionalProperty("value",entry.getValue());
-            }
-            cop.addStep(operation);
-        }
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    String key1= entry.getKey();
+                    Object value = getValueWithType(entry, propDef);
+                    if (key1.endsWith(":expr")) {
+                        key1 = key1.substring(0, key1.indexOf(':'));
+                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        tmp.put("EXPRESSION_VALUE", value);
 
+                        operation.addAdditionalProperty(key1,tmp);
+                    } else {
+                        operation.addAdditionalProperty(key1, value);
+                    }
+                }
+                cop.addStep(operation);
+            }
+            else {
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    String key1 = entry.getKey();
+                    Object value = getValueWithType(entry,propDef);
+                    if (key1.endsWith(":expr")) {
+                        key1 = key1.substring(0, key1.indexOf(':'));
+                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        tmp.put("EXPRESSION_VALUE", value);
+                        operation = new WriteAttribute(addr, key1,tmp);
+                    } else {
+                        operation = new WriteAttribute(addr, key1, value);
+                    }
+                    cop.addStep(operation);
+                }
+            }
+
+        }
+        else {
+            // write new child ( :name+ case )
+            operation = new Operation("add",addr);
+            for (Map.Entry<String,Object> entry : results.entrySet()) {
+                String key1 = entry.getKey();
+                Object value = getValueWithType(entry,propDef);
+                if (key1.endsWith(":expr")) {
+                    key1 = key1.substring(0, key1.indexOf(':'));
+                    Map<String,Object> tmp = new HashMap<String, Object>();
+                    tmp.put("EXPRESSION_VALUE", value);
+                    operation.addAdditionalProperty(key1,tmp);
+                } else {
+                    operation.addAdditionalProperty(key1, value);
+                }
+            }
+                cop.addStep(operation);
+        }
     }
+
 
     private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,
                                           Address address) {
@@ -300,8 +377,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
             }
             if (memberDef instanceof PropertyDefinitionMap) {
-                Map<String,Object> mapResult = updateHandleMap((PropertyMap) inner,(PropertyDefinitionMap)memberDef,
-                        address);
+                Map<String, Object> mapResult = null;
+                if (memberDef.getName().endsWith(":collapsed")) {
+                    mapResult = handleCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                } else {
+                    mapResult = updateHandleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef, address);
+                }
                 values.add(mapResult);
             }
         }
@@ -317,13 +398,31 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (propertySimple.getStringValue()==null && !propDef.isRequired())
             return;
 
-        Operation writeAttribute = new WriteAttribute(
-                address, propertySimple.getName(),propertySimple.getStringValue());
+        Operation writeAttribute = new WriteAttribute(address);
+        String name = propertySimple.getName();
+        if (name.endsWith(":expr")) {
+
+            String realName = name.substring(0,name.indexOf(":"));
+            try {
+                Integer num = Integer.parseInt(propertySimple.getStringValue());
+                writeAttribute.addAdditionalProperty("name",realName);
+                writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+            } catch (NumberFormatException nfe) {
+                // Not a number, and expressions are allowed, so send an expression
+                Map<String,String> expr = new HashMap<String, String>(1);
+                expr.put("EXPRESSION_VALUE",propertySimple.getStringValue());
+                writeAttribute.addAdditionalProperty("name", realName);
+                writeAttribute.addAdditionalProperty("value",expr);
+            }
+        } else {
+            writeAttribute.addAdditionalProperty("name",name);
+            writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+        }
         cop.addStep(writeAttribute);
     }
 
     private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef, Address address) {
-        Map<String,PropertyDefinition> memberDefinitions = mapDef.getPropertyDefinitions();
+        Map<String,PropertyDefinition> memberDefinitions = mapDef.getMap();
 
         Map<String,Object> results = new HashMap<String,Object>();
         for (String name : memberDefinitions.keySet()) {
@@ -346,5 +445,42 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
         return results;
     }
+
+    private Object getValueWithType(Map.Entry<String, Object> entry, PropertyDefinitionMap definitions) {
+
+        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) definitions.get(entry.getKey());
+        if (!(entry.getValue() instanceof String)) {
+            return entry.getValue();
+        }
+
+        String val = (String) entry.getValue();
+        PropertySimpleType type = pds.getType();
+        Object ret;
+        switch (type) {
+            case STRING:
+                ret= val;
+                break;
+            case INTEGER:
+                ret= Integer.valueOf(val);
+                break;
+            case BOOLEAN:
+                ret= Boolean.valueOf(val);
+                break;
+            case LONG:
+                ret= Long.valueOf(val);
+                break;
+            case FLOAT:
+                ret= Float.valueOf(val);
+                break;
+            case DOUBLE:
+                ret= Double.valueOf(val);
+                break;
+            default:
+                ret= val;
+        }
+
+        return ret;
+    }
+
 
 }

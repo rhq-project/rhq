@@ -248,7 +248,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                 tabCloseClickEvent.cancel();
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
 
-                SC.ask(MSG.view_dashboards_confirm1() + " [" + dashboardView.getStoredDashboard().getName()+ "]?",
+                SC.ask(MSG.view_dashboards_confirm1() + " [" + dashboardView.getStoredDashboard().getName() + "]?",
                     new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
@@ -399,14 +399,12 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
             ProblemResourcesPortlet.KEY, 250);
         //initialize config for the problemResources portlet.
-        problemResources.getConfiguration()
-            .put(
-                new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_MAX,
-                    ProblemResourcesPortlet.defaultValue));
-        problemResources.getConfiguration()
-            .put(
-                new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
-                    ProblemResourcesPortlet.defaultValue));
+        problemResources.getConfiguration().put(
+            new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_MAX,
+                ProblemResourcesPortlet.defaultShowMax));
+        problemResources.getConfiguration().put(
+            new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
+                ProblemResourcesPortlet.defaultShowHours));
         dashboard.addPortlet(problemResources, columnIndex, rowIndex++);
 
         DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,

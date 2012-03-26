@@ -176,8 +176,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
             checkIsDesiredSecurityException(e);
         }           
     }
-    
-    @Test
+
     public void testProxyFactoryWorksWithSecuredScriptEngine() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
         

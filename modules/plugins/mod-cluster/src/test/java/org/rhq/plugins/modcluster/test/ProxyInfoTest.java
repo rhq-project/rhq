@@ -28,7 +28,7 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
 /**
  * @author Stefan Negrea
  */
-@Test(groups = "modcluster-plugin")
+@Test(groups = "modcluster.plugin")
 public class ProxyInfoTest {
 
     @Test

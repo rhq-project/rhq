@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  */
 public class AggregateConfigurationBuilder {
     public static Configuration buildAggregateConfiguration(List<Configuration> configurations,
-                                                     ConfigurationDefinition configurationDefinition) {
+        ConfigurationDefinition configurationDefinition) {
         Configuration aggregateConfiguration = new Configuration();
 
         if (configurations.isEmpty()) {
@@ -103,9 +103,9 @@ public class AggregateConfigurationBuilder {
 
     private static void buildAggregatePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         List<AbstractPropertyMap> sourceParentPropertyMaps, AbstractPropertyMap targetParentPropertyMap) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        List<PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
         if (!childPropertyDefinitions.isEmpty()) {
-            for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
+            for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions)
                 buildAggregateProperty(childPropertyDefinition, sourceParentPropertyMaps, targetParentPropertyMap);
         } else {
             buildAggregateOpenPropertyMap(sourceParentPropertyMaps, targetParentPropertyMap);

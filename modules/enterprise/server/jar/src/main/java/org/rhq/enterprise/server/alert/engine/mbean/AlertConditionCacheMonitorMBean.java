@@ -34,6 +34,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public long getAvailabilityProcessingTime();
 
+    public long getAvailabilityDurationProcessingTime();
+
     public long getMeasurementProcessingTime();
 
     public long getEventProcessingTime();
@@ -45,6 +47,8 @@ public interface AlertConditionCacheMonitorMBean {
     public long getDriftProcessingTime();
 
     public void incrementAvailabilityProcessingTime(long moreMillis);
+
+    public void incrementAvailabilityDurationProcessingTime(long moreMillis);
 
     public void incrementMeasurementProcessingTime(long moreMillis);
 
@@ -64,6 +68,8 @@ public interface AlertConditionCacheMonitorMBean {
     public int getTotalCacheElementCount();
 
     public int getAvailabilityCacheElementCount();
+
+    public int getAvailabilityDurationCacheElementCount();
 
     public int getMeasurementCacheElementCount();
 
@@ -86,6 +92,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getAvailabilityCacheElementMatches();
 
+    public int getAvailabilityDurationCacheElementMatches();
+
     public int getMeasurementCacheElementMatches();
 
     public int getEventCacheElementMatches();
@@ -99,6 +107,8 @@ public interface AlertConditionCacheMonitorMBean {
     public int getDriftCacheElementMatches();
 
     public void incrementAvailabilityCacheElementMatches(int matches);
+
+    public void incrementAvailabilityDurationCacheElementMatches(int matches);
 
     public void incrementMeasurementCacheElementMatches(int matches);
 

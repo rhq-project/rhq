@@ -41,16 +41,16 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-eb" })
+@Test(groups = { "as5.plugin", "as5.plugin.ejb2", "as5.plugin.ejb2.eb" })
 public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
 
     private static final int CREATE_COUNT = 5;
     private static final int UPDATE_COUNT = 3;
     private static final int DELETE_COUNT = 3;
 
-    private static final String KEY_PREFIX = "as5-plugin-ejb2-entity-bean-test-entity";
+    private static final String KEY_PREFIX = "as5.plugin.ejb2-entity-bean-test-entity";
 
-    private static final String JNDI_NAME = "as5-plugin-test/AllTypes";
+    private static final String JNDI_NAME = "as5.plugin.test/AllTypes";
 
     protected String getResourceTypeName() {
         return "EJB2 Entity Bean";
@@ -59,7 +59,7 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
     /**
      * Perform some CRUD operations so that we have some values to collect as metrics.
      */
-    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
+    @BeforeGroups(groups = "as5.plugin.ejb2", dependsOnMethods = "deployEjb2TestJars")
     public void setupBean() {
         try {
             System.out.println("Performing CRUD ops on entities of type " + JNDI_NAME);
@@ -94,10 +94,10 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
         }
     }
 
-    //    @AfterGroups(groups = "as5-plugin")
+    //    @AfterGroups(groups = "as5.plugin")
     //    void cleanUpDb() {
     //        try {
-    //            Object entityHome = AppServerUtils.getRemoteObject("as5-plugin-test/AllTypes", Object.class);
+    //            Object entityHome = AppServerUtils.getRemoteObject("as5.plugin.test/AllTypes", Object.class);
     //
     //            for (int i = DELETE_COUNT; i < CREATE_COUNT; ++i) {
     //                invokeMethod("remove", entityHome, new MethodArgDef[] {

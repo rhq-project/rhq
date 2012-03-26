@@ -18,6 +18,16 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
@@ -60,15 +70,6 @@ import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
-
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet,
         DeleteResourceFacet,
@@ -162,14 +163,23 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 
         for (MeasurementScheduleRequest req : metrics) {
 
-
             if (req.getName().startsWith(INTERNAL))
                 processPluginStats(req,report);
             else {
                 // Metrics from the application server
 
-                Operation op = new ReadAttribute(address,req.getName()); // TODO batching
-                Result res = connection.execute(op, false);
+				String reqName = req.getName();
+
+				ComplexRequest request = null;
+				Operation op = null;
+				if (reqName.contains(":")) {
+					request = ComplexRequest.create(reqName);
+					op = new ReadAttribute(address, request.getProp());
+				} else {
+					op = new ReadAttribute(address,reqName); // TODO batching
+				}
+
+                Result res = connection.execute(op);
                 if (!res.isSuccess()) {
                     log.warn("Getting metric [" + req.getName() +"] at [ " + address + "] failed: " + res.getFailureDescription());
                     continue;
@@ -182,9 +192,17 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble(getStringValue(val));
-                            MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                            report.addData(data);
+							if (request != null) {
+								HashMap<String,Number> myValues = (HashMap<String, Number>) val;
+								for (String key : myValues.keySet()) {
+									String sub = request.getSub();
+									if (key.equals(sub)) {
+										addMetric2Report(report, req, myValues.get(key));
+									}
+								}
+							} else {
+								addMetric2Report(report, req, val);
+							}
                         } catch (NumberFormatException e) {
                             log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
                         }
@@ -200,7 +218,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         }
     }
 
-    private String getStringValue(Object val) {
+	private void addMetric2Report(MeasurementReport report, MeasurementScheduleRequest req, Object val) {
+		Double d = Double.parseDouble(getStringValue(val));
+		MeasurementDataNumeric data = new MeasurementDataNumeric(req, d);
+		report.addData(data);
+	}
+
+    protected String getStringValue(Object val) {
         String realVal;
         if (val instanceof String)
             realVal = (String)val;
@@ -552,8 +576,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
+        } else if (what.equals("subsystem")) {
+            operation = new Operation(op, new Address(this.path));
         }
-
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
@@ -628,4 +653,27 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         return address;
     }
 
+
+    private static class ComplexRequest {
+    		private String prop;
+    		private String sub;
+
+    		private ComplexRequest(String prop, String sub) {
+    			this.prop = prop;
+    			this.sub = sub;
+    		}
+
+    		public String getProp() {
+    			return prop;
+    		}
+
+    		public String getSub() {
+    			return sub;
+    		}
+
+    		public static ComplexRequest create(String requestName) {
+    			StringTokenizer tokenizer = new StringTokenizer(requestName, ":");
+    			return new ComplexRequest(tokenizer.nextToken(), tokenizer.nextToken());
+    		}
+    	}
 }

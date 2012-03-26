@@ -24,18 +24,23 @@ package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -48,7 +53,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 /**
  * Runs a periodic scan for resource availability.
  *
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author John Mazzitelli
  * @author Ian Springer
  */
@@ -63,6 +68,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     // standard plugin configuration setting/agent preference - if someone wants to do this, they must
     // explicitly pass in -D to the JVM running the plugin container.
     private static final int GET_AVAILABILITY_TIMEOUT;
+    private static final Random RANDOM = new Random();
     static {
         int timeout;
         try {
@@ -76,12 +82,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private final Log log = LogFactory.getLog(AvailabilityExecutor.class);
 
     private InventoryManager inventoryManager;
-    private AtomicBoolean sendChangedOnlyReport;
+    private AtomicBoolean sendChangesOnlyReport;
     private final Object lock = new Object();
+    private int scanHistorySize = 1;
+    private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 
     public AvailabilityExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
-        this.sendChangedOnlyReport = new AtomicBoolean(false);
+        this.sendChangesOnlyReport = new AtomicBoolean(false);
     }
 
     public void run() {
@@ -98,79 +106,108 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     /**
      * Returns the availability report that should be sent to the Server.
      *
-     * <p>This will return <code>null</code> if there is no committed inventory and thus no availability reports should
-     * be sent. This will rarely happen - only if this is a brand new agent whose inventory hasn't been committed yet or
-     * if the platform and all its children have been deleted (in which case the agent should be uninstalled, or the user
-     * will want to re-import the platform). In either case, it will be in rare, corner cases that this will ever return
-     * null, and the condition that caused the null should eventually go away.</p>
+     * <p>This will return <code>null</code> if there is nothing committed to inventory. Having no committed inventory 
+     * is rare.  There will be no committed inventory if this is a brand new agent whose inventory hasn't been committed 
+     * yet or if the platform and all its children have been deleted (in which case the agent should be uninstalled, or 
+     * the user will want to re-import the platform).
+     * 
+     * The report can be empty if there is nothing to report. This can happen for a changesOnly report when there
+     * are no changes.</p>
      *
      * @return the report containing all the availabilities that need to be sent to the Server, or <code>null</code> if
-     *         there is no committed inventory and thus no availability reports should be sent
+     *         there is no inventory or nothing to report. The report can be empty
      *
      * @throws Exception if failed to create and prepare the report
      */
+    @Nullable
     public AvailabilityReport call() throws Exception {
-        log.debug("Running Availability Scan...");
-
         AvailabilityReport availabilityReport;
 
         synchronized (lock) {
-            availabilityReport = new AvailabilityReport(sendChangedOnlyReport.get(), inventoryManager.getAgent()
-                .getName());
-
             if (inventoryManager.getPlatform().getInventoryStatus() != InventoryStatus.COMMITTED) {
                 return null;
             }
 
+            boolean changesOnly = sendChangesOnlyReport.get();
+            availabilityReport = new AvailabilityReport(changesOnly, inventoryManager.getAgent().getName());
+
+            // Follow up full reports with changesOnly reports 
+            if (!changesOnly) {
+                sendChangesOnlyReportNextTime();
+            }
+
             long start = System.currentTimeMillis();
+            Scan scan = new Scan(start, !changesOnly);
 
-            checkInventory(inventoryManager.getPlatform(), availabilityReport,
-                availabilityReport.isChangesOnlyReport(), true, false);
-
-            // In enterprise mode, the server will need at least one resource so it can derive what agent
-            // is sending this report.  If the report is empty (meaning, nothing has changed since the last
-            // availability check), let's add the platform record to the report
-            if (availabilityReport.getResourceAvailability().isEmpty()) {
-                checkInventory(inventoryManager.getPlatform(), availabilityReport, false, false, false);
+            // TODO back to debug
+            log.info("Scan Starting: " + new Date(start));
+            if (log.isDebugEnabled()) {
+                //log.debug("Scan Starting: " + new Date(start));
             }
 
-            // if we have non-platform resources in the report, the agent has had
-            // resources imported. So next time, only send changed only reports.
-            if (availabilityReport.getResourceAvailability().size() > 1) {
-                sendChangedOnlyReportNextTime();
+            try {
+                checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
+            } catch (RuntimeException e) {
+                if (Thread.interrupted()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Exception occurred during availability check, but this thread has been interrupted, "
+                                + "so most likely the plugin container is shutting down: " + e);
+                    }
+                    return availabilityReport;
+                }
             }
 
-            long end = System.currentTimeMillis();
+            scan.setEndTime(System.currentTimeMillis());
+
+            // TODO back to debug
+            log.info("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+            // Is this too much logging?
+            if (log.isDebugEnabled()) {
+                //log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+            }
+
+            addScanHistory(scan);
 
             if (log.isDebugEnabled()) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-                oos.writeObject(availabilityReport);
-                log.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
-                    + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
+                long end = System.currentTimeMillis();
+                ObjectOutputStream oos = null;
+                try {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
+                    oos = new ObjectOutputStream(baos);
+                    oos.writeObject(availabilityReport);
+                    log.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
+                        + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
+                } finally {
+                    if (null != oos) {
+                        oos.close();
+                    }
+                }
             }
         }
 
         return availabilityReport;
     }
 
-    private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-        boolean checkChildren, boolean parentIsDown) {
+    protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
+        AvailabilityType parentAvailType, boolean isForced, Scan scan) {
+
         // Only report avail for committed Resources - that's all the Server cares about.
         if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
         }
+
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
-        // Only report avail for synchronized Resources, otherwise chances are the Server will know nothing of the
-        // Resource.
+        // Only report avail for synchronized Resources, otherwise the Server will likely know nothing of the Resource.
         if (resourceContainer == null
             || resourceContainer.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
             return;
         }
+
         AvailabilityFacet resourceComponent;
         try {
             resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
                 FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
+
         } catch (PluginContainerException e) {
             // TODO (ips): Why aren't we logging this as an error?
             if (log.isDebugEnabled()) {
@@ -179,81 +216,287 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             return;
         }
 
-        // If this is a changed-only report, find out what the avail was the last time we checked it.
-        Availability previous = (reportChangesOnly) ? this.inventoryManager.getAvailabilityIfKnown(resource) : null;
+        ++scan.numResources;
 
-        AvailabilityType current;
-        if (parentIsDown) {
-            // If the resource's parent is down, the rules are that the resource and all of the parent's other
-            // descendants, must also be down, so there's no need to even ask the resource component for its
-            // current availability - its current avail is DOWN and that's that.
-            current = AvailabilityType.DOWN;
-        } else {
-            current = null;
-            try {
-                // if the component is started, ask what its current availability is as of right now;
-                // if it's not started, then assume it's down, and the next time we check,
-                // we'll see if it's started and check for real then - otherwise, keep assuming it's
-                // down (this is for the case when a plugin component can't start for whatever reason
-                // or is just slow to start)
-                if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                    current = resourceComponent.getAvailability();
+        // See if this resource is scheduled for an avail check
+        boolean checkAvail = false;
+        boolean deferToParent = false;
+        Long availabilityScheduleTime = resourceContainer.getAvailabilityScheduleTime();
+        MeasurementScheduleRequest availScheduleRequest = resourceContainer.getAvailabilitySchedule();
+
+        // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
+        // is "off-schedule" so we need to push out the next check.  
+        if ((null == availabilityScheduleTime) || isForced) {
+            // if there is no availability schedule (platform) then just perform the avail check
+            // (note, platforms always return UP anyway).
+            if (null == availScheduleRequest) {
+                checkAvail = true;
+
+            } else {
+                // if the schedule is enabled then schedule the next avail check, else just defer to the parent type
+                if (availScheduleRequest.isEnabled()) {
+                    // Schedule the avail check at some time between now and (now + collectionInterval). By
+                    // doing this random assignment for the first scheduled collection, we'll spread out the actual
+                    // check times going forward. Do not check it on this pass (unless we're forced)
+                    int interval = (int) availScheduleRequest.getInterval(); // intervals are short enough for safe cast
+                    availabilityScheduleTime = scan.startTime + RANDOM.nextInt(interval + 1);
+                    resourceContainer.setAvailabilityScheduleTime(availabilityScheduleTime);
+
+                    ++scan.numScheduledRandomly;
+
                 } else {
-                    this.inventoryManager.activateResource(resource, resourceContainer, false);
-                    if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                        current = resourceComponent.getAvailability();
-                    }
-                }
-            } catch (Throwable t) {
-                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t
-                    .getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
-                this.inventoryManager.sendResourceErrorToServer(resourceError);
-                // TODO GH: Put errors in report, rather than sending them to the Server separately.
-                if (log.isDebugEnabled()) {
-                    if (t instanceof TimeoutException) {
-                        // no need to log the stack trace for timeouts...
-                        log.debug("Failed to collect availability on " + resource + " (call timed out)");
-                    } else {
-                        log.debug("Failed to collect availability on " + resource, t);
-                    }
+                    deferToParent = true;
                 }
             }
-            if (current == null) {
-                current = AvailabilityType.DOWN;
+        } else {
+            // check avail if this resource scheduled time has been reached
+            checkAvail = scan.startTime >= availabilityScheduleTime;
+
+            if (checkAvail) {
+                long interval = availScheduleRequest.getInterval(); // intervals are short enough for safe cast
+                resourceContainer.setAvailabilityScheduleTime(scan.startTime + interval);
+                ++scan.numPushedByInterval;
             }
         }
 
-        // Only add the availability to the report if it changed from its previous state.
-        // If this is the first time we've been executed, reportChangesOnly will be false,
-        // and we will send a full report as our very first report.
-        if ((previous == null) || (previous.getAvailabilityType() != current) || !reportChangesOnly) {
-            Availability availability = this.inventoryManager.updateAvailability(resource, current);
+        // find out what the avail was the last time we checked it. this may be null
+        Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
+        AvailabilityType current = (null == previous) ? null : previous.getAvailabilityType();
+
+        // regardless of whether the avail schedule is met, we still must check avail if isForce is true or if
+        // it's a full report and we don't yet have an avail for the resource.
+        if (!checkAvail && (isForced || (scan.isFull && null == previous))) {
+            checkAvail = true;
+        }
+
+        if (checkAvail) {
+            if (deferToParent || (AvailabilityType.UP != parentAvailType)) {
+                // If the resource's parent is not up, the rules are that the resource and all of the parent's other
+                // descendants, must also be of the parent avail type, so there's no need to even ask the resource component
+                // for its current availability - its current avail is set to the parent avail type and that's that.
+                current = parentAvailType;
+                ++scan.numDeferToParent;
+
+            } else {
+                current = null;
+                try {
+                    ++scan.numGetAvailabilityCalls;
+
+                    // if the component is started, ask what its current availability is as of right now;
+                    // if it's not started, then assume it's down, and the next time we check,
+                    // we'll see if it's started and check for real then - otherwise, keep assuming it's
+                    // down (this is for the case when a plugin component can't start for whatever reason
+                    // or is just slow to start)
+                    if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
+                        current = resourceComponent.getAvailability();
+                    } else {
+                        this.inventoryManager.activateResource(resource, resourceContainer, false);
+                        if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
+                            current = resourceComponent.getAvailability();
+                        }
+                    }
+                } catch (Throwable t) {
+                    ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK,
+                        t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
+                    this.inventoryManager.sendResourceErrorToServer(resourceError);
+                    if (log.isDebugEnabled()) {
+                        if (t instanceof TimeoutException) {
+                            // no need to log the stack trace for timeouts...
+                            log.debug("Failed to collect availability on " + resource + " (call timed out)");
+                        } else {
+                            log.debug("Failed to collect availability on " + resource, t);
+                        }
+                    }
+                }
+                if (current == null) {
+                    current = AvailabilityType.DOWN;
+                }
+            }
+        }
+
+        // Add the availability to the report if it changed from its previous state or if this is a full report.
+        // Update the resource container only if the avail has changed.
+        boolean availChanged = (previous == null) || (previous.getAvailabilityType() != current);
+
+        if (availChanged || scan.isFull) {
+            Availability availability;
+
+            if (availChanged) {
+                ++scan.numAvailabilityChanges;
+
+                availability = this.inventoryManager.updateAvailability(resource, current);
+
+                // if the resource avail changed to UP then we must perform avail checks for all
+                // children, to ensure their avails are up to date. Note that if it changed to NOT UP
+                // then the children will just get the parent avail type and there is no avail check anyway.
+                if (!isForced && (AvailabilityType.UP == current)) {
+                    isForced = true;
+                }
+            } else {
+                // avoid the overhead of updating the resource container, the avail type did not change
+                availability = new Availability(resource, current);
+            }
+
+            // update the report
             availabilityReport.addAvailability(availability);
         }
 
-        if (checkChildren) {
-            for (Resource child : resource.getChildResources()) {
-                checkInventory(child, availabilityReport, reportChangesOnly, true, current == AvailabilityType.DOWN);
-            }
+        for (Resource child : resource.getChildResources()) {
+            checkInventory(child, availabilityReport, current, isForced, scan);
         }
 
         return;
     }
 
     /**
-     * This tells the executor to send a full availability report the next time it sends one. Package-scoped so the
-     * InventoryManager can call this.
+     * This tells the executor to send a full availability report the next time it sends one. Public-scoped so tests
+     * can call this.
      */
-    void sendFullReportNextTime() {
-        this.sendChangedOnlyReport.set(false);
+    public void sendFullReportNextTime() {
+        this.sendChangesOnlyReport.set(false);
+
+        if (log.isTraceEnabled()) {
+            log.trace("\nFull report requested by: " + getSmallStackTrace(new Throwable()));
+        }
+    }
+
+    static private String getSmallStackTrace(Throwable t) {
+        StringBuilder smallStack = new StringBuilder();
+
+        StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();
+        for (int i = 1; i < stack.length; i++) {
+            StackTraceElement ste = stack[i];
+            if (ste.getClassName().startsWith("org.rhq")) {
+                smallStack.append(ste.toString());
+                smallStack.append("\n");
+            }
+        }
+        return smallStack.toString();
     }
 
     /**
      * This tells the executor to send a minimal availability report the next time it sends one (that is, do not send a
-     * resource availability if it hasn't changed from its last known state). Package-scoped so the InventoryManager can
-     * call this.
+     * resource availability if it hasn't changed from its last known state). Public-scoped so test code can call this.
      */
-    void sendChangedOnlyReportNextTime() {
-        this.sendChangedOnlyReport.set(true);
+    public void sendChangesOnlyReportNextTime() {
+        this.sendChangesOnlyReport.set(true);
+    }
+
+    public void addScanHistory(Scan scan) {
+        synchronized (scanHistory) {
+            if (scanHistory.size() == scanHistorySize) {
+                scanHistory.removeLast();
+            }
+            scanHistory.push(scan);
+        }
+    }
+
+    public List<Scan> getScanHistory() {
+        synchronized (scanHistory) {
+            List<Scan> result = new ArrayList<Scan>(scanHistory.size());
+            result.addAll(scanHistory);
+            return result;
+        }
+    }
+
+    public Scan getMostRecentScanHistory() {
+        synchronized (scanHistory) {
+            return scanHistory.isEmpty() ? null : scanHistory.get(0);
+        }
+    }
+
+    public void setScanHistorySize(int scanHistorySize) {
+        synchronized (scanHistory) {
+            if (scanHistorySize < 1) {
+                return;
+            }
+            while (scanHistory.size() > scanHistorySize) {
+                scanHistory.removeLast();
+            }
+            this.scanHistorySize = scanHistorySize;
+        }
+    }
+
+    public static class Scan {
+        private long startTime;
+        private long endTime;
+        private long runtime;
+
+        private boolean isFull = false;
+        private boolean isForced = false;
+
+        int numResources = 0;
+        int numGetAvailabilityCalls = 0;
+        int numScheduledRandomly = 0;
+        int numPushedByInterval = 0;
+        int numAvailabilityChanges = 0;
+        int numDeferToParent = 0;
+
+        public Scan(long startTime, boolean isFull) {
+            this.startTime = startTime;
+            this.isFull = isFull;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(long endTime) {
+            this.endTime = endTime;
+            this.runtime = endTime - startTime;
+        }
+
+        public long getRuntime() {
+            return runtime;
+        }
+
+        public boolean isFull() {
+            return isFull;
+        }
+
+        public boolean isForced() {
+            return isForced;
+        }
+
+        public void setForced(boolean isForced) {
+            this.isForced = isForced;
+        }
+
+        public int getNumResources() {
+            return numResources;
+        }
+
+        public int getNumGetAvailabilityCalls() {
+            return numGetAvailabilityCalls;
+        }
+
+        public int getNumScheduledRandomly() {
+            return numScheduledRandomly;
+        }
+
+        public int getNumPushedByInterval() {
+            return numPushedByInterval;
+        }
+
+        public int getNumAvailabilityChanges() {
+            return numAvailabilityChanges;
+        }
+
+        public int getNumDeferToParent() {
+            return numDeferToParent;
+        }
+
+        @Override
+        public String toString() {
+            return "Scan [startTime=" + startTime + ", endTime=" + endTime + ", runtime=" + runtime + ", isFull="
+                + isFull + ", isForced=" + isForced + ", numResources=" + numResources + ", numGetAvailabilityCalls="
+                + numGetAvailabilityCalls + ", numScheduledRandomly=" + numScheduledRandomly + ", numPushedByInterval="
+                + numPushedByInterval + ", numAvailabilityChanges=" + numAvailabilityChanges + ", numDeferToParent="
+                + numDeferToParent + "]";
+        }
     }
 }

@@ -229,11 +229,11 @@ public class MetadataManagerTest {
         assert foo.getType() == PropertySimpleType.STRING;
 
         // This is an arbitrary entry map
-        assert def.getPropertyDefinitionMap("kilo").getPropertyDefinitions().size() == 0;
+        assert def.getPropertyDefinitionMap("kilo").getMap().size() == 0;
         assert def.getPropertyDefinitionMap("kilo").getName().equals("kilo");
 
         PropertyDefinitionSimple mapEmbeddedSimpleDef = (PropertyDefinitionSimple) def.getPropertyDefinitionMap("lima")
-            .getPropertyDefinitions().get("file");
+            .getMap().get("file");
         assert mapEmbeddedSimpleDef != null;
         assert mapEmbeddedSimpleDef.getType() == PropertySimpleType.FILE;
 

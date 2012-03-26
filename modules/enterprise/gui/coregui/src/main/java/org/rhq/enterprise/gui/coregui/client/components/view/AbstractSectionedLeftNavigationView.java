@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -197,7 +196,13 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     }
 
     public void setContent(Canvas newContent) {
-        contentCanvas.addChild(newContent);
+        if (newContent instanceof HasViewName) {
+            LocatableVLayout decoratedContent = decorateWithTitleBar(((HasViewName) newContent).getViewName(),
+                newContent);
+            contentCanvas.addChild(decoratedContent);
+        } else {
+            contentCanvas.addChild(newContent);
+        }
         contentCanvas.markForRedraw();
         currentContent = newContent;
     }
@@ -291,7 +296,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         return globalPermissions;
     }
 
-    protected LocatableVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
+    private LocatableVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
         LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId(viewName.getName()));
         vLayout.setWidth100();
         vLayout.setHeight100();

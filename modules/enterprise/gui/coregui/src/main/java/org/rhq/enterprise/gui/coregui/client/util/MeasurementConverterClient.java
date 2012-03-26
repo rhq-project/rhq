@@ -76,7 +76,68 @@ public class MeasurementConverterClient {
         if (targetUnits == null) {
             return value;
         } else {
-            return value + targetUnits;
+            return value + getMeasurementUnitAbbreviation(targetUnits);
+        }
+    }
+
+    public static String getMeasurementUnitAbbreviation(MeasurementUnits units) {
+        switch (units) {
+        case NONE:
+            return "";
+        case PERCENTAGE:
+            return MSG.common_unit_abbrev_percentage();
+        case BYTES:
+            return MSG.common_unit_abbrev_bytes();
+        case KILOBYTES:
+            return MSG.common_unit_abbrev_kilobytes();
+        case MEGABYTES:
+            return MSG.common_unit_abbrev_megabytes();
+        case GIGABYTES:
+            return MSG.common_unit_abbrev_gigabytes();
+        case TERABYTES:
+            return MSG.common_unit_abbrev_terabytes();
+        case PETABYTES:
+            return MSG.common_unit_abbrev_petabytes();
+        case BITS:
+            return MSG.common_unit_abbrev_bits();
+        case KILOBITS:
+            return MSG.common_unit_abbrev_kilobits();
+        case MEGABITS:
+            return MSG.common_unit_abbrev_megabits();
+        case GIGABITS:
+            return MSG.common_unit_abbrev_gigabits();
+        case TERABITS:
+            return MSG.common_unit_abbrev_terabits();
+        case PETABITS:
+            return MSG.common_unit_abbrev_petabits();
+        case EPOCH_MILLISECONDS:
+            return ""; // absolute time - no display
+        case EPOCH_SECONDS:
+            return ""; // absolute time - no display
+        case JIFFYS:
+            return MSG.common_unit_abbrev_jiffys();
+        case NANOSECONDS:
+            return MSG.common_unit_abbrev_nanoseconds();
+        case MICROSECONDS:
+            return MSG.common_unit_abbrev_microseconds();
+        case MILLISECONDS:
+            return MSG.common_unit_abbrev_milliseconds();
+        case SECONDS:
+            return MSG.common_unit_abbrev_seconds();
+        case MINUTES:
+            return MSG.common_unit_abbrev_minutes();
+        case HOURS:
+            return MSG.common_unit_abbrev_hours();
+        case DAYS:
+            return MSG.common_unit_abbrev_days();
+        case CELSIUS:
+            return MSG.common_unit_abbrev_celsius();
+        case KELVIN:
+            return MSG.common_unit_abbrev_kelvin();
+        case FAHRENHEIGHT:
+            return MSG.common_unit_abbrev_fahrenheight();
+        default:
+            return units.toString(); // unknown units - developer forgot to add a case statement - just use the toString for now
         }
     }
 
@@ -342,8 +403,8 @@ public class MeasurementConverterClient {
         }
 
         if (wasNegative) {
-            return new MeasurementNumericValueAndUnits(-currentValueAndUnits.getValue(), currentValueAndUnits
-                .getUnits());
+            return new MeasurementNumericValueAndUnits(-currentValueAndUnits.getValue(),
+                currentValueAndUnits.getUnits());
         }
 
         return currentValueAndUnits;

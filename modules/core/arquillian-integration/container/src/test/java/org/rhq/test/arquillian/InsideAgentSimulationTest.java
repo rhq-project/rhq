@@ -65,6 +65,8 @@ public class InsideAgentSimulationTest extends Arquillian {
 
     private FakeServerInventory fakeServerInventory;
 
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
+    
     @BeforeDiscovery(order = 1)
     public void resetServerServices() {
         serverServices.resetMocks();
@@ -73,21 +75,40 @@ public class InsideAgentSimulationTest extends Arquillian {
     
     @BeforeDiscovery(testMethods = "testDeepDiscovery", order = 2)
     public void setupDiscoveryMocks() throws Exception {
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(3);
         //autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
     
+    @AfterDiscovery
+    public void waitForAsyncDiscoveries() throws Exception {
+        if (discoveryCompleteChecker != null) {
+            discoveryCompleteChecker.waitForDiscoveryComplete();
+        }
+    }
+    
+    //we need to make sure that the no discovery test is run first, because the plugin container
+    //would keep the inventory from the previous test.
+    //the other two tests get each a new serverside, which, when synced with the PC, will cause
+    //the PC to clear and rediscover the resources (the serverside will have an empty inventory
+    //at first and hence the PC will clear its inventory, too).
+    @Test
+    public void testNoDiscovery() {
+        Assert.assertEquals(discoveredServers.size(), 0, "There should be no server discovered");
+        Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
+    }
+    
     //the difference between this test and the deep discovery one is that for this test
     //the mocks should not be set up and hence only a top server discovery should occur
-    @Test
+    @Test(dependsOnMethods = "testNoDiscovery")
     @RunDiscovery
     public void testShallowDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
         Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
     }
     
-    @Test
+    @Test(dependsOnMethods = "testNoDiscovery")
     @RunDiscovery
     public void testDeepDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");

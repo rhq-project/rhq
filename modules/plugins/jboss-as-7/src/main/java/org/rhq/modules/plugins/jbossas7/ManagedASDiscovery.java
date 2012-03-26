@@ -102,13 +102,13 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
 
                 String resourceName = serverInfo.name;
 
-                if (hostInfo.productName.equalsIgnoreCase(EAP)) {
+                if (EAP.equalsIgnoreCase(hostInfo.productName)) {
                     version = EAP_PREFIX + hostInfo.productVersion;
                     resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
                     resourceName = EAP_PREFIX + resourceName;
-                } else if (hostInfo.productName.equalsIgnoreCase(EDG)) {
-                    version = EDG_PREFIX + hostInfo.productVersion;
-                    resourceDescription = "Managed JBoss Enterprise Data Grid 6 server";
+                } else if (JDG.equalsIgnoreCase(hostInfo.productName)) {
+                    version = JDG_PREFIX + hostInfo.productVersion;
+                    resourceDescription = "Managed JBoss Data Grid 6 server";
                 } else {
                     resourceDescription = "Managed AS7 server";
                     version = hostInfo.releaseVersion;

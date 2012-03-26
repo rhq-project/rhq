@@ -19,6 +19,7 @@
 package org.rhq.core.db.ant.dbupgrade;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import mazz.i18n.Msg;
 
@@ -68,10 +69,21 @@ public class SST_DropTable extends SchemaSpecTask {
 
             log(MSG.getMsg(DbAntI18NResourceKeys.DROP_TABLE_EXECUTING, table));
             db_type.dropTable(conn, table);
+        } catch (IllegalStateException e) {
+            log(MSG.getMsg(DbAntI18NResourceKeys.DROP_TABLE_TABLE_DOES_NOT_EXIST, table));
+            // since the semantics demand that we return normally here, we need to rollback the
+            // invalidated transaction ourselves.
+            if (isIgnoreError()) {
+                try {
+                    conn.rollback();
+                } catch (SQLException e2) {
+                    log("rollback() exception: " + e2.toString());
+                }
+            }
+            return;
         } catch (Exception e) {
             throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.DROP_TABLE_ERROR, table, e), e);
         }
-
     }
 
     private void validateAttributes() throws BuildException {

@@ -50,15 +50,15 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = {"as5-plugin", "as5-plugin-sbm"})
+@Test(groups = {"as5.plugin", "as5.plugin.sbm"})
 public class ServiceBindingSetResourceTest extends AbstractServiceBindingTest {
 
-    private static final String NEW_BINDING_SET_NAME = "as5-plugin-test-binding-set";
+    private static final String NEW_BINDING_SET_NAME = "as5.plugin.test-binding-set";
     private static final String NEW_BINDING_DEFAULT_HOST_NAME = "localhost";
     private static final int NEW_BINDING_SET_PORT_OFFSET = 333;
 
-    private static final String NEW_BINDING_SET_NEW_OVERRIDE_SERVICE_NAME = "as5-plugin-override-service-name";
-    private static final String NEW_BINDING_SET_NEW_OVERRIDE_BINDING_NAME = "as5-plugin-override-binding-name";
+    private static final String NEW_BINDING_SET_NEW_OVERRIDE_SERVICE_NAME = "as5.plugin.override-service-name";
+    private static final String NEW_BINDING_SET_NEW_OVERRIDE_BINDING_NAME = "as5.plugin.override-binding-name";
     private static final int NEW_BINDING_SET_NEW_OVERRIDE_PORT = 45673;
     private static final String NEW_BINDING_SET_NEW_OVERRIDE_HOSTNAME = "somewhere-over-the-rainbow";
     private static final String NEW_BINDING_SET_NEW_OVERRIDE_DESCRIPTION = "a testing override";

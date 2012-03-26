@@ -58,6 +58,7 @@ public class ASConnection {
     private String host;
     private int port;
     private String FAILURE_DESCRIPTION = "\"failure-description\"";
+    private String INCLUDE_DEFAULT = "include-defaults";
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -68,13 +69,18 @@ public class ASConnection {
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+        if (host == null) {
+            throw new IllegalArgumentException("Management host cannot be null.");
+        }
+        if (port <= 0 || port > 65535) {
+            throw new IllegalArgumentException("Invalid port: " + port);
+        }
         this.host = host;
         this.port = port;
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
             urlString = url.toString();
-
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -87,7 +93,6 @@ public class ASConnection {
 
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     }
 
     /**
@@ -103,8 +108,24 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation) {
+        return executeRaw(operation, 10);
+    }
 
-        InputStream inputStream = null;
+    /**
+     * Execute an operation against the domain api. This method is doing the
+     * real work by talking to the remote server and sending JSON data, that
+     * is obtained by serializing the operation.
+     *
+     * Please do not use this API , but execute()
+     * @return JsonNode that describes the result
+     * @param operation an Operation that should be run on the domain controller
+     * @param timeoutSec Timeout on connect and read in seconds
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation)
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
+     */
+    public JsonNode executeRaw(Operation operation, int timeoutSec) {
+        InputStream inputStream;
         BufferedReader br = null;
         InputStream es = null;
         HttpURLConnection conn = null;
@@ -115,13 +136,20 @@ public class ASConnection {
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept", "application/json");
-            conn.setConnectTimeout(10 * 1000); // 10s
-            conn.setReadTimeout(10 * 1000); // 10s
+            conn.setConnectTimeout(timeoutSec * 1000); // 10s
+            conn.setReadTimeout(timeoutSec * 1000); // 10s
 
             if (conn.getReadTimeout() != 10 * 1000)
                 log.warn("JRE uses a broken timeout mechanism - nothing we can do");
 
             OutputStream out = conn.getOutputStream();
+
+            //add additional request property to include-defaults=true to all requests.
+            //if it's already set we leave it alone and assume that Operation creator is taking over control.
+            if (operation.getAdditionalProperties().isEmpty()
+                || !operation.getAdditionalProperties().containsKey(INCLUDE_DEFAULT)) {
+                operation.addAdditionalProperty("include-defaults", "true");
+            }
 
             String json_to_send = mapper.writeValueAsString(operation);
 
@@ -168,7 +196,7 @@ public class ASConnection {
                 }
 
                 String outcome;
-                JsonNode operationResult = null;
+                JsonNode operationResult;
                 if (builder.length() > 0) {
                     outcome = builder.toString();
                     operationResult = mapper.readTree(outcome);
@@ -187,11 +215,18 @@ public class ASConnection {
                 }
                 return operationResult;
             } else {
-                log.error("IS was null and code was " + responseCode);
                 //if not properly authorized sends plugin exception for visual indicator in the ui.
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED
+                    || responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("[" + url + "] Response was empty and response code was " + responseCode + " "
+                            + conn.getResponseMessage() + ".");
+                    }
                     throw new InvalidPluginConfigurationException(
-                        "Credentials for plugin to communicate with are invalid. Update Connection Settings with valid credentials.");
+                        "Credentials for plugin to connect to AS7 management interface are invalid. Update Connection Settings with valid credentials.");
+                } else {
+                    log.error("[" + url + "] Response was empty and response code was " + responseCode + " "
+                        + conn.getResponseMessage() + ".");
                 }
             }
         } catch (IllegalArgumentException iae) {
@@ -224,6 +259,7 @@ public class ASConnection {
                         }
                         es.close();
                     } catch (IOException e1) {
+                        // ignore
                     }
                 }
             }
@@ -261,7 +297,7 @@ public class ASConnection {
     }
 
     /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.
-     * 
+     *
      * @param path Operation.getAddress().getPath() value.
      * @return boolean indicating invalid spaces found.
      */
@@ -282,7 +318,19 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public Result execute(Operation op) {
-        return execute(op, false);
+        return execute(op, false,10);
+    }
+
+    /**
+     * Execute the passed Operation and return its Result. This is a shortcut of
+     * #execute(Operation, false)
+     * @param op Operation to execute
+     * @param timeoutSec Timeout to wait in seconds. Default is 10 sec
+     * @return Result of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
+    public Result execute(Operation op,int timeoutSec) {
+        return execute(op, false,timeoutSec);
     }
 
     /**
@@ -293,18 +341,43 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public ComplexResult executeComplex(Operation op) {
-        return (ComplexResult) execute(op, true);
+        return (ComplexResult) execute(op, true,10);
+    }
+
+    /**
+     * Execute the passed Operation and return its ComplexResult. This is a shortcut of
+     * #execute(Operation, true)
+     * @param op Operation to execute
+     * @param timeoutSec Timeout to wait in seconds. Default is 10 sec
+     * @return ComplexResult of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
+    public ComplexResult executeComplex(Operation op,int timeoutSec) {
+        return (ComplexResult) execute(op, true,timeoutSec);
     }
 
     /**
      * Execute the passed Operation and return its Result. Depending on <i>isComplex</i>
-     * the return type is a simple Result or a ComplexResult
+     * the return type is a simple Result or a ComplexResult. Default timeout here is 10sec
      * @param op Operation to execute
      * @param isComplex should a complex result be returned?
      * @return ComplexResult of the execution
      */
     public Result execute(Operation op, boolean isComplex) {
-        JsonNode node = executeRaw(op);
+        return execute(op, isComplex, 10);
+    }
+
+    /**
+     * Execute the passed Operation and return its Result. Depending on <i>isComplex</i>
+     * the return type is a simple Result or a ComplexResult
+     *
+     * @param op Operation to execute
+     * @param isComplex should a complex result be returned?
+     * @param timeoutSec
+     * @return ComplexResult of the execution
+     */
+    public Result execute(Operation op, boolean isComplex, int timeoutSec) {
+        JsonNode node = executeRaw(op,timeoutSec);
 
         if (node == null) {
             log.warn("Operation [" + op + "] returned null");
@@ -324,12 +397,6 @@ public class ASConnection {
                     log.warn("------ Detected 'failure-description' when communicating with server."
                         + as7ResultSerialization);
                 }
-                Result failure = new Result();
-                int failIndex = as7ResultSerialization.indexOf(FAILURE_DESCRIPTION);
-                String failMessage = "";
-                failMessage = as7ResultSerialization.substring(failIndex + FAILURE_DESCRIPTION.length() + 1);
-                failure.setFailureDescription("Operation <" + op + "> returned <" + failMessage + ">");
-                return failure;
             }
 
             if (isComplex) {

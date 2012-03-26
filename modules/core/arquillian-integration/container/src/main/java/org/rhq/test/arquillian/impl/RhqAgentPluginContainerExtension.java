@@ -26,6 +26,7 @@ import org.jboss.arquillian.test.spi.enricher.resource.ResourceProvider;
 import org.rhq.test.arquillian.impl.util.EnrichmentHook;
 import org.rhq.test.arquillian.impl.util.PluginContainerClassEnhancer;
 import org.rhq.test.arquillian.spi.PluginContainerOperation;
+import org.rhq.test.arquillian.spi.PluginContainerOperationRemedy;
 import org.rhq.test.arquillian.spi.PluginContainerPreparator;
 import org.rhq.test.arquillian.spi.PostPrepareEnricher;
 
@@ -47,6 +48,7 @@ public class RhqAgentPluginContainerExtension implements LoadableExtension {
         builder.observer(EnrichmentHook.class)
         .observer(PluginContainerPreparatorExecutor.class)
         .observer(PluginContainerOperationExecutor.class)
+        .observer(PluginContainerRemedyExecutor.class)
         .observer(PostPrepareEnricherExecutor.class);
         
         builder.service(DeployableContainer.class, RhqAgentPluginContainer.class)
@@ -55,6 +57,7 @@ public class RhqAgentPluginContainerExtension implements LoadableExtension {
         .service(ResourceProvider.class, ServerServicesProvider.class)
         .service(PostPrepareEnricher.class, DiscoveryResultsTestEnricher.class)
         .service(PluginContainerOperation.class, RunDiscoveryExecutor.class)
-        .service(PluginContainerPreparator.class, BeforeDiscoveryPreparator.class);
+        .service(PluginContainerPreparator.class, BeforeDiscoveryPreparator.class)
+        .service(PluginContainerOperationRemedy.class, AfterDiscoveryRemedy.class);
     }
 }

@@ -74,6 +74,7 @@ import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposit
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
@@ -120,6 +121,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
@@ -181,7 +183,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -269,6 +271,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //ALERTDEFINITIONMANAGER: END ----------------------------------
 
     //AVAILABILITYMANAGER: BEGIN ----------------------------------
+    public PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria) {
+        return availabilityManager.findAvailabilityByCriteria(subject, criteria);
+    }
+
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc) {
         return availabilityManager.findAvailabilityForResource(subject, resourceId, pc);
     }
@@ -513,8 +519,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
-        int packageTypeId, String version,
-        String displayVersion, Integer architectureId, byte[] packageBytes) {
+        int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
         return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
             displayVersion, architectureId, packageBytes);
     }
@@ -959,8 +964,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
+
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         return resourceManager.findResourceLineage(subject, resourceId);
+    }
+
+    @Override
+    public ResourceAvailabilitySummary getAvailabilitySummary(Subject subject, int resourceId) {
+        return resourceManager.getAvailabilitySummary(subject, resourceId);
     }
 
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
@@ -995,6 +1006,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public Resource updateResource(Subject subject, Resource resource) {
         return resourceManager.updateResource(subject, resource);
+    }
+
+    public List<Integer> disableResources(Subject subject, int[] resourceIds) {
+        return resourceManager.disableResources(subject, resourceIds);
+    }
+
+    public List<Integer> enableResources(Subject subject, int[] resourceIds) {
+        return resourceManager.enableResources(subject, resourceIds);
     }
 
     //RESOURCEMANAGER: END ----------------------------------
@@ -1234,8 +1253,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
 
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
-        throws ValidationException, ImportException {
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
         return synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
 
@@ -1248,6 +1267,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
-
 
 }

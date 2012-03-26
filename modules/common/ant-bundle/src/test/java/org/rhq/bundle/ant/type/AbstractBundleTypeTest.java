@@ -23,6 +23,7 @@
 
 package org.rhq.bundle.ant.type;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -31,19 +32,24 @@ import org.testng.annotations.Test;
 
 @Test
 public class AbstractBundleTypeTest {
+    private static final String realBasedir = (File.separatorChar == '/') ? "/basedir" : "c:\\basedir";
+    // normalized basedir
+    private static final String basedir = (File.separatorChar == '/') ? "/basedir" : "c:/basedir";
+
     public void testGetPattern() {
         Pattern regex;
 
-        regex = assertPatternsRegex("/basedir", "(/basedir/(easy\\.txt))|(/basedir/(test\\.txt))", "easy.txt",
-            "test.txt");
-        assert regex.matcher("/basedir/easy.txt").matches();
-        assert regex.matcher("/basedir/test.txt").matches();
-        assert !regex.matcher("/basedir/easyXtxt").matches();
-        assert !regex.matcher("/basedir/testXtxt").matches();
-        assert !regex.matcher("/basedir/easy.txtX").matches();
-        assert !regex.matcher("/basedir/test.txtX").matches();
-        assert !regex.matcher("/basedirX/easy.txt").matches();
-        assert !regex.matcher("/basedirX/test.txt").matches();
+        String expectedPattern = "(" + basedir + "/(easy\\.txt))|(" + basedir + "/(test\\.txt))";
+
+        regex = assertPatternsRegex(realBasedir, expectedPattern, "easy.txt", "test.txt");
+        assert regex.matcher(basedir + "/easy.txt").matches() : regex.pattern() + " vs. " + basedir + "/easy.txt";
+        assert regex.matcher(basedir + "/test.txt").matches();
+        assert !regex.matcher(basedir + "/easyXtxt").matches();
+        assert !regex.matcher(basedir + "/testXtxt").matches();
+        assert !regex.matcher(basedir + "/easy.txtX").matches();
+        assert !regex.matcher(basedir + "/test.txtX").matches();
+        assert !regex.matcher(basedir + "X/easy.txt").matches();
+        assert !regex.matcher(basedir + "X/test.txt").matches();
         assert !regex.matcher("easy.txt").matches() : "missing basedir";
         assert !regex.matcher("test.txt").matches() : "missing basedir";
 

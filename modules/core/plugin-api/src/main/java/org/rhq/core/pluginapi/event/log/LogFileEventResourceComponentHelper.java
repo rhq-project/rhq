@@ -78,6 +78,11 @@ public class LogFileEventResourceComponentHelper {
         // Grab the list-o-maps of event sources from the plugin config.
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         PropertyList logEventSources = pluginConfig.getList(LOG_EVENT_SOURCES_CONFIG_PROP);
+        if (logEventSources == null) {
+            throw new IllegalStateException("List property [" + LOG_EVENT_SOURCES_CONFIG_PROP
+                    + "] not defined in plugin configuration for " + this.resourceContext.getResourceType().getName()
+                    + " Resource with key [" + this.resourceContext.getResourceKey() + "].");
+        }
 
         // Build a new list containing the event sources that are enabled.
         List<PropertyMap> enabledEventSources = new ArrayList<PropertyMap>();

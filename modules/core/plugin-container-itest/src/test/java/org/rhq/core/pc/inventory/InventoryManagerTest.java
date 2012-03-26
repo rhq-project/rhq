@@ -49,7 +49,6 @@ import static org.mockito.Mockito.when;
  *
  * @author Ian Springer
  */
-@Test(groups = "arquillian")
 public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")
@@ -88,6 +87,7 @@ public class InventoryManagerTest extends Arquillian {
      *
      * @throws Exception if an error occurs
      */
+    @Test(groups = "pc.itest.inventorymanager")
     @RunDiscovery
     public void testSyncUnknownResources() throws Exception {
         validatePluginContainerInventory();

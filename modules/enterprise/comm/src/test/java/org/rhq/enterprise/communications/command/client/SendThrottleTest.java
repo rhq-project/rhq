@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "comm-client")
+@Test(groups = "comm.client")
 public class SendThrottleTest {
     /**
      * Tests send throttling.

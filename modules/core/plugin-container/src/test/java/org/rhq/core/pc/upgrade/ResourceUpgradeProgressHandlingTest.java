@@ -19,9 +19,9 @@
 package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 import org.jmock.Expectations;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.Resource;
@@ -38,7 +38,7 @@ public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgrade
     //test names
     private static final String DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST = "DuplicateResourceKeysHandledCorrectly";
     private static final String PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST = "ParentResourceStartedUpgradedWhenChildResourceBeingUpgraded";
-    
+
     //plugin names
     private static final String BASE_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-base-1.0.0.jar";
     private static final String PARENT_DEP_V1_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-parentdep-1.0.0.jar";
@@ -51,10 +51,11 @@ public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgrade
 
     private static final ResType TEST_TYPE = new ResType("TestResource", "test");
     private static final ResType PARENT_DEP_TYPE = new ResType("ParentDependency", "parentdep");
-    
-    @Test
-    @PluginContainerSetup(plugins = { UPGRADE_PROGRESS_PLUGIN_V1_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V1_PLUGIN_NAME }, sharedGroup = PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST, clearDataDir = true)
+
+    @Test(dependsOnMethods = "testDuplicateResourceKeysHandledCorrectly_V2")
+    @PluginContainerSetup( //
+    plugins = { UPGRADE_PROGRESS_PLUGIN_V1_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME }, //
+    sharedGroup = PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST, clearDataDir = true)
     public void testParentResourceStartedUpgradedWhenChildResourceBeingUpgraded_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
         setServerSideFake(PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST, inventory);
@@ -71,12 +72,13 @@ public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgrade
         //the v2 plugins are run
 
         Resource parent = findResourceWithOrdinal(PARENT_DEP_TYPE, 0);
-        assertNotNull(parent, "Failed to find the parent.");
+        Assert.assertNotNull(parent, "Failed to find the parent.");
     }
 
     @Test(dependsOnMethods = "testParentResourceStartedUpgradedWhenChildResourceBeingUpgraded_V1")
-    @PluginContainerSetup(plugins = { UPGRADE_PROGRESS_PLUGIN_V2_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V2_PLUGIN_NAME }, sharedGroup = PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST, clearInventoryDat = false)
+    @PluginContainerSetup( //
+    plugins = { UPGRADE_PROGRESS_PLUGIN_V2_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME }, //
+    sharedGroup = PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST, clearInventoryDat = false)
     public void testParentResourceStartedUpgradedWhenChildResourceBeingUpgraded_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST);
         context.checking(new Expectations() {
@@ -97,8 +99,9 @@ public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgrade
     }
 
     @Test
-    @PluginContainerSetup(plugins = { UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V1_PLUGIN_NAME }, sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearDataDir = true, numberOfInitialDiscoveries = 2)
+    @PluginContainerSetup( //
+    plugins = { UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME }, //
+    sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearDataDir = true, numberOfInitialDiscoveries = 2)
     public void testDuplicateResourceKeysHandledCorrectly_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
         setServerSideFake(DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, inventory);
@@ -117,11 +120,13 @@ public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgrade
             "The V1 inventory should have 1 parent.");
         assertEquals(getTestingResources(inventory, TEST_TYPE).size(), 2,
             "The V1 inventory should have 2 test resources.");
+        int foo = 0;
     }
 
     @Test(dependsOnMethods = "testDuplicateResourceKeysHandledCorrectly_V1")
-    @PluginContainerSetup(plugins = { UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V2_PLUGIN_NAME }, sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 2)
+    @PluginContainerSetup( //
+    plugins = { UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME }, //
+    sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 2)
     public void testDuplicateResourceKeysHandledCorrectly_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST);
 

@@ -36,7 +36,7 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 /**
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class OperationJsonTest {
 
     public void operationSerDeserTest() throws Exception {

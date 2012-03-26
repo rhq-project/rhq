@@ -32,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
@@ -183,6 +184,9 @@ public class ResourceErrorTest extends AbstractEJB3Test {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
 
+                for (Availability avail : res.getAvailability()) {
+                    em.remove(avail);
+                }
                 em.remove(res);
                 em.remove(type);
 

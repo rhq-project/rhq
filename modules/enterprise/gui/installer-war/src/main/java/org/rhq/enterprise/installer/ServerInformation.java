@@ -92,10 +92,9 @@ public class ServerInformation {
     private static final String UNDEPLOYED_H2_JMS_FILENAME = "jms-h2.rej";
     private static final String UNDEPLOYED_SQLSERVER_JMS_FILENAME = "jms-sqlserver.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
-    private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH = 
-        "org/rhq/enterprise/installer/ProductInfo.properties";
+    private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH = "org/rhq/enterprise/installer/ProductInfo.properties";
     private static final String JON_UNSUPPORTED_FEATURES_ENABLED_SYSPROP = "jon.unsupportedFeaturesEnabled";
-    
+
     private MBeanServer mbeanServer = null;
     private File deployDirectory = null;
     private File binDirectory = null;
@@ -105,10 +104,9 @@ public class ServerInformation {
     private Properties productInfo = null;
 
     public enum Product {
-        RHQ,
-        JON
+        RHQ, JON
     }
-    
+
     public ServerInformation() {
         // This is called both within the context of the GUI and the auto-install startup servlet.
         // Make sure you don't do anything that shouldn't be done from within the startup servlet.
@@ -204,6 +202,8 @@ public class ServerInformation {
 
         try {
             return db.checkTableExists(conn, "RHQ_PRINCIPAL");
+        } catch (IllegalStateException e) {
+            return false;
         } finally {
             db.closeConnection(conn);
         }
@@ -759,8 +759,8 @@ public class ServerInformation {
             project.addBuildListener(new LoggerAntBuildListener(logFileOutput));
 
             for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
-                project.addTaskDefinition(taskDef.getKey().toString(), Class.forName(taskDef.getValue().toString(),
-                    true, classLoader));
+                project.addTaskDefinition(taskDef.getKey().toString(),
+                    Class.forName(taskDef.getValue().toString(), true, classLoader));
             }
 
             new ProjectHelper2().parse(project, buildFile);
@@ -949,6 +949,8 @@ public class ServerInformation {
                     result.add(rs.getString(1));
                 }
             }
+        } catch (IllegalStateException e) {
+            // table does not exist
         } catch (SQLException e) {
             LOG.info("Unable to fetch existing server info: " + e.getMessage());
         } finally {
@@ -959,12 +961,12 @@ public class ServerInformation {
 
         return result;
     }
-    
+
     public Product getProduct() {
         Properties productInfo = getProductInfo();
         return (productInfo.getProperty("shortName").equals("JON")) ? Product.JON : Product.RHQ;
     }
-    
+
     private Properties getProductInfo() {
         if (this.productInfo == null) {
             ClassLoader classLoader = this.getClass().getClassLoader();
@@ -978,20 +980,21 @@ public class ServerInformation {
                         inputStream.close();
                     }
                 } catch (IOException e) {
-                    throw new IllegalStateException("Failed to load product info properties from class loader resource ["
+                    throw new IllegalStateException(
+                        "Failed to load product info properties from class loader resource ["
                             + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
                 }
 
                 return props;
             } else {
                 throw new IllegalStateException("Failed to find class loader resource ["
-                        + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+                    + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
             }
         }
 
         return this.productInfo;
     }
-    
+
     public boolean isUnsupportedJonFeaturesEnabled() {
         return Boolean.getBoolean(JON_UNSUPPORTED_FEATURES_ENABLED_SYSPROP);
     }
@@ -1131,8 +1134,8 @@ public class ServerInformation {
             rs = stm.executeQuery();
 
             if (rs.next()) {
-                result = new ServerInformation.Server(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3), rs
-                    .getString(4));
+                result = new ServerInformation.Server(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3),
+                    rs.getString(4));
             }
 
         } catch (SQLException e) {

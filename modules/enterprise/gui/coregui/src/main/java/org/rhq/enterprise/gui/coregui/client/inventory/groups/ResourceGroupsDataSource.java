@@ -117,7 +117,6 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, Resou
     @Override
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.setPageControl(getPageControl(request));
 
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));

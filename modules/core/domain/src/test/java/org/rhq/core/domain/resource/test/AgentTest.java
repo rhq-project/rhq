@@ -30,7 +30,7 @@ import javax.persistence.Query;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
+import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 @Test(groups = "integration.ejb3")
@@ -38,7 +38,7 @@ public class AgentTest extends AbstractEJB3Test {
     private long now = System.currentTimeMillis();
 
     public void testSuspectAgentQuery() throws Exception {
-        List<AgentLastAvailabilityReportComposite> reports;
+        List<AgentLastAvailabilityPingComposite> pings;
         int i;
 
         getTransactionManager().begin();
@@ -64,58 +64,54 @@ public class AgentTest extends AbstractEJB3Test {
 
             q = em.createNamedQuery(Agent.QUERY_FIND_ALL_SUSPECT_AGENTS);
             q.setParameter("dateThreshold", now - 2500);
-            reports = q.getResultList();
-            assert reports.size() == 2 + baselineSize : reports;
+            pings = q.getResultList();
+            assert pings.size() == 2 + baselineSize : pings;
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null, false));
-            assert reports.get(i).getAgentId() == agent3.getId();
-            assert reports.get(i).getAgentName().equals(agent3.getName());
-            assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().equals(agent3.getLastAvailabilityReport());
+            i = pings.indexOf(new AgentLastAvailabilityPingComposite(agent3.getId(), null, null, null, false));
+            assert pings.get(i).getAgentId() == agent3.getId();
+            assert pings.get(i).getAgentName().equals(agent3.getName());
+            assert pings.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
+            assert pings.get(i).getLastAvailabilityPing().equals(agent3.getLastAvailabilityPing());
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null, false));
-            assert reports.get(i).getAgentId() == agent4.getId();
-            assert reports.get(i).getAgentName().equals(agent4.getName());
-            assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().equals(agent4.getLastAvailabilityReport());
+            i = pings.indexOf(new AgentLastAvailabilityPingComposite(agent4.getId(), null, null, null, false));
+            assert pings.get(i).getAgentId() == agent4.getId();
+            assert pings.get(i).getAgentName().equals(agent4.getName());
+            assert pings.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
+            assert pings.get(i).getLastAvailabilityPing().equals(agent4.getLastAvailabilityPing());
 
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null,
-                false));
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null,
-                false));
+            assert -1 == pings.indexOf(new AgentLastAvailabilityPingComposite(agent2.getId(), null, null, null, false));
+            assert -1 == pings.indexOf(new AgentLastAvailabilityPingComposite(agent1.getId(), null, null, null, false));
 
             // add an agent with a null in the date column
             Agent agent0 = createAgent(em, 0, -1);
             assert em.find(Agent.class, agent0.getId()) != null;
-            reports = q.getResultList();
-            assert reports.size() == 2 + baselineSize : reports;
+            pings = q.getResultList();
+            assert pings.size() == 2 + baselineSize : pings;
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null, false));
-            assert reports.get(i).getAgentId() == agent3.getId();
-            assert reports.get(i).getAgentName().equals(agent3.getName());
-            assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().equals(agent3.getLastAvailabilityReport());
+            i = pings.indexOf(new AgentLastAvailabilityPingComposite(agent3.getId(), null, null, null, false));
+            assert pings.get(i).getAgentId() == agent3.getId();
+            assert pings.get(i).getAgentName().equals(agent3.getName());
+            assert pings.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
+            assert pings.get(i).getLastAvailabilityPing().equals(agent3.getLastAvailabilityPing());
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null, false));
-            assert reports.get(i).getAgentId() == agent4.getId();
-            assert reports.get(i).getAgentName().equals(agent4.getName());
-            assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().equals(agent4.getLastAvailabilityReport());
+            i = pings.indexOf(new AgentLastAvailabilityPingComposite(agent4.getId(), null, null, null, false));
+            assert pings.get(i).getAgentId() == agent4.getId();
+            assert pings.get(i).getAgentName().equals(agent4.getName());
+            assert pings.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
+            assert pings.get(i).getLastAvailabilityPing().equals(agent4.getLastAvailabilityPing());
 
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null,
-                false));
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null,
-                false));
+            assert -1 == pings.indexOf(new AgentLastAvailabilityPingComposite(agent2.getId(), null, null, null, false));
+            assert -1 == pings.indexOf(new AgentLastAvailabilityPingComposite(agent1.getId(), null, null, null, false));
 
             // get all of them, except the one with the null
             q.setParameter("dateThreshold", now - 1);
-            reports = q.getResultList();
-            assert reports.size() == 4 + baselineSize : reports;
+            pings = q.getResultList();
+            assert pings.size() == 4 + baselineSize : pings;
 
             // get none of them
             q.setParameter("dateThreshold", now - 10000);
-            reports = q.getResultList();
-            assert reports.size() == 0 + baselineSize : reports;
+            pings = q.getResultList();
+            assert pings.size() == 0 + baselineSize : pings;
         } finally {
             getTransactionManager().rollback();
         }
@@ -124,9 +120,9 @@ public class AgentTest extends AbstractEJB3Test {
     private Agent createAgent(EntityManager em, int num, long availDateOffsetFromNow) {
         Agent agent = new Agent("agent" + num, "address" + num, num, "remoteaddr" + num, "token" + num);
         if (availDateOffsetFromNow > 0) {
-            agent.setLastAvailabilityReport(now - availDateOffsetFromNow);
+            agent.setLastAvailabilityPing(now - availDateOffsetFromNow);
         } else {
-            agent.setLastAvailabilityReport(null);
+            agent.setLastAvailabilityPing(null);
         }
 
         em.persist(agent);

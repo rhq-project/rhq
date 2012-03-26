@@ -62,7 +62,6 @@ public class TemplateAlertDefinitionsDataSource extends AbstractAlertDefinitions
             }
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

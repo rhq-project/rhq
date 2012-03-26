@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -56,6 +57,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.content.FileContentDelegate;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.util.ZipUtil;
@@ -63,7 +65,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
 /**
  * A resource component for managing a standalone/top-level Profile Service managed deployment.
@@ -177,8 +178,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         String sha256 = null;
 
         try {
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
-            sha256 = fileContentDelegate.getSHA(file);
+            FileContentDelegate fileContentDelegate = new FileContentDelegate();
+            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, this.getResourceContext()
+                .getResourceDataDirectory());
         } catch (Exception iex) {
             if (log.isDebugEnabled()) {
                 log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
@@ -238,11 +240,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
-        String sha = null;
         try {
             tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(null, null, null);
-            sha = fileContentDelegate.computeSHAForArchive(tempFile);
         } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
                 packageDetails);
@@ -253,7 +252,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Backup the original app file/dir.
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File backupDir = new File(tempDir, "deployBackup");
+        File backupDir = new File(tempDir, "deployBackup" + UUID.randomUUID().getLeastSignificantBits());
         File backupOfOriginalFile = new File(backupDir, this.deploymentFile.getName());
         log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
         try {
@@ -310,31 +309,34 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 // Now redeploy the original file - this generally should succeed.
                 DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
+
+                // If the redeployment of the original backup succeeded then cleanup the backup from disk
+                deleteTemporaryFile(backupDir);
+                // If the redeployment fails the original backup is preserved on disk until agent restart
             } catch (Exception e1) {
                 log.debug("Rollback failed!", e1);
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
+
+            //since the deployment failed remove the temp application downloaded for deployment
+            deleteTemporaryFile(tempFile);
+
             log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
                 + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
-        // Deploy was successful!
-        deleteBackupOfOriginalFile(backupOfOriginalFile);
-
+        // Store SHA256 in the agent file if deployment was exploded
         if (this.deploymentFile.isDirectory()) {
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(deploymentFile, null, null);
-            try {
-                //This is a simulation of create content from FileContentDelegate split across
-                //this deployment method because JBoss AS5 is using a different deployment model.
-                //The SHA256 was pre-computed earlier (at the time the temp content file was created).
-                //The only thing left at this point is to store it in the manifest file.
-                fileContentDelegate.writeSHAToManifest(deploymentFile, sha);
-            } catch (IOException e) {
-                log.error("Unable to save SHA to manifest file for " + this.deploymentFile.getPath() + ".", e);
-            }
+            FileContentDelegate fileContentDelegate = new FileContentDelegate();
+            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile, this.getResourceContext()
+                .getResourceDataDirectory());
         }
+
+        // Remove temporary files created by this deployment.
+        deleteTemporaryFile(backupDir);
+        deleteTemporaryFile(tempFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -400,20 +402,20 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return response;
     }
 
-    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
-        log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
+    private void deleteTemporaryFile(File temporaryFile) {
+        log.debug("Deleting temporary file '" + temporaryFile + "'...");
         try {
-            FileUtils.forceDelete(backupOfOriginalFile);
+            FileUtils.forceDelete(temporaryFile);
         } catch (Exception e) {
             // not critical.
-            log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
+            log.warn("Failed to temporary file: " + temporaryFile);
         }
     }
 
     private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails)
         throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir, this.deploymentFile.getName());
+        File tempFile = new File(tempDir, this.deploymentFile.getName() + UUID.randomUUID().getLeastSignificantBits());
 
         OutputStream tempOutputStream = null;
         try {

@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.test.arquillian.impl;
 
 import java.lang.annotation.Annotation;
@@ -29,7 +28,7 @@ import org.jboss.arquillian.test.spi.enricher.resource.ResourceProvider;
 import org.rhq.core.pc.ServerServices;
 
 /**
- * 
+ * An Arquillian {@link ResourceProvider} for RHQ {@link ServerServices}.
  *
  * @author Lukas Krejci
  */
@@ -40,26 +39,22 @@ public class ServerServicesProvider implements ResourceProvider {
     
     @Override
     public boolean canProvide(Class<?> type) {
-        ServerServices ss = getServerServices();
-        
-        if (ss == null) {
-            return false;
-        }
-        
-        return type.isAssignableFrom(ss.getClass());        
+        return ServerServices.class.isAssignableFrom(type);
     }
 
     @Override
     public Object lookup(ArquillianResource resource, Annotation... qualifiers) {
-        return getServerServices();
-    }
-
-    private ServerServices getServerServices() {
         RhqAgentPluginContainer rpc = rhqAgentPluginContainer.get();
         if (rpc == null) {
-            return null;
+            throw new RuntimeException("To inject a ServerServices object, at least one RhqAgentPluginContainer must be configured.");
         }
-        
-        return rpc.getConfiguration().getServerServices();
+
+        ServerServices serverServices = rpc.getConfiguration().getServerServices();
+        if (serverServices == null) {
+            throw new RuntimeException("To inject a ServerServices object, the \"serverServicesImplementationClassName\" property must be set in the container's configuration.");
+        }
+
+        return serverServices;
     }
+
 }

@@ -72,7 +72,7 @@ import org.rhq.core.domain.tagging.Tag;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " //
         + "LEFT JOIN g.resourceType type " //
@@ -118,11 +118,8 @@ import org.rhq.core.domain.tagging.Tag;
         + " GROUP BY rg.groupCategory "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP, query =
-            "SELECT rg FROM ResourceGroup AS rg " +
-                    " WHERE LOWER(rg.name) = LOWER(:name)" +
-                    "     AND rg.visible = true"
-    ),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP, query = "SELECT rg FROM ResourceGroup AS rg "
+        + " WHERE LOWER(rg.name) = LOWER(:name)" + "     AND rg.visible = true"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
 
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
@@ -241,7 +238,7 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
         + "         SELECT "
-        + "              (     SELECT COUNT(eresAvail.ID) "
+        + "              (     SELECT COUNT(eresAvail.ID) " // the count of all explicit members
         + "                      FROM rhq_resource_avail eresAvail "
         + "                INNER JOIN rhq_resource eres "
         + "                        ON eresAvail.resource_id = eres.id "
@@ -250,16 +247,17 @@ public class ResourceGroup extends Group {
         + "                     WHERE expMap.resource_group_id = rg.id "
         + "              ) as explicitCount, "
         + "" //
-        + "              (     SELECT AVG(eresAvail.availability_type) "
+        + "              (     SELECT COUNT(eresAvail.ID) " // the count of UP explicit members
         + "                      FROM rhq_resource_avail eresAvail "
         + "                INNER JOIN rhq_resource eres "
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
         + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                       AND eresAvail.availability_type = 1 "
         + "              ) as explicitAvail, "
         + "" //
-        + "              (     SELECT COUNT(iresAvail.ID) "
+        + "              (     SELECT COUNT(iresAvail.ID) " // the count of all implicit members
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
@@ -268,13 +266,14 @@ public class ResourceGroup extends Group {
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "              ) as implicitCount, "
         + "" //
-        + "              (     SELECT AVG(iresAvail.availability_type) "
+        + "              (     SELECT COUNT(iresAvail.ID) " // the count of UP implicit members 
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                       AND iresAvail.availability_type = 1 "
         + "              ) as implicitAvail, "
         + "" //
         + "                rg.id as groupId, "

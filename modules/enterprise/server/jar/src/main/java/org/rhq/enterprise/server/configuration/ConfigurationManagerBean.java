@@ -2473,7 +2473,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     handlePDS(subject, pds);
                 } else if (memberDef instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
-                    for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                    for (PropertyDefinition inner : pdm.getPropertyDefinitions()) {
                         if (inner instanceof PropertyDefinitionSimple) {
                             handlePDS(subject, (PropertyDefinitionSimple) inner);
                         }
@@ -2485,7 +2485,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             } else if (pd instanceof PropertyDefinitionMap) {
                 PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
-                for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                for (PropertyDefinition inner : pdm.getPropertyDefinitions()) {
                     if (inner instanceof PropertyDefinitionSimple) {
                         handlePDS(subject, (PropertyDefinitionSimple) inner);
                     } else {
@@ -2514,7 +2514,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             String expression = pos.getExpression();
             String filter = pos.getFilter();
             Pattern filterPattern = null;
-            if (filter!=null)
+            if (filter != null)
                 filterPattern = Pattern.compile(filter);
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
@@ -2542,7 +2542,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         String name = composite.getResource().getName();
                         // filter if the user provided a filter
 
-                        if (filterPattern !=null ) {
+                        if (filterPattern != null) {
                             Matcher m = filterPattern.matcher(name);
                             if (m.matches()) {
                                 PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);

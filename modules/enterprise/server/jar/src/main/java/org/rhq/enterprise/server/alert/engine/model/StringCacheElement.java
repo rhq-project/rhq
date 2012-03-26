@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import java.util.regex.Pattern;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
+
 /**
  * @author Joseph Marques
  */

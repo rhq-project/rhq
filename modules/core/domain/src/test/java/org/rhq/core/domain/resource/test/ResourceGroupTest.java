@@ -30,6 +30,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -106,6 +107,9 @@ public class ResourceGroupTest extends AbstractEJB3Test {
 
                 group.removeExplicitResource(resource);
                 em.remove(group);
+                for (Availability avail : res.getAvailability()) {
+                    em.remove(avail);
+                }
                 em.remove(res);
                 em.remove(type);
 

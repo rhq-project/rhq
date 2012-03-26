@@ -37,9 +37,9 @@ import org.testng.annotations.ObjectFactory;
 
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.pluginapi.content.FileContentDelegate;
 import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 import org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent;
-import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
 @PrepareForTest({ StandaloneManagedDeploymentComponent.class })
 public class StandaloneManagedDeploymentComponentTest {
@@ -60,9 +60,10 @@ public class StandaloneManagedDeploymentComponentTest {
         PackageType mockPackageType = mock(PackageType.class);
 
         FileContentDelegate mockFileContentDelegate = mock(FileContentDelegate.class);
-        PowerMockito.whenNew(FileContentDelegate.class).withArguments(any(File.class), isNull(), isNull())
+        PowerMockito.whenNew(FileContentDelegate.class).withArguments(any(File.class), isNull())
             .thenReturn(mockFileContentDelegate);
-        when(mockFileContentDelegate.getSHA(any(File.class))).thenReturn("abcd1234");
+        when(mockFileContentDelegate.saveDeploymentSHA(any(File.class), any(File.class), any(File.class))).thenReturn(
+            "abcd1234");
 
         //create object to test and inject required dependencies
         StandaloneManagedDeploymentComponent objectUnderTest = new StandaloneManagedDeploymentComponent();
@@ -87,6 +88,6 @@ public class StandaloneManagedDeploymentComponentTest {
         Assert.assertEquals(resultPackageDetails.getSHA256(), "abcd1234");
         Assert.assertEquals(resultPackageDetails.getVersion(), "[sha256=abcd1234]");
 
-        verify(mockFileContentDelegate).getSHA(any(File.class));
+        verify(mockFileContentDelegate).saveDeploymentSHA(any(File.class), any(File.class), any(File.class));
     }
 }

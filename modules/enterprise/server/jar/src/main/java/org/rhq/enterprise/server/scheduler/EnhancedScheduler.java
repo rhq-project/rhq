@@ -22,6 +22,7 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 
 /**
  * An enhanced scheduler interface that provides the normal scheduler API with some additional convenience methods.
@@ -153,4 +154,30 @@ public interface EnhancedScheduler extends Scheduler {
      */
     public void scheduleSimpleCronJob(Class<? extends Job> jobClass, boolean rescheduleIfExists, boolean isVolatile,
         String cronString) throws SchedulerException;
+
+    /**
+     * Schedules the job with the given triggger.  If the trigger is null then the durable job is simply created,
+     * if necessary, and will await future triggers.
+     *
+     * <p>This is a convienence method for adding a trigger to a job.  There is no job-level {@link JobDataMap} but
+     * each trigger may contain a trigger-specific {@link JobDataMap}.</p>
+     *
+     * <p>This method delegates to {@link #addJob(org.quartz.JobDetail, boolean)} where the <code>
+     * name</code> is the name of the given class (<code>jobClass.getName()</code>) and <code>replace</code> is
+     * false. If <code>trigger</code> is not null, then
+     * {@link Scheduler#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)} will be called to schedule the job.</p>
+     *
+     * @param  jobClass           the class of the job that will be executed when the trigger fires
+     * @param  trigger            an optional trigger for firing the job
+     *
+     * @throws SchedulerException
+     *
+     * @see    SchedulerServiceMBean#addJob(org.quartz.JobDetail, boolean)
+     * @param  isVolatile         if <code>false</code>, the job will be persisted to the database; if <code>
+     *                            true</code>, when the scheduler is shutdown, the job's schedule is lost
+     * @see    SchedulerServiceMBean#scheduleJob(org.quartz.JobDetail, org.quartz.Trigger)
+     */
+    void scheduleTriggeredJob(Class<? extends Job> jobClass, boolean isVolatile, Trigger trigger)
+        throws SchedulerException;
+
 }

@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,6 +51,8 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
@@ -87,11 +88,11 @@ public class ResourceContainer implements Serializable {
 
     // non-transient fields
     private final Resource resource;
-    private Availability availability;
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
     private Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
+    private MeasurementScheduleRequest availabilitySchedule = null;
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -100,6 +101,10 @@ public class ResourceContainer implements Serializable {
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
     private transient ClassLoader resourceClassLoader;
+    // the currently known availability
+    private transient Availability availability;
+    // the time at which this resource is up for an avail check. null indicates unscheduled.
+    private transient Long availabilityScheduleTime;
 
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
@@ -125,9 +130,8 @@ public class ResourceContainer implements Serializable {
     }
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
-        Date now = new Date();
         synchronized (this) {
-            this.availability = new Availability(this.resource, now, availabilityType);
+            this.availability = new Availability(this.resource, availabilityType);
             return this.availability;
         }
     }
@@ -216,6 +220,49 @@ public class ResourceContainer implements Serializable {
         synchronized (this) {
             this.measurementSchedule = measurementSchedule;
         }
+    }
+
+    public MeasurementScheduleRequest getAvailabilitySchedule() {
+        // platforms don't have a schedule but other types should. If one has not yet been set (this can
+        // happen in various upgrade scenarios) set one, using a default interval. 
+        if (null == availabilitySchedule) {
+            MeasurementScheduleRequest request = null;
+            switch (this.resource.getResourceType().getCategory()) {
+            case PLATFORM:
+                break;
+            case SERVER:
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
+                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, true, DataType.AVAILABILITY);
+                break;
+            case SERVICE:
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
+                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, true, DataType.AVAILABILITY);
+                break;
+            }
+            if (null != request) {
+                setAvailabilitySchedule(request);
+            }
+        }
+
+        return availabilitySchedule;
+    }
+
+    public void setAvailabilitySchedule(MeasurementScheduleRequest availabilitySchedule) {
+        synchronized (this) {
+            this.availabilitySchedule = availabilitySchedule;
+            // when the schedule is (re)set just null out the schedule time and it will get rescheduled on the
+            // next avail execution.
+            this.availabilityScheduleTime = null;
+        }
+    }
+
+    public Long getAvailabilityScheduleTime() {
+        return availabilityScheduleTime;
+    }
+
+    // TODO: Is there a reason for this to be synchronized like the other setters? I don't see why it would need to be.
+    public void setAvailabilityScheduleTime(Long availabilityScheduleTime) {
+        this.availabilityScheduleTime = availabilityScheduleTime;
     }
 
     /**

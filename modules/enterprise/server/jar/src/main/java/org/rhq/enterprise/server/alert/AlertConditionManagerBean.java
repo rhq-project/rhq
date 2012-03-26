@@ -100,6 +100,10 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         } else if (category == AlertConditionCategory.AVAILABILITY) {
             queryName = AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY;
 
+        } else if (category == AlertConditionCategory.AVAIL_DURATION) {
+            // The duration category can use the same availability composite query, just needs a parameter set
+            queryName = AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY;
+
         } else if (category == AlertConditionCategory.CONTROL) {
             queryName = AlertCondition.QUERY_BY_CATEGORY_CONTROL;
 
@@ -127,7 +131,12 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         PersistenceUtility.setDataPage(query, pageControl);
         Query queryCount = entityManager.createNamedQuery(countQueryName);
 
-        // only the default parameterized count query needs a parameter
+        // The following query is used in two places, and needs the category set to get different results
+        if (queryName == AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY) {
+            query.setParameter("category", category);
+        }
+
+        // the default parameterized count query needs a parameter
         if (countQueryName == AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED) {
             queryCount.setParameter("category", category);
         }

@@ -10,11 +10,14 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -29,17 +32,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.event.EventManager;
-import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pc.upgrade.plugins.multi.base.NothingDiscoveringDiscoveryComponent;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -49,9 +51,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 
 /**
  * Base class for RHQ Component Testing.
@@ -85,7 +84,6 @@ public abstract class ComponentTest {
     String pluginContainerName = "rhq";
     OperationContext operationContext = new OperationContextImpl(0);
     ContentContext contentContext = new ContentContextImpl(0);
-    Executor availCollectorThreadPool = Executors.newCachedThreadPool();
     PluginContainerDeployment pluginContainerDeployment = null;
 
     /**
@@ -115,7 +113,8 @@ public abstract class ComponentTest {
         for (ResourceType resourceType : pmm.loadPlugin(pd)) {
             String componentType = pmm.getComponentClass(resourceType);
             ResourceComponent component = (ResourceComponent) Class.forName(componentType).newInstance();
-            Configuration configuration = resourceType.getPluginConfigurationDefinition().getDefaultTemplate().createConfiguration();
+            Configuration configuration = resourceType.getPluginConfigurationDefinition().getDefaultTemplate()
+                .createConfiguration();
 
             setConfiguration(configuration, resourceType);
 
@@ -133,14 +132,15 @@ public abstract class ComponentTest {
 
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
             EventContext eventContext = new EventContextImpl(resource);
+            AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
-                    resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
-                    pluginContainerName, eventContext, operationContext, contentContext,
-                    availCollectorThreadPool, pluginContainerDeployment);
+                resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
+                eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
             component.start(context);
 
-            resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, parentResourceComponent, context, systemInfo,
-                    Collections.emptyList(), Collections.emptyList(), pluginContainerName, pluginContainerDeployment);
+            resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, parentResourceComponent, context,
+                systemInfo, Collections.emptyList(), Collections.emptyList(), pluginContainerName,
+                pluginContainerDeployment);
 
             for (ResourceType rt : resourceType.getChildResourceTypes()) {
                 processChild(rt, component, context, resource);
@@ -156,8 +156,10 @@ public abstract class ComponentTest {
      * @param resource parent resource
      * @param resourceType child resource type
      */
-    private void processChild(ResourceType resourceType, ResourceComponent component, ResourceContext<?> parentContext, Resource resource) throws Exception {
-        Configuration configuration = resourceType.getPluginConfigurationDefinition().getDefaultTemplate().createConfiguration();
+    private void processChild(ResourceType resourceType, ResourceComponent component, ResourceContext<?> parentContext,
+        Resource resource) throws Exception {
+        Configuration configuration = resourceType.getPluginConfigurationDefinition().getDefaultTemplate()
+            .createConfiguration();
         setConfiguration(configuration, resourceType);
         log.info("childResource " + resourceType + " properties " + configuration.getProperties());
 
@@ -166,12 +168,13 @@ public abstract class ComponentTest {
         log.debug("rdc=" + rdc);
 
         EventContext eventContext = new EventContextImpl(resource);
-        ResourceContext context = new ResourceContext(resource, component, parentContext,
-                resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
-                pluginContainerName, eventContext, operationContext, contentContext,
-                availCollectorThreadPool, pluginContainerDeployment);
-        ResourceDiscoveryContext resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, component, context, systemInfo,
-                Collections.emptyList(), Collections.emptyList(), pluginContainerName, pluginContainerDeployment);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
+            systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
+            contentContext, availContext, pluginContainerDeployment);
+        ResourceDiscoveryContext resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, component,
+            context, systemInfo, Collections.emptyList(), Collections.emptyList(), pluginContainerName,
+            pluginContainerDeployment);
         Assert.assertNotNull(context.getEventContext());
         Set<DiscoveredResourceDetails> d = rdc.discoverResources(resourceDiscoveryContext);
         for (DiscoveredResourceDetails drd : d) {
@@ -181,11 +184,8 @@ public abstract class ComponentTest {
 
     }
 
-    private void createChild(DiscoveredResourceDetails drd,
-            Resource resource,
-            Configuration configuration,
-            ResourceComponent parentComponent, ResourceContext<?> parentContext) throws Exception
-    {
+    private void createChild(DiscoveredResourceDetails drd, Resource resource, Configuration configuration,
+        ResourceComponent parentComponent, ResourceContext<?> parentContext) throws Exception {
         ResourceType type = pmm.getType(drd.getResourceType());
 
         Resource cresource = new Resource();
@@ -199,10 +199,10 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         EventContext eventContext = new EventContextImpl(resource);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
-                resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
-                pluginContainerName, eventContext, operationContext, contentContext,
-                availCollectorThreadPool, pluginContainerDeployment);
+            resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
+            eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
 
         component.start(context);
         components.put(component, cresource);
@@ -235,7 +235,7 @@ public abstract class ComponentTest {
         Set<MeasurementScheduleRequest> s = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementDefinition md : type.getMetricDefinitions())
             s.add(new MeasurementScheduleRequest(new MeasurementSchedule(md, resource)));
-        ((MeasurementFacet)component).getValues(report, s);
+        ((MeasurementFacet) component).getValues(report, s);
         return report;
     }
 
@@ -256,7 +256,7 @@ public abstract class ComponentTest {
      * From a measurement report, returns a measurement value, or asserts failure if no such value exists.
      */
     protected Double getValue(MeasurementReport report, String name) {
-        for (MeasurementDataNumeric m: report.getNumericData()) {
+        for (MeasurementDataNumeric m : report.getNumericData()) {
             if (m.getName().equals(name)) {
                 log.debug("measurement name " + name + " " + m.getValue());
                 return m.getValue();

@@ -137,7 +137,7 @@ public class ConfigurationSet {
 
     private static void calculateGroupPropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         List<AbstractPropertyMap> sourceParentPropertyMaps, AbstractPropertyMap targetParentPropertyMap) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
                 calculateGroupProperty(childPropertyDefinition, sourceParentPropertyMaps, targetParentPropertyMap);
@@ -211,7 +211,7 @@ public class ConfigurationSet {
 
     private static void mergePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
                 mergeProperty(childPropertyDefinition, memberParentPropertyMaps, groupParentPropertyMap);

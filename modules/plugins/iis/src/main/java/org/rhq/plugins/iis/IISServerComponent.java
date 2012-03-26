@@ -110,8 +110,14 @@ public class IISServerComponent<T extends ResourceComponent<?>> implements Resou
                 throw new IllegalArgumentException("Operation [" + name + "] does not support params");
             }
         } catch (Exception e) {
+            // the operation may have affected availability, ask for a check
+            this.resourceContext.getAvailabilityContext().requestAvailabilityCheck();
+
             throw new RuntimeException("Failed to invoke operation [" + name + "]", e);
         }
+
+        // the operation may have affected availability, ask for a check
+        this.resourceContext.getAvailabilityContext().requestAvailabilityCheck();
 
         return result;
     }

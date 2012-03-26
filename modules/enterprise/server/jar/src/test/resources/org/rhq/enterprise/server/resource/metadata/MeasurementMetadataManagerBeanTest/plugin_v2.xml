@@ -14,6 +14,8 @@
         <metric displayName="metric3" property="metric3" dataType="calltime" displayType="detail"
                 description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
                 units="milliseconds" destinationType="myMethod"/>
+        <metric displayName="cannotBeSet" property="rhq.availability"
+                description="cannotBeSet" defaultInterval="120000" defaultOn="true"/>                
     </server>
     <server name="MetricServer2">
         <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
@@ -24,6 +26,15 @@
         <metric displayName="metric1" property="metric1" dataType="measurement" displayType="detail"
                 description="Metric One" category="performance" defaultInterval="60000" defaultOn="false"
                 units="milliseconds" measurementType="trendsup"/>
+
+        <service name="MetricService1">
+            <metric displayName="cannotBeSet" property="rhq.availability"
+                    description="cannotBeSet" defaultInterval="240000" defaultOn="true" />                
+        </service>    
+        <service name="MetricService2">
+            <metric displayName="cannotBeSet" property="rhq.availability"
+                    description="cannotBeSet" defaultInterval="480000" defaultOn="true" />                
+        </service>    
     </server>
     <server name="MetricServer4"/>
 </plugin>

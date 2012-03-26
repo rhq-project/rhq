@@ -25,7 +25,7 @@ import org.jboss.arquillian.core.api.annotation.Observes;
 import org.jboss.arquillian.core.spi.ServiceLoader;
 
 import org.rhq.test.arquillian.spi.PostPrepareEnricher;
-import org.rhq.test.arquillian.spi.events.PluginContainerOperationsExecuted;
+import org.rhq.test.arquillian.spi.events.PluginContainerCuredFromOperations;
 
 /**
  * 
@@ -37,7 +37,7 @@ public class PostPrepareEnricherExecutor {
     @Inject
     private Instance<ServiceLoader> serviceLoader;
     
-    public void run(@Observes PluginContainerOperationsExecuted event) {
+    public void run(@Observes PluginContainerCuredFromOperations event) {
         for(PostPrepareEnricher enricher : serviceLoader.get().all(PostPrepareEnricher.class)) {
             enricher.enrich(event.getTestInstance());
         }

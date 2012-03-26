@@ -370,4 +370,9 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     @Override
     public void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot) {
     }
+
+    @Override
+    public void requestFullAvailabilityReport() {
+        return;
+    }
 }

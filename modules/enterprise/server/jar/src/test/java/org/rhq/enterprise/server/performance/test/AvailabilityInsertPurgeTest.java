@@ -61,7 +61,7 @@ import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
  * @author Lukas Krejci
  */
 @Test(groups = "PERF")
-@Listeners( { DatabaseSetupInterceptor.class })
+@Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter = ExcelExporter.class)
 @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.101")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
@@ -142,7 +142,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
                     AvailabilityType at = (i % 2 == 0) ? AvailabilityType.UP : AvailabilityType.DOWN;
-                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    Availability a = new Availability(r, (t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
                 startTiming(round);
@@ -209,7 +209,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 for (Resource r : resources) {
                     int rand = (int) (Math.random() * 2);
                     AvailabilityType at = (rand == 1) ? AvailabilityType.UP : AvailabilityType.DOWN;
-                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    Availability a = new Availability(r, (t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
                 startTiming(round);
@@ -275,7 +275,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
                     AvailabilityType at = AvailabilityType.UP;
-                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    Availability a = new Availability(r, (t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
                 startTiming(round);
@@ -366,7 +366,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
                     AvailabilityType at = (i % 2 == 0) ? AvailabilityType.UP : AvailabilityType.DOWN;
-                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    Availability a = new Availability(r, (t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
                 startTiming(round);

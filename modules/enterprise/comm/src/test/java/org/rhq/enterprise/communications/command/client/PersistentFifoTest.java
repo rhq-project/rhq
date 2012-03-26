@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "comm-client")
+@Test(groups = "comm.client")
 public class PersistentFifoTest {
     /**
      * Tests putting and taking from fifo.

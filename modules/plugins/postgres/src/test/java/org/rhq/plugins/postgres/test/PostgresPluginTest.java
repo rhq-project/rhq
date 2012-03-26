@@ -50,7 +50,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * @author Greg Hinkle
  */
-@Test(groups = "postgres-plugin")
+@Test(groups = "postgres.plugin")
 public class PostgresPluginTest {
     private Log log = LogFactory.getLog(PostgresPluginTest.class);
     private static final String PLUGIN_NAME = "Postgres";

@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
@@ -53,6 +54,10 @@ public interface ResourceGWTService extends RemoteService {
 
     List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
 
+    List<Integer> disableResources(int[] resourceIds) throws RuntimeException;
+
+    List<Integer> enableResources(int[] resourceIds) throws RuntimeException;
+
     PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException;
 
@@ -60,6 +65,8 @@ public interface ResourceGWTService extends RemoteService {
         PageControl pc) throws RuntimeException;
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) throws RuntimeException;
+
+    ResourceAvailabilitySummary getResourceAvailabilitySummary(int resourceId) throws RuntimeException;
 
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 

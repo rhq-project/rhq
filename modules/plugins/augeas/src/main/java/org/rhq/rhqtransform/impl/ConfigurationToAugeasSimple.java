@@ -41,7 +41,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
 
-
 /**
  * Basic implementation of updating the Augeas with data from RHQ configuration.
  * The mapping is based on the RHQ property names.
@@ -107,7 +106,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
             i = seq - 1;
         }
 
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
             updateProperty(mapEntryPropDef, map, nodes.get(i), 0);
         }
 

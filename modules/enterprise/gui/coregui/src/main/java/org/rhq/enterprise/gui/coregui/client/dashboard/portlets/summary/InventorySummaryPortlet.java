@@ -27,6 +27,8 @@ import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -83,6 +85,8 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
             public void onSuccess(InventorySummary summary) {
                 form = new LocatableDynamicForm(extendLocatorId("Form"));
+                form.setPadding(5);
+
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
                 //                HeaderItem headerItem = new HeaderItem("header");
@@ -131,6 +135,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
         final StaticTextItem item;
         if (viewPath != null) {
             item = new LinkItem(name);
+            item.setTitleVAlign(VerticalAlignment.TOP); // see http://forums.smartclient.com/showthread.php?t=21284&highlight=LinkItem
             item.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     CoreGUI.goToView(viewPath);
@@ -142,6 +147,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
         item.setTitle(label);
         item.setDefaultValue(value);
+        item.setAlign(Alignment.CENTER);
 
         return item;
     }

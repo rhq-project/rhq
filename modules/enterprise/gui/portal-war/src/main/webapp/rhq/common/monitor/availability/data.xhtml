@@ -49,6 +49,9 @@
                            <c:when test="#{avail.value == 0 and avail.known}">
                               <img src="/images/timeline_red.gif" height="10" width="9" border="0" title="DOWN"/>
                            </c:when>
+                           <c:when test="#{avail.value == 3 and avail.known}">
+                              <img src="/images/timeline_orange.gif" height="10" width="9" border="0" title="DISABLED"/>
+                           </c:when>
                            <c:otherwise>
                               <img src="/images/timeline_unknown.gif" height="10" width="9" border="0" title="UNKNOWN"/>
                            </c:otherwise>

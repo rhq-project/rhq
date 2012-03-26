@@ -144,7 +144,8 @@ public class ApacheConfigurationUtil {
           if (nodeName.equals(SIMPLE_TAG_NAME)){
                 PropertySimple propertySimple = new PropertySimple(propertyName,null);
                 String value = node.getTextContent();
-                propertySimple.setStringValue(value);
+                // Normalize "" to null.
+                propertySimple.setStringValue(("".equals(value)) ? null : value);
                 prop = propertySimple;
              }
           

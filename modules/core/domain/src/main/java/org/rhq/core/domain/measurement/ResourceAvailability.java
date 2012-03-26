@@ -51,19 +51,21 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( //
 { @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID, query = "" //
     + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId = :resourceId "),
-    @NamedQuery(name = ResourceAvailability.UPDATE_BY_AGENT_ID, query = "" //
+    @NamedQuery(name = ResourceAvailability.UPDATE_PLATFORM_BY_AGENT_ID, query = "" //
         + "  UPDATE ResourceAvailability " //
         + "     SET availabilityType = :availabilityType " //
         + "   WHERE resourceId IN ( SELECT res.id " //
         + "                           FROM Resource res " //
-        + "                          WHERE res.agent.id = :agentId ) "),
-    @NamedQuery(name = ResourceAvailability.INSERT_BY_RESOURCE_IDS, query = "" //
-        + "  INSERT INTO ResourceAvailability ( resourceId ) " //
-        + "       SELECT res.id " //
-        + "         FROM Resource res " //
-        + "    LEFT JOIN res.currentAvailability avail " //
-        + "        WHERE res.id IN ( :resourceIds ) " //
-        + "          AND avail IS NULL "),
+        + "                          WHERE res.agent.id = :agentId " //
+        + "                            AND res.parentResource IS NULL )"),
+    @NamedQuery(name = ResourceAvailability.UPDATE_CHILD_BY_AGENT_ID, query = "" //
+        + "  UPDATE ResourceAvailability ra" //
+        + "     SET availabilityType = :availabilityType " //
+        + "   WHERE resourceId IN ( SELECT res.id " //
+        + "                           FROM Resource res " //
+        + "                          WHERE res.agent.id = :agentId " //
+        + "                            AND res.parentResource IS NOT NULL ) " //
+        + "     AND ra.availabilityType <> :disabled "),
     /*
      * Platform plugins always return up for availability.  Platforms are
      * only down if the check-suspect-agent's backfiller sets them down.
@@ -77,7 +79,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  JOIN res.currentAvailability avail " // we only want the current availability
         + " WHERE res.agent.id = :agentId " // use id not name to prevent an unnecessary join to agent table
         + "   AND res.parentResource IS NULL " // we only want platforms
-        + "   AND avail.availabilityType <> 1") // get all DOWN or UNKNOWN
+        + "   AND avail.availabilityType <> 1") // get all NOT UP
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
 public class ResourceAvailability implements Serializable {
@@ -86,8 +88,8 @@ public class ResourceAvailability implements Serializable {
     public static final String TABLE_NAME = "RHQ_RESOURCE_AVAIL";
 
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
-    public static final String UPDATE_BY_AGENT_ID = "ResourceAvailability.updateByAgentId";
-    public static final String INSERT_BY_RESOURCE_IDS = "ResourceAvailability.insertByResourceIds";
+    public static final String UPDATE_CHILD_BY_AGENT_ID = "ResourceAvailability.updateChildByAgentId";
+    public static final String UPDATE_PLATFORM_BY_AGENT_ID = "ResourceAvailability.updatePlatformByAgentId";
     public static final String QUERY_IS_AGENT_BACKFILLED = "ResourceAvailability.isAgentBackfilled";
 
     @SuppressWarnings("unused")
@@ -106,7 +108,7 @@ public class ResourceAvailability implements Serializable {
     /**
      * Availability state for this time period
      */
-    @Column(name = "AVAILABILITY_TYPE", nullable = true)
+    @Column(name = "AVAILABILITY_TYPE", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AvailabilityType availabilityType;
 
@@ -115,8 +117,7 @@ public class ResourceAvailability implements Serializable {
     }
 
     /**
-     * Constructor for {@link ResourceAvailability}. If <code>type</code> is <code>null</code>, it will be 
-     * considered unknown.
+     * Constructor for {@link ResourceAvailability}.
      *
      * @param resource
      * @param type
@@ -136,19 +137,12 @@ public class ResourceAvailability implements Serializable {
     }
 
     /**
-     * Indicates the availability status as either UP or DOWN; if <code>null</code> is returned, the status is unknown.
-     *
-     * @return availability status
+     * @return availability type
      */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
     }
 
-    /**
-     * Sets the availability status. This can be <code>null</code> to indicate an "unknown" availability status.
-     *
-     * @param availabilityType
-     */
     public void setAvailabilityType(AvailabilityType availabilityType) {
         this.availabilityType = availabilityType;
     }

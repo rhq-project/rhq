@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert.engine.internal;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite;
@@ -44,8 +46,9 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator.Cache;
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
-import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.AvailabilityCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposite;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.ResourceConfigurationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
@@ -59,6 +62,7 @@ class GlobalConditionCache extends AbstractConditionCache {
 
     private Map<Integer, Map<Integer, List<ResourceOperationCacheElement>>> resourceOperationCache; // key: resource ID, inner key: operation def ID
     private Map<Integer, List<AvailabilityCacheElement>> availabilityCache; // key: resource ID
+    private Map<Integer, List<AvailabilityDurationCacheElement>> availabilityDurationCache; // key: resource ID    
     private Map<Integer, List<ResourceConfigurationCacheElement>> resourceConfigurationCache; // key: resource ID
 
     private AlertConditionManagerLocal alertConditionManager;
@@ -69,6 +73,7 @@ class GlobalConditionCache extends AbstractConditionCache {
 
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
+        availabilityDurationCache = new HashMap<Integer, List<AvailabilityDurationCacheElement>>();
         resourceConfigurationCache = new HashMap<Integer, List<ResourceConfigurationCacheElement>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
@@ -89,7 +94,8 @@ class GlobalConditionCache extends AbstractConditionCache {
             Subject overlord = subjectManager.getOverlord();
 
             EnumSet<AlertConditionCategory> supportedCategories = EnumSet.of(AlertConditionCategory.AVAILABILITY,
-                AlertConditionCategory.CONTROL, AlertConditionCategory.RESOURCE_CONFIG);
+                AlertConditionCategory.AVAIL_DURATION, AlertConditionCategory.CONTROL,
+                AlertConditionCategory.RESOURCE_CONFIG);
 
             for (AlertConditionCategory nextCategory : supportedCategories) {
                 // page thru all alert definitions
@@ -137,28 +143,35 @@ class GlobalConditionCache extends AbstractConditionCache {
         int alertConditionId = alertCondition.getId(); // auto-unboxing is safe here because as the PK it's guaranteed to be non-null
 
         AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
-        AlertConditionOperator alertConditionOperator = AlertConditionCacheUtils.getAlertConditionOperator(
-            alertConditionCategory, alertCondition.getComparator(), alertCondition.getOption());
+        AlertConditionOperator alertConditionOperator = AlertConditionCacheUtils
+            .getAlertConditionOperator(alertCondition);
 
         if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
-            /*
-             * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
-             * it with AvailabilityType.UP to satisfy the desired semantics.
-             *
-             * TODO: jmarques - should associate a specific operator with availability UI selections to make biz
-             * processing more consistent with the model
-             */
             AlertConditionAvailabilityCategoryComposite availabilityComposite = (AlertConditionAvailabilityCategoryComposite) composite;
 
             try {
                 AvailabilityCacheElement cacheElement = new AvailabilityCacheElement(alertConditionOperator,
-                    AvailabilityType.UP, availabilityComposite.getAvailabilityType(), alertConditionId);
+                    availabilityComposite.getAvailabilityType(), alertConditionId);
                 addTo("availabilityCache", availabilityCache, availabilityComposite.getResourceId(), cacheElement,
                     alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create AvailabilityCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         availabilityComposite.getAvailabilityType(), AvailabilityType.UP));
+            }
+        } else if (alertConditionCategory == AlertConditionCategory.AVAIL_DURATION) {
+            AlertConditionAvailabilityCategoryComposite availabilityComposite = (AlertConditionAvailabilityCategoryComposite) composite;
+
+            try {
+                AvailabilityDurationCacheElement cacheElement = new AvailabilityDurationCacheElement(
+                    alertConditionOperator, alertCondition.getOption(), availabilityComposite.getAvailabilityType(),
+                    alertConditionId);
+                addTo("availabilityDurationCache", availabilityDurationCache, availabilityComposite.getResourceId(),
+                    cacheElement, alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create AvailabilityCacheElement with parameters: "
+                    + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
+                        availabilityComposite.getAvailabilityType(), alertConditionOperator.toString()));
             }
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             AlertConditionControlCategoryComposite controlComposite = (AlertConditionControlCategoryComposite) composite;
@@ -170,8 +183,8 @@ class GlobalConditionCache extends AbstractConditionCache {
                     operationRequestStatus, alertConditionId);
 
                 // auto-boxing always safe
-                addToResourceOperationCache(controlComposite.getResourceId(), controlComposite
-                    .getOperationDefinitionId(), cacheElement, alertConditionId, stats);
+                addToResourceOperationCache(controlComposite.getResourceId(),
+                    controlComposite.getOperationDefinitionId(), cacheElement, alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create ResourceOperationCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
@@ -190,8 +203,8 @@ class GlobalConditionCache extends AbstractConditionCache {
                         null, null));
             }
 
-            addTo("resourceConfigurationCache", resourceConfigurationCache, resourceConfigurationComposite
-                .getResourceId(), cacheElement, alertConditionId, stats);
+            addTo("resourceConfigurationCache", resourceConfigurationCache,
+                resourceConfigurationComposite.getResourceId(), cacheElement, alertConditionId, stats);
         }
     }
 
@@ -264,13 +277,66 @@ class GlobalConditionCache extends AbstractConditionCache {
 
                 List<AvailabilityCacheElement> cacheElements = lookupAvailabilityCacheElements(resource.getId());
 
-                processCacheElements(cacheElements, availabilityType, availability.getStartTime().getTime(), stats);
+                processCacheElements(cacheElements, availabilityType, availability.getStartTime(), stats);
+
+                // Avail Duration conditions are evaluated in two parts:
+                // 1) First, an avail change to the that starts the clock ticking.
+                // 2) Second, after the duration period, check to see if the avail state is still the same.
+                // Here we check for part 1, see if we need to start duration processing for the avail change
+                List<AvailabilityDurationCacheElement> durationCacheElements = lookupAvailabilityDurationCacheElements(resource
+                    .getId());
+                AvailabilityDurationCacheElement.checkCacheElements(durationCacheElements, resource, availabilityType);
             }
 
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityProcessingTime(stats.getAge());
             if (log.isDebugEnabled())
                 log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error("Error during global cache processing: ", t);
+        }
+        return stats;
+    }
+
+    // Avail Duration conditions are evaluated in two parts:
+    // 1) First, an avail change to the that starts the clock ticking.
+    // 2) Second, after the duration period, check to see if the avail state is still the same.
+    // Here we check for part 2, finish processing of the condition whose duration job finished and
+    // determined the avail state to be satisfied.  Now hook in to the alerting chassis...
+    public AlertConditionCacheStats checkConditions(AvailabilityDurationComposite... composites) {
+        if ((null == composites) || (composites.length == 0)) {
+            return new AlertConditionCacheStats();
+        }
+
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        try {
+            for (AvailabilityDurationComposite composite : composites) {
+
+                List<AvailabilityDurationCacheElement> cacheElements = lookupAvailabilityDurationCacheElements(composite
+                    .getResourceId());
+
+                // This method differs from the other <code>checkConditions<code> methods in that it is only 
+                // interested in a single condition for each composite, the one for which the duration job completed.
+                if (!(null == cacheElements || cacheElements.isEmpty())) {
+                    for (AvailabilityDurationCacheElement cacheElement : cacheElements) {
+                        if (composite.getConditionId() == cacheElement.getAlertConditionTriggerId()) {
+                            List<AvailabilityDurationCacheElement> cacheElementAsList = new ArrayList<AvailabilityDurationCacheElement>(
+                                1);
+                            cacheElementAsList.add(cacheElement);
+
+                            processCacheElements(cacheElementAsList, composite.getAvailabilityType(),
+                                System.currentTimeMillis(), stats);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityDurationCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityDurationProcessingTime(stats.getAge());
+            if (log.isDebugEnabled())
+                log.debug("Check AvailabilityDuration[size=" + composites.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error("Error during global cache processing: ", t);
@@ -309,6 +375,10 @@ class GlobalConditionCache extends AbstractConditionCache {
         return availabilityCache.get(resourceId); // yup, might be null
     }
 
+    private List<AvailabilityDurationCacheElement> lookupAvailabilityDurationCacheElements(int resourceId) {
+        return availabilityDurationCache.get(resourceId); // yup, might be null
+    }
+
     private List<ResourceConfigurationCacheElement> lookupResourceConfigurationCacheElements(int resourceId) {
         return resourceConfigurationCache.get(resourceId); // yup, might be null
     }
@@ -317,6 +387,8 @@ class GlobalConditionCache extends AbstractConditionCache {
     public int getCacheSize(Cache cache) {
         if (cache == AlertConditionCacheCoordinator.Cache.AvailabilityCache) {
             return AlertConditionCacheUtils.getMapListCount(availabilityCache);
+        } else if (cache == AlertConditionCacheCoordinator.Cache.AvailabilityDurationCache) {
+            return AlertConditionCacheUtils.getMapListCount(availabilityDurationCache);
         } else if (cache == AlertConditionCacheCoordinator.Cache.ResourceConfigurationCache) {
             return AlertConditionCacheUtils.getMapListCount(resourceConfigurationCache);
         } else if (cache == AlertConditionCacheCoordinator.Cache.ResourceOperationCache) {

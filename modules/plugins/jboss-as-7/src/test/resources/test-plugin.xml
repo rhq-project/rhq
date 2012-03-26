@@ -130,6 +130,23 @@
         </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="test12">
+        <resource-configuration>
+            <c:simple-property name="foo:expr" />
+            <c:simple-property name="foo2:expr" />
+            <c:simple-property name="bar"  type="integer"/>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test13">
+        <resource-configuration>
+            <c:map-property name="connector:collapsed" >
+                <c:simple-property name="name:0" />
+                <c:simple-property name="backup:1"/>
+            </c:map-property>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>
@@ -212,6 +229,22 @@
             </c:group>
         </resource-configuration>
 
+    </server>
+
+    <server name="listOfPlainMaps"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="JacORB subsystem configuration"
+             singleton="true">
+
+        <resource-configuration>
+            <c:list-property name="properties" description="A list of generic key/value properties.">
+                <c:map-property name="property:collapsed" displayName="Property">
+                   <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
+                   <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
     </server>
 
 

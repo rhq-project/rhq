@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 
 /**

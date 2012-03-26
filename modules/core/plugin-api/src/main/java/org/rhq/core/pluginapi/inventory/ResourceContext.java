@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,6 +38,7 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -63,9 +63,9 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  */
 @SuppressWarnings("unchecked")
 public class ResourceContext<T extends ResourceComponent<?>> {
-    
+
     private static final Log LOG = LogFactory.getLog(ResourceContext.class);
-    
+
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
@@ -76,29 +76,30 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final File resourceDataDirectory;
     private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
     private final ContentContext contentContext;
-    private final Executor availCollectionThreadPool;
+    private final AvailabilityContext availabilityContext;
     private final PluginContainerDeployment pluginContainerDeployment;
     private final ResourceTypeProcesses trackedProcesses;
-    
+
     private static class Children {
         public ResourceType resourceType;
         public String parentResourceUuid;
-        
+
         public Children(String parentResourceUuid, ResourceType resourceType) {
             this.parentResourceUuid = parentResourceUuid;
             this.resourceType = resourceType;
         }
-        
+
         @Override
         public int hashCode() {
             int uuidHashCode = parentResourceUuid == null ? 1 : parentResourceUuid.hashCode();
             return 31 * uuidHashCode * resourceType.getId();
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -115,9 +116,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                 .equals(o.parentResourceUuid)) && resourceType.equals(o.resourceType);
         }
     }
-    
+
     private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
-        
+
     /**
      * Creates a new {@link ResourceContext} object.
      *
@@ -143,15 +144,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *                                   operation manager
      * @param contentContext             a {@link ContentContext} the plugin can use to interoperate with the content
      *                                   manager
-     * @param availCollectorThreadPool   a thread pool that can be used by the plugin component should it wish
-     *                                   or need to perform asynchronous availability checking. See the javadoc on
-     *                                   {@link AvailabilityCollectorRunnable} for more information on this.
+     * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
+     *                                   plugin container inventory manager
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, Executor availCollectorThreadPool,
+        ContentContext contentContext, AvailabilityContext availabilityContext,
         PluginContainerDeployment pluginContainerDeployment) {
 
         this.resourceKey = resource.getResourceKey();
@@ -163,6 +163,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.dataDirectory = dataDirectory;
+        this.resourceDataDirectory = new File(dataDirectory, resource.getUuid());
         this.pluginContainerName = pluginContainerName;
         this.pluginContainerDeployment = pluginContainerDeployment;
         if (temporaryDirectory == null) {
@@ -175,8 +176,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.eventContext = eventContext;
         this.operationContext = operationContext;
         this.contentContext = contentContext;
-        this.availCollectionThreadPool = availCollectorThreadPool;
-        
+        this.availabilityContext = availabilityContext;
+
         String parentResourceUuid = "";
         if (resource.getParentResource() != null) {
             parentResourceUuid = resource.getParentResource().getUuid();
@@ -216,6 +217,19 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
+     * The {@link Resource#getUuid() uuid} of the resource this context is associated with.
+     *
+     * @return the resource's uuid string
+     */
+    public File getResourceDataDirectory() {
+        if (!resourceDataDirectory.exists()) {
+            resourceDataDirectory.mkdirs();
+        }
+
+        return this.resourceDataDirectory;
+    }
+
+    /**
      * The parent of the resource component that is associated with this context.
      *
      * @return parent component of the associated resource component
@@ -236,7 +250,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     protected ResourceContext<?> getParentResourceContext() {
         return this.parentResourceContext;
     }
-    
+
     /**
      * Returns a {@link SystemInfo} object that contains information about the platform/operating system that the
      * resource is running on. With this object, you can natively obtain things such as the operating system name, its
@@ -269,15 +283,16 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public ProcessInfo getNativeProcess() {
         ProcessInfo processInfo = trackedProcesses.getProcessInfo(resourceKey);
-        
+
         if (!isRediscoveryRequired(processInfo)) {
             return processInfo;
         }
-        
+
         if (LOG.isTraceEnabled()) {
-            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key " + resourceKey + ", syncing on " + trackedProcesses);
+            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key "
+                + resourceKey + ", syncing on " + trackedProcesses);
         }
-        
+
         synchronized (trackedProcesses) {
             //right, we've entered the critical section...
             //we might have waited for another thread to actually fill in the tracked processes
@@ -297,16 +312,15 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                     if (!processes.isEmpty()) {
                         ResourceDiscoveryContext<T> context;
 
-                        context =
-                            new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
-                                this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
-                                getPluginContainerName(), getPluginContainerDeployment());
+                        context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
+                            this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
+                            getPluginContainerName(), getPluginContainerDeployment());
 
                         details = this.resourceDiscoveryComponent.discoverResources(context);
-
-                        trackedProcesses.update(details);
-                        processInfo = trackedProcesses.getProcessInfo(resourceKey);
                     }
+                    
+                    trackedProcesses.update(details);
+                    processInfo = trackedProcesses.getProcessInfo(resourceKey);                    
                 } catch (Exception e) {
                     LOG.warn("Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
                 }
@@ -314,9 +328,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         }
 
         if (LOG.isTraceEnabled()) {
-            LOG.trace("getNativeProcess(): rediscovery done");            
+            LOG.trace("getNativeProcess(): rediscovery done");
         }
-        
+
         return processInfo;
     }
 
@@ -451,39 +465,24 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
-     * Under certain circumstances, a resource component may want to perform asynchronous availability checks, as
-     * opposed to {@link AvailabilityFacet#getAvailability()} blocking waiting for the managed resource to return
-     * its availability status. Using asynchronous availability checking frees the resource component from having
-     * to guarantee that the managed resource will provide availability status in a timely fashion.
-     * 
-     * If the resource component needs to perform asynchronous availability checking, it should call this
-     * method to create an instance of {@link AvailabilityCollectorRunnable} inside the {@link ResourceComponent#start} method.
-     * It should then call the returned object's {@link AvailabilityCollectorRunnable#start()} method within the same resource
-     * component {@link ResourceComponent#start(ResourceContext)} method. The resource component should call the
-     * {@link AvailabilityCollectorRunnable#stop()} method when the resource component
-     * {@link ResourceComponent#stop() stops}. The resource component's {@link AvailabilityFacet#getAvailability()} method
-     * should simply return the value returned by {@link AvailabilityCollectorRunnable#getLastKnownAvailability()}. This
-     * method will be extremely fast since it simply returns the last availability that was retrieved by the
-     * given availability checker. Only when the availability checker finishes checking for availability of the managed resource
-     * (however long it takes to do so) will the last known availability state change.
-     * 
-     * For more information, read the javadoc in {@link AvailabilityCollectorRunnable}.
+     * Returns an {@link AvailabilityContext} that allows the plugin to access the availability functionality provided by the
+     * plugin container.
      *
-     * @param availChecker the object that will perform the actual check of the managed resource's availability
-     * @param interval the interval, in milliseconds, between availability checks. The minimum value allowed
-     *                 for this parameter is {@link AvailabilityCollectorRunnable#MIN_INTERVAL}.
-     *
-     * @return the availability collector runnable that will perform the asynchronous checking
-     *
-     * @since 1.3
+     * @return availability context object
+     */
+    public AvailabilityContext getAvailabilityContext() {
+        return availabilityContext;
+    }
+
+    /**
+     * @deprecated Use {@link AvailabilityContext#createAvailabilityCollectorRunnable(AvailabilityFacet, long)}
      */
     public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet availChecker,
         long interval) {
-        // notice that we assume we are called with the same context classloader that will be need by the avail checker
-        return new AvailabilityCollectorRunnable(availChecker, interval,
-            Thread.currentThread().getContextClassLoader(), this.availCollectionThreadPool);
+
+        return getAvailabilityContext().createAvailabilityCollectorRunnable(availChecker, interval);
     }
-    
+
     /**
      * Returns a shared object representing the processes detected for given resource type under given parent.
      * Note that this comes from a static field so it is shared by any resource contexts representing a
@@ -495,14 +494,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return
      */
     private static ResourceTypeProcesses getTrackedProcesses(String parentResourceUuid, ResourceType resourceType) {
-        synchronized(PROCESSES_PER_PARENT_PER_RESOURCE_TYPE) {
+        synchronized (PROCESSES_PER_PARENT_PER_RESOURCE_TYPE) {
             Children key = new Children(parentResourceUuid, resourceType);
             ResourceTypeProcesses ret = PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.get(key);
             if (ret == null) {
                 ret = new ResourceTypeProcesses();
                 PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.put(key, ret);
             }
-            
+
             return ret;
         }
     }

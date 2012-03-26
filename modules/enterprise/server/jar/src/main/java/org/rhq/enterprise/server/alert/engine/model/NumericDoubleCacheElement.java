@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
+
 /**
  * @author Joseph Marques
  */

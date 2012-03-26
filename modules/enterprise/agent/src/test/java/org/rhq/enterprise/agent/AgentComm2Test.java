@@ -36,7 +36,7 @@ import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommandRe
  *
  * @author John Mazzitelli
  */
-@Test(groups = "agent-comm")
+@Test(groups = "agent.comm")
 public class AgentComm2Test extends AgentCommTestBase {
     private static final boolean ENABLE_TESTS = true;
 

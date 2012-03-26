@@ -20,6 +20,7 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
+    String nameFromPathProperty;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -88,7 +90,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
          */
         List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
         Operation op = new ReadResource(address);
-//        op.addAdditionalProperty("recursive", "true"); // Also get sub-resources
+        //        op.addAdditionalProperty("recursive", "true"); // Also get sub-resources
         loadHandleProperties(config, nonGroupdedDefs, op);
 
         return config;
@@ -104,23 +106,29 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param groupDefinition Definition of this group
      * @throws Exception If anything goes wrong
      */
-    private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
+    private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception {
         Operation operation;
         String groupName = groupDefinition.getName();
         if (groupName.startsWith("attribute:")) {
             String attr = groupName.substring("attribute:".length());
-            operation = new ReadAttribute(address,attr);
-        }
-        else if (groupName.startsWith("children:")) {
+            operation = new ReadAttribute(address, attr);
+        } else if (groupName.startsWith("children:")) {
             String type = groupName.substring("children:".length());
             if (type.contains(":")) {
-                // We only need the type for reading
-                type = type.substring(0,type.indexOf(":"));
+
+                // If the third part ends with a ?, we fill this config prop with the resource name from the path
+                String tmp = type.substring(type.indexOf(":") + 1);
+                if (tmp.endsWith("+-")) {
+                    nameFromPathProperty = tmp.substring(0, tmp.length() - 2);
+                }
+
+                // We need the type for reading
+                type = type.substring(0, type.indexOf(":"));
+
             }
-            operation = new ReadChildrenResources(address,type);
+            operation = new ReadChildrenResources(address, type);
             operation.addAdditionalProperty("recursive", "true");
-        }
-        else if (groupName.startsWith("child:")) {
+        } else if (groupName.startsWith("child:")) {
             String subPath = groupName.substring("child:".length());
             if (!subPath.contains("="))
                 throw new IllegalArgumentException("subPath of 'child:' expression has no =");
@@ -128,8 +136,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             Address address1 = new Address(address);
             address1.addSegment(subPath);
             operation = new ReadResource(address1);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
@@ -137,9 +144,9 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
     }
 
-
-    private void loadHandleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
-        if (definitions.size()==0)
+    private void loadHandleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op)
+        throws Exception {
+        if (definitions.size() == 0)
             return;
 
         Result operationResult = connection.execute(op);
@@ -147,19 +154,18 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             throw new IOException("Operation " + op + " failed: " + operationResult.getFailureDescription());
         }
 
-
         if (operationResult.getResult() instanceof List) {
             PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) definitions.get(0),
-                    operationResult.getResult());
+                operationResult.getResult());
 
-                if (propertyList!=null)
-                    config.put(propertyList);
+            if (propertyList != null)
+                config.put(propertyList);
             return;
         }
 
-        Map<String,Object> results = (Map<String, Object>) operationResult.getResult();
+        Map<String, Object> results = (Map<String, Object>) operationResult.getResult();
 
-        for (PropertyDefinition propDef :definitions ) {
+        for (PropertyDefinition propDef : definitions) {
 
             /*
              * We may have a mismatch for groups where the <c:group name="children:*"> child is a list of maps
@@ -179,40 +185,50 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
                 PropertyList list = new PropertyList(propertyName);
 
-                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                for (Map.Entry<String, Object> entry : results.entrySet()) {
                     Object val = entry.getValue();
                     String key = entry.getKey();
 
                     PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
 
-                    if (propertyMap!=null)
-                        list.add(propertyMap);
+                    if (nameFromPathProperty != null) {
+                        // We need to fill that property as well
+                        PropertySimple ps = new PropertySimple(nameFromPathProperty, key);
+                        propertyMap.put(ps);
                     }
+
+                    if (propertyMap != null)
+                        list.add(propertyMap);
+                }
 
                 config.put(list);
 
             } else { // standard case
 
-
-                Object valueObject = results.get(propertyName);
+                Object valueObject;
+                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")) {
+                    String realName = propertyName.substring(0, propertyName.indexOf(":"));
+                    valueObject = results.get(realName);
+                } else {
+                    valueObject = results.get(propertyName);
+                }
 
                 if (propDef instanceof PropertyDefinitionSimple) {
 
                     PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
-                    if (value!=null)
+                    if (value != null)
                         config.put(value);
                 }
 
                 else if (propDef instanceof PropertyDefinitionList) {
                     PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) propDef, valueObject);
 
-                    if (propertyList!=null)
+                    if (propertyList != null)
                         config.put(propertyList);
-                }
-                else if (propDef instanceof PropertyDefinitionMap) {
+                } else if (propDef instanceof PropertyDefinitionMap) {
                     PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject, null);
 
-                    if (propertyMap!=null)
+                    if (propertyMap != null)
                         config.put(propertyMap);
                 }
             }
@@ -225,15 +241,20 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         String name = propDef.getName();
         if (valueObject != null) {
             // Property is non-null -> return it.
-            propertySimple = new PropertySimple(name, valueObject);
+
+            if (valueObject instanceof Map) { // If this is a map and no single type, get the EXPRESSION_VALUE
+                Object o = ((Map) valueObject).get("EXPRESSION_VALUE");
+                propertySimple = new PropertySimple(name, o);
+            } else {
+                propertySimple = new PropertySimple(name, valueObject);
+            }
         } else {
             // property is null? Check if it is required
             if (propDef.isRequired()) {
                 String defaultValue = ((PropertyDefinitionSimple) propDef).getDefaultValue();
                 propertySimple = new PropertySimple(name, defaultValue);
-            }
-            else { // Not required and null -> return null
-                propertySimple = new PropertySimple(name,null);
+            } else { // Not required and null -> return null
+                propertySimple = new PropertySimple(name, null);
             }
         }
         return propertySimple;
@@ -248,47 +269,71 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param optionalEntryName
      * @return the populated map
      */
-    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject, String optionalEntryName) {
-        if (valueObject==null)
+    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDefMap, Object valueObject, String optionalEntryName) {
+        if (valueObject == null)
             return null;
 
-        String propDefName = propDef.getName();
+        String propDefName = propDefMap.getName();
         PropertyMap propertyMap = new PropertyMap(propDefName);
         String specialNameProp = null;
         if (propDefName.startsWith("*:")) {
             specialNameProp = propDefName.substring(2);
-            PropertySimple additionalNameProperty = new PropertySimple(specialNameProp,optionalEntryName);
+            PropertySimple additionalNameProperty = new PropertySimple(specialNameProp, optionalEntryName);
             propertyMap.put(additionalNameProperty);
         }
 
-        Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();
+        List<PropertyDefinition> propDefs = propDefMap.getPropertyDefinitions();
 
+        if (propDefName.endsWith(":collapsed")) {
+            // The result is a map of {" a" : " b" }, while the propdef is in the form
+            // map { prop {name=a } , prop {name=b) }
+            if (propDefs.size() != 2)
+                throw new IllegalArgumentException("Collapsed map [" + propDefName + "] needs 2 entries and not "
+                    + propDefs.size());
 
+            Iterator<PropertyDefinition> iterator = propDefs.iterator();
+            String name = iterator.next().getName();
+            Map<String, String> objects = (Map<String, String>) valueObject;
+            String val = objects.keySet().iterator().next();
+            PropertySimple ps = new PropertySimple(name, val);
+            propertyMap.put(ps);
+            name = iterator.next().getName();
+            val = objects.values().iterator().next();
+            ps = new PropertySimple(name, val);
+            propertyMap.put(ps);
 
-        Map<String,Object> objects = (Map<String, Object>) valueObject;
-        for (Map.Entry<String, PropertyDefinition> maEntry : memberDefMap.entrySet()) {
-            String key = maEntry.getKey();
+            return propertyMap;
+        }
+
+        Map<String, Object> objects = (Map<String, Object>) valueObject;
+        for (PropertyDefinition propDef : propDefs) {
+            String key = propDef.getName();
             if (key.equals(specialNameProp)) // Skip over specialName prop, as we have processed that already.
                 continue;
 
             // special case: if the key is "*", we just pick the first element
-            Object o ;
-            if (key.equals("*"))
+            Object o;
+            if (key.equals("*")) {
                 o = objects.entrySet().iterator().next().getValue();
-            else
+            } else if (key.endsWith(":expr")) {
+                // TODO we need to check te
+                String tmp = key.substring(0, key.indexOf(":"));
+                o = objects.get(tmp);
+            } else {
                 o = objects.get(key);
-            Property property;
-            PropertyDefinition value = maEntry.getValue();
-            if (value instanceof PropertyDefinitionSimple)
-                property = loadHandlePropertySimple((PropertyDefinitionSimple) value, o);
-            else if (value instanceof PropertyDefinitionList)
-                property = loadHandlePropertyList((PropertyDefinitionList) value, o);
-            else if (value instanceof PropertyDefinitionMap)
-                property = loadHandlePropertyMap((PropertyDefinitionMap) value, o,null);
-            else
-                throw new IllegalArgumentException("Unknown property type in map property [" + propDefName +"]");
+            }
 
-            if (property!=null)
+            Property property;
+            if (propDef instanceof PropertyDefinitionSimple)
+                property = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, o);
+            else if (propDef instanceof PropertyDefinitionList)
+                property = loadHandlePropertyList((PropertyDefinitionList) propDef, o);
+            else if (propDef instanceof PropertyDefinitionMap)
+                property = loadHandlePropertyMap((PropertyDefinitionMap) propDef, o, null);
+            else
+                throw new IllegalArgumentException("Unknown property type in map property [" + propDefName + "]");
+
+            if (property != null)
                 propertyMap.put(property);
             else {
                 if (log.isDebugEnabled())
@@ -310,36 +355,34 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         String propertyName = propDef.getName();
         PropertyList propertyList = new PropertyList(propertyName);
         PropertyDefinition memberDefinition = propDef.getMemberDefinition();
-        if (memberDefinition==null)
+        if (memberDefinition == null)
             throw new IllegalArgumentException("Member definition for property [" + propertyName + "] was null");
 
-        if (valueObject==null) {
-//            System.out.println("vo null");
+        if (valueObject == null) {
+            //            System.out.println("vo null");
             return null;
         }
 
         Collection<Object> objects;
         if (valueObject instanceof List)
             objects = (List<Object>) valueObject;
-        else /*if (valueObject instanceof Map)*/ {
-            objects = ((Map)valueObject).values();
+        else /*if (valueObject instanceof Map)*/{
+            objects = ((Map) valueObject).values();
         }
 
         if (memberDefinition instanceof PropertyDefinitionSimple) {
             for (Object obj : objects) {
-                PropertySimple property = loadHandlePropertySimple((PropertyDefinitionSimple) memberDefinition,
-                        obj);
-                if (property!=null)
+                PropertySimple property = loadHandlePropertySimple((PropertyDefinitionSimple) memberDefinition, obj);
+                if (property != null)
                     propertyList.add(property);
             }
-        }
-        else if (memberDefinition instanceof PropertyDefinitionMap) {
+        } else if (memberDefinition instanceof PropertyDefinitionMap) {
             for (Object obj : objects) {
-                Map<String,Object>  map = (Map<String, Object>) obj;
+                Map<String, Object> map = (Map<String, Object>) obj;
 
-                PropertyMap propertyMap = loadHandlePropertyMap(
-                        (PropertyDefinitionMap) propDef.getMemberDefinition(), map, null);
-                if (propertyMap!=null)
+                PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef.getMemberDefinition(),
+                    map, null);
+                if (propertyMap != null)
                     propertyList.add(propertyMap);
             }
         }

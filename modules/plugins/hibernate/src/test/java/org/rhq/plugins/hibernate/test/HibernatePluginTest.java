@@ -32,7 +32,7 @@ import org.rhq.core.pc.plugin.PluginManager;
 /**
  * @author Greg Hinkle
  */
-@Test(groups = "hibernate-plugin")
+@Test(groups = "hibernate.plugin")
 public class HibernatePluginTest
 {
    private Log log = LogFactory.getLog(HibernatePluginTest.class);

@@ -90,8 +90,10 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     private ProblemResourcesDataSource dataSource;
 
     //constants
-    public static final String unlimited = MSG.common_label_unlimited();
-    public static final String defaultValue = "20";
+    public static final int unlimited = -1;
+    public static final String unlimitedString = MSG.common_label_unlimited();
+    public static final String defaultShowMax = "20";
+    public static final String defaultShowHours = "24";
 
     private Timer refreshTimer;
 
@@ -163,14 +165,14 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
             return;
         }
 
-        int configuredValue = -1;
+        int configuredValue;
 
         //determine configuration value for ProblemResourceShowMax
-        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_MAX, defaultValue);
+        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_MAX, defaultShowMax);
         getDataSource().setMaximumProblemResourcesToDisplay(configuredValue);
 
         //determine configuration value for ProblemResourceShowHrs
-        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_HRS, defaultValue);
+        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_HRS, defaultShowHours);
         getDataSource().setMaximumProblemResourcesWithinHours(configuredValue);
     }
 
@@ -179,22 +181,28 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
      * @param storedPortlet DashboardPortlet instance
      * @param propertyKey Widget key
      * @param defaultKeyValue default value to be used if property not yet set.
-     * @return int value of configuration, Ex. 1,5,10,unlimited where unlimited==-1.
+     * @return value of configuration, Ex. 1,5,10,unlimited.
      */
     private int populateConfigurationValue(DashboardPortlet storedPortlet, String propertyKey, String defaultKeyValue) {
-        int configuredValue;
-        if ((storedPortlet != null) && (storedPortlet.getConfiguration().getSimple(propertyKey) != null)) {
-            //retrieve and translate to int
-            String retrieved = storedPortlet.getConfiguration().getSimple(propertyKey).getStringValue();
-            if (retrieved.equals(unlimited)) {
-                configuredValue = -1;
-            } else {
-                configuredValue = Integer.parseInt(retrieved);
-            }
-        } else {//create setting if not already there.
-            storedPortlet.getConfiguration().put(new PropertySimple(propertyKey, defaultKeyValue));
-            configuredValue = -1;
+        int configuredValue = Integer.valueOf(defaultKeyValue);
+
+        if ((storedPortlet == null) || (storedPortlet.getConfiguration() == null)) {
+            return configuredValue;
         }
+
+        if (storedPortlet.getConfiguration().getSimple(propertyKey) != null) {
+            String retrieved = storedPortlet.getConfiguration().getSimple(propertyKey).getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                configuredValue = Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                configuredValue = unlimited;
+            }
+
+        } else {
+            storedPortlet.getConfiguration().put(new PropertySimple(propertyKey, defaultKeyValue));
+        }
+
         return configuredValue;
     }
 
@@ -220,20 +228,13 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "5", "10", "15", "20", "30", unlimited };
+        String[] acceptableDisplayValues = { "5", "10", "15", "20", "30", unlimitedString };
         maximumProblemResourcesComboBox.setValueMap(acceptableDisplayValues);
         //set width of dropdown display region
         maximumProblemResourcesComboBox.setWidth(100);
 
-        //default selected value to 'unlimited'(live lists) and check both combobox settings here.
-        String selectedValue = defaultValue;
-
-        //if property exists retrieve it
-        if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
-            selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
-        } else {//insert default value
-            storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
-        }
+        int configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_MAX, defaultShowMax);
+        String selectedValue = configuredValue == unlimited ? unlimitedString : String.valueOf(configuredValue);
 
         //prepopulate the combobox with the previously stored selection
         maximumProblemResourcesComboBox.setDefaultValue(selectedValue);
@@ -244,21 +245,13 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_unit_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeProblemResourcesComboBox.setType("selection");
-        //define acceptable values for display amount
-        String[] acceptableTimeValues = { "1", "4", "8", "24", "48", unlimited };
+        String[] acceptableTimeValues = { "1", "4", "8", "24", "48", unlimitedString };
         maximumTimeProblemResourcesComboBox.setValueMap(acceptableTimeValues);
         maximumTimeProblemResourcesComboBox.setWidth(100);
 
-        //set to default
-        selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_HRS) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_HRS).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, defaultValue));
-            }
-        }
+        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_HRS, defaultShowHours);
+        selectedValue = configuredValue == unlimited ? unlimitedString : String.valueOf(configuredValue);
+
         //prepopulate the combobox with the previously stored selection
         maximumTimeProblemResourcesComboBox.setDefaultValue(selectedValue);
 
@@ -271,13 +264,20 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
 
-                if (form.getValue(PROBLEM_RESOURCE_SHOW_MAX) != null) {
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, form.getValue(PROBLEM_RESOURCE_SHOW_MAX)));
+                String value = (String) form.getValue(PROBLEM_RESOURCE_SHOW_MAX);
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? String.valueOf(unlimited) : value;
+
+                    storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, value));
                 }
-                if (form.getValue(PROBLEM_RESOURCE_SHOW_HRS) != null) {
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, form.getValue(PROBLEM_RESOURCE_SHOW_HRS)));
+
+                value = (String) form.getValue(PROBLEM_RESOURCE_SHOW_HRS);
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? String.valueOf(unlimited) : value;
+
+                    storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, value));
                 }
 
                 configure(portletWindow, storedPortlet);

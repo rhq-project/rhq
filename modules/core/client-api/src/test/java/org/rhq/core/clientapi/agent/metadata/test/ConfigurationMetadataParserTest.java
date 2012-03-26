@@ -248,7 +248,7 @@ public class ConfigurationMetadataParserTest {
 
         map = definition.getPropertyDefinitionMap("serverProperty51");
         assert map != null : "serverProperty51 was not loaded";
-        nestedProperties = map.getPropertyDefinitions();
+        nestedProperties = map.getMap();
         assert nestedProperties != null : "serverProperty51 did not have any nested properties";
         assert nestedProperties.size() == 3 : "serverProperty51 did not contain the correct number of nested properties";
         assert nestedProperties.get("simpleProperty51") instanceof PropertyDefinitionSimple : "serverProperty51 nested simple property was incorrect";

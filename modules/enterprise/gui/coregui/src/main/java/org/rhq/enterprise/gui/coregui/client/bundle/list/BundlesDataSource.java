@@ -90,7 +90,6 @@ public class BundlesDataSource extends RPCDataSource<Bundle, BundleCriteria> {
     @Override
     protected BundleCriteria getFetchCriteria(final DSRequest request) {
         BundleCriteria criteria = new BundleCriteria();
-        criteria.setPageControl(getPageControl(request));
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
             criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));

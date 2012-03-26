@@ -10,7 +10,7 @@
                overridden via the mvn command line. -->
     <configuration>
       <property name="jbossHome">${jboss7.home}</property>
-      <property name="javaVmArguments">-Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=${jboss.standalone.bindAddress} -Djboss.bind.address=${jboss.standalone.bindAddress} -Djboss.bind.address.unsecure=${jboss.standalone.bindAddress} -Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</property>
+      <property name="javaVmArguments">-Djava.net.preferIPv4Stack=true -Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=${jboss.standalone.bindAddress} -Djboss.bind.address=${jboss.standalone.bindAddress} -Djboss.bind.address.unsecure=${jboss.standalone.bindAddress} -Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</property>
       <property name="managementAddress">${jboss.standalone.bindAddress}</property>
       <property name="managementPort">${jboss.standalone.nativeManagementPort}</property>
     </configuration>

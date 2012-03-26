@@ -189,6 +189,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 initLogEventSourcesConfigProp(logFile, config);
 
                 HostPort managementPort = getManagementPortFromHostXml(commandLine);
+                if (!psName.equals("HostController")) { // standalone
+                    managementPort = checkForSocketBindingOffset(managementPort, commandLine);
+                }
                 config.put(new PropertySimple("hostname", managementPort.host));
                 config.put(new PropertySimple("port", managementPort.port));
                 config.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
@@ -235,6 +238,20 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
         return discoveredResources;
 
+    }
+
+    private HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
+
+        for (String line : commandLine) {
+            if (line.contains("jboss.socket.binding.port-offset")) {
+                String tmp = line.substring(line.indexOf('=')+1);
+                Integer offset = Integer.valueOf(tmp);
+                managementPort.port+=offset;
+                break;
+            }
+        }
+
+        return managementPort;
     }
 
     private String getServerDescr(String productName) {

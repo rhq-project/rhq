@@ -47,7 +47,7 @@ public class SubsystemResourceDriftView extends DriftHistoryView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("recentDrift");
+                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentDrift("recentDrift");
                 exportModalWindow.show();
                 refreshTableInfo();
             }

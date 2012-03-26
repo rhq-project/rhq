@@ -67,6 +67,9 @@ public class ExportModalWindow {
      */
     List<OperationRequestStatus> operationRequestStatusList;
 
+
+
+
     private ExportModalWindow(String reportUrl) {
         this.reportUrl = reportUrl;
         createDialogWindow();
@@ -79,7 +82,6 @@ public class ExportModalWindow {
 
     public static ExportModalWindow createStandardExportWindow(String reportUrl) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
-        newExportDialog.setShowDetail(false);
         return newExportDialog;
     }
 
@@ -100,7 +102,7 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createInventorySummaryExportWindow(String reportUrl) {
+    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, true);
         return newExportDialog;
     }

@@ -22,38 +22,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceLinkField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.data.fields.*;
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.*;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -66,6 +50,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A tabular report that shows the types of resources are installed and how many
@@ -264,7 +251,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                    ExportModalWindow exportModalWindow = ExportModalWindow.createInventorySummaryExportWindow("inventorySummary");
+                    ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForInventorySummary("inventorySummary");
                     exportModalWindow.show();
                 }
 

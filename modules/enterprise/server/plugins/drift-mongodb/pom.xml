@@ -15,12 +15,13 @@
     <description>Server side plugin providing MongoDB Backend for drift management</description>
 
     <properties>
-        <!--
-          Tests are temporarily disabled until a MongoDB server is set up for use with 
-          hudson builds. They can however be run locally provided you have MongoDB installed.
-          - jsanda
-        <skipTests>true</skipTests>
-        -->
+      <!-- 
+        skipping mongodb tests by default for dev builds since a MongoDB
+        server install is not a prerequisite for development environment.
+        MongoDB is however is installed on jenkins and MongoDB tests will
+        run in jenkins builds.
+      -->
+      <skip.mongodb.tests>true</skip.mongodb.tests</skip.mongodb.tests>       
     </properties>
 
     <dependencies>
@@ -84,6 +85,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <skipTests>${skip.mongodb.tests}</skipTests>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                     <!--
                         <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>

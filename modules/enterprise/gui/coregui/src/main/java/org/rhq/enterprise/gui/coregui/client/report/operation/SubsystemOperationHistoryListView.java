@@ -21,13 +21,9 @@ package org.rhq.enterprise.gui.coregui.client.report.operation;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Ian Springer
@@ -57,21 +53,7 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                List<OperationRequestStatus> operationRequestStatusList = new ArrayList<OperationRequestStatus>(10);
-                String[] operationalStatuses = statusFilter.getValues();
-                for (String operationalStatus : operationalStatuses) {
-                    if(operationalStatus.equals(OperationRequestStatus.CANCELED.getDisplayName())){
-                        operationRequestStatusList.add(OperationRequestStatus.CANCELED);
-                    }else  if(operationalStatus.equals(OperationRequestStatus.FAILURE.getDisplayName())){
-                        operationRequestStatusList.add(OperationRequestStatus.FAILURE);
-                    }else  if(operationalStatus.equals(OperationRequestStatus.INPROGRESS.getDisplayName())){
-                        operationRequestStatusList.add(OperationRequestStatus.INPROGRESS);
-                    }else  if(operationalStatus.equals(OperationRequestStatus.SUCCESS.getDisplayName())){
-                        operationRequestStatusList.add(OperationRequestStatus.SUCCESS);
-                    }
-
-                }
-                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentOperations("recentOperations",operationRequestStatusList);
+                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentOperations("recentOperations",statusFilter.getValues());
                 exportModalWindow.show();
                 refreshTableInfo();
             }

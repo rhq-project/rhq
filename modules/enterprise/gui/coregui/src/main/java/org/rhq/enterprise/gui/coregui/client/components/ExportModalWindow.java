@@ -38,15 +38,12 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,11 +72,11 @@ public class ExportModalWindow {
     /**
      * For recent Alerts.
      */
-    List<AlertPriority> alertPriorityList;
+    String[] alertPriorityFilters;
     /**
      * For Recent Operations.
      */
-    List<OperationRequestStatus> operationRequestStatusList;
+    String[] operationRequestStatuses;
 
     Set<Integer> resourceTypeIdsForExport;
 
@@ -105,15 +102,15 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForRecentAlerts(String reportUrl, List<AlertPriority> alertPriorityList) {
+    public static ExportModalWindow createExportWindowForRecentAlerts(String reportUrl, String[] alertPriorityList) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
-        newExportDialog.setAlertPriorityList(alertPriorityList);
+        newExportDialog.setAlertPriorityFilters(alertPriorityList);
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForRecentOperations(String reportUrl, List<OperationRequestStatus> operationRequestStatus) {
+    public static ExportModalWindow createExportWindowForRecentOperations(String reportUrl, String[] operationRequestStatuses ) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
-        newExportDialog.setOperationRequestStatusList(operationRequestStatus);
+        newExportDialog.setOperationRequestStatusList(operationRequestStatuses);
         return newExportDialog;
     }
 
@@ -191,12 +188,12 @@ public class ExportModalWindow {
         exportWindow.addItem(dialogLayout);
     }
 
-    public void setAlertPriorityList(List<AlertPriority> alertPriorityList) {
-        this.alertPriorityList = alertPriorityList;
+    public void setAlertPriorityFilters(String[] alertPriorityFilters) {
+        this.alertPriorityFilters = alertPriorityFilters;
     }
 
-    public void setOperationRequestStatusList(List<OperationRequestStatus> operationRequestStatusList) {
-        this.operationRequestStatusList = operationRequestStatusList;
+    public void setOperationRequestStatusList(String[] operationRequestStatuses) {
+        this.operationRequestStatuses = operationRequestStatuses;
     }
 
     public String calculateUrl(DynamicForm form) {
@@ -204,9 +201,28 @@ public class ExportModalWindow {
         StringBuilder queryString = new StringBuilder();
 
         if (showDetail) {
-            queryString.append("?details").append(form.getValueAsString(DETAILS_FIELD));
+            queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
         }
-        return URL.encode(BASE_URL + reportUrl + "." + format  + queryString);
+        if(operationRequestStatuses != null){
+            StringBuilder operationRequestStatusBuffer = new StringBuilder();
+            for (String operationRequestStatus : operationRequestStatuses) {
+                operationRequestStatusBuffer.append(operationRequestStatus);
+                operationRequestStatusBuffer.append(",");
+            }
+
+            queryString.append("operationRequestStatus=").append(operationRequestStatusBuffer.toString());
+        }
+        if(alertPriorityFilters != null){
+            StringBuilder alertsPriorityBuffer = new StringBuilder();
+            for (String alertPriority : alertPriorityFilters) {
+                alertsPriorityBuffer.append(alertPriority);
+                alertsPriorityBuffer.append(",");
+            }
+            queryString.append("alertPriority=").append(alertsPriorityBuffer.toString());
+        }
+
+        
+        return URL.encode(BASE_URL + reportUrl + "." + format  + "?"+queryString);
     }
 
     public boolean  isShowDetail(){

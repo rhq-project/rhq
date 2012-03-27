@@ -2208,7 +2208,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </service>
     </server>
 
-    <server name="ModCluster"
+    <serice name="ModCluster"
              class="ModClusterComponent"
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
@@ -2224,12 +2224,111 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
         </plugin-configuration>
 
-       <!-- Disable for now. This is available and modifiable by Configuration options.
-        <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
-            <results>
-                    <c:simple-property name="operationResult"/>
-            </results>
-        </operation>-->
+	<operation name="add" description="Operation adding the modcluster subsystem.">
+	  <parameters>
+	    <c:simple-property name="mod-cluster-config" required="false" type="-object-" readOnly="false" description="The common modcluster configuration."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="add-proxy" description="Add the proxy to the list of httpd connected to the node.">
+	  <parameters>
+	    <c:simple-property name="host" required="true" type="string" readOnly="false" description="Hostname of the proxy (Apache httpd)"/>
+	    <c:simple-property name="port" required="true" type="integer" readOnly="false" description="Port where the proxy (Apache httpd) is receiving the MCMP"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="disable" description="Tell Apache httpd that all contexts of the node can't process new requests.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="disable-context" description="Tell Apache httpd that the context can't process new requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="enable-context" description="Tell Apache httpd that the context is ready receive requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="list-proxies" description="Read the list of httpd connected to the node.">
+	  <results>
+	   <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->    
+	   <c:simple-property name="proxy-list" description="List of proxies the node is connected to. Format (hostname:port) separated with comas"/>
+	  </results>
+	</operation>
+
+	<operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="remove" description="Operation removing the modcluster subsystem.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="remove-proxy" description="Remove the proxy to the list of httpd connected to the node.">
+	  <parameters>
+	    <c:simple-property name="host" required="true" type="string" readOnly="false" description="Hostname of the proxy (Apache httpd)"/>
+	    <c:simple-property name="port" required="true" type="integer" readOnly="false" description="Port where the proxy (Apache httpd) is receiving the MCMP"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="reset" description="Reset the node connection to Apache httpd.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="stop" description="Tell Apache httpd that all contexts of the node can't process requests.">
+	  <parameters>
+	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="stop-context" description="Tell Apache httpd that the context can't process requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
 
         <resource-configuration>
                 <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
@@ -2255,9 +2354,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 		<c:simple-property name="ttl" required="false" type="integer" readOnly="false" defaultValue="60" description="Time to live (in seconds) for idle connections above smax"/>
 		<c:simple-property name="node-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout (in seconds) for proxy connections to a node."/>
 		<c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
-		<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
+		<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/> 
         </resource-configuration>
-    </server>
+    </service>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"

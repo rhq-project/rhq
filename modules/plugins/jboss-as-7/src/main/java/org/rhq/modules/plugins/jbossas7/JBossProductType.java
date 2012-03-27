@@ -19,7 +19,9 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
-import java.util.Arrays;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * A product based on JBoss 7.x.
@@ -28,18 +30,16 @@ import java.util.Arrays;
  */
 public enum JBossProductType {
 
-    AS("AS7", "JBoss AS 7", "JBoss Application Server 7"),
-    EAP("EAP6", "JBoss EAP 6", "JBoss Enterprise Application Platform 6"),
-    EDG("EDG6", "JBoss EDG 6", "JBoss Enterprise Data Grid 6"),
-    EPP("EPP6", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6"),
-//    EWP("EWP6", "JBoss EWP 6", "JBoss Enterprise Web Platform 6"),
-    SOA("SOA-P6", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)");
+    AS("AS", "JBoss AS 7", "JBoss Application Server 7"),
+    EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6"),
+    EDG("EDG", "JBoss EDG 6", "JBoss Enterprise Data Grid 6"),
+    EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6"),
+//    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6"),
+    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)");
 
     public final String SHORT_NAME;
     public final String NAME;
     public final String FULL_NAME;
-
-    private static final String EAP_IMPLEMENTATION_TITLE = "JBoss Enterprise Application Platform";
 
     JBossProductType(String shortName, String name, String fullName) {
         this.SHORT_NAME = shortName;
@@ -55,27 +55,42 @@ public enum JBossProductType {
      * @return the product type
      */
     public static JBossProductType determineJBossProductType(File homeDir) {
-        JBossProductType productType;                
-        File productDir = new File(homeDir, "modules/org/jboss/as/product");
-        if (productDir.exists()) {
+        try {
+            return determineJBossProductTypeViaProductConfFile(homeDir);
+        } catch (Exception e) {
+            // TODO: Log an error.
+            return determineJBossProductTypeViaHomeDirName(homeDir);
+        }
+    }
+
+    private static JBossProductType determineJBossProductTypeViaProductConfFile(File homeDir) throws Exception {
+        JBossProductType productType;
+        File productConfFile = new File(homeDir, "bin/product.conf");
+        if (productConfFile.exists()) {
             // It's some product (i.e. not community AS).
-            File[] files = productDir.listFiles();
-            if (files.length == 0) {
-                throw new RuntimeException("Unable to determine product type - [" + productDir 
-                        + "] exists but is empty.");
+            Properties productConfProps = new Properties();
+            FileInputStream inputStream = new FileInputStream(productConfFile);
+            try {
+                productConfProps.load(inputStream);
+            } catch (IOException e) {
+                throw new Exception("Failed to parse " + productConfFile + ".", e);
+            } finally {
+                inputStream.close();
             }
-            if (files.length > 1) {
-                throw new RuntimeException("Unable to determine product type - [" + productDir 
-                        + "] contains multiple product subdirectories: " + Arrays.toString(files));
+            String slot = productConfProps.getProperty("slot", "").trim();
+            if (slot.isEmpty()) {
+                throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
-            File productTypeDir = files[0];
-            String productName = productTypeDir.getName();
-            if (productName.equals("eap")) {
+            if (slot.equals("eap")) {
                 productType = JBossProductType.EAP;
-            } else if (productName.equals("edg")) {
+            } else if (slot.equals("edg")) {
                 productType = JBossProductType.EDG;
+            } else if (slot.equals("epp")) {
+                productType = JBossProductType.EPP;
+            } else if (slot.equals("soa-p")) {
+                productType = JBossProductType.SOA;
             } else {
-                throw new RuntimeException("Unknown product type: " + productName);
+                throw new RuntimeException("Unknown product type: " + slot);
             }
         } else {
             productType = JBossProductType.AS;
@@ -84,6 +99,26 @@ public enum JBossProductType {
         return productType;
     }
 
+    private static JBossProductType determineJBossProductTypeViaHomeDirName(File homeDir) {
+        JBossProductType productType;
+        String homeDirName = homeDir.getName();
+        if (homeDirName.contains("-as-")) {
+            productType = JBossProductType.AS;
+        } else if (homeDirName.contains("-eap-")) {
+            productType = JBossProductType.EAP;
+        } else if (homeDirName.contains("-edg-")) {
+            productType = JBossProductType.EDG;
+        } else if (homeDirName.contains("-epp-")) {
+             productType = JBossProductType.EPP;
+        } else if (homeDirName.contains("soa-p-")) {
+             productType = JBossProductType.SOA;
+        } else {
+             throw new RuntimeException("Failed to determine product type for JBoss product installed at [" + homeDir + "].");
+        }
+
+        return productType;
+    }
+    
     @Override
     public String toString() {
         return this.NAME;

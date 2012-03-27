@@ -2255,13 +2255,13 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
 	  </parameters>
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process new requests."/>
 	  </results>
 	</operation>
 
 	<operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node are ready receive requests."/>
 	  </results>
 	</operation>
 
@@ -2271,7 +2271,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
 	  </parameters>
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context is ready receive requests."/>
 	  </results>
 	</operation>
 
@@ -2298,7 +2298,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
 	<operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd.">
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Refresh the node sending a new CONFIG message to Apache httpd."/>
 	  </results>
 	</operation>
 
@@ -2320,7 +2320,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
 	<operation name="reset" description="Reset the node connection to Apache httpd.">
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Reset the node connection to Apache httpd."/>
 	  </results>
 	</operation>
 
@@ -2329,7 +2329,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
 	  </parameters>
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process requests."/>
 	  </results>
 	</operation>
 
@@ -2340,7 +2340,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
 	  </parameters>
 	  <results>
-	     <c:simple-property name="operationResult"/>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node can't process requests."/>
 	  </results>
 	</operation>
 

@@ -24,7 +24,6 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-
         Operation op = new Operation(name, getAddress());
         OperationResult operationResult = new OperationResult();
         Result result = null;
@@ -54,14 +53,42 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
             addAdditionalToOp(op, parameters, "host", false);
             addAdditionalToOp(op, parameters, "port", false);
             result = getASConnection().execute(op);
-            if (result.isSuccess()) {
+            if (result != null && result.isSuccess()) {
                 operationResult.setSimpleResult("Success");
             }
         } else if ("remove-proxy".equals(name)) {
             addAdditionalToOp(op, parameters, "host", false);
             addAdditionalToOp(op, parameters, "port", false);
             result = getASConnection().execute(op);
-            if (result.isSuccess()) {
+            if (result != null && result.isSuccess()) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("disable-context".equals(name)) {
+            addAdditionalToOp(op, parameters, "virtualhost", false);
+            addAdditionalToOp(op, parameters, "context", false);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("enable-context".equals(name)) {
+            addAdditionalToOp(op, parameters, "virtualhost", false);
+            addAdditionalToOp(op, parameters, "context", false);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("stop".equals(name)) {
+            addAdditionalToOp(op, parameters, "waittime", true);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("stop-context".equals(name)) {
+            addAdditionalToOp(op, parameters, "virtualhost", false);
+            addAdditionalToOp(op, parameters, "context", false);
+            addAdditionalToOp(op, parameters, "waittime", true);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
                 operationResult.setSimpleResult("Success");
             }
         } else if ("read-proxies-configuration".equals(name)) {
@@ -114,7 +141,10 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
             /*
              * This is a catch all for operations that are not explicitly treated above.
              */
-            op = new Operation(name, address);
+            result = getASConnection().execute(op);
+            if (result.isSuccess()) {
+                operationResult.setSimpleResult("Success");
+            }
         }
 
         if (!result.isSuccess()) {

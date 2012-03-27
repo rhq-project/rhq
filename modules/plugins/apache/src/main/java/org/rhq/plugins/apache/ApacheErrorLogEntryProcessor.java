@@ -78,8 +78,7 @@ public class ApacheErrorLogEntryProcessor extends MultiLineLogEntryProcessor {
         SeverityLevel severityLevel;
         try {
             severityLevel = SeverityLevel.valueOf(severityLevelString.toUpperCase());
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new ParseException("Unknown severity level: " + severityLevelString);
         }
         EventSeverity severity = LEVEL_TO_SEVERITY_MAP.get(severityLevel);

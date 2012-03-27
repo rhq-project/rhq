@@ -47,71 +47,81 @@ import org.rhq.rhqtransform.ConfigurationToAugeas;
 public enum DirectiveMapping {
 
     DIRECTIVE_PER_MAP {
-        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
+            ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingDirectivePerMap();
             config.setTree(tree);
             return config.loadResourceConfiguration(startNode, resourceConfigDef);
 
         };
-        
-        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToAugeas mapping = new MappingToAugeasDirectivePerMap();
-        	mapping.setTree(tree);
-        	mapping.updateResourceConfiguration(node, configDef, config);
+
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+            ConfigurationDefinition configDef) {
+            ConfigurationToAugeas mapping = new MappingToAugeasDirectivePerMap();
+            mapping.setTree(tree);
+            mapping.updateResourceConfiguration(node, configDef, config);
         }
-        
+
     },
-    
+
     PARAM_PER_MAP {
-        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
+            ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingParamPerMap();
             config.setTree(tree);
             return config.loadResourceConfiguration(startNode, resourceConfigDef);
         };
-        
-        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef) {
-        	ConfigurationToAugeas mapping = new MappingToAugeasParamPerMap();
-        	mapping.setTree(tree);
-        	mapping.updateResourceConfiguration(node, configDef, config);
+
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+            ConfigurationDefinition configDef) {
+            ConfigurationToAugeas mapping = new MappingToAugeasParamPerMap();
+            mapping.setTree(tree);
+            mapping.updateResourceConfiguration(node, configDef, config);
         }
     },
-    
+
     DIRECTIVE_PER_MAP_INDEX {
-        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
+            ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingDirectivePerMapIndex();
             config.setTree(tree);
             return config.loadResourceConfiguration(startNode, resourceConfigDef);
         };
-        
-        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToAugeas mapping = new MappingToAugeasDirectivePerMapIndex();
-        	mapping.setTree(tree);
-        	mapping.updateResourceConfiguration(node, configDef, config);
+
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+            ConfigurationDefinition configDef) {
+            ConfigurationToAugeas mapping = new MappingToAugeasDirectivePerMapIndex();
+            mapping.setTree(tree);
+            mapping.updateResourceConfiguration(node, configDef, config);
         }
     },
-    
+
     POSITION_PROPERTY {
-        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
+            ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingPositionToConfiguration();
             config.setTree(tree);
             return config.loadResourceConfiguration(startNode, resourceConfigDef);
         };
-        
-        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef){            
+
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+            ConfigurationDefinition configDef) {
         }
     },
-    
+
     SIMPLE_PROP {
-        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
+            ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingDirectiveToSimpleProperty();
             config.setTree(tree);
             return config.loadResourceConfiguration(startNode, resourceConfigDef);
         };
-        
-        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef){
-        	ConfigurationToAugeas mapping = new MappingToAugeasDirectiveToSimple();
-        	mapping.setTree(tree);
-        	mapping.updateResourceConfiguration(node, configDef, config);
+
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+            ConfigurationDefinition configDef) {
+            ConfigurationToAugeas mapping = new MappingToAugeasDirectiveToSimple();
+            mapping.setTree(tree);
+            mapping.updateResourceConfiguration(node, configDef, config);
         }
     };
 
@@ -127,5 +137,6 @@ public enum DirectiveMapping {
     public abstract Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode,
         ConfigurationDefinition resourceConfigDef);
 
-    public abstract void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef) ;
+    public abstract void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config,
+        ConfigurationDefinition configDef);
 }

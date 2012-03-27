@@ -20,18 +20,17 @@ public class SpecificParams {
      * @param param Parameters of directive. 
      * @return directive prepared for validation without configuration specific parameters.
      */
-    public static String prepareForAugeas(String name,String value){
-        if (name.equals("Options"))
-        {
+    public static String prepareForAugeas(String name, String value) {
+        if (name.equals("Options")) {
             StringBuilder ret = new StringBuilder();
-            Pattern pattern =  Pattern.compile("[ \t]*(Add|Remove|Set)[ \t]*([a-zA-Z]+)"); 
+            Pattern pattern = Pattern.compile("[ \t]*(Add|Remove|Set)[ \t]*([a-zA-Z]+)");
             int startIndex = 0;
             boolean updated = true;
-            while (updated && startIndex < value.length()){
+            while (updated && startIndex < value.length()) {
                 updated = false;
-                    Matcher m = pattern.matcher(value);
-                    while (m.find(startIndex)) {
-                        if (m.groupCount() >0)
+                Matcher m = pattern.matcher(value);
+                while (m.find(startIndex)) {
+                    if (m.groupCount() > 0)
                         for (int i = 1; i <= m.groupCount(); i++) {
                             String val = m.group(i);
                             if (val.equals("Add"))
@@ -40,42 +39,42 @@ public class SpecificParams {
                                 val = "-";
                             if (val.equals("Set"))
                                 val = "";
-                            ret.append(val+ " ");
+                            ret.append(val + " ");
                         }
-                        updated = true;
-                        startIndex = m.end();
-                    }       
+                    updated = true;
+                    startIndex = m.end();
+                }
             }
-            if (ret.length()>0)
-              ret.deleteCharAt(ret.length()-1);            
-            
+            if (ret.length() > 0)
+                ret.deleteCharAt(ret.length() - 1);
+
             return ret.toString();
         }
-        
-        if (name.equals("Listen")){
+
+        if (name.equals("Listen")) {
             int i;
             StringBuilder val = new StringBuilder(value);
             while (val.charAt(0) == ' ' || val.charAt(0) == '\t')
                 val.deleteCharAt(0);
-            
-            String [] str = val.toString().split("[ \t]+");
-            
+
+            String[] str = val.toString().split("[ \t]+");
+
             Pattern pat = Pattern.compile("[0-9]+");
             StringBuilder bld = new StringBuilder();
-            for (i =0;i<str.length;i++){
+            for (i = 0; i < str.length; i++) {
                 Matcher m = pat.matcher(str[i]);
-                if (m.matches())
-                {if (i==1)
-                  str[i] = ":"+str[i];
-                else
-                    str[i]=" "+str[i];
-                }else
-                    str[i]=" "+str[i];
+                if (m.matches()) {
+                    if (i == 1)
+                        str[i] = ":" + str[i];
+                    else
+                        str[i] = " " + str[i];
+                } else
+                    str[i] = " " + str[i];
                 bld.append(str[i]);
             }
-        return bld.toString();
+            return bld.toString();
         }
-        
+
         return value;
 
     }
@@ -89,18 +88,17 @@ public class SpecificParams {
      * @return directive prepared for validation without configuration specific parameters.
      */
 
-    public static StringBuilder prepareForConfiguration(String name,StringBuilder value){
-        if (name.equals("Options"))
-        {
+    public static StringBuilder prepareForConfiguration(String name, StringBuilder value) {
+        if (name.equals("Options")) {
             StringBuilder ret = new StringBuilder();
-            Pattern pattern =  Pattern.compile("[ \t]*([+-]?)([a-zA-Z]+)"); 
+            Pattern pattern = Pattern.compile("[ \t]*([+-]?)([a-zA-Z]+)");
             int startIndex = 0;
             boolean updated = true;
-            while (updated && startIndex < value.length()){
+            while (updated && startIndex < value.length()) {
                 updated = false;
-                    Matcher m = pattern.matcher(value);
-                    while (m.find(startIndex)) {
-                        if (m.groupCount() >0)
+                Matcher m = pattern.matcher(value);
+                while (m.find(startIndex)) {
+                    if (m.groupCount() > 0)
                         for (int i = 1; i <= m.groupCount(); i++) {
                             String val = m.group(i);
                             if (val.equals("+"))
@@ -109,18 +107,18 @@ public class SpecificParams {
                                 val = "Remove";
                             if (val.equals(""))
                                 val = "Set";
-                            ret.append(val+ " ");
+                            ret.append(val + " ");
                         }
-                        updated = true;
-                        startIndex = m.end();
-                    }       
+                    updated = true;
+                    startIndex = m.end();
+                }
             }
-            if (ret.length()>0)
-              ret.deleteCharAt(ret.length()-1);            
-            
+            if (ret.length() > 0)
+                ret.deleteCharAt(ret.length() - 1);
+
             return ret;
         }
-        
+
         return value;
     }
 }

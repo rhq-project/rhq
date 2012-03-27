@@ -49,9 +49,11 @@ public class RuntimeApacheConfiguration {
     private static final Log LOG = LogFactory.getLog(RuntimeApacheConfiguration.class);
 
     private static final Set<String> LOGGED_UNKNOWN_MODULES = Collections.synchronizedSet(new HashSet<String>());
-    
+
     private enum ModuleLoadedState {
-        LOADED, NOT_LOADED, UNKNOWN
+        LOADED,
+        NOT_LOADED,
+        UNKNOWN
     }
 
     private RuntimeApacheConfiguration() {
@@ -66,9 +68,9 @@ public class RuntimeApacheConfiguration {
      */
     public static class NodeInspectionResult {
         public boolean nodeIsConditional;
-        public boolean shouldRecurseIntoConditionalNode;        
+        public boolean shouldRecurseIntoConditionalNode;
     }
-    
+
     /**
      * Node inspector is used to determine how to proceed with the parsing of the configuration file.
      * 
@@ -77,11 +79,11 @@ public class RuntimeApacheConfiguration {
      */
     public static class NodeInspector {
         private TransformState state;
-        
+
         private NodeInspector(TransformState state) {
             this.state = state;
         }
-        
+
         /**
          * Inspects a node.
          * 
@@ -92,7 +94,7 @@ public class RuntimeApacheConfiguration {
          */
         public NodeInspectionResult inspect(String currentNodeName, List<String> allValues, String valueAsString) {
             NodeInspectionResult result = new NodeInspectionResult();
-            
+
             result.shouldRecurseIntoConditionalNode = true;
 
             if (currentNodeName.equalsIgnoreCase("LoadModule")) {
@@ -120,7 +122,8 @@ public class RuntimeApacheConfiguration {
                         LOG.debug("Encountered unknown module name in an IfModule directive: " + moduleFile);
                     } else {
                         LOG.warn("Encountered unknown module name in an IfModule directive: "
-                            + moduleFile + ". If you are using Apache 2.1 or later, you can try changing the module identifier from the source file to "
+                            + moduleFile
+                            + ". If you are using Apache 2.1 or later, you can try changing the module identifier from the source file to "
                             + "the actual module name as used in the LoadModule directive to get rid of this warning.");
                     }
                     LOGGED_UNKNOWN_MODULES.add(moduleFile);
@@ -232,11 +235,11 @@ public class RuntimeApacheConfiguration {
             } else {
                 result.nodeIsConditional = false;
             }
-            
+
             return result;
         }
     }
-    
+
     /**
      * This is a node visitor interface to be implemented by the users of the 
      * {@link RuntimeApacheConfiguration#walkRuntimeConfig(ApacheAugeasTree, ProcessInfo, ApacheBinaryInfo, Map)}
@@ -371,7 +374,7 @@ public class RuntimeApacheConfiguration {
         public Map<String, String> moduleFiles;
         public String httpdVersion;
         public boolean suppressUnknownModuleWarnings;
-        
+
         public TransformState(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo,
             Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
             defines = new HashSet<String>(httpdBinaryInfo.getCompiledInDefines());
@@ -418,16 +421,17 @@ public class RuntimeApacheConfiguration {
             }
 
             httpdVersion = httpdBinaryInfo.getVersion();
-            
+
             this.suppressUnknownModuleWarnings = suppressUnknownModuleWarnings;
         }
     }
 
-    public static NodeInspector getNodeInspector(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
-        return new NodeInspector(new TransformState(httpdProcessInfo, httpdBinaryInfo,
-            moduleNames, suppressUnknownModuleWarnings));
+    public static NodeInspector getNodeInspector(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo,
+        Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        return new NodeInspector(new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames,
+            suppressUnknownModuleWarnings));
     }
-    
+
     /**
      * Given the apache configuration and information about the parameters httpd was executed
      * with this method provides the directive tree that corresponds to the actual
@@ -447,14 +451,15 @@ public class RuntimeApacheConfiguration {
     public static ApacheDirectiveTree extract(ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo,
         ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         ApacheDirectiveTree ret = tree.clone();
-        transform(new TransformingWalker(), ret.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo,
-            moduleNames, suppressUnknownModuleWarnings));
+        transform(new TransformingWalker(), ret.getRootNode(),
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
 
         return ret;
     }
 
     public static void walkRuntimeConfig(final NodeVisitor<ApacheDirective> visitor, ApacheDirectiveTree tree,
-        ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames,
+        boolean suppressUnknownModuleWarnings) {
         TreeWalker<ApacheDirective> walker = new TreeWalker<ApacheDirective>() {
             public void visitConditionalNode(ApacheDirective node, boolean isSatisfied) {
                 visitor.visitConditionalNode(node, isSatisfied);
@@ -487,11 +492,13 @@ public class RuntimeApacheConfiguration {
             }
         };
 
-        transform(walker, tree.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+        transform(walker, tree.getRootNode(),
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
 
     public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree,
-        ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames,
+        boolean suppressUnknownModuleWarnings) {
         TreeWalker<AugeasNode> walker = new TreeWalker<AugeasNode>() {
             public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
                 visitor.visitConditionalNode(node, isSatisfied);
@@ -534,7 +541,8 @@ public class RuntimeApacheConfiguration {
                 return node.getLabel();
             }
         };
-        transform(walker, tree.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+        transform(walker, tree.getRootNode(),
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
 
     private static <T> void transform(TreeWalker<T> walker, T parentNode, NodeInspector inspector) {
@@ -545,7 +553,8 @@ public class RuntimeApacheConfiguration {
         walker.onBeforeChildrenScan(parentNode);
 
         for (T node : walker.getChildren(parentNode)) {
-            NodeInspectionResult result = inspector.inspect(walker.getName(node), walker.getValues(node), walker.getValue(node));
+            NodeInspectionResult result =
+                inspector.inspect(walker.getName(node), walker.getValues(node), walker.getValue(node));
             if (result == null) {
                 continue;
             }
@@ -590,8 +599,8 @@ public class RuntimeApacheConfiguration {
         //the compiled in modules are being reported by apache using their source file
         //and the on-demand loaded modules are identified by their 
         //module name - consistent, huh?
-        boolean result = currentlyLoadedModules.contains(moduleIdentifier)
-            || currentlyLoadedModules.contains(moduleName);
+        boolean result =
+            currentlyLoadedModules.contains(moduleIdentifier) || currentlyLoadedModules.contains(moduleName);
 
         return result ? ModuleLoadedState.LOADED : ModuleLoadedState.NOT_LOADED;
     }

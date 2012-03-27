@@ -31,7 +31,9 @@ public class SNMPValue {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public enum Type {
-        LONG, STRING, LONG_CONVERTABLE
+        LONG,
+        STRING,
+        LONG_CONVERTABLE
     }
 
     private OID oid;

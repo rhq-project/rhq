@@ -1,6 +1,5 @@
 package org.rhq.plugins.apache.parser;
 
-
 public class ApacheParserException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
@@ -34,5 +33,4 @@ public class ApacheParserException extends RuntimeException {
         super(cause);
     }
 
-    
 }

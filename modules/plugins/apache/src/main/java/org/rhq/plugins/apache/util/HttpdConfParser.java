@@ -38,14 +38,11 @@ public class HttpdConfParser {
 
     private final Log log = LogFactory.getLog(HttpdConfParser.class);
 
-
     private Set<String> vhosts = new HashSet<String>();
     private boolean modJkInstalled;
     private String workerPropertiesFile;
     private String uriWorkerLocation;
     private String mainServer;
-
-
 
     /**
      * Parses the httpd.conf file located at confPath
@@ -60,53 +57,45 @@ public class HttpdConfParser {
             return false;
         }
 
-        BufferedReader reader=null;
+        BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(file));
             String line;
             String tmp;
-            while ((line=reader.readLine())!=null) {
-                line=line.trim();
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
                 tmp = getValueFrom2ndArg(line);
 
                 if (line.startsWith("LoadModule") && line.contains("jk_module")) {
-                    modJkInstalled=true;
-                }
-                else if (line.startsWith("JkWorkersFile")) {
-                    if (tmp!=null) {
+                    modJkInstalled = true;
+                } else if (line.startsWith("JkWorkersFile")) {
+                    if (tmp != null) {
                         workerPropertiesFile = tmp;
                     }
-                }
-                else if (line.startsWith("<VirtualHost")) {
-                    if (tmp!=null) {
+                } else if (line.startsWith("<VirtualHost")) {
+                    if (tmp != null) {
                         vhosts.add(tmp);
                     }
-                }
-                else if (line.startsWith("JkMountFile")) {
-                    if (tmp!=null) {
+                } else if (line.startsWith("JkMountFile")) {
+                    if (tmp != null) {
                         uriWorkerLocation = tmp;
                     }
-                }
-                else if (line.startsWith("JkMount") && !line.startsWith("JkMountFile")) {
+                } else if (line.startsWith("JkMount") && !line.startsWith("JkMountFile")) {
                     // TODO
-                }
-                else if (line.startsWith("Listen")) {
-                    if (tmp!=null) {
-                        mainServer=tmp;
+                } else if (line.startsWith("Listen")) {
+                    if (tmp != null) {
+                        mainServer = tmp;
                     }
                 }
             }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             log.warn("Can't process " + confPath + " :" + ioe.getMessage());
             return false;
-        }
-        finally {
-            if (reader!=null)
+        } finally {
+            if (reader != null)
                 try {
                     reader.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     // Nothing we can do ...
                 }
         }
@@ -123,13 +112,13 @@ public class HttpdConfParser {
     @Nullable
     private String getValueFrom2ndArg(String input) {
 
-        if (input==null)
+        if (input == null)
             return null;
 
         String ret = null;
         String[] tokens = input.split("\\s");
-        if (tokens.length>1)
-            ret=tokens[1];
+        if (tokens.length > 1)
+            ret = tokens[1];
         return ret;
     }
 

@@ -52,8 +52,9 @@ class SNMPSessionCache implements InvocationHandler {
         SNMPSession sessionCache;
 
         try {
-            sessionCache = (SNMPSession) Proxy.newProxyInstance(SNMPSession.class.getClassLoader(),
-                new Class[] { SNMPSession.class }, handler);
+            sessionCache =
+                (SNMPSession) Proxy.newProxyInstance(SNMPSession.class.getClassLoader(),
+                    new Class[] { SNMPSession.class }, handler);
         } catch (Exception e) {
             throw new SNMPException(e.getMessage());
         }
@@ -90,7 +91,7 @@ class SNMPSessionCache implements InvocationHandler {
 
         invoker.append('(');
 
-        if (args!= null && args.length != 0) {
+        if (args != null && args.length != 0) {
             String arg = args[0].toString();
 
             invoker.append(arg);

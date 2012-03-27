@@ -76,18 +76,18 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
     public List<AugeasNode> getChildNodes() {
         List<AugeasNode> nodes = null;
         nodes = ag.match(getFullPath() + File.separatorChar + "*");
-        
+
         if (includedNodes != null) {
             //to avoid having to recompute indexes to insert the included nodes into the
             //list of nodes as seen by augeas, let's include them from the biggest index
             //to the lowest.
             List<Integer> includeNodeIndexes = new ArrayList<Integer>(includedNodes.keySet());
             Collections.sort(includeNodeIndexes, Collections.reverseOrder());
-            
-            for(Integer idx : includeNodeIndexes) {
+
+            for (Integer idx : includeNodeIndexes) {
                 //remove the include node itself
                 nodes.remove(idx);
-                
+
                 //add the included nodes instead of it
                 nodes.addAll(idx, includedNodes.get(idx));
             }
@@ -111,16 +111,16 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         List<AugeasNode> childNodes = super.getChildNodes();
         int idx = 0;
         boolean found = false;
-        
-        for(AugeasNode child : childNodes) {
+
+        for (AugeasNode child : childNodes) {
             if (child.getLabel().equals(includeNode.getLabel()) && child.getSeq() == includeNode.getSeq()) {
                 found = true;
                 break;
             }
-            
+
             ++idx;
         }
-        
+
         if (found) {
             List<AugeasNode> alreadyIncluded = includedNodes.get(idx);
             if (alreadyIncluded == null) {
@@ -160,8 +160,8 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         //else if this node is included from another file
         //and we would destroy that association here.
     }
-    
-    public void setParentNode(AugeasNode node){
-    	this.parentNode = node;
-    }    
+
+    public void setParentNode(AugeasNode node) {
+        this.parentNode = node;
+    }
 }

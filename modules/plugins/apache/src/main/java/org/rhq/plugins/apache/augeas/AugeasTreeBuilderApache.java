@@ -75,10 +75,10 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
             List<File> files = new ArrayList<File>();
 
-            File check = new File(inclName);        
-            File root = new File(check.isAbsolute() ? Glob.rootPortion(inclName) : apacheConfig.getServerRootPath());                     
+            File check = new File(inclName);
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(inclName) : apacheConfig.getServerRootPath());
             files.addAll(Glob.match(root, inclName, Glob.ALPHABETICAL_COMPARATOR));
-            
+
             if (module.getExcludedGlobs() != null)
                 Glob.excludeAll(files, module.getExcludedGlobs());
 
@@ -115,8 +115,8 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
         for (AugeasNode node : createdNodes) {
             if (canContainNestedNodes(node.getLabel())) {
-                String labelName = node.getLabel()
-                    + ((node.getSeq() != 0) ? "[" + String.valueOf(node.getSeq()) + "]" : "");
+                String labelName =
+                    node.getLabel() + ((node.getSeq() != 0) ? "[" + String.valueOf(node.getSeq()) + "]" : "");
                 updateIncludes((ApacheAugeasNode) node, tree, fileName + File.separator + labelName, null);
             }
             if (node.getLabel().equals("Include")) {

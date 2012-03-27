@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class ApacheConfigWriter {
 
     private static final Log log = LogFactory.getLog(ApacheConfigReader.class);

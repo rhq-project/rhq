@@ -31,9 +31,9 @@ package org.rhq.plugins.apache.util;
 public class AugeasNodeValueUtil {
 
     private AugeasNodeValueUtil() {
-        
+
     }
-    
+
     /**
      * If the string is enclosed in double or single quotes, the
      * value inside the quotes is returned with all the escaped characters
@@ -43,7 +43,8 @@ public class AugeasNodeValueUtil {
      * @return
      */
     public static String unescape(String value) {
-        if (value == null) return value;
+        if (value == null)
+            return value;
         if (value.startsWith("\"")) {
             return value.substring(1, value.length() - 1).replaceAll("\\\"", "\"");
         } else if (value.startsWith("'")) {
@@ -51,7 +52,7 @@ public class AugeasNodeValueUtil {
         }
         return value;
     }
-    
+
     /**
      * If the supplied value contains single or double quotes, the returned
      * string is enclosed in quotes and the original qoutes "inside" are escaped.
@@ -65,7 +66,7 @@ public class AugeasNodeValueUtil {
         } else if (value.indexOf('\'') >= 0) {
             return "'" + value.replaceAll("'", "\\'") + "'";
         }
-        
+
         return value;
     }
 }

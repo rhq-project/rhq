@@ -145,9 +145,10 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         // in the GUI -- see RHQ-627
         // We might want to investigate this again later.
         if (processExecutionResults.getError() != null || (exitCode != null && exitCode != 0)) {
-            String msg = "Operation " + operation + " failed. Exit code: [" + exitCode + "]\n, Output : ["
-                + processExecutionResults.getCapturedOutput() + "]\n" + "Error: [" + processExecutionResults.getError()
-                + "]";
+            String msg =
+                "Operation " + operation + " failed. Exit code: [" + exitCode + "]\n, Output : ["
+                    + processExecutionResults.getCapturedOutput() + "]\n" + "Error: ["
+                    + processExecutionResults.getError() + "]";
             throw new Exception(msg);
         }
 
@@ -216,6 +217,11 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
      * Enumeration of supported operations for an Apache server.
      */
     private enum Operation {
-        START, STOP, RESTART, START_SSL, GRACEFUL_RESTART, CONFIG_TEST
+        START,
+        STOP,
+        RESTART,
+        START_SSL,
+        GRACEFUL_RESTART,
+        CONFIG_TEST
     }
 }

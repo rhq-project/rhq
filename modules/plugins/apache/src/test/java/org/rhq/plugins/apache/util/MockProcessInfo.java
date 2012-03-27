@@ -30,7 +30,7 @@ public class MockProcessInfo extends ProcessInfo {
 
     private long pid;
     private String[] commandLine;
-    
+
     @Override
     public long getPid() {
         return pid;
@@ -39,12 +39,12 @@ public class MockProcessInfo extends ProcessInfo {
     public void setPid(long pid) {
         this.pid = pid;
     }
-    
+
     @Override
     public String[] getCommandLine() {
         return commandLine;
     }
-    
+
     public void setCommandLine(String[] commandLine) {
         this.commandLine = commandLine;
     }

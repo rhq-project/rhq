@@ -39,11 +39,13 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * 
  * @author Lukas Krejci
  */
-public class ApacheFilesComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet, DeleteResourceFacet {
+public class ApacheFilesComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet,
+    DeleteResourceFacet {
 
     ResourceContext<ApacheServerComponent> resourceContext;
-    
-    public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException, Exception {
+
+    public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException,
+        Exception {
         // TODO Auto-generated method stub
         resourceContext = context;
     }
@@ -62,7 +64,8 @@ public class ApacheFilesComponent implements ResourceComponent<ApacheServerCompo
      */
     public Configuration loadResourceConfiguration() throws Exception {
         // TODO Auto-generated method stub
-        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().createConfiguration();
+        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate()
+            .createConfiguration();
     }
 
     /* (non-Javadoc)
@@ -77,8 +80,7 @@ public class ApacheFilesComponent implements ResourceComponent<ApacheServerCompo
      */
     public void deleteResource() throws Exception {
         // TODO Auto-generated method stub
-        
-    }
 
+    }
 
 }

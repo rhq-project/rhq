@@ -63,18 +63,20 @@ import org.rhq.plugins.www.snmp.SNMPValue;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent>, ResourceUpgradeFacet<ApacheServerComponent> {
+public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent>,
+    ResourceUpgradeFacet<ApacheServerComponent> {
 
-    private static final String COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS = "*** Could not determine the virtual host address ***";
+    private static final String COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS =
+        "*** Could not determine the virtual host address ***";
 
     public static final String LOGS_DIRECTORY_NAME = "logs";
 
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
     private static final String LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
-    
+
     private static final Log log = LogFactory.getLog(ApacheVirtualHostServiceDiscoveryComponent.class);
-    
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 
@@ -82,7 +84,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.parseRuntimeConfiguration(false);
-        
+
         //first define the root server as one virtual host
         discoverMainServer(context, tree, discoveredResources);
 
@@ -91,8 +93,8 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         File configPath = serverComponent.getServerRoot();
         File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);
 
-        for(VHostSpec vhost : VHostSpec.detect(tree)) {
-            
+        for (VHostSpec vhost : VHostSpec.detect(tree)) {
+
             String firstAddress = vhost.hosts.get(0);
 
             String resourceKey = createResourceKey(vhost.serverName, vhost.hosts);
@@ -100,13 +102,16 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, vhost.serverName, false);
+            Address address =
+                serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, vhost.serverName,
+                    false);
             if (address != null) {
                 String scheme = address.scheme;
                 String hostToPing = address.host;
                 int portToPing = address.port;
                 if (address.isPortWildcard() || !address.isPortDefined()) {
-                    Address serverAddress = serverComponent.getAddressUtility().getMainServerSampleAddress(tree, hostToPing, 0);
+                    Address serverAddress =
+                        serverComponent.getAddressUtility().getMainServerSampleAddress(tree, hostToPing, 0);
                     if (serverAddress != null) {
                         portToPing = serverAddress.port;
                     } else {
@@ -114,17 +119,19 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                     }
                 }
                 if (address.isHostDefault() || address.isHostWildcard()) {
-                    Address serverAddress = serverComponent.getAddressUtility().getMainServerSampleAddress(tree, null, portToPing);
-                    
+                    Address serverAddress =
+                        serverComponent.getAddressUtility().getMainServerSampleAddress(tree, null, portToPing);
+
                     if (serverAddress != null) {
                         hostToPing = serverAddress.host;
                     } else {
                         hostToPing = null;
                     }
                 }
-                
+
                 String url;
-                if (hostToPing != null && portToPing != Address.PORT_WILDCARD_VALUE && portToPing != Address.NO_PORT_SPECIFIED_VALUE) {
+                if (hostToPing != null && portToPing != Address.PORT_WILDCARD_VALUE
+                    && portToPing != Address.NO_PORT_SPECIFIED_VALUE) {
                     url = scheme + "://" + hostToPing + ":" + portToPing + "/";
                 } else {
                     url = COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS;
@@ -132,17 +139,18 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
                 PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
                 pluginConfiguration.put(urlProp);
-                
+
                 File rtLogFile = new File(logsDir, address.host + address.port + RT_LOG_FILE_NAME_SUFFIX);
-                
-                PropertySimple rtLogProp = new PropertySimple(
-                    ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+
+                PropertySimple rtLogProp =
+                    new PropertySimple(ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP,
+                        rtLogFile.toString());
                 pluginConfiguration.put(rtLogProp);
 
                 //redefine the resourcename using the virtual host sample address
                 resourceName = address.toString(false, true);
             }
-            
+
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));
         }
@@ -165,13 +173,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         ApacheDirectiveTree tree = serverComponent.parseRuntimeConfiguration(false);
 
         List<VHostSpec> vhosts = VHostSpec.detect(tree);
-        VirtualHostLegacyResourceKeyUtil legacyResourceKeyUtil = new VirtualHostLegacyResourceKeyUtil(serverComponent, tree);
-        
+        VirtualHostLegacyResourceKeyUtil legacyResourceKeyUtil =
+            new VirtualHostLegacyResourceKeyUtil(serverComponent, tree);
 
         //first, let's see if the inventoried resource has the snmpWwwServiceIndex property set
         //if it does, use that to determine what vhost this corresponds to.
-        String snmpServiceIndexString = inventoriedResource.getPluginConfiguration().getSimpleValue(
-            LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP, null);
+        String snmpServiceIndexString =
+            inventoriedResource.getPluginConfiguration().getSimpleValue(LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP, null);
         if (snmpServiceIndexString != null) {
             Integer snmpServiceIndex = null;
             try {
@@ -207,10 +215,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                             //the SNMP indices are in the reverse order of the definitions in the config files
                             //+1, where the main server is always on index 1.
                             VHostSpec vhost = vhosts.get(vhosts.size() - snmpServiceIndex + 1);
-                            
+
                             //right, let's do a cross-check before we actually create the resource key so
                             //that we catch user-generated errors.
-                            Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
+                            Set<String> legacyResourceKeys =
+                                legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
                             if (legacyResourceKeys.contains(resourceKey)) {
                                 newResourceKey = createResourceKey(vhost.serverName, vhost.hosts);
                             } else {
@@ -233,31 +242,35 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             return report;
         }
-        
+
         Map<String, Set<VHostSpec>> possibleMatchesPerRK = new HashMap<String, Set<VHostSpec>>();
-        for (VHostSpec vhost : vhosts) {            
+        for (VHostSpec vhost : vhosts) {
             Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
 
-            for(String legacyRK : legacyResourceKeys) {
+            for (String legacyRK : legacyResourceKeys) {
                 addPossibleRKMatch(legacyRK, vhost, possibleMatchesPerRK);
             }
         }
 
-        for(String legacyRK : legacyResourceKeyUtil.getLegacyMainServerResourceKeys()) {
+        for (String legacyRK : legacyResourceKeyUtil.getLegacyMainServerResourceKeys()) {
             addPossibleRKMatch(legacyRK, null, possibleMatchesPerRK);
         }
 
         Set<VHostSpec> matchingVhosts = possibleMatchesPerRK.get(resourceKey);
         if (matchingVhosts == null || matchingVhosts.isEmpty()) {
-            throw new IllegalArgumentException("Failed to identify the vhost resource with the old-style resource key '" + resourceKey + 
-                "' with any of the vhosts in the apache configuration files. This means that the vhost resource is stale and you can safely uninventory it.");
+            throw new IllegalArgumentException(
+                "Failed to identify the vhost resource with the old-style resource key '"
+                    + resourceKey
+                    + "' with any of the vhosts in the apache configuration files. This means that the vhost resource is stale and you can safely uninventory it.");
         } else if (matchingVhosts.size() > 1) {
-            String message = "Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
-                + resourceKey
-                + "' which could be matched with any of the following possible new-style resource keys: "
-                + matchingVhosts + ". The plugin does not have enough information to successfully upgrade this resource."
-                + " Please take note of any alert definitions or operation schedules that you have defined for this resource and manually uninventory it.";
-            
+            String message =
+                "Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
+                    + resourceKey
+                    + "' which could be matched with any of the following possible new-style resource keys: "
+                    + matchingVhosts
+                    + ". The plugin does not have enough information to successfully upgrade this resource."
+                    + " Please take note of any alert definitions or operation schedules that you have defined for this resource and manually uninventory it.";
+
             throw new IllegalArgumentException(message);
         } else {
             VHostSpec vhost = matchingVhosts.iterator().next();
@@ -273,7 +286,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         return report;
     }
-   
+
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
         ApacheDirectiveTree runtimeConfig, Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
 
@@ -283,16 +296,19 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         File configPath = context.getParentResourceComponent().getServerRoot();
         File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);
 
-        String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
-            ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
-        
+        String mainServerUrl =
+            context.getParentResourceContext().getPluginConfiguration()
+                .getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+
         if (mainServerUrl == null || mainServerUrl.trim().isEmpty()) {
-            HttpdAddressUtility.Address addr = context.getParentResourceComponent().getAddressUtility().getMainServerSampleAddress(runtimeConfig, null, 0);
+            HttpdAddressUtility.Address addr =
+                context.getParentResourceComponent().getAddressUtility()
+                    .getMainServerSampleAddress(runtimeConfig, null, 0);
             mainServerUrl = addr.toString();
         }
-        
-        PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
-            mainServerUrl);
+
+        PropertySimple mainServerUrlProp =
+            new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, mainServerUrl);
 
         mainServerPluginConfig.put(mainServerUrlProp);
 
@@ -305,18 +321,18 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
 
-        PropertySimple rtLogProp = new PropertySimple(
-            ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+        PropertySimple rtLogProp =
+            new PropertySimple(ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP,
+                rtLogFile.toString());
         mainServerPluginConfig.put(rtLogProp);
 
         String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
-        
-        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
-            key, "Main", null, null,
-            mainServerPluginConfig, null);
+
+        DiscoveredResourceDetails mainServer =
+            new DiscoveredResourceDetails(resourceType, key, "Main", null, null, mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
     }
-    
+
     public static String createResourceKey(String serverName, List<String> hosts) {
         StringBuilder keyBuilder = new StringBuilder();
         if (serverName != null) {
@@ -324,21 +340,22 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
         keyBuilder.append("|"); //always do this so that we have a clear distinction between old and new style resource keys
         keyBuilder.append(hosts.get(0));
-       
-        for (int i = 1; i < hosts.size(); ++i){
+
+        for (int i = 1; i < hosts.size(); ++i) {
             keyBuilder.append(" ").append(hosts.get(i));
         }
-        
+
         return keyBuilder.toString();
     }
-    
-    private static void addPossibleRKMatch(String resourceKey, VHostSpec vhost, Map<String, Set<VHostSpec>> possibleMatches) {
+
+    private static void addPossibleRKMatch(String resourceKey, VHostSpec vhost,
+        Map<String, Set<VHostSpec>> possibleMatches) {
         Set<VHostSpec> matches = possibleMatches.get(resourceKey);
         if (matches == null) {
             matches = new HashSet<VHostSpec>();
             possibleMatches.put(resourceKey, matches);
         }
-        
+
         matches.add(vhost);
     }
 }

@@ -43,7 +43,9 @@ public class SNMPClient {
     public static final SNMPVersion DEFAULT_VERSION = SNMPVersion.V2C;
 
     public enum SNMPVersion {
-        V1, V2C, V3
+        V1,
+        V2C,
+        V3
     }
 
     public static final String[] VALID_AUTHTYPES = { "md5", "sha" };
@@ -90,8 +92,8 @@ public class SNMPClient {
         ClassLoader classLoader = (contextClassLoader != null) ? contextClassLoader : this.getClass().getClassLoader();
         InputStream stream = classLoader.getResourceAsStream(OIDS_PROPERTIES_RESOURCE_PATH);
         if (stream == null) {
-            throw new IllegalStateException("Resource '" + OIDS_PROPERTIES_RESOURCE_PATH
-                    + "' not found by " + classLoader);
+            throw new IllegalStateException("Resource '" + OIDS_PROPERTIES_RESOURCE_PATH + "' not found by "
+                + classLoader);
         }
         Properties props = new Properties();
         try {

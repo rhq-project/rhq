@@ -38,70 +38,70 @@ public class MockApacheBinaryInfo extends ApacheBinaryInfo {
     private String mpm;
     private String root;
     private String version;
-    
+
     public MockApacheBinaryInfo() {
         super(null);
     }
-    
+
     @Override
     public String getBinaryPath() {
         return binaryPath;
     }
-    
+
     public void setBinaryPath(String path) {
         this.binaryPath = path;
     }
-    
+
     @Override
     public String getBuilt() {
         return built;
     }
-    
+
     public void setBuilt(String built) {
         this.built = built;
     }
-    
+
     @Override
     public Set<String> getCompiledInDefines() {
         return defines;
     }
-    
+
     public void setCompiledInDefines(Set<String> defines) {
         this.defines = defines;
     }
-    
+
     @Override
     public Set<String> getCompiledInModules() {
         return modules;
     }
-    
+
     public void setCompiledInModules(Set<String> modules) {
         this.modules = modules;
     }
-    
+
     @Override
     public String getCtl() {
         return configFile;
     }
-    
+
     public void setCtl(String ctl) {
         this.configFile = ctl;
     }
-    
+
     @Override
     public long getLastModified() {
         return lastModified;
     }
-    
+
     public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
     }
-    
+
     @Override
     public String getMpm() {
         return mpm;
     }
-    
+
     public void setMpm(String mpm) {
         this.mpm = mpm;
     }

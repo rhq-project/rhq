@@ -103,9 +103,10 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
 public class ApacheServerComponent implements AugeasRHQComponent, ResourceComponent<PlatformComponent>,
     MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
 
-    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration and child resource creation/deletion support for Apache is optional. "
-        + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
-        + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
+    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE =
+        "Configuration and child resource creation/deletion support for Apache is optional. "
+            + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
+            + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -215,19 +216,20 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
             File executablePath = getExecutablePath();
             try {
-                this.binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(),
-                    this.resourceContext.getSystemInformation());
+                this.binaryInfo =
+                    ApacheBinaryInfo.getInfo(executablePath.getPath(), this.resourceContext.getSystemInformation());
             } catch (Exception e) {
                 throw new InvalidPluginConfigurationException("'" + executablePath
                     + "' is not a valid Apache executable (" + e + ").");
             }
 
-            this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig,
-                this.resourceContext.getSystemInformation());
+            this.operationsDelegate =
+                new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext.getSystemInformation());
 
             //init the module names with the defaults
-            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo
-                .getVersion()));
+            moduleNames =
+                new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo
+                    .getVersion()));
 
             //and add the user-provided overrides/additions
             PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_CUSTOM_MODULE_NAMES);
@@ -345,8 +347,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
         AugeasComponent comp = getAugeas();
         try {
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
 
             AugeasTree tree = comp.getAugeasTree(AUGEAS_HTTP_MODULE_NAME);
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -372,8 +374,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         AugeasTree tree = null;
         try {
             tree = comp.getAugeasTree(AUGEAS_HTTP_MODULE_NAME);
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
 
             mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
@@ -409,8 +411,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 File tempDir = resourceContext.getDataDirectory();
                 if (!tempDir.exists())
                     throw new RuntimeException("Loading of lens failed");
-                AugeasConfigurationApache config = new AugeasConfigurationApache(tempDir.getAbsolutePath(),
-                    resourceContext.getPluginConfiguration());
+                AugeasConfigurationApache config =
+                    new AugeasConfigurationApache(tempDir.getAbsolutePath(), resourceContext.getPluginConfiguration());
                 return config;
             }
 
@@ -432,13 +434,13 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
         if (ApacheVirtualHostServiceComponent.RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             Configuration vhostResourceConfig = report.getResourceConfiguration();
-            ConfigurationDefinition vhostResourceConfigDef = report.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition vhostResourceConfigDef =
+                report.getResourceType().getResourceConfigurationDefinition();
             Configuration vhostPluginConfig = report.getPluginConfiguration();
 
             String vhostDef = report.getUserSpecifiedResourceName();
-            String serverName = vhostResourceConfig.getSimpleValue(
-                ApacheVirtualHostServiceComponent.SERVER_NAME_CONFIG_PROP, null);
+            String serverName =
+                vhostResourceConfig.getSimpleValue(ApacheVirtualHostServiceComponent.SERVER_NAME_CONFIG_PROP, null);
 
             //determine the resource key
             String resourceKey = vhostDef;
@@ -490,8 +492,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 int seq = existingVhosts.size() + 1;
 
                 Configuration pluginConfig = resourceContext.getPluginConfiguration();
-                String creationType = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY,
-                    PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE);
+                String creationType =
+                    pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY,
+                        PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE);
 
                 AugeasNode vhost = null;
 
@@ -526,8 +529,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                             //that would load the file, so we have to
                             //add the include directive to the main conf.
                             List<AugeasNode> includes = tree.matchRelative(tree.getRootNode(), "Include");
-                            AugeasNode include = tree.createNode(tree.getRootNode(), "Include", null,
-                                includes.size() + 1);
+                            AugeasNode include =
+                                tree.createNode(tree.getRootNode(), "Include", null, includes.size() + 1);
                             tree.createNode(include, "param", vhostFile, 0);
                             tree.save();
                         }
@@ -756,8 +759,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     @NotNull
     public ConfigurationTimestamp getConfigurationTimestamp() {
-        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getTemporaryDirectory()
-            .getAbsolutePath(), resourceContext.getPluginConfiguration());
+        AugeasConfigurationApache config =
+            new AugeasConfigurationApache(resourceContext.getTemporaryDirectory().getAbsolutePath(),
+                resourceContext.getPluginConfiguration());
         return new ConfigurationTimestamp(config.getAllConfigurationFiles());
     }
 
@@ -897,15 +901,16 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     private void startEventPollers() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        Boolean enabled = Boolean.valueOf(pluginConfig
-            .getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
+        Boolean enabled =
+            Boolean.valueOf(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
         if (enabled) {
-            File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
-                PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
-            ApacheErrorLogEntryProcessor processor = new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE,
-                errorLogFile);
-            String includesPatternString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN,
-                null);
+            File errorLogFile =
+                resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH,
+                    DEFAULT_ERROR_LOG_PATH));
+            ApacheErrorLogEntryProcessor processor =
+                new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile);
+            String includesPatternString =
+                pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN, null);
             if (includesPatternString != null) {
                 try {
                     Pattern includesPattern = Pattern.compile(includesPatternString);
@@ -915,22 +920,23 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                         + "] is not a valid regular expression.");
                 }
             }
-            String minimumSeverityString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY,
-                null);
+            String minimumSeverityString =
+                pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY, null);
             if (minimumSeverityString != null) {
                 EventSeverity minimumSeverity = EventSeverity.valueOf(minimumSeverityString.toUpperCase());
                 processor.setMinimumSeverity(minimumSeverity);
             }
-            EventPoller poller = new LogFileEventPoller(this.eventContext, ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile,
-                processor);
+            EventPoller poller =
+                new LogFileEventPoller(this.eventContext, ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile, processor);
             this.eventContext.registerEventPoller(poller, 60, errorLogFile.getPath());
         }
     }
 
     private void stopEventPollers() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
-            PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
+        File errorLogFile =
+            resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH,
+                DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 

@@ -78,8 +78,8 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         try {
             AugeasNode parentNode = context.getParentResourceComponent().getNode(tree);
-            List<AugeasNode> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE,
-                parentNode);
+            List<AugeasNode> directories =
+                AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
 
             ResourceType resourceType = context.getResourceType();
 

@@ -15,10 +15,12 @@ public interface RecentDriftLocal {
     @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentDrift(
-            @QueryParam("categoryId") Integer categoryId,
+            @QueryParam("categories") String categories,
             @QueryParam("snapshot") Integer snapshot,
             @QueryParam("path") String path,
             @QueryParam("definition") String definition,
+            @QueryParam("startTime") Long startTime,
+            @QueryParam("endTime") Long endTime,
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

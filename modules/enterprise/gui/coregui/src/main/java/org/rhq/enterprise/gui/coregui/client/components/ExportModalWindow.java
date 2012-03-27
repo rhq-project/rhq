@@ -63,7 +63,7 @@ public class ExportModalWindow {
 
     private String reportUrl;
 
-    PopupWindow exportWindow;
+    private PopupWindow exportWindow;
 
     private boolean showDetail;
 
@@ -79,6 +79,12 @@ public class ExportModalWindow {
     String[] operationRequestStatuses;
 
     Set<Integer> resourceTypeIdsForExport;
+    
+    // for Recent Drift Report
+    String driftDefinition;
+    String driftSnapshot;
+    String[] driftCategories;
+    String driftPath;
 
 
     private ExportModalWindow(String reportUrl) {
@@ -97,8 +103,13 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForRecentDrift(String reportUrl) {
+    public static ExportModalWindow createExportWindowForRecentDrift(String reportUrl, String definition,
+                                                                     String snapshot, String[] driftCategories, String path) {
         ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+        newExportDialog.setDriftCategories(driftCategories);
+        newExportDialog.setDriftDefinition(definition);
+        newExportDialog.setDriftPath(path);
+        newExportDialog.setDriftSnapshot(snapshot);
         return newExportDialog;
     }
 
@@ -221,6 +232,24 @@ public class ExportModalWindow {
             queryString.append("alertPriority=").append(alertsPriorityBuffer.toString());
         }
 
+        // Drift Related
+        if(driftCategories != null){
+            StringBuilder driftCategoriesBuffer = new StringBuilder();
+            for (String category : driftCategories) {
+                driftCategoriesBuffer.append(category).append(",");
+            }
+            queryString.append("categories=").append(driftCategoriesBuffer.toString());
+        }
+        if (driftDefinition != null) {
+            queryString.append("definition=").append(driftDefinition);
+        }
+        if (driftPath != null) {
+            queryString.append("path=").append(driftDefinition);
+        }
+        if (driftSnapshot != null) {
+            queryString.append("snapshot=").append(driftSnapshot);
+        }
+
         
         return URL.encode(BASE_URL + reportUrl + "." + format  + "?"+queryString);
     }
@@ -231,6 +260,22 @@ public class ExportModalWindow {
 
     public void setShowDetail(boolean showDetail) {
         this.showDetail = showDetail;
+    }
+
+    public void setDriftDefinition(String driftDefinition) {
+        this.driftDefinition = driftDefinition;
+    }
+
+    public void setDriftSnapshot(String driftSnapshot) {
+        this.driftSnapshot = driftSnapshot;
+    }
+
+    public void setDriftCategories(String[] driftCategories) {
+        this.driftCategories = driftCategories;
+    }
+
+    public void setDriftPath(String driftPath) {
+        this.driftPath = driftPath;
     }
 
     public void show() {

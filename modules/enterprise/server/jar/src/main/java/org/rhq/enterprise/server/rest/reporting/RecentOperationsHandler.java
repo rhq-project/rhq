@@ -1,7 +1,21 @@
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -10,16 +24,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
@@ -45,9 +49,9 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 //@todo: add ability to pass multiple operations
                 final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-                if(operationRequestStatus != null){
-                    criteria.addFilterStatus(OperationRequestStatus.valueOf(operationRequestStatus.toUpperCase()));
-                }
+//                if(operationRequestStatus != null){
+//                    criteria.addFilterStatus(OperationRequestStatus.valueOf(operationRequestStatus.toUpperCase()));
+//                }
 
                 CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor =
                         new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {

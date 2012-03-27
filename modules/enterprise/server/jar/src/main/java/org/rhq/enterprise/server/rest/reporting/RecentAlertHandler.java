@@ -16,7 +16,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -48,9 +47,9 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 final AlertCriteria criteria = new AlertCriteria();
-                if(alertPriority != null){
-                   criteria.addFilterPriorities(AlertPriority.valueOf(alertPriority.toUpperCase()));
-                }
+//                if(alertPriority != null){
+//                   criteria.addFilterPriorities(AlertPriority.valueOf(alertPriority.toUpperCase()));
+//                }
 
                 CriteriaQueryExecutor<Alert, AlertCriteria> queryExecutor =
                         new CriteriaQueryExecutor<Alert, AlertCriteria>() {

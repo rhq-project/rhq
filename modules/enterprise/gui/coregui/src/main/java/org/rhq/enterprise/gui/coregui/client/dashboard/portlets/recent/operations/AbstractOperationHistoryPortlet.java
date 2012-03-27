@@ -162,7 +162,8 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
                 // operation status
-                String selectedValue = operationStatusSelector.getValue().toString();
+                String selectedValue = (null == operationStatusSelector.getValue()) ? "" : operationStatusSelector
+                    .getValue().toString();
                 if ((selectedValue.trim().isEmpty())
                     || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {
                     selectedValue = "";
@@ -237,8 +238,9 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
             } else {//if disabled, reset time defaults
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
-                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
-                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(
+                    Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT),
+                    Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
                 //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
                     (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
@@ -380,8 +382,8 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
                         int lastN = property.getIntegerValue();
                         property = this.configuration.getSimple(Constant.METRIC_RANGE_UNIT);
                         int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                            .valueOf(lastUnits));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
+                            Integer.valueOf(lastUnits));
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }

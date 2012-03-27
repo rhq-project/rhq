@@ -2,21 +2,30 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;

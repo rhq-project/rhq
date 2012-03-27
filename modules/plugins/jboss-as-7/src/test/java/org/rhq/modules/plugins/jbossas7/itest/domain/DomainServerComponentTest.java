@@ -57,8 +57,8 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return "jboss.domain.portOffset";
     }
 
-    @RunDiscovery
     @Test(priority = 20, groups = "discovery")
+    @RunDiscovery
     public void testDomainServerDiscovery() throws Exception {
         super.testAutoDiscovery();
     }

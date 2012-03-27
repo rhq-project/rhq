@@ -22,6 +22,8 @@
  */
 package org.rhq.plugins.jbossas5.itest;
 
+import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,7 +32,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.ResourceUtility;
-import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.domain.util.TypeAndKeyResourceFilter;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -63,8 +65,14 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
     }
 
     private Resource getServerResource() {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        return ResourceUtility.getChildResource(inventoryManager.getPlatform(), RESOURCE_TYPE, RESOURCE_KEY);
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Set<Resource> childResources = ResourceUtility.getChildResources(platform,
+                new TypeAndKeyResourceFilter(RESOURCE_TYPE, RESOURCE_KEY));
+        if (childResources.size() > 1) {
+            throw new IllegalStateException(platform + " has more than one child Resource with same type ("
+                    + RESOURCE_TYPE + ") and key (" + RESOURCE_KEY + ").");
+        }
+        return (childResources.isEmpty()) ? null : childResources.iterator().next();
     }
 
 }

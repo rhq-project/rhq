@@ -26,8 +26,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.ResourceUtility;
-import org.rhq.core.pc.inventory.InventoryManager;
 
 import static org.testng.Assert.*;
 
@@ -53,17 +51,8 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     protected abstract String getServerResourceKey();
 
     protected Resource getServerResource() {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        Resource resource = ResourceUtility.getChildResource(inventoryManager.getPlatform(),
-                getServerResourceType(),
-                getServerResourceKey());
-
-        assertNotNull(resource,
-                getServerResourceType().getName() + " Resource with key [" + getServerResourceKey()
-                        + "] not found in inventory - platform child Resources that were discovered: "
-                        + inventoryManager.getPlatform().getChildResources());
-
-        return resource;
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        return getResourceByTypeAndKey(platform, getServerResourceType(), getServerResourceKey());
     }
 
     public void testAutoDiscovery() throws Exception {

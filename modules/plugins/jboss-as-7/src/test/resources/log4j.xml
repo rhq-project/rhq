@@ -43,14 +43,15 @@
       </layout>
    </appender>
 
+<!--
    <category name="org.rhq.core.pc">
-      <priority value="FATAL"/>
+      <priority value="ERROR"/>
    </category>
 
    <category name="org.rhq.core.pc.PluginContainer">
      <priority value="INFO"/>
    </category>
-
+-->
    <category name="org.rhq.core.clientapi">
      <priority value="FATAL"/>
    </category>

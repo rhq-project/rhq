@@ -18,18 +18,25 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import java.util.Set;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceFilter;
 import org.rhq.core.domain.util.ResourceUtility;
+import org.rhq.core.domain.util.TypeAndKeyResourceFilter;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
+
+import static org.testng.Assert.assertNotNull;
 
 /**
  * The base class for all jboss-as-7 plugin integration tests.
@@ -50,18 +57,20 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
      */
     @AfterDiscovery
     public void installManagementUsers() throws PluginContainerException {
+        System.out.println("\n=== Discovery scan completed.");
         if (!createdManagementUsers) {
+            System.out.println("====== Installing management users...");
+
             Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-            Resource domainServer = ResourceUtility.getChildResource(platform,
-                    DomainServerComponentTest.RESOURCE_TYPE, DomainServerComponentTest.RESOURCE_KEY);
-            if (domainServer != null) {
-                installManagementUser(domainServer);
-            }
-            Resource standaloneServer = ResourceUtility.getChildResource(platform,
-                    StandaloneServerComponentTest.RESOURCE_TYPE, StandaloneServerComponentTest.RESOURCE_KEY);
-            if (standaloneServer != null) {
-                installManagementUser(standaloneServer);
-            }
+
+            Resource domainServer = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
+                    DomainServerComponentTest.RESOURCE_KEY);
+            installManagementUser(domainServer);
+
+            Resource standaloneServer = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+                    StandaloneServerComponentTest.RESOURCE_KEY);
+            installManagementUser(standaloneServer);
+
             // TODO (ips, 03/16/12): Uncomment this once I fix the issue with Resources that were previously discovered
             //                       and committed getting discovered with a status of NEW.
             //createdManagementUsers = true;
@@ -69,7 +78,7 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     }
 
     private void installManagementUser(Resource resource) throws PluginContainerException {
-        System.out.println("\n>>> Installing management user [" + MANAGEMENT_USERNAME + "] for " + resource + "...");
+        System.out.println("========= Installing management user [" + MANAGEMENT_USERNAME + "] for " + resource + "...");
 
         // Invoke the "installRhqUser" operation on the ResourceComponent - this will update the mgmt-users.properties
         // file in the AS7 server's configuration directory.
@@ -101,6 +110,27 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     @Override
     protected String getPluginName() {
         return PLUGIN_NAME;
+    }
+
+    protected static Resource getResourceByTypeAndKey(Resource parent, final ResourceType type, String key) {
+        Set<Resource> childResources = ResourceUtility.getChildResources(parent,
+                new TypeAndKeyResourceFilter(type, key));
+        if (childResources.size() > 1) {
+            throw new IllegalStateException(parent + " has more than one child Resource with same type ("
+                    + type + ") and key (" + key + ").");
+        }
+        Resource serverResource = (childResources.isEmpty()) ? null : childResources.iterator().next();
+
+        assertNotNull(serverResource,
+                type.getName() + " Resource with key [" + key + "] not found in inventory - child "
+                        + type.getCategory().getDisplayName() + "s that were discovered: "
+                + ResourceUtility.getChildResources(parent,
+                new ResourceFilter() {
+                    public boolean accept(Resource resource) {
+                        return (resource.getResourceType().getCategory() == type.getCategory());
+                    }
+                }));
+        return serverResource;
     }
 
 }

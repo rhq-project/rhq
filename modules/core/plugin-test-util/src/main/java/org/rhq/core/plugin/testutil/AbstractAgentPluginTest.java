@@ -130,6 +130,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      */
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
+        System.out.println("\n=== Resetting Server services prior to running discovery scan...");
         try {
             this.serverServices.resetMocks();
             Mockito.when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(Mockito.any(InventoryReport.class))).then(

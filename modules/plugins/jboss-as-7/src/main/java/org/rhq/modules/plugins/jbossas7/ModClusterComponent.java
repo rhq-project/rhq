@@ -191,4 +191,10 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
             op.addAdditionalProperty(parameterName, value);
         }
     }
+
+    @Override
+    public Address getAddress() {
+        return new Address(key);
+    }
+
 }

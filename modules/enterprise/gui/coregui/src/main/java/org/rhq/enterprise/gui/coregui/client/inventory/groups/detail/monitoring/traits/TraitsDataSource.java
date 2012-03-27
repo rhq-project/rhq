@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,9 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -35,10 +38,12 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A DataSource for reading traits for the current group.
@@ -61,13 +66,36 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
-        DataSourceTextField resourceNameField = new DataSourceTextField(
-            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, MSG.common_title_resource());
-        fields.add(0, resourceNameField);
+        return fields;
+    }
 
-        DataSourceTextField ancestryField = new DataSourceTextField(AncestryUtil.RESOURCE_ANCESTRY, MSG
-            .common_title_ancestry());
-        fields.add(1, ancestryField);
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = super.getListGridFields();
+
+        ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+        resourceNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, value.toString(), null);
+            }
+        });
+        resourceNameField.setShowHover(true);
+        resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+        fields.add(resourceNameField);
+
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        fields.add(ancestryField);
 
         return fields;
     }

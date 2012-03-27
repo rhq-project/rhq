@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +29,17 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -72,18 +74,35 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
         idField.setHidden(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME,
+        return fields;
+    }
+
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(3);
+
+        ListGridField nameField = new ListGridField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME,
             MSG.dataSource_traits_field_trait());
         fields.add(nameField);
 
         // TODO: Include description from metric def?
 
-        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE,
+        ListGridField valueField = new ListGridField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE,
             MSG.common_title_value());
         fields.add(valueField);
 
-        DataSourceDateTimeField timestampField = new DataSourceDateTimeField(
-            MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, MSG.dataSource_traits_field_lastChanged());
+        ListGridField timestampField = new ListGridField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
+            MSG.dataSource_traits_field_lastChanged());
+        timestampField.setCellFormatter(new TimestampCellFormatter());
+        timestampField.setShowHover(true);
+        timestampField.setHoverCustomizer(TimestampCellFormatter
+            .getHoverCustomizer(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP));
+        timestampField.setWidth("20%");
         fields.add(timestampField);
 
         return fields;

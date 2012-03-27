@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.ArrayList;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
@@ -29,7 +31,6 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,
@@ -56,14 +57,13 @@ public abstract class AbstractMeasurementDataTraitListDetailView extends Table {
     }
 
     @Override
-    protected void configureTable() {        
+    protected void configureTable() {
         ListGrid listGrid = getListGrid();
-        listGrid.setSelectionType(SelectionStyle.NONE);
 
-        // Set widths and cell formatters on the fields.
-        ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
-        timestampField.setWidth("20%");
-        timestampField.setCellFormatter(new TimestampCellFormatter());
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        listGrid.setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+
+        listGrid.setSelectionType(SelectionStyle.NONE);
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {

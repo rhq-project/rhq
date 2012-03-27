@@ -1220,6 +1220,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
             deactivateResource(resource);
 
+            // TODO REMOVE THIS IF STATEMENT - IT IS JUST FOR TESTING
+            if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
+                new Exception("BAD CHILD SET:" + resource.getChildResources().getClass().getName() + ":"
+                    + resource.getId() + ":" + resource.getName()).printStackTrace();
+            }
+
             for (Resource child : resource.getChildResources()) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }

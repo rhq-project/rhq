@@ -178,8 +178,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String toCSV(Resource resource) {
-        return resource.getName() + "," + resource.getAncestry() + "," + resource.getDescription() + "," +
-            resource.getResourceType().getName() + "," + resource.getVersion() + "," +
-            resource.getCurrentAvailability().getAvailabilityType();
+        return resource.getName() + "," + ReportHelper.parseAncestry(resource.getAncestry()) + "," +
+            resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
+            "," + resource.getCurrentAvailability().getAvailabilityType();
     }
 }

@@ -23,6 +23,8 @@ package org.rhq.enterprise.server.rest.reporting;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.rhq.core.domain.resource.Resource;
+
 /**
  * Formatting tools for rest reporting.
  */
@@ -63,6 +65,24 @@ public class ReportHelper {
     public static String formatDate(long epochMillis){
         Date date = new Date(epochMillis);
         return DateFormat.getDateInstance().format(date);
+    }
+
+    public static String parseAncestry(String ancestry) {
+        if (null == ancestry) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+        for (int i = 0; i < ancestryEntries.length; ++i) {
+            String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+            String ancestorName = entryTokens[2];
+            builder.append((i > 0) ? " < " : "");
+            builder.append(ancestorName);
+
+        }
+
+        return builder.toString();
     }
 
 }

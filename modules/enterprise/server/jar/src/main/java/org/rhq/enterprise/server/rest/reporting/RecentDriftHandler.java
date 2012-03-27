@@ -74,7 +74,7 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                         drift.getDrift().getCategory() + "," +
                         drift.getDrift().getPath() + "," +
                         cleanForCSV(drift.getResource().getName()) +","+
-                        cleanForCSV(drift.getResource().getAncestry());
+                        cleanForCSV(ReportHelper.parseAncestry(drift.getResource().getAncestry()));
             }
 
             private String getHeader(){

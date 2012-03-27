@@ -78,7 +78,7 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
                         operation.getSubjectName() + "," +
                         operation.getStatus() + "," +
                         cleanForCSV(operation.getResource().getName()) +","+
-                        cleanForCSV(operation.getResource().getAncestry());
+                        cleanForCSV(ReportHelper.parseAncestry(operation.getResource().getAncestry()));
             }
 
             private String getHeader(){

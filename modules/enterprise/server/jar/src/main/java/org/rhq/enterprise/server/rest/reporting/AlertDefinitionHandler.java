@@ -80,7 +80,7 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                             + alertDefinition.getEnabled() + ","
                             + alertDefinition.getPriority() + ","
                             + cleanForCSV(getParentName(resource)) + ","
-                            + cleanForCSV(resource.getAncestry());
+                            + cleanForCSV(ReportHelper.parseAncestry(resource.getAncestry()));
                 }
 
                 private String getParentName(Resource resource){

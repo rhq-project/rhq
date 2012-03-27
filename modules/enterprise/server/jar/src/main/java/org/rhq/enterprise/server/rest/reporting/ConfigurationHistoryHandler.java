@@ -71,9 +71,10 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
                         + formatDateTime(configurationUpdate.getCreatedTime())+","
                         + formatDateTime(configurationUpdate.getModifiedTime())+","
                         + configurationUpdate.getStatus()+","
-                        + cleanForCSV(configurationUpdate.getResource().getAncestry());
+                        + cleanForCSV(ReportHelper.parseAncestry(configurationUpdate.getResource().getAncestry()));
                 //@todo: check dates, user, update-type
             }
+
             private String getHeader(){
                 return "Name,Version,Date Submitted,Date Completed,Status,Ancestry";
             }

@@ -106,7 +106,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                 String conditionValue;
 
                 if (conditionLogs.size() > 1) {
-
+                    conditionText = "Multiple Conditions";
                 } else if (conditionLogs.size() == 1) {
                     AlertConditionLog conditionLog = conditionLogs.iterator().next();
                     AlertCondition condition = conditionLog.getCondition();

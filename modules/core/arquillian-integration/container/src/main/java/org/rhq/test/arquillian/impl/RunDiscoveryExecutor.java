@@ -16,11 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.test.arquillian.impl;
 
 import org.jboss.arquillian.test.spi.event.suite.TestEvent;
 
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.arquillian.spi.PluginContainerOperation;
@@ -53,10 +53,17 @@ public class RunDiscoveryExecutor implements PluginContainerOperation {
     
     private void runDiscovery(RunDiscovery annotation, PluginContainer pluginContainer) {        
         if (annotation.discoverServers()) {
-            pluginContainer.getInventoryManager().executeServerScanImmediately();
+            InventoryReport serverScanReport = pluginContainer.getInventoryManager().executeServerScanImmediately();
+            if (!serverScanReport.getErrors().isEmpty()) {
+                throw new RuntimeException("Errors occurred during server scan: " + serverScanReport.getErrors());
+            }
         }
         if (annotation.discoverServices()) {
-            pluginContainer.getInventoryManager().executeServiceScanImmediately();
+            InventoryReport serviceScanReport = pluginContainer.getInventoryManager().executeServiceScanImmediately();
+            if (!serviceScanReport.getErrors().isEmpty()) {
+                throw new RuntimeException("Errors occurred during service scan: " + serviceScanReport.getErrors());
+            }
         }
     }
+
 }

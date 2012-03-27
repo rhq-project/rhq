@@ -13,7 +13,7 @@ public class XmlFileReadingTest {
 
     public void hostPort70() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -25,7 +25,7 @@ public class XmlFileReadingTest {
 
     public void hostPort71() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -38,22 +38,22 @@ public class XmlFileReadingTest {
 
     public void domainController1() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host1.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getDomainControllerFromHostXml();
+        AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert hp.isLocal : "DC is not local as expected: " + hp;
 
     }
 
     public void domainController2() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host2.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getDomainControllerFromHostXml();
+        AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert "192.168.100.1".equals(hp.host) : "DC is at " + hp.host;
         assert hp.port == 9559 : "DC port is at " + hp.port;
     }
@@ -62,7 +62,7 @@ public class XmlFileReadingTest {
 
     public void testXpath70() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -88,7 +88,7 @@ public class XmlFileReadingTest {
 
     public void testXpath71() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -114,7 +114,7 @@ public class XmlFileReadingTest {
 
     public void testGetRealm() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 

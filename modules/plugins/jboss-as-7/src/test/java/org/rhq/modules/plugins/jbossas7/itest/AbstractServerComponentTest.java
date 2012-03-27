@@ -59,7 +59,9 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
                 getServerResourceKey());
 
         assertNotNull(resource,
-                getServerResourceType() + " Resource with key [" + getServerResourceKey() + "] not found in inventory.");
+                getServerResourceType().getName() + " Resource with key [" + getServerResourceKey()
+                        + "] not found in inventory - platform child Resources that were discovered: "
+                        + inventoryManager.getPlatform().getChildResources());
 
         return resource;
     }

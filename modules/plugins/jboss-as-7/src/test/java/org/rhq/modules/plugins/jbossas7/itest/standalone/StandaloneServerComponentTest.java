@@ -39,7 +39,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
     // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home"));
+    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/standalone");
 
     private static final String RELOAD_OPERATION_NAME = "reload";
     private static final String RESTART_OPERATION_NAME = "restart";

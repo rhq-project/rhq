@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -34,7 +35,7 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    public static final String RESOURCE_KEY = "DomainController";    
+    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/domain");
 
     @Override
     protected ResourceType getServerResourceType() {

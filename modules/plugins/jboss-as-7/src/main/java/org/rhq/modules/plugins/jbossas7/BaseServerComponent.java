@@ -257,8 +257,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
     }
 
     protected OperationResult installManagementUser(Configuration parameters, Configuration pluginConfig, AS7Mode mode) {
-        String user = parameters.getSimpleValue("user","");
-        String password = parameters.getSimpleValue("password","");
+        String user = parameters.getSimpleValue("user", "");
+        String password = parameters.getSimpleValue("password", "");
 
         OperationResult result = new OperationResult();
 
@@ -273,21 +273,30 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             return result;
         }
 
-        String baseDir = pluginConfig.getSimpleValue("baseDir","");
-        if (baseDir.isEmpty()) {
-            result.setErrorMessage("No baseDir found, can not continue");
+        String homeDir = pluginConfig.getSimpleValue("homeDir", "");
+        if (homeDir.isEmpty()) {
+            result.setErrorMessage("No homeDir found, can not continue");
             return result;
         }
-        String standaloneXmlFile = pluginConfig.getSimpleValue("config",mode.getDefaultXmlFile());
 
-        String standaloneXml = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator + standaloneXmlFile;
+        String configFile;
+        BaseProcessDiscovery processDiscovery;
+        switch (mode) {
+            case STANDALONE:
+                processDiscovery = new StandaloneASDiscovery();
+                configFile = pluginConfig.getSimpleValue("config", null);
+                break;
+            case HOST:
+                processDiscovery = new HostControllerDiscovery();
+                configFile = pluginConfig.getSimpleValue("hostConfig", null);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported mode: " + mode);
+        }
+        processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
 
-        AbstractBaseDiscovery abd = new AbstractBaseDiscovery();
-        abd.readStandaloneOrHostXmlFromFile(standaloneXml);
-
-        String realm = pluginConfig.getSimpleValue("realm","ManagementRealm");
-        String propertiesFilePath = abd.getSecurityPropertyFileFromHostXml(baseDir,mode, realm);
-
+        String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
+        String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(homeDir, mode, realm);
 
         Properties p = new Properties();
         try {

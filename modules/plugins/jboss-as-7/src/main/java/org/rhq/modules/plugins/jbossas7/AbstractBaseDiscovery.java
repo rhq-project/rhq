@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 
+import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 
 /**
@@ -42,8 +43,10 @@ import org.rhq.core.system.ProcessInfo;
  * @author Heiko W. Rupp
  */
 public class AbstractBaseDiscovery {
-    static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
-    private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
+
+    static final String BOOT_LOG_FILE_SYSPROP = "org.jboss.boot.log.file";
+    private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
+
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
@@ -62,18 +65,6 @@ public class AbstractBaseDiscovery {
         }
     }
 
-    /**
-     * Read the host.xml or standalone.xml file depending on isDomainMode. If isDomainMode is true,
-     * host.xml is read, otherwise standalone.xml.
-     * The xml file content is stored in the variable hostXml for future use.
-     * @param processInfo Process info to determine the base file location
-     * @param isDomainMode Indicates if host.xml should be read (true) or standalone.xml (false)
-     */
-    protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
-        String hostXmlFile = getHostXmlFileLocation(processInfo, isDomainMode);
-        readStandaloneOrHostXmlFromFile(hostXmlFile);
-    }
-
     protected void readStandaloneOrHostXmlFromFile(String hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
@@ -90,36 +81,20 @@ public class AbstractBaseDiscovery {
     }
 
     /**
-     * Determine the server home (=base) directory by parsing the passed command line
-     * @param commandLine command line arguments of the process
-     * @return The home dir if found or empty string otherwise
-     */
-    String getHomeDirFromCommandLine(String[] commandLine) {
-        for (String line : commandLine) {
-            if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
-                return line.substring(DJBOSS_SERVER_HOME_DIR.length() + 1);
-        }
-        return "";
-    }
-
-    /**
      * Determine the location of the boot log file of the server by parsing the command line
      * @param commandLine command line arguments of the process
      * @return The log file location or empty string otherwise
      */
+    //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log
+    //-Dlogging.configuration=file:/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/configuration/logging.properties
     String getLogFileFromCommandLine(String[] commandLine) {
-
-        for (String line : commandLine) {
-            if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))
-                return line.substring(DORG_JBOSS_BOOT_LOG_FILE.length());
-        }
-        return "";
+        return getSystemPropertyFromCommandLine(commandLine, BOOT_LOG_FILE_SYSPROP, "");
     }
 
     /**
      * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
      * @return an Object containing host and port
-     * @see #readStandaloneOrHostXml(org.rhq.core.system.ProcessInfo, boolean) on how to obtain the parsed xml
+     * @see #readStandaloneOrHostXmlFromFile(String) for how to obtain the parsed xml
      * @param commandLine Command line arguments of the process to
      */
     protected HostPort getManagementPortFromHostXml(String[] commandLine) {
@@ -260,7 +235,7 @@ public class AbstractBaseDiscovery {
      * Try to obtain the domain controller's location from looking at host.xml
      * @return host and port of the domain controller
      */
-    protected HostPort getDomainControllerFromHostXml() {
+    protected HostPort getHostPortFromHostXml() {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
@@ -317,30 +292,10 @@ public class AbstractBaseDiscovery {
         return fullName;
     }
 
-    /**
-     * Get the location of the host definition file (host.xml in domain mode, standalone.xml
-     * in standalone mode.
-     * @param processInfo ProcessInfo structure containing the ENV variables
-     * @param isDomain Are we looking for host.xml (=isDomain) or not
-     * @return The path to the definition file.
-     */
-    protected String getHostXmlFileLocation(ProcessInfo processInfo, boolean isDomain) {
-
-        String home = processInfo.getEnvironmentVariable("jboss.home.dir");
-        if (home == null)
-            home = getHomeDirFromCommandLine(processInfo.getCommandLine());
-        StringBuilder builder = new StringBuilder(home);
-        if (isDomain)
-            builder.append(File.separator).append(AS7Mode.DOMAIN.getBaseDir());
-        else
-            builder.append(File.separator).append(AS7Mode.STANDALONE.getBaseDir());
-        builder.append(File.separator).append("configuration");
-        if (isDomain)
-            builder.append(File.separator).append(AS7Mode.HOST.getDefaultXmlFile());
-        else
-            builder.append(File.separator).append(AS7Mode.STANDALONE.getDefaultXmlFile());
-        return builder.toString();
-
+    protected File getHomeDir(ProcessInfo processInfo) {
+        String home = getSystemPropertyFromCommandLine(processInfo.getCommandLine(), HOME_DIR_SYSPROP,
+                processInfo.getEnvironmentVariable("JBOSS_HOME"));
+        return new File(FileUtils.getCanonicalPath(home));
     }
 
     protected String determineServerVersionFromHomeDir(String homeDir) {
@@ -380,6 +335,24 @@ public class AbstractBaseDiscovery {
             log.error("Evaluation XPath expression failed: " + e.getMessage());
             return null;
         }
+    }
+
+    protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName) {
+        return getSystemPropertyFromCommandLine(commandLine, systemPropertyName, null);
+    }
+
+    protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName,
+                                                           String defaultValue) {
+        for (String arg : commandLine) {
+            String prefix = "-D" + systemPropertyName;
+            String prefixWithEqualsSign = prefix + "=";
+            if (arg.startsWith(prefixWithEqualsSign)) {
+                return arg.substring(prefixWithEqualsSign.length());
+            } else if (arg.equals(prefix)) {
+                return "";
+            }
+        }
+        return defaultValue;
     }
 
     /**

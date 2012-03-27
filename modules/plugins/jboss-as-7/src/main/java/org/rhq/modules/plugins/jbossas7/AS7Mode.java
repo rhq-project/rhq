@@ -61,4 +61,5 @@ public enum AS7Mode {
     public String getConfigPropertyName() {
         return configPropertyName;
     }
+
 }

@@ -62,7 +62,7 @@
       -->
 
     <server name="JBossAS7 Host Controller"
-            discovery="BaseProcessDiscovery"
+            discovery="HostControllerDiscovery"
             class="HostControllerComponent"
             description="Domain controller (delegate) for this host"
             >
@@ -74,12 +74,14 @@
             <c:simple-property name="password" type="password" default="rhqadmin" description="Password for the management user" required="false"/>
             <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Domain Configuration"/>
             <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Host Configuration"/>
-            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="true"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
+            <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
                                description="The absolute path to a JRE or JDK installation directory containing
-                                                        the JVM that should be used to start and shutdown the HostController instance;
-                                                        defaults to the home directory of the RHQ agent JRE."/>
+                                            the JVM that should be used to start and shutdown the HostController instance;
+                                            defaults to the home directory of the RHQ Agent JRE."/>
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
@@ -358,7 +360,7 @@
     </server>
 
     <server name="JBossAS7 Standalone Server"
-            discovery="BaseProcessDiscovery"
+            discovery="StandaloneASDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
             supportsManualAdd="true"
@@ -370,12 +372,14 @@
             <c:simple-property name="user" default="rhqadmin" type="string" description="Management user for a secured AS" required="false"/>
             <c:simple-property name="password" default="rhqadmin" type="password" description="Password for the management user" required="false"/>
             <c:simple-property name="config" type="string" default="standalone.xml" description="Running configuration" displayName="Configuration"/>
-            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="true"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
+            <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
                                description="The absolute path to a JRE or JDK installation directory containing
-                                                        the JVM that should be used to start and shutdown the JBossAS instance;
-                                                        defaults to the home directory of the RHQ agent JRE."/>
+                                            the JVM that should be used to start and shutdown the JBossAS instance;
+                                            defaults to the home directory of the RHQ Agent JRE."/>
             &logSources;
 
         </plugin-configuration>

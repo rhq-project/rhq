@@ -1,21 +1,9 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -25,6 +13,19 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
 
@@ -32,6 +33,7 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTi
 @Stateless
 public class RecentOperationsHandler extends AbstractRestBean implements RecentOperationsLocal {
 
+    private final Log log = LogFactory.getLog(RecentOperationsHandler.class);
     @EJB
     private OperationManagerLocal operationManager;
 
@@ -41,17 +43,20 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
 
     @Override
     public StreamingOutput recentOperations(
-        @QueryParam("operationRequestStatus") @DefaultValue("failure")
         final String operationRequestStatus,
-        @Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
+        UriInfo uriInfo, Request request, HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
-                //@todo: add ability to pass multiple operations
                 final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-//                if(operationRequestStatus != null){
-//                    criteria.addFilterStatus(OperationRequestStatus.valueOf(operationRequestStatus.toUpperCase()));
-//                }
+
+                List<OperationRequestStatus> operationRequestStatusList = new ArrayList<OperationRequestStatus>(10);
+                String statuses[] = operationRequestStatus.split(",");
+                for (String requestStatus : statuses) {
+                    log.info("OperationRequestStatus Filter set for: " + requestStatus);
+                    operationRequestStatusList.add(OperationRequestStatus.valueOf(requestStatus.toUpperCase()));
+                }
+                criteria.addFilterStatuses(operationRequestStatusList.toArray(new OperationRequestStatus[operationRequestStatusList.size()]));
 
                 CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor =
                         new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {

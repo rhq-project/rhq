@@ -12,7 +12,7 @@ public interface RecentOperationsLocal {
     @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentOperations(
-            @QueryParam("operationRequestStatus") @DefaultValue("Failure") String operationStatus,
+            @QueryParam("operationRequestStatus") @DefaultValue("InProgress,Success,Failure,Cancelled") String operationRequestStatus,
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

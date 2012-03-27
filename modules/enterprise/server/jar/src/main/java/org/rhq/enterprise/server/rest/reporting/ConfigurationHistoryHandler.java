@@ -1,6 +1,18 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -10,14 +22,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.rhq.core.domain.util.PageOrdering.ASC;
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
@@ -63,7 +67,7 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
             }
             private String toCSV(ResourceConfigurationUpdate configurationUpdate) {
                 return cleanForCSV(configurationUpdate.getResource().getName()) + ","
-                        + configurationUpdate.getConfiguration().getVersion() + ","
+                        + configurationUpdate.getId() + ","
                         + formatDateTime(configurationUpdate.getCreatedTime())+","
                         + formatDateTime(configurationUpdate.getModifiedTime())+","
                         + configurationUpdate.getStatus()+","

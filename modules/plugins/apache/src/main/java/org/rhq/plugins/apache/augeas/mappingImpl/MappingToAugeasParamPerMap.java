@@ -91,9 +91,9 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
         StringBuffer param= new StringBuffer();
         for (List<PropertyMap> directive: map){
                 for (PropertyMap propMap : directive){
-                       for (String propDefMap : memberPropDef.getMap().keySet())
+                       for (PropertyDefinition propDefMap : memberPropDef.getPropertyDefinitions())
                        {//for (Property propVal : propMap.getMap().values()){
-                          Property propVal = propMap.get(propDefMap);
+                          Property propVal = propMap.get(propDefMap.getName());
                           if (propVal!=null)
                              if (!propVal.getName().equals("_index")){
                                   param.append(" "+((PropertySimple) propVal).getStringValue());

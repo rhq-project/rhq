@@ -2208,7 +2208,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </service>
     </server>
 
-    <serice name="ModCluster"
+    <server name="ModCluster"
              class="ModClusterComponent"
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
@@ -2224,14 +2224,14 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
         </plugin-configuration>
 
-	<operation name="add" description="Operation adding the modcluster subsystem.">
+	<!--<operation name="add" description="Operation adding the modcluster subsystem.">
 	  <parameters>
 	    <c:simple-property name="mod-cluster-config" required="false" type="-object-" readOnly="false" description="The common modcluster configuration."/>
 	  </parameters>
 	  <results>
 	     <c:simple-property name="operationResult"/>
 	  </results>
-	</operation>
+	</operation>-->
 
 	<operation name="add-proxy" description="Add the proxy to the list of httpd connected to the node.">
 	  <parameters>
@@ -2282,17 +2282,31 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	  </results>
 	</operation>
 
+	<operation name="read-proxies-configuration" description="Send a DUMP to httpd and display the result.">
+	  <results>
+             <!-- Result of the DUMP command.-->    
+	     <c:simple-property name="current-proxy-config" description="Result of the DUMP command. Snapshot of httpd/modcluster configuration."/>
+	  </results>
+	</operation>
+
+	<operation name="read-proxies-info" description="Send a INFO to httpd and display the result.">
+	  <results>
+             <!-- Result of the INFO command.-->    
+	     <c:simple-property name="current-proxy-info" description="Result of the INFO command. Snapshot of httpd/modcluster proxy information."/>
+	  </results>
+	</operation>
+
 	<operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd.">
 	  <results>
 	     <c:simple-property name="operationResult"/>
 	  </results>
 	</operation>
 
-	<operation name="remove" description="Operation removing the modcluster subsystem.">
+    <!--<operation name="remove" description="Operation removing the modcluster subsystem.">
 	  <results>
 	     <c:simple-property name="operationResult"/>
 	  </results>
-	</operation>
+	</operation>-->
 
 	<operation name="remove-proxy" description="Remove the proxy to the list of httpd connected to the node.">
 	  <parameters>
@@ -2356,7 +2370,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 		<c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
 		<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/> 
         </resource-configuration>
-    </service>
+    </server>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"

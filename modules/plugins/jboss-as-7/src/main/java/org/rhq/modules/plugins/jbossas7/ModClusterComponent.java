@@ -31,22 +31,24 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
 
         if ("list-proxies".equals(name)) {
             result = getASConnection().execute(op);
-            ArrayList container = (ArrayList) result.getResult();
-            if ((container != null) && !container.isEmpty()) {
-                Object type = container.get(0);
-                String values = "";
-                if (type instanceof String) {
-                    for (int i = 0; i < container.size(); i++) {
-                        values += container.get(i) + ",";
+            if ((result != null) && (result.isSuccess())) {
+                ArrayList container = (ArrayList) result.getResult();
+                if ((container != null) && !container.isEmpty()) {
+                    Object type = container.get(0);
+                    String values = "";
+                    if (type instanceof String) {
+                        for (int i = 0; i < container.size(); i++) {
+                            values += container.get(i) + ",";
+                        }
+                        values = values.substring(0, values.length() - 1);
+                    } else {
+                        values = container.toString();
                     }
-                    values = values.substring(0, values.length() - 1);
-                } else {
-                    values = container.toString();
-                }
-                operationResult.getComplexResults().put(new PropertySimple("proxy-list", values));
+                    operationResult.getComplexResults().put(new PropertySimple("proxy-list", values));
 
-            } else {//return empty value.
-                operationResult.getComplexResults().put(new PropertySimple("proxy-list", ""));
+                } else {//return empty value.
+                    operationResult.getComplexResults().put(new PropertySimple("proxy-list", ""));
+                }
             }
         } else if ("add-proxy".equals(name)) {
             addAdditionalToOp(op, parameters, "host", false);
@@ -62,6 +64,57 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
             if (result.isSuccess()) {
                 operationResult.setSimpleResult("Success");
             }
+        } else if ("read-proxies-configuration".equals(name)) {
+            //spinder 3/25/12: Can we do better than displaying all content as massive string?
+            //                 Content is unstructured/variable from httpd server.
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                ArrayList container = (ArrayList) result.getResult();
+                if ((container != null) && !container.isEmpty()) {
+                    Object type = container.get(0);
+                    String values = "";
+                    if (type instanceof String) {
+                        for (int i = 0; i < container.size(); i++) {
+                            values += container.get(i) + ",";
+                        }
+                        values = values.substring(0, values.length() - 1);
+                    } else {
+                        values = container.toString();
+                    }
+                    operationResult.getComplexResults().put(new PropertySimple("current-proxy-config", values));
+
+                } else {//return empty value.
+                    operationResult.getComplexResults().put(new PropertySimple("current-proxy-config", ""));
+                }
+            }
+        } else if ("read-proxies-info".equals(name)) {
+            //spinder 3/25/12: Can we do better than displaying all content as massive string?
+            //                 Content is unstructured/variable from httpd server.
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                ArrayList container = (ArrayList) result.getResult();
+                if ((container != null) && !container.isEmpty()) {
+                    Object type = container.get(0);
+                    String values = "";
+                    if (type instanceof String) {
+                        for (int i = 0; i < container.size(); i++) {
+                            values += container.get(i) + ",";
+                        }
+                        values = values.substring(0, values.length() - 1);
+                    } else {
+                        values = container.toString();
+                    }
+                    operationResult.getComplexResults().put(new PropertySimple("current-proxy-info", values));
+
+                } else {//return empty value.
+                    operationResult.getComplexResults().put(new PropertySimple("current-proxy-info", ""));
+                }
+            }
+        } else {
+            /*
+             * This is a catch all for operations that are not explicitly treated above.
+             */
+            op = new Operation(name, address);
         }
 
         if (!result.isSuccess()) {

@@ -1013,7 +1013,7 @@
           <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
        </resource-configuration>
 
-    </server>
+    </service>
 
     <server name="Datasources"
             discovery="SubsystemDiscovery"

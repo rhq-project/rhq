@@ -38,6 +38,9 @@ public class ReportHelper {
      * @return Cleaned String suitable for inclusion in CSV file
      */
     public static String cleanForCSV(String input){
+        if (input == null) {
+            return " ";
+        }
         return input.replace(',',' ').replace('\n', ' ');
     }
 

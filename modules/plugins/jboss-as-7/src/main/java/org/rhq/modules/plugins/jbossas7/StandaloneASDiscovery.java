@@ -63,14 +63,19 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, String configName, String productTypeName) {        
+    protected String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType) {
         String hostName = findHostName();
-        return (hostName == null || hostName.isEmpty()) ? configName : configName + " (" + hostName + ")"; 
+        StringBuilder name = new StringBuilder();
+        name.append(configName).append(" ").append(productType.SHORT_NAME);
+        if ((hostName != null) && !hostName.isEmpty()) {
+            name.append(" (").append(hostName).append(")");
+        }
+        return name.toString();
     }
 
     @Override
-    protected String buildDefaultResourceDescription(HostPort hostPort, String productTypeName) {
-        return "Standalone " + productTypeName + " server";
+    protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
+        return "Standalone " + productType.FULL_NAME + " server";
     }
 
     @Override

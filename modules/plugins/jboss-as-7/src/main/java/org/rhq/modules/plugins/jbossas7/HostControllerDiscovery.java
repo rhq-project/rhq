@@ -63,16 +63,16 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, String configName, String productTypeName) {
+    protected String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType) {
         String suffix = (hostPort.isLocal) ? "Domain Controller" : "Host Controller";
-        return configName + " " + productTypeName + " " + suffix;
+        return configName + " " + productType.NAME + " " + suffix;
     }
 
     @Override
-    protected String buildDefaultResourceDescription(HostPort hostPort, String productTypeName) {
+    protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
         String prefix = (hostPort.isLocal) ? "Domain controller" : "Host controller";
         String suffix = (hostPort.isLocal) ? "domain" : "host";
-        return prefix + " for a " + productTypeName + " " + suffix;
+        return prefix + " for a " + productType.FULL_NAME + " " + suffix;
     }
 
     @Override

@@ -58,12 +58,6 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
 
-    protected static final String JBOSS_EAP_6 = "JBoss Enterprise Application Platform 6";
-    protected static final String JBOSS_EDG_6 = "JBoss Enterprise Data Grid 6";
-    protected static final String JBOSS_EPP_6 = "JBoss Enterprise Portal Platform 6";
-    protected static final String JBOSS_SOA_6 = "JBoss Service Oriented Architecture Platform 6";
-    protected static final String AS7 = "AS7";
-
     private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -80,7 +74,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
                 log.info("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
                         + details.getResourceKey() + "].");
             } catch (Exception e) {
-                log.warn("Discovery for a " + discoveryContext.getResourceType().getName()
+                log.error("Discovery for a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for process " + psr + ": " + e);
             }
         }
@@ -95,34 +89,19 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         ProcessInfo process = psr.getProcessInfo();
         String[] commandLine = process.getCommandLine();
         String homeDir = getHomeDir(process).getPath();
+        JBossProductType productType = JBossProductType.determineJBossProductType(new File(homeDir));
         String version = determineServerVersionFromHomeDir(homeDir);
-
+        if (productType != JBossProductType.AS) {
+            version = productType.SHORT_NAME + " " + version;
+        }
         File baseDir = getBaseDir(process);
         String configName = baseDir.getName();
         String key = baseDir.getPath();
         readStandaloneOrHostXmlFromFile(getHostXmlFile(process).getPath()); // this sets this.hostXml
         HostPort hostPort = getHostPortFromHostXml();
 
-        // TODO: Move this stuff to a ProductType enum.
-        String productTypeName;
-        String productTypePrefix;
-        if (homeDir.contains("eap")) {
-            productTypeName = JBOSS_EAP_6;
-            productTypePrefix = EAP;
-        } else if (homeDir.contains("edg")) {
-            productTypeName = JBOSS_EDG_6;
-            productTypePrefix = JDG;
-        } else {
-            productTypeName = AS7;
-            productTypePrefix = null;
-        }
-
-        String name = buildDefaultResourceName(hostPort, configName, productTypeName);
-        String description = buildDefaultResourceDescription(hostPort, productTypeName);
-        if (productTypePrefix != null) {
-            name = productTypePrefix + " " + name;
-            version = productTypePrefix + " " + version;
-        }
+        String name = buildDefaultResourceName(hostPort, configName, productType);
+        String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("homeDir", homeDir));
         pluginConfig.put(new PropertySimple("baseDir", baseDir));
@@ -143,8 +122,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         if (productInfo.fromRemote) {
             version = productInfo.productName + " " + productInfo.productVersion;
             name = productInfo.productName + " " + productInfo.serverName;
-            String tmp = getServerDescr(productInfo.getProductName());
-            description = "Standalone " + tmp + " server";
         }
 
         //            String javaClazz = psr.getProcessInfo().getName();
@@ -202,9 +179,9 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
 
     protected abstract String getHostXmlFileName();
 
-    protected abstract String buildDefaultResourceName(HostPort hostPort, String configName, String productTypeName);
+    protected abstract String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType);
     
-    protected abstract String buildDefaultResourceDescription(HostPort hostPort, String productTypeName);
+    protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
     
     protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
         for (String line : commandLine) {
@@ -217,19 +194,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         }
 
         return managementPort;
-    }
-
-    // TODO: Move this to a ProductType enum.
-    private String getServerDescr(String productName) {
-        if (productName.equals("EAP"))
-            return JBOSS_EAP_6;
-        if (productName.equals("EDG"))
-            return JBOSS_EDG_6;
-        if (productName.equals("SOA"))
-            return JBOSS_SOA_6;
-        if (productName.equals("EPP"))
-            return JBOSS_EPP_6;
-        return AS7;
     }
 
     // Manually add a (remote) AS7 instance.
@@ -253,14 +217,14 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
 
         String resourceKey = hostname + ":" + portS + ":" + productName;
 
-        // TODO: Move this stuff to a ProductType enum.
         String description;
         if (productName.contains("EAP")) {
-            description = "Standalone JBoss Enterprise Application Platform server";
+            description = "Standalone" + JBossProductType.EAP.FULL_NAME + " server";
         } else if (productName.contains("EDG")) {
-            description = "Standalone JBoss Enterprise DataGrid server";
-        } else
+            description = "Standalone" + JBossProductType.EDG.FULL_NAME + " server";
+        } else {
             description = context.getResourceType().getDescription();
+        }
 
         pluginConfiguration.put(new PropertySimple("manuallyAdded", true));
 

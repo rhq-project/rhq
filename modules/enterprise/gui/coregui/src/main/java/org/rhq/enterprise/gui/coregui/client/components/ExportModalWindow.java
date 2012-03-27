@@ -40,7 +40,9 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 
 import java.util.LinkedHashMap;
@@ -54,8 +56,9 @@ import java.util.Set;
  */
 public class ExportModalWindow {
 
-    //@todo:pull from message bundle
-    private static String BASE_URL = GWT.getHostPageBaseURL() + "rest/1/reports/";
+    private static final Messages MSG = CoreGUI.getMessages();
+
+    private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
 
     private static final String FORMAT_FIELD = "format";
     private static final String DETAILS_FIELD = "details";

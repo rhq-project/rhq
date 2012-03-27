@@ -1,5 +1,19 @@
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -10,14 +24,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
@@ -40,17 +46,7 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 GenericDriftCriteria criteria  = new GenericDriftCriteria();
-                if(definition != null){
-                    //
-                    //criteria.addFilterDriftDefinitionId(snapshot);
-                }
-                if(snapshot != null){
-                    criteria.addFilterChangeSetStartVersion(1);// always start at 1 for this report
-                    criteria.addFilterChangeSetEndVersion(snapshot);
-                }
-                if(path != null){
-                    criteria.addFilterPath(path);
-                }
+                criteria.addFilterChangeSetStartVersion(1);// always start at 1 for this report
 
                 CriteriaQueryExecutor<DriftComposite, DriftCriteria> queryExecutor =
                         new CriteriaQueryExecutor<DriftComposite, DriftCriteria>() {

@@ -10,7 +10,7 @@
 #JBOSS_CONFIG=standalone
 
 # the number of instances to start
-#JBOSS_INSTANCES=1
+#JBOSS_INSTANCES=2
 
 # options to pass to the JBoss AS JVM
 #JAVA_OPTS="-Xms200M -Xmx400M -XX:MaxPermSize=150M -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000 -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.net.preferIPv4Stack=true"
@@ -70,17 +70,19 @@ if [ -n "${AS7}" ]; then
    echo "AS7 config file not found." >&2
    exit 1
  fi
+ AS7_ENCODED_PASSWORD=`echo -n "rhqadmin:ManagementRealm:rhqadmin" | md5sum | awk '{printf $1}'`
 fi
 
-for ((  i = 1 ;  i <= ${INSTANCES};  i++  )); do
+for ((  i = 1 ;  i <= ${JBOSS_INSTANCES};  i++  )); do
   CONFIG_DIR_NAME="${JBOSS_CONFIG}${i}"
   CONFIG_DIR="${SERVER_BASE_DIR}/${CONFIG_DIR_NAME}"
   if [ ! -d "${CONFIG_DIR}" ]; then
     echo "Creating new config dir '${CONFIG_DIR}'..."
-    cp -pr "${SERVER_BASE_DIR}/${JBOSS_CONFIG}" "${CONFIG_DIR}"
+    cp -pr "${JBOSS_CONFIG_DIR}" "${CONFIG_DIR}"
     ( cd "${CONFIG_DIR}" ; rm -rf data log tmp work )
     if [ -n "${AS7}" ]; then
         sed -in '{s/<inet-address /<loopback-address /}' "${CONFIG_FILE}"
+        echo "rhqadmin=${AS7_ENCODED_PASSWORD}" >"${CONFIG_DIR}/configuration/mgmt-users.properties"
     fi 
   fi
   BIND_ADDRESS="127.${OCTET}.0.${i}"

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
 import com.smartgwt.client.data.Criteria;
 
@@ -31,21 +31,23 @@ import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * A tabular report that shows the types of resources are installed and how many
- * of them are installed.
+ * A tweaked version of the InventorySummary report that narrows the relevant types to those that support Drift
+ * monitoring, and shows the compliance state of each type.
  * 
- * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
-public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView, HasViewName {
+public class DriftComplianceReport extends LocatableVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), IconEnum.INVENTORY_SUMMARY);
+    public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance(),
+        IconEnum.DRIFT_COMPLIANCE);
 
     private ResourceSearchView resourceList;
 
-    public ResourceInstallReport(String locatorId ) {
+    public DriftComplianceReport(String locatorId ) {
         super(locatorId);
         setHeight100();
         setWidth100();
@@ -72,7 +74,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(new InventorySummaryReportTable(extendLocatorId("table")));
+        addMember(new DriftComplianceReportTable(extendLocatorId("table")));
     }
 
     protected Criteria createResourceSearchViewCriteria(int resourceTypeId) {
@@ -90,7 +92,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList = new DriftComplianceReportResourceSearchView(extendLocatorId("resourceList"), criteria);
         addMember(resourceList);
         markForRedraw();
     }
@@ -108,5 +110,4 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     public ViewName getViewName() {
         return VIEW_ID;
     }
-
 }

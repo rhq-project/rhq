@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
 import java.util.List;
 

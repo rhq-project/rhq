@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
 import java.util.List;
 
@@ -47,16 +47,14 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class InventorySummaryDataSource extends RPCDataSource<ResourceInstallCount, Criteria> {
 
-    public class Field {
-        public static final String COUNT = "count"; // long that we convert to int
-        public static final String TYPENAME = "typeName"; // String
-        public static final String TYPEPLUGIN = "typePlugin"; // String
-        public static final String CATEGORY = "category"; // ResourceCategory
-        public static final String TYPEID = "typeId"; // int
-        public static final String VERSION = "version"; // String
-        public static final String OBJECT = "object";
-        public static final String EXPORT = "exportDetails";
-    }
+    public static final String COUNT = "count"; // long that we convert to int
+    public static final String TYPENAME = "typeName"; // String
+    public static final String TYPEPLUGIN = "typePlugin"; // String
+    public static final String CATEGORY = "category"; // ResourceCategory
+    public static final String TYPEID = "typeId"; // int
+    public static final String VERSION = "version"; // String
+    public static final String OBJECT = "object";
+    public static final String EXPORT = "exportDetails";
 
     public InventorySummaryDataSource() {
         setFields(getFields());
@@ -71,15 +69,15 @@ public class InventorySummaryDataSource extends RPCDataSource<ResourceInstallCou
     public ListGridRecord copyValues(ResourceInstallCount from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(Field.COUNT,
+        record.setAttribute(COUNT,
             Long.valueOf(from.getCount()).intValue()); // we'll never have over Integer.MAX_VALUE, overflow not a worry
-        record.setAttribute(Field.TYPENAME, from.getTypeName());
-        record.setAttribute(Field.TYPEPLUGIN, from.getTypePlugin());
-        record.setAttribute(Field.CATEGORY, from.getCategory().name());
-        record.setAttribute(Field.TYPEID, from.getTypeId());
-        record.setAttribute(Field.VERSION, from.getVersion());
-        record.setAttribute(Field.OBJECT, from);
-        record.setAttribute(Field.EXPORT, false);
+        record.setAttribute(TYPENAME, from.getTypeName());
+        record.setAttribute(TYPEPLUGIN, from.getTypePlugin());
+        record.setAttribute(CATEGORY, from.getCategory().name());
+        record.setAttribute(TYPEID, from.getTypeId());
+        record.setAttribute(VERSION, from.getVersion());
+        record.setAttribute(OBJECT, from);
+        record.setAttribute(EXPORT, false);
 
         return record;
     }
@@ -87,12 +85,12 @@ public class InventorySummaryDataSource extends RPCDataSource<ResourceInstallCou
     @Override
     public DataSourceField[] getFields() {
         return new DataSourceField[] {
-            new DataSourceLinkField(Field.TYPENAME),
-            new DataSourceTextField(Field.TYPEPLUGIN),
-            new DataSourceImageField(Field.CATEGORY),
-            new DataSourceTextField(Field.VERSION),
-            new DataSourceIntegerField(Field.COUNT),
-            new DataSourceBooleanField(Field.EXPORT)
+            new DataSourceLinkField(TYPENAME),
+            new DataSourceTextField(TYPEPLUGIN),
+            new DataSourceImageField(CATEGORY),
+            new DataSourceTextField(VERSION),
+            new DataSourceIntegerField(COUNT),
+            new DataSourceBooleanField(EXPORT)
         };
     }
 

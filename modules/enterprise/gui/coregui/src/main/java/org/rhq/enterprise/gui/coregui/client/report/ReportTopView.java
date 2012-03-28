@@ -46,6 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.alert.SubsystemRecentAlertsView;
 import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.report.inventory.DriftComplianceReport;
+import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;

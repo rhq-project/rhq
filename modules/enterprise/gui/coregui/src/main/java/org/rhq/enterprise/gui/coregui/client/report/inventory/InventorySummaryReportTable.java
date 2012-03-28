@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.report.ExportChangeHandler;
 
 /**
 * @author jsanda
@@ -61,8 +62,8 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
     @Override
     protected void configureTable() {
-        exportChangeHandler = new ExportChangeHandler(getListGrid(), InventorySummaryDataSource.Field.TYPEID,
-            InventorySummaryDataSource.Field.EXPORT);
+        exportChangeHandler = new ExportChangeHandler(getListGrid(), InventorySummaryDataSource.TYPEID,
+            InventorySummaryDataSource.EXPORT);
 
         List<ListGridField> fields = createListGridFields();
 
@@ -104,7 +105,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
     }
 
     protected ListGridField createNameField() {
-        ListGridField field = new ListGridField(InventorySummaryDataSource.Field.TYPENAME,
+        ListGridField field = new ListGridField(InventorySummaryDataSource.TYPENAME,
             MSG.common_title_resource_type());
         field.setWidth("35%");
 
@@ -124,13 +125,13 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
     }
 
     protected ListGridField createPluginField() {
-        ListGridField field = new ListGridField(InventorySummaryDataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());
+        ListGridField field = new ListGridField(InventorySummaryDataSource.TYPEPLUGIN, MSG.common_title_plugin());
         field.setWidth("10%");
         return field;
     }
 
     protected ListGridField createCategoryField() {
-        ListGridField field = new ListGridField(InventorySummaryDataSource.Field.CATEGORY,
+        ListGridField field = new ListGridField(InventorySummaryDataSource.CATEGORY,
             MSG.common_title_category());
 
         field.setWidth(70);
@@ -146,7 +147,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
         field.setHoverCustomizer(new HoverCustomizer() {
             @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String cat = record.getAttribute(InventorySummaryDataSource.Field.CATEGORY);
+                String cat = record.getAttribute(InventorySummaryDataSource.CATEGORY);
                 if (ResourceCategory.PLATFORM.name().equals(cat)) {
                     return MSG.common_title_platform();
                 } else if (ResourceCategory.SERVER.name().equals(cat)) {
@@ -162,13 +163,13 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
     }
 
     protected ListGridField createVersionField() {
-        ListGridField field = new ListGridField(InventorySummaryDataSource.Field.VERSION, MSG.common_title_version());
+        ListGridField field = new ListGridField(InventorySummaryDataSource.VERSION, MSG.common_title_version());
         field.setWidth("*");
         return field;
     }
 
     protected ListGridField createCountField() {
-        ListGridField field = new ListGridField(InventorySummaryDataSource.Field.COUNT, MSG.common_title_count());
+        ListGridField field = new ListGridField(InventorySummaryDataSource.COUNT, MSG.common_title_count());
         field.setWidth(60);
         return field;
     }
@@ -216,7 +217,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
                 int numColumns = table.getFields().length;
                 int row = 0;
                 for (ListGridRecord record : table.getRecords()) {
-                    record.setAttribute(InventorySummaryDataSource.Field.EXPORT, exportAll);
+                    record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
                     table.refreshCell(row++, numColumns - 1);
                 }
             }
@@ -226,8 +227,8 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
     private String getResourceTypeTableUrl(ListGridRecord selected) {
         String url = null;
         if (selected != null) {
-            int resourceTypeId = selected.getAttributeAsInt(InventorySummaryDataSource.Field.TYPEID);
-            String version = selected.getAttribute(InventorySummaryDataSource.Field.VERSION);
+            int resourceTypeId = selected.getAttributeAsInt(InventorySummaryDataSource.TYPEID);
+            String version = selected.getAttribute(InventorySummaryDataSource.VERSION);
             if (version == null) {
                 url = "#Reports/Inventory/" + getReportNameForResourceTypeURL() + "/" + resourceTypeId;
             } else {

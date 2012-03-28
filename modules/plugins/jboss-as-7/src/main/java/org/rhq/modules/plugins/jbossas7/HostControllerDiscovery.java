@@ -36,6 +36,9 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
 
     private static final String DOMAIN_BASE_DIR_SYSPROP = "jboss.domain.base.dir";
     private static final String DOMAIN_CONFIG_DIR_SYSPROP = "jboss.domain.config.dir";
+    private static final String DOMAIN_LOG_DIR_SYSPROP = "jboss.domain.log.dir";
+
+    private AS7CommandLineOption HOST_CONFIG_OPTION = new AS7CommandLineOption(null, "host-config");
 
     @Override
     protected AS7Mode getMode() {
@@ -53,13 +56,28 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
+    protected String getLogDirSystemPropertyName() {
+        return DOMAIN_LOG_DIR_SYSPROP;
+    }
+
+    @Override
     protected String getDefaultBaseDirName() {
         return "domain";
     }
 
     @Override
-    protected String getHostXmlFileName() {
+    protected AS7CommandLineOption getHostXmlFileNameOption() {
+        return HOST_CONFIG_OPTION;
+    }
+
+    @Override
+    protected String getDefaultHostXmlFileName() {
         return "host.xml";
+    }
+
+    @Override
+    protected String getLogFileName() {
+        return "host-controller.log";
     }
 
     @Override
@@ -76,19 +94,15 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected File getLogFile(ProcessInfo process) {
-        String bootLogFile = getLogFileFromCommandLine(process.getCommandLine());
-        return new File(bootLogFile);
-    }
-
-    @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
+        ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();
         String domainConfig = getServerConfigFromCommandLine(psr.getProcessInfo().getCommandLine(), getMode());
         pluginConfig.put(new PropertySimple("domainConfig", domainConfig));
-        pluginConfig.put(new PropertySimple("hostConfig", getHostXmlFile(psr.getProcessInfo())));
+        String configDirString = pluginConfig.getSimpleValue("configDir", null);
+        pluginConfig.put(new PropertySimple("hostConfig", getHostXmlFile(process, new File(configDirString))));
         return details;
     }
 

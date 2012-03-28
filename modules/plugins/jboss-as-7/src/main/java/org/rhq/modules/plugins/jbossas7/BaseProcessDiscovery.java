@@ -56,7 +56,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Abstract base discovery component for the two server types - "JBossAS7 Host Controller" and
  * "JBossAS7 Standalone Server".
  */
-public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
+public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
+        implements ResourceDiscoveryComponent, ManualAddFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -64,16 +65,16 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-        List<ProcessScanResult> scans = discoveryContext.getAutoDiscoveredProcesses();
-        for (ProcessScanResult psr : scans) {
+        List<ProcessScanResult> processScanResults = discoveryContext.getAutoDiscoveredProcesses();
+        for (ProcessScanResult processScanResult : processScanResults) {
             try {
-                DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, psr);
+                DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, processScanResult);
                 discoveredResources.add(details);
                 log.info("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
                         + details.getResourceKey() + "].");
             } catch (Exception e) {
-                log.error("Discovery for a " + discoveryContext.getResourceType().getName()
-                        + " Resource failed for process " + psr + ": " + e);
+                log.error("Discovery of a " + discoveryContext.getResourceType().getName()
+                        + " Resource failed for " + processScanResult.getProcessInfo() + ".", e);
             }
         }
 
@@ -86,16 +87,17 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         // for management port
         ProcessInfo process = psr.getProcessInfo();
         String[] commandLine = process.getCommandLine();
-        String homeDir = getHomeDir(process).getPath();
-        JBossProductType productType = JBossProductType.determineJBossProductType(new File(homeDir));
-        String version = determineServerVersionFromHomeDir(homeDir);
+        File homeDir = getHomeDir(process);
+        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
+        String version = determineServerVersionFromHomeDir(homeDir.getPath());
         if (productType != JBossProductType.AS) {
             version = productType.SHORT_NAME + " " + version;
         }
-        File baseDir = getBaseDir(process);
+        File baseDir = getBaseDir(process, homeDir);
         String configName = baseDir.getName();
         String key = baseDir.getPath();
-        readStandaloneOrHostXmlFromFile(getHostXmlFile(process).getPath()); // this sets this.hostXml
+        File configDir = getConfigDir(process, baseDir);
+        readStandaloneOrHostXmlFromFile(getHostXmlFile(process, configDir).getPath()); // this sets this.hostXml
         HostPort hostPort = getHostPortFromHostXml();
 
         String name = buildDefaultResourceName(hostPort, configName, productType);
@@ -103,12 +105,12 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
 
         pluginConfig.put(new PropertySimple("homeDir", homeDir));
         pluginConfig.put(new PropertySimple("baseDir", baseDir));
-        pluginConfig.put(new PropertySimple("configDir", getConfigDir(process)));
+        pluginConfig.put(new PropertySimple("configDir", configDir));
         pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
-        pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process))));
-        fillUserPassFromFile(pluginConfig, getMode(), homeDir);
-        String logFile = getLogFile(process).getAbsolutePath();
-        initLogEventSourcesConfigProp(logFile, pluginConfig);
+        pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process, configDir))));
+        fillUserPassFromFile(pluginConfig, getMode(), homeDir.getPath());
+        File logFile = getLogFile(getLogDir(process, baseDir));
+        initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
         HostPort managementHostPort = getManagementPortFromHostXml(commandLine);
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
@@ -141,41 +143,117 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
             pluginConfig, process);
     }
 
-    protected File getBaseDir(ProcessInfo process) {
+    protected File getBaseDir(ProcessInfo process, File homeDir) {
         String baseDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
                 getBaseDirSystemPropertyName());
-        File baseDir = (baseDirString != null) ? new File(FileUtils.getCanonicalPath(baseDirString)) :
-                new File(getHomeDir(process), getDefaultBaseDirName());
+        File baseDir;
+        if (baseDirString != null) {
+            baseDir = new File(baseDirString);
+            if (!baseDir.isAbsolute()) {
+                if (process.getExecutable() == null) {
+                    baseDir = new File(homeDir, baseDirString);
+                    if (!baseDir.exists()) {
+                        throw new RuntimeException(getBaseDirSystemPropertyName() + " for AS7 process " + process
+                                + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                    }
+                } else {
+                    String cwd = process.getExecutable().getCwd();
+                    baseDir = new File(cwd, baseDirString);
+                    if (!baseDir.exists()) {
+                        baseDir = new File(homeDir, baseDirString);                    
+                    }
+                }
+            }
+            baseDir = new File(FileUtils.getCanonicalPath(baseDir.getPath()));
+        } else {
+            baseDir = new File(homeDir, getDefaultBaseDirName());
+        }
         return baseDir;
     }
 
-    protected File getConfigDir(ProcessInfo process) {
+    protected File getConfigDir(ProcessInfo process, File baseDir) {
         String configDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
                 getConfigDirSystemPropertyName());
-        File configDir = (configDirString != null) ? new File(FileUtils.getCanonicalPath(configDirString)) :
-                new File(getBaseDir(process), getDefaultConfigDirName());
+        File configDir;
+        if (configDirString != null) {
+            configDir = new File(configDirString);
+            if (!configDir.isAbsolute()) {
+                if (process.getExecutable() == null) {
+                    throw new RuntimeException(getConfigDirSystemPropertyName() + " for AS7 process " + process
+                            + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                }
+                String cwd = process.getExecutable().getCwd();
+                configDir = new File(cwd, configDirString);
+            }
+            configDir = new File(FileUtils.getCanonicalPath(configDir.getPath()));
+        } else {
+            configDir = new File(baseDir, getDefaultConfigDirName());
+        }
         return configDir;
     }
 
-    protected File getHostXmlFile(ProcessInfo process) {
-        return new File(getConfigDir(process), getHostXmlFileName());
+    protected File getLogDir(ProcessInfo process, File baseDir) {
+        String logDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
+                getLogDirSystemPropertyName());
+        File logDir;
+        if (logDirString != null) {
+            logDir = new File(logDirString);
+            if (!logDir.isAbsolute()) {
+                if (process.getExecutable() == null) {
+                    throw new RuntimeException(getLogDirSystemPropertyName() + " for AS7 process " + process
+                            + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+                }
+                String cwd = process.getExecutable().getCwd();
+                logDir = new File(cwd, logDirString);
+            }
+            logDir = new File(FileUtils.getCanonicalPath(logDir.getPath()));
+        } else {
+            logDir = new File(baseDir, getDefaultLogDirName());
+        }
+        return logDir;
+    }
+
+    // Returns the name of the host config xml file (domain controller) or server config xml file (standalone server),
+    // e.g. "standalone.xml" or "host.xml".
+    protected String getHostXmlFileName(ProcessInfo process) {
+        AS7CommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
+        String optionValue = getOptionFromCommandLine(process.getCommandLine(), hostXmlFileNameOption);
+        return (optionValue != null) ? optionValue : getDefaultHostXmlFileName();
+    }
+
+
+    // Returns the host config xml file (domain controller) or server config xml file (standalone server).
+    protected File getHostXmlFile(ProcessInfo process, File configDir) {
+        return new File(configDir, getHostXmlFileName(process));
     }
 
     protected String getDefaultConfigDirName() {
         return "configuration";
     }
 
+    protected String getDefaultLogDirName() {
+        return "log";
+    }
+
     protected abstract AS7Mode getMode();
 
-    protected abstract File getLogFile(ProcessInfo process);
+    protected File getLogFile(File logDir) {
+        return new File(logDir, getLogFileName());
+    }
 
     protected abstract String getBaseDirSystemPropertyName();
 
     protected abstract String getConfigDirSystemPropertyName();
 
+    protected abstract String getLogDirSystemPropertyName();
+
     protected abstract String getDefaultBaseDirName();
 
-    protected abstract String getHostXmlFileName();
+    protected abstract AS7CommandLineOption getHostXmlFileNameOption();
+
+    protected abstract String getDefaultHostXmlFileName();
+
+    protected abstract String getLogFileName();
 
     protected abstract String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType);
 
@@ -187,20 +265,20 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
 
         String hostname = pluginConfiguration.getSimpleValue("hostname", null);
-        String portS = pluginConfiguration.getSimpleValue("port", null);
+        String portString = pluginConfiguration.getSimpleValue("port", null);
         String user = pluginConfiguration.getSimpleValue("user", null);
         String pass = pluginConfiguration.getSimpleValue("password", null);
 
-        if (hostname == null || portS == null) {
+        if (hostname == null || portString == null) {
             throw new InvalidPluginConfigurationException("Host and port must not be null");
         }
-        int port = Integer.valueOf(portS);
+        int port = Integer.valueOf(portString);
 
         ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
         String productName = productInfo.getProductName();
         String productVersion = productInfo.getProductVersion();
 
-        String resourceKey = hostname + ":" + portS + ":" + productName;
+        String resourceKey = hostname + ":" + port + ":" + productName;
 
         String description;
         if (productName.contains("EAP")) {

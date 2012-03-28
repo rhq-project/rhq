@@ -36,6 +36,9 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     private static final String SERVER_BASE_DIR_SYSPROP = "jboss.server.base.dir";
     private static final String SERVER_CONFIG_DIR_SYSPROP = "jboss.server.config.dir";
+    private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
+
+    private AS7CommandLineOption SERVER_CONFIG_OPTION = new AS7CommandLineOption('c', "server-config");
 
     @Override
     protected AS7Mode getMode() {
@@ -53,13 +56,28 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
+    protected String getLogDirSystemPropertyName() {
+        return SERVER_LOG_DIR_SYSPROP;
+    }
+
+    @Override
     protected String getDefaultBaseDirName() {
         return "standalone";
     }
 
     @Override
-    protected String getHostXmlFileName() {
+    protected AS7CommandLineOption getHostXmlFileNameOption() {
+        return SERVER_CONFIG_OPTION;
+    }
+
+    @Override
+    protected String getDefaultHostXmlFileName() {
         return "standalone.xml";
+    }
+
+    @Override
+    protected String getLogFileName() {
+        return "server.log";
     }
 
     @Override
@@ -79,13 +97,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected File getLogFile(ProcessInfo process) {
-        String bootLogFile = getLogFileFromCommandLine(process.getCommandLine());
-        File logDir = new File(bootLogFile).getParentFile();
-        return new File(logDir, "server.log");
-    }
-
-    @Override
     protected HostPort getManagementPortFromHostXml(String[] commandLine) {
         HostPort managementPort = super.getManagementPortFromHostXml(commandLine);
         if (!managementPort.withOffset) {
@@ -98,8 +109,10 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
+        ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();
-        pluginConfig.put(new PropertySimple("config", getHostXmlFile(psr.getProcessInfo())));
+        String configDirString = pluginConfig.getSimpleValue("configDir", null);
+        pluginConfig.put(new PropertySimple("config", getHostXmlFile(process, new File(configDirString))));
         return details;
     }
 

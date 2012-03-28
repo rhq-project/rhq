@@ -32,6 +32,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 
 import org.rhq.core.pluginapi.util.FileUtils;
@@ -44,9 +45,11 @@ import org.rhq.core.system.ProcessInfo;
  */
 public class AbstractBaseDiscovery {
 
-    static final String BOOT_LOG_FILE_SYSPROP = "org.jboss.boot.log.file";
     private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
+    private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
 
+    private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption(null, "bmanagement");
+    
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
@@ -79,17 +82,6 @@ public class AbstractBaseDiscovery {
         } catch (Exception e) {
             log.error(e.getMessage());
         }
-    }
-
-    /**
-     * Determine the location of the boot log file of the server by parsing the command line
-     * @param commandLine command line arguments of the process
-     * @return The log file location or empty string otherwise
-     */
-    //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log
-    //-Dlogging.configuration=file:/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/configuration/logging.properties
-    String getLogFileFromCommandLine(String[] commandLine) {
-        return getSystemPropertyFromCommandLine(commandLine, BOOT_LOG_FILE_SYSPROP, "");
     }
 
     /**
@@ -194,47 +186,24 @@ public class AbstractBaseDiscovery {
         if (value.contains(":")) {
             int i = value.indexOf(":");
             expression = value.substring(0, i);
-            fallback = value.substring(i + 1);
+            fallback = ((i + 1) < value.length()) ? value.substring(i + 1) : "";
         } else {
             expression = value;
         }
-        /*
-         * Now try to find the expression in the arguments.
-         * AS 7 unfortunately is "too clever" and we need to look for
-         * -D jboss.bind.address.management
-         * or
-         * -b management
-         * to find the management addresss
-         */
 
-        String ret = null;
-        for (int i = 0, commandLineLength = commandLine.length; i < commandLineLength; i++) {
-            String line = commandLine[i];
-            if (expression.contains("address")) {
-                if (line.contains("-bmanagement") || line.contains("jboss.bind.address.management")) {
-                    if (line.contains("="))
-                        ret = line.substring(line.indexOf("=") + 1); // -bmanagement=1.2.3.4
-                    else
-                        ret = commandLine[i + 1]; // -bmanagement 1.2.3.4
-                    break;
-                }
-            } else if (expression.equals("jboss.management.http.port")) {
-                if (line.contains(expression)) {
-                    ret = line.substring(line.indexOf("=") + 1);
-                    break;
-                }
-            } else if (expression.equals(SOCKET_BINDING_PORT_OFFSET_SYSPROP)) {
-                if (line.contains(expression)) {
-                    ret = line.substring(line.indexOf('=')+1);
-                    break;
-                }
-            }
+        String resolvedValue = null;
+        if (expression.equals(BIND_ADDRESS_MANAGEMENT_SYSPROP)) {
+            // special case: mgmt address can be specified via either -bmanagement= or -Djboss.bind.address.management=
+            resolvedValue = getOptionFromCommandLine(commandLine, BIND_ADDRESS_MANAGEMENT_OPTION);
         }
-        if (ret == null)
-            ret = fallback;
+        if (resolvedValue == null) {
+            resolvedValue = getSystemPropertyFromCommandLine(commandLine, expression);
+        }
+        if (resolvedValue == null) {
+            resolvedValue = fallback;
+        }
 
-        return ret;
-
+        return resolvedValue;
     }
 
     /**
@@ -314,7 +283,17 @@ public class AbstractBaseDiscovery {
     protected File getHomeDir(ProcessInfo processInfo) {
         String home = getSystemPropertyFromCommandLine(processInfo.getCommandLine(), HOME_DIR_SYSPROP,
                 processInfo.getEnvironmentVariable("JBOSS_HOME"));
-        return new File(FileUtils.getCanonicalPath(home));
+        File homeDir = new File(home);
+        if (!homeDir.isAbsolute()) {
+            if (processInfo.getExecutable() == null) {
+                throw new RuntimeException(HOME_DIR_SYSPROP + " for AS7 process " + processInfo
+                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+            }
+            String cwd = processInfo.getExecutable().getCwd();
+            homeDir = new File(cwd, home);
+        }
+        
+        return new File(FileUtils.getCanonicalPath(homeDir.getPath()));
     }
 
     protected String determineServerVersionFromHomeDir(String homeDir) {
@@ -356,17 +335,20 @@ public class AbstractBaseDiscovery {
         }
     }
 
+    @Nullable
     protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName) {
         return getSystemPropertyFromCommandLine(commandLine, systemPropertyName, null);
     }
 
+    @Nullable
     protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName,
-                                                           String defaultValue) {
-        for (String arg : commandLine) {
-            String prefix = "-D" + systemPropertyName;
-            String prefixWithEqualsSign = prefix + "=";
+                                                             String defaultValue) {
+        String prefix = "-D" + systemPropertyName;
+        String prefixWithEqualsSign = prefix + "=";
+        for (String arg : commandLine) {            
             if (arg.startsWith(prefixWithEqualsSign)) {
-                return arg.substring(prefixWithEqualsSign.length());
+                return (prefixWithEqualsSign.length() < arg.length()) ?
+                    arg.substring(prefixWithEqualsSign.length()) : "";
             } else if (arg.equals(prefix)) {
                 return "";
             }
@@ -374,14 +356,48 @@ public class AbstractBaseDiscovery {
         return defaultValue;
     }
 
-    protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
-        for (String line : commandLine) {
-            if (line.contains(SOCKET_BINDING_PORT_OFFSET_SYSPROP)) {
-                String tmp = line.substring(line.indexOf('=')+1);
-                Integer offset = Integer.valueOf(tmp);
-                managementPort.port+=offset;
-                break;
+    @Nullable
+    protected static String getOptionFromCommandLine(String[] commandLine, AS7CommandLineOption option) {
+        String shortOptionPrefix;
+        String shortOption;
+        if (option.getShortName() != null) {
+            shortOption = "-" + option.getShortName();
+            shortOptionPrefix = shortOption + "=";
+        } else {
+            shortOption = null;
+            shortOptionPrefix = null;
+        }
+        String longOptionPrefix;
+        if (option.getLongName() != null) {
+            longOptionPrefix = "--" + option.getLongName() + "=";
+        } else {
+            longOptionPrefix = null;
+        }
+        for (int i = 0, commandLineLength = commandLine.length; i < commandLineLength; i++) {
+            String arg = commandLine[i];
+            if (option.getShortName() != null) {
+                if (arg.startsWith(shortOptionPrefix)) {
+                    return (shortOptionPrefix.length() < arg.length()) ? arg.substring(shortOptionPrefix.length()) : "";
+                } else if (arg.equals(shortOption)) {
+                    return (i != (commandLineLength - 1)) ? commandLine[i + 1] : "";
+                }
             }
+            if (option.getLongName() != null) {
+                if (arg.startsWith(longOptionPrefix)) {
+                    return (longOptionPrefix.length() < arg.length()) ? arg.substring(longOptionPrefix.length()) : "";
+                }
+            }
+        }
+        // If we reached here, the option wasn't on the command line.
+
+        return null;
+    }
+    
+    protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
+        String value = getSystemPropertyFromCommandLine(commandLine, SOCKET_BINDING_PORT_OFFSET_SYSPROP);
+        if (value != null) {
+            int offset = Integer.valueOf(value);
+            managementPort.port += offset;
         }
 
         return managementPort;
@@ -412,4 +428,5 @@ public class AbstractBaseDiscovery {
             return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isLocal=" + isLocal + '}';
         }
     }
+
 }

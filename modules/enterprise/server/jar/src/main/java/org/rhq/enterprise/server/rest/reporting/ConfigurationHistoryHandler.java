@@ -7,16 +7,15 @@ import java.io.OutputStream;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -34,11 +33,9 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
     @EJB
     private ConfigurationManagerLocal configurationManager;
 
-    @EJB
-    private SubjectManagerLocal subjectMgr;
-
     @Override
-    public StreamingOutput configurationHistory(UriInfo uriInfo, Request request, HttpHeaders headers ) {
+    public StreamingOutput configurationHistory(UriInfo uriInfo, final HttpServletRequest request,
+        HttpHeaders headers ) {
 
         return new StreamingOutput() {
             @Override
@@ -71,16 +68,28 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
                         + formatDateTime(configurationUpdate.getCreatedTime())+","
                         + formatDateTime(configurationUpdate.getModifiedTime())+","
                         + configurationUpdate.getStatus()+","
-                        + cleanForCSV(ReportHelper.parseAncestry(configurationUpdate.getResource().getAncestry()));
+                        + cleanForCSV(ReportHelper.parseAncestry(configurationUpdate.getResource().getAncestry())) + ","
+                        + getDetailsURL(configurationUpdate);
                 //@todo: check dates, user, update-type
             }
 
             private String getHeader(){
-                return "Name,Version,Date Submitted,Date Completed,Status,Ancestry";
+                return "Name,Version,Date Submitted,Date Completed,Status,Ancestry,Details URL";
             }
 
-        };
+            private String getDetailsURL(ResourceConfigurationUpdate configUpdate) {
+                String protocol;
+                if (request.isSecure()) {
+                    protocol = "https";
+                } else {
+                    protocol = "http";
+                }
 
+                return protocol + "://" + request.getServerName() + ":" + request.getServerPort() +
+                    "/coregui/#Resource/" + configUpdate.getResource().getId() + "/Configuration/History/" +
+                    configUpdate.getId();
+            }
+        };
     }
 
 }

@@ -58,8 +58,13 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                     log.info("Drift Snapshot version Filter set for: " + snapshot);
                     criteria.addFilterChangeSetEndVersion(snapshot);
                 }
+                if(path != null){
+                    log.info("Drift Path Filter set for: " + path);
+                    criteria.addFilterPath(path);
+                }
                 if(definition != null){
-                    //@todo: drift definition search
+                    log.info("Drift Definition Filter set for: " + definition);
+                    criteria.addFilterId(path);
                 }
 
                 List<DriftCategory> driftCategoryList = new ArrayList<DriftCategory>(10);

@@ -234,7 +234,7 @@
     <server name="listOfPlainMaps"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
-             description="JacORB subsystem configuration"
+             description="list of plain maps"
              singleton="true">
 
         <resource-configuration>
@@ -244,6 +244,33 @@
                    <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
                 </c:map-property>
             </c:list-property>
+        </resource-configuration>
+    </server>
+
+    <server name="groupedproperties"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="same name grouped properties"
+             singleton="true">
+        <resource-configuration>
+            <c:group name="child:first-group=first-group" displayName="First group">
+               <c:simple-property name="firstprop:1"  type="string"/>
+               <c:list-property name="secondprop:2" displayName="Properties" required="false" readOnly="false">               
+                    <c:simple-property name="name" displayName="Property-Name"/>
+               </c:list-property>
+               <c:map-property name="thirdprop:3" displayName="Keepalive Time" description="Sample map property." >
+                    <c:simple-property name="value" required="true" type="string" description="value"/>
+               </c:map-property>
+            </c:group>
+            <c:group name="child:second-group=second-group" displayName="First group">
+               <c:simple-property name="firstprop:4" type="string"/>
+               <c:list-property name="secondprop:5" displayName="Properties" required="false" readOnly="false">               
+                    <c:simple-property name="name" displayName="Property-Name"/>
+               </c:list-property>
+               <c:map-property name="thirdprop:6" displayName="Keepalive Time" description="Sample map property." >
+                    <c:simple-property name="value" required="true" type="string" description="value"/>
+               </c:map-property>
+            </c:group>
         </resource-configuration>
     </server>
 

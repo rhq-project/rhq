@@ -525,4 +525,60 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
             index++;
         }
     }
+
+    public void testGroupedPropertiesWithIdenticalNames() throws Exception {
+        String resultString = loadJsonFromFile("groupedproperties.json");
+
+        ConfigurationDefinition definition = loadDescriptor("groupedproperties");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        Assert.assertEquals(properties.size(), 6);
+
+        for (int index = 1; index < 5; index += 3) {
+            String stringValue = index + "" + (index + 1) + "" + (index + 2);
+
+            String firstPropName = "firstprop:" + index;
+            boolean firstPropFound = false;
+            String secondPropName = "secondprop:" + (index + 1);
+            boolean secondPropFound = false;
+            String thirdPropName = "thirdprop:" + (index + 2);
+            boolean thirdPropFound = false;
+
+            for (Property property : properties) {
+                if (property.getName().equals(firstPropName)) {
+                    firstPropFound = true;
+                    Assert.assertEquals(((PropertySimple) property).getStringValue(), stringValue);
+                } else if (property.getName().equals(secondPropName)) {
+                    secondPropFound = true;
+                    PropertyList list = (PropertyList) property;
+                    Assert.assertEquals(list.getList().size(), 3);
+                    for (int i = 0; i < 3; i++) {
+                        PropertySimple simpleProperty = (PropertySimple) list.getList().get(i);
+                        String expectedValue = "test" + (i + index);
+                        Assert.assertEquals(simpleProperty.getStringValue(), expectedValue);
+                    }
+                } else if (property.getName().equals(thirdPropName)) {
+                    thirdPropFound = true;
+                    PropertyMap map = (PropertyMap) property;
+                    Assert.assertEquals(map.getMap().size(), 1);
+                    String actualValue = ((PropertySimple) (map.get("value"))).getStringValue();
+                    Assert.assertEquals(actualValue, stringValue);
+                }
+            }
+
+            Assert.assertTrue(firstPropFound);
+            Assert.assertTrue(secondPropFound);
+            Assert.assertTrue(thirdPropFound);
+        }
+    }
 }

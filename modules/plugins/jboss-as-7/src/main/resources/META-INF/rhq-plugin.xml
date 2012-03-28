@@ -2694,10 +2694,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <c:group name="child:bean-validation=bean-validation" displayName="Bean validation (JSR-303) for resource adapters.">
-                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether bean validation is enabled. The default value is true."/>
+                <c:simple-property name="enabled:1" required="false" type="boolean" readOnly="false" defaultValue="true" displayName="Enabled" description="Specify whether bean validation is enabled. The default value is true."/>
             </c:group>
             <c:group name="child:archive-validation=archive-validation" displayName="Archive validation for resource adapters.">
-                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether archive validation is enabled. The default value is true."/>
+                <c:simple-property name="enabled:2" required="false" type="boolean" readOnly="false" defaultValue="true" displayName="Enabled" description="Specify whether archive validation is enabled. The default value is true."/>
                 <c:simple-property name="fail-on-error" required="false" type="boolean" readOnly="false" defaultValue="true" description="Should an archive validation error report fail the deployment. The default value is true."/>
                 <c:simple-property name="fail-on-warn" required="false" type="boolean" readOnly="false" defaultValue="false" description="Should an archive validation warning report fail the deployment. The default value is false."/>
             </c:group>
@@ -2736,28 +2736,28 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the WorkManager"/>
 
                 <c:group name="child:long-running-threads=default-long-running-threads" displayName="Long running thread pool executor with a bounded queue where threads submittings tasks may block.">
-	                <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether core threads may time out. The default value is false."/>
-	                <c:simple-property name="core-threads:expr" required="false" type="string" readOnly="false" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-	                <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
+	                <c:simple-property name="allow-core-timeout:1" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
+	                <c:simple-property name="core-threads:expr:2" required="false" type="string" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+	                <c:map-property name="keepalive-time:3" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
 	                   <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
 	                   <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
 	                </c:map-property>
-	                <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
-	                <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
-	                <c:simple-property name="queue-length:expr" required="false" type="string" readOnly="false" description="The queue length."/>
-	                <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+	                <c:simple-property name="max-threads:expr:4" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
+	                <c:simple-property name="name:5" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
+	                <c:simple-property name="queue-length:expr:6" required="false" type="string" readOnly="false" displayName="Queue Length" description="The queue length."/>
+	                <c:simple-property name="thread-factory:7" required="false" type="string" readOnly="false" displayName="Thread Factory" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
                 </c:group>
                  <c:group name="child:short-running-threads=default-short-running-threads" displayName="Short running thread pool executor with a bounded queue where threads submittings tasks may block.">
-                    <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether core threads may time out. The default value is false."/>
-                    <c:simple-property name="core-threads:expr" required="false" type="string" readOnly="false" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-                    <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
+                    <c:simple-property name="allow-core-timeout:8" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
+                    <c:simple-property name="core-threads:expr:9" required="false" type="string" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+                    <c:map-property name="keepalive-time:10" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
                         <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
                         <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
                     </c:map-property>
-                    <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
-                    <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
-                    <c:simple-property name="queue-length:expr" required="false" type="string" readOnly="false" description="The queue length."/>
-                    <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+                    <c:simple-property name="max-threads:expr:11" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
+                    <c:simple-property name="name:12" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
+                    <c:simple-property name="queue-length:expr:13" required="false" type="string" readOnly="false" displayName="Queue Length" description="The queue length."/>
+                    <c:simple-property name="thread-factory:14" required="false" type="string" readOnly="false" displayName="Thread Factory" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
                 </c:group>
             </resource-configuration>
         </service>

@@ -240,12 +240,11 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
     }
 
-    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
-                                         Address address) {
-
-        String propName = prop.getName();
+    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef, Address address) {
         Operation writeAttribute;
         Map<String,Object> results;
+
+        String propName = stripNumberIdentifier(prop.getName());
         if (propName.endsWith(":collapsed")) {
             String realName = propName.substring(0, propName.indexOf(':'));
             results = handleCollapsedMap(prop, propDef);
@@ -386,7 +385,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 values.add(mapResult);
             }
         }
-        Operation writeAttribute = new WriteAttribute(address,prop.getName(),values);
+
+        String name = stripNumberIdentifier(prop.getName());
+        Operation writeAttribute = new WriteAttribute(address,name,values);
         cop.addStep(writeAttribute);
     }
 
@@ -399,7 +400,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             return;
 
         Operation writeAttribute = new WriteAttribute(address);
-        String name = propertySimple.getName();
+        String name = stripNumberIdentifier(propertySimple.getName());
         if (name.endsWith(":expr")) {
 
             String realName = name.substring(0,name.indexOf(":"));
@@ -482,5 +483,17 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return ret;
     }
 
-
+    private String stripNumberIdentifier(String name) {
+        //strip :number from the property name, it's not needed
+        //it was added in the descriptor as unique identifier
+        if (name.contains(":")) {
+            try {
+                Integer.parseInt(name.substring(name.lastIndexOf(':') + 1));
+                name = name.substring(0, name.lastIndexOf(':'));
+            } catch (Exception e) {
+                //do nothing, this means the property name does not end with :number, so nothing needs to be stripped
+            }
+        }
+        return name;
+    }
 }

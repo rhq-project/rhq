@@ -206,6 +206,17 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             } else { // standard case
 
                 Object valueObject;
+
+                //strip :number from properties
+                if (propertyName.contains(":")) {
+                    try {
+                        Integer.parseInt(propertyName.substring(propertyName.lastIndexOf(':') + 1));
+                        propertyName = propertyName.substring(0, propertyName.lastIndexOf(':'));
+                    } catch (Exception e) {
+                        //do nothing, this means the property name does not end with :number, so nothing needs to be stripped
+                    }
+                }
+
                 if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")) {
                     String realName = propertyName.substring(0, propertyName.indexOf(":"));
                     valueObject = results.get(realName);

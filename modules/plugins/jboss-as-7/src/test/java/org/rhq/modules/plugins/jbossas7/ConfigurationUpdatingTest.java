@@ -45,7 +45,8 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 @Test(groups = "unit")
 public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest {
 
-    ObjectMapper mapper ;
+    ObjectMapper mapper;
+
     @BeforeSuite
     void loadPluginDescriptor() throws Exception {
         super.loadPluginDescriptor();
@@ -60,20 +61,19 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        conf.put(new PropertySimple("needed","test"));
-        conf.put(new PropertySimple("optional",null));
+        conf.put(new PropertySimple("needed", "test"));
+        conf.put(new PropertySimple("optional", null));
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1;
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
-
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
 
     }
 
@@ -83,13 +83,11 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        PropertyList propertyList = new PropertyList("foo",
-                new PropertySimple("optional","Hello"),
-                new PropertySimple("optional",null),
-                new PropertySimple("optional","world"));
+        PropertyList propertyList = new PropertyList("foo", new PropertySimple("optional", "Hello"),
+            new PropertySimple("optional", null), new PropertySimple("optional", "world"));
 
         conf.put(propertyList);
 
@@ -98,12 +96,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
         List<String> values = (List<String>) props.get("value");
-        assert values.size()==2 : "Values had "+ values.size() + " entries"; // The optional null must not be present
-
-
+        assert values.size() == 2 : "Values had " + values.size() + " entries"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
 
@@ -115,12 +111,11 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        PropertyMap propertyMap = new PropertyMap("foo",
-                new PropertySimple("needed","Hello"),
-                new PropertySimple("optional","world"));
+        PropertyMap propertyMap = new PropertyMap("foo", new PropertySimple("needed", "Hello"), new PropertySimple(
+            "optional", "world"));
 
         conf.put(propertyMap);
 
@@ -129,26 +124,26 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
-        Map<String,Object> values = (Map<String,Object>) props.get("value");
-        assert values.size()==2 : "Values had "+ values.size() + " entries instead of 2"; // The optional null must not be present
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        Map<String, Object> values = (Map<String, Object>) props.get("value");
+        assert values.size() == 2 : "Values had " + values.size() + " entries instead of 2"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
 
     }
+
     public void test4() throws Exception {
 
         ConfigurationDefinition definition = loadDescriptor("mapOfSimple1");
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        PropertyMap propertyMap = new PropertyMap("foo",
-                new PropertySimple("needed","Hello"),
-                new PropertySimple("readOnly","world"));
+        PropertyMap propertyMap = new PropertyMap("foo", new PropertySimple("needed", "Hello"), new PropertySimple(
+            "readOnly", "world"));
 
         conf.put(propertyMap);
 
@@ -157,10 +152,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
-        Map<String,Object> values = (Map<String,Object>) props.get("value");
-        assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        Map<String, Object> values = (Map<String, Object>) props.get("value");
+        assert values.size() == 1 : "Values had " + values.size() + " entries instead of 1"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
 
@@ -172,11 +167,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        PropertyMap propertyMap = new PropertyMap("foo",
-                new PropertySimple("needed","Hello"));
+        PropertyMap propertyMap = new PropertyMap("foo", new PropertySimple("needed", "Hello"));
 
         conf.put(propertyMap);
 
@@ -185,10 +179,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
-        Map<String,Object> values = (Map<String,Object>) props.get("value");
-        assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        Map<String, Object> values = (Map<String, Object>) props.get("value");
+        assert values.size() == 1 : "Values had " + values.size() + " entries instead of 1"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
 
@@ -200,14 +194,13 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
-        PropertyMap propertyMap = new PropertyMap("theMap",
-                new PropertySimple("needed","Hello"),
-                new PropertySimple("optional","World"));
+        PropertyMap propertyMap = new PropertyMap("theMap", new PropertySimple("needed", "Hello"), new PropertySimple(
+            "optional", "World"));
 
-        PropertyList propertyList = new PropertyList("foo",propertyMap);
+        PropertyList propertyList = new PropertyList("foo", propertyMap);
 
         conf.put(propertyList);
 
@@ -216,12 +209,12 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
         assert step1.getOperation().equals("write-attribute");
-        Map<String,Object> props = step1.getAdditionalProperties();
-        assert props.size()==2;
-        List<Map<String,Object>> values = (List<Map<String, Object>>) props.get("value");
-        assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
-        Map<String,Object> map = values.get(0);
-        assert map.size()==2 : "Map had " + map.size() + " entries instead of two";
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        List<Map<String, Object>> values = (List<Map<String, Object>>) props.get("value");
+        assert values.size() == 1 : "Values had " + values.size() + " entries instead of 1"; // The optional null must not be present
+        Map<String, Object> map = values.get(0);
+        assert map.size() == 2 : "Map had " + map.size() + " entries instead of two";
 
         String result = mapper.writeValueAsString(cop);
 
@@ -232,17 +225,17 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
         PropertyMap propertyMap = new PropertyMap("http");
-        propertyMap.put(new PropertySimple("name","http"));
-        propertyMap.put(new PropertySimple("port",18080));
-        propertyMap.put(new PropertySimple("fixed-port",false));
+        propertyMap.put(new PropertySimple("name", "http"));
+        propertyMap.put(new PropertySimple("port", 18080));
+        propertyMap.put(new PropertySimple("fixed-port", false));
         PropertyList propertyList = new PropertyList("*");
         propertyList.add(propertyMap);
         conf.put(propertyList);
-        conf.put(new PropertySimple("port-offset",0));
+        conf.put(new PropertySimple("port-offset", 0));
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
@@ -253,23 +246,23 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         // As we do not specify a base address when creating the delegate 0 or 1 address element is ok.
         assert step1.getAddress().isEmpty();
-        assert step2.getAddress().size()==1;
-        assert step3.getAddress().size()==1;
+        assert step2.getAddress().size() == 1;
+        assert step3.getAddress().size() == 1;
 
         assert step1.getAdditionalProperties().get("name").equals("port-offset");
         assert step1.getAdditionalProperties().get("value").equals("0");
 
         assert step2.getAdditionalProperties().get("name").equals("port");
         Object value = step2.getAdditionalProperties().get("value");
-        assert value !=null;
+        assert value != null;
         assert value instanceof Integer;
-        assert (Integer)value == 18080;
+        assert (Integer) value == 18080;
 
         assert step3.getAdditionalProperties().get("name").equals("fixed-port");
         Object value1 = step3.getAdditionalProperties().get("value");
-        assert value1 !=null;
+        assert value1 != null;
         assert value1 instanceof Boolean;
-        assert !(Boolean)value1;
+        assert !(Boolean) value1;
 
         assert step2.getAddress().get(0).equals("socket-binding=http");
         assert step3.getAddress().get(0).equals("socket-binding=http");
@@ -280,24 +273,24 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
         PropertyList propertyList = new PropertyList("*");
         PropertyMap propertyMap = new PropertyMap("binding");
-        propertyMap.put(new PropertySimple("name","http"));
-        propertyMap.put(new PropertySimple("port",18080));
-        propertyMap.put(new PropertySimple("fixed-port",false));
+        propertyMap.put(new PropertySimple("name", "http"));
+        propertyMap.put(new PropertySimple("port", 18080));
+        propertyMap.put(new PropertySimple("fixed-port", false));
         propertyList.add(propertyMap);
 
         propertyMap = new PropertyMap("binding");
-        propertyMap.put(new PropertySimple("name","https"));
-        propertyMap.put(new PropertySimple("port",18081));
-        propertyMap.put(new PropertySimple("fixed-port",false));
+        propertyMap.put(new PropertySimple("name", "https"));
+        propertyMap.put(new PropertySimple("port", 18081));
+        propertyMap.put(new PropertySimple("fixed-port", false));
         propertyList.add(propertyMap);
 
         conf.put(propertyList);
-        conf.put(new PropertySimple("port-offset",0));
+        conf.put(new PropertySimple("port-offset", 0));
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
@@ -310,24 +303,23 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         // As we do not specify a base address when creating the delegate 0 or 1 address element is ok.
         assert step1.getAddress().isEmpty();
-        assert step2.getAddress().size()==1;
-        assert step3.getAddress().size()==1;
+        assert step2.getAddress().size() == 1;
+        assert step3.getAddress().size() == 1;
 
         assert step1.getAdditionalProperties().get("name").equals("port-offset");
         assert step1.getAdditionalProperties().get("value").equals("0");
 
         assert step2.getAdditionalProperties().get("name").equals("port");
         Object value = step2.getAdditionalProperties().get("value");
-        assert value !=null;
+        assert value != null;
         assert value instanceof Integer;
-        assert (Integer)value == 18080;
-
+        assert (Integer) value == 18080;
 
         assert step3.getAdditionalProperties().get("name").equals("fixed-port");
         Object value1 = step3.getAdditionalProperties().get("value");
-        assert value1 !=null;
+        assert value1 != null;
         assert value1 instanceof Boolean;
-        assert !(Boolean)value1;
+        assert !(Boolean) value1;
 
         assert step2.getAddress().get(0).equals("socket-binding=http");
         assert step3.getAddress().get(0).equals("socket-binding=http");
@@ -341,16 +333,16 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
 
-        conf.put(new PropertySimple("default-virtual-server","hulla")); // this is read-only and must not show up in result
-        conf.put(new PropertySimple("test-prop","Heiko"));
-        conf.put(new PropertySimple("check-interval",23));
-        conf.put(new PropertySimple("disabled",true));
-        conf.put(new PropertySimple("listings",false));
-        conf.put(new PropertySimple("max-depth",17));
+        conf.put(new PropertySimple("default-virtual-server", "hulla")); // this is read-only and must not show up in result
+        conf.put(new PropertySimple("test-prop", "Heiko"));
+        conf.put(new PropertySimple("check-interval", 23));
+        conf.put(new PropertySimple("disabled", true));
+        conf.put(new PropertySimple("listings", false));
+        conf.put(new PropertySimple("max-depth", 17));
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
@@ -363,10 +355,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         Operation step5 = cop.step(4);
 
         assert step1.getAddress().isEmpty();
-        assert step2.getAddress().size()==1;
-        assert step3.getAddress().size()==1;
-        assert step4.getAddress().size()==1;
-        assert step5.getAddress().size()==1;
+        assert step2.getAddress().size() == 1;
+        assert step3.getAddress().size() == 1;
+        assert step4.getAddress().size() == 1;
+        assert step5.getAddress().size() == 1;
         assert step2.getAddress().get(0).equals("configuration=jsp-configuration");
         assert step3.getAddress().get(0).equals("configuration=jsp-configuration");
         assert step4.getAddress().get(0).equals("configuration=static-resources");
@@ -387,13 +379,12 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String resultString = loadJsonFromFile("system-props.json");
 
         ObjectMapper mapper = new ObjectMapper();
-        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
         JsonNode json = mapper.valueToTree(result);
 
         connection.setContent(json);
 
-
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
 
@@ -402,15 +393,14 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         PropertyList propertyList = new PropertyList("*2");
         PropertyMap propertyMap = new PropertyMap("*");
-        propertyMap.put(new PropertySimple("name","hulla"));
-        propertyMap.put(new PropertySimple("value","hopp"));
+        propertyMap.put(new PropertySimple("name", "hulla"));
+        propertyMap.put(new PropertySimple("value", "hopp"));
         propertyList.add(propertyMap);
         propertyMap = new PropertyMap("*");
-        propertyMap.put(new PropertySimple("name","bar"));
-        propertyMap.put(new PropertySimple("value","42!"));
+        propertyMap.put(new PropertySimple("name", "bar"));
+        propertyMap.put(new PropertySimple("value", "42!"));
         propertyList.add(propertyMap);
         conf.put(propertyList);
-
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
@@ -420,9 +410,9 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         Operation step2 = cop.step(1);
         Operation step3 = cop.step(2);
 
-        assert step1.getAddress().size()==1;
-        assert step2.getAddress().size()==1;
-        assert step3.getAddress().size()==1;
+        assert step1.getAddress().size() == 1;
+        assert step2.getAddress().size() == 1;
+        assert step3.getAddress().size() == 1;
         assert step1.getAddress().get(0).equals("system-property=hulla");
         assert step2.getAddress().get(0).equals("system-property=bar");
         assert step3.getAddress().get(0).equals("system-property=hello");
@@ -444,13 +434,12 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String resultString = loadJsonFromFile("system-props.json");
 
         ObjectMapper mapper = new ObjectMapper();
-        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
         JsonNode json = mapper.valueToTree(result);
 
         connection.setContent(json);
 
-
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
 
@@ -461,17 +450,16 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         PropertyList propertyList = new PropertyList("*2");
         PropertyMap propertyMap = new PropertyMap("*");
         // add 'hulla'
-        propertyMap.put(new PropertySimple("name","hulla"));
-        propertyMap.put(new PropertySimple("value","hopp"));
+        propertyMap.put(new PropertySimple("name", "hulla"));
+        propertyMap.put(new PropertySimple("value", "hopp"));
         propertyList.add(propertyMap);
         propertyMap = new PropertyMap("*");
         // update 'bar' -> needs to trigger a remove + an :add
-        propertyMap.put(new PropertySimple("name","bar"));
-        propertyMap.put(new PropertySimple("value","42!"));
+        propertyMap.put(new PropertySimple("name", "bar"));
+        propertyMap.put(new PropertySimple("value", "42!"));
         propertyList.add(propertyMap);
         conf.put(propertyList);
         // 'hello' is not present -> needs to trigger a :remove for it
-
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
@@ -482,10 +470,10 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         Operation step3 = cop.step(2);
         Operation step4 = cop.step(3);
 
-        assert step1.getAddress().size()==1;
-        assert step2.getAddress().size()==1;
-        assert step3.getAddress().size()==1;
-        assert step4.getAddress().size()==1;
+        assert step1.getAddress().size() == 1;
+        assert step2.getAddress().size() == 1;
+        assert step3.getAddress().size() == 1;
+        assert step4.getAddress().size() == 1;
         assert step1.getAddress().get(0).equals("system-property=hulla");
         assert step2.getAddress().get(0).equals("system-property=bar");
         assert step3.getAddress().get(0).equals("system-property=bar");
@@ -509,24 +497,23 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String resultString = loadJsonFromFile("expressionTest.json");
 
         ObjectMapper mapper = new ObjectMapper();
-        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
         JsonNode json = mapper.valueToTree(result);
 
         connection.setContent(json);
 
-
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
 
-        conf.put(new PropertySimple("foo:expr",123));
-        conf.put(new PropertySimple("foo2:expr","${foo:42}"));
-        conf.put(new PropertySimple("bar",456));
+        conf.put(new PropertySimple("foo:expr", 123));
+        conf.put(new PropertySimple("foo2:expr", "${foo:42}"));
+        conf.put(new PropertySimple("bar", 456));
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop != null;
-        assert cop.numberOfSteps()==3;
+        assert cop.numberOfSteps() == 3;
 
         Map<String, Object> additionalProperties = cop.step(0).getAdditionalProperties();
         assert additionalProperties.get("name").equals("foo");
@@ -534,19 +521,17 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         additionalProperties = cop.step(1).getAdditionalProperties();
         assert additionalProperties.get("name").equals("foo2");
-        assert additionalProperties.get("value")!=null;
+        assert additionalProperties.get("value") != null;
         assert additionalProperties.get("value") instanceof Map;
-        Map<String,Object> map = (Map<String, Object>) additionalProperties.get("value");
+        Map<String, Object> map = (Map<String, Object>) additionalProperties.get("value");
         assert map.containsKey("EXPRESSION_VALUE");
         assert map.get("EXPRESSION_VALUE").equals("${foo:42}");
-
 
         additionalProperties = cop.step(2).getAdditionalProperties();
         assert additionalProperties.get("name").equals("bar");
         assert additionalProperties.get("value").equals("456");
 
     }
-
 
     public void test13() throws Exception {
 
@@ -556,37 +541,36 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String resultString = loadJsonFromFile("collapsedMapTest.json");
 
         ObjectMapper mapper = new ObjectMapper();
-        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
         JsonNode json = mapper.valueToTree(result);
 
         connection.setContent(json);
 
-
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
 
         Configuration conf = new Configuration();
 
         PropertyMap pm = new PropertyMap("connector:collapsed");
-        PropertySimple ps = new PropertySimple("name:0","in-vm");
+        PropertySimple ps = new PropertySimple("name:0", "in-vm");
         pm.put(ps);
-        ps = new PropertySimple("backup:1","hulla-hoo");
+        ps = new PropertySimple("backup:1", "hulla-hoo");
         pm.put(ps);
         conf.put(pm);
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop != null;
-        assert cop.numberOfSteps()==1;
+        assert cop.numberOfSteps() == 1;
         Operation step = cop.step(0);
-        assert step!=null;
+        assert step != null;
         assert step.getOperation().equals("write-attribute") : "Step name was " + step.getOperation();
         Map<String, Object> additionalProperties = step.getAdditionalProperties();
-        assert additionalProperties !=null;
-        assert additionalProperties.size()==2;
+        assert additionalProperties != null;
+        assert additionalProperties.size() == 2;
         assert additionalProperties.get("name").equals("connector");
         Object value = additionalProperties.get("value");
         assert value instanceof Map;
-        Map <String,Object> map = (Map<String, Object>) value;
+        Map<String, Object> map = (Map<String, Object>) value;
         assert map.containsKey("in-vm");
         assert map.containsValue("hulla-hoo");
     }
@@ -647,5 +631,72 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
             Assert.assertEquals(map.size(), 1);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testGroupedPropertiesWithIdenticalNames() throws Exception {
+        String resultString = loadJsonFromFile("groupedproperties.json");
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDefinition definition = loadDescriptor("groupedproperties");
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+        for (int index = 1; index < 5; index += 3) {
+            String stringValue = index + "" + (index + 1) + "" + (index + 2);
+
+            String firstPropName = "firstprop:" + index;
+            PropertySimple propertySimple = new PropertySimple(firstPropName, stringValue);
+            conf.put(propertySimple);
+
+            String secondPropName = "secondprop:" + (index + 1);
+            PropertyList propertyList = new PropertyList(secondPropName);
+            for (int i = 0; i < 3; i++) {
+                String value = "test" + (i + index);
+                PropertySimple tempPropertySimple = new PropertySimple("name", value);
+                propertyList.add(tempPropertySimple);
+            }
+            conf.put(propertyList);
+
+            String thirdPropName = "thirdprop:" + (index + 2);
+            PropertyMap propertyMap = new PropertyMap(thirdPropName);
+            PropertySimple tempPropertySimple = new PropertySimple("value", stringValue);
+            propertyMap.put(tempPropertySimple);
+            conf.put(propertyMap);
+        }
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        Assert.assertNotNull(cop);
+        Assert.assertEquals(cop.numberOfSteps(), 6);
+
+        for (int index = 0; index < 6; index++) {
+            Operation step = cop.step(index);
+            Assert.assertEquals(step.getOperation(), "write-attribute", "Step name was " + step.getOperation());
+            Map<String, Object> additionalProperties = step.getAdditionalProperties();
+            Assert.assertEquals(additionalProperties.size(), 2);
+
+            if (additionalProperties.get("name").equals("firstprop")) {
+                String expectedValue = (index + 1) + "" + (index + 2) + "" + (index + 3);
+                Assert.assertEquals(additionalProperties.get("value"), expectedValue);
+            } else if (additionalProperties.get("name").equals("secondprop")) {
+                List<String> listValue = (List<String>) additionalProperties.get("value");
+                Assert.assertTrue(listValue.contains("test" + (index)));
+                Assert.assertTrue(listValue.contains("test" + (index + 1)));
+                Assert.assertTrue(listValue.contains("test" + (index + 2)));
+            } else {
+                Map<String, String> mapValue = (Map<String, String>) additionalProperties.get("value");
+                Assert.assertEquals(mapValue.size(), 1);
+                String expectedValue = (index - 1) + "" + (index) + "" + (index + 1);
+                Assert.assertEquals(mapValue.values().iterator().next(), expectedValue);
+            }
+        }
+
     }
 }

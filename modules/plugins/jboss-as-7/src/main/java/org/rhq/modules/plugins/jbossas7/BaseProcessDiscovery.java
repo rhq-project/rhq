@@ -72,16 +72,21 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                 discoveredResources.add(details);
                 log.info("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
                         + details.getResourceKey() + "].");
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // Only barf a stack trace for runtime exceptions.
                 log.error("Discovery of a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for " + processScanResult.getProcessInfo() + ".", e);
+            } catch (Exception e) {                
+                log.error("Discovery of a " + discoveryContext.getResourceType().getName()
+                        + " Resource failed for " + processScanResult.getProcessInfo() + " - cause: " + e);
             }
         }
 
         return discoveredResources;
     }
 
-    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, ProcessScanResult psr) {
+    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, 
+                                                             ProcessScanResult psr) throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         // IF SE, then look at domain/configuration/host.xml <management interface="default" port="9990
         // for management port
@@ -97,7 +102,11 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         String configName = baseDir.getName();
         String key = baseDir.getPath();
         File configDir = getConfigDir(process, baseDir);
-        readStandaloneOrHostXmlFromFile(getHostXmlFile(process, configDir).getPath()); // this sets this.hostXml
+        File hostXmlFile = getHostXmlFile(process, configDir);
+        if (!hostXmlFile.exists()) {
+            throw new Exception("Server configuration file not found at the expected location (" + hostXmlFile + ").");
+        }
+        readStandaloneOrHostXmlFromFile(hostXmlFile.getPath()); // this sets this.hostXml
         HostPort hostPort = getHostPortFromHostXml();
 
         String name = buildDefaultResourceName(hostPort, configName, productType);

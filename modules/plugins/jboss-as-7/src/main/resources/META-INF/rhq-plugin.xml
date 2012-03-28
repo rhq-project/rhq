@@ -2218,21 +2218,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
 	<operation name="list-proxies" description="Read the list of httpd connected to the node.">
 	  <results>
-	   <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->    
+	   <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->
 	   <c:simple-property name="proxy-list" description="List of proxies the node is connected to. Format (hostname:port) separated with comas"/>
 	  </results>
 	</operation>
 
 	<operation name="read-proxies-configuration" description="Send a DUMP to httpd and display the result.">
 	  <results>
-             <!-- Result of the DUMP command.-->    
+             <!-- Result of the DUMP command.-->
 	     <c:simple-property name="current-proxy-config" description="Result of the DUMP command. Snapshot of httpd/modcluster configuration."/>
 	  </results>
 	</operation>
 
 	<operation name="read-proxies-info" description="Send a INFO to httpd and display the result.">
 	  <results>
-             <!-- Result of the INFO command.-->    
+             <!-- Result of the INFO command.-->
 	     <c:simple-property name="current-proxy-info" description="Result of the INFO command. Snapshot of httpd/modcluster proxy information."/>
 	  </results>
 	</operation>
@@ -2309,7 +2309,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 		<c:simple-property name="ttl" required="false" type="integer" readOnly="false" defaultValue="60" description="Time to live (in seconds) for idle connections above smax"/>
 		<c:simple-property name="node-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout (in seconds) for proxy connections to a node."/>
 		<c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
-		<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/> 
+		<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
         </resource-configuration>
     </server>
 
@@ -2448,7 +2448,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
                                description="Offset from standard ports for this group. This is only available in standalone mode"
                                required="false"/>
-            <c:group name="children:socket-binding:name+-" displayName="Individual socket bindings">
+            <c:group name="children:socket-binding:name+" displayName="Individual socket bindings">
             <c:list-property name="*" displayName="Bindings">
                 <c:map-property name="binding">
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>

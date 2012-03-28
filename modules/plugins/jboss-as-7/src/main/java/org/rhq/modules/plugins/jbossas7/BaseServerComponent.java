@@ -394,6 +394,9 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
                     report.addData(data);
                 }
             }
+            else {
+                log.debug("getSKMRequests failed: " + res.getFailureDescription());
+            }
         }
 
         super.getValues(report, leftovers);

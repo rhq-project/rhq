@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@ package org.rhq.core.pc.configuration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -35,8 +34,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -44,6 +41,7 @@ import java.util.concurrent.Callable;
  * @author Greg Hinkle
  */
 public class ConfigurationCheckExecutor implements Runnable, Callable {
+
     private Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
 
     private ConfigurationManager configurationManager;
@@ -62,7 +60,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
     }
 
     public Object call() {
-        log.info("Starting configuration update check");
+        log.info("Starting configuration update check...");
         long start = System.currentTimeMillis();
 
         checkConfigurations(this.inventoryManager.getPlatform(), true);
@@ -87,20 +85,16 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 // Expecting when the resource does not support configuration management
             }
 
-
             if (resourceComponent != null) {
                 // Only report availability for committed resources; don't bother with new, ignored or deleted resources.
                 if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
                         && resourceType.getResourceConfigurationDefinition() != null) {
 
-                    if (log.isErrorEnabled())
-                        log.debug("Checking for updated resource configuration on: " + resource);
-
-                    ConfigurationUpdateRequest request =
-                            new ConfigurationUpdateRequest(0, resource.getResourceConfiguration(), resource.getId());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Checking for updated Resource configuration for " + resource + "...");
+                    }
 
                     try {
-
                         Configuration liveConfiguration = resourceComponent.loadResourceConfiguration();
 
                         if (liveConfiguration != null) {
@@ -123,7 +117,8 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                             }
                         }
                     } catch (Throwable t) {
-                        log.warn("Unable to check for updated configuration", t);
+                        log.warn("An error occurred while checking for an updated Resource configuration for " +
+                                resource + ".", t);
                     }
                 }
             }
@@ -131,7 +126,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             if (checkChildren) {
                 for (Resource child : resource.getChildResources()) {
                     try {
-                    checkConfigurations(child, true);
+                        checkConfigurations(child, true);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -139,4 +134,5 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             }
         }
     }
+
 }

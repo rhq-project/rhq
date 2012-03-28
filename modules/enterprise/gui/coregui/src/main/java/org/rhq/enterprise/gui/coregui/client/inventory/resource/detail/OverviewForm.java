@@ -143,8 +143,8 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
-        typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
-            + MSG.common_title_type() + type.getName());
+        typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>"
+           + MSG.common_title_type() + ": " + type.getName());
         typeItem.setValue(AncestryUtil.getFormattedType(type));
         formItems.add(typeItem);
 
@@ -347,7 +347,7 @@ public class OverviewForm extends EnhancedDynamicForm {
     }
 
     public void loadData() {
-        // TODO: Reload the ResourceComposite too.        
+        // TODO: Reload the ResourceComposite too.
         loadTraitValues();
         markForRedraw();
     }

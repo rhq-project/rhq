@@ -22,6 +22,7 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
+import org.rhq.test.arquillian.RunDiscovery;
 
 /**
  * Test stuff around socket bindings.
@@ -48,6 +50,11 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
+
+    @BeforeClass
+    @RunDiscovery(discoverServices = true)
+    public void doSomeDiscovery() throws Exception {
+    }
 
     public void loadBindings() throws Exception {
 

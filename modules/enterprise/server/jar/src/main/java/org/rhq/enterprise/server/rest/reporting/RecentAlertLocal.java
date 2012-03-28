@@ -12,7 +12,7 @@ public interface RecentAlertLocal {
     @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentAlerts(
-            @QueryParam("alertPriority") @DefaultValue("High,Med,Low") String alertPriority,
+            @QueryParam("alertPriority") @DefaultValue("high,medium,low") String alertPriority,
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

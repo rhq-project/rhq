@@ -20,32 +20,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.LinkedHashMap;
-import java.util.Set;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
-import com.smartgwt.client.data.DateRange;
-import com.smartgwt.client.data.RelativeDate;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.DateRangeItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+
+import java.util.Set;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -57,14 +38,13 @@ public class ExportModalWindow {
     private static final Messages MSG = CoreGUI.getMessages();
 
     private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
+    private static final String FORMAT = "csv"; //CSV is all we need right now
 
-    private static final String FORMAT_FIELD = "format";
-    private static final String DETAILS_FIELD = "details";
-    private static final String DATE_RANGE_FIELD = "dri";
+    //private static final String FORMAT_FIELD = "format";
+    //private static final String DETAILS_FIELD = "details";
+    //private static final String DATE_RANGE_FIELD = "dri";
 
     private String reportUrl;
-
-    private PopupWindow exportWindow;
 
     private boolean showAllDetail;
 
@@ -88,20 +68,24 @@ public class ExportModalWindow {
     String driftPath;
 
 
+    /**
+     * Private constructors to force use of static factory creation pattern.
+     * @param reportUrl
+     */
     private ExportModalWindow(String reportUrl) {
+
         this.reportUrl = reportUrl;
-        createDialogWindow();
     }
+
+
     private ExportModalWindow(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
         this.reportUrl = reportUrl;
         this.showAllDetail = showDetail;
         this.resourceTypeIds = resourceTypeIds;
-        createDialogWindow();
     }
 
     public static ExportModalWindow createStandardExportWindow(String reportUrl) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
-        return newExportDialog;
+        return new ExportModalWindow(reportUrl);
     }
 
     public static ExportModalWindow createExportWindowForRecentDrift(String reportUrl, String definition,
@@ -128,77 +112,76 @@ public class ExportModalWindow {
 
     public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl, boolean showAllDetails,
         Set<Integer> resourceTypeIdsForExport) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, showAllDetails, resourceTypeIdsForExport);
-        return newExportDialog;
+        return new ExportModalWindow(reportUrl, showAllDetails, resourceTypeIdsForExport);
     }
 
-    private void createDialogWindow() {
-        exportWindow = new PopupWindow("exportSettings", null);
-        exportWindow.setTitle("Export Dialog");
-
-        VLayout dialogLayout = new VLayout();
-
-        HLayout headerLayout = new HLayout();
-        headerLayout.setHeight(25);
-        headerLayout.setAlign(Alignment.CENTER);
-        TitleBar titleBar = new TitleBar(exportWindow, "Export Settings", IconEnum.REPORT.getIcon24x24Path());
-        headerLayout.addMember(titleBar);
-        dialogLayout.addMember(headerLayout);
-
-        HLayout formLayout = new HLayout();
-        formLayout.setAlign(VerticalAlignment.TOP);
-
-        final DynamicForm form = new DynamicForm();
-
-        final SelectItem formatsList = new SelectItem(FORMAT_FIELD, "Format");
-        LinkedHashMap<String, String> formats = new LinkedHashMap<String, String>();
-        formats.put("csv", "CSV");
-        formats.put("xml", "XML");
-        formatsList.setValueMap(formats);
-        formatsList.setDefaultValue("csv");
-
-        CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
-        detailCheckboxItem.setVisible(showAllDetail);
-        detailCheckboxItem.setValue(false);
-
-        DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
-        dateRangeItem.setAllowRelativeDates(true);
-        DateRange dateRange = new DateRange();
-        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
-        dateRange.setRelativeEndDate(RelativeDate.TODAY);
-        dateRangeItem.setValue(dateRange);
-
-
-        form.setItems(new SpacerItem(),formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
-        formLayout.addMember(form);
-        dialogLayout.addMember(formLayout);
-
-        ToolStrip buttonBar = new ToolStrip();
-        buttonBar.setAlign(Alignment.RIGHT);
-        buttonBar.setPadding(5);
-        buttonBar.setMembersMargin(10);
-
-        IButton cancelButton = new IButton("Cancel", new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                exportWindow.hide();
-            }
-        });
-        buttonBar.addMember(cancelButton);
-
-        IButton finishButton = new IButton("Export", new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                exportWindow.hide();
-                Window.open(calculateUrl(form), "download", null);
-            }
-        });
-        buttonBar.addMember(finishButton);
-
-        dialogLayout.addMember(buttonBar);
-
-        exportWindow.addItem(dialogLayout);
-    }
+//    private void createDialogWindow() {
+//        exportWindow = new PopupWindow("exportSettings", null);
+//        exportWindow.setTitle("Export Dialog");
+//
+//        VLayout dialogLayout = new VLayout();
+//
+//        HLayout headerLayout = new HLayout();
+//        headerLayout.setHeight(25);
+//        headerLayout.setAlign(Alignment.CENTER);
+//        TitleBar titleBar = new TitleBar(exportWindow, "Export Settings", IconEnum.REPORT.getIcon24x24Path());
+//        headerLayout.addMember(titleBar);
+//        dialogLayout.addMember(headerLayout);
+//
+//        HLayout formLayout = new HLayout();
+//        formLayout.setAlign(VerticalAlignment.TOP);
+//
+//        final DynamicForm form = new DynamicForm();
+//
+//        final SelectItem formatsList = new SelectItem(FORMAT_FIELD, "Format");
+//        LinkedHashMap<String, String> formats = new LinkedHashMap<String, String>();
+//        formats.put("csv", "CSV");
+//        formats.put("xml", "XML");
+//        formatsList.setValueMap(formats);
+//        formatsList.setDefaultValue("csv");
+//
+//        CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
+//        detailCheckboxItem.setVisible(showAllDetail);
+//        detailCheckboxItem.setValue(false);
+//
+//        DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
+//        dateRangeItem.setAllowRelativeDates(true);
+//        DateRange dateRange = new DateRange();
+//        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
+//        dateRange.setRelativeEndDate(RelativeDate.TODAY);
+//        dateRangeItem.setValue(dateRange);
+//
+//
+//        form.setItems(new SpacerItem(),formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
+//        formLayout.addMember(form);
+//        dialogLayout.addMember(formLayout);
+//
+//        ToolStrip buttonBar = new ToolStrip();
+//        buttonBar.setAlign(Alignment.RIGHT);
+//        buttonBar.setPadding(5);
+//        buttonBar.setMembersMargin(10);
+//
+//        IButton cancelButton = new IButton("Cancel", new ClickHandler() {
+//            @Override
+//            public void onClick(ClickEvent clickEvent) {
+//                exportWindow.hide();
+//            }
+//        });
+//        buttonBar.addMember(cancelButton);
+//
+//        IButton finishButton = new IButton("Export", new ClickHandler() {
+//            @Override
+//            public void onClick(ClickEvent clickEvent) {
+//                exportWindow.hide();
+//                Window.open(calculateUrl(form), "download", null);
+//            }
+//        });
+//        buttonBar.addMember(finishButton);
+//
+//        dialogLayout.addMember(buttonBar);
+//
+//        exportWindow.addItem(dialogLayout);
+//    }
 
     public void setAlertPriorityFilters(String[] alertPriorityFilters) {
         this.alertPriorityFilters = alertPriorityFilters;
@@ -208,13 +191,12 @@ public class ExportModalWindow {
         this.operationRequestStatuses = operationRequestStatuses;
     }
 
-    public String calculateUrl(DynamicForm form) {
-        String format = form.getValueAsString(FORMAT_FIELD);
+    public String determineUrl() {
         StringBuilder queryString = new StringBuilder();
 
-        if (showAllDetail) {
-            queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
-        }
+//        if (showAllDetail) {
+//            queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
+//        }
         if(!isEmpty(operationRequestStatuses)){
             StringBuilder operationRequestStatusBuffer = new StringBuilder();
             for (String operationRequestStatus : operationRequestStatuses) {
@@ -252,7 +234,7 @@ public class ExportModalWindow {
         }
 
         
-        return URL.encode(BASE_URL + reportUrl + "." + format  + "?"+queryString);
+        return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+queryString);
     }
 
     private boolean isEmpty(String[] array) {
@@ -261,10 +243,6 @@ public class ExportModalWindow {
 
     public boolean isShowAllDetail(){
         return showAllDetail;
-    }
-
-    public void setShowAllDetail(boolean showAllDetail) {
-        this.showAllDetail = showAllDetail;
     }
 
     public void setDriftDefinition(String driftDefinition) {
@@ -283,8 +261,9 @@ public class ExportModalWindow {
         this.driftPath = driftPath;
     }
 
-    public void show() {
-        exportWindow.show();
+    public void show(){
+        Window.open(determineUrl(), "download", null);
+
     }
 
 }

@@ -39,6 +39,9 @@ import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -103,8 +106,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-
-        //addMember(new TitleBar(this, VIEW_ID.getTitle(),VIEW_ID.getIconPath()));
         addMember(new ResourceInstallReportTable(extendLocatorId("table")));
     }
 
@@ -158,7 +159,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
-            ListGridField fieldExport = new ListGridField("export", "Export");
+            ListGridField fieldExport = new ListGridField("exportDetails", "Export Details");
 
             exportChangeHandler = new ExportChangeHandler(getListGrid(), DataSource.Field.TYPEID,
                 DataSource.Field.EXPORT);
@@ -251,6 +252,30 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             });
         }
 
+        @Override
+        protected void configureTableFilters() {
+            CheckboxItem exportAllDetails = new CheckboxItem("exportAllDetails", "Export All Details");
+            exportAllDetails.setLabelAsTitle(true);
+
+            setShowFilterForm(true);
+            setFilterFormItems(exportAllDetails);
+
+            exportAllDetails.addChangedHandler(new ChangedHandler() {
+
+                boolean exportAll;
+
+                @Override
+                public void onChanged(ChangedEvent event) {
+                    exportAll = !exportAll;
+                    ListGrid table = getListGrid();
+                    int row = 0;
+                    for (ListGridRecord record : table.getRecords()) {
+                        record.setAttribute(DataSource.Field.EXPORT, exportAll);
+                        table.refreshCell(row++, 5);
+                    }
+                }
+            });
+        }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {
             String url = null;
@@ -276,7 +301,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public static final String TYPEID = "typeId"; // int
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
-                public static final String EXPORT = "export";
+                public static final String EXPORT = "exportDetails";
             }
 
             public DataSource() {

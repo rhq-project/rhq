@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
@@ -38,7 +39,7 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
     ResourceManagerLocal resourceManager;
 
     @Override
-    public StreamingOutput alertDefinitions(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
+    public StreamingOutput alertDefinitions(UriInfo uriInfo, final HttpServletRequest request, HttpHeaders headers ) {
 
             return new StreamingOutput() {
 
@@ -80,7 +81,8 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                             + alertDefinition.getEnabled() + ","
                             + alertDefinition.getPriority() + ","
                             + cleanForCSV(getParentName(resource)) + ","
-                            + cleanForCSV(ReportHelper.parseAncestry(resource.getAncestry()));
+                            + cleanForCSV(ReportHelper.parseAncestry(resource.getAncestry())) + ","
+                            + getDetailsURL(alertDefinition);
                 }
 
                 private String getParentName(Resource resource){
@@ -89,7 +91,20 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
 
                 private String getHeader(){
-                   return "Name,Description,Enabled,Priority,Parent,Ancestry";
+                   return "Name,Description,Enabled,Priority,Parent,Ancestry,Details URL";
+                }
+
+                private String getDetailsURL(AlertDefinition alertDef) {
+                    String protocol;
+                    if (request.isSecure()) {
+                        protocol = "https";
+                    } else {
+                        protocol = "http";
+                    }
+
+                    return protocol + "://" + request.getServerName() + ":" + request.getServerPort() +
+                        "/coregui/#Resource/" + alertDef.getResource().getId() + "/Alerts/Definitions/" +
+                        alertDef.getId();
                 }
 
                 private Resource loadResource(int resourceId) {

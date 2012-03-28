@@ -9,9 +9,9 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -28,7 +28,6 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
@@ -46,14 +45,9 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
     @EJB
     private AlertManagerLocal alertManager;
 
-    @EJB
-    private SubjectManagerLocal subjectMgr;
-
     @Override
-    public StreamingOutput recentAlerts(
-        final String alertPriority,
-        UriInfo uriInfo,
-        Request request, HttpHeaders headers) {
+    public StreamingOutput recentAlerts(final String alertPriority, UriInfo uriInfo, final HttpServletRequest request,
+        HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
@@ -91,13 +85,27 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         cleanForCSV(alert.getAlertDefinition().getName()) + "," +
                         getConditionText(alert) + ", " +
                         alert.getAlertDefinition().getPriority() + "," +
-                        "Status"+ "," +
-                        cleanForCSV(alert.getAlertDefinition().getResource().getName())+","+
-                        cleanForCSV(ReportHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()));
+                        "Status" + "," +
+                        cleanForCSV(alert.getAlertDefinition().getResource().getName()) + "," +
+                        cleanForCSV(ReportHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()))
+                        + "," + getDetailsURL(alert);
             }
 
             private String getHeader(){
-                return "Creation Time,Name,Condition Text,Priority,Status,Resource,Ancestry";
+                return "Creation Time,Name,Condition Text,Priority,Status,Resource,Ancestry,Details URL";
+            }
+
+            private String getDetailsURL(Alert alert) {
+                String protocol;
+                if (request.isSecure()) {
+                    protocol = "https";
+                } else {
+                    protocol = "http";
+                }
+
+                return protocol + "://" + request.getServerName() + ":" + request.getServerPort() +
+                    "/coregui/#Resource/" + alert.getAlertDefinition().getResource().getId() + "/Alerts/History/" +
+                    alert.getId();
             }
 
             private String getConditionText(Alert alert) {

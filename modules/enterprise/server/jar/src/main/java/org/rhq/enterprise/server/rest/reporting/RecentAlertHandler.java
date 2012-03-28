@@ -85,7 +85,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         cleanForCSV(alert.getAlertDefinition().getName()) + "," +
                         getConditionText(alert) + ", " +
                         alert.getAlertDefinition().getPriority() + "," +
-                        "Status" + "," +
+                        getStatus(alert) + "," +
                         cleanForCSV(alert.getAlertDefinition().getResource().getName()) + "," +
                         cleanForCSV(ReportHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()))
                         + "," + getDetailsURL(alert);
@@ -93,6 +93,13 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
 
             private String getHeader(){
                 return "Creation Time,Name,Condition Text,Priority,Status,Resource,Ancestry,Details URL";
+            }
+
+            private String getStatus(Alert alert) {
+                if (alert.getAcknowledgeTime() == null || alert.getAcknowledgeTime() < 0) {
+                    return "No Ack";
+                }
+                return "Ack (" + alert.getAcknowledgingSubject() + ")";
             }
 
             private String getDetailsURL(Alert alert) {

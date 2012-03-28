@@ -58,8 +58,6 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
 
-    private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     // Auto-discover running AS7 instances.
@@ -180,21 +178,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
     protected abstract String getHostXmlFileName();
 
     protected abstract String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType);
-    
-    protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
-    
-    protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
-        for (String line : commandLine) {
-            if (line.contains(SOCKET_BINDING_PORT_OFFSET_SYSPROP)) {
-                String tmp = line.substring(line.indexOf('=')+1);
-                Integer offset = Integer.valueOf(tmp);
-                managementPort.port+=offset;
-                break;
-            }
-        }
 
-        return managementPort;
-    }
+    protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
 
     // Manually add a (remote) AS7 instance.
     @Override
@@ -288,7 +273,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery impleme
         }
     }
 
-    private String findHost(File hostXmlFile) {                
+    private String findHost(File hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         String hostName = null;
         try {

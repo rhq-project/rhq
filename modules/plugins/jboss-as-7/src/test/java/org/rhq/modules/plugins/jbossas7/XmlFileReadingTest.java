@@ -112,6 +112,37 @@ public class XmlFileReadingTest {
 
     }
 
+    public void testXpath711() throws Exception {
+
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
+        URL url = getClass().getClassLoader().getResource("standalone711.xml");
+        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+
+        String realm = bd.obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
+        assert "ManagementRealm".equals(realm) : "Realm was " + realm;
+        String sbindingRef = bd.obtainXmlPropertyViaXPath(
+                ("//management/management-interfaces/http-interface/socket-binding/@http"));
+        assert "management-http".equals(sbindingRef): "Socketbinding was " + sbindingRef;
+
+        String pathExpr = "/server/socket-binding-group/socket-binding[@name='" + sbindingRef + "']/@port";
+        String port = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.management.http.port:9990}".equals(port) : "Port was [" + port + "]";
+
+        pathExpr = "/server/socket-binding-group/socket-binding[@name='" + sbindingRef + "']/@interface";
+        String interfName = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "management".equals(interfName) : "Interface was " + interfName;
+
+        pathExpr = "/server/interfaces/interface[@name='" + interfName + "']/inet-address/@value";
+        String interfElem = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.bind.address.management:127.0.0.71}".equals(interfElem) : "InterfElem was " + interfElem;
+
+        String socketBindingGroupName = "standard-sockets";
+        pathExpr = "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
+        String offsetAttr = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.socket.binding.port-offset:123}".equals(offsetAttr) : "Port-Offset was " + offsetAttr;
+
+    }
+
     public void testGetRealm() throws Exception {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();

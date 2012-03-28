@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -88,14 +88,17 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     @Override
     protected HostPort getManagementPortFromHostXml(String[] commandLine) {
         HostPort managementPort = super.getManagementPortFromHostXml(commandLine);
-        return checkForSocketBindingOffset(managementPort, commandLine);
+        if (!managementPort.withOffset) {
+            managementPort = checkForSocketBindingOffset(managementPort, commandLine);
+        }
+        return managementPort;
     }
 
     @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
-        Configuration pluginConfig = details.getPluginConfiguration();       
+        Configuration pluginConfig = details.getPluginConfiguration();
         pluginConfig.put(new PropertySimple("config", getHostXmlFile(psr.getProcessInfo())));
         return details;
     }

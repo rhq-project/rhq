@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ public class AbstractBaseDiscovery {
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
+    private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
@@ -108,6 +109,7 @@ public class AbstractBaseDiscovery {
 
         socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
         String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
+        String portOffset = null;
 
         if (!socketInterface.isEmpty()) {
             interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
@@ -133,6 +135,11 @@ public class AbstractBaseDiscovery {
                 + socketBindingName + "']/@port");
             String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
                 + socketBindingName + "']/@interface");
+            String socketBindingGroupName = "standard-sockets";
+            // /server/socket-binding-group[@name='standard-sockets']/@port-offset
+            String xpathExpression =
+                    "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
+            portOffset = obtainXmlPropertyViaXPath(xpathExpression);
 
             // TODO the next may also be expressed differently
             interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
@@ -149,11 +156,19 @@ public class AbstractBaseDiscovery {
         else
             hp.host = "localhost"; // Fallback
 
+        hp.port = 0;
+
         if (portString != null && !portString.isEmpty()) {
             String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_MGMT_PORT));
             hp.port = Integer.valueOf(tmp);
-        } else
-            hp.port = DEFAULT_MGMT_PORT; // Fallback to default
+        }
+
+        if (portOffset!=null && !portOffset.isEmpty()) {
+            String tmp = replaceDollarExpression(portOffset, commandLine, "0");
+            Integer offset = Integer.valueOf(tmp);
+            hp.port += offset;
+            hp.withOffset=true;
+        }
         return hp;
     }
 
@@ -203,13 +218,17 @@ public class AbstractBaseDiscovery {
                         ret = commandLine[i + 1]; // -bmanagement 1.2.3.4
                     break;
                 }
-            } else if (expression.contains("port")) {
+            } else if (expression.equals("jboss.management.http.port")) {
                 if (line.contains(expression)) {
                     ret = line.substring(line.indexOf("=") + 1);
                     break;
                 }
+            } else if (expression.equals(SOCKET_BINDING_PORT_OFFSET_SYSPROP)) {
+                if (line.contains(expression)) {
+                    ret = line.substring(line.indexOf('=')+1);
+                    break;
+                }
             }
-
         }
         if (ret == null)
             ret = fallback;
@@ -355,6 +374,19 @@ public class AbstractBaseDiscovery {
         return defaultValue;
     }
 
+    protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
+        for (String line : commandLine) {
+            if (line.contains(SOCKET_BINDING_PORT_OFFSET_SYSPROP)) {
+                String tmp = line.substring(line.indexOf('=')+1);
+                Integer offset = Integer.valueOf(tmp);
+                managementPort.port+=offset;
+                break;
+            }
+        }
+
+        return managementPort;
+    }
+
     /**
      * Helper class that holds information about the host,port tuple
      */
@@ -362,6 +394,7 @@ public class AbstractBaseDiscovery {
         String host;
         int port;
         boolean isLocal = true;
+        boolean withOffset = false;
 
         public HostPort() {
             host = "localhost";

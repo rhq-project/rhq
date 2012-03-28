@@ -20,6 +20,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.LinkedHashMap;
+import java.util.Set;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
@@ -38,13 +41,11 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-
-import java.util.LinkedHashMap;
-import java.util.Set;
 
 /**
  * Build a custom Export window based for particular export screens.
@@ -65,7 +66,7 @@ public class ExportModalWindow {
 
     private PopupWindow exportWindow;
 
-    private boolean showDetail;
+    private boolean showAllDetail;
 
     // optional Fields
 
@@ -78,7 +79,7 @@ public class ExportModalWindow {
      */
     String[] operationRequestStatuses;
 
-    Set<Integer> resourceTypeIdsForExport;
+    Set<Integer> resourceTypeIds;
     
     // for Recent Drift Report
     String driftDefinition;
@@ -93,8 +94,8 @@ public class ExportModalWindow {
     }
     private ExportModalWindow(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
         this.reportUrl = reportUrl;
-        this.showDetail = showDetail;
-        resourceTypeIdsForExport = resourceTypeIds;
+        this.showAllDetail = showDetail;
+        this.resourceTypeIds = resourceTypeIds;
         createDialogWindow();
     }
 
@@ -125,9 +126,9 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl,
+    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl, boolean showAllDetails,
         Set<Integer> resourceTypeIdsForExport) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, true, resourceTypeIdsForExport);
+        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl, showAllDetails, resourceTypeIdsForExport);
         return newExportDialog;
     }
 
@@ -157,7 +158,7 @@ public class ExportModalWindow {
         formatsList.setDefaultValue("csv");
 
         CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
-        detailCheckboxItem.setVisible(showDetail);
+        detailCheckboxItem.setVisible(showAllDetail);
         detailCheckboxItem.setValue(false);
 
         DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
@@ -211,7 +212,7 @@ public class ExportModalWindow {
         String format = form.getValueAsString(FORMAT_FIELD);
         StringBuilder queryString = new StringBuilder();
 
-        if (showDetail) {
+        if (showAllDetail) {
             queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
         }
         if(operationRequestStatuses != null){
@@ -254,12 +255,12 @@ public class ExportModalWindow {
         return URL.encode(BASE_URL + reportUrl + "." + format  + "?"+queryString);
     }
 
-    public boolean  isShowDetail(){
-        return showDetail;
+    public boolean isShowAllDetail(){
+        return showAllDetail;
     }
 
-    public void setShowDetail(boolean showDetail) {
-        this.showDetail = showDetail;
+    public void setShowAllDetail(boolean showAllDetail) {
+        this.showAllDetail = showAllDetail;
     }
 
     public void setDriftDefinition(String driftDefinition) {

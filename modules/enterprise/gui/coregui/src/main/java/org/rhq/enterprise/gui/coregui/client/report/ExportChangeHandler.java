@@ -48,7 +48,11 @@ public class ExportChangeHandler implements ChangedHandler {
         this.exportAttribute = exportAttribute;
     }
 
-    public Set<Integer> getResourceTypeIdsForExport() {
+    /**
+     * @return The set of resource type ids that the user has selected for which details
+     * should be included in the export.
+     */
+    public Set<Integer> getResourceTypeIds() {
         return resourceTypeIds;
     }
 

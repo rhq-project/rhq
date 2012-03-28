@@ -79,6 +79,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private ResourceSearchView resourceList;
 
+    private boolean exportAll;
+
     public ResourceInstallReport(String locatorId ) {
         super(locatorId);
         setHeight100();
@@ -245,7 +247,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForInventorySummary(
-                        "inventorySummary", exportChangeHandler.getResourceTypeIdsForExport());
+                        "inventorySummary", exportAll, exportChangeHandler.getResourceTypeIds());
                     exportModalWindow.show();
                     refreshTableInfo();
                 }
@@ -261,9 +263,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             setFilterFormItems(exportAllDetails);
 
             exportAllDetails.addChangedHandler(new ChangedHandler() {
-
-                boolean exportAll;
-
                 @Override
                 public void onChanged(ChangedEvent event) {
                     exportAll = !exportAll;

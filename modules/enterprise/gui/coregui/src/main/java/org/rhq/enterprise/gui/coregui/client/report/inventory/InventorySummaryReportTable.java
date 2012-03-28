@@ -21,10 +21,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -32,19 +28,18 @@ import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.report.ExportChangeHandler;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
 * @author jsanda
@@ -193,9 +188,8 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForInventorySummary(
-                    getReportNameForDownloadURL(), exportAll, exportChangeHandler.getResourceTypeIds());
-                exportModalWindow.show();
+                ReportExporter exportModalWindow = ReportExporter.createExporterForInventorySummary(getReportNameForDownloadURL(), exportAll, exportChangeHandler.getResourceTypeIds());
+                exportModalWindow.export();
                 refreshTableInfo();
             }
         });

@@ -17,12 +17,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.modules.plugins.jbossas7.itest.standalone;
+package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -49,21 +48,25 @@ import static org.testng.Assert.assertNotNull;
  * This could actually also run for domain mode
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
-public class SocketBindingTest extends AbstractJBossAS7PluginTest {
+@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
+public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
 
     @Test(priority = 10,groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)    public void doSomeDiscovery() throws Exception {
+    @RunDiscovery(discoverServices = true, discoverServers = true)
+    public void runDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+
+        Thread.sleep(10*1000L); // delay so that PC gets a chance to scan for resources
+
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
-
     }
+
 
     @Test(priority = 11)
     public void loadBindings() throws Exception {
@@ -78,11 +81,11 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
         PropertyMap map = new PropertyMap("binding");
         PropertySimple ps = new PropertySimple("name","bla");
         map.put(ps);
-        ps = new PropertySimple("port",12345);
+        ps = new PropertySimple("port:expr",12345);
         map.put(ps);
         ps = new PropertySimple("fixed-port",false);
         map.put(ps);
-        ps = new PropertySimple("multicast-port","${foo.bar.baz:12346}");
+        ps = new PropertySimple("multicast-port:expr","${foo.bar.baz:12346}");
         map.put(ps);
         PropertyList pl = (PropertyList) configuration.get("*");
         int count = pl.getList().size();
@@ -122,7 +125,7 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
         configuration = loadConfig();
         map=null;
         pl = (PropertyList) configuration.get("*");
-        for (Property prop : pl.getList()) {
+        for (Property prop: pl.getList()) {
             PropertyMap pm = (PropertyMap) prop;
             PropertySimple ps2 = pm.getSimple("name");
             if (!ps2.getStringValue().equals("bla2"))
@@ -183,35 +186,6 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
         assert response.getErrorMessage()==null: "Property removal resulted in this error: " + response.getErrorMessage();
     }
 
-    /** THIS ONE WILL NOT WORK IN DOMAIN MODE */
-    @Test(priority = 11)
-    public void changePortOffset() throws Exception {
-
-        Configuration configuration = loadConfig();
-        PropertySimple ps = configuration.getSimple("port-offset");
-        String original = ps.getStringValue();
-
-        configuration.put(new PropertySimple("port-offset",0));
-
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,configuration,getResource().getId());
-        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Changing the port-offset resulted in this error: " + response.getErrorMessage();
-
-        configuration = loadConfig();
-        ps = configuration.getSimple("port-offset");
-        assert ps != null;
-        assert ps.getIntegerValue()!=null;
-        assert ps.getIntegerValue()==0;
-
-        configuration.put(new PropertySimple("port-offset",original));
-
-        request = new ConfigurationUpdateRequest(2,configuration,getResource().getId());
-        response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
-        assert response!=null;
-        assert response.getErrorMessage()==null: "Changing the port-offset back resulted in this error: " + response.getErrorMessage();
-
-    }
 
 
 
@@ -227,8 +201,11 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
 
         InventoryManager im = pluginContainer.getInventoryManager();
         Resource platform = im.getPlatform();
-        Resource server = getResourceByTypeAndKey(platform,StandaloneServerComponentTest.RESOURCE_TYPE,StandaloneServerComponentTest.RESOURCE_KEY);
+        assert platform != null : "Did not find a platform";
+        Resource server = getResourceByTypeAndKey(platform,DomainServerComponentTest.RESOURCE_TYPE,DomainServerComponentTest.RESOURCE_KEY);
+        assert server != null : "Did not find the domain server";
         Resource bindings = getResourceByTypeAndKey(server,RESOURCE_TYPE,RESOURCE_KEY);
+        assert bindings != null : "Did not find " + RESOURCE_KEY;
         return bindings;
     }
 

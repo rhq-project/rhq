@@ -22,46 +22,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.HashMap;
-import java.util.List;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceLinkField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.ListGridEditEvent;
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -72,7 +41,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class DriftComplianceReport extends LocatableVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance(), IconEnum.DRIFT_COMPLIANCE);
+    public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance(),
+        IconEnum.DRIFT_COMPLIANCE);
 
     private ResourceSearchView resourceList;
 
@@ -138,226 +108,5 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
-    }
-
-    class DriftComplianceReportTable extends Table<DriftComplianceReportTable.DataSource> {
-
-        public DriftComplianceReportTable(String locatorId) {
-            super(locatorId);
-            setDataSource(new DataSource());
-        }
-
-        @Override
-        protected void configureTable() {
-            super.configureTable();
-
-            ListGridField fieldTypeName = new ListGridField(DataSource.Field.TYPENAME, MSG.common_title_resource_type());
-            ListGridField fieldPlugin = new ListGridField(DataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());
-            ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
-            ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
-            ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
-            ListGridField fieldExport = new ListGridField("exportDetails", "Export Details");
-
-            ExportChangeHandler exportChangeHandler = new ExportChangeHandler(getListGrid(), DataSource.Field.TYPEID,
-                DataSource.Field.EXPORT);
-            fieldExport.setCanToggle(true);
-            fieldExport.setCanEdit(true);
-            fieldExport.addChangedHandler(exportChangeHandler);
-
-            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE, MSG
-                .common_title_in_compliance());
-            HashMap<String, String> complianceIcons = new HashMap<String, String>();
-            complianceIcons.put("true", ImageManager.getAvailabilityIcon(true));
-            complianceIcons.put("false", ImageManager.getAvailabilityIcon(false));
-            fieldInCompliance.setValueIcons(complianceIcons);
-            fieldInCompliance.setType(ListGridFieldType.ICON);
-            fieldInCompliance.setCanSortClientOnly(true);
-
-            fieldTypeName.setWidth("35%");
-            fieldPlugin.setWidth("10%");
-            fieldCategory.setWidth(70);
-            fieldVersion.setWidth("*");
-            fieldCount.setWidth(60);
-            fieldInCompliance.setWidth(100);
-
-            // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
-            //                       uncomment these lines to allow grouping by the plugin or category fields.
-            /*getListGrid().setCanGroupBy(true);
-            fieldTypeName.setCanGroupBy(false);
-            fieldVersion.setCanGroupBy(false);
-            fieldCount.setCanGroupBy(false);
-            fieldInCompliance.setCanGroupBy(false);*/
-
-            fieldTypeName.setCellFormatter(new CellFormatter() {
-                @Override
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String url = getResourceTypeTableUrl(record);
-                    if (url == null) {
-                        return value.toString();
-                    }
-
-                    return "<a href=\"" + url + "\">" + value.toString() + "</a>";
-                }
-            });
-
-            fieldCategory.setType(ListGridFieldType.ICON);
-            fieldCategory.setShowValueIconOnly(true);
-            HashMap<String, String> categoryIcons = new HashMap<String, String>(3);
-            categoryIcons
-                .put(ResourceCategory.PLATFORM.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM));
-            categoryIcons.put(ResourceCategory.SERVER.name(), ImageManager.getResourceIcon(ResourceCategory.SERVER));
-            categoryIcons.put(ResourceCategory.SERVICE.name(), ImageManager.getResourceIcon(ResourceCategory.SERVICE));
-            fieldCategory.setValueIcons(categoryIcons);
-            fieldCategory.setShowHover(true);
-            fieldCategory.setHoverCustomizer(new HoverCustomizer() {
-                @Override
-                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String cat = record.getAttribute(DataSource.Field.CATEGORY);
-                    if (ResourceCategory.PLATFORM.name().equals(cat)) {
-                        return MSG.common_title_platform();
-                    } else if (ResourceCategory.SERVER.name().equals(cat)) {
-                        return MSG.common_title_server();
-                    } else if (ResourceCategory.SERVICE.name().equals(cat)) {
-                        return MSG.common_title_service();
-                    }
-                    return "";
-                }
-            });
-
-            setListGridDoubleClickHandler(new DoubleClickHandler() {
-                @Override
-                public void onDoubleClick(DoubleClickEvent event) {
-                    ListGrid lg = (ListGrid) event.getSource();
-                    ListGridRecord selected = lg.getSelectedRecord();
-                    String url = getResourceTypeTableUrl(selected);
-                    if (url != null) {
-                        CoreGUI.goToView(url);
-                    }
-                }
-            });
-
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance,
-                fieldExport);
-            getListGrid().setEditEvent(ListGridEditEvent.CLICK);
-            getListGrid().setEditByCell(true);
-            addExportAction();
-        }
-
-        private void addExportAction() {
-            addTableAction("Export", "Export", new TableAction() {
-                @Override
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    return true;
-                }
-
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    ExportModalWindow exportModalWindow =
-                        ExportModalWindow.createExportWindowForInventorySummary("driftCompliance", false, null);
-                    exportModalWindow.show();
-                    refreshTableInfo();
-                }
-            });
-        }
-
-        private String getResourceTypeTableUrl(ListGridRecord selected) {
-            String url = null;
-            if (selected != null) {
-                int resourceTypeId = selected.getAttributeAsInt(DataSource.Field.TYPEID);
-                String version = selected.getAttribute(DataSource.Field.VERSION);
-                if (version == null) {
-                    url = "#Reports/Inventory/DriftCompliance/" + resourceTypeId;
-                } else {
-                    url = "#Reports/Inventory/DriftCompliance/" + resourceTypeId + "/" + version;
-                }
-            }
-            return url;
-        }
-
-        class DataSource extends RPCDataSource<ResourceInstallCount, org.rhq.core.domain.criteria.Criteria> {
-
-            public class Field {
-                public static final String COUNT = "count"; // long that we convert to int
-                public static final String TYPENAME = "typeName"; // String
-                public static final String TYPEPLUGIN = "typePlugin"; // String
-                public static final String CATEGORY = "category"; // ResourceCategory
-                public static final String TYPEID = "typeId"; // int
-                public static final String VERSION = "version"; // String
-                public static final String OBJECT = "object";
-                public static final String IN_COMPLIANCE = "inCompliance";
-                public static final String EXPORT = "exportDetails";
-            }
-
-            public DataSource() {
-                DataSourceLinkField name = new DataSourceLinkField(Field.TYPENAME);
-                DataSourceTextField plugin = new DataSourceTextField(Field.TYPEPLUGIN);
-                DataSourceImageField category = new DataSourceImageField(Field.CATEGORY);
-                DataSourceTextField version = new DataSourceTextField(Field.VERSION);
-                DataSourceIntegerField count = new DataSourceIntegerField(Field.COUNT);
-                DataSourceBooleanField inCompliance = new DataSourceBooleanField(Field.IN_COMPLIANCE);
-                DataSourceBooleanField export = new DataSourceBooleanField(Field.EXPORT);
-
-                setFields(name, plugin, category, version, count, inCompliance, export);
-            }
-
-            @Override
-            public ResourceInstallCount copyValues(Record from) {
-                return (ResourceInstallCount) from.getAttributeAsObject(DataSource.Field.OBJECT);
-            }
-
-            @Override
-            public ListGridRecord copyValues(ResourceInstallCount from) {
-                ListGridRecord record = new ListGridRecord();
-
-                record.setAttribute(Field.COUNT, Long.valueOf(from.getCount()).intValue()); // we'll never have over Integer.MAX_VALUE, overflow not a worry
-                record.setAttribute(Field.TYPENAME, from.getTypeName());
-                record.setAttribute(Field.TYPEPLUGIN, from.getTypePlugin());
-                record.setAttribute(Field.CATEGORY, from.getCategory().name());
-                record.setAttribute(Field.TYPEID, from.getTypeId());
-                record.setAttribute(Field.VERSION, from.getVersion());
-                record.setAttribute(Field.OBJECT, from);
-                record.setAttribute(Field.EXPORT, false);
-
-                if (from.getNumDriftTemplates() > 0) {
-                    record.setAttribute(Field.IN_COMPLIANCE, Boolean.toString(from.isInCompliance()));
-                }
-
-                return record;
-            }
-
-            @Override
-            protected org.rhq.core.domain.criteria.Criteria getFetchCriteria(DSRequest request) {
-                // we don't use criterias for this datasource, just return null
-                return null;
-            }
-
-            @Override
-            protected void executeFetch(final DSRequest request, final DSResponse response,
-                final org.rhq.core.domain.criteria.Criteria unused) {
-                ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
-                resourceService.findResourceComplianceCounts(new AsyncCallback<List<ResourceInstallCount>>() {
-
-                    @Override
-                    public void onSuccess(List<ResourceInstallCount> result) {
-                        response.setData(buildRecords(result));
-                        response.setTotalRows(result.size());
-                        processResponse(request.getRequestId(), response);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_reports_inventorySummary_failFetch(), caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-            }
-
-            @Override
-            protected void executeUpdate(Record editedRecord, Record oldRecord, DSRequest request,
-                DSResponse response) {
-            }
-        }
     }
 }

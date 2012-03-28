@@ -114,9 +114,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                     conditionValue = conditionLog.getValue();
                     if (condition.getMeasurementDefinition() != null) {
                         try {
-//                            conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()),
-//                                condition.getMeasurementDefinition().getUnits(), true);
-                            conditionValue = format(conditionLog.getValue(),
+                            conditionValue = MeasurementConverter.format(conditionLog.getValue(),
                                 condition.getMeasurementDefinition().getUnits());
                         } catch (Exception e) {
                             // the condition log value was probably not a number (most likely a trait). Ignore this exception.
@@ -135,7 +133,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                 StringBuilder builder = new StringBuilder();
                 AlertConditionCategory category = condition.getCategory();
                 AlertConditionOperator operator;
-                double threshold;
+                String formattedThreshold;
 
                 switch (category) {
                     case AVAILABILITY:
@@ -178,14 +176,13 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         builder.append(" For ");
 
                         String value = String.valueOf(Integer.valueOf(condition.getOption()) / 60);
-                        String formatted = format(value, MeasurementUnits.MINUTES);
+                        String formatted = MeasurementConverter.format(value, MeasurementUnits.MINUTES);
 
                         builder.append(formatted).append("]");
                         break;
                     case THRESHOLD:
-                        threshold = condition.getThreshold();
                         MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
-                        //String formatted = format(threshold, units, true);
+                        formattedThreshold = MeasurementConverter.format(condition.getThreshold(), units, true);
 
                         if (condition.getOption() == null) {
                             builder.append("Metric Value Threshold [")
@@ -193,7 +190,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                                 .append(" ")
                                 .append(condition.getComparator())
                                 .append(" ")
-                                .append(threshold)
+                                .append(formattedThreshold)
                                 .append("]");
                         } else {
                             // this is a calltime threshold condition
@@ -205,7 +202,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                                 .append(" ")
                                 .append(condition.getComparator())  // <, >, =
                                 .append(" ")
-                                .append(threshold)
+                                .append(formattedThreshold)
                                 .append("]");
                             if (condition.getName() != null && condition.getName().length() > 0) {
                                 builder.append(" with call destination matching '")
@@ -215,13 +212,14 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         }
                         break;
                     case BASELINE:
-                        threshold = condition.getThreshold();
+                        formattedThreshold = MeasurementConverter.format(condition.getThreshold(),
+                            MeasurementUnits.PERCENTAGE, true);
                         builder.append("Metric Value Baseline [")
                             .append(condition.getName())
                             .append(" ")
                             .append(condition.getComparator())
                             .append(" ")
-                            .append(threshold)
+                            .append(formattedThreshold)
                             .append(" of ")
                             .append(condition.getOption())
                             .append("]");
@@ -234,7 +232,8 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                                 .append("]");
                         } else {
                             // this is a calltime change condition
-                            threshold = condition.getThreshold();
+                            formattedThreshold = MeasurementConverter.format(condition.getThreshold(),
+                                MeasurementUnits.PERCENTAGE, true);
                             builder.append("Call Time Value Changes [");
                             if (condition.getMeasurementDefinition() != null) {
                                 builder.append(condition.getMeasurementDefinition().getDisplayName()).append(" ");
@@ -243,7 +242,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                                 .append(" ")
                                 .append(getCalltimeChangeComparator(condition.getComparator()))
                                 .append(" by at least ")
-                                .append(threshold)
+                                .append(formattedThreshold)
                                 .append("]");
                             if (condition.getName() != null && condition.getName().length() > 0) {
                                 builder.append(" with call destination matching '")
@@ -310,11 +309,11 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         String metricName = condition.getName();
                         MeasurementUnits metricUnits = condition.getMeasurementDefinition().getUnits();
                         double loValue = condition.getThreshold();
-                        //String formattedLoValue = MeasurementConverterClient.format(loValue, units, true);
+                        String formattedLoValue = MeasurementConverter.format(loValue, metricUnits, true);
                         String formattedHiValue = condition.getOption();
                         try {
                             double hiValue = Double.parseDouble(formattedHiValue);
-                            //formattedHiValue = MeasurementConverterClient.format(hiValue, units, true);
+                            formattedHiValue = MeasurementConverter.format(hiValue, metricUnits, true);
                         } catch (Exception e) {
                             formattedHiValue = "?[" + formattedHiValue + "]?"; // signify something is wrong with the value
                         }
@@ -327,7 +326,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             builder.append("Metric Value Range: [")
                                 .append(metricName)
                                 .append("] between ")
-                                .append(loValue)
+                                .append(formattedLoValue)
                                 .append("] and [")
                                 .append(formattedHiValue)
                                 .append("], exclusive");
@@ -336,7 +335,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             builder.append("Metric Value Range: [")
                                 .append(metricName)
                                 .append("] outside [")
-                                .append(loValue)
+                                .append(formattedLoValue)
                                 .append("] and [")
                                 .append(formattedHiValue)
                                 .append("], exclusive");
@@ -345,7 +344,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             builder.append("Metric Value Range: [")
                                 .append(metricName)
                                 .append("] between [")
-                                .append(loValue)
+                                .append(formattedLoValue)
                                 .append("] and [")
                                 .append(formattedHiValue)
                                 .append("], inclusive");
@@ -354,7 +353,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             builder.append("Metric Value Range: [")
                                 .append(metricName)
                                 .append("] outside [")
-                                .append(loValue)
+                                .append(formattedLoValue)
                                 .append("] and [")
                                 .append(formattedHiValue)
                                 .append("], inclusive");
@@ -368,75 +367,6 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                             .append(category.getName());
                 }
                 return builder.toString();
-            }
-
-            private String format(String value, MeasurementUnits targetUnits) {
-                if (targetUnits == null) {
-                    return value;
-                } else {
-                    return value + getMeasurementUnitAbbreviation(targetUnits);
-                }
-            }
-
-            private String getMeasurementUnitAbbreviation(MeasurementUnits units) {
-                switch (units) {
-                    case NONE:
-                        return "";
-                    case PERCENTAGE:
-                        return "%";
-                    case BYTES:
-                        return "B";
-                    case KILOBYTES:
-                        return "KB";
-                    case MEGABYTES:
-                        return "MB";
-                    case GIGABYTES:
-                        return "GB";
-                    case TERABYTES:
-                        return "TB";
-                    case PETABYTES:
-                        return "PB";
-                    case BITS:
-                        return "b";
-                    case KILOBITS:
-                        return "kb";
-                    case MEGABITS:
-                        return "Mb";
-                    case GIGABITS:
-                        return "Gb";
-                    case TERABITS:
-                        return "Tb";
-                    case PETABITS:
-                        return "Pb";
-                    case EPOCH_MILLISECONDS:
-                        return ""; // absolute time - no display
-                    case EPOCH_SECONDS:
-                        return ""; // absolute time - no display
-                    case JIFFYS:
-                        return "j";
-                    case NANOSECONDS:
-                        return "ns";
-                    case MICROSECONDS:
-                        return "us";
-                    case MILLISECONDS:
-                        return "ms";
-                    case SECONDS:
-                        return "s";
-                    case MINUTES:
-                        return "m";
-                    case HOURS:
-                        return "h";
-                    case DAYS:
-                        return "d";
-                    case CELSIUS:
-                        return "C";
-                    case KELVIN:
-                        return "K";
-                    case FAHRENHEIGHT:
-                        return "F";
-                    default:
-                        return units.toString();
-                }
             }
 
             private String getCalltimeChangeComparator(String comparator) {

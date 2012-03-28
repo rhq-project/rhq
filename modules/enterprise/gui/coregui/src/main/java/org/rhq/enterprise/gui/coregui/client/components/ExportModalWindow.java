@@ -215,7 +215,7 @@ public class ExportModalWindow {
         if (showAllDetail) {
             queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
         }
-        if(operationRequestStatuses != null){
+        if(!isEmpty(operationRequestStatuses)){
             StringBuilder operationRequestStatusBuffer = new StringBuilder();
             for (String operationRequestStatus : operationRequestStatuses) {
                 operationRequestStatusBuffer.append(operationRequestStatus);
@@ -224,7 +224,7 @@ public class ExportModalWindow {
 
             queryString.append("operationRequestStatus=").append(operationRequestStatusBuffer.toString());
         }
-        if(alertPriorityFilters != null){
+        if(!isEmpty(alertPriorityFilters)){
             StringBuilder alertsPriorityBuffer = new StringBuilder();
             for (String alertPriority : alertPriorityFilters) {
                 alertsPriorityBuffer.append(alertPriority);
@@ -234,7 +234,7 @@ public class ExportModalWindow {
         }
 
         // Drift Related
-        if(driftCategories != null){
+        if(!isEmpty(driftCategories)){
             StringBuilder driftCategoriesBuffer = new StringBuilder();
             for (String category : driftCategories) {
                 driftCategoriesBuffer.append(category).append(",");
@@ -253,6 +253,10 @@ public class ExportModalWindow {
 
         
         return URL.encode(BASE_URL + reportUrl + "." + format  + "?"+queryString);
+    }
+
+    private boolean isEmpty(String[] array) {
+        return array == null || array.length == 0;
     }
 
     public boolean isShowAllDetail(){

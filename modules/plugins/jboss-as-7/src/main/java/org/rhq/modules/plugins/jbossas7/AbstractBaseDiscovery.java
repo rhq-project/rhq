@@ -255,7 +255,7 @@ public class AbstractBaseDiscovery {
         return realm;
     }
 
-    String getSecurityPropertyFileFromHostXml(String baseDir, AS7Mode mode, String realm) {
+    String getSecurityPropertyFileFromHostXml(File baseDir, AS7Mode mode, String realm) {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
@@ -270,14 +270,15 @@ public class AbstractBaseDiscovery {
         else
             dmode = "domain";
 
-        String fullName;
-        if (relDir.equals("jboss." + dmode + ".config.dir"))
-            fullName = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator
-                + fileName;
-        else
-            fullName = relDir + File.separator + fileName;
+        File configDir;
+        if (relDir.equals("jboss." + dmode + ".config.dir")) {
+            configDir = new File(baseDir, "configuration");
+        } else {
+            configDir = new File(relDir);
+        }
+        File securityPropertyFile = new File(configDir, fileName);
 
-        return fullName;
+        return securityPropertyFile.getPath();
     }
 
     protected File getHomeDir(ProcessInfo processInfo) {

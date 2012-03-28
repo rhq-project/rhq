@@ -30,6 +30,12 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
+import com.smartgwt.client.data.fields.DataSourceImageField;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourceLinkField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
@@ -150,6 +156,13 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
+            ListGridField fieldExport = new ListGridField("exportDetails", "Export Details");
+
+            ExportChangeHandler exportChangeHandler = new ExportChangeHandler(getListGrid(), DataSource.Field.TYPEID,
+                DataSource.Field.EXPORT);
+            fieldExport.setCanToggle(true);
+            fieldExport.setCanEdit(true);
+            fieldExport.addChangedHandler(exportChangeHandler);
 
             ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE, MSG
                 .common_title_in_compliance());
@@ -223,7 +236,10 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
                 }
             });
 
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance);
+            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance,
+                fieldExport);
+            getListGrid().setEditEvent(ListGridEditEvent.CLICK);
+            getListGrid().setEditByCell(true);
             addExportAction();
         }
 
@@ -269,6 +285,19 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
                 public static final String IN_COMPLIANCE = "inCompliance";
+                public static final String EXPORT = "exportDetails";
+            }
+
+            public DataSource() {
+                DataSourceLinkField name = new DataSourceLinkField(Field.TYPENAME);
+                DataSourceTextField plugin = new DataSourceTextField(Field.TYPEPLUGIN);
+                DataSourceImageField category = new DataSourceImageField(Field.CATEGORY);
+                DataSourceTextField version = new DataSourceTextField(Field.VERSION);
+                DataSourceIntegerField count = new DataSourceIntegerField(Field.COUNT);
+                DataSourceBooleanField inCompliance = new DataSourceBooleanField(Field.IN_COMPLIANCE);
+                DataSourceBooleanField export = new DataSourceBooleanField(Field.EXPORT);
+
+                setFields(name, plugin, category, version, count, inCompliance, export);
             }
 
             @Override
@@ -287,6 +316,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
                 record.setAttribute(Field.OBJECT, from);
+                record.setAttribute(Field.EXPORT, false);
 
                 if (from.getNumDriftTemplates() > 0) {
                     record.setAttribute(Field.IN_COMPLIANCE, Boolean.toString(from.isInCompliance()));
@@ -322,6 +352,11 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
                         processResponse(request.getRequestId(), response);
                     }
                 });
+            }
+
+            @Override
+            protected void executeUpdate(Record editedRecord, Record oldRecord, DSRequest request,
+                DSResponse response) {
             }
         }
     }

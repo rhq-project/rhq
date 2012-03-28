@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -114,8 +114,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("alertDefinitions");
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createStandardExporter("alertDefinitions");
+                exporter.export();
             }
 
         });

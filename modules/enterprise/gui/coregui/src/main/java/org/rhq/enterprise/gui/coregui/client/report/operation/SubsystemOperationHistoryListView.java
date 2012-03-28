@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.report.operation;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 
@@ -53,8 +53,8 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentOperations("recentOperations",statusFilter.getValues());
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createExporterForRecentOperations("recentOperations", statusFilter.getValues());
+                exporter.export();
                 refreshTableInfo();
             }
 

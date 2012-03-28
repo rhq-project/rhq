@@ -27,13 +27,12 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -45,9 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
+import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.*;
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {
 
@@ -123,8 +120,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("platformUtilization");
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createStandardExporter("platformUtilization");
+                exporter.export();
                 refreshTableInfo();
             }
         });

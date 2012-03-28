@@ -25,9 +25,8 @@ package org.rhq.enterprise.gui.coregui.client.report.measurement;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -71,8 +70,8 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("suspectMetrics");
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createStandardExporter("suspectMetrics");
+                exporter.export();
                 refreshTableInfo();
             }
         });

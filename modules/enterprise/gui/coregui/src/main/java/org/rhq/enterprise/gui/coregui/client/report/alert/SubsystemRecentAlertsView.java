@@ -1,14 +1,13 @@
 package org.rhq.enterprise.gui.coregui.client.report.alert;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -43,9 +42,9 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
                         alertPriorityList.add(AlertPriority.LOW);
                     }
                 }
-                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentAlerts(
-                    "recentAlerts", alertPriorityList.toArray(new String[alertPriorityList.size()]));
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createExporterForRecentAlerts(
+                        "recentAlerts", alertPriorityList.toArray(new String[alertPriorityList.size()]));
+                exporter.export();
                 refreshTableInfo();
             }
         });

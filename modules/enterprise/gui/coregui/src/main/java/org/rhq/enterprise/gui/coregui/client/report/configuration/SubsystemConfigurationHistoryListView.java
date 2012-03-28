@@ -1,7 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.report.configuration;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 
@@ -27,8 +27,8 @@ public class SubsystemConfigurationHistoryListView extends ResourceConfiguration
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createStandardExportWindow("configurationHistory");
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createStandardExporter("configurationHistory");
+                exporter.export();
                 refreshTableInfo();
             }
         });

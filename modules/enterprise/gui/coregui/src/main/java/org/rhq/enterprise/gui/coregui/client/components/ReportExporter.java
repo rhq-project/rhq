@@ -29,20 +29,17 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 import java.util.Set;
 
 /**
- * Build a custom Export window based for particular export screens.
+ * Exporter for building urls to reports (csv).
+ * The reports are RESTful urls opened up in a new window.
  *
  * @author Mike Thompson
  */
-public class ExportModalWindow {
+public class ReportExporter {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
     private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
     private static final String FORMAT = "csv"; //CSV is all we need right now
-
-    //private static final String FORMAT_FIELD = "format";
-    //private static final String DETAILS_FIELD = "details";
-    //private static final String DATE_RANGE_FIELD = "dri";
 
     private String reportUrl;
 
@@ -72,25 +69,25 @@ public class ExportModalWindow {
      * Private constructors to force use of static factory creation pattern.
      * @param reportUrl
      */
-    private ExportModalWindow(String reportUrl) {
+    private ReportExporter(String reportUrl) {
 
         this.reportUrl = reportUrl;
     }
 
 
-    private ExportModalWindow(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
+    private ReportExporter(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
         this.reportUrl = reportUrl;
         this.showAllDetail = showDetail;
         this.resourceTypeIds = resourceTypeIds;
     }
 
-    public static ExportModalWindow createStandardExportWindow(String reportUrl) {
-        return new ExportModalWindow(reportUrl);
+    public static ReportExporter createStandardExporter(String reportUrl) {
+        return new ReportExporter(reportUrl);
     }
 
-    public static ExportModalWindow createExportWindowForRecentDrift(String reportUrl, String definition,
-                                                                     String snapshot, String[] driftCategories, String path) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+    public static ReportExporter createExporterForRecentDrift(String reportUrl, String definition,
+                                                              String snapshot, String[] driftCategories, String path) {
+        ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setDriftCategories(driftCategories);
         newExportDialog.setDriftDefinition(definition);
         newExportDialog.setDriftPath(path);
@@ -98,90 +95,23 @@ public class ExportModalWindow {
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForRecentAlerts(String reportUrl, String[] alertPriorityList) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList) {
+        ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setAlertPriorityFilters(alertPriorityList);
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForRecentOperations(String reportUrl, String[] operationRequestStatuses ) {
-        ExportModalWindow newExportDialog = new ExportModalWindow(reportUrl);
+    public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses) {
+        ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setOperationRequestStatusList(operationRequestStatuses);
         return newExportDialog;
     }
 
-    public static ExportModalWindow createExportWindowForInventorySummary(String reportUrl, boolean showAllDetails,
-        Set<Integer> resourceTypeIdsForExport) {
-        return new ExportModalWindow(reportUrl, showAllDetails, resourceTypeIdsForExport);
+    public static ReportExporter createExporterForInventorySummary(String reportUrl, boolean showAllDetails,
+                                                                   Set<Integer> resourceTypeIdsForExport) {
+        return new ReportExporter(reportUrl, showAllDetails, resourceTypeIdsForExport);
     }
 
-//    private void createDialogWindow() {
-//        exportWindow = new PopupWindow("exportSettings", null);
-//        exportWindow.setTitle("Export Dialog");
-//
-//        VLayout dialogLayout = new VLayout();
-//
-//        HLayout headerLayout = new HLayout();
-//        headerLayout.setHeight(25);
-//        headerLayout.setAlign(Alignment.CENTER);
-//        TitleBar titleBar = new TitleBar(exportWindow, "Export Settings", IconEnum.REPORT.getIcon24x24Path());
-//        headerLayout.addMember(titleBar);
-//        dialogLayout.addMember(headerLayout);
-//
-//        HLayout formLayout = new HLayout();
-//        formLayout.setAlign(VerticalAlignment.TOP);
-//
-//        final DynamicForm form = new DynamicForm();
-//
-//        final SelectItem formatsList = new SelectItem(FORMAT_FIELD, "Format");
-//        LinkedHashMap<String, String> formats = new LinkedHashMap<String, String>();
-//        formats.put("csv", "CSV");
-//        formats.put("xml", "XML");
-//        formatsList.setValueMap(formats);
-//        formatsList.setDefaultValue("csv");
-//
-//        CheckboxItem detailCheckboxItem = new CheckboxItem(DETAILS_FIELD, "Show Detail");
-//        detailCheckboxItem.setVisible(showAllDetail);
-//        detailCheckboxItem.setValue(false);
-//
-//        DateRangeItem dateRangeItem = new DateRangeItem(DATE_RANGE_FIELD, "Date Range");
-//        dateRangeItem.setAllowRelativeDates(true);
-//        DateRange dateRange = new DateRange();
-//        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
-//        dateRange.setRelativeEndDate(RelativeDate.TODAY);
-//        dateRangeItem.setValue(dateRange);
-//
-//
-//        form.setItems(new SpacerItem(),formatsList, detailCheckboxItem, new SpacerItem(),new SpacerItem(), dateRangeItem);
-//        formLayout.addMember(form);
-//        dialogLayout.addMember(formLayout);
-//
-//        ToolStrip buttonBar = new ToolStrip();
-//        buttonBar.setAlign(Alignment.RIGHT);
-//        buttonBar.setPadding(5);
-//        buttonBar.setMembersMargin(10);
-//
-//        IButton cancelButton = new IButton("Cancel", new ClickHandler() {
-//            @Override
-//            public void onClick(ClickEvent clickEvent) {
-//                exportWindow.hide();
-//            }
-//        });
-//        buttonBar.addMember(cancelButton);
-//
-//        IButton finishButton = new IButton("Export", new ClickHandler() {
-//            @Override
-//            public void onClick(ClickEvent clickEvent) {
-//                exportWindow.hide();
-//                Window.open(calculateUrl(form), "download", null);
-//            }
-//        });
-//        buttonBar.addMember(finishButton);
-//
-//        dialogLayout.addMember(buttonBar);
-//
-//        exportWindow.addItem(dialogLayout);
-//    }
 
     public void setAlertPriorityFilters(String[] alertPriorityFilters) {
         this.alertPriorityFilters = alertPriorityFilters;
@@ -261,7 +191,7 @@ public class ExportModalWindow {
         this.driftPath = driftPath;
     }
 
-    public void show(){
+    public void export(){
         Window.open(determineUrl(), "download", null);
 
     }

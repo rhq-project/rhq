@@ -24,7 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.components.ExportModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
@@ -47,8 +47,8 @@ public class SubsystemResourceDriftView extends DriftHistoryView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ExportModalWindow exportModalWindow = ExportModalWindow.createExportWindowForRecentDrift("recentDrift",definitionFilter.getValueAsString(),changeSetFilter.getValueAsString(),categoryFilter.getValues(),pathFilter.getValueAsString());
-                exportModalWindow.show();
+                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift", definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(), pathFilter.getValueAsString());
+                exporter.export();
                 refreshTableInfo();
             }
 

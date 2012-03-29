@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,26 +43,32 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Provide connections to the AS and reading / writing date from/to it.
+ * Provide management connections to an AS7 instance and reading/writing data from/to it.
+ *
  * @author Heiko W. Rupp
  */
 public class ASConnection {
 
     public static final String MANAGEMENT = "/management";
+    private static final String FAILURE_DESCRIPTION = "\"failure-description\"";
+    private static final String INCLUDE_DEFAULT = "include-defaults";
+
+    // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
+    public static boolean verbose = false;
+
     private final Log log = LogFactory.getLog(ASConnection.class);
-    URL url;
-    String urlString;
+
+    private URL url;
+    private String urlString;
     private ObjectMapper mapper;
-    public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
-    Authenticator passwordAuthenticator;
+    private Authenticator passwordAuthenticator;
     private String host;
     private int port;
-    private String FAILURE_DESCRIPTION = "\"failure-description\"";
-    private String INCLUDE_DEFAULT = "include-defaults";
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
-     * #executeRaw.
+     * {@link #executeRaw(Operation)}.
+     *
      * @param host Host of the DomainController or standalone server
      * @param port Port of the JSON api.
      * @param user user needed for authentication
@@ -116,34 +122,56 @@ public class ASConnection {
      * real work by talking to the remote server and sending JSON data, that
      * is obtained by serializing the operation.
      *
-     * Please do not use this API , but execute()
-     * @return JsonNode that describes the result
+     * Please do not use this API, but rather use {@link #execute(Operation)}.
+     *
      * @param operation an Operation that should be run on the domain controller
      * @param timeoutSec Timeout on connect and read in seconds
+     *
+     * @return JsonNode that describes the result
+     *
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation)
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation, int timeoutSec) {
-        InputStream inputStream;
-        BufferedReader br = null;
-        InputStream es = null;
-        HttpURLConnection conn = null;
         long t1 = System.currentTimeMillis();
+
+        HttpURLConnection conn;
+        OutputStream out;
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept", "application/json");
-            conn.setConnectTimeout(timeoutSec * 1000); // 10s
-            conn.setReadTimeout(timeoutSec * 1000); // 10s
+            int timeoutMillis = timeoutSec * 1000;
+            conn.setConnectTimeout(timeoutMillis);
+            conn.setReadTimeout(timeoutMillis);
 
-            if (conn.getReadTimeout() != 10 * 1000)
-                log.warn("JRE uses a broken timeout mechanism - nothing we can do");
+            if (conn.getReadTimeout() != timeoutMillis) {
+                log.warn("The JRE uses a broken timeout mechanism - nothing we can do.");
+            }
 
-            OutputStream out = conn.getOutputStream();
+            out = conn.getOutputStream();
+        } catch (IOException e) {
+            // This most likely just means the server is down.
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to open connection to [" + urlString + "] in order to invoke [" + operation + "]: "
+                        + e);
+            }
+            // TODO (ips): Would it make more sense to return null here, since we didn't even connect?
+            Result failure = new Result();
+            failure.setFailureDescription(e.getMessage());
+            failure.setOutcome("failure");
+            failure.setRhqThrowable(e);
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
+        }
 
+        InputStream inputStream;
+        BufferedReader br = null;
+        InputStream es = null;
+        try {
             //add additional request property to include-defaults=true to all requests.
             //if it's already set we leave it alone and assume that Operation creator is taking over control.
             if (operation.getAdditionalProperties().isEmpty()
@@ -159,7 +187,7 @@ public class ASConnection {
                 if (containsSpaces(operation.getAddress().getPath())) {
                     Result noResult = new Result();
                     String outcome = "- Path '" + operation.getAddress().getPath()
-                        + "' in invalid as it cannot contain spaces -";
+                        + "' is invalid as it contains spaces -";
                     if (verbose) {
                         log.error(outcome);
                     }
@@ -187,7 +215,6 @@ public class ASConnection {
             }
 
             if (inputStream != null) {
-
                 br = new BufferedReader(new InputStreamReader(inputStream));
                 String line;
                 StringBuilder builder = new StringBuilder();
@@ -230,8 +257,7 @@ public class ASConnection {
                 }
             }
         } catch (IllegalArgumentException iae) {
-            log.error("Illegal argument " + iae);
-            log.error("  for input " + operation);
+            log.error("Illegal argument " + iae + "\n\t for input " + operation);
         } catch (SocketTimeoutException ste) {
             log.error("Request to AS timed out " + ste.getMessage());
             conn.disconnect();
@@ -242,7 +268,6 @@ public class ASConnection {
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
-
         } catch (IOException e) {
             log.error("Failed to get data: " + e.getMessage());
 
@@ -387,7 +412,6 @@ public class ASConnection {
         }
         Result res;
         try {
-
             //check for failure-description indicator, otherwise ObjectMapper will try to deserialize as json. Ex.
             // {"outcome":"failed","failure-description":"JBAS014792: Unknown attribute number-of-timed-out-transactions","rolled-back":true}
             String as7ResultSerialization = node.toString();
@@ -425,4 +449,5 @@ public class ASConnection {
     public int getPort() {
         return port;
     }
+
 }

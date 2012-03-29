@@ -43,7 +43,7 @@ public class PostgresTableDiscoveryComponent implements ResourceDiscoveryCompone
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PostgresDatabaseComponent> context)
         throws Exception {
-        log.debug("Discovering postgres tables for " + context.getParentResourceComponent().getDatabaseName());
+        log.debug("Discovering postgres tables for " + context.getParentResourceComponent().getDatabaseName() + "...");
         Set<DiscoveredResourceDetails> discoveredTables = new HashSet<DiscoveredResourceDetails>();
 
         Connection connection = context.getParentResourceComponent().getConnection();

@@ -39,13 +39,13 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  * @author Greg Hinkle
  */
 public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponent<PostgresServerComponent<?>> {
-    private static final Log log = LogFactory.getLog(PostgresTableDiscoveryComponent.class);
+    private static final Log log = LogFactory.getLog(PostgresUserDiscoveryComponent.class);
 
     public static final String USERS_QUERY = "select * from pg_roles";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PostgresServerComponent<?>> context)
         throws Exception {
-        log.info("Discovering postgres users");
+        log.debug("Discovering postgres users for " + context.getParentResourceComponent().getJDBCUrl() + "...");
         Set<DiscoveredResourceDetails> discoveredUsers = new HashSet<DiscoveredResourceDetails>();
 
         Connection connection = context.getParentResourceComponent().getConnection();

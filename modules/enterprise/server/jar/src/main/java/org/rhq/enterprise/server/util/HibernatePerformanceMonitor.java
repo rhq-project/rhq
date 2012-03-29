@@ -30,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.stat.Statistics;
 
-import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.domain.server.PersistenceUtility;
 
 /**
  * @author Joseph Marques

@@ -3,7 +3,7 @@
 <%@ page import="java.util.Map" %>
 
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
-<%@ page import="org.rhq.core.server.PersistenceUtility" %>
+<%@ page import="org.rhq.core.domain.server.PersistenceUtility" %>
 
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils"%>
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility"%>

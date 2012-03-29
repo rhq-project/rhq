@@ -154,7 +154,7 @@
             <rhq.test.ds.port>9092</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
             <!-- This custom dialect is required for proper operation using H2, see class JavaDoc for more info -->
-            <rhq.test.ds.hibernate-dialect>org.rhq.core.server.H2CustomDialect</rhq.test.ds.hibernate-dialect>
+            <rhq.test.ds.hibernate-dialect>org.rhq.core.domain.server.H2CustomDialect</rhq.test.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.StdJDBCDelegate</rhq.test.quartz.driverDelegateClass>
             <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
@@ -170,7 +170,7 @@
             <rhq.dev.ds.port>9092</rhq.dev.ds.port>
             <rhq.dev.ds.db-name>rhq</rhq.dev.ds.db-name>
             <!-- This custom dialect is required for proper operation using H2, see class JavaDoc for more info -->
-            <rhq.dev.ds.hibernate-dialect>org.rhq.core.server.H2CustomDialect</rhq.dev.ds.hibernate-dialect>
+            <rhq.dev.ds.hibernate-dialect>org.rhq.core.domain.server.H2CustomDialect</rhq.dev.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.dev.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.StdJDBCDelegate</rhq.dev.quartz.driverDelegateClass>
             <rhq.dev.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.dev.quartz.selectWithLockSQL>

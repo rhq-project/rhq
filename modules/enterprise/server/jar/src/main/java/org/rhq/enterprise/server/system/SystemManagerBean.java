@@ -65,7 +65,7 @@ import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;

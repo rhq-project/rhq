@@ -90,9 +90,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 @SuppressWarnings("unchecked")

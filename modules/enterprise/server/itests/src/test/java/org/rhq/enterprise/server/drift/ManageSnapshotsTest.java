@@ -52,8 +52,8 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
+import org.rhq.core.domain.server.EntitySerializer;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.server.EntitySerializer;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 

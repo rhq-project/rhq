@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.server;
+package org.rhq.core.domain.server;
 
 /**
  * This uses a ThreadLocal to bind an externalization strategy based on the invoking subsystem. In other

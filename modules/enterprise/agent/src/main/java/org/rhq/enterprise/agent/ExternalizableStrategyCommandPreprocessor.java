@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.agent;
 
-import org.rhq.core.server.ExternalizableStrategy;
+import org.rhq.core.domain.server.ExternalizableStrategy;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;

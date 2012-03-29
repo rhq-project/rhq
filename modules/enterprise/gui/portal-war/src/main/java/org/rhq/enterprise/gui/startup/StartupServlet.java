@@ -376,7 +376,7 @@ public class StartupServlet extends HttpServlet {
                 .getServiceContainer()
                 .addCommandListener(
                     new ExternalizableStrategyCommandListener(
-                        org.rhq.core.server.ExternalizableStrategy.Subsystem.AGENT));
+                        org.rhq.core.domain.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
             throw new ServletException("Cannot start the server-side communications services.", e);
         }

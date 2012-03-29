@@ -25,7 +25,7 @@ import javax.persistence.EntityManager;
 
 import org.hibernate.stat.Statistics;
 
-import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.domain.server.PersistenceUtility;
 
 /**
  * @author Joseph Marques

@@ -23,7 +23,7 @@ import org.hibernate.stat.Statistics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**

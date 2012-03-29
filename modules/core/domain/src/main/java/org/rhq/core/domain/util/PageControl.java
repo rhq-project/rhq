@@ -29,7 +29,7 @@ import java.util.List;
 
 /**
  * Used to pass information on pagination and sorting to data lookup methods.
- * {@link org.rhq.core.server.PersistenceUtility} provides several methods
+ * {@link org.rhq.core.domain.server.PersistenceUtility} provides several methods
  * that can be called to apply PageControls to various types of queries.
  *
  * @author Greg Hinkle

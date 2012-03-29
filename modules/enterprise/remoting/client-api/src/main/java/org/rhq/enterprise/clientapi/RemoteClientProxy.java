@@ -29,7 +29,7 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.rhq.bindings.client.AbstractRhqFacadeProxy;
 import org.rhq.bindings.client.RhqManagers;
 import org.rhq.bindings.util.InterfaceSimplifier;
-import org.rhq.core.server.ExternalizableStrategy;
+import org.rhq.core.domain.server.ExternalizableStrategy;
 
 /**
  * This class acts as a local SLSB proxy to make remote invocations

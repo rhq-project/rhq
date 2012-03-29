@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.server;
+package org.rhq.core.domain.server;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,7 +49,7 @@ import javax.persistence.Id;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.server.ExternalizableStrategy.Subsystem;
+import org.rhq.core.domain.server.ExternalizableStrategy.Subsystem;
 
 /**
  * A utility specifically tailored to entities which will iterate over its persistence fields with a consistent

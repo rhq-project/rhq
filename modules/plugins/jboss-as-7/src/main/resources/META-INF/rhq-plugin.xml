@@ -2808,4 +2808,36 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
      </service>
 
+     <service name="CMP"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the cmp subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=cmp" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:group name="child:hilo-keygenerator=hilo-keygenerator" displayName="HiLo based key generators.">
+                <c:simple-property name="block-size" required="false" type="long" readOnly="true" description="The block size"/>
+                <c:simple-property name="create-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create create the tables"/>
+                <c:simple-property name="create-table-ddl" required="false" type="string" readOnly="true" description="The DDL used to create the table"/>
+                <c:simple-property name="data-source" required="false" type="string" readOnly="true" description="The datasource used for sequence generation"/>
+                <c:simple-property name="drop-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create drop the tables"/>
+                <c:simple-property name="id-column" required="false" type="string" readOnly="true" description="The ID column name"/>
+                <c:simple-property name="select-hi-ddl" required="false" type="string" readOnly="true" description="The DDL used to select the hi value"/>
+                <c:simple-property name="sequence-column" required="false" type="string" readOnly="true" description="The sequence column name"/>
+                <c:simple-property name="sequence-name" required="false" type="string" readOnly="true" description="The name of the sequence"/>
+                <c:simple-property name="table-name" required="false" type="string" readOnly="true" description="The table name"/>
+            </c:group>
+        </resource-configuration>
+
+     </service>
+
 </plugin>

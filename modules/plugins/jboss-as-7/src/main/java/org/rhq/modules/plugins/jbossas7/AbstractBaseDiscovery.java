@@ -48,7 +48,7 @@ public class AbstractBaseDiscovery {
     private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
 
-    private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption(null, "bmanagement");
+    private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption("bmanagement", null);
     
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";

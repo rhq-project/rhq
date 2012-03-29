@@ -55,7 +55,8 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Base component for functionality that is common to Standalone AS and HostControllers
+ * Base component for functionality that is common to Standalone Servers and Host Controllers.
+ *
  * @author Heiko W. Rupp
  */
 public class BaseServerComponent extends BaseComponent implements MeasurementFacet {
@@ -273,11 +274,12 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             return result;
         }
 
-        String homeDir = pluginConfig.getSimpleValue("homeDir", "");
-        if (homeDir.isEmpty()) {
-            result.setErrorMessage("No homeDir found, can not continue");
+        String homeDirString = pluginConfig.getSimpleValue("homeDir", "");
+        if (homeDirString.isEmpty()) {
+            result.setErrorMessage("No homeDir found - cannot continue.");
             return result;
         }
+        File homeDir = new File(homeDirString);
 
         String configFile;
         BaseProcessDiscovery processDiscovery;
@@ -318,8 +320,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             log.error(nsae.getMessage());
             result.setErrorMessage(nsae.getMessage());
         }
-        result.setSimpleResult("User/Password set or updated");
-        log.info("Installed management user [" + user + "].");
+        result.setSimpleResult("Management user [" + user + "] added or updated.");
+        log.info("Added or updated management user [" + user + "].");
 
         context.getAvailabilityContext().requestAvailabilityCheck();
 
@@ -362,7 +364,6 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             else if (!requestName.startsWith("_skm:")) { // handled below
                 leftovers.add(request);
             }
-
         }
 
         // Now handle the skm

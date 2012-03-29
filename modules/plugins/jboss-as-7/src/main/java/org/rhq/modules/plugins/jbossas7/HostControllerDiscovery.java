@@ -95,7 +95,7 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult psr) {
+                                                             ProcessScanResult psr) throws Exception {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
         ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();

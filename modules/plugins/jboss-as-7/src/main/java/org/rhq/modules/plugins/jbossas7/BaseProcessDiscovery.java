@@ -117,7 +117,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("configDir", configDir));
         pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
         pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process, configDir))));
-        fillUserPassFromFile(pluginConfig, getMode(), homeDir.getPath());
+        fillUserPassFromFile(pluginConfig, getMode(), homeDir);
         File logFile = getLogFile(getLogDir(process, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
         HostPort managementHostPort = getManagementPortFromHostXml(commandLine);
@@ -316,8 +316,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return (String) res.getResult();
     }
 
-    private void fillUserPassFromFile(Configuration config, AS7Mode mode, String baseDir) {
-
+    private void fillUserPassFromFile(Configuration config, AS7Mode mode, File baseDir) {
         //        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
         String realm = getManagementSecurityRealmFromHostXml();
         String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
@@ -329,6 +328,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                     + "] or file is not readable");
             return;
         }
+        // TODO (ips): Can't we use Properties.load() to read the file?
         BufferedReader br = null;
         try {
             FileReader fileReader = new FileReader(file);

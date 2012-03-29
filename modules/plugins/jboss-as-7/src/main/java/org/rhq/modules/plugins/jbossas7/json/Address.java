@@ -83,7 +83,6 @@ public class Address {
             String tmp = component.trim();
 
             if (tmp.contains("=")) {
-                // strip / from the start of the key if it happens to be there
                 PROPERTY_VALUE valuePair = pathFromSegment(tmp);
                 this.path.add(valuePair);
             }

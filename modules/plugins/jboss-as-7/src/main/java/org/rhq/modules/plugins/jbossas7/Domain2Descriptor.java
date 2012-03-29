@@ -49,6 +49,8 @@ public class Domain2Descriptor {
 
     private void run(String[] args) {
 
+        //process and populate command line args passed in and determine
+        //operation modes.
         D2DMode mode = null;
         String user = null;
         String pass = null;
@@ -87,20 +89,28 @@ public class Domain2Descriptor {
         String path = arg;
         path = path.replaceAll("/", ","); // Allow path from jboss-cli.sh's
         // pwd command
+
+        //spinder 3/29/12: if additional child type info passed in then load it. What does this look like?
         String childType = null;
         if (args.length > pos + 1) {
             childType = args[pos + 1];
         }
 
+        //create connection
         ASConnection conn = new ASConnection("localhost", 9990, user, pass);
 
         Address address = new Address(path);
+
+        //create request to get metadata type information
         Operation op = new Operation("read-resource-description", address);
+        //recurse down the tree.
         op.addAdditionalProperty("recursive", "true");
 
+        //additionally request operation metadata
         if (mode == D2DMode.OPERATION) {
             op.addAdditionalProperty("operations", true);
         }
+        //additionally request metric metadata
         if (mode == D2DMode.METRICS) {
             op.addAdditionalProperty("include-runtime", true);
         }
@@ -115,6 +125,7 @@ public class Domain2Descriptor {
             return;
         }
 
+        //load json object hierarchy of response
         Map<String, Object> resMap = res.getResult();
         String what;
         if (mode == D2DMode.OPERATION) {
@@ -123,8 +134,12 @@ public class Domain2Descriptor {
             what = "attributes";
         }
 
+        //Determine which attributes to focus on.
         Map<String, Object> attributesMap;
+
+        //when will childtype is actually passed then...
         if (childType != null) {
+
             Map childMap = (Map) resMap.get("children");
             Map<String, Object> typeMap = (Map<String, Object>) childMap.get(childType);
             if (typeMap == null) {
@@ -138,16 +153,18 @@ public class Domain2Descriptor {
             }
             Map starMap = (Map) descriptionMap.get("*");
             attributesMap = (Map<String, Object>) starMap.get(what);
-        } else {
+        } else {//no child type passed in just load typical map
             attributesMap = (Map<String, Object>) resMap.get(what);
         }
 
         if (mode == D2DMode.OPERATION) {
+            //populate operations(each special map type) and sort them for ordered listing
             Set<String> strings = attributesMap.keySet();
             String[] keys = strings.toArray(new String[strings.size()]);
             Arrays.sort(keys);
 
             for (String key : keys) {
+                //exclude typical 'read-' and 'write-attribute' operations typical to all types.
                 if (key.startsWith("read-")) {
                     continue;
                 }
@@ -155,6 +172,7 @@ public class Domain2Descriptor {
                     continue;
                 }
 
+                //for each custom operation found, retrieve child hierarchy and pass into
                 Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
                 createOperation(key, value);
             }
@@ -177,8 +195,8 @@ public class Domain2Descriptor {
 
             Type ptype = getTypeFromProps(props);
             if (ptype == Type.OBJECT && mode != D2DMode.METRICS) {
-                System.out.println("<c:map-property name=\"" + key + "\" description=\""
-                        + props.get("description") + "\" >");
+                System.out.println("<c:map-property name=\"" + key + "\" description=\"" + props.get("description")
+                    + "\" >");
 
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get("attributes");
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
@@ -200,7 +218,7 @@ public class Domain2Descriptor {
                             Map<String, Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
                             Type ts = getTypeFromProps(emapEntryValue);
                             StringBuilder sb = generateProperty(indent, emapEntryValue, ts, emapEntry.getKey(),
-                                    getAccessType(emapEntryValue));
+                                getAccessType(emapEntryValue));
                             System.out.println(sb.toString());
                         } else {
                             System.out.println(emapEntry.getValue());
@@ -248,7 +266,7 @@ public class Domain2Descriptor {
                     HashMap<String, Object> myMap = (HashMap<String, Object>) props.get("value-type");
                     for (Map.Entry<String, Object> myEntry : myMap.entrySet()) {
                         createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
-                                key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                            key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
                     }
                 } else {
                     if (!accessType.equals("metric")) {
@@ -289,32 +307,41 @@ public class Domain2Descriptor {
 
         if (emapEntry.getValue() instanceof Map) {
             Map<String, Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
-            sb = generateProperty(indent, emapEntryValue, getTypeFromProps(emapEntryValue),
-                    emapEntry.getKey(), getAccessType(emapEntryValue));
+            sb = generateProperty(indent, emapEntryValue, getTypeFromProps(emapEntryValue), emapEntry.getKey(),
+                getAccessType(emapEntryValue));
         } else {
             sb = new StringBuilder();
-            doIndent(indent,sb);
+            doIndent(indent, sb);
             sb.append(emapEntry.getValue().toString());
         }
         System.out.println(sb.toString());
     }
 
+    /** Assumes custom operation for AS7 node.
+     * 
+     * @param name of custom operation.
+     * @param operationMap Json node representation of operation details as Map<String,Object>.
+     */
     private void createOperation(String name, Map<String, Object> operationMap) {
 
-        if (operationMap == null) {
+        if ((name == null) && (operationMap == null)) {
             return;
         }
 
+        //container for flexible string concatenation and each operation
         StringBuilder builder = new StringBuilder("<operation name=\"");
 
         builder.append(name).append('"');
 
+        //description attribute
         String description = (String) operationMap.get("description");
         appendDescription(builder, description, null);
+        //close xml tag
         builder.append(">\n");
 
+        //detect operation parameters if present.
         Map<String, Object> reqMap = (Map<String, Object>) operationMap.get("request-properties");
-        if (reqMap != null && !reqMap.isEmpty()) {
+        if (reqMap != null && !reqMap.isEmpty()) {//if present build parameters segment for plugin descriptor.
             builder.append("  <parameters>\n");
             generatePropertiesForMap(builder, reqMap);
             builder.append("  </parameters>\n");
@@ -333,13 +360,21 @@ public class Domain2Descriptor {
         System.out.println(builder.toString());
     }
 
+    /** Builds 'description' attribute for an xml node.
+     * 
+     * @param builder 
+     * @param description
+     * @param defaultValueText
+     */
     private void appendDescription(StringBuilder builder, String description, String defaultValueText) {
         if (description != null && !description.isEmpty()) {
+            //wrap onto a new line
             if (builder.length() > 120) {
                 builder.append("\n        ");
             }
             builder.append(" description=\"");
 
+            //trim period off of descriptions for consistency.
             if (defaultValueText != null) {
                 if (description.charAt(description.length() - 1) != '.') {
                     description += ".";
@@ -347,6 +382,7 @@ public class Domain2Descriptor {
                 description = description + " " + defaultValueText;
             }
 
+            //replace problematic strings with correct escaped xml references.
             description = description.replace("<", "&lt;");
             description = description.replace(">", "&gt;");
             description = description.replace("\"", "\'");
@@ -370,8 +406,9 @@ public class Domain2Descriptor {
                 builder.append(generateProperty(4, entryValue, type, entryKey, null));
                 builder.append('\n');
             } else {
+
                 builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
-                        .append("-->");
+                    .append("-->");
             }
         }
     }
@@ -385,7 +422,7 @@ public class Domain2Descriptor {
     }
 
     private StringBuilder generateProperty(int indent, Map<String, Object> props, Type type, String entryName,
-                                           String accessType) {
+        String accessType) {
 
         boolean expressionsAllowed = false;
         Boolean tmp = (Boolean) props.get("expressions-allowed");
@@ -466,14 +503,8 @@ public class Domain2Descriptor {
 
     public enum Type {
 
-        STRING(false,"string"),
-        INT(true,"integer"),
-        BOOLEAN(false,"boolean"),
-        LONG(true,"long"),
-        BIG_DECIMAL(true,"long"),
-        OBJECT(false,"-object-"),
-        LIST(false,"-list-"),
-        DOUBLE(true,"long");
+        STRING(false, "string"), INT(true, "integer"), BOOLEAN(false, "boolean"), LONG(true, "long"), BIG_DECIMAL(true,
+            "long"), OBJECT(false, "-object-"), LIST(false, "-list-"), DOUBLE(true, "long");
 
         private boolean numeric;
         private String rhqName;

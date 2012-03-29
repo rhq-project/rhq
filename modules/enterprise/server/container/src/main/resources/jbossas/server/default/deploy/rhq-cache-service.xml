@@ -24,7 +24,7 @@
       <attribute name="NodeLockingScheme">OPTIMISTIC</attribute>
 
       <!--              Valid modes are LOCAL, REPL_ASYNC and REPL_SYNC -->
-      <attribute name="CacheMode">REPL_ASYNC</attribute>
+      <attribute name="CacheMode">LOCAL</attribute>
 
       <!--         Just used for async repl: use a replication queue -->
       <attribute name="UseReplQueue">false</attribute>
@@ -45,19 +45,21 @@
          e.g. file:/home/bela/default.xml
          <attribute name="ClusterProperties"></attribute>
       -->
+<!--
+
       <attribute name="ClusterConfig">
 
          <config>
-            <!--  UDP: if you have a multihomed machine,
+            &lt;!&ndash;  UDP: if you have a multihomed machine,
                set the bind_addr attribute to the appropriate NIC IP address, e.g bind_addr="192.168.0.2"
-            -->
-            <!--  UDP: On Windows machines, because of the media sense feature
+            &ndash;&gt;
+            &lt;!&ndash;  UDP: On Windows machines, because of the media sense feature
                being broken with multicast (even after disabling media sense)
                set the loopback attribute to true
 
                TODO need to parametrize and add to installer
 
-            -->
+            &ndash;&gt;
             <UDP
                mcast_addr="${jgroups.udp.mcast_addr:230.1.2.3}"
                mcast_port="${jboss.alertcachepartition.mcast_port:48899}"
@@ -97,6 +99,7 @@
             <pbcast.STATE_TRANSFER up_thread="true" down_thread="true" />
          </config>
       </attribute>
+-->
 
       <!--         Whether or not to fetch state on joining a cluster -->
       <attribute name="FetchStateOnStartup">true</attribute>

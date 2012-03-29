@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -27,6 +26,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
+
+import static org.testng.Assert.*;
 
 /**
  * Test discovery and facets of the "JBossAS7 Standalone Server" Resource type.
@@ -38,7 +39,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
     // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home"));
+    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/standalone");
 
     private static final String RELOAD_OPERATION_NAME = "reload";
     private static final String RESTART_OPERATION_NAME = "restart";
@@ -51,6 +52,16 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @Override
     protected String getServerResourceKey() {
         return RESOURCE_KEY;
+    }
+
+    @Override
+    protected String getBindAddressSystemPropertyName() {
+        return "jboss.standalone.bindAddress";
+    }
+
+    @Override
+    protected String getPortOffsetSystemPropertyName() {
+        return "jboss.standalone.portOffset";
     }
 
     @Test(priority = 10, groups = "discovery")
@@ -73,8 +84,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     // ******************************* OPERATIONS ******************************* //
-    // TODO: Re-enable once fixed.
-    @Test(priority = 12, enabled = false)
+    @Test(priority = 12)
     public void testReloadOperation() throws Exception {
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
@@ -89,10 +99,10 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @Test(priority = 13, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
         AvailabilityType avail = getAvailability(getServerResource());
-        Assert.assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
-        Assert.assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, AvailabilityType.UP);
     }
 
 }

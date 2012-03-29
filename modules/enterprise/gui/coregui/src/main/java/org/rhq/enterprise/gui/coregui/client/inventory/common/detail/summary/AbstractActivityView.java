@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary;
 
-import java.util.logging.Logger;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -27,11 +29,17 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -55,10 +63,13 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
-
-import java.util.List;
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Simeon Pinder
@@ -294,8 +305,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
                             Resource[] currentResources = new Resource[explicitMembers.size()];
                             explicitMembers.toArray(currentResources);
                             if (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)) {
-                                if (currentResources[0].getResourceType().getCategory().equals(
-                                    ResourceCategory.PLATFORM)) {
+                                if (currentResources[0].getResourceType().getCategory()
+                                    .equals(ResourceCategory.PLATFORM)) {
                                     enableBundleArea();
                                     getRecentBundleDeployments();
                                 }
@@ -306,7 +317,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
                     @Override
                     public void onFailure(Throwable caught) {
                         Log.debug("Error retrieving information for group [" + group.getId() + "]:"
-                                + caught.getMessage());
+                            + caught.getMessage());
                     }
                 });
 
@@ -469,10 +480,10 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      */
     public static Configuration saveResultCounterSettings(final SelectItem resultCountSelector,
         final Configuration portletConfig) {
-        String selectedValue;
         if ((resultCountSelector != null) && (portletConfig != null)) {
-            selectedValue = resultCountSelector.getValue().toString();
-            if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
+            String selectedValue = (null == resultCountSelector.getValue()) ? "" : resultCountSelector.getValue()
+                .toString();
+            if (selectedValue.trim().isEmpty() || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
             } else {
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
@@ -489,12 +500,12 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     */
     public static Configuration saveOperationStatusSelectorSettings(final SelectItem operationStatusSelector,
         final Configuration portletConfig) {
-        String selectedValue;
-        selectedValue = operationStatusSelector.getValue().toString();
-        if ((selectedValue.trim().isEmpty())
+        String selectedValue = (null == operationStatusSelector.getValue()) ? "" : operationStatusSelector.getValue()
+            .toString();
+        if (selectedValue.trim().isEmpty()
             || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {//then no operation status specified
             portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
-        } else {//some subset of available alertPriorities will be used
+        } else {
             portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
         }
         return portletConfig;
@@ -508,9 +519,9 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     */
     public static Configuration saveConfigUpdateStatusSelectorSettings(final SelectItem configStatusSelector,
         final Configuration portletConfig) {
-        String selectedValue;
-        selectedValue = configStatusSelector.getValue().toString();
-        if ((selectedValue.trim().isEmpty())
+        String selectedValue = (null == configStatusSelector.getValue()) ? "" : configStatusSelector.getValue()
+            .toString();
+        if (selectedValue.trim().isEmpty()
             || (selectedValue.split(",").length == ConfigurationUpdateStatus.values().length)) {//then no operation status specified
             portletConfig.put(new PropertySimple(Constant.CONFIG_UPDATE_STATUS, Constant.CONFIG_UPDATE_STATUS_DEFAULT));
         } else {//some subset of available configUpdate statuses will be used
@@ -561,8 +572,9 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             } else {//if disabled, reset time defaults
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
-                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
-                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(
+                    Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT),
+                    Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
                 //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
                     (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
@@ -578,8 +590,9 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     * returns populated configuration object.
     */
     public static Configuration saveAlertPrioritySettings(SelectItem alertPrioritySelector, Configuration portletConfig) {
-        String selectedValue = alertPrioritySelector.getValue().toString();
-        if ((selectedValue.trim().isEmpty()) || (selectedValue.split(",").length == AlertPriority.values().length)) {//then no alertPriority specified
+        String selectedValue = (String) alertPrioritySelector.getValue();
+        if (null == selectedValue || selectedValue.trim().isEmpty()
+            || (selectedValue.split(",").length == AlertPriority.values().length)) {//then no alertPriority specified
             portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
         } else {//some subset of available alertPriorities will be used
             portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));

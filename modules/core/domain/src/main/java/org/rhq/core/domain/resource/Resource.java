@@ -1387,7 +1387,15 @@ public class Resource implements Comparable<Resource>, Serializable {
     public void setChildResources(Set<Resource> children) {
         // Never allow this.childResources to become null, so we can guarantee getChildResources() will always return a
         // non-null value.
-        this.childResources = (children != null) ? children : new HashSet<Resource>();
+        if (children != null) {
+            this.childResources = children;
+        } else {
+            if (this.childResources != null) {
+                this.childResources.clear();
+            } else {
+                this.childResources = new HashSet<Resource>();
+            }
+        }
     }
 
     @Nullable

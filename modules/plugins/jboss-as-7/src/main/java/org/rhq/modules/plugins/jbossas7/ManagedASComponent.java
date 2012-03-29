@@ -113,8 +113,12 @@ public class ManagedASComponent extends BaseComponent {
 
         // We need to deduct the domain host from the path, as it is not encoded in the resource itself.
         String serverPath = path;
-        serverPath = serverPath.substring(0,serverPath.indexOf(","));
-        serverPath = serverPath.substring(serverPath.indexOf("=")+1);
+        try {
+            serverPath = serverPath.substring(0,serverPath.indexOf(","));
+            serverPath = serverPath.substring(serverPath.indexOf("=")+1);
+        } catch (RuntimeException e) {
+            throw new Exception("Failed to extract hostname from server path [" + serverPath + "].", e);
+        }
         configuration.put(new PropertySimple("hostname",serverPath));
 
         Operation op = new ReadResource(getAddress());

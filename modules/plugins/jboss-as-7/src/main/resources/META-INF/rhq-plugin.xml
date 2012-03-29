@@ -51,7 +51,6 @@
         displayName="JBoss Application Server 7.x"
         description="Management of JBossAS 7"
         package="org.rhq.modules.plugins.jbossas7"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration"
         >
@@ -62,7 +61,7 @@
       -->
 
     <server name="JBossAS7 Host Controller"
-            discovery="BaseProcessDiscovery"
+            discovery="HostControllerDiscovery"
             class="HostControllerComponent"
             description="Domain controller (delegate) for this host"
             >
@@ -74,12 +73,14 @@
             <c:simple-property name="password" type="password" default="rhqadmin" description="Password for the management user" required="false"/>
             <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Domain Configuration"/>
             <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Host Configuration"/>
-            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
+            <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
                                description="The absolute path to a JRE or JDK installation directory containing
-                                                        the JVM that should be used to start and shutdown the HostController instance;
-                                                        defaults to the home directory of the RHQ agent JRE."/>
+                                            the JVM that should be used to start and shutdown the HostController instance;
+                                            defaults to the home directory of the RHQ Agent JRE."/>
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
@@ -358,7 +359,7 @@
     </server>
 
     <server name="JBossAS7 Standalone Server"
-            discovery="BaseProcessDiscovery"
+            discovery="StandaloneASDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
             supportsManualAdd="true"
@@ -370,12 +371,14 @@
             <c:simple-property name="user" default="rhqadmin" type="string" description="Management user for a secured AS" required="false"/>
             <c:simple-property name="password" default="rhqadmin" type="password" description="Password for the management user" required="false"/>
             <c:simple-property name="config" type="string" default="standalone.xml" description="Running configuration" displayName="Configuration"/>
-            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
+            <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
                                description="The absolute path to a JRE or JDK installation directory containing
-                                                        the JVM that should be used to start and shutdown the JBossAS instance;
-                                                        defaults to the home directory of the RHQ agent JRE."/>
+                                            the JVM that should be used to start and shutdown the JBossAS instance;
+                                            defaults to the home directory of the RHQ Agent JRE."/>
             &logSources;
 
         </plugin-configuration>
@@ -954,64 +957,6 @@
             <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true" defaultValue="false"
                                description="enable/disable error information logging for cached connection manager"/>
         </resource-configuration>
-
-    </server>
-
-    <server name="Transactions Subsystem"
-            discovery="SubsystemDiscovery"
-            class="BaseComponent"
-            singleton="true"
-            description="The transactions subsystem."
-            >
-
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
-        </plugin-configuration>
-
-       <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-       <metric property="number-of-timed-out-transactions" description="The number of transactions that have rolled back due to timeout."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-       <metric property="number-of-committed-transactions" description="The number of committed transactions."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-       <metric property="number-of-transactions" description="The total number of transactions (top-level and nested) created"
-               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-       <metric property="number-of-heuristics" description="The number of transactions which have terminated with heuristic outcomes."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-       <metric property="number-of-aborted-transactions" description="The number of aborted (i.e. rolledback) transactions."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-       <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-       <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-       <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure."
-               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-
-       <resource-configuration>
-          <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
-                   description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
-          <c:simple-property name="process-id-uuid" required="false" type="boolean" readOnly="false" description="Indicates whether the transaction manager should use a UUID based process id."/>
-          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the recovery environment."/>
-          <c:simple-property name="jts" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true this enables the Java Transaction Service"/>
-          <c:simple-property name="object-store-path" required="false" type="string" readOnly="false" defaultValue="tx-object-store"
-                   description="Denotes a relative or absolute filesystem path denoting where the transaction manager object store should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
-          <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="var" description="Denotes a relative or absolute filesystem path denoting where the transaction manager core should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
-          <c:simple-property name="process-id-socket-binding" required="false" type="string" readOnly="false" description="The name of the socket binding configuration to use if the transaction manager should use a socket-based process id. Will be 'undefined' if 'process-id-uuid' is 'true'; otherwise must be set."/>
-          <c:simple-property name="default-timeout" required="false" type="integer" readOnly="false" defaultValue="300" description="The default timeout."/>
-          <c:simple-property name="process-id-socket-max-ports" required="false" type="integer" readOnly="false" defaultValue="10" description="The maximum number of ports to search for an open port if the transaction manager should use a socket-based process id. If the port specified by the socket binding referenced in 'process-id-socket-binding' is occupied, the next higher port will be tried until an open port is found or the number of ports specified by this attribute have been tried. Will be 'undefined' if 'process-id-uuid' is 'true'."/>
-          <c:simple-property name="recovery-listener" required="false" type="boolean" readOnly="false" defaultValue="false" description="Used to specify if the recovery system should listen on a network socket or not."/>
-          <c:simple-property name="status-socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the transaction status manager."/>
-          <c:simple-property name="node-identifier" required="false" type="string" readOnly="false" defaultValue="1" description="Used to set the node identifier on the core environment."/>
-          <c:simple-property name="enable-tsm-status" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the transaction status manager (TSM) service, needed for out of process recovery, should be provided or not.."/>
-          <c:simple-property name="object-store-relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
-                   description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
-          <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
-       </resource-configuration>
 
     </server>
 
@@ -2220,12 +2165,125 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
         </plugin-configuration>
 
-       <!-- Disable for now. This is available and modifiable by Configuration options.
-        <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
-            <results>
-                    <c:simple-property name="operationResult"/>
-            </results>
-        </operation>-->
+	<!--<operation name="add" description="Operation adding the modcluster subsystem.">
+	  <parameters>
+	    <c:simple-property name="mod-cluster-config" required="false" type="-object-" readOnly="false" description="The common modcluster configuration."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>-->
+
+	<operation name="add-proxy" description="Add the proxy to the list of httpd connected to the node.">
+	  <parameters>
+	    <c:simple-property name="host" required="true" type="string" readOnly="false" description="Hostname of the proxy (Apache httpd)"/>
+	    <c:simple-property name="port" required="true" type="integer" readOnly="false" description="Port where the proxy (Apache httpd) is receiving the MCMP"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="disable" description="Tell Apache httpd that all contexts of the node can't process new requests.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="disable-context" description="Tell Apache httpd that the context can't process new requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process new requests."/>
+	  </results>
+	</operation>
+
+	<operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node are ready receive requests."/>
+	  </results>
+	</operation>
+
+	<operation name="enable-context" description="Tell Apache httpd that the context is ready receive requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context is ready receive requests."/>
+	  </results>
+	</operation>
+
+	<operation name="list-proxies" description="Read the list of httpd connected to the node.">
+	  <results>
+	   <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->
+	   <c:simple-property name="proxy-list" description="List of proxies the node is connected to. Format (hostname:port) separated with comas"/>
+	  </results>
+	</operation>
+
+	<operation name="read-proxies-configuration" description="Send a DUMP to httpd and display the result.">
+	  <results>
+             <!-- Result of the DUMP command.-->
+	     <c:simple-property name="current-proxy-config" description="Result of the DUMP command. Snapshot of httpd/modcluster configuration."/>
+	  </results>
+	</operation>
+
+	<operation name="read-proxies-info" description="Send a INFO to httpd and display the result.">
+	  <results>
+             <!-- Result of the INFO command.-->
+	     <c:simple-property name="current-proxy-info" description="Result of the INFO command. Snapshot of httpd/modcluster proxy information."/>
+	  </results>
+	</operation>
+
+	<operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Refresh the node sending a new CONFIG message to Apache httpd."/>
+	  </results>
+	</operation>
+
+    <!--<operation name="remove" description="Operation removing the modcluster subsystem.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>-->
+
+	<operation name="remove-proxy" description="Remove the proxy to the list of httpd connected to the node.">
+	  <parameters>
+	    <c:simple-property name="host" required="true" type="string" readOnly="false" description="Hostname of the proxy (Apache httpd)"/>
+	    <c:simple-property name="port" required="true" type="integer" readOnly="false" description="Port where the proxy (Apache httpd) is receiving the MCMP"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation>
+
+	<operation name="reset" description="Reset the node connection to Apache httpd.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Reset the node connection to Apache httpd."/>
+	  </results>
+	</operation>
+
+	<operation name="stop" description="Tell Apache httpd that all contexts of the node can't process requests.">
+	  <parameters>
+	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process requests."/>
+	  </results>
+	</operation>
+
+	<operation name="stop-context" description="Tell Apache httpd that the context can't process requests.">
+	  <parameters>
+	    <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
+	    <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
+	    <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node can't process requests."/>
+	  </results>
+	</operation>
 
         <resource-configuration>
                 <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
@@ -2291,6 +2349,65 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </server>
 
 
+  <service name="Transactions Subsystem"
+          discovery="SubsystemDiscovery"
+          class="BaseComponent"
+          singleton="true"
+          description="The transactions subsystem."
+          >
+
+      <runs-inside>
+          <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+          <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+      </runs-inside>
+
+      <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
+      </plugin-configuration>
+
+     <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created."
+           measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+     <metric property="number-of-timed-out-transactions" description="The number of transactions that have rolled back due to timeout."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+     <metric property="number-of-committed-transactions" description="The number of committed transactions."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+     <metric property="number-of-transactions" description="The total number of transactions (top-level and nested) created"
+             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+     <metric property="number-of-heuristics" description="The number of transactions which have terminated with heuristic outcomes."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+     <metric property="number-of-aborted-transactions" description="The number of aborted (i.e. rolledback) transactions."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+     <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+     <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+     <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+
+     <resource-configuration>
+        <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+                 description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+        <c:simple-property name="process-id-uuid" required="false" type="boolean" readOnly="false" description="Indicates whether the transaction manager should use a UUID based process id."/>
+        <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the recovery environment."/>
+        <c:simple-property name="jts" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true this enables the Java Transaction Service"/>
+        <c:simple-property name="object-store-path" required="false" type="string" readOnly="false" defaultValue="tx-object-store"
+                 description="Denotes a relative or absolute filesystem path denoting where the transaction manager object store should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+        <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="var" description="Denotes a relative or absolute filesystem path denoting where the transaction manager core should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+        <c:simple-property name="process-id-socket-binding" required="false" type="string" readOnly="false" description="The name of the socket binding configuration to use if the transaction manager should use a socket-based process id. Will be 'undefined' if 'process-id-uuid' is 'true'; otherwise must be set."/>
+        <c:simple-property name="default-timeout" required="false" type="integer" readOnly="false" defaultValue="300" description="The default timeout."/>
+        <c:simple-property name="process-id-socket-max-ports" required="false" type="integer" readOnly="false" defaultValue="10" description="The maximum number of ports to search for an open port if the transaction manager should use a socket-based process id. If the port specified by the socket binding referenced in 'process-id-socket-binding' is occupied, the next higher port will be tried until an open port is found or the number of ports specified by this attribute have been tried. Will be 'undefined' if 'process-id-uuid' is 'true'."/>
+        <c:simple-property name="recovery-listener" required="false" type="boolean" readOnly="false" defaultValue="false" description="Used to specify if the recovery system should listen on a network socket or not."/>
+        <c:simple-property name="status-socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the transaction status manager."/>
+        <c:simple-property name="node-identifier" required="false" type="string" readOnly="false" defaultValue="1" description="Used to set the node identifier on the core environment."/>
+        <c:simple-property name="enable-tsm-status" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the transaction status manager (TSM) service, needed for out of process recovery, should be provided or not.."/>
+        <c:simple-property name="object-store-relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+                 description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+        <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
+     </resource-configuration>
+
+  </service>
+
+
     <service name="Network Interface"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
@@ -2331,7 +2448,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
                                description="Offset from standard ports for this group. This is only available in standalone mode"
                                required="false"/>
-            <c:group name="children:socket-binding:name+-" displayName="Individual socket bindings">
+            <c:group name="children:socket-binding:name+" displayName="Individual socket bindings">
             <c:list-property name="*" displayName="Bindings">
                 <c:map-property name="binding">
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
@@ -2575,37 +2692,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" default="subsystem=jca" readOnly="true"/>
         </plugin-configuration>
 
-        <service name="ArchiveValidation"
-                 class="BaseComponent"
-                 discovery="SubsystemDiscovery"
-                 description="Archive validation for resource adapters."
-                 singleton="true">
-
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="archive-validation"/>
-            </plugin-configuration>
-
-            <resource-configuration>
+        <resource-configuration>
+            <c:group name="child:bean-validation=bean-validation" displayName="Bean validation (JSR-303) for resource adapters.">
+                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether bean validation is enabled. The default value is true."/>
+            </c:group>
+            <c:group name="child:archive-validation=archive-validation" displayName="Archive validation for resource adapters.">
                 <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether archive validation is enabled. The default value is true."/>
                 <c:simple-property name="fail-on-error" required="false" type="boolean" readOnly="false" defaultValue="true" description="Should an archive validation error report fail the deployment. The default value is true."/>
                 <c:simple-property name="fail-on-warn" required="false" type="boolean" readOnly="false" defaultValue="false" description="Should an archive validation warning report fail the deployment. The default value is false."/>
-            </resource-configuration>
-        </service>
-
-        <service name="BeanValidation"
-                 class="BaseComponent"
-                 discovery="SubsystemDiscovery"
-                 description="Bean validation (JSR-303) for resource adapters."
-                 singleton="true">
-
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="bean-validation"/>
-            </plugin-configuration>
-
-            <resource-configuration>
-                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether bean validation is enabled. The default value is true."/>
-            </resource-configuration>
-        </service>
+            </c:group>
+            <c:group name="child:cached-connection-manager=cached-connection-manager" displayName="Cached connection manager for resource adapters.">
+                <c:simple-property name="debug" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable debug information logging. The default value is false."/>
+                <c:simple-property name="error" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable error information logging. The default value is false."/>
+                <c:simple-property name="install" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable the cached connection manager valve and interceptor. The default value is false."/>
+            </c:group>
+        </resource-configuration>
 
         <service name="BootstrapContext"
                  class="BaseComponent"
@@ -2633,25 +2734,78 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
             <resource-configuration>
                 <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the WorkManager"/>
+
+                <c:group name="child:long-running-threads=default-long-running-threads" displayName="Long running thread pool executor with a bounded queue where threads submittings tasks may block.">
+	                <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether core threads may time out. The default value is false."/>
+	                <c:simple-property name="core-threads:expr" required="false" type="string" readOnly="false" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+	                <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
+	                   <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
+	                   <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+	                </c:map-property>
+	                <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
+	                <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+	                <c:simple-property name="queue-length:expr" required="false" type="string" readOnly="false" description="The queue length."/>
+	                <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+                </c:group>
+                 <c:group name="child:short-running-threads=default-short-running-threads" displayName="Short running thread pool executor with a bounded queue where threads submittings tasks may block.">
+                    <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether core threads may time out. The default value is false."/>
+                    <c:simple-property name="core-threads:expr" required="false" type="string" readOnly="false" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+                    <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
+                        <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
+                        <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+                    </c:map-property>
+                    <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
+                    <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+                    <c:simple-property name="queue-length:expr" required="false" type="string" readOnly="false" description="The queue length."/>
+                    <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+                </c:group>
             </resource-configuration>
         </service>
-        
-        <service name="CachedConnectionManager"
-                 class="BaseComponent"
-                 discovery="SubsystemDiscovery"
-                 description="Cached connection manager for resource adapters."
-                 singleton="true">
 
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="cached-connection-manager"/>
-            </plugin-configuration>
+     </service>
 
-            <resource-configuration>
-                <c:simple-property name="debug" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable debug information logging. The default value is false."/>
-                <c:simple-property name="error" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable error information logging. The default value is false."/>
-                <c:simple-property name="install" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable/disable the cached connection manager valve and interceptor. The default value is false."/>
-            </resource-configuration>
-        </service>     
+     <service name="JAXR"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JAXR subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jaxr" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="connection-factory" required="false" type="string" readOnly="false" description="The JNDI name for the ConnectionFactory"/>
+            <c:simple-property name="publish-url" required="false" type="string" readOnly="false" description="The jUDDI server publish URL"/>
+            <c:simple-property name="query-url" required="false" type="string" readOnly="false" description="The jUDDI server query URL"/>
+        </resource-configuration>
+
+     </service>
+
+     <service name="JPA"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JPA subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+           <c:simple-property name="default-datasource" required="false" type="string" readOnly="false" description="The name of the default global datasource."/>
+        </resource-configuration>
+
      </service>
 
 </plugin>

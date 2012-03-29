@@ -1,6 +1,6 @@
 /*
 * RHQ Management Platform
-* Copyright (C) 2005-2008 Red Hat, Inc.
+* Copyright (C) 2005-2012 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.FileSystemUsage;
+import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.SigarProxy;
 
 /**
@@ -61,11 +62,19 @@ public class FileSystemInfo {
         try {
             // this is the usage data and therefore should be refreshed
             this.fsUsage = sigar.getMountedFileSystemUsage(this.mountPoint);
-        } catch (Exception e) {
-            // this happens when the file system is not available (like if its a CD-ROM without a CD loaded in it)
-            // we can ignore this and set the usage data to null
+        } catch (SigarException e) {
+            // this happens when the file system is not available (e.g. if it's a CD-ROM without a CD loaded in it) or
+            // if we don't have permission to access the filesystem. we can ignore it and set the usage data to null.
             this.fsUsage = null;
-            log.debug("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "]", e);
+            if (log.isTraceEnabled()) {
+                log.trace("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "].", e);
+            } else {
+                log.debug("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "]: " + e);
+            }
+        } catch (RuntimeException e) {
+            this.fsUsage = null;
+            log.error("An error occurred while refreshing the usage data for file system mounted at [" + this.mountPoint
+                    + "].", e);
         }
     }
 
@@ -84,7 +93,8 @@ public class FileSystemInfo {
 
     /**
      * This returns the usage information on the file system. This may return <code>null</code> if the file system is
-     * not available (e.g when a "device not ready" error for CD-ROM drives occurs).
+     * not available (e.g when a "device not ready" error for CD-ROM drives occurs) or not accessible due to lack of
+     * permission.
      *
      * @return file system usage data
      */

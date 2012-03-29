@@ -213,7 +213,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorAvail, monitorSched,
+        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorTraits, monitorAvail, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 

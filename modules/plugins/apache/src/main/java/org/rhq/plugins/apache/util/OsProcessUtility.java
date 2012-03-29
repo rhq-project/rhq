@@ -50,38 +50,38 @@ public abstract class OsProcessUtility {
     public static File getProcExe(long pid, String name) {
         SigarProxy sigar = SigarAccess.getSigar();
         File argv0;
-            try {
-                String exe = sigar.getProcExe(pid).getName();
-                // may be "" on Solaris
-                if (exe.length() > 0) {
-                    return new File(exe);
-                }
-            } catch (SigarException e) {
-                // most likely permission denied
+        try {
+            String exe = sigar.getProcExe(pid).getName();
+            // may be "" on Solaris
+            if (exe.length() > 0) {
+                return new File(exe);
             }
+        } catch (SigarException e) {
+            // most likely permission denied
+        }
 
-            argv0 = null;
-            String[] args = getProcArgs(pid, sigar);
-            if (args.length != 0) {
-                // might not be an absolute path
-                argv0 = new File(args[0]);
-                if (argv0.exists() && argv0.isAbsolute()) {
-                    return argv0;
-                }
+        argv0 = null;
+        String[] args = getProcArgs(pid, sigar);
+        if (args.length != 0) {
+            // might not be an absolute path
+            argv0 = new File(args[0]);
+            if (argv0.exists() && argv0.isAbsolute()) {
+                return argv0;
             }
+        }
 
-            List<String> modules = getProcModules(pid, sigar);
-            if (modules.size() > 0) {
-                if (name == null) {
-                    return new File(modules.get(0));
-                }
-                name = File.separator + name;
-                for (String module : modules) {
-                    if (module.endsWith(name)) {
-                        return new File(module);
-                    }
+        List<String> modules = getProcModules(pid, sigar);
+        if (modules.size() > 0) {
+            if (name == null) {
+                return new File(modules.get(0));
+            }
+            name = File.separator + name;
+            for (String module : modules) {
+                if (module.endsWith(name)) {
+                    return new File(module);
                 }
             }
+        }
 
         return argv0;
     }

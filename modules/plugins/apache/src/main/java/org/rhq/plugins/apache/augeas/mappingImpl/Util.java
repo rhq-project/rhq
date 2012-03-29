@@ -35,9 +35,9 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  */
 class Util {
     private Util() {
-        
+
     }
-    
+
     /**
      * Creates a simple property from given definition and given value.
      * 
@@ -58,8 +58,9 @@ class Util {
 
         if (!definition.getEnumeratedValues().isEmpty()) {
             //options with empty values correspond to null values
-            if (value == null) value = "";
-            
+            if (value == null)
+                value = "";
+
             //apache configuration values are usually case-insensitive.
             String valLowerCase = value.toLowerCase();
             for (PropertyDefinitionEnumeration option : definition.getEnumeratedValues()) {
@@ -68,7 +69,7 @@ class Util {
                 }
             }
         }
-        
+
         return new PropertySimple(name, value);
     }
 }

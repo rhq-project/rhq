@@ -75,13 +75,16 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-    
-    public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
-    public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
-    public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
+
+    public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP =
+        ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
+    public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP =
+        ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
+    public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP =
+        ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
     public static final String SERVER_NAME_CONFIG_PROP = "ServerName";
-    
+
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
@@ -140,14 +143,15 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 if (getWwwServiceIndex() < 1) {
                     return AvailabilityType.DOWN;
                 }
-                
+
                 //ok, so the vhost is present. Now let's just ping the SNMP module to see
                 //if it is reachable and base our availability on that...
                 SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
-                
+
                 return snmpSession.ping() ? AvailabilityType.UP : AvailabilityType.DOWN;
             } catch (Exception e) {
-                log.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey() + "] using SNMP failed.", e);
+                log.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey()
+                    + "] using SNMP failed.", e);
                 return AvailabilityType.DOWN;
             }
         }
@@ -157,14 +161,14 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         if (!isAugeasEnabled()) {
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
 
         AugeasComponent comp = getAugeas();
         try {
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
 
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
@@ -179,13 +183,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return;
         }
-        
+
         AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             AugeasNode virtHostNode = getNode(tree);
             mapping.updateAugeas(virtHostNode, report.getConfiguration(), resourceConfigDef);
@@ -214,7 +218,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         if (!isAugeasEnabled()) {
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
 
         if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
@@ -293,7 +297,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return report;
         }
-        
+
         ResourceType resourceType = report.getResourceType();
         AugeasComponent comp = null;
         try {
@@ -406,8 +410,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         ApacheServerComponent server = resourceContext.getParentResourceComponent();
 
         if (snmpIdx < 1) {
-            throw new IllegalStateException(
-                "Could not determine the index of the virtual host [" + resourceKey + "] in the runtime configuration. This is very strange.");
+            throw new IllegalStateException("Could not determine the index of the virtual host [" + resourceKey
+                + "] in the runtime configuration. This is very strange.");
         }
 
         if (snmpIdx == 1) {
@@ -525,7 +529,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return oid;
     }
 
-    public static int getWwwServiceIndex(ApacheServerComponent parent, String resourceKey) {        
+    public static int getWwwServiceIndex(ApacheServerComponent parent, String resourceKey) {
         //figure out the servername and addresses of this virtual host
         //from the resource key.
         String vhostServerName = null;
@@ -536,53 +540,55 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             if (vhostServerName.isEmpty()) {
                 vhostServerName = null;
             }
-        }        
+        }
         vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
 
         int foundIdx = 0;
-        
+
         //only look for the vhost entry if the vhost we're looking for isn't the main server
         if (!MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            ApacheDirectiveTree tree = parent.parseRuntimeConfiguration(false); 
-            
+            ApacheDirectiveTree tree = parent.parseRuntimeConfiguration(false);
+
             //find the vhost entry the resource key represents
             List<ApacheDirective> vhosts = tree.search("/<VirtualHost");
-            for(ApacheDirective vhost : vhosts) {
+            for (ApacheDirective vhost : vhosts) {
                 List<ApacheDirective> serverNames = vhost.getChildByName("ServerName");
-                String serverName = serverNames.size() > 0 ? serverNames.get(0).getValuesAsString() : null; 
-                
+                String serverName = serverNames.size() > 0 ? serverNames.get(0).getValuesAsString() : null;
+
                 List<String> addrs = vhost.getValues();
-                
-                boolean serverNamesMatch = (serverName == null && vhostServerName == null) ||
-                    (serverName != null && serverName.equals(vhostServerName));
+
+                boolean serverNamesMatch =
+                    (serverName == null && vhostServerName == null)
+                        || (serverName != null && serverName.equals(vhostServerName));
                 boolean addrsMatch = true;
-                
+
                 if (addrs.size() != vhostAddressStrings.length) {
                     addrsMatch = false;
                 } else {
-                    for(int i = 0; i < vhostAddressStrings.length; ++i) {
+                    for (int i = 0; i < vhostAddressStrings.length; ++i) {
                         if (!addrs.contains(vhostAddressStrings[i])) {
                             addrsMatch = false;
                             break;
                         }
                     }
                 }
-                
+
                 if (serverNamesMatch && addrsMatch) {
                     break;
                 }
-                
+
                 ++foundIdx;
             }
-            
+
             if (foundIdx == vhosts.size()) {
-                log.debug("The virtual host with resource key [" + resourceKey + "] doesn't seem to be present in the apache configuration anymore.");
+                log.debug("The virtual host with resource key [" + resourceKey
+                    + "] doesn't seem to be present in the apache configuration anymore.");
                 return -1;
             } else {
                 //httpd vhosts are internally (in httpd internal data structures) ordered like this:
                 //1) the main server entry is always first
                 //2) all the vhosts are ordered from the last to appear in the joined config files to the first one
-                
+
                 //we now have an index to the list of the vhosts in the order they are defined.
                 //so let's swap it over.
                 //just subtracting from the size will give us the "room" for the first index
@@ -591,24 +597,26 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 foundIdx = vhosts.size() - foundIdx;
             }
         }
-        
+
         //the snmp indices are 1-based
         return foundIdx + 1;
     }
-    
+
     /**
      * @return the index of the virtual host that identifies it in SNMP
      * @throws Exception on SNMP error
      */
     private int getWwwServiceIndex() {
-        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
+        ConfigurationTimestamp currentTimestamp =
+            resourceContext.getParentResourceComponent().getConfigurationTimestamp();
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
             //don't go through this configuration again even if we fail further below.. we'd fail again.
             lastConfigurationTimeStamp = currentTimestamp;
-            
+
             //configuration has changed. re-read the service index of this virtual host            
-            snmpWwwServiceIndex = getWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey());
+            snmpWwwServiceIndex =
+                getWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey());
         }
         return snmpWwwServiceIndex;
     }

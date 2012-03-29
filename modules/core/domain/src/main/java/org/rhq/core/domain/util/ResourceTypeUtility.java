@@ -28,12 +28,13 @@ import org.rhq.core.domain.resource.ResourceType;
 /**
  * A set of utility methods for working with {@link ResourceType}s.
  *
+ * @since 4.4
  * @author Ian Springer
  */
 public abstract class ResourceTypeUtility {
 
     /**
-     * Returns the set of MeasurementDefinition defined by the given Resource type, which are accepted by the specified
+     * Returns the set of MeasurementDefinitions defined by the given Resource type, which are accepted by the specified
      * filter. If the filter is null, all of the type's MeasurementDefinitions will be returned.
      *
      * @param type the Resource type

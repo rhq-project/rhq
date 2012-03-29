@@ -49,7 +49,7 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
 
     private Map<AugeasNode, List<String>> includes;
     private List<String> includeGlobs;
-    
+
     public ApacheAugeasTree(String serverRootPath, Augeas ag, AugeasModuleConfig moduleConfig) {
         super(ag, moduleConfig);
         this.includeGlobs = initIncludeGlobs(serverRootPath);
@@ -58,7 +58,7 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
     protected AugeasNode instantiateNode(String fullPath) {
         return new ApacheAugeasNode(fullPath, this);
     }
-    
+
     public Map<AugeasNode, List<String>> getIncludes() {
         return includes;
     }
@@ -110,7 +110,7 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
     private int subExpressionIndex(String expr) {
         //we have to parse the expression carefully because of the 
         //potential xpath qualifier that can contain path separators.
-        
+
         //0 = normal
         //1 = in xpath qualifier
         //2 = in double-quoted string (inside the qualifier)
@@ -167,10 +167,10 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
             }
             idx++;
         }
-        
+
         return idx == expr.length() ? -1 : idx;
     }
-    
+
     private List<AugeasNode> parseExpr(AugeasNode nd, String expr) throws Exception {
 
         int index = subExpressionIndex(expr);
@@ -199,7 +199,7 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
         if (includes.containsKey(nd)) {
             List<String> files = includes.get(nd);
             for (String fileName : files) {
-                List<AugeasNode> nds = this.matchInternal(fileName + PATH_SEPARATOR+ expr);
+                List<AugeasNode> nds = this.matchInternal(fileName + PATH_SEPARATOR + expr);
                 for (AugeasNode node : nds) {
                     if (!nodes.contains(node))
                         nodes.add(node);
@@ -230,8 +230,8 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
      */
     private List<String> initIncludeGlobs(String serverRootPath) {
         ArrayList<String> ret = new ArrayList<String>();
-        
-        for(String glob : getModuleConfig().getIncludedGlobs()) {
+
+        for (String glob : getModuleConfig().getIncludedGlobs()) {
             File f = new File(glob);
             if (f.isAbsolute()) {
                 ret.add(glob);

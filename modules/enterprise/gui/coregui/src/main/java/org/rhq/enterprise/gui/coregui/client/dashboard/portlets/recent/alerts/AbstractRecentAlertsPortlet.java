@@ -194,7 +194,8 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
                 // alert severity
-                String selectedValue = alertPrioritySelector.getValue().toString();
+                String selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
+                    .getValue().toString();
                 if ((selectedValue.trim().isEmpty())
                     || (selectedValue.split(",").length == AlertPriority.values().length)) {
                     // no severity filter
@@ -227,12 +228,12 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         return customSettingsForm;
     }
 
-   /**
-    * Takes the current value of the widget and persists it into the configuration object passed in.
-    *
-    * @param measurementRangeEditor metric range editor widget
-    * @param portletConfig - the config to be updated
-    */
+    /**
+     * Takes the current value of the widget and persists it into the configuration object passed in.
+     *
+     * @param measurementRangeEditor metric range editor widget
+     * @param portletConfig - the config to be updated
+     */
     private void saveMeasurementRangeEditorSettings(final CustomConfigMeasurementRangeEditor measurementRangeEditor,
         Configuration portletConfig) {
         String selectedValue;
@@ -269,8 +270,9 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             } else {//if disabled, reset time defaults
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
-                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
-                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(
+                    Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT),
+                    Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
                 //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
                     (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
@@ -409,8 +411,8 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
                         int lastN = property.getIntegerValue();
                         property = this.configuration.getSimple(Constant.METRIC_RANGE_UNIT);
                         int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                            .valueOf(lastUnits));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
+                            Integer.valueOf(lastUnits));
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }

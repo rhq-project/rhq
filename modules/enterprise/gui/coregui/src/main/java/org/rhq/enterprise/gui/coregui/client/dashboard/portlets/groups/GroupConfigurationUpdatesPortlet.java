@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -213,7 +212,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                     updatedConfig);
 
                 //persist and reload portlet
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
                 refresh();
             }
@@ -301,7 +300,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + context.getGroupId() + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -457,8 +456,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                             int lastN = property.getIntegerValue();
                             property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
                             int lastUnits = property.getIntegerValue();
-                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                                .valueOf(lastUnits));
+                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
+                                Integer.valueOf(lastUnits));
                             criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                             criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                         }

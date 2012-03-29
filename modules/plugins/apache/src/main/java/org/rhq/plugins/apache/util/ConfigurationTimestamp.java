@@ -36,37 +36,40 @@ import java.util.Map;
 public class ConfigurationTimestamp {
 
     private Map<String, Long> lastModifiedTimes;
-    
+
     public ConfigurationTimestamp() {
         lastModifiedTimes = new HashMap<String, Long>();
     }
-    
+
     public ConfigurationTimestamp(List<File> files) {
         this();
-        for(File f : files) {
+        for (File f : files) {
             lastModifiedTimes.put(f.getAbsolutePath(), f.lastModified());
         }
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof ConfigurationTimestamp)) {
             return false;
         }
-        
-        ConfigurationTimestamp other = (ConfigurationTimestamp)o;
-        
+
+        ConfigurationTimestamp other = (ConfigurationTimestamp) o;
+
         Map<String, Long> oLastModified = other.lastModifiedTimes;
-        
-        if (lastModifiedTimes.size() != oLastModified.size()) return false;
-        
-        for(Map.Entry<String, Long> entry : lastModifiedTimes.entrySet()) {
+
+        if (lastModifiedTimes.size() != oLastModified.size())
+            return false;
+
+        for (Map.Entry<String, Long> entry : lastModifiedTimes.entrySet()) {
             Long otherModified = oLastModified.get(entry.getKey());
-            if (otherModified == null) return false;
-            
-            if (!entry.getValue().equals(otherModified)) return false;
+            if (otherModified == null)
+                return false;
+
+            if (!entry.getValue().equals(otherModified))
+                return false;
         }
-        
+
         return true;
     }
 }

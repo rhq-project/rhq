@@ -40,11 +40,13 @@ import org.rhq.plugins.platform.PlatformComponent;
  * 
  * @author Lukas Krejci
  */
-public class ApacheLocationComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet, DeleteResourceFacet {
+public class ApacheLocationComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet,
+    DeleteResourceFacet {
 
     ResourceContext<ApacheServerComponent> resourceContext;
-    
-    public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException, Exception {
+
+    public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException,
+        Exception {
         // TODO Auto-generated method stub
         resourceContext = context;
     }
@@ -63,7 +65,8 @@ public class ApacheLocationComponent implements ResourceComponent<ApacheServerCo
      */
     public Configuration loadResourceConfiguration() throws Exception {
         // TODO Auto-generated method stub
-        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().createConfiguration();
+        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate()
+            .createConfiguration();
     }
 
     /* (non-Javadoc)
@@ -78,8 +81,7 @@ public class ApacheLocationComponent implements ResourceComponent<ApacheServerCo
      */
     public void deleteResource() throws Exception {
         // TODO Auto-generated method stub
-        
-    }
 
+    }
 
 }

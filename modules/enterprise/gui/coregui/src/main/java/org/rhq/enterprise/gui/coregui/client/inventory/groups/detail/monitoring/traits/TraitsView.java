@@ -47,6 +47,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     @Override
     protected void configureTable() {
+        super.configureTable();
+
         ListGrid listGrid = getListGrid();
 
         listGrid.setShowAllRecords(true);

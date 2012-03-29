@@ -13,7 +13,7 @@ public class XmlFileReadingTest {
 
     public void hostPort70() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -25,7 +25,7 @@ public class XmlFileReadingTest {
 
     public void hostPort71() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -38,22 +38,22 @@ public class XmlFileReadingTest {
 
     public void domainController1() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host1.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getDomainControllerFromHostXml();
+        AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert hp.isLocal : "DC is not local as expected: " + hp;
 
     }
 
     public void domainController2() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host2.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getDomainControllerFromHostXml();
+        AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert "192.168.100.1".equals(hp.host) : "DC is at " + hp.host;
         assert hp.port == 9559 : "DC port is at " + hp.port;
     }
@@ -62,7 +62,7 @@ public class XmlFileReadingTest {
 
     public void testXpath70() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -88,7 +88,7 @@ public class XmlFileReadingTest {
 
     public void testXpath71() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
@@ -112,9 +112,40 @@ public class XmlFileReadingTest {
 
     }
 
+    public void testXpath711() throws Exception {
+
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
+        URL url = getClass().getClassLoader().getResource("standalone711.xml");
+        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+
+        String realm = bd.obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
+        assert "ManagementRealm".equals(realm) : "Realm was " + realm;
+        String sbindingRef = bd.obtainXmlPropertyViaXPath(
+                ("//management/management-interfaces/http-interface/socket-binding/@http"));
+        assert "management-http".equals(sbindingRef): "Socketbinding was " + sbindingRef;
+
+        String pathExpr = "/server/socket-binding-group/socket-binding[@name='" + sbindingRef + "']/@port";
+        String port = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.management.http.port:9990}".equals(port) : "Port was [" + port + "]";
+
+        pathExpr = "/server/socket-binding-group/socket-binding[@name='" + sbindingRef + "']/@interface";
+        String interfName = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "management".equals(interfName) : "Interface was " + interfName;
+
+        pathExpr = "/server/interfaces/interface[@name='" + interfName + "']/inet-address/@value";
+        String interfElem = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.bind.address.management:127.0.0.71}".equals(interfElem) : "InterfElem was " + interfElem;
+
+        String socketBindingGroupName = "standard-sockets";
+        pathExpr = "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
+        String offsetAttr = bd.obtainXmlPropertyViaXPath(pathExpr);
+        assert "${jboss.socket.binding.port-offset:123}".equals(offsetAttr) : "Port-Offset was " + offsetAttr;
+
+    }
+
     public void testGetRealm() throws Exception {
 
-        BaseProcessDiscovery bd = new BaseProcessDiscovery();
+        BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 

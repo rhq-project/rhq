@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.apache;
 
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +62,7 @@ public class ApachePluginTest {
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
             pcConfig.setDataDirectory(dataDir);
-            
+
             pcConfig.setInsideAgent(false);
             PluginContainer.getInstance().setConfiguration(pcConfig);
             PluginContainer container = PluginContainer.getInstance();
@@ -71,7 +70,7 @@ public class ApachePluginTest {
             container.getInventoryManager().executeServerScanImmediately();
             container.getInventoryManager().executeServiceScanImmediately();
             ApacheAugeasTest test = new ApacheAugeasTest();
-            if (!test.isAugeasInstalled()){
+            if (!test.isAugeasInstalled()) {
                 System.out.println("Augeas is not installed.");
                 return;
             }
@@ -113,8 +112,8 @@ public class ApachePluginTest {
     @Test(dependsOnMethods = "testServerDiscovery")
     public void testServiceDiscovery() throws Exception {
         try {
-            InventoryReport report = PluginContainer.getInstance().getInventoryManager()
-                .executeServiceScanImmediately();
+            InventoryReport report =
+                PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
             Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
             System.out.println("RUNTIME SERVERS: " + platform.getChildResources().size());
             for (Resource server : platform.getChildResources()) {
@@ -129,14 +128,15 @@ public class ApachePluginTest {
 
     @Test(dependsOnMethods = "testServiceDiscovery", enabled = false)
     // TODO: this is not a unit test - it requires an apache server to be running with snmp enabled
-    public void testMeasurementComponent() throws Exception {
+        public
+        void testMeasurementComponent() throws Exception {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
         for (Resource server : platform.getChildResources()) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
             Collections.sort(services);
             for (Resource service : services) {
-                ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
-                    .getResourceComponent(service);
+                ResourceComponent serviceComponent =
+                    PluginContainer.getInstance().getInventoryManager().getResourceComponent(service);
                 if (serviceComponent instanceof MeasurementFacet) {
                     Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
                     metricList.add(new MeasurementScheduleRequest(1, "wwwSummaryInRequests", 1000, true,

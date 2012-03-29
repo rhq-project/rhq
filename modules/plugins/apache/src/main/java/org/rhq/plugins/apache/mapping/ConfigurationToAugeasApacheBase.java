@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
+
 /**
  * 
  * @author Filip Drabek
@@ -52,18 +53,18 @@ public abstract class ConfigurationToAugeasApacheBase implements ConfigurationTo
         Configuration resourceConfig) throws AugeasRhqException {
 
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
- 
+
         for (PropertyDefinition propDef : propDefs) {
-        	Property prop = resourceConfig.get(propDef.getName());
+            Property prop = resourceConfig.get(propDef.getName());
             updateProperty(propDef, prop, node, 0);
         }
     }
 
     public abstract void updateMap(PropertyDefinitionMap propDefMap, Property prop, AugeasNode mapNode, int seq)
-        throws AugeasRhqException ;
-    
+        throws AugeasRhqException;
+
     public abstract void updateList(PropertyDefinitionList propDef, Property prop, AugeasNode listNode, int seq)
-        throws AugeasRhqException; 
+        throws AugeasRhqException;
 
     public abstract void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef, Property prop, int seq)
         throws AugeasRhqException;

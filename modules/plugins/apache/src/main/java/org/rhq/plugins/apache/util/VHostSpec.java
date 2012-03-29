@@ -29,23 +29,23 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 public class VHostSpec {
     public String serverName;
     public List<String> hosts;
-    
+
     public static List<VHostSpec> detect(ApacheDirectiveTree config) {
         List<ApacheDirective> virtualHosts = config.search("/<VirtualHost");
-        
+
         List<VHostSpec> ret = new ArrayList<VHostSpec>(virtualHosts.size());
-        
-        for(ApacheDirective dir : virtualHosts) {
+
+        for (ApacheDirective dir : virtualHosts) {
             ret.add(new VHostSpec(dir));
         }
-        
+
         return ret;
     }
-    
+
     public VHostSpec() {
-        
+
     }
-    
+
     public VHostSpec(ApacheDirective vhostDirective) {
         hosts = new ArrayList<String>(vhostDirective.getValues());
 
@@ -55,40 +55,40 @@ public class VHostSpec {
             serverName = serverNames.get(serverNames.size() - 1).getValuesAsString();
         }
     }
-    
+
     @Override
     public String toString() {
         return ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(serverName, hosts);
     }
-    
+
     @Override
     public int hashCode() {
         int ret = serverName != null ? serverName.hashCode() : 1;
-        for(String host : hosts) {
+        for (String host : hosts) {
             ret = 31 * ret * host.hashCode();
         }
-        
+
         return ret;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        
+
         if (!(o instanceof VHostSpec)) {
             return false;
         }
-        
+
         VHostSpec other = (VHostSpec) o;
-        
+
         boolean serverNameEqual = serverName == null ? other.serverName == null : serverName.equals(other.serverName);
-        
+
         if (!serverNameEqual) {
             return false;
         }
-        
+
         return hosts.equals(other.hosts);
     }
 }

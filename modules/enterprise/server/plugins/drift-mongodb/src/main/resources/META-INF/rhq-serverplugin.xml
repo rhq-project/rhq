@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<drift-plugin
+<drift-plugin disabledOnDiscovery="true"
    version="1.0"
    apiVersion="1.0"
    description="The Drift Management MongoDB Persistence Store"
@@ -9,13 +9,17 @@
    package="org.rhq.enterprise.server.plugins.drift.mongodb"
    xmlns="urn:xmlns:rhq-serverplugin.drift"
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:c="urn:xmlns:rhq-configuration"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <serverplugin:help><![CDATA[
         Provides back-end store and retrieve for drift files.
     ]]></serverplugin:help>
     
-    <serverplugin:plugin-component class="MongoDBDriftServer"/>
+    <serverplugin:plugin-component class="MongoDBDriftServer">
+        <serverplugin:control name="purgeOrphanedContent" description="Purges drift file content no longer referenced
+            by any change sets."/>
+    </serverplugin:plugin-component>
 
     <drift diff-support="false" />
     

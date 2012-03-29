@@ -71,16 +71,16 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
     public Configuration loadResourceConfiguration() throws Exception {
         if (!isAugeasEnabled()) {
-            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);            
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
 
         AugeasComponent comp = getAugeas();
         try {
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
 
             AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -96,13 +96,13 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return;
         }
-        
+
         AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef =
+                resourceContext.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             AugeasNode directoryNode = getNode(tree.getRootNode());
             mapping.updateAugeas(directoryNode, report.getConfiguration(), resourceConfigDef);
@@ -127,9 +127,9 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         if (!isAugeasEnabled()) {
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-        
+
         AugeasComponent comp = getAugeas();
 
         try {

@@ -3,8 +3,10 @@ package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 import java.io.Serializable;
 
 import com.google.code.morphia.annotations.Embedded;
+import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Transient;
 
+import org.bson.types.ObjectId;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 
@@ -18,10 +20,12 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
     private static final long serialVersionUID = 1L;
 
     /**
-     * This id field is only unique within the parent change set. The purpose of this field
-     * is to provide fast, efficient access to a file entry a change set document.
+     * This is the array index of the entry in the document that exists in the database.
+     * Each entry has a unique index relative to its owning change set. The index is used
+     * to form a unique id for the entry.
      */
-    private int id;
+    @Property("idx")
+    private int index;
 
     /**
      * The time that the entry was created.
@@ -43,10 +47,9 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     @Transient
     private MongoDBChangeSet changeSet;
-
-    private MongoDBFile oldFile;
-
-    private MongoDBFile newFile;
+    
+    @Transient
+    private ObjectId changeSetId;
 
     private String oldFileHash;
 
@@ -57,13 +60,15 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     public MongoDBChangeSetEntry(String path, DriftCategory category) {
         this.path = path;
+        int i = path.lastIndexOf("/");
+        directory = (i != -1) ? path.substring(0, i) : "./";
         this.category = category;
     }
 
     /**
      * Returns an id that uniquely identifies this entry. Since a MongoChangeSetEntry does
-     * have a PK in the database, this is a combination of the change set id with the id
-     * assigned by the owning change set. The format is:
+     * not have a PK in the database, this is a combination of the change set id with its
+     * index which is assigned by the owning change set. The format is:
      * <p/>
      * <pre>
      *     &lt;changeset_id&gt;:&lt;n&gt;
@@ -76,45 +81,43 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
      */
     @Override
     public String getId() {
-        return changeSet.getId() + ":" + id;
+        if (changeSetId == null) {
+            return null;
+        }
+        return changeSetId.toString() + ":" + index;
     }
 
     /**
-     * Sets the id for the entry which is assumed to be an integer that is assigned
-     * by the owning change set.
-     *
-     * @param id An integer id that should be unique among other entries within the owning
-     * change set.
+     * This method does <strong>not</strong> actually set the id. It is here
+     * only because it is required by the {@link Drift} interface.
+     * @param id
      */
     @Override
-    public void setId(String id) {
-        this.id = Integer.parseInt(id);
+    public void setId(String id) {        
     }
 
     /**
-     * Returns the change set assigned id. This id is unique across file entries within
-     * the owning change set.
+     * Sets the index of the entry which is the array index within the document stored in the
+     * database. The index is used to form a unique id for the entry. 
      *
-     * @return The change set assigned id
+     * @param index The array index of the entry as it is stored in the change set document
+     * in the database.
      */
-    public int getInternalId() {
-        return id;
-    }
-
-    /**
-     * Sets the id for the entry which is assumed to be an integer that is assigned
-     * by the owning change set.
-     *
-     * @param id An integer id that should be unique among other entries within the owning
-     * change set.
-     */
-    public void setId(int id) {
-        this.id = id;
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     @Override
     public Long getCtime() {
         return ctime;
+    }
+
+    /**
+     * This is here only for testing.
+     * @param ctime The timestamp
+     */
+    public void setCtime(Long ctime) {
+        this.ctime = ctime;
     }
 
     @Override
@@ -125,6 +128,7 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
     @Override
     public void setChangeSet(MongoDBChangeSet changeSet) {
         this.changeSet = changeSet;
+        changeSetId = changeSet.getObjectId();
     }
 
     @Override
@@ -145,6 +149,8 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
     @Override
     public void setPath(String path) {
         this.path = path;
+        int i = path.lastIndexOf("/");
+        directory = (i != -1) ? path.substring(0, i) : "./";
     }
 
     @Override
@@ -175,21 +181,21 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     @Override
     public MongoDBFile getOldDriftFile() {
-        return oldFile;
+        return new MongoDBFile(oldFileHash);
     }
 
     @Override
     public void setOldDriftFile(MongoDBFile oldDriftFile) {
-        oldFile = oldDriftFile;
+        oldFileHash = oldDriftFile.getHashId();
     }
 
     @Override
     public MongoDBFile getNewDriftFile() {
-        return newFile;
+        return new MongoDBFile(newFileHash);
     }
 
     @Override
     public void setNewDriftFile(MongoDBFile newDriftFile) {
-        newFile = newDriftFile;
+        newFileHash = newDriftFile.getHashId();
     }
 }

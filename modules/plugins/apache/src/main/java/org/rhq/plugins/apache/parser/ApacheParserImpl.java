@@ -38,19 +38,20 @@ public class ApacheParserImpl implements ApacheParser {
     private ApacheDirectiveStack stack;
     private String serverRootPath;
     private RuntimeApacheConfiguration.NodeInspector nodeInspector;
-    
+
     /**
      * 
      * @param tree the tree that this parser will fill in
      * @param initialServerRootPath the initial server root path as detected by other means
      * @param nodeInspector the node inspector to determine the runtime configuration or null, if full configuration tree is needed
      */
-    public ApacheParserImpl(ApacheDirectiveTree tree, String initialServerRootPath, RuntimeApacheConfiguration.NodeInspector nodeInspector) {
+    public ApacheParserImpl(ApacheDirectiveTree tree, String initialServerRootPath,
+        RuntimeApacheConfiguration.NodeInspector nodeInspector) {
         stack = new ApacheDirectiveStack();
         this.serverRootPath = initialServerRootPath;
         this.tree = tree;
         stack.addDirective(this.tree.getRootNode());
-        this.nodeInspector = nodeInspector;  
+        this.nodeInspector = nodeInspector;
     }
 
     public void addDirective(ApacheDirective directive) throws Exception {
@@ -58,7 +59,7 @@ public class ApacheParserImpl implements ApacheParser {
             //we're ignoring until the end of an ignored nested directive
             return;
         }
-        
+
         if (directive.getName().equals(INCLUDE_DIRECTIVE)) {
             List<File> files = getIncludeFiles(directive.getValuesAsString());
             for (File fl : files) {
@@ -69,12 +70,12 @@ public class ApacheParserImpl implements ApacheParser {
         } else if (directive.getName().equals(SERVER_ROOT_DIRECTIVE)) {
             this.serverRootPath = AugeasNodeValueUtil.unescape(directive.getValuesAsString());
         }
-        
+
         if (nodeInspector != null) {
             //let the inspector process this directive in case it sees something of interest
             nodeInspector.inspect(directive.getName(), directive.getValues(), directive.getValuesAsString());
         }
-        
+
         directive.setParentNode(stack.getLastDirective());
         stack.getLastDirective().addChildDirective(directive);
     }
@@ -84,11 +85,12 @@ public class ApacheParserImpl implements ApacheParser {
     }
 
     public void startNestedDirective(ApacheDirective directive) {
-        if (nodeInspector != null) {            
+        if (nodeInspector != null) {
             //now we have a node inspector so the tree construction is driven by it - we actually leave out the conditional
             //directives and replace them with their contents (if they are to be applied of course)...
-            
-            RuntimeApacheConfiguration.NodeInspectionResult res = nodeInspector.inspect(directive.getName(), directive.getValues(), directive.getValuesAsString());
+
+            RuntimeApacheConfiguration.NodeInspectionResult res =
+                nodeInspector.inspect(directive.getName(), directive.getValues(), directive.getValuesAsString());
             if (res == null || (res.nodeIsConditional && !res.shouldRecurseIntoConditionalNode)) {
                 //ok, this node should be ignored, mark that fact with a null parent
                 stack.addDirective(null);
@@ -109,12 +111,12 @@ public class ApacheParserImpl implements ApacheParser {
                     stack.getLastDirective().addChildDirective(directive);
                 }
                 stack.addDirective(directive);
-            }            
+            }
         } else {
             //there is no node inspector, so we have no "guidance" on the tree construction.
             //Just include all the nested structures so that a full configuration tree is built
             //with all the directives.
-            
+
             //we might be inside an ignored nested directive, so leave all the weaving stuff
             //out in that case...
             if (stack.getLastDirective() != null) {

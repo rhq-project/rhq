@@ -44,7 +44,7 @@
    </appender>
 
    <category name="org.rhq.core.pc">
-      <priority value="FATAL"/>
+      <priority value="ERROR"/>
    </category>
 
    <category name="org.rhq.core.pc.PluginContainer">

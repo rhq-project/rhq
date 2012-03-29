@@ -33,6 +33,7 @@
   <properties>
     <!-- explicitly specify a default encoding to avoid relying on the LANG env var being set correctly -->
     <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>ISO-8859-1</project.reporting.outputEncoding>
 
     <rhq.groupId>org.rhq</rhq.groupId>
     <rhq.product.name>RHQ</rhq.product.name>
@@ -536,7 +537,7 @@
 
   <build>
 
-    <defaultGoal>install</defaultGoal>
+     <defaultGoal>install</defaultGoal>
 
      <pluginManagement>
        <plugins>

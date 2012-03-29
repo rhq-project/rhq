@@ -151,7 +151,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 if (Thread.interrupted()) {
                     if (log.isDebugEnabled()) {
                         log.debug("Exception occurred during availability check, but this thread has been interrupted, "
-                                + "so most likely the plugin container is shutting down: " + e);
+                            + "so most likely the plugin container is shutting down: " + e);
                     }
                     return availabilityReport;
                 }
@@ -308,15 +308,18 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         }
                     }
                 }
-                if (current == null) {
-                    current = AvailabilityType.DOWN;
+            }
+            if (null == current) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Protecting against null getAvailability(). Setting DOWN to " + resource);
                 }
+                current = AvailabilityType.DOWN;
             }
         }
 
         // Add the availability to the report if it changed from its previous state or if this is a full report.
         // Update the resource container only if the avail has changed.
-        boolean availChanged = (previous == null) || (previous.getAvailabilityType() != current);
+        boolean availChanged = (null != current && (null == previous) || (current != previous.getAvailabilityType()));
 
         if (availChanged || scan.isFull) {
             Availability availability;

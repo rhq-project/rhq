@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -51,12 +51,13 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  * there are additional platform-specific methods that need to be exposed. Most functionality, however, can be exposed
  * via this native superclass implementation.
  *
- * <p>This implementation uses SIGAR. To enable debug logging in SIGAR, set the system property "sigar.nativeLogging" or
- * call {@link Sigar#enableLogging(boolean)}.</p>
+ * <p>This implementation uses SIGAR. To enable debug logging in SIGAR, set the system property
+ * <code>sigar.nativeLogging</code> or call {@link Sigar#enableLogging(boolean)}.</p>
  *
  * @author John Mazzitelli
  */
 public class NativeSystemInfo implements SystemInfo {
+
     private final Log log = LogFactory.getLog(NativeSystemInfo.class);
 
     private SigarProxy sigar;
@@ -104,7 +105,11 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public String getOperatingSystemName() {
-        return OperatingSystem.getInstance().getName();
+        OperatingSystem os = OperatingSystem.getInstance();
+        // SIGAR returns "Win32" as the OS name for all Windows systems, even 64-bit ones. Work around this by instead
+        // returning "Windows" for all Windows systems, which is more consistent with the UNIX operating systems anyway.
+        // (https://jira.hyperic.com/browse/SIGAR-238)
+        return (OperatingSystem.NAME_WIN32.equals(os.getName()) ? "Windows" : os.getName());
     }
 
     public String getOperatingSystemVersion() {
@@ -115,10 +120,10 @@ public class NativeSystemInfo implements SystemInfo {
         try {
             return sigar.getNetInfo().getHostName();
         } catch (Exception e) {
-            // For some reason, the native layer failed to get the hostname
-            // Let's fallback and ask Java for help. But if that fails, too,
-            // let's wrap the native layer's exception since we'll want to
-            // see its cause since it'll probably have a more descriptive error message
+            // For some reason, the native layer failed to get the hostname.
+            // Let's fallback and ask Java for help. But if that fails too,
+            // let's wrap the native layer's exception, since we'll want to
+            // see its cause, which will probably have a more descriptive error message.
             try {
                 return InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException uhe) {
@@ -128,7 +133,7 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public List<NetworkAdapterInfo> getAllNetworkAdapters() throws SystemInfoException {
-        ArrayList<NetworkAdapterInfo> adapters = new ArrayList<NetworkAdapterInfo>();
+        List<NetworkAdapterInfo> adapters = new ArrayList<NetworkAdapterInfo>();
 
         try {
             String[] interfaceNames = sigar.getNetInterfaceList();
@@ -200,13 +205,12 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public List<ServiceInfo> getAllServices() throws SystemInfoException {
-        throw new UnsupportedOperationException("Cannot get services for this plaform");
+        throw new UnsupportedOperationException("Cannot get services for this platform");
     }
 
     public List<ProcessInfo> getAllProcesses() {
         ArrayList<ProcessInfo> processes = new ArrayList<ProcessInfo>();
         long[] pids = null;
-        final int timeout = 2 * 60 * 1000; // 2 minutes
 
         log.debug("Retrieving PIDs of all running processes...");
         long startTime = System.currentTimeMillis();
@@ -238,10 +242,7 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public ProcessInfo getThisProcess() {
-        long self;
-
-        self = sigar.getPid();
-
+        long self = sigar.getPid();
         ProcessInfo info = new ProcessInfo(self);
         return info;
     }
@@ -269,7 +270,6 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public Swap getSwapInfo() {
-
         try {
             // Removed this check since http://jira.hyperic.com/browse/SIGAR-112 is fixed.
             /*
@@ -341,7 +341,7 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public String getSystemArchitecture() {
-        OperatingSystem op = OperatingSystem.getInstance();
+        OperatingSystem op = OperatingSystem.getInstance();        
         return op.getArch();
     }
 
@@ -352,4 +352,5 @@ public class NativeSystemInfo implements SystemInfo {
     public NativeSystemInfo() {
         this.sigar = SigarAccess.getSigar();
     }
+
 }

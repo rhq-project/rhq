@@ -436,6 +436,8 @@
             -  can still shut down the servers fired up.
             -->
             <configuration>
+              <skipTests>false</skipTests>
+              <skipITs>false</skipITs>
               <includes>
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
                 <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
@@ -450,7 +452,10 @@
                 <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                 <jboss7.home>${jboss7.home}</jboss7.home>
                 <as7.version>${as7.version}</as7.version>
+                <jboss.standalone.bindAddress>${jboss.standalone.bindAddress}</jboss.standalone.bindAddress>
+                <jboss.standalone.portOffset>${jboss.standalone.portOffset}</jboss.standalone.portOffset>
                 <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>
+                <jboss.domain.portOffset>${jboss.domain.portOffset}</jboss.domain.portOffset>
                 <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
                 <settings.localRepository>${settings.localRepository}</settings.localRepository>
               </systemPropertyVariables>

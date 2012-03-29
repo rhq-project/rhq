@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
@@ -31,7 +32,9 @@ import com.mongodb.Mongo;
 
 import org.bson.types.ObjectId;
 
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 
@@ -44,6 +47,73 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     public ChangeSetDAO(Morphia morphia, Mongo mongo, String db) {
         super(mongo, morphia, db);
         this.morphia = morphia;
+    }
+    
+    public List<MongoDBChangeSet> findByChangeSetCritiera(DriftChangeSetCriteria criteria) {
+        Query<MongoDBChangeSet> query = createQuery();
+        
+        if (criteria.getFilterId() != null) {
+            // There is no need to apply any additional filters if the id filter is specified
+            return query.field("id").equal(new ObjectId(criteria.getFilterId())).asList();
+        }
+        
+        if (criteria.getFilterResourceId() != null) {
+            query.field("resourceId").equal(criteria.getFilterResourceId());
+        }
+
+        if (criteria.getFilterDriftDefinitionId() != null) {
+            query.field("driftDefId").equal(criteria.getFilterDriftDefinitionId());
+        }
+        
+        if (criteria.getFilterVersion() != null) {
+            query.field("version").equal(Integer.parseInt(criteria.getFilterVersion()));
+        }
+        
+        if (criteria.getFilterStartVersion() != null) {
+            query.field("version").greaterThanOrEq(Integer.parseInt(criteria.getFilterStartVersion()));
+        }
+        
+        if (criteria.getFilterEndVersion() != null) {
+            query.field("version").lessThanOrEq(Integer.parseInt(criteria.getFilterEndVersion()));
+        }
+
+        if (criteria.getFilterCreatedAfter() != null) {
+            query.field("ctime").greaterThanOrEq(criteria.getFilterCreatedAfter());
+        }
+
+        if (criteria.getFilterCreatedBefore() != null) {
+            query.field("ctime").lessThan(criteria.getFilterCreatedBefore());
+        }
+
+        if (criteria.getFilterDriftPath() != null) {
+            query.field("files.path").equal(Pattern.compile(".*" + criteria.getFilterDriftPath() + ".*"));
+        }
+        
+        if (criteria.getFilterDriftDirectory() != null) {
+            query.field("files.directory").equal(criteria.getFilterDriftDirectory());
+        }
+
+        if (criteria.getFilterCategory() != null) {
+            query.field("category").equal(criteria.getFilterCategory());
+        }
+        
+        if (criteria.getFilterDriftCategories() != null) {
+            query.field("files.category").in(criteria.getFilterDriftCategories());
+        }
+
+        if (!criteria.isFetchDrifts()) {
+            query.retrievedFields(false, "files");
+        }
+
+        if (criteria.getSortVersion() != null) {
+            if (criteria.getSortVersion() == PageOrdering.ASC) {
+                query.order("version");
+            } else {
+                query.order("-version");
+            }
+        }
+
+        return query.asList();
     }
 
     public List<MongoDBChangeSet> findByDriftCriteria(DriftCriteria criteria) {
@@ -92,6 +162,8 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     }
 
     public List<MongoDBChangeSetEntry> findEntries(DriftCriteria criteria) {
+        // TODO Add support for driftHandlingModes filter
+
         if (criteria.getFilterId() != null) {
             String[] ids = criteria.getFilterId().split(":");
             ObjectId changeSetId = new ObjectId(ids[0]);
@@ -103,9 +175,29 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         boolean entriesFiltered = false;
 
         ChangeSetEntryFilters filters = new ChangeSetEntryFilters();
+        
+        if (criteria.getFilterChangeSetId() != null) {
+            query.field("id").equal(new ObjectId(criteria.getFilterChangeSetId()));
+            changeSetsFiltered = true;
+        }
 
         if (criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
+            changeSetsFiltered = true;
+        }
+        
+        if (criteria.getFilterDriftDefinitionId() != null) {
+            query.field("driftDefId").equal(criteria.getFilterDriftDefinitionId());
+            changeSetsFiltered = true;
+        }
+
+        if (criteria.getFilterChangeSetStartVersion() != null) {
+            query.field("version").greaterThanOrEq(criteria.getFilterChangeSetStartVersion());
+            changeSetsFiltered = true;
+        }
+
+        if (criteria.getFilterChangeSetEndVersion() != null) {
+            query.field("version").lessThanOrEq(criteria.getFilterChangeSetEndVersion());
             changeSetsFiltered = true;
         }
 
@@ -131,6 +223,12 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
             query.field("files.path").equal(criteria.getFilterPath());
             entriesFiltered = true;
             filters.add(new PathFilter(criteria.getFilterPath()));
+        }
+        
+        if (criteria.getFilterDirectory() != null) {
+            query.field("files.directory").equal(criteria.getFilterDirectory());
+            entriesFiltered = true;
+            filters.add(new DirectoryFilter(criteria.getFilterDirectory()));
         }
 
         List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
@@ -172,6 +270,12 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
             return changeSet.getDrifts().iterator().next();
         }
         return null;
+    }
+    
+    public void deleteChangeSets(int resourceId, String driftDefName) {
+        deleteByQuery(createQuery()
+                .field("resourceId").equal(resourceId)
+                .field("driftDefName").equal(driftDefName));
     }
 
 }

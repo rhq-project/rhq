@@ -56,18 +56,15 @@ import org.rhq.plugins.apache.util.MockProcessInfo;
 public class SnmpMappingTest {
 
     private File tmpDir;
-    
-    private static final String[] VHOST_NAMES_CONFIGURATION_TEST_FILES = {
-        "snmp-mapping/httpd.conf",
+
+    private static final String[] VHOST_NAMES_CONFIGURATION_TEST_FILES = { "snmp-mapping/httpd.conf",
         "snmp-mapping/vhost-with-servername-by-ip.conf",
         "snmp-mapping/vhost-with-servername-by-unresolvable-hostname.conf",
         "snmp-mapping/vhost-without-servername-resolvable-ip.conf",
         "snmp-mapping/vhost-without-servername-unresolvable-hostname.conf",
-        "snmp-mapping/vhost-without-servername-unresolvable-ip.conf"
-    };
-    
-    private static final String[] EXPECTED_SNMP_NAMES = {
-        "the-main-server-name:42", //httpd.conf
+        "snmp-mapping/vhost-without-servername-unresolvable-ip.conf" };
+
+    private static final String[] EXPECTED_SNMP_NAMES = { "the-main-server-name:42", //httpd.conf
         "12.34.56.78:0", //vhost-with-servername-by-ip.conf
         "this-will-never-resolve.weird-server.net:90", //vhost-with-servername-by-unresolvable-hostname.conf
         "<<<LOCALHOST>>>:1002", //vhost-without-servernama-resolvable-ip.conf
@@ -78,25 +75,24 @@ public class SnmpMappingTest {
     @BeforeClass
     public void copyConfigurationFiles() throws Exception {
         tmpDir = FileUtil.createTempDirectory("apache-runtime-config-tests", null, null);
-        
-        for(String path : VHOST_NAMES_CONFIGURATION_TEST_FILES) {
+
+        for (String path : VHOST_NAMES_CONFIGURATION_TEST_FILES) {
             copyResourceToFile(path, new File(tmpDir, path));
         }
     }
-    
+
     @BeforeClass
     public void initExpectedResults() throws Exception {
         String localhost = InetAddress.getByName("127.0.0.1").getHostName();
-        for(int i = 0; i < EXPECTED_SNMP_NAMES.length; ++i) {
+        for (int i = 0; i < EXPECTED_SNMP_NAMES.length; ++i) {
             EXPECTED_SNMP_NAMES[i] = EXPECTED_SNMP_NAMES[i].replaceAll("<<<LOCALHOST>>>", localhost);
         }
     }
-    
+
     @AfterClass
     public void deleteConfigurationFiles() throws IOException {
         FileUtils.purge(tmpDir, true);
     }
-    
 
     public void testVhostNames() {
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
@@ -113,29 +109,29 @@ public class SnmpMappingTest {
         List<ApacheDirective> vhosts = tree.search("/<VirtualHost");
         List<String> snmpNames = new ArrayList<String>(vhosts.size() + 1);
         snmpNames.add(addrUtil.getHttpdInternalMainServerAddressRepresentation(tree).toString(false, false));
-        for(ApacheDirective vhost : vhosts) {
+        for (ApacheDirective vhost : vhosts) {
             String vhostDef = vhost.getValues().get(0);
             String serverName = null;
             List<ApacheDirective> serverNames = vhost.getChildByName("ServerName");
             if (serverNames.size() > 0) {
                 serverName = serverNames.get(serverNames.size() - 1).getValuesAsString();
             }
-            
-            snmpNames.add(addrUtil.getHttpdInternalVirtualHostAddressRepresentation(tree, vhostDef, serverName).toString(false, false));
+
+            snmpNames.add(addrUtil.getHttpdInternalVirtualHostAddressRepresentation(tree, vhostDef, serverName)
+                .toString(false, false));
         }
-        
+
         assertEquals(snmpNames, Arrays.asList(EXPECTED_SNMP_NAMES));
     }
-    
 
-    private void copyResourceToFile(String resourcePath, File destination) throws IOException {        
+    private void copyResourceToFile(String resourcePath, File destination) throws IOException {
         InputStream input = getClass().getClassLoader().getResourceAsStream(resourcePath);
-        
+
         if (input != null) {
             destination.getParentFile().mkdirs();
             destination.createNewFile();
-            
+
             StreamUtil.copy(input, new BufferedOutputStream(new FileOutputStream(destination)), true);
         }
-    }    
+    }
 }

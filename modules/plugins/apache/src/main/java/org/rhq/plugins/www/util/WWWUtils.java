@@ -94,8 +94,7 @@ public abstract class WWWUtils {
             // get the response code to actually trigger sending the Request.
             connection.getResponseCode();
             ret = connection.getHeaderField("Server");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             ret = null;
         }
         return ret;
@@ -103,21 +102,19 @@ public abstract class WWWUtils {
 
     // This method has been added in support of https://bugzilla.redhat.com/show_bug.cgi?id=690430.
     private static void disableCertificateVerification(HttpsURLConnection connection) {
-        TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[] {};
-                }
-
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                    return;
-                }
-
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                    return;
-                }
+        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[] {};
             }
-        };
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                return;
+            }
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                return;
+            }
+        } };
         try {
             SSLContext sslContext = SSLContext.getInstance("SSL");
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());

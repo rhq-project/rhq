@@ -89,7 +89,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         public DiscoveryFailureException(String message) {
             super(message);
         }
-        
+
         public DiscoveryFailureException(String message, Throwable cause) {
             super(message, cause);
         }
@@ -97,10 +97,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
     public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
-    
+
     static {
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20 = new LinkedHashMap<String, String>();
-        
+
         //these are extracted from http://httpd.apache.org/docs/current/mod/
         //and linked pages
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("beos.c", "mpm_beos_module");
@@ -185,13 +185,13 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_usertrack.c", "usertrack_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_version.c", "version_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_vhost_alias.c", "vhost_alias_module");
-        
+
         //some hand picked modules
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_jk.c", "jk_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpcommon.c", "snmpcommon_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpagt.c", "snmpagt_module");
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("covalent-snmp-v20.c", "snmp_agt_module");
-        
+
         //this list is for apache 1.3
         MODULE_SOURCE_FILE_TO_MODULE_NAME_13 = new LinkedHashMap<String, String>();
         MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_access.c", "access_module");
@@ -237,9 +237,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         //and some hand-picks
         MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_jk.c", "jk_module");
-        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("covalent-snmp-v13.c", "snmp_agt_module");        
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("covalent-snmp-v13.c", "snmp_agt_module");
     }
-    
+
     public Set<DiscoveredResourceDetails>
         discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
@@ -272,28 +272,29 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      * the process info.
      * @throws Exception other unhandled exception
      */
-    private DiscoveredResourceDetails discoverSingleProcess(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
-        ProcessScanResult process) throws DiscoveryFailureException, Exception {
+    private DiscoveredResourceDetails discoverSingleProcess(
+        ResourceDiscoveryContext<PlatformComponent> discoveryContext, ProcessScanResult process)
+        throws DiscoveryFailureException, Exception {
 
         if (isWindowsServiceRootInstance(process)) {
             return null;
-        }   
-        
+        }
+
         File executablePath = getExecutableAbsolutePath(process);
         log.debug("Apache executable path: " + executablePath);
-        
+
         ApacheBinaryInfo binaryInfo;
         try {
-            binaryInfo = ApacheBinaryInfo
-                .getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
+            binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
         } catch (Exception e) {
-            throw new DiscoveryFailureException("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
+            throw new DiscoveryFailureException("'" + executablePath + "' is not a valid Apache executable (" + e
+                + ").");
         }
 
         if (!isSupportedVersion(binaryInfo.getVersion())) {
             throw new DiscoveryFailureException("Apache " + binaryInfo.getVersion() + " is not suppported.");
         }
-        
+
         String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
         if (serverRoot == null) {
             throw new DiscoveryFailureException("Unable to determine server root.");
@@ -306,26 +307,27 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
 
-        PropertySimple executablePathProp = new PropertySimple(
-            ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
+        PropertySimple executablePathProp =
+            new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
         pluginConfig.put(executablePathProp);
 
-        PropertySimple serverRootProp = new PropertySimple(
-            ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
+        PropertySimple serverRootProp =
+            new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
         pluginConfig.put(serverRootProp);
 
-        PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
-            serverConfigFile);
+        PropertySimple configFile =
+            new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF, serverConfigFile);
         pluginConfig.put(configFile);
 
-        PropertySimple inclusionGlobs = new PropertySimple(
-            PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+        PropertySimple inclusionGlobs =
+            new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
         pluginConfig.put(inclusionGlobs);
 
         pluginConfig.put(new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_CUSTOM_MODULE_NAMES));
-        
-        ApacheDirectiveTree serverConfig = parseRuntimeConfiguration(serverConfigFile.getAbsolutePath(), process.getProcessInfo(), binaryInfo);
-        
+
+        ApacheDirectiveTree serverConfig =
+            parseRuntimeConfiguration(serverConfigFile.getAbsolutePath(), process.getProcessInfo(), binaryInfo);
+
         String serverUrl = null;
         String vhostsGlobInclude = null;
 
@@ -335,7 +337,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
             serverRootProp.setValue(serverRoot);
         }
-                
+
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
         vhostsGlobInclude = scanForGlobInclude(serverConfig);
 
@@ -358,18 +360,18 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             InetSocketAddress addr = snmpAddresses.get(0);
             int port = addr.getPort();
             InetAddress host = addr.getAddress() == null ? InetAddress.getLocalHost() : addr.getAddress();
-            
-            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host.getHostAddress()));
+
+            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host
+                .getHostAddress()));
             pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, port));
         }
-        
-        return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
-            binaryInfo);
+
+        return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(), binaryInfo);
     }
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
         String inventoriedResourceKey = context.getResourceKey();
-        
+
         //check if the inventoried resource has the old format of the resource key.
         //the old format was "server-root", while the new format
         //is "server-root||httpd-conf". Checking for "||" in the resource key is therefore
@@ -377,7 +379,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (inventoriedResourceKey.contains("||")) {
             return null;
         }
-        
+
         //all the information we need for the new style resource key is 
         //actually present in the plugin configuration of the existing resource
         //already, so let's just generate the new style resource key from it.        
@@ -393,10 +395,11 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws InvalidPluginConfigurationException {
         validateServerRootAndServerConfigFile(pluginConfig);
 
-        String executablePath = pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
-            ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
-        String absoluteExecutablePath = ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig,
-            executablePath).getPath();
+        String executablePath =
+            pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
+                ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
+        String absoluteExecutablePath =
+            ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig, executablePath).getPath();
         ApacheBinaryInfo binaryInfo;
         try {
             binaryInfo = ApacheBinaryInfo.getInfo(absoluteExecutablePath, discoveryContext.getSystemInformation());
@@ -413,8 +416,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         ProcessInfo processInfo = null;
         try {
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
-                processInfo, binaryInfo);
+            DiscoveredResourceDetails resourceDetails =
+                createResourceDetails(discoveryContext, pluginConfig, processInfo, binaryInfo);
             return resourceDetails;
         } catch (Exception e) {
             throw new RuntimeException("Failed to create resource details during manual add.");
@@ -443,8 +446,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         String key = formatResourceKey(pluginConfig);
 
-        DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-            key, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
+        DiscoveredResourceDetails resourceDetails =
+            new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, PRODUCT_DESCRIPTION,
+                pluginConfig, processInfo);
         log.debug("Apache Server resource details created: " + resourceDetails);
         return resourceDetails;
     }
@@ -576,12 +580,16 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (!executablePath.isAbsolute()) {
             //try to figure out the full path... this might fail due to lack of privs
             //if the agent is running as a different user than the httpd process
-            String errorMessage = "Executable path (" + executablePath + ") is not absolute. "
-            + "Please restart Apache specifying an absolute path for the executable or "
-            + "make sure that the user running the RHQ agent is able to access the commandline parameters of the " + executableName + " process.";
+            String errorMessage =
+                "Executable path ("
+                    + executablePath
+                    + ") is not absolute. "
+                    + "Please restart Apache specifying an absolute path for the executable or "
+                    + "make sure that the user running the RHQ agent is able to access the commandline parameters of the "
+                    + executableName + " process.";
             Throwable cause = null;
             boolean success = false;
-            
+
             //the OsProcessUtility.getProcExe does an excelent job at figuring the full path and I never saw it fail
             //when the agent process has enough privs to get at the info at all. Nevertheless, let's be paranoid
             //and try yet another method..
@@ -589,24 +597,24 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 String cwd = process.getProcessInfo().getCurrentWorkingDirectory();
                 if (cwd != null) {
                     executablePath = new File(cwd, executablePath.getPath());
-                    
+
                     success = executablePath.isAbsolute() && executablePath.isFile();
                 }
             } catch (Exception e) {
-                cause = e;                
+                cause = e;
             }
-            
+
             if (!success) {
                 throw new DiscoveryFailureException(errorMessage, cause);
             }
         }
-        
+
         return executablePath;
     }
-    
+
     private static void validateServerRootAndServerConfigFile(Configuration pluginConfig) {
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
-            .getStringValue();
+        String serverRoot =
+            pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
         File serverRootFile;
         try {
             serverRootFile = new File(serverRoot).getCanonicalFile(); // this will resolve symlinks
@@ -641,26 +649,27 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo,
         ApacheBinaryInfo binaryInfo) {
-        
+
         String httpdVersion = binaryInfo.getVersion();
         Map<String, String> defaultModuleNames = getDefaultModuleNames(httpdVersion);
-        
+
         return parseRuntimeConfiguration(path, processInfo, binaryInfo, defaultModuleNames, true);
     }
 
-    public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+    public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo,
+        ApacheBinaryInfo binaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         String defaultServerRoot = binaryInfo.getRoot();
-        
+
         RuntimeApacheConfiguration.NodeInspector insp =
-            RuntimeApacheConfiguration.getNodeInspector(processInfo, binaryInfo,
-                moduleNames, suppressUnknownModuleWarnings);
+            RuntimeApacheConfiguration.getNodeInspector(processInfo, binaryInfo, moduleNames,
+                suppressUnknownModuleWarnings);
 
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, defaultServerRoot, insp);
         ApacheConfigReader.buildTree(path, parser);
         return tree;
     }
-    
+
     public static String scanForGlobInclude(ApacheDirectiveTree tree) {
         try {
             List<ApacheDirective> includes = tree.search("/Include");
@@ -691,17 +700,19 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
         return null;
     }
-    
+
     public static String formatResourceKey(Configuration pluginConfiguration) {
-        String serverRoot = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
-        String httpdConf = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
-        
+        String serverRoot =
+            pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        String httpdConf =
+            pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+
         return formatResourceKey(serverRoot, httpdConf);
     }
-    
+
     public static String formatResourceKey(String serverRoot, String httpdConf) {
         serverRoot = FileUtils.getCanonicalPath(serverRoot);
-        
+
         //we could have inherited the configuration from
         //RHQ 1.x times, when the httpdConf was relative.
         File httpdConfF = new File(httpdConf);
@@ -710,10 +721,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             httpdConf = httpdConfF.getAbsolutePath();
         }
         httpdConf = FileUtils.getCanonicalPath(httpdConf);
-        
+
         return serverRoot + "||" + httpdConf;
     }
-    
+
     private static List<InetSocketAddress> findSNMPAddresses(ApacheDirectiveTree tree, File serverRoot) {
         List<InetSocketAddress> ret = new ArrayList<InetSocketAddress>();
 
@@ -723,14 +734,13 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             log.info("SNMPConf directive not found. Skipping SNMP configuration.");
             return ret;
         }
-        
+
         String confDirName = confs.get(0).getValuesAsString();
         if (confDirName == null || confDirName.isEmpty()) {
             log.warn("The SNMPConf directive seems to not have a value. Skipping SNMP configuration.");
             return ret;
         }
-        
-        
+
         File confDir = new File(confDirName);
 
         if (!confDir.isAbsolute()) {
@@ -744,7 +754,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 + "'. Skipping SNMP configuration.");
             return ret;
         }
-        
+
         try {
             String agentAddressLine = findSNMPAgentAddressConfigLine(snmpdConf);
 
@@ -752,7 +762,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 log.warn("Could not find the 'agentaddress' property in the snmpd.conf. Skipping SNMP configuration.");
                 return ret;
             }
-            
+
             int specStartIdx = agentAddressLine.indexOf("agentaddress") + "agentaddress".length() + 1;
 
             while (Character.isWhitespace(agentAddressLine.charAt(specStartIdx)))
@@ -787,16 +797,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     ret.add(address);
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse the SNMP 'agentaddress' configuration property: "
-                    + agentAddressLine, e);
+                log.warn("Failed to parse the SNMP 'agentaddress' configuration property: " + agentAddressLine, e);
             }
         } catch (IOException e) {
             log.warn("Failed to read in the configured snmpd.conf file: " + snmpdConf.getAbsolutePath(), e);
         }
-        
+
         return ret;
     }
-    
+
     private static String findSNMPAgentAddressConfigLine(File snmpdConf) throws IOException {
         BufferedReader rdr = new BufferedReader(new FileReader(snmpdConf));
 
@@ -809,7 +818,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     return line;
                 }
             }
-            
+
             return null;
         } finally {
             rdr.close();
@@ -818,14 +827,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public static Map<String, String> getDefaultModuleNames(String version) {
         switch (HttpdAddressUtility.get(version)) {
-        case APACHE_1_3 : 
+        case APACHE_1_3:
             return MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
         case APACHE_2_x:
             return MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
-        default: throw new IllegalStateException("Unknown HttpdAddressUtility instance.");
-    }        
+        default:
+            throw new IllegalStateException("Unknown HttpdAddressUtility instance.");
+        }
     }
-    
+
     /**
      * We need this because of PIQL limitations.
      * 
@@ -843,7 +853,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      */
     private static boolean isWindowsServiceRootInstance(ProcessScanResult process) {
         String kArg = getCommandLineOption(process.getProcessInfo().getCommandLine(), "-k");
-        
+
         return kArg != null && kArg.equalsIgnoreCase("runservice");
     }
 }

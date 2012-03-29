@@ -20,11 +20,21 @@ package org.rhq.test.arquillian.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.xml.namespace.QName;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,10 +54,12 @@ import org.jboss.shrinkwrap.api.Filter;
 import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+import org.jboss.shrinkwrap.impl.base.path.BasicPath;
 
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.arquillian.impl.util.SigarInstaller;
@@ -66,7 +78,9 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
-    
+
+    private static final ArchivePath PLUGIN_DESCRIPTOR_PATH = new BasicPath("META-INF", "rhq-plugin.xml");
+
     private static final Map<String, Boolean> NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC = new HashMap<String, Boolean>();
     
     static {
@@ -206,25 +220,35 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         try {
             switchPcInstance();
         } catch (Exception e) {
-            throw new DeploymentException("Failed to switch plugin container.", e);
+            throw new DeploymentException("Failed to switch to PluginContainer [" + container.get().getName() + "].",
+                    e);
         }
 
-        RhqAgentPluginArchive plugin = archive.as(RhqAgentPluginArchive.class);
+        RhqAgentPluginArchive pluginArchive = archive.as(RhqAgentPluginArchive.class);
 
-        Node descriptor = plugin.get(ArchivePaths.create("META-INF/rhq-plugin.xml"));
+        Node descriptor = pluginArchive.get(ArchivePaths.create("META-INF/rhq-plugin.xml"));
         if (descriptor == null) {
-            throw new DeploymentException("Archive [" + archive + "] doesn't specify an RHQ plugin descriptor.");
+            throw new DeploymentException("Plugin archive [" + archive + "] doesn't specify an RHQ plugin descriptor.");
         }
 
         boolean wasStarted = stopPc();
 
-        deployPlugin(plugin);
+        deployPlugin(pluginArchive);
 
         if (wasStarted) {
             startPc();
         }
 
-        LOG.info("Done deploying " + archive + " to PluginContainer " + container.get().getName());
+        PluginContainer pc = PluginContainer.getInstance();
+        String pluginName = getPluginName(pluginArchive);
+        PluginEnvironment plugin = pc.getPluginManager().getPlugin(pluginName);
+        if (plugin == null) {
+            throw new RuntimeException("Failed to deploy plugin '" + pluginName + "' (" + pluginArchive.getName()
+                    + ") - check the log above for an error (and big stack trace) from PluginManager.initialize().");
+        }
+
+        LOG.info("Done deploying plugin '" + pluginName + "' (" + archive + ") to PluginContainer "
+                + container.get().getName() +".");
         
         return new ProtocolMetaData();
     }
@@ -323,7 +347,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if the plugin container needed to be started (i.e. was not running before), false otherwise.
      */
     private boolean startPc() {
-        LOG.debug("Starting PluginContainer on demand");
+        LOG.debug("Starting PluginContainer on demand...");
         
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
@@ -344,7 +368,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if PC was running before this call, false otherwise
      */
     private boolean stopPc() {
-        LOG.debug("Stopping PluginContainer on demand");
+        LOG.debug("Stopping PluginContainer on demand...");
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
             pc.shutdown();
@@ -369,6 +393,58 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     private PluginContainer switchPcInstance() throws Exception {
         return switchPluginContainer(container.get().getName());
+    }
+
+    private static String getPluginName(Archive<?> archive) {
+        InputStream is = archive.get(PLUGIN_DESCRIPTOR_PATH).getAsset().openStream();
+        XMLEventReader rdr = null;
+        try {
+            rdr = XMLInputFactory.newInstance().createXMLEventReader(is);
+
+            XMLEvent event = null;
+            while (rdr.hasNext()) {
+                event = rdr.nextEvent();
+                if (event.getEventType() == XMLEvent.START_ELEMENT) {
+                    break;
+                }
+            }
+
+            StartElement startElement = event.asStartElement();
+            String tagName = startElement.getName().getLocalPart();
+            if (!"plugin".equals(tagName)) {
+                throw new IllegalArgumentException("Illegal start tag found in the plugin descriptor. Expected 'plugin' but found '" + tagName + "' in the plugin '" + archive + "'.");
+            }
+
+            Attribute nameAttr = startElement.getAttributeByName(new QName("name"));
+
+            if (nameAttr == null) {
+                throw new IllegalArgumentException("Couldn't find the name attribute on the plugin tag in the plugin descriptor of plugin '" + archive + "'.");
+            }
+
+            return nameAttr.getValue();
+        } catch (XMLStreamException e) {
+            throw new IllegalArgumentException("Failed to extract the plugin name out of the RHQ plugin archive [" + archive + "]", e);
+        } catch (FactoryConfigurationError e) {
+            throw new IllegalArgumentException("Failed to extract the plugin name out of the RHQ plugin archive [" + archive + "]", e);
+        } finally {
+            closeReaderAndStream(rdr, is, archive);
+        }
+    }
+
+    private static void closeReaderAndStream(XMLEventReader rdr, InputStream str, Archive<?> archive) {
+        if (rdr != null) {
+            try {
+                rdr.close();
+            } catch (XMLStreamException e) {
+                LOG.error("Failed to close the XML reader of the plugin descriptor in archive [" + archive + "]", e);
+            }
+        }
+
+        try {
+            str.close();
+        } catch (IOException e) {
+            LOG.error("Failed to close the input stream of the plugin descriptor in archive [" + archive + "]", e);
+        }
     }
 
 }

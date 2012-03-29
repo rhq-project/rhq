@@ -64,9 +64,9 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
 
     public Configuration loadResourceConfiguration() throws Exception {
         if (!isAugeasEnabled()) {
-            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);            
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-                
+
         ConfigurationDefinition resourceConfigDef = context.getResourceType().getResourceConfigurationDefinition();
         AugeasComponent comp = parentComponent.getAugeas();
         AugeasTree tree = null;
@@ -86,7 +86,7 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         AugeasComponent comp = parentComponent.getAugeas();
         AugeasTree tree = null;
         try {

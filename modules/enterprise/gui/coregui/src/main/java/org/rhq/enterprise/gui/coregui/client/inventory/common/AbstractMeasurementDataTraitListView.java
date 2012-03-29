@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.ArrayList;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
@@ -27,7 +29,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,
@@ -60,19 +61,15 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
         super.configureTable();
 
         ListGrid listGrid = getListGrid();
+
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        listGrid.setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+
         listGrid.setSelectionType(SelectionStyle.SINGLE);
 
         // Set widths and cell formatters on the fields.
         ListGridField displayNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
-        if (displayNameField != null) {
-            displayNameField.setWidth("20%");
-        }
-
-        ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
-        if (timestampField != null) {
-            timestampField.setWidth("20%");
-            timestampField.setCellFormatter(new TimestampCellFormatter());
-        }
+        displayNameField.setWidth("20%");
     }
 
     @Override

@@ -60,7 +60,7 @@ import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
 /**
- * Standard platform/server inventory detection execution. This is typically called in a non-blocking fashion and the
+ * Standard platform/server inventory detection execution. This is typically called in a non-blocking fashion, and the
  * report is returned asynchronously to the server. It is available for direct execution via a Future when running in an
  * embedded mode.
  *
@@ -82,11 +82,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         this.autoDiscoveryRequest = autoDiscoveryRequest;
         this.inventoryManager = inventoryManager;
         this.configuration = configuration;
-    }
-
-    public AutoDiscoveryExecutor() {
-        autoDiscoveryRequest = new AutoDiscoveryRequest();
-        autoDiscoveryRequest.getScanTypes().add(AutoDiscoveryScanType.Plugin);
     }
 
     public void run() {
@@ -167,7 +162,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
 
         Set<ResourceType> serverTypes = pluginManager.getMetadataManager().getTypesForCategory(ResourceCategory.SERVER);
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
-        ResourceComponent platformComponent = platformContainer.getResourceComponent();
         Resource platformResource = platformContainer.getResource();
 
         for (ResourceType serverType : serverTypes) {
@@ -195,7 +189,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                     component, platformContainer, scanResults);
 
                 for (Resource discoveredServer : discoveredServers) {
-                    log.debug("Detected server " + discoveredServer);
                     Resource inventoriedResource = this.inventoryManager.mergeResourceFromDiscovery(discoveredServer,
                         platformResource);
 
@@ -237,8 +230,10 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 if ((queryResults != null) && (queryResults.size() > 0)) {
                     for (ProcessInfo autoDiscoveredProcess : queryResults) {
                         scanResults.add(new ProcessScanResult(processScan, autoDiscoveredProcess));
-                        log.info("Process scan auto-detected new server resource: scan=[" + processScan
-                            + "], discovered-process=[" + autoDiscoveredProcess + "]");
+                        if (log.isDebugEnabled()) {
+                            log.debug("Process scan auto-detected potential new server Resource: scan=[" + processScan
+                                + "], discovered-process=[" + autoDiscoveredProcess + "]");
+                        }
                     }
                 }
             }
@@ -248,8 +243,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
 
     private boolean verifyComponentCompatibility(ResourceDiscoveryComponent component,
         ResourceComponent parentResourceComponent) throws PluginContainerException {
-        Method discoveryCall = null;
-
+        Method discoveryCall;
         try {
             discoveryCall = component.getClass().getMethod("discoverResources", ResourceCategory.class);
         } catch (NoSuchMethodException e) {

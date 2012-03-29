@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Map;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
@@ -35,6 +36,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -52,11 +54,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
 /**
  * Shows details of a server plugin.
@@ -68,31 +68,32 @@ public class ServerPluginDetailView extends LocatableVLayout {
     private final PluginGWTServiceAsync pluginManager = GWTServiceLookup.getPluginService();
     private final int pluginId;
 
-    private int DETAILS_POSITION = 0;
-    private int HELP_POSITION = 1;
-    private int CONTROLS_POSITION = 2;
-    private int PLUGINCONFIG_POSITION = 3;
-    private int SCHEDULEDJOBS_POSITION = 4;
+    private final LocatableSectionStack sectionStack;
+    private SectionStackSection detailsSection = null;
+    private SectionStackSection helpSection = null;
+    private SectionStackSection controlsSection = null;
+    private SectionStackSection pluginConfigSection = null;
+    private SectionStackSection scheduledJobsSection = null;
+    private int initSectionCount = 0;
 
     public ServerPluginDetailView(String locatorId, int pluginId) {
         super(locatorId);
         this.pluginId = pluginId;
         setHeight100();
         setWidth100();
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
-        final LocatableSectionStack sectionStack;
+        setOverflow(Overflow.AUTO);
 
         sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
         sectionStack.setMargin(5);
-        sectionStack.setOverflow(Overflow.AUTO);
+        sectionStack.setOverflow(Overflow.VISIBLE);
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
 
         pluginManager.getServerPlugin(this.pluginId, true, new AsyncCallback<ServerPlugin>() {
             public void onSuccess(ServerPlugin plugin) {
@@ -107,8 +108,52 @@ public class ServerPluginDetailView extends LocatableVLayout {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
             }
         });
+    }
 
-        addMember(sectionStack);
+    public boolean isInitialized() {
+        return initSectionCount >= 5;
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        // wait until we have all of the sections before we show them. We don't use InitializableView because,
+        // it seems they are not supported (in the applicable renderView()) at this level.
+        new Timer() {
+            final long startTime = System.currentTimeMillis();
+
+            public void run() {
+                if (isInitialized()) {
+                    if (null != detailsSection) {
+                        sectionStack.addSection(detailsSection);
+                    }
+                    if (null != helpSection) {
+                        sectionStack.addSection(helpSection);
+                    }
+                    if (null != controlsSection) {
+                        sectionStack.addSection(controlsSection);
+                    }
+                    if (null != pluginConfigSection) {
+                        sectionStack.addSection(pluginConfigSection);
+                    }
+                    if (null != scheduledJobsSection) {
+                        sectionStack.addSection(scheduledJobsSection);
+                    }
+
+                    addMember(sectionStack);
+                    markForRedraw();
+
+                } else {
+                    // don't wait forever, give up after 20s and show what we have
+                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                    if (elapsedMillis > 20000) {
+                        initSectionCount = 5;
+                    }
+                    schedule(100); // Reschedule the timer.
+                }
+            }
+        }.run(); // fire the timer immediately
     }
 
     private void prepareControlsSection(final SectionStack stack, final ServerPlugin plugin) {
@@ -121,8 +166,10 @@ public class ServerPluginDetailView extends LocatableVLayout {
                         SectionStackSection section = new SectionStackSection(MSG.view_admin_plugins_serverControls());
                         section.setExpanded(false);
                         section.addItem(new ServerPluginControlView(extendLocatorId("controlView"), plugin, result));
-                        stack.addSection(section, CONTROLS_POSITION);
+
+                        controlsSection = section;
                     }
+                    ++initSectionCount;
                 }
 
                 public void onFailure(Throwable caught) {
@@ -137,26 +184,23 @@ public class ServerPluginDetailView extends LocatableVLayout {
         pluginManager.getServerPluginConfigurationDefinition(pluginKey, new AsyncCallback<ConfigurationDefinition>() {
             public void onSuccess(ConfigurationDefinition def) {
                 if (def != null) {
-                    LocatableVStack layout = new LocatableVStack(extendLocatorId("pcEditorLayout"));
-                    layout.setMargin(5);
-                    layout.setMembersMargin(5);
-                    layout.setAutoHeight();
+                    LocatableVLayout layout = new LocatableVLayout(extendLocatorId("pcEditorLayout"));
 
-                    LocatableHStack buttons = new LocatableHStack(extendLocatorId("pcButtonsLayout"));
+                    ToolStrip buttons = new ToolStrip();
+                    buttons.setWidth100();
+                    buttons.setExtraSpace(10);
                     buttons.setMembersMargin(5);
-                    buttons.setAutoHeight();
-                    layout.addMember(buttons);
+                    buttons.setLayoutMargin(5);
 
                     final IButton saveButtonPC = new LocatableIButton(extendLocatorId("pcSave"), MSG
                         .common_button_save());
-                    buttons.addMember(saveButtonPC);
 
                     final IButton resetButtonPC = new LocatableIButton(extendLocatorId("pcRest"), MSG
                         .common_button_reset());
-                    buttons.addMember(resetButtonPC);
 
                     Configuration config = plugin.getPluginConfiguration();
                     final ConfigurationEditor editorPC = new ConfigurationEditor(extendLocatorId("pcEdit"), def, config);
+                    editorPC.setOverflow(Overflow.AUTO);
                     editorPC.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
                             if (event.isInvalidPropertySetChanged()) {
@@ -169,7 +213,6 @@ public class ServerPluginDetailView extends LocatableVLayout {
                             }
                         }
                     });
-                    layout.addMember(editorPC);
 
                     resetButtonPC.addClickHandler(new ClickHandler() {
                         public void onClick(ClickEvent event) {
@@ -200,11 +243,19 @@ public class ServerPluginDetailView extends LocatableVLayout {
                         }
                     });
 
+                    buttons.addMember(saveButtonPC);
+                    buttons.addMember(resetButtonPC);
+                    layout.addMember(buttons);
+                    layout.addMember(editorPC);
+
                     SectionStackSection section = new SectionStackSection(MSG.view_admin_plugins_serverConfig());
                     section.setExpanded(false);
                     section.setItems(layout);
-                    stack.addSection(section, PLUGINCONFIG_POSITION);
+
+                    pluginConfigSection = section;
                 }
+
+                ++initSectionCount;
             }
 
             @Override
@@ -222,14 +273,12 @@ public class ServerPluginDetailView extends LocatableVLayout {
             public void onSuccess(ConfigurationDefinition def) {
                 if (def != null) {
                     LocatableVLayout layout = new LocatableVLayout(extendLocatorId("sjEditorLayout"));
-                    layout.setMargin(5);
-                    layout.setMembersMargin(5);
-                    layout.setAutoHeight();
 
-                    LocatableHStack buttons = new LocatableHStack(extendLocatorId("sjButtonsLayout"));
+                    ToolStrip buttons = new ToolStrip();
+                    buttons.setWidth100();
+                    buttons.setExtraSpace(10);
                     buttons.setMembersMargin(5);
-                    buttons.setAutoHeight();
-                    layout.addMember(buttons);
+                    buttons.setLayoutMargin(5);
 
                     final IButton saveButtonSJ = new LocatableIButton(extendLocatorId("sjSave"), MSG
                         .common_button_save());
@@ -241,6 +290,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
 
                     Configuration config = plugin.getScheduledJobsConfiguration();
                     final ConfigurationEditor editorSJ = new ConfigurationEditor(extendLocatorId("sjEdit"), def, config);
+                    editorSJ.setOverflow(Overflow.AUTO);
                     editorSJ.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
                             if (event.isInvalidPropertySetChanged()) {
@@ -253,7 +303,6 @@ public class ServerPluginDetailView extends LocatableVLayout {
                             }
                         }
                     });
-                    layout.addMember(editorSJ);
 
                     resetButtonSJ.addClickHandler(new ClickHandler() {
                         public void onClick(ClickEvent event) {
@@ -284,11 +333,17 @@ public class ServerPluginDetailView extends LocatableVLayout {
                         }
                     });
 
+                    layout.addMember(buttons);
+                    layout.addMember(editorSJ);
+
                     SectionStackSection section = new SectionStackSection(MSG.view_admin_plugins_serverScheduleJobs());
                     section.setExpanded(false);
                     section.setItems(layout);
-                    stack.addSection(section, SCHEDULEDJOBS_POSITION);
+
+                    scheduledJobsSection = section;
                 }
+
+                ++initSectionCount;
             }
 
             @Override
@@ -305,8 +360,11 @@ public class ServerPluginDetailView extends LocatableVLayout {
             section.setExpanded(true);
             Label help = new Label(plugin.getHelp());
             section.setItems(help);
-            stack.addSection(section, HELP_POSITION);
+
+            helpSection = section;
         }
+
+        ++initSectionCount;
         return;
     }
 
@@ -365,7 +423,9 @@ public class ServerPluginDetailView extends LocatableVLayout {
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
         section.setItems(form);
-        stack.addSection(section, DETAILS_POSITION);
+
+        detailsSection = section;
+        ++initSectionCount;
 
         return;
     }

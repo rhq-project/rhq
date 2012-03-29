@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -158,7 +157,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyRefreshing = false;
                 }
 
@@ -282,7 +281,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                 storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
                 //resynch the config object in the datasource
-                groupOperations.setDatasource(new GroupOperationsCriteriaDataSource(portletConfig));
+                ((GroupOperationsCriteriaDataSource) groupOperations.getDataSource()).setPortletConfig(updatedConfig);
                 //apply latest settings to the visible result set
                 refresh();
             }
@@ -394,11 +393,19 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
  */
 class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource {
 
+    private Configuration portletConfig;
+
     public GroupOperationsCriteriaDataSource(Configuration portletConfig) {
         this.portletConfig = portletConfig;
     }
 
-    private Configuration portletConfig;
+    public Configuration getPortletConfig() {
+        return portletConfig;
+    }
+
+    public void setPortletConfig(Configuration portletConfig) {
+        this.portletConfig = portletConfig;
+    }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
@@ -469,8 +476,8 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
                         int lastN = property.getIntegerValue();
                         property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
                         int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                            .valueOf(lastUnits));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
+                            Integer.valueOf(lastUnits));
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }

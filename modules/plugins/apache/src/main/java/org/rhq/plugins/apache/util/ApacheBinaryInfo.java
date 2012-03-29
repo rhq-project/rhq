@@ -64,9 +64,8 @@ public class ApacheBinaryInfo {
     private long lastModified = 0;
     private Set<String> compiledInModules = new HashSet<String>();
     private Set<String> compiledInDefines = new HashSet<String>();
-    
-    protected ApacheBinaryInfo(@NotNull
-    String binaryPath) {
+
+    protected ApacheBinaryInfo(@NotNull String binaryPath) {
         this.binaryPath = binaryPath;
     }
 
@@ -138,7 +137,7 @@ public class ApacheBinaryInfo {
 
         try {
             compiledInDefines.clear();
-            
+
             ProcessExecution processExecution = new ProcessExecution(binaryPath);
             processExecution.setArguments(new String[] { "-V" });
             processExecution.setWaitForCompletion(10000L);
@@ -176,7 +175,7 @@ public class ApacheBinaryInfo {
                     if (equalsIdx >= 0) {
                         define = define.substring(0, equalsIdx);
                     }
-                    
+
                     compiledInDefines.add(define);
                 }
             }
@@ -192,14 +191,14 @@ public class ApacheBinaryInfo {
             }
         }
     }
-    
+
     private void getCompiledInModules(String binaryPath, SystemInfo systemInfo) {
         BufferedReader is = null;
 
         try {
-            
+
             compiledInModules.clear();
-            
+
             ProcessExecution processExecution = new ProcessExecution(binaryPath);
             processExecution.setArguments(new String[] { "-l" });
             processExecution.setWaitForCompletion(10000L);
@@ -218,7 +217,7 @@ public class ApacheBinaryInfo {
                     firstLine = false;
                     continue;
                 }
-                
+
                 compiledInModules.add(line.trim());
             }
         } catch (Throwable t) {
@@ -248,7 +247,7 @@ public class ApacheBinaryInfo {
 
         getVersionCommandInfo(binaryPath, systemInfo);
         getCompiledInModules(binaryPath, systemInfo);
-        
+
         File libHttpd = getHttpdSharedLibrary(binaryFile);
 
         this.version = findVersion((libHttpd != null) ? libHttpd.getPath() : this.binaryPath);
@@ -322,8 +321,8 @@ public class ApacheBinaryInfo {
 
     @Override
     public String toString() {
-        String info = "version=" + this.version + ", root=" + this.root + ", binary=" + this.binaryPath + ", ctl="
-            + this.ctl;
+        String info =
+            "version=" + this.version + ", root=" + this.root + ", binary=" + this.binaryPath + ", ctl=" + this.ctl;
 
         if (this.mpm != null) {
             info += ", mpm=" + this.mpm;
@@ -373,11 +372,11 @@ public class ApacheBinaryInfo {
     private static boolean isUnix() {
         return File.separatorChar == '/';
     }
-    
+
     public Set<String> getCompiledInModules() {
         return compiledInModules;
     }
-    
+
     public Set<String> getCompiledInDefines() {
         return compiledInDefines;
     }

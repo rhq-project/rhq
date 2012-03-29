@@ -45,21 +45,23 @@ public class VirtualHostLegacyResourceKeyUtil {
     private HttpdAddressUtility addressUtility;
     private ApacheDirectiveTree runtimeConfig;
     private ApacheServerComponent serverComponent;
-    
+
     public VirtualHostLegacyResourceKeyUtil(ApacheServerComponent serverComponent, ApacheDirectiveTree runtimeConfig) {
         this.runtimeConfig = runtimeConfig;
         this.addressUtility = serverComponent.getAddressUtility();
         this.serverComponent = serverComponent;
-        
+
         vhosts = VHostSpec.detect(runtimeConfig);
         snmpLikeReport = new ArrayList<HttpdAddressUtility.Address>();
         snmpLikeReport.add(addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig));
-        for(VHostSpec vhost : vhosts) {
-            HttpdAddressUtility.Address snmpRecord = addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost.hosts.get(0), vhost.serverName); 
+        for (VHostSpec vhost : vhosts) {
+            HttpdAddressUtility.Address snmpRecord =
+                addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost.hosts.get(0),
+                    vhost.serverName);
             snmpLikeReport.add(snmpRecord);
         }
     }
-    
+
     /**
      * This creates a list of possible resource keys for the main server.
      * <p>
@@ -72,11 +74,11 @@ public class VirtualHostLegacyResourceKeyUtil {
      */
     public Set<String> getLegacyMainServerResourceKeys() {
         Set<String> ret = new HashSet<String>();
-        
+
         String key = getRHQ3NonSNMPLegacyMainServerResourceKey();
-        
+
         ret.add(key);
-        
+
         String snmpKey = getRHQ3SNMPLikeResourceKey(key);
 
         if (snmpKey != null) {
@@ -84,10 +86,10 @@ public class VirtualHostLegacyResourceKeyUtil {
         }
 
         ret.add(addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));
-        
+
         return ret;
     }
-    
+
     /**
      * A resource key for the main vhost that would be returned by the RHQ 3 codebase
      * if SNMP wasn't enabled during discovery.
@@ -103,9 +105,9 @@ public class VirtualHostLegacyResourceKeyUtil {
      */
     public String getRHQ3NonSNMPLegacyMainServerResourceKey() {
         String mainServerUrl = serverComponent.getServerUrl();
-        
+
         String key = null;
-        
+
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
             try {
                 URI mainServerUri = new URI(mainServerUrl);
@@ -114,7 +116,7 @@ public class VirtualHostLegacyResourceKeyUtil {
                 if (port == -1) {
                     port = 80;
                 }
-    
+
                 key = host + ":" + port;
             } catch (URISyntaxException e) {
                 //hmm.. strange
@@ -122,10 +124,10 @@ public class VirtualHostLegacyResourceKeyUtil {
         } else {
             key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
         }
-        
+
         return key;
     }
-    
+
     /**
      * Returns a list of possible resource keys that the RHQ 3 code could generate for the specified
      * vhost.
@@ -140,20 +142,22 @@ public class VirtualHostLegacyResourceKeyUtil {
         String key = getRHQ3NonSNMPLegacyVirtualHostResourceKey(vhost);
 
         Set<String> ret = new HashSet<String>();
-        
+
         ret.add(key);
-        
+
         String snmpKey = getRHQ3SNMPLikeResourceKey(key);
         if (snmpKey != null) {
             ret.add(snmpKey);
         }
 
-        String snmpKeyFromRhq1 = addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost.hosts.get(0), vhost.serverName).toString(false, false);
+        String snmpKeyFromRhq1 =
+            addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost.hosts.get(0),
+                vhost.serverName).toString(false, false);
         ret.add(snmpKeyFromRhq1);
-        
+
         return ret;
     }
-    
+
     /**
      * A resource key for given vhost that would be returned by RHQ 3 if SNMP wasn't enabled during
      * discovery.
@@ -168,17 +172,17 @@ public class VirtualHostLegacyResourceKeyUtil {
             HttpdAddressUtility.Address serverAddr = HttpdAddressUtility.Address.parse(vhost.serverName);
             hostAddr.host = serverAddr.host;
         }
-        
+
         //the SNMP module seems to resolve the IPs to hostnames.
         try {
             InetAddress hostName = InetAddress.getByName(hostAddr.host);
             hostAddr.host = hostName.getHostName();
         } catch (UnknownHostException e) {
-        } 
-        
+        }
+
         return hostAddr.host + ":" + hostAddr.port;
     }
-    
+
     /**
      * Returns an "SNMP" resource key that would have been resolved out of the non-snmp resource key
      * by the RHQ 3 code-base. Note that the returned key actually isn't what SNMP module would 
@@ -189,7 +193,7 @@ public class VirtualHostLegacyResourceKeyUtil {
      */
     public String getRHQ3SNMPLikeResourceKey(String nonSnmpResourceKey) {
         int idx = getMatchingWwwServiceIndex(nonSnmpResourceKey);
-        
+
         if (idx < 0) {
             return null;
         } else {
@@ -219,18 +223,20 @@ public class VirtualHostLegacyResourceKeyUtil {
         vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
 
         //convert the vhost addresses into fully qualified ip/port addresses
-        List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
-            vhostAddressStrings.length);
+        List<HttpdAddressUtility.Address> vhostAddresses =
+            new ArrayList<HttpdAddressUtility.Address>(vhostAddressStrings.length);
 
-        if (vhostAddressStrings.length == 1 && ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+        if (vhostAddressStrings.length == 1
+            && ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
             HttpdAddressUtility.Address serverAddr = addressUtility.getMainServerSampleAddress(runtimeConfig, null, 0);
             if (serverAddr != null) {
                 vhostAddresses.add(serverAddr);
             }
         } else {
             for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                HttpdAddressUtility.Address vhostAddr = addressUtility.getVirtualHostSampleAddress(runtimeConfig, vhostAddressStrings[i],
-                    vhostServerName, true);
+                HttpdAddressUtility.Address vhostAddr =
+                    addressUtility.getVirtualHostSampleAddress(runtimeConfig, vhostAddressStrings[i], vhostServerName,
+                        true);
                 if (vhostAddr != null) {
                     vhostAddresses.add(vhostAddr);
                 } else {
@@ -251,67 +257,69 @@ public class VirtualHostLegacyResourceKeyUtil {
         //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
         //and possibly multiple IP addresses.
         int bestMatchRate = 0;
-        
+
         int idx = 0;
-        for(HttpdAddressUtility.Address snmpAddress : snmpLikeReport) {
-            
+        for (HttpdAddressUtility.Address snmpAddress : snmpLikeReport) {
+
             int matchRate = matchRate(vhostAddresses, snmpAddress);
             if (matchRate > bestMatchRate) {
                 ret = idx;
                 bestMatchRate = matchRate;
             }
-            
+
             ++idx;
         }
-        
+
         return ret;
     }
-    
-    private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
-        for(HttpdAddressUtility.Address a : addresses) {
+
+    private static int
+        matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
+        for (HttpdAddressUtility.Address a : addresses) {
             if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;
             }
         }
-        
+
         //try to get the IP of the address to check
         InetAddress[] ipAddresses;
         try {
             ipAddresses = InetAddress.getAllByName(addressToCheck.host);
-            for(InetAddress ip : ipAddresses) {
-                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
-                
-                for(HttpdAddressUtility.Address a : addresses) {
+            for (InetAddress ip : ipAddresses) {
+                HttpdAddressUtility.Address newCheck =
+                    new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
+
+                for (HttpdAddressUtility.Address a : addresses) {
                     if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port, true)) {
                         return 2;
                     }
                 }
-            }            
+            }
         } catch (UnknownHostException e) {
             return 0;
         }
-        
+
         //because of the lack of documentation on the SNMP module, we assumed
         //some wrong things in the past.. this is one of them...
         int addressPort = addressToCheck.port;
         if (addressPort == 80) {
             addressPort = 0;
         }
-        
+
         //ok, try the hardest...
-        for(HttpdAddressUtility.Address listAddress: addresses) {
+        for (HttpdAddressUtility.Address listAddress : addresses) {
             int listPort = listAddress.port;
             if (listPort == 80) {
                 listPort = 0;
             }
-            
+
             InetAddress[] listAddresses;
             try {
                 listAddresses = InetAddress.getAllByName(listAddress.host);
             } catch (UnknownHostException e) {
                 return 0;
             }
-            
+
             for (InetAddress listInetAddr : listAddresses) {
                 for (InetAddress ip : ipAddresses) {
                     if (ip.equals(listInetAddr) && addressPort == listPort) {
@@ -320,7 +328,7 @@ public class VirtualHostLegacyResourceKeyUtil {
                 }
             }
         }
-        
+
         return 0;
-    }    
+    }
 }

@@ -24,11 +24,13 @@ import gnu.getopt.LongOpt;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import mazz.i18n.Msg;
 
@@ -247,7 +249,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         throws Exception {
         PluginContainer pc = PluginContainer.getInstance();
         PluginMetadataManager metadataManager = pc.getPluginManager().getMetadataManager();
-        Set<ResourceType> typesToDiscover = new HashSet<ResourceType>();
+        Set<ResourceType> typesToDiscover = new TreeSet<ResourceType>(new PluginPrimaryResourceTypeComparator());
 
         // make sure the plugin exists first (if one was specified)
         Set<String> allPlugins = metadataManager.getPluginNames();
@@ -427,4 +429,22 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         out.println();
         return;
     }
+
+    private class PluginPrimaryResourceTypeComparator implements Comparator<ResourceType> {
+        @Override
+        public int compare(ResourceType type1, ResourceType type2) {
+            if (type1.getPlugin() == null) {
+                return (type2.getPlugin() == null) ? 0 : -1;
+            }
+            int result = (type2.getPlugin() == null) ? 1 : type1.getPlugin().compareTo(type2.getPlugin());
+            if (result != 0) {
+                return result;
+            }
+            if (type1.getName() == null) {
+                return (type2.getName() == null) ? 0 : -1;
+            }
+            return (type2.getName() == null) ? 1 : type1.getName().compareTo(type2.getName());
+        }
+    }
+
 }

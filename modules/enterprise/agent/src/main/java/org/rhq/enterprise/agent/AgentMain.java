@@ -3657,7 +3657,7 @@ public class AgentMain {
                     // An unlikely state, but if we're not sending, not polling and not performing autoDiscovery 
                     // (multicast), then start polling to we eventually get out of this state.
                     if (!(m_clientSender.isServerPolling() || isAutoDiscoveryEnabled())) {
-                        LOG.info("Starting polling to determine sender status");
+                        LOG.info(AgentI18NResourceKeys.PING_EXECUTOR_STARTING_POLLING);
                         m_clientSender.startServerPolling();
                     }
 
@@ -3666,7 +3666,7 @@ public class AgentMain {
 
                 // we are in sending mode, so make sure the poller is off 
                 if (m_clientSender.isServerPolling()) {
-                    LOG.info("Stopping polling and resuming pinging");
+                    LOG.info(AgentI18NResourceKeys.PING_EXECUTOR_STOPPING_POLLING_RESUME_PING);
                     m_clientSender.stopServerPolling();
                 }
 
@@ -3684,10 +3684,11 @@ public class AgentMain {
                 // If the ping fails, typically do to a CannotConnectException, and we're not using autodiscovery,
                 // then start the poller to have sending mode re-established when the connection resumes.
                 if (!(m_clientSender.isServerPolling() || isAutoDiscoveryEnabled())) {
-                    LOG.info("Starting polling to determine sender status", t);
+                    LOG.info(AgentI18NResourceKeys.PING_EXECUTOR_STARTING_POLLING_AFTER_EXCEPTION,
+                        ThrowableUtil.getAllMessages(t));
                     m_clientSender.startServerPolling();
                 } else {
-                    LOG.warn("Server Ping failed", t);
+                    LOG.warn(AgentI18NResourceKeys.PING_EXECUTOR_SERVER_PING_FAILED, t);
                 }
             }
         }

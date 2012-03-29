@@ -51,8 +51,8 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
      * @throws InvalidPluginConfigurationException
      * @throws Exception
      */
-    public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException, Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
+        throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>(1);
 
@@ -61,22 +61,21 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
         // Try to determine the presence of mod_jk and its version via a http request
         PropertySimple urlString = parentConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL);
         String modJkVersion = null;
-        if (urlString!=null) {
+        if (urlString != null) {
             try {
                 URL url = new URL(urlString.getStringValue());
                 String header = WWWUtils.getServerHeader(url);
-                if (header!=null) {
+                if (header != null) {
                     if (header.contains("mod_jk")) {
-                        header = header.substring(header.indexOf("mod_jk")+7);
+                        header = header.substring(header.indexOf("mod_jk") + 7);
                         int blankPos = header.indexOf(" ");
-                        if (blankPos>0)
-                            modJkVersion = header.substring(0,header.indexOf(" "));
+                        if (blankPos > 0)
+                            modJkVersion = header.substring(0, header.indexOf(" "));
                         else
                             modJkVersion = header;
                     }
                 }
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 // nothing to do
             }
         }
@@ -98,18 +97,18 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
         if (parser.parse(confPath) && parser.isModJkInstalled()) {
 
             Configuration config = context.getDefaultPluginConfiguration();
-            if (parser.getWorkerPropertiesFile()!=null) {
+            if (parser.getWorkerPropertiesFile() != null) {
                 PropertySimple workers = new PropertySimple("workerFile", parser.getWorkerPropertiesFile());
                 config.put(workers);
             }
-            if (parser.getUriWorkerLocation()!=null) {
+            if (parser.getUriWorkerLocation() != null) {
                 PropertySimple workers = new PropertySimple("uriWorkerFile", parser.getUriWorkerLocation());
                 config.put(workers);
             }
 
-
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(),
-                    confPath,"mod_jk",modJkVersion,"Mod_JK", config, null);
+            DiscoveredResourceDetails detail =
+                new DiscoveredResourceDetails(context.getResourceType(), confPath, "mod_jk", modJkVersion, "Mod_JK",
+                    config, null);
             details.add(detail);
             return details;
         }

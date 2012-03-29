@@ -931,8 +931,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setRecordEnabledProperty(null);
 
         List<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        final List<PropertyDefinition> propertyDefinitions = memberPropertyDefinitionMap
-            .getPropertyDefinitions();
+        final List<PropertyDefinition> propertyDefinitions = memberPropertyDefinitionMap.getPropertyDefinitions();
 
         List<PropertyDefinition> summaryPropertyDefinitions = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition subDef : propertyDefinitions) {
@@ -1046,6 +1045,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             field.setType(ListGridFieldType.BOOLEAN);
             break;
         case INTEGER:
+        case LONG: // according to what i see in smartgwt forums, INTEGER supports LONG
             field.setType(ListGridFieldType.INTEGER);
             break;
         case FLOAT:

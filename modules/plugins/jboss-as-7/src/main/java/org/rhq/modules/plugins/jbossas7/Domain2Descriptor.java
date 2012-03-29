@@ -370,7 +370,7 @@ public class Domain2Descriptor {
                 builder.append(generateProperty(4, entryValue, type, entryKey, null));
                 builder.append('\n');
             } else {
-                builder.append("<!--").append(entry.getKey()).append("--").append(entry.getValue().toString())
+                builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
                         .append("-->");
             }
         }

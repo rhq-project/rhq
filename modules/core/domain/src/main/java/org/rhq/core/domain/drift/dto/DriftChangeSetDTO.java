@@ -20,7 +20,7 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
 
     private DriftChangeSetCategory category;
 
-    private int configId;
+    private int driftDefId;
 
     private DriftHandlingMode driftHandlingMode;
 
@@ -69,12 +69,12 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
 
     @Override
     public int getDriftDefinitionId() {
-        return configId;
+        return driftDefId;
     }
 
     @Override
     public void setDriftDefinitionId(int id) {
-        configId = id;
+        driftDefId = id;
     }
 
     @Override

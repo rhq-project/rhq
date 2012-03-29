@@ -68,7 +68,7 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
         if (!isAugeasEnabled()) {
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
-        
+
         AugeasComponent comp = null;
         try {
             comp = parentComponent.getAugeas();
@@ -90,7 +90,7 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
             report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return;
         }
-        
+
         AugeasComponent comp = null;
         AugeasTree tree = null;
         try {

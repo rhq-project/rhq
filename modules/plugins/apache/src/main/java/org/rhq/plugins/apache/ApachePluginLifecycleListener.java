@@ -53,7 +53,7 @@ public class ApachePluginLifecycleListener implements PluginLifecycleListener {
 
         if (!destination.canWrite()) {
             throw new Exception("Creating of temporary file for lens failed. Destination file "
-                    + destination.getAbsolutePath() + " is not accessible.");
+                + destination.getAbsolutePath() + " is not accessible.");
         }
 
         OutputStream out = new FileOutputStream(destination);
@@ -88,6 +88,3 @@ public class ApachePluginLifecycleListener implements PluginLifecycleListener {
         }
     }
 }
-    
-
-

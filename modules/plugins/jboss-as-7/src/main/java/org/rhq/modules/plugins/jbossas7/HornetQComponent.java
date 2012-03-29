@@ -33,11 +33,11 @@ public class HornetQComponent extends BaseComponent {
         Configuration rc = report.getResourceConfiguration();
         Address targetAddress = new Address(getPath());
 
-        CreationType targeType = CreationType.getForName(targetTypeName);
-        if (targeType==null)
+        CreationType targetType = CreationType.getForName(targetTypeName);
+        if (targetType==null)
             throw new IllegalArgumentException("Type " + targetTypeName + " not yet supported");
 
-        targetAddress.add(targeType.as7name,resourceName);
+        targetAddress.add(targetType.as7name,resourceName);
         List<String> entries;
 
         Operation op;
@@ -55,7 +55,7 @@ public class HornetQComponent extends BaseComponent {
         }
 
         op = new Operation("add",targetAddress);
-        switch (targeType) {
+        switch (targetType) {
             case JMS_QUEUE:
                 entries = getEntriesPropertyFromConfig(rc);
                 op.addAdditionalProperty("entries",entries);
@@ -233,17 +233,15 @@ public class HornetQComponent extends BaseComponent {
         OBJECT(false,"-object-"),
         LIST(false,"-list-"),
         DOUBLE(true,"long")
-
         ;
 
         private boolean numeric;
         private String rhqName;
 
         private DataType(boolean numeric, String rhqName) {
-            this.numeric=numeric;
+            this.numeric = numeric;
             this.rhqName = rhqName;
         }
-
 
         public boolean isNumeric() {
             return numeric;

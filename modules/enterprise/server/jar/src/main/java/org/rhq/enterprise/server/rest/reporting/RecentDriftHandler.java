@@ -1,22 +1,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -28,8 +13,21 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -108,7 +106,7 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                         drift.getDrift().getCategory() + "," +
                         drift.getDrift().getPath() + "," +
                         cleanForCSV(drift.getResource().getName()) +","+
-                        cleanForCSV(ReportHelper.parseAncestry(drift.getResource().getAncestry())) + "," +
+                        cleanForCSV(ReportFormatHelper.parseAncestry(drift.getResource().getAncestry())) + "," +
                         getDetailsURL(drift);
             }
 

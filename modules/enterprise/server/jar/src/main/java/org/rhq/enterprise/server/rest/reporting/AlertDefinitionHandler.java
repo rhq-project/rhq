@@ -1,19 +1,5 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -26,7 +12,20 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -81,7 +80,7 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                             + alertDefinition.getEnabled() + ","
                             + alertDefinition.getPriority() + ","
                             + cleanForCSV(getParentName(resource)) + ","
-                            + cleanForCSV(ReportHelper.parseAncestry(resource.getAncestry())) + ","
+                            + cleanForCSV(ReportFormatHelper.parseAncestry(resource.getAncestry())) + ","
                             + getDetailsURL(alertDefinition);
                 }
 

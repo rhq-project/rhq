@@ -1,29 +1,8 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.AlertConditionOperator;
-import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.*;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
@@ -33,8 +12,22 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -87,7 +80,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         alert.getAlertDefinition().getPriority() + "," +
                         getStatus(alert) + "," +
                         cleanForCSV(alert.getAlertDefinition().getResource().getName()) + "," +
-                        cleanForCSV(ReportHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()))
+                        cleanForCSV(ReportFormatHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()))
                         + "," + getDetailsURL(alert);
             }
 

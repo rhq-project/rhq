@@ -1,18 +1,6 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -22,9 +10,20 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import static org.rhq.core.domain.util.PageOrdering.ASC;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -68,7 +67,7 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
                         + formatDateTime(configurationUpdate.getCreatedTime())+","
                         + formatDateTime(configurationUpdate.getModifiedTime())+","
                         + configurationUpdate.getStatus()+","
-                        + cleanForCSV(ReportHelper.parseAncestry(configurationUpdate.getResource().getAncestry())) + ","
+                        + cleanForCSV(ReportFormatHelper.parseAncestry(configurationUpdate.getResource().getAncestry())) + ","
                         + getDetailsURL(configurationUpdate);
                 //@todo: check dates, user, update-type
             }

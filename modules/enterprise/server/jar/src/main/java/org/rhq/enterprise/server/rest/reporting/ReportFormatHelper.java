@@ -20,17 +20,17 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import org.rhq.core.domain.resource.Resource;
+
 import java.text.DateFormat;
 import java.util.Date;
-
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * Formatting tools for rest reporting.
  */
-public class ReportHelper {
+public class ReportFormatHelper {
 
-    private ReportHelper(){
+    private ReportFormatHelper(){
        // This is just a static utility class
     }
 
@@ -52,8 +52,12 @@ public class ReportHelper {
      * @return String formatted string (i.e. '11/4/03 8:14 PM')
      */
     public static String formatDateTime(long epochMillis){
-        Date date = new Date(epochMillis);
-        return DateFormat.getInstance().format(date);
+        if(epochMillis != 0){
+            Date date = new Date(epochMillis);
+            return DateFormat.getInstance().format(date);
+        }else {
+            return " ";
+        }
     }
 
 
@@ -63,8 +67,12 @@ public class ReportHelper {
      * @return String formatted string (i.e. '11/4/03')
      */
     public static String formatDate(long epochMillis){
+        if(epochMillis != 0){
         Date date = new Date(epochMillis);
         return DateFormat.getDateInstance().format(date);
+        }else {
+            return " ";
+        }
     }
 
     public static String parseAncestry(String ancestry) {

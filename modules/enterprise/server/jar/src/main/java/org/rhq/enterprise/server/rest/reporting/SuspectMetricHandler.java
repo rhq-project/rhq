@@ -1,16 +1,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -18,6 +9,14 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -53,7 +52,7 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
                 for (MeasurementOOBComposite oobComposite : comps) {
                     sb.append( oobComposite.getResourceName());
                     sb.append(",");
-                    sb.append(ReportHelper.parseAncestry(oobComposite.getResourceAncestry()));
+                    sb.append(ReportFormatHelper.parseAncestry(oobComposite.getResourceAncestry()));
                     sb.append(",");
                     sb.append( oobComposite.getUnits()); // Metric
                     sb.append(",");

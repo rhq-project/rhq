@@ -1,22 +1,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -27,8 +12,21 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -79,7 +77,7 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
                         operation.getSubjectName() + "," +
                         operation.getStatus() + "," +
                         cleanForCSV(operation.getResource().getName()) +","+
-                        cleanForCSV(ReportHelper.parseAncestry(operation.getResource().getAncestry())) + "," +
+                        cleanForCSV(ReportFormatHelper.parseAncestry(operation.getResource().getAncestry())) + "," +
                         getDetailsURL(operation);
             }
 

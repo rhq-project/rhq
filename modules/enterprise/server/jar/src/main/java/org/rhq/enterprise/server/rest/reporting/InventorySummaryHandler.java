@@ -18,27 +18,6 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -48,6 +27,18 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.*;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
 import static org.rhq.core.domain.util.PageOrdering.ASC;
@@ -178,7 +169,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String toCSV(Resource resource) {
-        return resource.getName() + "," + ReportHelper.parseAncestry(resource.getAncestry()) + "," +
+        return resource.getName() + "," + ReportFormatHelper.parseAncestry(resource.getAncestry()) + "," +
             resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
             "," + resource.getCurrentAvailability().getAvailabilityType();
     }

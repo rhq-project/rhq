@@ -76,7 +76,8 @@ public class MeasurementConverterClient {
         if (targetUnits == null) {
             return value;
         } else {
-            return value + getMeasurementUnitAbbreviation(targetUnits);
+            String abbr = getMeasurementUnitAbbreviation(targetUnits);
+            return (abbr.length() > 0) ? (value + " " + abbr) : value;
         }
     }
 

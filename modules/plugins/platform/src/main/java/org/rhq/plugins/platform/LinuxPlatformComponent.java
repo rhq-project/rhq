@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ import org.rhq.plugins.platform.content.yum.YumProxy;
 import org.rhq.plugins.platform.content.yum.YumServer;
 
 public class LinuxPlatformComponent extends PosixPlatformComponent implements ContentFacet {
+
     // the prefix for all distro trait names
     private static final String DISTRO_TRAIT_NAME_PREFIX = "distro.";
 
@@ -66,14 +67,11 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
 
     private final Log log = LogFactory.getLog(LinuxPlatformComponent.class);
 
-    private ContentContext contentContext;
-
-    private YumServer yumServer = new YumServer();
-    private YumProxy yumProxy = new YumProxy();
+    private YumServer yumServer;
+    private YumProxy yumProxy;
 
     private boolean enableContentDiscovery = false;
     private boolean enableInternalYumServer = false;
-
 
     @Override
     public void start(ResourceContext context) {
@@ -106,17 +104,17 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
 
         startWithContentContext(context.getContentContext());
 
-
         return;
     }
 
     @Override
     public void stop() {
-
-        try {
-            yumServer.halt();
-        } catch (Exception e) {
-            log.warn("Failed to shutdown the yum server", e);
+        if (yumServer != null) {
+            try {
+                yumServer.halt();
+            } catch (Exception e) {
+                log.warn("Failed to shutdown the yum server.", e);
+            }
         }
 
         super.stop();
@@ -124,17 +122,18 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
 
     private void startWithContentContext(ContentContext context) {
         if (this.enableInternalYumServer) {
+            yumServer = new YumServer();
+            yumProxy = new YumProxy();
+
             int port = yumPort();
             log.debug("yum port=[" + port + "]");
 
-            this.contentContext = context;
             try {
                 YumContext yumContext = new PluginContext(port, this.resourceContext, context);
                 yumServer.start(yumContext);
                 yumProxy.init(this.resourceContext);
-
             } catch (Exception e) {
-                log.error("Start failed:", e);
+                log.error("Failed to start yum server.", e);
             }
         } else {
             log.info("Internal yum server is disabled.");
@@ -163,6 +162,10 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
     }
 
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
+        if (!this.enableInternalYumServer) {
+            throw new UnsupportedOperationException("Internal yum server is disabled - this operation is a no-op.");
+        }
+
         try {
             DeployPackagesResponse result = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
             List<String> pkgs = new ArrayList<String>();
@@ -188,6 +191,10 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
+        if (!this.enableInternalYumServer) {
+            throw new UnsupportedOperationException("Internal yum server is disabled - this operation is a no-op.");
+        }
+
         try {
             RemovePackagesResponse result = new RemovePackagesResponse(ContentResponseResult.SUCCESS);
             List<String> pkgs = new ArrayList<String>();
@@ -223,14 +230,13 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("cleanYumMetadataCache".equals(name)) {
-            if (this.yumServer.isStarted()) {
-                log.info("Cleaning yum metadata");
-                yumServer.cleanMetadata();
-                yumProxy.cleanMetadata();
-                return new OperationResult();
-            } else {
-                throw new UnsupportedOperationException("Internal yum server is disabled, this operation is a no-op");
+            if (!this.enableInternalYumServer) {
+                throw new UnsupportedOperationException("Internal yum server is disabled - this operation is a no-op.");
             }
+            log.info("Cleaning yum metadata...");
+            yumServer.cleanMetadata();
+            yumProxy.cleanMetadata();
+            return new OperationResult();
         }
 
         return super.invokeOperation(name, parameters);
@@ -253,4 +259,5 @@ public class LinuxPlatformComponent extends PosixPlatformComponent implements Co
         PropertySimple p = this.resourceContext.getPluginConfiguration().getSimple("yumPort");
         return ((p != null) ? p.getIntegerValue() : 9080);
     }
+
 }

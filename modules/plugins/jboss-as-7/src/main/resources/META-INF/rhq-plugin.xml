@@ -82,6 +82,7 @@
                                             the JVM that should be used to start and shutdown the HostController instance;
                                             defaults to the home directory of the RHQ Agent JRE."/>
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
+            <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
             &logSources;
         </plugin-configuration>
@@ -444,6 +445,8 @@
                                description="The absolute path to a JRE or JDK installation directory containing
                                             the JVM that should be used to start and shutdown the JBossAS instance;
                                             defaults to the home directory of the RHQ Agent JRE."/>
+            <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
+
             &logSources;
 
         </plugin-configuration>

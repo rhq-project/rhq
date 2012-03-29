@@ -35,6 +35,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 
@@ -43,7 +45,7 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
-public class AbstractBaseDiscovery {
+public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
 
     private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";

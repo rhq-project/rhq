@@ -71,8 +71,9 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
-public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet {
+public class BaseComponent<T extends ResourceComponent<?>> implements AS7Component<T>, MeasurementFacet,
+    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet  {
+
     private static final String INTERNAL = "_internal:";
     private static final int INTERNAL_SIZE = INTERNAL.length();
     private static final String LOCALHOST = "localhost";
@@ -80,7 +81,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     public static final String MANAGED_SERVER = "Managed Server";
     final Log log = LogFactory.getLog(this.getClass());
 
-    ResourceContext context;
+    ResourceContext<T> context;
     Configuration pluginConfiguration;
     String myServerName;
     ASConnection connection;
@@ -111,7 +112,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
      * Start the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
         this.context = context;
         pluginConfiguration = context.getPluginConfiguration();
 
@@ -254,11 +255,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         report.addData(data);
     }
 
-    protected ASConnection getASConnection() {
+    public ASConnection getASConnection() {
         return connection;
     }
 
-    protected String getPath() {
+    public String getPath() {
         return path;
     }
 
@@ -656,4 +657,5 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             return new ComplexRequest(tokenizer.nextToken(), tokenizer.nextToken());
         }
     }
+
 }

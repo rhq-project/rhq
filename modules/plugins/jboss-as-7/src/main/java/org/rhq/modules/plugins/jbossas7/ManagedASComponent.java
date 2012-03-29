@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -43,7 +42,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class ManagedASComponent extends BaseComponent {
+public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>> {
 
     /**
      * Get the availability of the managed AS server. We can't just check if
@@ -53,13 +52,12 @@ public class ManagedASComponent extends BaseComponent {
      */
     @Override
     public AvailabilityType getAvailability() {
-
         if (context.getResourceType().getName().equals("Managed Server")) {
             Address theAddress = new Address();
-            String host = pluginConfiguration.getSimpleValue("domainHost","local");
+            String host = pluginConfiguration.getSimpleValue("domainHost", "local");
             theAddress.add("host",host);
             theAddress.add("server-config", myServerName);
-            Operation getStatus = new ReadAttribute(theAddress,"status");
+            Operation getStatus = new ReadAttribute(theAddress, "status");
             Result result;
             try {
                 result = connection.execute(getStatus);

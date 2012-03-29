@@ -39,7 +39,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         if (operationName.equals("addDriver")) { // TODO decide if we need this at all. See also the plugin-descriptor
             String drivername = parameters.getSimpleValue("driver-name", NOTSET);
 
-
             Address theAddress = new Address(address);
             theAddress.add("jdbc-driver", drivername);
 
@@ -47,8 +46,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             op.addAdditionalProperty("driver-name",drivername);
             op.addAdditionalProperty("deployment-name",parameters.getSimpleValue("deployment-name", NOTSET));
             op.addAdditionalProperty("driver-class-name",parameters.getSimpleValue("driver-class-name", NOTSET));
-
-
         }
         else if (operationName.equals("addDatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
@@ -117,7 +114,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         else {
             result.setErrorMessage(res.getFailureDescription());
         }
-
 
         return result;
     }

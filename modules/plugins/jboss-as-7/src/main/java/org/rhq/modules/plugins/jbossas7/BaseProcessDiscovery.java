@@ -94,10 +94,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         String[] commandLine = process.getCommandLine();
         File homeDir = getHomeDir(process);
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
-        String version = determineServerVersionFromHomeDir(homeDir.getPath());
-        if (productType != JBossProductType.AS) {
-            version = productType.SHORT_NAME + " " + version;
-        }
         File baseDir = getBaseDir(process, homeDir);
         String configName = baseDir.getName();
         String key = baseDir.getPath();
@@ -124,13 +120,20 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
+        pluginConfig.put(new PropertySimple("productType", productType.name()));
 
-        ProductInfo productInfo = new ProductInfo(managementHostPort.host, pluginConfig.getSimpleValue("user", null),
-            pluginConfig.getSimpleValue("password", null), managementHostPort.port);
-        productInfo = productInfo.getFromRemote();
-        if (productInfo.fromRemote) {
-            version = productInfo.productName + " " + productInfo.productVersion;
-            name = productInfo.productName + " " + productInfo.serverName;
+        String version;
+        String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir.getPath());
+        if (productType == JBossProductType.AS) {
+            version = versionFromHomeDir;
+        } else {
+            ProductInfo productInfo = new ProductInfo(managementHostPort.host, pluginConfig.getSimpleValue("user", null),
+                pluginConfig.getSimpleValue("password", null), managementHostPort.port);
+            productInfo = productInfo.getFromRemote();
+            String productVersion = (productInfo.fromRemote) ? productInfo.productVersion : versionFromHomeDir;
+            // TODO: Grab the product version from the product info properties file, so we aren't relying on connecting
+            //       to the server to obtain it.
+            version = productType.SHORT_NAME + " " + productVersion;
         }
 
         //            String javaClazz = psr.getProcessInfo().getName();

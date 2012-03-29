@@ -27,6 +27,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -38,7 +39,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Component class for host- and domain controller
  * @author Heiko W. Rupp
  */
-public class HostControllerComponent extends BaseServerComponent implements OperationFacet {
+public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
+        implements OperationFacet {
 
     private final Log log = LogFactory.getLog(HostControllerComponent.class);
 

@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
@@ -133,8 +134,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     private ResourceSearchView createResourceSearchView(ViewName viewName, Criteria initialCriteria) {
-        return new ResourceSearchView(extendLocatorId(viewName.getName()), initialCriteria, viewName.getTitle(),
-            viewName.getIcon().getIcon24x24Path());
+        return new ResourceSearchViewWrapper(viewName, initialCriteria, viewName.getIcon().getIcon24x24Path());
     }
 
     private NavigationSection buildResourcesSection() {
@@ -149,10 +149,10 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
-                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM), ImageManager
-                    .getResourceLargeIcon(ResourceCategory.SERVER), ImageManager
-                    .getResourceLargeIcon(ResourceCategory.SERVICE));
+                return new ResourceSearchViewWrapper(PAGE_ALL_RESOURCES, null,
+                    ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM),
+                    ImageManager.getResourceLargeIcon(ResourceCategory.SERVER),
+                    ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE));
             }
         });
 
@@ -238,4 +238,25 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         return new NavigationSection(GROUPS_SECTION_VIEW_ID, allGroupsItem, dynagroupDefinitionsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);
     }
+
+    private class ResourceSearchViewWrapper extends ResourceSearchView implements HasViewName {
+
+        private ViewName viewName;
+
+        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
+            super(viewName.getName(), criteria, viewName.getTitle(), headerIcons);
+            this.viewName = viewName;
+        }
+
+        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria) {
+            super(viewName.getName(), criteria);
+            this.viewName = viewName;
+        }
+
+        @Override
+        public ViewName getViewName() {
+            return viewName;
+        }
+    }
+
 }

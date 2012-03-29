@@ -47,6 +47,9 @@ import java.util.Properties;
  * @author John Mazzitelli
  */
 public class PropertiesFileUpdate {
+
+    private static final String CHAR_ENCODING_8859_1 = "8859_1";
+
     private File file;
 
     /**
@@ -80,7 +83,7 @@ public class PropertiesFileUpdate {
         if (!existingProps.containsKey(key)) {
             FileOutputStream fos = new FileOutputStream(file, true);
             try {
-                PrintStream ps = new PrintStream(fos, true, "8859_1");
+                PrintStream ps = new PrintStream(fos, true, CHAR_ENCODING_8859_1);
                 try {
                     ps.println(key + "=" + value);
                 } finally {
@@ -127,8 +130,8 @@ public class PropertiesFileUpdate {
         // Now go line-by-line in the properties file, updating property values as we go along.
         // When we get to the end of the existing file, append any new props that didn't exist before.
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(baos, true, "8859_1");
-        InputStreamReader isr = new InputStreamReader(new FileInputStream(file), "8859_1");
+        PrintStream out = new PrintStream(baos, true, CHAR_ENCODING_8859_1);
+        InputStreamReader isr = new InputStreamReader(new FileInputStream(file), CHAR_ENCODING_8859_1);
         BufferedReader in = new BufferedReader(isr);
 
         for (String line = in.readLine(); line != null; line = in.readLine()) {
@@ -210,4 +213,5 @@ public class PropertiesFileUpdate {
 
         return ((start > 0) || (end < str.length())) ? str.substring(start, end) : str;
     }
+
 }

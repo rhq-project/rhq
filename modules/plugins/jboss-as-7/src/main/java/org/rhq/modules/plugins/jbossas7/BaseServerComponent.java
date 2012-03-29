@@ -19,11 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.ConnectException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -47,6 +43,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -74,7 +71,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
      * @throws Exception If anything goes wrong
      */
     protected OperationResult restartServer(Configuration parameters, AS7Mode mode) throws Exception {
-        OperationResult tmp = invokeOperation("shutdown",parameters);
+        OperationResult tmp = invokeOperation("shutdown", parameters);
 
         if (tmp.getErrorMessage()!=null) {
             tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
@@ -116,12 +113,12 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
     protected OperationResult startServer(AS7Mode mode) {
         OperationResult operationResult = new OperationResult();
         String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
-        String baseDir = pluginConfiguration.getSimpleValue("baseDir","");
-        if (baseDir.isEmpty()) {
-            operationResult.setErrorMessage("No base directory provided");
+        String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
+        if (homeDir.isEmpty()) {
+            operationResult.setErrorMessage("No home directory provided.");
             return operationResult;
         }
-        String script = baseDir + File.separator + startScript;
+        String script = homeDir + File.separator + startScript;
 
         ProcessExecution processExecution;
         processExecution = ProcessExecutionUtility.createProcessExecution(new File("/bin/sh"));
@@ -148,7 +145,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
 
             }
         }
-        processExecution.setWorkingDirectory(baseDir);
+        processExecution.setWorkingDirectory(homeDir);
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
@@ -274,12 +271,12 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             return result;
         }
 
-        String homeDirString = pluginConfig.getSimpleValue("homeDir", "");
-        if (homeDirString.isEmpty()) {
-            result.setErrorMessage("No homeDir found - cannot continue.");
+        String baseDirString = pluginConfig.getSimpleValue("baseDir", "");
+        if (baseDirString.isEmpty()) {
+            result.setErrorMessage("No baseDir found - cannot continue.");
             return result;
         }
-        File homeDir = new File(homeDirString);
+        File baseDir = new File(baseDirString);
 
         String configFile;
         BaseProcessDiscovery processDiscovery;
@@ -298,30 +295,31 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(homeDir, mode, realm);
+        String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
-        Properties p = new Properties();
+        String encryptedPassword;
         try {
-            UsernamePasswordHashUtil util = new UsernamePasswordHashUtil();
-            String value = util.generateHashedHexURP(user, realm, password.toCharArray());
-
-            FileInputStream fis = new FileInputStream(propertiesFilePath);
-            p.load(fis);
-            fis.close();
-            p.setProperty(user,value);
-            FileOutputStream fos = new FileOutputStream(propertiesFilePath);
-            p.store(fos,null);
-            fos.flush();
-            fos.close();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            result.setErrorMessage(e.getMessage());
-        } catch (NoSuchAlgorithmException nsae) {
-            log.error(nsae.getMessage());
-            result.setErrorMessage(nsae.getMessage());
+            UsernamePasswordHashUtil hashUtil = new UsernamePasswordHashUtil();
+            encryptedPassword = hashUtil.generateHashedHexURP(user, realm, password.toCharArray());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt password.", e);
         }
-        result.setSimpleResult("Management user [" + user + "] added or updated.");
-        log.info("Added or updated management user [" + user + "].");
+
+        boolean userAlreadyExisted;
+        try {
+            PropertiesFileUpdate propsFileUpdate = new PropertiesFileUpdate(propertiesFilePath);
+            Properties existingProps = propsFileUpdate.loadExistingProperties();
+            userAlreadyExisted = existingProps.containsKey(user);
+            propsFileUpdate.update(user, encryptedPassword);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update management users properties file [" + propertiesFilePath
+                    + "].", e);
+        }
+
+        String verb = (userAlreadyExisted) ? "updated" : "added";
+        result.setSimpleResult("Management user [" + user + "] " + verb + ".");
+        log.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
+                + " server with key [" + context.getResourceKey() + "].");
 
         context.getAvailabilityContext().requestAvailabilityCheck();
 
@@ -329,7 +327,6 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
     }
 
     public void getValues(MeasurementReport report, Set metrics) throws Exception {
-
         Set<MeasurementScheduleRequest> requests = metrics;
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 

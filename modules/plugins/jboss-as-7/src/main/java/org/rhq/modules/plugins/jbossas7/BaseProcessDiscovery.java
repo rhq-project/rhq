@@ -117,7 +117,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("configDir", configDir));
         pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
         pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process, configDir))));
-        fillUserPassFromFile(pluginConfig, getMode(), homeDir);
+        fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
         HostPort managementHostPort = getManagementPortFromHostXml(commandLine);
@@ -317,7 +317,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     }
 
     private void fillUserPassFromFile(Configuration config, AS7Mode mode, File baseDir) {
-        //        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
         String realm = getManagementSecurityRealmFromHostXml();
         String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 

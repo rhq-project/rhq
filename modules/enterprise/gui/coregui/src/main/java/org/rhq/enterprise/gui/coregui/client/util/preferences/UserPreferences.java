@@ -58,6 +58,8 @@ public class UserPreferences {
 
     private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
 
+    private HashSet<String> changedPreferenceKeys = new HashSet<String>();
+    
     // when these preferences change, they should not trigger a refresh.
     private static ArrayList<String> preferencesThatShouldNotCauseRefresh;
     static {
@@ -65,7 +67,7 @@ public class UserPreferences {
         preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
         preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
     }
-
+    
     public UserPreferences(Subject subject) {
         this.subject = subject;
         this.userConfiguration = subject.getUserConfiguration();
@@ -269,6 +271,8 @@ public class UserPreferences {
             prop.setStringValue(value);
         }
 
+        changedPreferenceKeys.add(name);
+        
         UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, value, oldValue, persistCallback);
         for (UserPreferenceChangeListener listener : changeListeners) {
             listener.onPreferenceChange(event);
@@ -291,6 +295,8 @@ public class UserPreferences {
                 listener.onPreferenceRemove(event);
             }
         }
+        
+        changedPreferenceKeys.add(name);
     }
 
     public void clearConfiguration() {
@@ -309,7 +315,8 @@ public class UserPreferences {
     }
 
     public void store(AsyncCallback<Subject> persistCallback) {
-        this.subjectService.updateSubject(this.subject, persistCallback);
+        this.subjectService.updateSubjectPreferences(this.subject, changedPreferenceKeys, persistCallback);
+        changedPreferenceKeys.clear();
     }
 
     public Configuration getConfiguration() {

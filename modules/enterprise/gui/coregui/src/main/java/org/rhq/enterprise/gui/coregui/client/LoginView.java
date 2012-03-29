@@ -23,7 +23,9 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -480,7 +482,11 @@ public class LoginView extends LocatableCanvas {
                 PropertySimple simple = new PropertySimple("isNewUser", null);
                 newSubject.getUserConfiguration().put(simple);
             }
-            GWTServiceLookup.getSubjectService().updateSubject(newSubject, new AsyncCallback<Subject>() {
+            
+            Set<String> prefsChanges = new HashSet<String>();
+            prefsChanges.add("isNewUser");
+            
+            GWTServiceLookup.getSubjectService().updateSubjectAndPreferences(newSubject, prefsChanges, new AsyncCallback<Subject>() {
                 public void onFailure(Throwable caught) {
                     Log.error("Failed to register LDAP subject '" + newSubject.getName() + "' " + caught.getMessage(),
                         caught);

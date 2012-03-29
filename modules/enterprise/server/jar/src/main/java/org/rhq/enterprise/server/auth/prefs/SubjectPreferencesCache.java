@@ -114,6 +114,22 @@ public class SubjectPreferencesCache {
         }
     }
 
+    /**    
+     * @param subjectId the subject to get preferences of
+     * @return the <b>COPY</b> of the configuration object - changes done to that instance will not be reflected in the persisted
+     * preferences
+     */
+    public synchronized Configuration getPreferences(int subjectId) {
+        load(subjectId);
+        
+        Configuration config = subjectPreferences.get(subjectId);
+        if (config == null) {
+            return new Configuration();
+        } else {
+            return config.deepCopy();
+        }
+    }
+    
     public synchronized void clearConfiguration(int subjectId) {
         if (log.isTraceEnabled()) {
             log.trace("Removing PreferencesCache For " + subjectId);

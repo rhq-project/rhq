@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Principal;
@@ -89,15 +91,17 @@ public interface SubjectGWTService extends RemoteService {
     void logout(int sessionId) throws RuntimeException;
 
     /**
-     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles, but it will save
-     * the subject's configuration.
-     *
+     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles and it
+     * will <b>NOT</b> save the subject's preferences (the reason for that is that the preferences
+     * are still updated both in the old JSF UI as well as in the GWT UI and figuring out what values
+     * changed requires some more work than simply saving the GWT's view of the preferences).
+     * 
      * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
     Subject updateSubject(Subject subjectToModify) throws RuntimeException;
-
+    
     /**
      * Updates an existing subject with new data. This cascades changes to roles and LDAP roles, so the passed-in
      * subject should be fully-fetched (i.e. both roles and LDAP roles should be fetched).
@@ -108,6 +112,32 @@ public interface SubjectGWTService extends RemoteService {
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
     Subject updateSubject(Subject subjectToModify, String newPassword) throws RuntimeException;
+
+    /**
+     * This will update the preferences of the supplied subject (which might or might not be the same as the
+     * current user).
+     * 
+     * @param subjectToModify the subject to modify the preferences of
+     * @param changedPrefs the set of preference names that are known to have changed - only the preferences
+     * with these names will be persisted to the database.
+     * @return the subject with the preferences updated to match the persisted state (which might contain
+     * additional changes - this is because the prefs are still being updated both in the GWT and JSF UIs).
+     * 
+     * @throws RuntimeException
+     */
+    Subject updateSubjectPreferences(Subject subjectToModify, Set<String> changedPrefs) throws RuntimeException;
+
+    /**
+     * A combination of {@link #updateSubject(Subject)} and {@link #updateSubjectPreferences(Subject, Set)} methods.
+     * <p>
+     * This method will therefore modify both the subject and the preferences that changed.
+     * 
+     * @param subjectToModify
+     * @param changedPrefs
+     * @return
+     * @throws RuntimeException
+     */
+    Subject updateSubjectAndPreferences(Subject subjectToModify, Set<String> changedPrefs) throws RuntimeException;
 
     /**
      * Queries subjects using current logged in user.

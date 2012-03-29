@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -41,6 +42,8 @@ import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -53,10 +56,30 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class ServerGroupComponent extends ManagedASComponent implements ContentFacet, CreateChildResourceFacet {
+public class ServerGroupComponent extends BaseComponent implements ContentFacet, CreateChildResourceFacet,
+        OperationFacet {
 
     private static final String SUCCESS = "success";
     private static final String OUTCOME = "outcome";
+
+    @Override
+    public OperationResult invokeOperation(String name,
+                                           Configuration parameters) throws InterruptedException, Exception {
+
+        Operation op = new Operation(name,getAddress());
+        Result res = getASConnection().execute(op);
+
+        OperationResult result = new OperationResult();
+
+        if (res.isSuccess()) {
+            result.setSimpleResult(SUCCESS);
+        }
+        else {
+            result.setErrorMessage(res.getFailureDescription());
+        }
+        return result;
+
+    }
 
     @Override
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

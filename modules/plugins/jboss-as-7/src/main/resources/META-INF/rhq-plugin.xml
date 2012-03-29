@@ -147,6 +147,12 @@
                     <c:map-property name="*:name" displayName="Name" readOnly="true">
                         <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
                         <c:simple-property name="value" displayName="Value"/>
+                        <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                            <c:property-options>
+                                <c:option value="true"/>
+                                <c:option value="false"/>
+                            </c:property-options>
+                        </c:simple-property>
                     </c:map-property>
                 </c:list-property>
             </c:group>
@@ -222,9 +228,54 @@
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
-                <c:simple-property name="jvm" required="false"/> <!-- TODO -->
-            </resource-configuration>
 
+
+                <c:group name="children:system-property:name+" displayName="System-properties">
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                        <c:map-property name="*:name" displayName="Name" readOnly="true">
+                            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                            <c:simple-property name="value" displayName="Value"/>
+                            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                                <c:property-options>
+                                    <c:option value="true"/>
+                                    <c:option value="false"/>
+                                </c:property-options>
+                            </c:simple-property>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+<!-- TODO commented out as it makes the whole config not show in the UI - fetch from AS works ok
+                <c:group name="children:jvm:name+" displayName="JVMs">
+                    <c:list-property name="*3" displayName="JVM" required="false" description="JVM properties">
+                        <c:map-property name="*:name" displayName="Name" readOnly="false">
+                            <c:simple-property name="name" required="true" type="string" readOnly="true" description="Name of this JVM definition"/>
+                            <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
+                            <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
+                            <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
+                            <c:list-property name="environment-variables" description="The JVM environment variables." >
+                                <c:simple-property name="environment-variable" />
+                            </c:list-property>
+                            <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
+                            <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
+                            <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
+                            <c:list-property name="jvm-options" description="The JVM options." >
+                                <c:simple-property name="jvm-option" />
+                            </c:list-property>
+                            <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
+                            <c:simple-property name="max-permgen-size" required="false" type="string" readOnly="false" description="The maximum size of the permanent generation."/>
+                            <c:simple-property name="permgen-size" required="false" type="string" readOnly="false" description="The initial permanent generation size."/>
+                            <c:simple-property name="stack-size" required="false" type="string" readOnly="false" description="The JVM stack size settings."/>
+                            <c:simple-property name="type" required="false" type="string" readOnly="true" description="The JVM type can be either SUN or IBM" default="SUN">
+                                <c:property-options>
+                                    <c:option value="SUN"/>
+                                    <c:option value="IBM"/>
+                                </c:property-options>
+                            </c:simple-property>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+-->
+            </resource-configuration>
         </server>
         <server name="Host"
                 description="Host involved in this domain"
@@ -236,29 +287,28 @@
             </plugin-configuration>
 
 
-
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">
-                                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
-                                    <c:map-property name="*:name" displayName="Name" readOnly="true">
-                                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
-                                        <c:simple-property name="value" displayName="Value"/>
-                                    </c:map-property>
-                                </c:list-property>
-                            </c:group>
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                        <c:map-property name="*:name" displayName="Name" readOnly="true">
+                            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                            <c:simple-property name="value" displayName="Value"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
                 <c:group name="children:path:name+" displayName="Path">
-                                <c:list-property name="*3" displayName="Path" required="false"
-                                                 description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
-                                    <c:map-property name="*" displayName="Entry">
-                                       <c:simple-property name="name" required="true" type="string" readOnly="false"
-                                                          description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
-                                       <c:simple-property name="path" required="true" type="string" readOnly="false"
-                                                          description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
-                                       <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
-                                                          description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
-                                    </c:map-property>
-                                </c:list-property>
-                            </c:group>
+                    <c:list-property name="*3" displayName="Path" required="false"
+                                     description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
+                        <c:map-property name="*" displayName="Entry">
+                            <c:simple-property name="name" required="true" type="string" readOnly="false"
+                                               description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
+                            <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                               description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+                            <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                               description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
 
             </resource-configuration>
         </server>
@@ -312,6 +362,21 @@
                 <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
 
                 <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
+
+                <c:group name="children:system-property:name+" displayName="System-properties">
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                        <c:map-property name="*:name" displayName="Name" readOnly="true">
+                            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                            <c:simple-property name="value" displayName="Value"/>
+                            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                                <c:property-options>
+                                    <c:option value="true"/>
+                                    <c:option value="false"/>
+                                </c:property-options>
+                            </c:simple-property>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
 
             </resource-configuration>
 
@@ -441,6 +506,12 @@
                     <c:map-property name="*:name" displayName="Name" readOnly="true">
                         <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
                         <c:simple-property name="value" displayName="Value"/>
+                        <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                            <c:property-options>
+                                <c:option value="true"/>
+                                <c:option value="false"/>
+                            </c:property-options>
+                        </c:simple-property>
                     </c:map-property>
                 </c:list-property>
             </c:group>

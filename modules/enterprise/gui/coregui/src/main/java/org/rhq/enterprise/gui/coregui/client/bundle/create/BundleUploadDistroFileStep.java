@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.LinkedHashMap;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -195,9 +197,18 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         recipe.setHeight(150);
 
         textFileRetrieverForm.addFormHandler(new DynamicFormHandler() {
+            /*
+             * Helper method to unescape a string which has been escaped for inclusion in HTML tags 
+             */
+            public String htmlUnescape(String escapedHtml) {
+                Element e = Document.get().createDivElement();
+                e.setInnerHTML(escapedHtml);
+                return e.getInnerText();
+            }
+
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                wizard.setRecipe(event.getResults());
-                recipe.setValue(event.getResults());
+                wizard.setRecipe(htmlUnescape(event.getResults()));
+                recipe.setValue(htmlUnescape(event.getResults()));
                 textFileRetrieverForm.retrievalStatus(true);
                 showUpload.show();
                 upload.hide();

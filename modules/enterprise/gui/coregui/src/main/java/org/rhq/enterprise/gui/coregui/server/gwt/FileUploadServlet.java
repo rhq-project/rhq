@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -116,13 +116,15 @@ public class FileUploadServlet extends HttpServlet {
 
             if (retrieve && actualFiles.size() == 1) {
                 // sending in "retrieve" form element with a single file means the client just wants the content echoed back
+                resp.setContentType("text/html");
                 FileItem fileItem = actualFiles.get(0);
 
                 ServletOutputStream outputStream = resp.getOutputStream();
                 outputStream.print("<html>");
                 InputStream inputStream = fileItem.getInputStream();
                 try {
-                    StreamUtil.copy(inputStream, outputStream, false);
+                    // we have to HTML escape inputStream before writing it to outputStream
+                    StreamUtil.copy(inputStream, outputStream, false, true);
                 } finally {
                     inputStream.close();
                 }

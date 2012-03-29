@@ -1,6 +1,6 @@
 /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2012 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,8 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,6 +57,77 @@ public class StreamUtil {
      * Private to prevent instantiation.
      */
     private StreamUtil() {
+    }
+
+    /**
+     * Replace characters having special meaning <em>inside</em> HTML tags with
+     * their escaped equivalents, using character entities such as
+     * <tt>'&amp;'</tt>.
+     * <P>
+     * The escaped characters are :
+     * <ul>
+     * <li><
+     * <li>>
+     * <li>"
+     * <li>'
+     * <li>\
+     * <li>&
+     * </ul>
+     * <P>
+     * This method ensures that arbitrary text appearing inside a tag does not
+     * "confuse" the tag. For example, <tt>HREF='Blah.do?Page=1&Sort=ASC'</tt>
+     * does not comply with strict HTML because of the ampersand, and should be
+     * changed to <tt>HREF='Blah.do?Page=1&amp;Sort=ASC'</tt>. This is
+     * commonly seen in building query strings. (In JSTL, the c:url tag performs
+     * this task automatically.)
+     * 
+     * forHTMLTag is copy-n-pasted from: http://www.javapractices.com/Topic96.cjp 
+     * used to be in our util.StringUtil, we should really use jakarta's <code>StringEscapeUtils.escapeHTML()</code> 
+     * method, however, at this time we do not want to pull in the entire 
+     * Commons Lang API dependency for just one method.
+     * 
+     * @param aTagFragment
+     *           some HTML to be escaped
+     * @return escaped HTML
+     */
+    private static String forHTMLTag(String aTagFragment) {
+        final StringBuffer result = new StringBuffer();
+
+        final StringCharacterIterator iterator = new StringCharacterIterator(aTagFragment);
+
+        for (char character = iterator.current(); character != CharacterIterator.DONE; character = iterator.next()) {
+            switch (character) {
+            case '<':
+                result.append("&lt;");
+                break;
+            case '>':
+                result.append("&gt;");
+                break;
+            case '\"':
+                result.append("&quot;");
+                break;
+            case '\'':
+                result.append("&#039;");
+                break;
+            case '\\':
+                result.append("&#092;");
+                break;
+            case '&':
+                result.append("&amp;");
+                break;
+            case '|':
+                result.append("&#124;");
+                break;
+            case ',':
+                result.append("&#44;");
+                break;
+            default:
+                // the char is not a special one add it to the result as is
+                result.append(character);
+                break;
+            }
+        }
+        return result.toString();
     }
 
     /**
@@ -93,7 +166,7 @@ public class StreamUtil {
         copy(reader, wrt);
         return wrt.toString();
     }
-    
+
     /**
      * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
      * closed.
@@ -121,7 +194,7 @@ public class StreamUtil {
     public static long copy(Reader rdr, Writer wrt) throws RuntimeException {
         return copy(rdr, wrt, true);
     }
-    
+
     /**
      * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
      * closed but only if <code>closeStreams</code> is <code>true</code>. If <code>closeStreams</code> is <code>
@@ -136,6 +209,30 @@ public class StreamUtil {
      * @throws RuntimeException if failed to read or write the data
      */
     public static long copy(InputStream input, OutputStream output, boolean closeStreams) throws RuntimeException {
+        return copy(input, output, closeStreams, false);
+    }
+
+    /**
+     * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
+     * closed but only if <code>closeStreams</code> is <code>true</code>. If <code>closeStreams</code> is <code>
+     * false</code>, the streams are left open; the caller has the reponsibility to close them.
+     * <p>
+     * If htmlEscape is <code>true</code> the input stream is read into a <code>String</code> and all HTML entities 
+     * are escaped using {@link #forHTMLTag(String)} prior to being copied to output stream.
+     *
+     * @param  input        the originating stream that contains the data to be copied
+     * @param  output       the destination stream where the data should be copied to
+     * @param  closeStreams if <code>true</code>, the streams will be closed before the method returns
+     * @param  htmlEscape   if <code>true</code>, the input stream will be HTML escaped before being written to output stream
+     *
+     * @return the number of bytes copied from the input to the output stream or the number of characters stored in output stream if htmlEscape is <code>true</code>
+     *
+     * @throws RuntimeException if failed to read or write the data
+     * 
+     * @since 4.4
+     */
+    public static long copy(InputStream input, OutputStream output, boolean closeStreams, boolean htmlEscape)
+        throws RuntimeException {
         if (input == null) {
             throw new IllegalArgumentException("Input stream is null.");
         }
@@ -153,7 +250,13 @@ public class StreamUtil {
             byte[] buffer = new byte[bufferSize];
 
             for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
-                output.write(buffer, 0, bytesRead);
+                if (htmlEscape) {
+                    String htmlEncodedStr = forHTMLTag(new String(buffer));
+                    bytesRead = htmlEncodedStr.length();
+                    output.write(htmlEncodedStr.getBytes(), 0, bytesRead);
+                } else {
+                    output.write(buffer, 0, bytesRead);
+                }
                 numBytesCopied += bytesRead;
             }
 
@@ -200,14 +303,14 @@ public class StreamUtil {
         try {
             long numCharsCopied = 0;
             char[] buffer = new char[32768];
-            
+
             int cnt;
-            while((cnt = rdr.read(buffer)) != -1) {
+            while ((cnt = rdr.read(buffer)) != -1) {
                 numCharsCopied += cnt;
                 wrt.write(buffer, 0, cnt);
             }
-            
-            return numCharsCopied;            
+
+            return numCharsCopied;
         } catch (IOException e) {
             throw new RuntimeException("Reader could not have been copied to the writer.", e);
         } finally {
@@ -217,16 +320,16 @@ public class StreamUtil {
                 } catch (IOException ioe) {
                     LOG.warn("Reader could not be closed.", ioe);
                 }
-                
+
                 try {
-                    wrt.close();                    
+                    wrt.close();
                 } catch (IOException ioe) {
                     LOG.warn("Writer could not be closed.", ioe);
                 }
             }
         }
     }
-    
+
     /**
      * Copies data from the input stream to the output stream. The caller has the responsibility to close them. This
      * method allows you to copy a byte range from the input stream. The start byte is the index (where the first byte
@@ -344,7 +447,7 @@ public class StreamUtil {
 
         return retObject;
     }
-    
+
     /**
      * Can be used to safely close a stream. No-op if the stream is null.
      * 

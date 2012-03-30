@@ -2034,7 +2034,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Webservices"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="WebservicesComponent"
         singleton="true"
         >
 
@@ -2047,15 +2047,31 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
         </plugin-configuration>
 
+<!--  REMOVING. These are lifecycle operations for AS container itself.  Don't think we want to allow
+      customers to be able to remove/add a subsystem via RHQ.
+	<operation name="add" description="Adds the web services subsystem.">
+	  <parameters>
+	    <c:simple-property name="modify-wsdl-address" required="false" type="boolean" readOnly="false" description="Whether the soap address can be modified."/>
+	    <c:simple-property name="wsdl-host" required="false" type="string" readOnly="false" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
+	    <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="false" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+	    <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="false" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Adds the web services subsystem."/>
+	  </results>
+	</operation>
+
+	<operation name="remove" description="Removes the web services subsystem.">
+	  <results>
+	     <c:simple-property name="operationResult"/>
+	  </results>
+	</operation> -->
+
         <resource-configuration>
-            <c:simple-property name="modify-soap-address" required="true" type="boolean" readOnly="true"
-                               description="Whether the soap address can be modified."/>
-            <c:simple-property name="webservice-host" required="true" type="string" readOnly="true"
-                               description="The WSDL, that is a required deployment artifact for an endpoint, has a &amp;soap:address> element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &amp;soap:address> is a valid URL, JBossWS will not rewrite it unless 'modifySOAPAddress' is true. If the content of &amp;soap:address> is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'webServiceHost' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &amp;soap:address>"/>
-            <c:simple-property name="webservice-port" type="integer" readOnly="true"
-                               description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
-            <c:simple-property name="webservice-secure-port" type="integer" readOnly="true"
-                               description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+		<c:simple-property name="modify-wsdl-address" required="false" type="boolean" readOnly="false" description="Whether the soap address can be modified."/>
+		<c:simple-property name="wsdl-host" required="false" type="string" readOnly="false" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
+		<c:simple-property name="wsdl-port" required="false" type="integer" readOnly="false" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+		<c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="false" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
         </resource-configuration>
 
         <service name="Endpoint"

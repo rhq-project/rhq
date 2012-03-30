@@ -277,7 +277,8 @@ public class ASConnection {
             } catch (IOException ioe) {
                 responseCodeString = "unknown response code";
             }
-            log.error(operation + " failed with " + responseCodeString + " - response body was [" + responseBody + "].");
+            log.error(operation + " failed with " + responseCodeString + " - response body was [" + responseBody + "].",
+                    e);
 
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());

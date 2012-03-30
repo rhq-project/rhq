@@ -52,7 +52,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
-    @Test(groups = { "plugin.metadata", "NewPlugin" })
+    @Test(groups = { "plugin.resource.metadata.test", "plugin.metadata", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
         // create the initial type that has bundle and drift definitions 
         createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
@@ -107,7 +107,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(groups = { "plugin.metadata", "NewPlugin" })
+    @Test(groups = { "plugin.resource.metadata.test", "plugin.metadata", "NewPlugin" })
     public void registerPluginWithDuplicateDriftDefinitions() {
         try {
             createPlugin("test-plugin.jar", "1.0", "dup_drift.xml");
@@ -117,19 +117,20 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "registerPluginWithDuplicateDriftDefinitions" }, groups = { "plugin.metadata",
-        "NewPlugin" })
+    @Test(dependsOnMethods = { "registerPluginWithDuplicateDriftDefinitions" }, groups = {
+        "plugin.resource.metadata.test", "plugin.metadata", "NewPlugin" })
     public void registerPlugin() throws Exception {
         createPlugin("test-plugin.jar", "1.0", "plugin_v1.xml");
     }
 
-    @Test(dependsOnMethods = { "registerPlugin" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "registerPlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistNewTypes() {
         List<String> newTypes = asList("ServerA", "ServerB");
         assertTypesPersisted("Failed to persist new types", newTypes, "TestPlugin");
     }
 
-    //    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
+    //    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.resource.metadata.test", "plugin.metadata", "NewPlugin"})
     //    public void persistSubcategories() throws Exception {
     //        assertResourceTypeAssociationEquals(
     //            "ServerA",
@@ -139,29 +140,34 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     //        );
     //    }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistMeasurementDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "metricDefinitions",
             asList("metric1", "metric2", "rhq.availability"));
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistEventDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
             asList("logAEntry", "logBEntry"));
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistOperationDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions", asList("start", "stop"));
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistProcessScans() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "processScans", asList("serverA"));
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistDriftDefinitionTemplates() throws Exception {
         ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
             asList("drift-pc", "drift-fs"));
@@ -200,7 +206,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistBundleTargetConfigurations() throws Exception {
         String resourceTypeName = "ServerA";
         String plugin = "TestPlugin";
@@ -235,55 +242,64 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistChildTypes() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "childResourceTypes", asList("Child1", "Child2"));
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistPluginConfigurationDefinition() throws Exception {
         assertAssociationExists("ServerA", "pluginConfigurationDefinition");
     }
 
-    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "NewPlugin" })
     public void persistPackageTypes() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
             asList("ServerA.Content.1", "ServerA.Content.2"));
     }
 
-    @Test(groups = { "plugin.metadata", "UpgradePlugin" }, dependsOnGroups = { "NewPlugin" })
+    @Test(groups = { "plugin.resource.metadata.test", "plugin.metadata", "UpgradePlugin" }, dependsOnGroups = { "NewPlugin" })
     public void upgradePlugin() throws Exception {
         createPlugin("test-plugin.jar", "2.0", "plugin_v2.xml");
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeOperationDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions",
             asList("start", "shutdown", "restart"));
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeChildResources() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "childResourceTypes", asList("Child1", "Child3"));
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeParentTypeOfChild() throws Exception {
         assertResourceTypeAssociationEquals("ServerB", "TestPlugin", "childResourceTypes", asList("Child2"));
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeEventDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
             asList("logAEntry", "logCEntry"));
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeProcessScans() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "processScans", asList("processA", "processB"));
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeDriftDefinitionTemplates() throws Exception {
         ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
             asList("drift-rc", "drift-mt"));
@@ -313,7 +329,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradeBundleTargetConfigurations() throws Exception {
         String resourceTypeName = "ServerA";
         String plugin = "TestPlugin";
@@ -348,7 +365,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
+    @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
+        "UpgradePlugin" })
     public void upgradePackageTypes() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
             asList("ServerA.Content.1", "ServerA.Content.3"));
@@ -367,7 +385,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         createPlugin("remove-types-plugin", "2.0", "remove_types_v2.xml");
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteOperationDefsForRemovedType() throws Exception {
         OperationManagerLocal operationMgr = LookupUtil.getOperationManager();
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
@@ -382,7 +401,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The operation definition should have been deleted", 0, operationDefs.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteEventDefsForRemovedType() throws Exception {
         List<?> results = getEntityManager()
             .createQuery("from EventDefinition e where e.name = :ename and e.resourceType.name = :rname")
@@ -391,7 +411,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The event definition(s) should have been deleted", 0, results.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteParent() throws Exception {
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
@@ -424,7 +445,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         return null;
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteTypeAndAllItsDescedantTypes() throws Exception {
         List<?> typesNotRemoved = getEntityManager()
             .createQuery("from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)")
@@ -435,7 +457,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("Failed to delete resource type or one or more of its descendant types", 0, typesNotRemoved.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteProcessScans() {
         List<?> processScans = getEntityManager()
             .createQuery("from ProcessScan p where p.name = :name1 or p.name = :name2").setParameter("name1", "scan1")
@@ -444,7 +467,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The process scans should have been deleted", 0, processScans.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteSubcategories() {
         List<?> subcategories = getEntityManager()
             .createQuery("from ResourceSubCategory r where r.name = :name1 or r.name = :name2 or r.name = :name3")
@@ -453,7 +477,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The subcategories should have been deleted", 0, subcategories.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteResources() {
         ResourceManagerLocal resourceMgr = LookupUtil.getResourceManager();
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
@@ -478,7 +503,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteBundles() {
         List<?> bundles = getEntityManager().createQuery("from Bundle b where b.bundleType.name = :name")
             .setParameter("name", "Test Bundle").getResultList();
@@ -486,7 +512,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("Failed to delete the bundles", 0, bundles.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteBundleTypes() {
         List<?> bundleTypes = getEntityManager().createQuery("from BundleType b where b.name = :name")
             .setParameter("name", "Test Bundle").getResultList();
@@ -494,7 +521,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The bundle type should have been deleted", 0, bundleTypes.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deletePackages() {
         List<?> packages = getEntityManager().createQuery("from Package p where p.name = :name")
             .setParameter("name", "ServerC::test-package").getResultList();
@@ -502,7 +530,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("All packages should have been deleted", 0, packages.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deletePackageTypes() {
         List<?> packageTypes = getEntityManager().createQuery("from PackageType p where p.name = :name")
             .setParameter("name", "ServerC.Content").getResultList();
@@ -510,7 +539,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("All package types should have been deleted", 0, packageTypes.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteResourceGroups() {
         List<?> groups = getEntityManager()
             .createQuery("from ResourceGroup g where g.name = :name and g.resourceType.name = :typeName")
@@ -519,7 +549,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("All resource groups should have been deleted", 0, groups.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteAlertTemplates() {
         List<?> templates = getEntityManager()
             .createQuery("from AlertDefinition a where a.name = :name and a.resourceType.name = :typeName")
@@ -528,7 +559,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("Alert templates should have been deleted.", 0, templates.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
+    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
+        "plugin.metadata", "RemoveTypes" })
     public void deleteMeasurementDefinitions() {
         List<?> measurementDefs = getEntityManager().createQuery("from MeasurementDefinition m where m.name = :name")
             .setParameter("name", "ServerC::metric1").getResultList();

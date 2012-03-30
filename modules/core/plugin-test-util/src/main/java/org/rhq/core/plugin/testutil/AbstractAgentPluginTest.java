@@ -151,7 +151,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected AvailabilityType getAvailability(Resource resource)
             throws PluginContainerException {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
-        int timeoutMillis = 5000;
+        long timeoutMillis = 5000;
         AvailabilityFacet availFacet = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
                 FacetLockType.READ, timeoutMillis, false, false);        
         AvailabilityType avail;
@@ -292,7 +292,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
                
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
-        int timeoutMillis = 7000;
+        long timeoutMillis = 5000;
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
                 FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();

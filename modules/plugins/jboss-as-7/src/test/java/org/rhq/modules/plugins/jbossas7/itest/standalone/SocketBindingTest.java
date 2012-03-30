@@ -22,7 +22,6 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;

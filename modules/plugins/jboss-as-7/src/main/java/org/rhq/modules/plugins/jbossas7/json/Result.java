@@ -18,15 +18,18 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
- * Counterpart of a result JSON object like e.g.:
- * <pre>{"outcome" : "success", "result" : "no metrics available", "compensating-operation" : null}</pre>
+ * Counterpart of a result JSON object, e.g.:
+ * <pre>
+ *     {"outcome" : "success", "result" : "no metrics available", "compensating-operation" : null}
+ *     {"outcome" : "failed", "failure-description" : "JBAS010850: No handler for operation foo at address []", "rolled-back" : true}
+ * </pre>
+ *
  * @author Heiko W. Rupp
  */
 public class Result {
@@ -134,7 +137,10 @@ public class Result {
     @Override
     public String toString() {
         return "Result{" +
-                "success=" + success +
+                "outcome='" + outcome + '\'' +
+                ", failureDescription=" + failureDescription +
+                ", rolledBack=" + rolledBack +
                 '}';
     }
+
 }

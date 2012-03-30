@@ -147,9 +147,8 @@ public class ASConnection {
             int timeoutMillis = timeoutSec * 1000;
             conn.setConnectTimeout(timeoutMillis);
             conn.setReadTimeout(timeoutMillis);
-
             if (conn.getReadTimeout() != timeoutMillis) {
-                log.warn("The JRE uses a broken timeout mechanism - nothing we can do.");
+                log.warn("Read timeout did not get set on HTTP connection - the JRE uses a broken timeout mechanism - nothing we can do.");
             }
 
             out = conn.getOutputStream();
@@ -161,7 +160,7 @@ public class ASConnection {
             }
             // TODO (ips): Would it make more sense to return null here, since we didn't even connect?
             Result failure = new Result();
-            failure.setFailureDescription(e.getMessage());
+            failure.setFailureDescription(e.toString());
             failure.setOutcome("failure");
             failure.setRhqThrowable(e);
             JsonNode ret = mapper.valueToTree(failure);
@@ -212,7 +211,7 @@ public class ASConnection {
 
                 String outcome;
                 JsonNode operationResult;
-                if (responseBody.length() > 0) {
+                if (!responseBody.isEmpty()) {
                     outcome = responseBody;
                     operationResult = mapper.readTree(outcome);
                     if (verbose) {
@@ -277,16 +276,29 @@ public class ASConnection {
             } catch (IOException ioe) {
                 responseCodeString = "unknown response code";
             }
-            log.error(operation + " failed with " + responseCodeString + " - response body was [" + responseBody + "].",
-                    e);
+            String failureDescription = operation + " failed with " + responseCodeString + " - response body was ["
+                    + responseBody + "].";
+            log.error(failureDescription, e);
 
-            Result failure = new Result();
-            failure.setFailureDescription(e.getMessage());
-            failure.setOutcome("failure");
-            failure.setRhqThrowable(e);
+            JsonNode operationResult = null;
+            if (!responseBody.isEmpty()) {
+                try {
+                    operationResult = mapper.readTree(responseBody);
+                } catch (IOException ioe) {
+                    log.error("Failed to deserialize response body [" + responseBody + "] to JsonNode: " + ioe);
+                }
+            }
 
-            JsonNode ret = mapper.valueToTree(failure);
-            return ret;
+            if (operationResult == null) {
+                Result result = new Result();
+                result.setOutcome("failure");
+                result.setFailureDescription(failureDescription);
+                result.setRolledBack(responseBody.contains("rolled-back=true"));
+                result.setRhqThrowable(e);
+                operationResult = mapper.valueToTree(result);
+            }
+
+            return operationResult;
         } finally {
             long requestEndTime = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();

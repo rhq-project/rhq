@@ -1452,23 +1452,6 @@
 
     </server>
 
-    <server name="ResourceAdapters"
-            discovery="SubsystemDiscovery"
-            class="BaseComponent"
-            singleton="true"
-            >
-
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
-        </plugin-configuration>
-    </server>
-
-
     <server name="Logging"
         discovery="SubsystemDiscovery"
         class="LoggerComponent"
@@ -2964,5 +2947,45 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	        </c:list-property>
         </resource-configuration>
      </service>
+
+
+     <service name="ResourceAdapters"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+        </plugin-configuration>
+
+        <service name="ResourceAdapter"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="The configuration of the resource adapter.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="resource-adapter"/>
+            </plugin-configuration>
+
+            <operation name="activate" description="Force the resource adapter config activation without server reload">
+                <results>
+                   <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <resource-configuration>
+                <c:simple-property name="archive" required="true" type="string" readOnly="false" description="Specifies the resource adapter archive"/>
+                <c:simple-property name="beanvalidationgroups" required="false" type="string" readOnly="false" description="Specifies the bean validation groups that should be used"/>
+                <c:simple-property name="bootstrapcontext" required="false" type="string" readOnly="false" description="Specifies the unique name of the bootstrap context that should be used"/>
+                <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter"/>
+            </resource-configuration>
+        </service>
+
+    </service>
 
 </plugin>

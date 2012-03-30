@@ -229,10 +229,25 @@
       </activation>
 
       <properties>
-        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.Beta distribution zipfile.</as7.url>
+        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.Beta1 distribution zipfile.</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
       </properties>
+    </profile>
 
+    <profile>
+      <id>eap600ER4.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0.ER4</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.ER4 distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
     </profile>
 
     <!-- Activate this profile to run the integration tests (these can take a while to complete). -->

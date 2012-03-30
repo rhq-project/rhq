@@ -2978,4 +2978,137 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </service>
 
+
+    <service name="EJB3"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        description="The configuration of the ejb3 subsystem."
+        singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=ejb3"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+	        <c:simple-property name="default-clustered-sfsb-cache" required="false" type="string" readOnly="false" description="Name of the default stateful bean cache, which will be applicable to all clustered stateful EJBs, unless overridden at the deployment or bean level"/>
+	        <c:simple-property name="default-entity-bean-instance-pool" required="false" type="string" readOnly="false" description="Name of the default entity bean instance pool, which will be applicable to all entity beans, unless overridden at the deployment or bean level"/>
+	        <c:simple-property name="default-entity-bean-optimistic-locking" required="false" type="boolean" readOnly="false" description="If set to true entity beans will use optimistic locking by default"/>
+	        <c:simple-property name="default-mdb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default MDB instance pool, which will be applicable to all MDBs, unless overridden at the deployment or bean level"/>
+	        <c:simple-property name="default-resource-adapter-name" required="false" type="string" readOnly="false" defaultValue="hornetq-ra" description="Name of the default resource adapter name that will be used by MDBs, unless overridden at the deployment or bean level. The default value is hornetq-ra."/>
+	        <c:simple-property name="default-sfsb-cache" required="false" type="string" readOnly="false" description="Name of the default stateful bean cache, which will be applicable to all stateful EJBs, unless overridden at the deployment or bean level"/>
+	        <c:simple-property name="default-singleton-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
+	        <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
+	        <c:simple-property name="default-stateful-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
+	        <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
+        </resource-configuration>
+
+        <service name="ThreadPool"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="A thread pool executor with an unbounded queue.  Such a thread pool has a core size and a queue with no upper bound.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, the task is placed in queue.  If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="thread-pool"/>
+            </plugin-configuration>
+
+            <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
+            <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
+            <metric property="current-thread-count" description="The current number of threads in the pool."/>
+            <metric property="keepalive-time:time" description="The time"/>
+            <metric property="keepalive-time:unit" description="The time unit"/>
+            <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
+            <metric property="rejected-count" description="The number of tasks that have been rejected."/>
+            <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
+
+            <resource-configuration>
+	            <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down." >
+	                <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
+	                <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+	            </c:map-property>
+	            <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
+	            <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+	            <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+            </resource-configuration>
+        </service>
+
+        <service name="FilePassivationStore"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="A file system based passivation store.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="file-passivation-store"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+	            <c:simple-property name="groups-path" required="false" type="string" readOnly="false" defaultValue="ejb3/groups"/>
+	            <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+	            <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
+	            <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+	            <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"/>
+	            <c:simple-property name="sessions-path" required="false" type="string" readOnly="false" defaultValue="ejb3/sessions"/>
+	            <c:simple-property name="subdirectory-count:expr" required="false" type="string" readOnly="false" defaultValue="100"/>
+            </resource-configuration>
+        </service>
+
+        <service name="StrictMaxBeanInstancePool"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="A bean instance pool with a strict upper limit">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="strict-max-bean-instance-pool"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+	            <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+	            <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+	            <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
+            </resource-configuration>
+        </service>
+
+        <service name="Cache"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="A SFSB cache.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="cache"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:list-property name="aliases" description="The aliases by which this cache may also be referenced" >
+                    <c:simple-property name="aliases" />
+                </c:list-property>
+                <c:simple-property name="passivation-store" required="false" type="string" readOnly="false" description="The passivation store used by this cache"/>
+            </resource-configuration>
+        </service>
+
+        <service name="ClusterPassivationStore"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="A clustered passivation store.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="cluster-passivation-store"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="bean-cache" required="false" type="string" readOnly="false" description="The name of the cache used to store bean instances."/>
+                <c:simple-property name="cache-container" required="false" type="string" readOnly="false" defaultValue="ejb" description="The name of the cache container used for the bean and client-mappings caches. The default value is ejb."/>
+                <c:simple-property name="client-mappings-cache" required="false" type="string" readOnly="false" defaultValue="remote-connector-client-mappings" description="The name of the cache used to store client-mappings of the EJB remoting connector's socket-bindings. The default value is remote-connector-client-mappings."/>
+                <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+                <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
+                <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+                <c:simple-property name="passivate-events-on-replicate" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates whether replication should trigger passivation events on the bean. The default value is true."/>
+            </resource-configuration>
+        </service>
+
+     </service>
+
 </plugin>

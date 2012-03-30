@@ -10,8 +10,8 @@ public interface SuspectMetricLocal {
 
     @GET
     @Path("/")
-    @Produces({"text/csv", "application/xml"})
-    Response suspectMetrics(
+    @Produces("text/csv")
+    StreamingOutput suspectMetrics(
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

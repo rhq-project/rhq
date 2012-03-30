@@ -20,10 +20,10 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.rhq.core.domain.resource.Resource;
-
 import java.text.DateFormat;
 import java.util.Date;
+
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * Formatting tools for rest reporting.

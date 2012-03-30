@@ -144,9 +144,10 @@ public class ResourceClientFactory {
     
     private Class<?> defineCustomInterface(ResourceClientProxy proxy) {
         try {
-            // define the dynamic class
+            // define the dynamic class - do not put it in any known rhq package in case our jars are signed (see BZ-794503)
             ClassPool pool = ClassPool.getDefault();
-            CtClass customClass = pool.makeInterface(ResourceClientProxy.class.getName() + proxy.fingerprint);
+            CtClass customClass = pool.makeInterface("org.rhq.bindings.client.dynamic."
+                + ResourceClientProxy.class.getSimpleName() + proxy.fingerprint);
 
             for (String key : proxy.allProperties.keySet()) {
                 Object prop = proxy.allProperties.get(key);

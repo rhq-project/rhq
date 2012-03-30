@@ -32,7 +32,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class StringUtil {
+
+    private static final Log log = LogFactory.getLog(StringUtil.class);
+
     /**
      * @param  source  The source string to perform replacements on.
      * @param  find    The substring to find in source.
@@ -98,8 +104,7 @@ public class StringUtil {
                 retVal = remove.toString();
             }
         } catch (Exception e) {
-            // XXX This should never happen
-            e.printStackTrace();
+            log.error("This should not have happened.", e);
             retVal = null;
         }
 

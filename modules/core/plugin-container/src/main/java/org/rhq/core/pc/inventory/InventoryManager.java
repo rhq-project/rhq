@@ -1222,9 +1222,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // TODO REMOVE THIS IF STATEMENT - IT IS JUST FOR TESTING
             if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
-                new Exception("BAD CHILD SET - IF YOU SEE THIS, LOG IT IN BZ 801432:"
+                Exception e = new Exception("BAD CHILD SET - IF YOU SEE THIS, LOG IT IN BZ 801432:"
                     + resource.getChildResources().getClass().getName() + ":" + resource.getId() + ":"
-                    + resource.getName()).printStackTrace();
+                    + resource.getName());
+                log.fatal("[BZ 801432]", e);
             }
 
             for (Resource child : resource.getChildResources()) {

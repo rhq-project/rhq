@@ -25,7 +25,6 @@ package org.rhq.core.clientapi.agent.metadata.i18n;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,14 +36,14 @@ import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  * Generates localization properties files for a plugin descriptor. Can update existing files by appending properties
@@ -53,7 +52,10 @@ import org.xml.sax.SAXException;
  * @author Greg Hinkle
  */
 public class PropertiesGenerator {
-    private Map<String, String> properties = new LinkedHashMap();
+
+    private final Log log = LogFactory.getLog(PropertiesGenerator.class);
+
+    private Map<String, String> properties = new LinkedHashMap<String, String>();
 
     private boolean update;
     private File xmlFile;
@@ -126,12 +128,8 @@ public class PropertiesGenerator {
             FileOutputStream fos = new FileOutputStream(propertiesFile, this.update);
             this.contentWriter = new PrintWriter(fos);
             generateNode(doc.getDocumentElement(), "");
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("Failed to generate i18n properties file.", e);
         } finally {
             if (this.contentWriter != null) {
                 this.contentWriter.close();

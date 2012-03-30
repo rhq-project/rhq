@@ -42,7 +42,7 @@ import java.util.concurrent.Callable;
  */
 public class ConfigurationCheckExecutor implements Runnable, Callable {
 
-    private Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
+    private final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
 
     private ConfigurationManager configurationManager;
     private ConfigurationServerService configurationServerService;
@@ -128,7 +128,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                     try {
                         checkConfigurations(child, true);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error("Failed to check Resource configuration for " + child + ".", e);
                     }
                 }
             }

@@ -3,6 +3,8 @@ package org.rhq.core.pc.drift;
 import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,11 +21,14 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.io.File.separator;
 
 public class SnapshotGenerator extends DirectoryWalker {
+
+    private final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
 
     private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
@@ -65,7 +70,7 @@ public class SnapshotGenerator extends DirectoryWalker {
                     zos.putNextEntry(entry);
                     IOUtils.copy(istream, zos);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Failed to add file " + file + " to zipfile " + zipFile + ".", e);
                 } finally {
                     if (istream != null) {
                         istream.close();

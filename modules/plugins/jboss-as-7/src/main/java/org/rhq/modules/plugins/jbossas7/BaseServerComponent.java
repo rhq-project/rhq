@@ -281,14 +281,17 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
         String configFile;
         BaseProcessDiscovery processDiscovery;
+        String configDir = pluginConfig.getSimpleValue("configDir",null);
         switch (mode) {
             case STANDALONE:
                 processDiscovery = new StandaloneASDiscovery();
                 configFile = pluginConfig.getSimpleValue("config", null);
+                configFile = configDir + File.separator + configFile;
                 break;
             case HOST:
                 processDiscovery = new HostControllerDiscovery();
                 configFile = pluginConfig.getSimpleValue("hostConfig", null);
+                configFile = configDir + File.separator + configFile;
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported mode: " + mode);

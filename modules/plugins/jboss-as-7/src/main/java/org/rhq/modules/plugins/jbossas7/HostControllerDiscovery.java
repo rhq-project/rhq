@@ -101,8 +101,7 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         Configuration pluginConfig = details.getPluginConfiguration();
         String domainConfig = getServerConfigFromCommandLine(psr.getProcessInfo().getCommandLine(), getMode());
         pluginConfig.put(new PropertySimple("domainConfig", domainConfig));
-        String configDirString = pluginConfig.getSimpleValue("configDir", null);
-        pluginConfig.put(new PropertySimple("hostConfig", getHostXmlFile(process, new File(configDirString))));
+        pluginConfig.put(new PropertySimple("hostConfig", getHostXmlFileName(process)));
         return details;
     }
 

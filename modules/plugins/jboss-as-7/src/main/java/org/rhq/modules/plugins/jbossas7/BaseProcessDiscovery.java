@@ -76,7 +76,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                 // Only barf a stack trace for runtime exceptions.
                 log.error("Discovery of a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for " + processScanResult.getProcessInfo() + ".", e);
-            } catch (Exception e) {                
+            } catch (Exception e) {
                 log.error("Discovery of a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for " + processScanResult.getProcessInfo() + " - cause: " + e);
             }
@@ -85,7 +85,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return discoveredResources;
     }
 
-    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, 
+    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         // IF SE, then look at domain/configuration/host.xml <management interface="default" port="9990
@@ -172,7 +172,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                     String cwd = process.getExecutable().getCwd();
                     baseDir = new File(cwd, baseDirString);
                     if (!baseDir.exists()) {
-                        baseDir = new File(homeDir, baseDirString);                    
+                        baseDir = new File(homeDir, baseDirString);
                     }
                 }
             }

@@ -111,8 +111,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
         ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();
-        String configDirString = pluginConfig.getSimpleValue("configDir", null);
-        pluginConfig.put(new PropertySimple("config", getHostXmlFile(process, new File(configDirString))));
+        pluginConfig.put(new PropertySimple("config", getHostXmlFileName(process)));
         return details;
     }
 

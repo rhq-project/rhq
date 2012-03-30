@@ -113,7 +113,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     private class OutputDetailedInventorySummary implements StreamingOutput {
 
         // map of counts keyed by resource type id
-        private Map<Integer, ResourceInstallCount> installCounts = new LinkedHashMap<Integer, ResourceInstallCount>();
+        private Map<ResourceInstallCountKey, ResourceInstallCount> installCounts =
+            new LinkedHashMap<ResourceInstallCountKey, ResourceInstallCount>();
 
         private Set<Integer> resourceTypeIds;
 
@@ -121,7 +122,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             Set<Integer> resourceTypeIds) {
             this.resourceTypeIds = resourceTypeIds;
             for (ResourceInstallCount installCount : installCounts) {
-                this.installCounts.put(installCount.getTypeId(), installCount);
+                this.installCounts.put(new ResourceInstallCountKey(installCount.getTypeId(), installCount.getVersion()),
+                    installCount);
             }
         }
 
@@ -145,7 +147,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                 };
                 query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                 for (Resource resource : query) {
-                    ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
+                    ResourceInstallCountKey key = new ResourceInstallCountKey(resource.getResourceType().getId(),
+                        resource.getVersion());
+                    ResourceInstallCount installCount = installCounts.get(key);
                     String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
                     output.write(record.getBytes());
                 }
@@ -210,6 +214,42 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         return resource.getName() + "," + ReportFormatHelper.parseAncestry(resource.getAncestry()) + "," +
             resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
             "," + resource.getCurrentAvailability().getAvailabilityType();
+    }
+
+    private static class ResourceInstallCountKey {
+        private int resourceTypeId;
+        private String version;
+
+        public ResourceInstallCountKey(int resourceTypeId, String version) {
+            this.resourceTypeId = resourceTypeId;
+            if (version == null) {
+                // Storing empty string here to make equals/hashCode easier. In
+                // this context, null and empty string are essentially the same.
+                this.version = "";
+            } else {
+                this.version = version;
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ResourceInstallCountKey that = (ResourceInstallCountKey) o;
+
+            if (resourceTypeId != that.resourceTypeId) return false;
+            if (!version.equals(that.version)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = resourceTypeId;
+            result = 31 * result + version.hashCode();
+            return result;
+        }
     }
 
 }

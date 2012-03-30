@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.util.List;
-
 import javax.ejb.Local;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -43,7 +41,7 @@ public interface DriftComplianceLocal {
         @Context UriInfo uriInfo,
         @Context Request request,
         @Context HttpHeaders headers,
-        @QueryParam("details") @DefaultValue("false") boolean includeDetails,
-        @QueryParam("resourceTypes") List<Integer> resourceTypeIds);
+        @QueryParam("showAllDetails") @DefaultValue("false") boolean includeDetails,
+        @QueryParam("resourceTypeId") String resourceTypeId);
 
 }

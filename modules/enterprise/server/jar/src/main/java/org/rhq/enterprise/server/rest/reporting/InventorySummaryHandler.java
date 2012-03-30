@@ -18,6 +18,28 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -27,18 +49,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.*;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
 import static org.rhq.core.domain.util.PageOrdering.ASC;
@@ -51,13 +61,16 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     protected ResourceManagerLocal resourceMgr;
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean includeDetails,
-        final List<Integer> resourceTypeIds) {
+    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers,
+        boolean showAllDetails, final String resourceTypeIds) {
         final List<ResourceInstallCount> results = getSummaryCounts();
         final MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
-        if (includeDetails) {
-            return new OutputDetailedInventorySummary(results, new TreeSet<Integer>(resourceTypeIds));
+        if (showAllDetails) {
+            Set<Integer> ids = Collections.emptySet();
+            return new OutputDetailedInventorySummary(results, ids);
+        } else if (resourceTypeIds != null) {
+            return new OutputDetailedInventorySummary(results, parseIds(resourceTypeIds));
         } else {
             return new StreamingOutput() {
                 @Override
@@ -79,20 +92,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                         }
                     } else if (mediaType.toString().equals("text/csv")) {
                         stream.write((getHeader() + "\n").getBytes());
-
-                        if (resourceTypeIds.isEmpty()) {
-                            for (ResourceInstallCount installCount : results) {
-                                String record = toCSV(installCount) + "\n";
-                                stream.write(record.getBytes());
-                            }
-                        } else {
-                            Set<Integer> ids = new TreeSet<Integer>(resourceTypeIds);
-                            for (ResourceInstallCount installCount : results) {
-                                if (ids.contains(installCount.getTypeId())) {
-                                    String record = toCSV(installCount) + "\n";
-                                    stream.write(record.getBytes());
-                                }
-                            }
+                        for (ResourceInstallCount installCount : results) {
+                            String record = toCSV(installCount) + "\n";
+                            stream.write(record.getBytes());
                         }
                     }
                 }
@@ -100,55 +102,87 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         }
     }
 
+    private Set<Integer> parseIds(String resourceTypeIdParam) {
+        Set<Integer> ids = new TreeSet<Integer>();
+        for (String id : resourceTypeIdParam.split(",")) {
+            ids.add(Integer.parseInt(id));
+        }
+        return ids;
+    }
+
     private class OutputDetailedInventorySummary implements StreamingOutput {
 
         // map of counts keyed by resource type id
-        private Map<Integer, ResourceInstallCount> installCounts = new HashMap<Integer, ResourceInstallCount>();
+        private Map<Integer, ResourceInstallCount> installCounts = new LinkedHashMap<Integer, ResourceInstallCount>();
 
         private Set<Integer> resourceTypeIds;
 
-        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCountList,
+        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCounts,
             Set<Integer> resourceTypeIds) {
             this.resourceTypeIds = resourceTypeIds;
-            for (ResourceInstallCount installCount : installCountList) {
-                installCounts.put(installCount.getTypeId(), installCount);
+            for (ResourceInstallCount installCount : installCounts) {
+                this.installCounts.put(installCount.getTypeId(), installCount);
             }
         }
 
         @Override
         public void write(OutputStream output) throws IOException, WebApplicationException {
-            final ResourceCriteria criteria = getDetailsQueryCriteria(installCounts);
-            if (!resourceTypeIds.isEmpty()) {
-                criteria.addFilterResourceTypeIds(resourceTypeIds.toArray(new Integer[resourceTypeIds.size()]));
-            }
+            ResourceCriteria criteria;
+            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor;
+            CriteriaQuery<Resource, ResourceCriteria> query;
 
-            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
-                new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+            output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
+
+            // if there are no resource type ids, that means we fetching everything - all
+            // details for all types.
+            if (resourceTypeIds.isEmpty()) {
+                criteria = getDetailsQueryCriteria(null);
+                queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
                     @Override
                     public PageList<Resource> execute(ResourceCriteria criteria) {
                         return resourceMgr.findResourcesByCriteria(caller, criteria);
                     }
                 };
-
-            CriteriaQuery<Resource, ResourceCriteria> query =
-                new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-            output.write((getHeader() + "\n").getBytes());
-            for (Resource resource : query) {
-                 ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
-                if (installCount != null) {
+                query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+                for (Resource resource : query) {
+                    ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
                     String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
                     output.write(record.getBytes());
+                }
+            } else {
+                for (ResourceInstallCount installCount : installCounts.values()) {
+                    if (resourceTypeIds.contains(installCount.getTypeId())) {
+                        criteria = getDetailsQueryCriteria(installCount.getTypeId());
+                        queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                            @Override
+                            public PageList<Resource> execute(ResourceCriteria criteria) {
+                                return resourceMgr.findResourcesByCriteria(caller, criteria);
+                            }
+                        };
+                        query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+                        for (Resource resource : query) {
+                            String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
+                            output.write(record.getBytes());
+                        }
+                    } else {
+                        String record = toCSV(installCount) + ",,,,,,,\n";
+                        output.write(record.getBytes());
+                    }
                 }
             }
         }
     }
 
-    protected ResourceCriteria getDetailsQueryCriteria(Map<Integer, ResourceInstallCount> installCounts) {
+    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterInventoryStatus(COMMITTED);
         criteria.addSortResourceCategory(ASC);
         criteria.addSortPluginName(ASC);
         criteria.addSortResourceTypeName(ASC);
+
+        if (resourceTypeId != null) {
+            criteria.addFilterResourceTypeId(resourceTypeId);
+        }
 
         return criteria;
     }
@@ -162,6 +196,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         return "Resource Type,Plugin,Category,Version,Count";
     }
 
+    protected String getDetailsHeader() {
+        return "Name,Ancestry,Description,Type,Version,Availability";
+    }
+
     protected String toCSV(ResourceInstallCount installCount) {
         return installCount.getTypeName() + "," + installCount.getTypePlugin() + "," +
             installCount.getCategory().getDisplayName() + "," + installCount.getVersion() + "," +
@@ -169,8 +207,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String toCSV(Resource resource) {
-        return resource.getName() + "," + ReportFormatHelper.parseAncestry(resource.getAncestry()) + "," +
+        return resource.getName() + "," + ReportHelper.parseAncestry(resource.getAncestry()) + "," +
             resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
             "," + resource.getCurrentAvailability().getAvailabilityType();
     }
+
 }

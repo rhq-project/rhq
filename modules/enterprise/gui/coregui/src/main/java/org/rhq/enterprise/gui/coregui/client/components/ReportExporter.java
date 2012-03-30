@@ -20,13 +20,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.Set;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
+
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * Exporter for building urls to reports (csv).
@@ -124,9 +126,12 @@ public class ReportExporter {
     public String determineUrl() {
         StringBuilder queryString = new StringBuilder();
 
-//        if (showAllDetail) {
-//            queryString.append("details=").append(form.getValueAsString(DETAILS_FIELD));
-//        }
+        if (showAllDetail) {
+            queryString.append("showAllDetails=").append("true");
+        } else if (!resourceTypeIds.isEmpty()) {
+            queryString.append("resourceTypeId=").append(StringUtility.toString(resourceTypeIds));
+        }
+
         if(!isEmpty(operationRequestStatuses)){
             StringBuilder operationRequestStatusBuffer = new StringBuilder();
             for (String operationRequestStatus : operationRequestStatuses) {

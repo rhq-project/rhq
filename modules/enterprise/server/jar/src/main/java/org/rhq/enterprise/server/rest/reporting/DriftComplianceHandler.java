@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -41,12 +39,9 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean includeDetails,
-        List<Integer> resourceTypeIds) {
-        // We pass an empty list here for the resourceTypeIds param because this report
-        // not support the typeId query para.
-        List<Integer> ids = Collections.emptyList();
-        return super.generateReport(uriInfo, request, headers, includeDetails, ids);
+    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean showAllDetails,
+        String resourceTypeIds) {
+        return super.generateReport(uriInfo, request, headers, showAllDetails, "");
     }
 
     @Override
@@ -55,16 +50,20 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     }
 
     @Override
-    protected ResourceCriteria getDetailsQueryCriteria(Map <Integer, ResourceInstallCount> installCounts) {
-        ResourceCriteria criteria = super.getDetailsQueryCriteria(installCounts);
+    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId) {
+        ResourceCriteria criteria = super.getDetailsQueryCriteria(resourceTypeId);
         criteria.fetchDriftDefinitions(true);
-        criteria.addFilterResourceTypeIds(installCounts.keySet().toArray(new Integer[installCounts.size()]));
         return criteria;
     }
 
     @Override
     protected String getHeader() {
         return super.getHeader() + ",In Compliance?";
+    }
+
+    @Override
+    protected String getDetailsHeader() {
+        return super.getDetailsHeader() + ",In Compliance?";
     }
 
     @Override

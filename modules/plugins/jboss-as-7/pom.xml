@@ -297,9 +297,9 @@
               </execution>
             </executions>
           </plugin>
-
+<!--
           <plugin>
-            <!-- use the arquillian plugin to start/stop the standalone server -->
+            <!- - use the arquillian plugin to start/stop the standalone server - ->
             <groupId>org.jboss.arquillian.maven</groupId>
             <artifactId>arquillian-maven-plugin</artifactId>
             <version>1.0.0.Alpha2</version>
@@ -343,15 +343,63 @@
             </dependencies>
 
           </plugin>
-
+-->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.2.1.jbossorg-3</version>
 
             <executions>
+
               <execution>
-                <id>start-jboss7-host-controller</id>
+                <id>start-as7-standalone</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <background>true</background>
+                  <!-- test blocks until the port at backgroundPollingAddress is available (waiting for starting) -->
+                  <!-- when maven jvm exits, this plugin will kill the running servers -->
+                  <backgroundPollingAddress>${jboss.standalone.bindAddress}:${jboss.standalone.nativeManagementPort}
+                  </backgroundPollingAddress>
+                  <executable>${java.home}/bin/java</executable>
+                  <arguments>
+                    <!-- Process Controller Java options -->
+                    <argument>-D[Standalone]</argument>
+                    <argument>-server</argument>
+                    <argument>-XX:+UseCompressedOops</argument>
+                    <argument>-XX:+TieredCompilation</argument>
+                    <argument>-Xms64m</argument>
+                    <argument>-Xmx512m</argument>
+                    <argument>-XX:MaxPermSize=256m</argument>
+                    <argument>-Djava.net.preferIPv4Stack=true</argument>
+                    <argument>-Dorg.jboss.resolver.warning=true</argument>
+                    <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                    <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                    <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                    <argument>-Djava.awt.headless=true</argument>
+                    <argument>-Djboss.server.default.config=standalone.xml</argument>
+                    <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/standalone/log/boot.log</argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/standalone/configuration/logging.properties</argument>
+                    <argument>-jar</argument>
+                    <argument>${jboss7.home}/jboss-modules.jar</argument>
+                    <argument>-mp</argument>
+                    <argument>${jboss7.home}/modules</argument>
+                    <argument>-jaxpmodule</argument>
+                    <argument>javax.xml.jaxp-provider</argument>
+                    <argument>org.jboss.as.standalone</argument>
+                    <argument>-Djboss.home.dir=${jboss7.home}</argument>
+                    <argument>-Djboss.bind.address.management=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.bind.address=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.bind.address.unsecure=${jboss.standalone.bindAddress}</argument>
+                    <argument>-Djboss.socket.binding.port-offset=${jboss.standalone.portOffset}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>start-as7-domain</id>
                 <phase>pre-integration-test</phase>
                 <goals>
                   <goal>exec</goal>

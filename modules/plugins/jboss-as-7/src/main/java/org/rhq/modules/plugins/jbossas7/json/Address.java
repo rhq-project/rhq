@@ -49,7 +49,7 @@ public class Address {
     }
 
     /**
-     * Construct an Addres by cloning another
+     * Construct an Address by cloning another
      * @param other Address to clone
      */
     public Address(Address other) {

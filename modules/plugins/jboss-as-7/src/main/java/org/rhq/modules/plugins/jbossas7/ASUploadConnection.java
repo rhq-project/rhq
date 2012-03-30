@@ -115,8 +115,10 @@ public class ASUploadConnection {
             os.flush();
 
             int code = connection.getResponseCode();
-            log.info("Response code for file upload: " + code);
-            if (code==500)
+            if (code != 200) {
+                log.warn("Response code for file upload: " + code + " " + connection.getResponseMessage());
+            }
+            if (code == 500)
                 is = connection.getErrorStream();
             else
                 is = connection.getInputStream();
@@ -208,7 +210,6 @@ public class ASUploadConnection {
                     String reason = reasonNode.getTextValue();
                     return true;
                 }
-
             } catch (Exception e) {
                 log.error(e);
                 return true;
@@ -217,12 +218,12 @@ public class ASUploadConnection {
         return false;
     }
 
-
     private void closeQuietly(final Closeable closeable) {
         if(closeable != null) {
             try {
                 closeable.close();
-            } catch (final IOException e) {}
+            } catch (final IOException ignore) {
+            }
         }
     }
 }

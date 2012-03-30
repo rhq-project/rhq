@@ -116,7 +116,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
-        HostPort managementHostPort = getManagementPortFromHostXml(commandLine);
+        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));

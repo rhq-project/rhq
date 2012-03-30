@@ -45,8 +45,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class ManagedASDiscovery extends AbstractBaseDiscovery<HostControllerComponent<?>>
-         {
+public class ManagedASDiscovery extends AbstractBaseDiscovery<HostControllerComponent<?>> {
 
     private HostControllerComponent parentComponent;
 

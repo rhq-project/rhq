@@ -357,8 +357,8 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
                 Result res = getASConnection().execute(op);
 
                 if (res.isSuccess()) {
-                    Long startTime= (Long) res.getResult();
-                    MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
+                    Long startTime = (Long) res.getResult();
+                    MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
                     report.addData(data);
                 }
             }

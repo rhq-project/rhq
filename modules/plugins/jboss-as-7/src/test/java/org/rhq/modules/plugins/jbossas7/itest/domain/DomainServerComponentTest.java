@@ -57,7 +57,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return "jboss.domain.portOffset";
     }
 
-    @Test(priority = 20, groups = "discovery")
+    @Test(priority = 1000, groups = "discovery")
     @RunDiscovery
     public void testDomainServerDiscovery() throws Exception {
         super.testAutoDiscovery();
@@ -65,20 +65,20 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(priority = 21, enabled = true)
+    @Test(priority = 1001, enabled = true)
     public void testMetricsHaveNonNullValues() throws Exception {
         super.testMetricsHaveNonNullValues();
     }
 
     @Override
-    @Test(priority = 21, enabled = true)
+    @Test(priority = 1002, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(priority = 22, enabled = false)
+    @Test(priority = 1003, enabled = false)
     public void testDomainServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
     }

@@ -118,8 +118,7 @@
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"
-                displayName="Number of management requests"
-                />
+                displayName="Number of management requests"/>
         <metric property="_internal:requestTime" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="trendsup" description="Total time for requests" units="milliseconds"
                 displayName="Time used for management requests"/>
@@ -424,6 +423,7 @@
         </service>
     </server>
 
+
     <server name="JBossAS7 Standalone Server"
             discovery="StandaloneASDiscovery"
             class="StandaloneASComponent"
@@ -495,10 +495,10 @@
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
 
-        <metric property="server-state" dataType="trait" displayName="Server state" description="Detailed server state"
+        <metric property="server-state" dataType="trait" displayName="Server State" description="Detailed server state"
                 displayType="summary"/>
         &serverKindMetrics;
-        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
+        <metric property="startTime" dataType="trait" displayName="Server Start Time" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 

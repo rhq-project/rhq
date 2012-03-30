@@ -17,7 +17,7 @@ public class XmlFileReadingTest {
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getManagementPortFromHostXml(new String[]{});
+        AbstractBaseDiscovery.HostPort hp = bd.getManagementHostPortFromHostXml(new String[]{});
         System.out.println(hp);
         assert hp.host.equals("127.0.0.70") : "Host is " + hp.host;
         assert hp.port==19990 : "Port is " + hp.port;
@@ -29,7 +29,7 @@ public class XmlFileReadingTest {
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         bd.readStandaloneOrHostXmlFromFile(url.getFile());
 
-        AbstractBaseDiscovery.HostPort hp = bd.getManagementPortFromHostXml(new String[]{});
+        AbstractBaseDiscovery.HostPort hp = bd.getManagementHostPortFromHostXml(new String[]{});
         System.out.println(hp);
         // hp : HostPort{host='localhost', port=9990, isLocal=true}
         assert hp.host.equals("127.0.0.71") : "Host is " + hp.host;

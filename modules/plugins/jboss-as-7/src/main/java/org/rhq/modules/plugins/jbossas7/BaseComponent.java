@@ -163,7 +163,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 String reqName = req.getName();
 
                 ComplexRequest request = null;
-                Operation op = null;
+                Operation op;
                 if (reqName.contains(":")) {
                     request = ComplexRequest.create(reqName);
                     op = new ReadAttribute(address, request.getProp());

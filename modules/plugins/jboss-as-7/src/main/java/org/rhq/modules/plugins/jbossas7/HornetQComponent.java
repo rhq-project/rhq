@@ -40,10 +40,8 @@ public class HornetQComponent extends BaseComponent {
         targetAddress.add(targetType.as7name,resourceName);
         List<String> entries;
 
-        Operation op;
-
         Result res;
-        op = new Operation("read-operation-description",targetAddress);
+        Operation op = new Operation("read-operation-description",targetAddress);
         op.addAdditionalProperty("name","add");
         ComplexResult cres = getASConnection().executeComplex(op);
         Map<String,Map<String,Object>> definitions;
@@ -205,7 +203,7 @@ public class HornetQComponent extends BaseComponent {
         /**
          * Create a Type
          * @param descriptorName type name as it is listed in the plugin descriptor
-         * @param as7name the type undder which as7 knows it.
+         * @param as7name the type by which as7 knows it.
          */
         CreationType(String descriptorName, String as7name) {
 

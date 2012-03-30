@@ -92,12 +92,12 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      * @see #readStandaloneOrHostXmlFromFile(String) for how to obtain the parsed xml
      * @param commandLine Command line arguments of the process to
      */
-    protected HostPort getManagementPortFromHostXml(String[] commandLine) {
+    protected HostPort getManagementHostPortFromHostXml(String[] commandLine) {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
         String portString;
-        String interfaceExpession;
+        String interfaceExpression;
 
         String socketBindingName;
 
@@ -106,10 +106,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         String portOffset = null;
 
         if (!socketInterface.isEmpty()) {
-            interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
+            interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
                 + "']/inet-address/@value");
-            if (interfaceExpession.isEmpty()) {
-                interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
+            if (interfaceExpression.isEmpty()) {
+                interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
                                 + "']/loopback-address/@value");
             }
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
@@ -117,10 +117,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
             // old AS7.0, early 7.1 style
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
             String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@interface");
-            interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                 + "']/inet-address/@value");
-            if (interfaceExpession.isEmpty()) {
-                interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+            if (interfaceExpression.isEmpty()) {
+                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                                 + "']/loopback-address/@value");
             }
         } else {
@@ -136,17 +136,17 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
             portOffset = obtainXmlPropertyViaXPath(xpathExpression);
 
             // TODO the next may also be expressed differently
-            interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+            interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                 + "']/inet-address/@value");
-            if (interfaceExpession.isEmpty()) {
-                interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+            if (interfaceExpression.isEmpty()) {
+                interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                                 + "']/loopback-address/@value");
             }
         }
         HostPort hp = new HostPort();
 
-        if (!interfaceExpession.isEmpty())
-            hp.host = replaceDollarExpression(interfaceExpession, commandLine, "localhost");
+        if (!interfaceExpression.isEmpty())
+            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
         else
             hp.host = "localhost"; // Fallback
 

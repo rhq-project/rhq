@@ -56,13 +56,13 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
 
     @Test(priority = 10,groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)    public void doSomeDiscovery() throws Exception {
+    @RunDiscovery(discoverServices = true, discoverServers = true)
+    public void doSomeDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
-
     }
 
     @Test(priority = 11)

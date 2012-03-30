@@ -97,8 +97,8 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected HostPort getManagementPortFromHostXml(String[] commandLine) {
-        HostPort managementPort = super.getManagementPortFromHostXml(commandLine);
+    protected HostPort getManagementHostPortFromHostXml(String[] commandLine) {
+        HostPort managementPort = super.getManagementHostPortFromHostXml(commandLine);
         if (!managementPort.withOffset) {
             managementPort = checkForSocketBindingOffset(managementPort, commandLine);
         }

@@ -54,7 +54,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
     public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
 
-    @Test(priority = 10,groups = "discovery")
+    @Test(priority = 1010,groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void runDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -68,13 +68,13 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
     }
 
 
-    @Test(priority = 11)
+    @Test(priority = 1011)
     public void loadBindings() throws Exception {
 
         loadConfig();
     }
 
-    @Test(priority = 11)
+    @Test(priority = 1011)
     public void addBinding() throws Exception {
 
         Configuration configuration = loadConfig();
@@ -104,7 +104,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ (count+1);
     }
 
-    @Test(priority = 11)
+    @Test(priority = 1011)
     public void addModifyBinding() throws Exception {
 
         Configuration configuration = loadConfig();
@@ -146,7 +146,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
     }
 
-    @Test(priority = 11)
+    @Test(priority = 1011)
     public void addRemoveBinding() throws Exception {
 
         Configuration configuration = loadConfig();

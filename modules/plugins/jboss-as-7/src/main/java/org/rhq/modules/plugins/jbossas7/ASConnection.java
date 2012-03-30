@@ -38,6 +38,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -114,7 +115,7 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation) {
-        return executeRaw(operation, 10);
+        return executeRaw(operation, 20);
     }
 
     /**
@@ -169,8 +170,8 @@ public class ASConnection {
         }
 
         InputStream inputStream;
-        BufferedReader br = null;
-        InputStream es = null;
+        BufferedReader inputReader = null;
+        InputStream errorStream = null;
         try {
             //add additional request property to include-defaults=true to all requests.
             //if it's already set we leave it alone and assume that Operation creator is taking over control.
@@ -215,17 +216,13 @@ public class ASConnection {
             }
 
             if (inputStream != null) {
-                br = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                StringBuilder builder = new StringBuilder();
-                while ((line = br.readLine()) != null) {
-                    builder.append(line);
-                }
+                inputReader = new BufferedReader(new InputStreamReader(inputStream));
+                String responseBody = StreamUtil.slurp(inputReader);
 
                 String outcome;
                 JsonNode operationResult;
-                if (builder.length() > 0) {
-                    outcome = builder.toString();
+                if (responseBody.length() > 0) {
+                    outcome = responseBody;
                     operationResult = mapper.readTree(outcome);
                     if (verbose) {
                         ObjectMapper om2 = new ObjectMapper();
@@ -240,26 +237,27 @@ public class ASConnection {
                     noResult.setOutcome("failure");
                     operationResult = mapper.valueToTree(noResult);
                 }
+
                 return operationResult;
             } else {
                 //if not properly authorized sends plugin exception for visual indicator in the ui.
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED
                     || responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
                     if (log.isDebugEnabled()) {
-                        log.debug("[" + url + "] Response was empty and response code was " + responseCode + " "
+                        log.debug("Response to " + operation + " was empty and response code was " + responseCode + " "
                             + conn.getResponseMessage() + ".");
                     }
                     throw new InvalidPluginConfigurationException(
                         "Credentials for plugin to connect to AS7 management interface are invalid. Update Connection Settings with valid credentials.");
                 } else {
-                    log.error("[" + url + "] Response was empty and response code was " + responseCode + " "
-                        + conn.getResponseMessage() + ".");
+                    log.error("Response to " + operation + " was empty and response code was " + responseCode + " ("
+                        + conn.getResponseMessage() + ").");
                 }
             }
         } catch (IllegalArgumentException iae) {
-            log.error("Illegal argument " + iae + "\n\t for input " + operation);
+            log.error("Illegal argument for input " + operation + ": " + iae.getMessage());
         } catch (SocketTimeoutException ste) {
-            log.error("Request to AS timed out " + ste.getMessage());
+            log.error(operation + " timed out: " + ste.getMessage());
             conn.disconnect();
             Result failure = new Result();
             failure.setFailureDescription(ste.getMessage());
@@ -269,20 +267,20 @@ public class ASConnection {
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
         } catch (IOException e) {
-            log.error("Failed to get data: " + e.getMessage());
+            log.error("Failed to get data: " + e);
 
             //the following code is in place to help keep-alive http connection re-use to occur.
             if (conn != null) {//on error conditions it's still necessary to read the response so JDK knows can reuse
                 //the http connections behind the scenes.
-                es = conn.getErrorStream();
-                if (es != null) {
-                    BufferedReader dr = new BufferedReader(new InputStreamReader(es));
+                errorStream = conn.getErrorStream();
+                if (errorStream != null) {
+                    BufferedReader dr = new BufferedReader(new InputStreamReader(errorStream));
                     String ignore = null;
                     try {
                         while ((ignore = dr.readLine()) != null) {
                             //already reported error. just empty stream.
                         }
-                        es.close();
+                        errorStream.close();
                     } catch (IOException e1) {
                         // ignore
                     }
@@ -298,20 +296,21 @@ public class ASConnection {
             return ret;
 
         } finally {
-            if (br != null) {
+            if (inputReader != null) {
                 try {
-                    br.close();
+                    inputReader.close();
                 } catch (IOException e) {
-                    log.error(e.getMessage());
+                    log.error("Failed to close HTTP connection input stream: " + e.getMessage());
                 }
             }
-            if (es != null) {
+            if (errorStream != null) {
                 try {
-                    es.close();
+                    errorStream.close();
                 } catch (IOException e) {
-                    log.error(e.getMessage());
+                    log.error("Failed to close HTTP connection error stream: " + e.getMessage());
                 }
             }
+
             long t2 = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();
             stats.incrementRequestCount();

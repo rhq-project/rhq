@@ -64,7 +64,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         return "jboss.standalone.portOffset";
     }
 
-    @Test(priority = 10, groups = "discovery")
+    @Test(priority = 1, groups = "discovery")
     @RunDiscovery
     public void testStandaloneServerDiscovery() throws Exception {
         super.testAutoDiscovery();
@@ -72,31 +72,31 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(priority = 11, enabled = true)
+    @Test(priority = 2, enabled = true)
     public void testMetricsHaveNonNullValues() throws Exception {
         super.testMetricsHaveNonNullValues();
     }
 
     @Override
-    @Test(priority = 11, enabled = true)
+    @Test(priority = 3, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
-    @Test(priority = 12)
+    @Test(priority = 4)
     public void testReloadOperation() throws Exception {
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(priority = 13, enabled = false)
+    @Test(priority = 5, enabled = false)
     public void testStandaloneServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
     }
 
     // TODO: Re-enable once fixed.
-    @Test(priority = 13, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
+    @Test(priority = 5, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
         AvailabilityType avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);

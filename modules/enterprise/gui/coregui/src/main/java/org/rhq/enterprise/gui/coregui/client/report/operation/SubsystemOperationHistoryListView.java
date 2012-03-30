@@ -53,7 +53,8 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                ReportExporter exporter = ReportExporter.createExporterForRecentOperations("recentOperations", statusFilter.getValues());
+                ReportExporter exporter = ReportExporter.createExporterForRecentOperations("recentOperations", statusFilter.getValues(),
+                        fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate() );
                 exporter.export();
                 refreshTableInfo();
             }

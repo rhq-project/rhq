@@ -43,7 +43,7 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
                     }
                 }
                 ReportExporter exporter = ReportExporter.createExporterForRecentAlerts(
-                        "recentAlerts", alertPriorityList.toArray(new String[alertPriorityList.size()]));
+                        "recentAlerts", alertPriorityList.toArray(new String[alertPriorityList.size()]), fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate());
                 exporter.export();
                 refreshTableInfo();
             }

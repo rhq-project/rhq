@@ -47,7 +47,7 @@ public class SubsystemResourceDriftView extends DriftHistoryView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift", definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(), pathFilter.getValueAsString());
+                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift", definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(), pathFilter.getValueAsString(), fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate());
                 exporter.export();
                 refreshTableInfo();
             }

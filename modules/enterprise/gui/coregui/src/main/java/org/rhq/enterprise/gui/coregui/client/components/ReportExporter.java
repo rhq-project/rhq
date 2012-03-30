@@ -20,15 +20,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.Set;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
-
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+
+import java.util.Date;
+import java.util.Set;
 
 /**
  * Exporter for building urls to reports (csv).
@@ -37,8 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  * @author Mike Thompson
  */
 public class ReportExporter {
-
-    private static final Messages MSG = CoreGUI.getMessages();
 
     private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
     private static final String FORMAT = "csv"; //CSV is all we need right now
@@ -66,6 +62,10 @@ public class ReportExporter {
     String[] driftCategories;
     String driftPath;
 
+    // Date filtering
+    Date fromDate;
+    Date toDate;
+
 
     /**
      * Private constructors to force use of static factory creation pattern.
@@ -87,25 +87,39 @@ public class ReportExporter {
         return new ReportExporter(reportUrl);
     }
 
-    public static ReportExporter createExporterForRecentDrift(String reportUrl, String definition,
-                                                              String snapshot, String[] driftCategories, String path) {
-        ReportExporter newExportDialog = new ReportExporter(reportUrl);
-        newExportDialog.setDriftCategories(driftCategories);
-        newExportDialog.setDriftDefinition(definition);
-        newExportDialog.setDriftPath(path);
-        newExportDialog.setDriftSnapshot(snapshot);
-        return newExportDialog;
+    public static ReportExporter createStandardExporter(String reportUrl, Date fromDate, Date toDate) {
+        ReportExporter newExporter = new ReportExporter(reportUrl);
+        newExporter.setFromDate(fromDate);
+        newExporter.setToDate(toDate);
+        return newExporter;
     }
 
-    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList) {
+    public static ReportExporter createExporterForRecentDrift(String reportUrl, String definition,
+                                                              String snapshot, String[] driftCategories, String path,
+                                                              Date fromDate, Date toDate) {
+        ReportExporter newExporter = new ReportExporter(reportUrl);
+        newExporter.setDriftCategories(driftCategories);
+        newExporter.setDriftDefinition(definition);
+        newExporter.setDriftPath(path);
+        newExporter.setDriftSnapshot(snapshot);
+        newExporter.setFromDate(fromDate);
+        newExporter.setToDate(toDate);
+        return newExporter;
+    }
+
+    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, Date fromDate, Date toDate) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setAlertPriorityFilters(alertPriorityList);
+        newExportDialog.setFromDate(fromDate);
+        newExportDialog.setToDate(toDate);
         return newExportDialog;
     }
 
-    public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses) {
+    public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses, Date fromDate, Date toDate) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setOperationRequestStatusList(operationRequestStatuses);
+        newExportDialog.setFromDate(fromDate);
+        newExportDialog.setToDate(toDate);
         return newExportDialog;
     }
 
@@ -168,6 +182,14 @@ public class ReportExporter {
             queryString.append("snapshot=").append(driftSnapshot);
         }
 
+        // to/from Dates
+        if(fromDate != null){
+            queryString.append("fromDate=").append(fromDate.getTime());
+        }
+        if(toDate != null){
+            queryString.append("toDate=").append(toDate.getTime());
+        }
+
         
         return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+queryString);
     }
@@ -194,6 +216,14 @@ public class ReportExporter {
 
     public void setDriftPath(String driftPath) {
         this.driftPath = driftPath;
+    }
+
+    public void setFromDate(Date fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    public void setToDate(Date toDate) {
+        this.toDate = toDate;
     }
 
     public void export(){

@@ -86,7 +86,6 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
         return new StreamingOutput() {
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
-                PageControl pageControl = new PageControl(0, 5);
                 Criteria criteria = new Criteria() {
                     @Override
                     public Class<?> getPersistentClass() {

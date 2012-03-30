@@ -23,6 +23,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -66,6 +68,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     protected TextItem definitionFilter;
     protected TextItem changeSetFilter;
     protected TextItem pathFilter;
+    protected DateItem toDateFilter;
+    protected DateItem fromDateFilter;
 
 
     private EntityContext context;
@@ -138,8 +142,17 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
+        fromDateFilter = new DateItem();
+        fromDateFilter.setUseTextField(true);
+        fromDateFilter.setTitle(MSG.filter_from_date());
+        toDateFilter = new DateItem();
+        toDateFilter.setUseTextField(true);
+        toDateFilter.setTitle(MSG.filter_to_date());
+        toDateFilter.setValue(new Date());
+
+
         if (isShowFilterForm()) {
-            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter);
+            setFilterFormItems(fromDateFilter, toDateFilter, definitionFilter, changeSetFilter, categoryFilter, pathFilter );
         }
     }
 

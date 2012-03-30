@@ -25,6 +25,7 @@ import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -47,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -71,6 +73,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     protected SelectItem priorityFilter;
+    protected DateItem fromDateFilter;
+    protected DateItem toDateFilter;
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -116,9 +120,16 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
+        fromDateFilter = new DateItem();
+        fromDateFilter.setUseTextField(true);
+        fromDateFilter.setTitle(MSG.filter_from_date());
+        toDateFilter = new DateItem();
+        toDateFilter.setUseTextField(true);
+        toDateFilter.setTitle(MSG.filter_to_date());
+        toDateFilter.setValue(new Date());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(priorityFilter);
+            setFilterFormItems(fromDateFilter, toDateFilter, priorityFilter);
         }
     }
 

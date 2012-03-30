@@ -25,6 +25,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -65,10 +67,13 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
     protected SelectItem statusFilter;
+    protected DateItem toDateFilter;
+    protected DateItem fromDateFilter;
     
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
+
 
     static {
         OperationRequestStatus[] statusValues = OperationRequestStatus.values();
@@ -133,8 +138,16 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
         statusFilter.setWidth(325);
 
+        fromDateFilter = new DateItem();
+        fromDateFilter.setUseTextField(true);
+        fromDateFilter.setTitle(MSG.filter_from_date());
+        toDateFilter = new DateItem();
+        toDateFilter.setUseTextField(true);
+        toDateFilter.setTitle(MSG.filter_to_date());
+        toDateFilter.setValue(new Date());
+
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter);
+            setFilterFormItems(fromDateFilter, toDateFilter, statusFilter);
         }
     }
 

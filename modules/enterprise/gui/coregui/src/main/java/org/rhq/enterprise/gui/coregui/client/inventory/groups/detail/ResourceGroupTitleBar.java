@@ -35,6 +35,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -270,10 +271,11 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.title.markForRedraw();
     }
 
-    private void setGroupIcons(ResourceGroupComposite groupComposite) {
-        Double avails = groupComposite.getExplicitAvail();
-        this.badge.setSrc(ImageManager.getGroupLargeIcon(this.group.getGroupCategory(), avails));
-        this.availabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(avails));
+    private void setGroupIcons(ResourceGroupComposite composite) {
+        GroupAvailabilityType groupAvailType = composite.getExplicitAvailabilityType();
+
+        this.badge.setSrc(ImageManager.getGroupLargeIcon(this.group.getGroupCategory(), groupAvailType));
+        this.availabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(groupAvailType));
     }
 
     private void updateFavoriteButton() {

@@ -325,7 +325,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                         ResourceGroup emptyGroup = new ResourceGroup("");
                         emptyGroup.setId(-1);
                         Long zero = new Long(0);
-                        groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, emptyGroup);
+                        groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, zero, zero, emptyGroup);
                         groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
                             groupComposite);
                     }

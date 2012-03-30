@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
+
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -42,9 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A canvas that shows basic information/properties on a specific group.
  *
@@ -58,7 +59,7 @@ public class GeneralProperties extends LocatableVLayout {
     private boolean isAutoGroup;
 
     public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar,
-                             boolean isAutoGroup) {
+        boolean isAutoGroup) {
         super(locatorId);
         this.groupComposite = groupComposite;
         this.titleBar = titleBar;
@@ -114,8 +115,8 @@ public class GeneralProperties extends LocatableVLayout {
                                 titleBar.displayGroupName(newName);
 
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_group_summary_nameUpdateSuccessful(String.valueOf(group
-                                        .getId()), oldName, newName), Message.Severity.Info));
+                                    new Message(MSG.view_group_summary_nameUpdateSuccessful(
+                                        String.valueOf(group.getId()), oldName, newName), Message.Severity.Info));
                             }
                         });
                 }
@@ -147,7 +148,7 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(typeItem);
 
         StaticTextItem countItem = new StaticTextItem("memberCount", MSG.view_group_summary_memberCount());
-        long memberCount = this.groupComposite.getImplicitUp() + this.groupComposite.getImplicitDown();
+        long memberCount = this.groupComposite.getImplicitCount();
         countItem.setValue(memberCount);
         formItems.add(countItem);
 
@@ -201,8 +202,8 @@ public class GeneralProperties extends LocatableVLayout {
 
         FormItem recursiveItem;
         if (isEditable) {
-            CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive", MSG
-                .view_group_summary_recursive());
+            CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive",
+                MSG.view_group_summary_recursive());
             editableRecursiveItem.setValueEditedHandler(new ValueEditedHandler() {
                 public void editedValue(Object newValue) {
                     boolean isRecursive = ((newValue != null) && (Boolean) newValue);
@@ -239,8 +240,8 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(lastModifiedByItem);
 
         if (isDynaGroup) {
-            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", MSG
-                .view_group_summary_groupDefinition());
+            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition",
+                MSG.view_group_summary_groupDefinition());
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
             String groupDefinitionName = StringUtility.escapeHtml(groupDefinition.getName());

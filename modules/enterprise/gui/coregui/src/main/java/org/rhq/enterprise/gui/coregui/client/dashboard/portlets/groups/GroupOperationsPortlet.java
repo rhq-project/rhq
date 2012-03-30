@@ -177,7 +177,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                         ResourceGroup emptyGroup = new ResourceGroup("");
                         emptyGroup.setId(-1);
                         Long zero = new Long(0);
-                        groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, emptyGroup);
+                        groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, zero, zero, emptyGroup);
                         groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
                             new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
                     }

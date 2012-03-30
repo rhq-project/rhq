@@ -67,7 +67,7 @@ public class ResourceGroupUIBean {
 
     public ResourceGroupUIBean(ResourceGroupComposite resourceGroupComposite, Subject subject) {
         this.resourceGroup = resourceGroupComposite.getResourceGroup();
-        this.upCount = resourceGroupComposite.getExplicitUp();
+        this.upCount = resourceGroupComposite.getExplicitUpAndUnknown();
         this.downCount = resourceGroupComposite.getExplicitDown();
         this.count = upCount + downCount;
         this.availability = resourceGroupComposite.getExplicitAvail();

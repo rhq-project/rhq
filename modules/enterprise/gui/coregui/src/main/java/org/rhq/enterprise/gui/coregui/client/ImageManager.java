@@ -14,6 +14,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 
 /**
  * Provides an API to obtain links to images and icons, thus avoiding hardcoding image URLs throughout client code.
@@ -281,40 +282,43 @@ public class ImageManager {
     }
 
     /**
-     * Returns the group icon badged with availability icon. Avails is the
-     * percentage of resources in the group that are UP. If avails is 0, it is
-     * red (no resources are available), if it is 1, it is green (all resources
-     * are available), if it is between 0 and 1, it is yellow.
-     * 
-     * If avails is null, this means there are no resources in the group. In that
-     * case, this method returns the "UP" badged icon. 
-     *  
+     * Returns the group icon badged with availability icon. Group avail
+     * badging is determined in the following way, in order:
+     * allDown      = red
+     * someDown     = yellow
+     * someDisabled = orange
+     * otherwise    = green  
+     *   
      * @param groupType the type of group
-     * @param avails percentage of resources that are UP
      * @return the group badge icon
      */
-    public static String getGroupIcon(GroupCategory groupType, Double avails) {
-        return getGroupIcon(groupType, avails, "16");
+    public static String getGroupIcon(GroupCategory groupType, GroupAvailabilityType groupAvailType) {
+        return getGroupIcon(groupType, groupAvailType, "16");
     }
 
-    public static String getGroupLargeIcon(GroupCategory groupType, Double avails) {
-        return getGroupIcon(groupType, avails, "24");
+    /**
+     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType) 
+     */
+    public static String getGroupLargeIcon(GroupCategory groupType, GroupAvailabilityType groupAvailType) {
+        return getGroupIcon(groupType, groupAvailType, "24");
     }
 
-    private static String getGroupIcon(GroupCategory groupType, Double avails, String size) {
+    /**
+     * @see #getGroupIcon(GroupCategory, GroupAvailabilityType) 
+     */
+    private static String getGroupIcon(GroupCategory groupType, GroupAvailabilityType groupAvailType, String size) {
         String category = groupType == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
 
-        if (avails == null) {
+        switch (groupAvailType) {
+        case EMPTY:
             return "types/" + category + "_up_" + size + ".png";
-        }
-
-        double val = avails.doubleValue();
-
-        if (val == 0.0d) {
+        case DOWN:
             return "types/" + category + "_down_" + size + ".png";
-        } else if (val > 0.0d && val < 1.0d) {
+        case WARN:
             return "types/" + category + "_warning_" + size + ".png";
-        } else {
+        case DISABLED:
+            return "types/" + category + "_disabled_" + size + ".png";
+        default:
             return "types/" + category + "_up_" + size + ".png";
         }
     }
@@ -368,28 +372,26 @@ public class ImageManager {
     }
 
     /**
-     * Returns the large availability icon based on the given percentage.
-     * Avails is the percentage of availabilities that are UP. If avails is 0, it is
-     * red (nothing is available), if it is 1, it is green (everything is available),
-     * if it is between 0 and 1, it is yellow.
-     * 
-     * If avails is null, the icon will be the unknown/grey form.
-     *  
-     * @param avails percentage of availabilities that are UP
-     * @return the large availability icon
+     * Returns the large availability icon based on group availability. Determined in the following way, in order:
+     * empty        = grey
+     * allDown      = red
+     * someDown     = yellow
+     * someDisabled = orange
+     * otherwise    = green  
+     *   
+     * @return the large avail icon
      */
-    public static String getAvailabilityGroupLargeIcon(Double avails) {
-        if (avails == null) {
+    public static String getAvailabilityGroupLargeIcon(GroupAvailabilityType groupAvailType) {
+        switch (groupAvailType) {
+        case EMPTY:
             return "subsystems/availability/availability_grey_24.png";
-        }
-
-        double val = avails.doubleValue();
-
-        if (val == 0.0d) {
+        case DOWN:
             return "subsystems/availability/availability_red_24.png";
-        } else if (val > 0.0d && val < 1.0d) {
+        case WARN:
             return "subsystems/availability/availability_yellow_24.png";
-        } else {
+        case DISABLED:
+            return "subsystems/availability/availability_orange_24.png";
+        default:
             return "subsystems/availability/availability_green_24.png";
         }
     }

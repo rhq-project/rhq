@@ -227,7 +227,8 @@ public class FavoritesButton extends LocatableIMenuButton {
 
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
-            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite.getImplicitAvail()));
+            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(),
+                groupComposite.getImplicitAvailabilityType()));
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
@@ -295,7 +296,8 @@ public class FavoritesButton extends LocatableIMenuButton {
 
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
-            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite.getImplicitAvail()));
+            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(),
+                groupComposite.getImplicitAvailabilityType()));
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {

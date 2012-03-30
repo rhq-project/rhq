@@ -32,25 +32,28 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author Ian Springer
- * @author Joseph Marques
  */
 public class ResourceGroupComposite implements Serializable {
+
+    public enum GroupAvailabilityType {
+        EMPTY, UP, DOWN, WARN, DISABLED
+    };
 
     private static final long serialVersionUID = 1L;
 
     ////JAXB Needs no args constructor and final fields make that difficult. 
 
-    private Double implicitAvail;
-    private Double explicitAvail;
     private ResourceGroup resourceGroup;
 
     private GroupCategory category;
-    private long implicitUp;
+    private long implicitCount;
     private long implicitDown;
-    private long explicitUp;
+    private long implicitDisabled;
+    private long explicitCount;
     private long explicitDown;
+    private long explicitDisabled;
 
     private ResourceFacets resourceFacets;
 
@@ -61,63 +64,46 @@ public class ResourceGroupComposite implements Serializable {
     public ResourceGroupComposite() {
     }
 
-    public ResourceGroupComposite(Long explicitUp, Long explicitDown, Long implicitUp, Long implicitDown,
-        ResourceGroup resourceGroup) {
-        this(explicitUp + explicitDown, //
-            (double) explicitUp / (explicitUp + explicitDown), //
-            implicitUp + implicitDown, //
-            (double) implicitUp / (implicitUp + implicitDown), //
+    // Constructor used in Hibernate Query, see ResourceGroupManagerBean
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
+        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup) {
+
+        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
             resourceGroup, null, new ResourcePermission());
     }
 
-    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
-        Double implicitAvailability, ResourceGroup resourceGroup) {
-        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
-            new ResourcePermission());
-    }
-
-    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
-        Double implicitAvailability, ResourceGroup resourceGroup, Number measure, Number inventory, Number control,
-        Number alert, Number event, Number configureRead, Number configureWrite, Number content,
+    // Constructor used in Hibernate Query, see ResourceGroupManagerBean 
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
+        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, Number measure, Number inventory,
+        Number control, Number alert, Number event, Number configureRead, Number configureWrite, Number content,
         Number createChildResources, Number deleteResources, Number drift) {
-        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
-            new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control.intValue() > 0, alert
-                .intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
-                content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0, drift
-                    .intValue() > 0));
+
+        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
+            resourceGroup, null, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
+                control.intValue() > 0, alert.intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0,
+                configureWrite.intValue() > 0, content.intValue() > 0, createChildResources.intValue() > 0,
+                deleteResources.intValue() > 0, drift.intValue() > 0));
     }
 
-    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
-        Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
-        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, facets,
-            new ResourcePermission());
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
+        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, ResourceFacets facets) {
+
+        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
+            resourceGroup, facets, new ResourcePermission());
     }
 
     // Private constructor that all public constructors delegate to
-    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
-        Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets, ResourcePermission permissions) {
-        long expCount = (explicitCount == null ? 0 : explicitCount);
-        double expAvail = (explicitAvailability == null ? 0 : explicitAvailability);
-        long impCount = (implicitCount == null ? 0 : implicitCount);
-        double impAvail = (implicitAvailability == null ? 0 : implicitAvailability);
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
+        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, ResourceFacets facets,
+        ResourcePermission permissions) {
 
-        explicitUp = Math.round(expCount * expAvail);
-        explicitDown = expCount - explicitUp;
-        if (explicitUp + explicitDown > 0) {
-            // keep explicitAvail null if there are no explicit resources in the group
-            explicitAvail = expAvail;
-        } else {
-            explicitAvail = null;
-        }
+        this.implicitCount = implicitCount;
+        this.implicitDown = implicitDown;
+        this.implicitDisabled = implicitDisabled;
 
-        implicitUp = Math.round(impCount * impAvail);
-        implicitDown = impCount - implicitUp;
-        if (implicitUp + implicitDown > 0) {
-            // keep implicitAvail null if there are no implicit resources in the group
-            implicitAvail = impAvail;
-        } else {
-            implicitAvail = null;
-        }
+        this.explicitCount = explicitCount;
+        this.explicitDown = explicitDown;
+        this.explicitDisabled = explicitDisabled;
 
         this.resourceGroup = resourceGroup;
 
@@ -134,12 +120,36 @@ public class ResourceGroupComposite implements Serializable {
         this.resourcePermission = permissions;
     }
 
-    public Double getImplicitAvail() {
-        return this.implicitAvail;
+    public long getImplicitCount() {
+        return implicitCount;
     }
 
-    public Double getExplicitAvail() {
-        return this.explicitAvail;
+    public long getImplicitDown() {
+        return implicitDown;
+    }
+
+    public long getImplicitDisabled() {
+        return implicitDisabled;
+    }
+
+    public long getImplicitUpAndUnknown() {
+        return implicitCount - implicitDown - implicitDisabled;
+    }
+
+    public long getExplicitCount() {
+        return explicitCount;
+    }
+
+    public long getExplicitDown() {
+        return explicitDown;
+    }
+
+    public long getExplicitDisabled() {
+        return explicitDisabled;
+    }
+
+    public long getExplicitUpAndUnknown() {
+        return explicitCount - explicitDown - explicitDisabled;
     }
 
     public ResourceGroup getResourceGroup() {
@@ -150,32 +160,60 @@ public class ResourceGroupComposite implements Serializable {
         return this.category;
     }
 
-    public long getImplicitUp() {
-        return this.implicitUp;
+    /**
+     * Returns the explicit group availability determined with the following algorithm, evaluated top to bottom:
+     * <pre>
+     * empty group  = EMPTY
+     * allDown      = DOWN
+     * someDown     = WARN
+     * someDisabled = DISABLED
+     * otherwise    = UP (all members UP or UNKNOWN)
+     * </pre>  
+     *   
+     * @return the group availability type, null for an empty group
+     */
+    public GroupAvailabilityType getExplicitAvailabilityType() {
+        return getAvailabilityType(true);
     }
 
-    public long getImplicitDown() {
-        return this.implicitDown;
+    /**
+     * Returns the implicit group availability determined with the following algorithm, evaluated top to bottom:
+     * <pre>
+     * empty group  = EMPTY
+     * allDown      = DOWN
+     * someDown     = WARN
+     * someDisabled = DISABLED
+     * otherwise    = UP (all members UP or UNKNOWN)
+     * </pre>  
+     *   
+     * @return the group availability type, null for an empty group
+     */
+    public GroupAvailabilityType getImplicitAvailabilityType() {
+        return getAvailabilityType(false);
     }
 
-    public long getExplicitUp() {
-        return this.explicitUp;
-    }
+    private GroupAvailabilityType getAvailabilityType(boolean isExplicit) {
+        long count = isExplicit ? explicitCount : implicitCount;
+        long down = isExplicit ? explicitDown : implicitDown;
+        long disabled = isExplicit ? explicitDisabled : implicitDisabled;
 
-    public long getExplicitDown() {
-        return this.explicitDown;
-    }
+        if (0 == count) {
+            return GroupAvailabilityType.EMPTY;
+        }
 
-    // remove once the old UI is killed, for now this is still needed
-    @Deprecated
-    public String getExplicitFormatted() {
-        return getAlignedAvailabilityResults(getExplicitUp(), getExplicitDown());
-    }
+        if (down == count) {
+            return GroupAvailabilityType.DOWN;
+        }
 
-    // remove once the old UI is killed, for now this is still needed
-    @Deprecated
-    public String getImplicitFormatted() {
-        return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+        if (down > 0) {
+            return GroupAvailabilityType.WARN;
+        }
+
+        if (disabled > 0) {
+            return GroupAvailabilityType.DISABLED;
+        }
+
+        return GroupAvailabilityType.UP;
     }
 
     @XmlTransient
@@ -207,10 +245,28 @@ public class ResourceGroupComposite implements Serializable {
 
     // remove once the old UI is killed, for now this is still needed
     @Deprecated
-    private String getAlignedAvailabilityResults(long up, long down) {
+    public Double getExplicitAvail() {
+        return 0 == explicitCount ? null : (1.0 - (explicitDown / explicitCount));
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getExplicitFormatted() {
+        return getAlignedAvailabilityResults(getExplicitUpAndUnknown() + getExplicitDisabled(), getExplicitDown());
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getImplicitFormatted() {
+        return getAlignedAvailabilityResults(getImplicitUpAndUnknown() + getImplicitDisabled(), getImplicitDown());
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    private String getAlignedAvailabilityResults(long up, long notUp) {
         StringBuilder results = new StringBuilder();
         results.append("<table width=\"120px\"><tr>");
-        if (up == 0 && down == 0) {
+        if (up == 0 && notUp == 0) {
             results.append(getColumn(false, "<img src=\""
                 + "/coregui/images/subsystems/availability/availability_grey_16.png" + "\" /> 0"));
             results.append(getColumn(true));
@@ -221,13 +277,13 @@ public class ResourceGroupComposite implements Serializable {
                     + "/coregui/images/subsystems/availability/availability_green_16.png" + "\" />", up));
             }
 
-            if (up > 0 && down > 0) {
+            if (up > 0 && notUp > 0) {
                 results.append(getColumn(true)); // , " / ")); // use a vertical separator image if we want a separator
             }
 
-            if (down > 0) {
+            if (notUp > 0) {
                 results.append(getColumn(false, " <img src=\""
-                    + "/coregui/images/subsystems/availability/availability_red_16.png" + "\" />", down));
+                    + "/coregui/images/subsystems/availability/availability_red_16.png" + "\" />", notUp));
             } else {
                 results.append(getColumn(false,
                     "&nbsp;&nbsp;<img src=\"/coregui/images/blank.png\" width=\"16px\" height=\"16px\" />"));
@@ -261,8 +317,9 @@ public class ResourceGroupComposite implements Serializable {
     public String toString() {
         return "ResourceGroupComposite[name="
             + this.resourceGroup.getName() //
-            + ", implicit[up/down/avail=," + this.implicitUp + "/" + this.implicitDown + "/" + this.implicitAvail + "]"
-            + ", explicit[up/down/avail=," + this.explicitUp + "/" + this.explicitDown + "/" + this.explicitAvail + "]"
-            + ", facets=" + ((this.resourceFacets == null) ? "none" : this.resourceFacets.getFacets()) + "]";
+            + ", implicit[count/down/disabled=," + this.implicitCount + "/" + this.implicitDown + "/"
+            + this.implicitDisabled + "]" + ", explicit[count/down/disabled=," + this.explicitCount + "/"
+            + this.explicitDown + "/" + this.explicitDisabled + "]" + ", facets="
+            + ((this.resourceFacets == null) ? "none" : this.resourceFacets.getFacets()) + "]";
     }
 }

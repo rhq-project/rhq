@@ -87,7 +87,6 @@ import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -625,13 +624,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupComposite(subject, groupId);
 
         // if the group is empty (has no members) the availability will be null
-        if (groupComposite.getExplicitAvail() == null) {
+        if (0 == groupComposite.getExplicitCount()) {
             return new HashMap<Integer, Configuration>();
         }
 
-        AvailabilityType availability = (groupComposite.getExplicitAvail() == 1) ? AvailabilityType.UP
-            : AvailabilityType.DOWN;
-        if (availability == AvailabilityType.DOWN)
+        if (groupComposite.getExplicitDown() > 0)
             throw new Exception("Current group Resource configuration for " + groupId
                 + " cannot be calculated, because one or more of this group's member Resources are DOWN.");
 

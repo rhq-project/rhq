@@ -400,9 +400,20 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             } else if (context.type == EntityContext.Type.ResourceGroup) {
                 ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(subject,
                     context.groupId);
-                Double firstAvailability = composite.getExplicitAvail();
-                newFirstAvailabilityType = firstAvailability == null ? null
-                    : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
+                switch (composite.getExplicitAvailabilityType()) {
+                case EMPTY:
+                    newFirstAvailabilityType = null;
+                    break;
+                case DOWN:
+                case WARN:
+                    newFirstAvailabilityType = AvailabilityType.DOWN;
+                    break;
+                case DISABLED:
+                    newFirstAvailabilityType = AvailabilityType.DISABLED;
+                    break;
+                default:
+                    newFirstAvailabilityType = AvailabilityType.UP;
+                }
 
             } else {
                 // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date

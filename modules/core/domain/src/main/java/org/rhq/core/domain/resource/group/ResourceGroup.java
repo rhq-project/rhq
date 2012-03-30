@@ -238,7 +238,7 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
         + "         SELECT "
-        + "              (     SELECT COUNT(eresAvail.ID) " // the count of all explicit members
+        + "              (     SELECT COUNT(eresAvail.ID) " // total explicit members
         + "                      FROM rhq_resource_avail eresAvail "
         + "                INNER JOIN rhq_resource eres "
         + "                        ON eresAvail.resource_id = eres.id "
@@ -247,17 +247,27 @@ public class ResourceGroup extends Group {
         + "                     WHERE expMap.resource_group_id = rg.id "
         + "              ) as explicitCount, "
         + "" //
-        + "              (     SELECT COUNT(eresAvail.ID) " // the count of UP explicit members
+        + "              (     SELECT COUNT(eresAvail.ID) " // DOWN explicit members
         + "                      FROM rhq_resource_avail eresAvail "
         + "                INNER JOIN rhq_resource eres "
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
         + "                     WHERE expMap.resource_group_id = rg.id "
-        + "                       AND eresAvail.availability_type = 1 "
+        + "                       AND eresAvail.availability_type = 0 "
         + "              ) as explicitAvail, "
         + "" //
-        + "              (     SELECT COUNT(iresAvail.ID) " // the count of all implicit members
+        + "              (     SELECT COUNT(eresAvail.ID) " // DISABLED explicit members
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                       AND eresAvail.availability_type = 3 "
+        + "              ) as explicitAvail, "
+        + "" //
+        + "              (     SELECT COUNT(iresAvail.ID) " // total implicit members
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
@@ -266,14 +276,24 @@ public class ResourceGroup extends Group {
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "              ) as implicitCount, "
         + "" //
-        + "              (     SELECT COUNT(iresAvail.ID) " // the count of UP implicit members 
+        + "              (     SELECT COUNT(iresAvail.ID) " // DOWN implicit members 
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
-        + "                       AND iresAvail.availability_type = 1 "
+        + "                       AND iresAvail.availability_type = 0 "
+        + "              ) as implicitAvail, "
+        + "" //
+        + "              (     SELECT COUNT(iresAvail.ID) " // DISABLED implicit members 
+        + "                      FROM rhq_resource_avail iresAvail "
+        + "                INNER JOIN rhq_resource ires "
+        + "                        ON iresAvail.resource_id = ires.id "
+        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
+        + "                        ON ires.id = impMap.resource_id "
+        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                       AND iresAvail.availability_type = 3 "
         + "              ) as implicitAvail, "
         + "" //
         + "                rg.id as groupId, "

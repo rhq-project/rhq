@@ -39,6 +39,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -162,13 +163,15 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             rg.setResourceType(rt);
         }
 
-        Long explicitUp = Long.valueOf(from.getAttribute("explicitUp"));
+        Long explicitCount = Long.valueOf(from.getAttribute("explicitCount"));
         Long explicitDown = Long.valueOf(from.getAttribute("explicitDown"));
-        Long implicitUp = Long.valueOf(from.getAttribute("implicitUp"));
+        Long explicitDisabled = Long.valueOf(from.getAttribute("explicitDisabled"));
+        Long implicitCount = Long.valueOf(from.getAttribute("implicitCount"));
         Long implicitDown = Long.valueOf(from.getAttribute("implicitDown"));
+        Long implicitDisabled = Long.valueOf(from.getAttribute("implicitDisabled"));
 
-        ResourceGroupComposite composite = new ResourceGroupComposite(explicitUp, explicitDown, implicitUp,
-            implicitDown, rg);
+        ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitDisabled,
+            implicitCount, implicitDown, implicitDisabled, rg);
 
         return composite;
     }
@@ -182,10 +185,12 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         record.setAttribute(DESCRIPTION.propertyName(), from.getResourceGroup().getDescription());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceGroup().getGroupCategory().name());
 
-        record.setAttribute("explicitUp", String.valueOf(from.getExplicitUp()));
+        record.setAttribute("explicitCount", String.valueOf(from.getExplicitCount()));
         record.setAttribute("explicitDown", String.valueOf(from.getExplicitDown()));
-        record.setAttribute("implicitUp", String.valueOf(from.getImplicitUp()));
+        record.setAttribute("explicitDisabled", String.valueOf(from.getExplicitDisabled()));
+        record.setAttribute("implicitCount", String.valueOf(from.getImplicitCount()));
         record.setAttribute("implicitDown", String.valueOf(from.getImplicitDown()));
+        record.setAttribute("implicitDisabled", String.valueOf(from.getImplicitDisabled()));
 
         record.setAttribute(AVAIL_CHILDREN.propertyName(), getExplicitFormatted(from));
         record.setAttribute(AVAIL_DESCENDANTS.propertyName(), getImplicitFormatted(from));
@@ -200,36 +205,48 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     }
 
     private String getExplicitFormatted(ResourceGroupComposite from) {
-        return getAlignedAvailabilityResults(from.getExplicitUp(), from.getExplicitDown());
+        return getAlignedAvailabilityResults(from.getExplicitCount(), from.getExplicitUpAndUnknown(),
+            from.getExplicitDown(), from.getExplicitDisabled());
     }
 
     private String getImplicitFormatted(ResourceGroupComposite from) {
-        return getAlignedAvailabilityResults(from.getImplicitUp(), from.getImplicitDown());
+        return getAlignedAvailabilityResults(from.getImplicitCount(), from.getImplicitUpAndUnknown(),
+            from.getImplicitDown(), from.getImplicitDisabled());
     }
 
-    private String getAlignedAvailabilityResults(long up, long down) {
+    private String getAlignedAvailabilityResults(long total, long up, long down, long disabled) {
         StringBuilder results = new StringBuilder();
-        results.append("<table width=\"120px\"><tr>");
-        if (up == 0 && down == 0) {
+
+        results.append("<table width=\"180px\"><tr>");
+        if (0 == total) {
             results.append(getColumn(false,
                 "<img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
+
         } else {
             if (up > 0) {
+                String imagePath = ImageManager.getFullImagePath(ImageManager
+                    .getAvailabilityIconFromAvailType(AvailabilityType.UP));
+                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", up));
+            } else {
                 results.append(getColumn(false,
-                    " <img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE))
-                        + "\" />", up));
-            }
-
-            if (up > 0 && down > 0) {
-                results.append(getColumn(true)); // , " / ")); // use a vertical separator image if we want a separator
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
             }
 
             if (down > 0) {
+                String imagePath = ImageManager.getFullImagePath(ImageManager
+                    .getAvailabilityIconFromAvailType(AvailabilityType.DOWN));
+                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", down));
+            } else {
                 results.append(getColumn(false,
-                    " <img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE))
-                        + "\" />", down));
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
+
+            if (disabled > 0) {
+                String imagePath = ImageManager.getFullImagePath(ImageManager
+                    .getAvailabilityIconFromAvailType(AvailabilityType.DISABLED));
+                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", disabled));
             } else {
                 results.append(getColumn(false,
                     "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));

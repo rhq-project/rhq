@@ -241,6 +241,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             clearImplicitResources(groupId);
             makeImplicitMirrorExplicit(groupId);
         }
+
+        if (updateMembership) {
+            try {
+                setResourceType(groupId);
+            } catch (ResourceGroupDeleteException e) {
+                throw new ResourceGroupNotFoundException(e.getMessage());
+            }
+        }
+
         return newlyAttachedGroup;
     }
 
@@ -433,6 +442,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) {
+
+        addResourcesToGroup(subject, groupId, resourceIds, true);
+    }
+
+    private void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds, boolean setType) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids == null || ids.length == 0) {
             return;
@@ -447,6 +461,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
             addResourcesToGroupImplicit(subject, groupId, batchIds, true, isRecursive);
             addResourcesToGroupExplicit(subject, groupId, batchIds, isRecursive);
+        }
+
+        if (setType) {
+            try {
+                setResourceType(groupId);
+            } catch (ResourceGroupDeleteException e) {
+                throw new ResourceGroupNotFoundException(e.getMessage());
+            }
         }
     }
 
@@ -571,6 +593,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) {
+
+        removeResourcesFromGroup(subject, groupId, resourceIds, true);
+    }
+
+    private void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds, boolean setType) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids == null || ids.length == 0) {
             return;
@@ -583,6 +610,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             Integer[] batchIdArray = ArrayUtils.copyOfRange(ids, batchIndex, batchIndex + 1000);
 
             removeResourcesFromGroup_helper(subject, groupId, batchIdArray, isRecursive);
+        }
+
+        if (setType) {
+            try {
+                setResourceType(groupId);
+            } catch (ResourceGroupDeleteException e) {
+                throw new ResourceGroupNotFoundException(e.getMessage());
+            }
         }
     }
 
@@ -1156,18 +1191,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             try {
                 while (rs.next()) {
                     long explicitCount = rs.getLong(1);
-                    long explicitUpCount = rs.getLong(2);
-                    //double explicitAvail = rs.getDouble(2);
-                    long implicitCount = rs.getLong(3);
-                    long implicitUpCount = rs.getLong(4);
-                    //double implicitAvail = rs.getDouble(4);
-                    // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
-                    // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of an indication
-                    // of UP vs DOWN it is now UP vs NOT UP (not up is every other avail). 
-                    double explicitAvail = (explicitCount > 0) ? (explicitUpCount / explicitCount) : 0D;
-                    double implicitAvail = (implicitCount > 0) ? (implicitUpCount / implicitCount) : 0D;
+                    long explicitDown = rs.getLong(2);
+                    long explicitDisabled = rs.getLong(3);
+                    long implicitCount = rs.getLong(4);
+                    long implicitDown = rs.getLong(5);
+                    long implicitDisabled = rs.getLong(6);
                     int groupKey = rs.getInt(5);
-                    Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey };
+                    Object[] next = new Object[] { explicitCount, explicitDown, explicitDisabled, implicitCount,
+                        implicitDown, implicitDisabled, groupKey };
                     rawResults.add(next);
                 }
             } finally {
@@ -1208,9 +1239,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         int i = 0;
         for (Object[] row : rawResults) {
             long explicitCount = (Long) row[0];
-            double explicitAvail = (Double) row[1];
-            long implicitCount = (Long) row[2];
-            double implicitAvail = (Double) row[3];
+            long explicitDown = (Long) row[1];
+            long explicitDisabled = (Long) row[2];
+            long implicitCount = (Long) row[3];
+            long implicitDown = (Long) row[4];
+            long implicitDisabled = (Long) row[5];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
             ResourceType type = group.getResourceType();
             ResourceFacets facets;
@@ -1221,8 +1254,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // compatible group
                 facets = resourceTypeManager.getResourceFacets(type.getId());
             }
-            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
-                implicitAvail, group, facets);
+            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown,
+                explicitDisabled, implicitCount, implicitDown, implicitDisabled, group, facets);
             Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
             composite.setResourcePermission(new ResourcePermission(perms));
             results.add(composite);
@@ -1294,13 +1327,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         List<Integer> newMembers = ArrayUtils.wrapInList(resourceIds); // members needing addition
         newMembers.removeAll(currentMembers);
         if (newMembers.size() > 0) {
-            addResourcesToGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(newMembers));
+            addResourcesToGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(newMembers), false);
         }
 
         List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
         extraMembers.removeAll(ArrayUtils.wrapInList(resourceIds));
         if (extraMembers.size() > 0) {
-            removeResourcesFromGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(extraMembers));
+            removeResourcesFromGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(extraMembers),
+                false);
         }
 
         // As a result of the membership change ensure that the group type is set correctly.
@@ -1362,17 +1396,25 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             throw new PermissionException("You do not have permission to view this resource group");
         }
 
+        // Could do this with two GROUP BY queries but we'll go with one RT to the db and hope that's best, despite
+        // all the subselects.
         String queryString = "SELECT \n" //
-            + "  (SELECT count(er) "
+            + "  (SELECT count(er) " // Total explicit
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
-            + "  (SELECT count(er) "
+            + "  (SELECT count(er) " // DOWN explicit
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
-            + "        AND er.currentAvailability.availabilityType = 1 ),\n"
-            + "  (SELECT count(ir) "
+            + "        AND er.currentAvailability.availabilityType = 0 ),\n"
+            + "  (SELECT count(er) " // DISABLED explicit
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "        AND er.currentAvailability.availabilityType = 3 ),\n"
+            + "  (SELECT count(ir) " // Total implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
-            + "  (SELECT count(ir) "
+            + "  (SELECT count(ir) " // DOWN implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
-            + "        AND ir.currentAvailability.availabilityType = 1 ), g \n"
+            + "        AND ir.currentAvailability.availabilityType = 0 ), g \n"
+            + "  (SELECT count(ir) " // DISABLED implicit
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "        AND ir.currentAvailability.availabilityType = 3 ), g \n"
             + "FROM ResourceGroup g where g.id = :groupId";
 
         Query query = entityManager.createQuery(queryString);
@@ -1399,19 +1441,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroupComposite composite = null;
         if (((Number) data[2]).longValue() > 0) {
             long explicitCount = ((Number) data[0]).longValue();
-            long explicitUpCount = ((Number) data[1]).longValue();
-            long implicitCount = ((Number) data[2]).longValue();
-            long implicitUpCount = ((Number) data[3]).longValue();
+            long explicitDownCount = ((Number) data[1]).longValue();
+            long explicitDisabledCount = ((Number) data[2]).longValue();
+            long implicitCount = ((Number) data[3]).longValue();
+            long implicitDownCount = ((Number) data[4]).longValue();
+            long implicitDisabledCount = ((Number) data[5]).longValue();
             // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
-            // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of an indication
-            // of UP vs DOWN it is now UP vs NOT UP (not up is every other avail). 
-            double explicitAvail = (explicitCount > 0) ? (explicitUpCount / explicitCount) : 0D;
-            double implicitAvail = (implicitCount > 0) ? (implicitUpCount / implicitCount) : 0D;
+            // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of a ratio of
+            // of UP vs DOWN it is now handled with counts. This is handled in the composite.
 
-            composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount, implicitAvail, group,
-                facets);
+            composite = new ResourceGroupComposite(explicitCount, explicitDownCount, explicitDisabledCount,
+                implicitCount, implicitDownCount, implicitDisabledCount, group, facets);
         } else {
-            composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
+            composite = new ResourceGroupComposite(0L, 0L, 0L, 0L, 0L, 0L, group, facets);
         }
 
         return composite;
@@ -1483,14 +1525,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      *   2) It can not be a candidate for filtering
      *   3) It must be sorted by using the zero-based positional ordinal within the projection
      *
-     * This method offers 4 new aggregates that you can sort on.  The
+     * This method offers 2 new aggregates that you can sort on.  The
      *
      * explicitCount (ordinal 0) - the count of the number of children in the group
-     * explicitAvail (ordinal 1) - decimal percentage representing the number of UP children relative to the total
-     *                             number of children in the group
      * implicitCount (ordinal 2) - the count of the number of descendents in the group
-     * implicitAvail (ordinal 3) - decimal percentage representing the number of UP descendents relative to the total
-     *                             number of descendents in the group
      */
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
@@ -1504,9 +1542,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitUpCount," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitUpCount," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitUpCount," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitUpCount," // implicit member count with DISABLED avail
                 + "    %alias% ) "; // ResourceGroup
             break;
         case ROLE_OWNED:
@@ -1514,9 +1554,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitUpCount," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitUpCount," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitUpCount," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitUpCount," // implicit member count with DISABLED avail
                 + "    %alias%, " // ResourceGroup
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE

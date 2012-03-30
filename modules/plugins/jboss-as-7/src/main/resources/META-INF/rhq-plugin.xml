@@ -1776,71 +1776,6 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </server>
 
-    <server name="Security"
-        discovery="SubsystemDiscovery"
-        class="BaseComponent"
-        singleton="true"
-        >
-
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=security"/>
-        </plugin-configuration>
-
-
-
-        <resource-configuration>
-            <c:simple-property name="authentication-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Specifies the AuthenticationManager implementation class name to use. To use the container default set the value to 'default'"/>
-            <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="true" defaultValue="false"
-                               description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads."/>
-            <c:simple-property name="default-callback-handler-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="A global class name for the CallbackHandler implementation to be used with login modules. To use the container default set the value to 'default'"/>
-            <c:simple-property name="subject-factory-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Sets the class name for the SubjectFactory implementation to be used. To use the container default set the value to 'default'."/>
-            <c:simple-property name="authorization-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Specifies the AuthorizationManager implementation class name to use. To use the container default set the value to 'default'."/>
-            <c:simple-property name="audit-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Specifies the AuditManager implementation class name to use. To use the container default set the value to 'default'."/>
-            <c:simple-property name="identity-trust-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Specifies the IdentityTrustManager implementation class name to use. To use the container default set the value to 'default'."/>
-            <c:simple-property name="mapping-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
-                               description="Specifies the MappingManager implementation class name to use. To use the container default set the value to 'default''."/>
-        </resource-configuration>
-
-        <service name="SecurtityDomain"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-
-            <runs-inside>
-                <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-                <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-            </runs-inside>
-
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="security-domain"/>
-            </plugin-configuration>
-
-
-
-            <resource-configuration>
-                <c:simple-property name="extends" required="false" type="string" readOnly="true" description="The parent security domain"/>
-                <c:simple-property name="cache-type" required="false" type="string" readOnly="true"
-                                   description="Adds a cache to speed up authentication checks. Allowed values are 'default' to use simple map as the cache and 'infinispan' to use an Infinispan cache.">
-                    <c:property-options>
-                        <c:option value="default"/>
-                        <c:option value="infinispan"/>
-                    </c:property-options>
-                </c:simple-property>
-            </resource-configuration>
-        </service>
-
-    </server>
 
     <server name="Infinispan"
         discovery="SubsystemDiscovery"
@@ -2983,6 +2918,51 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 <c:simple-property name="beanvalidationgroups" required="false" type="string" readOnly="false" description="Specifies the bean validation groups that should be used"/>
                 <c:simple-property name="bootstrapcontext" required="false" type="string" readOnly="false" description="Specifies the unique name of the bootstrap context that should be used"/>
                 <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter"/>
+            </resource-configuration>
+        </service>
+
+    </service>
+
+
+    <service name="Security"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=security"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" defaultValue="false" description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads. The default value is false."/>
+        </resource-configuration>
+
+        <service name="SecurtityDomain"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+            <runs-inside>
+                <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+                <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+            </runs-inside>
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="security-domain"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="extends" required="false" type="string" readOnly="true" description="The parent security domain"/>
+                <c:simple-property name="cache-type" required="false" type="string" readOnly="true" description="Adds a cache to speed up authentication checks. Allowed values are 'default' to use simple map as the cache and 'infinispan' to use an Infinispan cache.">
+                    <c:property-options>
+                        <c:option value="default"/>
+                        <c:option value="infinispan"/>
+                    </c:property-options>
+                </c:simple-property>
             </resource-configuration>
         </service>
 

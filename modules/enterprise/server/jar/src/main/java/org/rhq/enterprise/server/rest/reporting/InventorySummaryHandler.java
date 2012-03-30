@@ -133,8 +133,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
             output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
 
-            // if there are no resource type ids, that means we fetching everything - all
-            // details for all types.
+            // if there are no resource type ids, that means we are fetching everything,
+            // that is all resource details for all types.
             if (resourceTypeIds.isEmpty()) {
                 criteria = getDetailsQueryCriteria(null);
                 queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
@@ -207,7 +207,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String toCSV(Resource resource) {
-        return resource.getName() + "," + ReportHelper.parseAncestry(resource.getAncestry()) + "," +
+        return resource.getName() + "," + ReportFormatHelper.parseAncestry(resource.getAncestry()) + "," +
             resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
             "," + resource.getCurrentAvailability().getAvailabilityType();
     }

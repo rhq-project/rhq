@@ -2929,8 +2929,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <service name="ThreadFactory"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+                 class="BaseComponent">
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="thread-factory"/>
@@ -2951,8 +2950,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <service name="ThreadPool"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+                 class="BaseComponent">
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>

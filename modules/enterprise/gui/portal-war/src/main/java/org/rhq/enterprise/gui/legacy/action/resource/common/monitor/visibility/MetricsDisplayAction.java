@@ -29,9 +29,9 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;

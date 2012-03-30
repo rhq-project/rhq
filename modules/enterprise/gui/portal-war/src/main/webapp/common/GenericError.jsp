@@ -1,7 +1,7 @@
 <%@ page language="java" %>
 <%@ page isErrorPage="true" %>
 <%@ page import="java.util.Enumeration"%>
-<%@ page import="org.rhq.core.clientapi.util.StringUtil" %>
+<%@ page import="org.rhq.core.util.StringUtil" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>

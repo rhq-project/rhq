@@ -3,8 +3,8 @@ package org.rhq.enterprise.server.measurement;
 import java.util.Arrays;
 import java.util.List;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesBase;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 

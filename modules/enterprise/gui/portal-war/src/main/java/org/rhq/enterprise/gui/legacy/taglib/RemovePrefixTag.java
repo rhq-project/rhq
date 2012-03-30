@@ -24,7 +24,8 @@ import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.tagext.TagSupport;
 import org.apache.taglibs.standard.tag.common.core.NullAttributeException;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
-import org.rhq.core.clientapi.util.StringUtil;
+
+import org.rhq.core.util.StringUtil;
 
 public class RemovePrefixTag extends TagSupport {
     private String prefix = null;

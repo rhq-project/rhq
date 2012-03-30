@@ -27,9 +27,9 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.util.StringUtil;
 
 public abstract class SubjectPreferencesBase {
 

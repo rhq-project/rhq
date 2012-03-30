@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.StringTokenizer;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;

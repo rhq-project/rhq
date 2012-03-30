@@ -27,7 +27,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
 import org.rhq.core.clientapi.util.ArrayUtil;
-import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.util.StringUtil;
 
 /**
  * Format a value into a duration.

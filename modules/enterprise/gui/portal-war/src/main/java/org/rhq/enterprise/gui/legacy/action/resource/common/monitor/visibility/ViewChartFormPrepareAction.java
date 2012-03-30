@@ -35,7 +35,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 
 import org.rhq.core.clientapi.util.ArrayUtil;
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -51,6 +50,7 @@ import org.rhq.core.domain.resource.group.Group;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.gui.common.servlet.HighLowMetricValue;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;

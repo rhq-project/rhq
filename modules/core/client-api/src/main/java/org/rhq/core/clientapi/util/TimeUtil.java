@@ -31,6 +31,7 @@ import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
+import org.rhq.core.util.StringUtil;
 
 public class TimeUtil {
     public static final String DATE_FORMAT = "MM-dd-yy-HH-mm-ss";

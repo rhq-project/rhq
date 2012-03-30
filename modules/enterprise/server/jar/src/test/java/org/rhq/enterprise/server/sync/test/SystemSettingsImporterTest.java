@@ -27,11 +27,11 @@ import java.util.Properties;
 import org.jmock.Expectations;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.sync.entity.SystemSettings;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.test.JMockTest;

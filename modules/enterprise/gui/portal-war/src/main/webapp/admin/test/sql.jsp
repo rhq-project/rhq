@@ -13,7 +13,7 @@ $Header$
 <%@ page import="javax.naming.InitialContext" %>
 <%@ page import="javax.naming.NamingException" %>
 <%@ page import="javax.servlet.ServletRequest" %>
-<%@ page import="org.rhq.core.clientapi.util.StringUtil" %>
+<%@ page import="org.rhq.core.util.StringUtil" %>
 <%@ page import="org.rhq.enterprise.server.RHQConstants"%>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.core.db.DatabaseTypeFactory" %>

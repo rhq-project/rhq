@@ -28,7 +28,7 @@ import javax.faces.context.FacesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 
 /**

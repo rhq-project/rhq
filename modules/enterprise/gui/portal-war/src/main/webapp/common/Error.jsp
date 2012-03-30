@@ -1,7 +1,7 @@
 <%@ page language="java" %>
 <%@ page isErrorPage="true" %>
 <%@ page import="javax.servlet.ServletException" %>
-<%@ page import="org.rhq.core.clientapi.util.StringUtil" %>
+<%@ page import="org.rhq.core.util.StringUtil" %>
 <%@ page import="org.rhq.enterprise.server.auth.SessionNotFoundException"%>
 <%@ page import="org.rhq.enterprise.server.auth.SessionTimeoutException"%>
 

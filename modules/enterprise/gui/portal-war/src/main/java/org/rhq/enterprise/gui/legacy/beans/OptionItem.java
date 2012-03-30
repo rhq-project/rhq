@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.struts.util.LabelValueBean;
-import org.rhq.core.clientapi.util.StringUtil;
+
+import org.rhq.core.util.StringUtil;
 
 /**
  * This bean is for use with html:options.

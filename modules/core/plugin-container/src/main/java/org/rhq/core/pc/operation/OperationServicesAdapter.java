@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rhq.core.clientapi.server.operation.OperationServerService;
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -34,6 +33,7 @@ import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
 import org.rhq.core.pluginapi.operation.OperationServicesResultCode;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ExceptionPackage;
 
 /**

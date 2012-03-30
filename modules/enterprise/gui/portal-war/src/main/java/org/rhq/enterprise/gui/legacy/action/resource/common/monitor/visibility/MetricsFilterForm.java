@@ -21,7 +21,8 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.ImageButtonBean;
-import org.rhq.core.clientapi.util.StringUtil;
+
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
 
 /**

@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 
 /**

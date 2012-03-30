@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.alert.*;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
@@ -387,7 +388,7 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                                 .append(formattedHiValue)
                                 .append("], inclusive");
                         } else {
-                            builder.append("BAD COMPARATOR! Report this bug: " + condition.getComparator());
+                            builder.append("BAD COMPARATOR! Report this bug: ").append(condition.getComparator());
                         }
                         break;
                     default:

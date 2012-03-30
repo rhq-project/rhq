@@ -21,10 +21,12 @@
   <properties>
     <json.version>${project.json.version}</json.version>
     <jackson.version>1.9.5</jackson.version>
-    <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
+    <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
     <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
     <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+    <java.tieredCompilation>-Dxxx</java.tieredCompilation>
+    <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
   </properties>
 
 
@@ -42,6 +44,8 @@
 
     <!-- === Compile Deps === -->
 
+    <!-- NOTE: jackson 2.0.0 has moved to a new groupId - artifacts are under
+               http://repo1.maven.org/maven2/com/fasterxml/jackson/ -->
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
@@ -119,6 +123,36 @@
 
 
   <profiles>
+
+    <profile>
+      <id>java7</id>
+      <activation>
+        <property>
+          <name>java.specification.version</name>
+          <value>1.7</value>
+        </property>
+      </activation>
+
+      <properties>
+        <java.tieredCompilation>-XX:+TieredCompilation</java.tieredCompilation>
+      </properties>
+
+    </profile>
+
+    <profile>
+      <id>java64bit</id>
+
+      <activation>
+        <property>
+          <name>sun.arch.data.model</name>
+          <value>64</value>
+        </property>
+      </activation>
+
+      <properties>
+        <java.useCompressedOOPS>-XX:+UseCompressedOops</java.useCompressedOOPS>
+      </properties>
+    </profile>
 
     <profile>
       <id>as700Final.itest.setup</id>
@@ -368,8 +402,8 @@
                     <!-- Process Controller Java options -->
                     <argument>-D[Standalone]</argument>
                     <argument>-server</argument>
-                    <argument>-XX:+UseCompressedOops</argument>
-                    <argument>-XX:+TieredCompilation</argument>
+                    <argument>${java.useCompressedOOPS}</argument>
+                    <argument>${java.tieredCompilation}</argument>
                     <argument>-Xms64m</argument>
                     <argument>-Xmx512m</argument>
                     <argument>-XX:MaxPermSize=256m</argument>

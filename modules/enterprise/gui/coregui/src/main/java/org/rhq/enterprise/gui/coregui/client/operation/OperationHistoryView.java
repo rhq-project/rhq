@@ -45,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -144,7 +143,6 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         toDateFilter = new DateItem();
         toDateFilter.setUseTextField(true);
         toDateFilter.setTitle(MSG.filter_to_date());
-        toDateFilter.setValue(new Date());
 
         if (isShowFilterForm()) {
             setFilterFormItems(fromDateFilter, toDateFilter, statusFilter);

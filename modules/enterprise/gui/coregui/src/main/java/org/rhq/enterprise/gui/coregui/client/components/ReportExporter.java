@@ -63,8 +63,8 @@ public class ReportExporter {
     String driftPath;
 
     // Date filtering
-    Date fromDate;
-    Date toDate;
+    Date startDate;
+    Date endDate;
 
 
     /**
@@ -89,8 +89,8 @@ public class ReportExporter {
 
     public static ReportExporter createStandardExporter(String reportUrl, Date fromDate, Date toDate) {
         ReportExporter newExporter = new ReportExporter(reportUrl);
-        newExporter.setFromDate(fromDate);
-        newExporter.setToDate(toDate);
+        newExporter.setStartDate(fromDate);
+        newExporter.setEndDate(toDate);
         return newExporter;
     }
 
@@ -102,24 +102,24 @@ public class ReportExporter {
         newExporter.setDriftDefinition(definition);
         newExporter.setDriftPath(path);
         newExporter.setDriftSnapshot(snapshot);
-        newExporter.setFromDate(fromDate);
-        newExporter.setToDate(toDate);
+        newExporter.setStartDate(fromDate);
+        newExporter.setEndDate(toDate);
         return newExporter;
     }
 
     public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, Date fromDate, Date toDate) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setAlertPriorityFilters(alertPriorityList);
-        newExportDialog.setFromDate(fromDate);
-        newExportDialog.setToDate(toDate);
+        newExportDialog.setStartDate(fromDate);
+        newExportDialog.setEndDate(toDate);
         return newExportDialog;
     }
 
     public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses, Date fromDate, Date toDate) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setOperationRequestStatusList(operationRequestStatuses);
-        newExportDialog.setFromDate(fromDate);
-        newExportDialog.setToDate(toDate);
+        newExportDialog.setStartDate(fromDate);
+        newExportDialog.setEndDate(toDate);
         return newExportDialog;
     }
 
@@ -142,7 +142,7 @@ public class ReportExporter {
 
         if (showAllDetail) {
             queryString.append("showAllDetails=").append("true");
-        } else if (!resourceTypeIds.isEmpty()) {
+        } else if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
             queryString.append("resourceTypeId=").append(StringUtility.toString(resourceTypeIds));
         }
 
@@ -183,11 +183,11 @@ public class ReportExporter {
         }
 
         // to/from Dates
-        if(fromDate != null){
-            queryString.append("fromDate=").append(fromDate.getTime());
+        if(startDate != null){
+            queryString.append("startTime=").append(startDate.getTime());
         }
-        if(toDate != null){
-            queryString.append("toDate=").append(toDate.getTime());
+        if(endDate != null){
+            queryString.append("endTime=").append(endDate.getTime());
         }
 
         
@@ -218,12 +218,12 @@ public class ReportExporter {
         this.driftPath = driftPath;
     }
 
-    public void setFromDate(Date fromDate) {
-        this.fromDate = fromDate;
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
     }
 
-    public void setToDate(Date toDate) {
-        this.toDate = toDate;
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 
     public void export(){

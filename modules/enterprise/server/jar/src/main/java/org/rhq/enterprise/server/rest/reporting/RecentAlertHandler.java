@@ -2,10 +2,10 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.alert.*;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,20 +40,28 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
     private AlertManagerLocal alertManager;
 
     @Override
-    public StreamingOutput recentAlerts(final String alertPriority, UriInfo uriInfo, final HttpServletRequest request,
-        HttpHeaders headers) {
+    public StreamingOutput recentAlerts(final String alertPriority, final Long startTime, final Long endTime,
+                                        final UriInfo uriInfo, final HttpServletRequest request,
+                                        final HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 final AlertCriteria criteria = new AlertCriteria();
+                criteria.addSortCtime(PageOrdering.DESC);
 
-                List<AlertPriority> alertPriorityList = new ArrayList<AlertPriority>(10);
-                String alertPriorities[] = alertPriority.split(",");
-                for ( String alertPriorityValue : alertPriorities) {
-                    log.info("Alert Priority Filter set for: " + alertPriorityValue);
-                    alertPriorityList.add(AlertPriority.valueOf(alertPriorityValue.toUpperCase()));
+                if(startTime != null){
+                    criteria.addFilterStartTime(startTime);
                 }
-                criteria.addFilterPriorities(alertPriorityList.toArray(new AlertPriority[alertPriorityList.size()]));
+                if(endTime != null){
+                    criteria.addFilterEndTime(endTime);
+                }
+                // lets default the end time for them to now if they didnt enter it
+                if(startTime != null && endTime == null){
+                    Date today = new Date();
+                    criteria.addFilterEndTime(today.getTime());
+                }
+
+                criteria.addFilterPriorities(getAlertPriorities());
 
                 CriteriaQueryExecutor<Alert, AlertCriteria> queryExecutor =
                         new CriteriaQueryExecutor<Alert, AlertCriteria>() {
@@ -73,6 +82,18 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                 }
 
             }
+
+            private AlertPriority[] getAlertPriorities() {
+                List<AlertPriority> alertPriorityList = new ArrayList<AlertPriority>(10);
+                String alertPriorities[] = alertPriority.split(",");
+                for ( String alertPriorityValue : alertPriorities) {
+                    log.info("Alert Priority Filter set for: " + alertPriorityValue);
+                    alertPriorityList.add(AlertPriority.valueOf(alertPriorityValue.toUpperCase()));
+                }
+
+                return alertPriorityList.toArray(new AlertPriority[alertPriorityList.size()]);
+            }
+
             private String toCSV(Alert alert) {
                 return formatDateTime(alert.getCtime()) + "," +
                         cleanForCSV(alert.getAlertDefinition().getName()) + "," +

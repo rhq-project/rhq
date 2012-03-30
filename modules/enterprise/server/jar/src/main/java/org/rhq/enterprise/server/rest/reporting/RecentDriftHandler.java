@@ -24,6 +24,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
@@ -52,6 +53,19 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 criteria.fetchChangeSet(true);
                 criteria.addFilterChangeSetStartVersion(1);// always start at 1 for this report
 
+                if(startTime != null){
+                    criteria.addFilterStartTime(startTime);
+                }
+                if(endTime != null){
+                    criteria.addFilterEndTime(endTime);
+                }
+                // lets default the end time for them to now if they didnt enter it
+                if(startTime != null && endTime == null){
+                    Date today = new Date();
+                    criteria.addFilterEndTime(today.getTime());
+                }
+
+
                 if(snapshot != null){
                     log.info("Drift Snapshot version Filter set for: " + snapshot);
                     criteria.addFilterChangeSetEndVersion(snapshot);
@@ -62,23 +76,10 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 }
                 if(definition != null){
                     log.info("Drift Definition Filter set for: " + definition);
-                    criteria.addFilterId(path);
+                    //@todo: drift sorting is done in the resultset after no criteria for definition
                 }
 
-                List<DriftCategory> driftCategoryList = new ArrayList<DriftCategory>(10);
-                String categoryArray[] = categories.split(",");
-                for (String category : categoryArray) {
-                    log.info("DriftCategories Filter set for: " + category);
-                    driftCategoryList.add(DriftCategory.valueOf(category.toUpperCase()));
-                }
-                criteria.addFilterCategories(driftCategoryList.toArray(new DriftCategory[driftCategoryList.size()]));
-
-                if(startTime != null){
-                   criteria.addFilterStartTime(startTime);
-                }
-                if(endTime != null){
-                    criteria.addFilterEndTime(endTime);
-                }
+                criteria.addFilterCategories(getCategories());
 
                 CriteriaQueryExecutor<DriftComposite, DriftCriteria> queryExecutor =
                         new CriteriaQueryExecutor<DriftComposite, DriftCriteria>() {
@@ -99,6 +100,17 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 }
 
             }
+
+            private DriftCategory[] getCategories() {
+                List<DriftCategory> driftCategoryList = new ArrayList<DriftCategory>(10);
+                String categoryArray[] = categories.split(",");
+                for (String category : categoryArray) {
+                    log.info("DriftCategories Filter set for: " + category);
+                    driftCategoryList.add(DriftCategory.valueOf(category.toUpperCase()));
+                }
+                return (driftCategoryList.toArray(new DriftCategory[driftCategoryList.size()]));
+            }
+
             private String toCSV(DriftComposite drift) {
                 return formatDateTime(drift.getDrift().getCtime()) + "," +
                         cleanForCSV(drift.getDriftDefinitionName()) + "," +

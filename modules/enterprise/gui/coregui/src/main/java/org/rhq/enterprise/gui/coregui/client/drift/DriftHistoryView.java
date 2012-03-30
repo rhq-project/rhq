@@ -42,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -148,7 +147,6 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         toDateFilter = new DateItem();
         toDateFilter.setUseTextField(true);
         toDateFilter.setTitle(MSG.filter_to_date());
-        toDateFilter.setValue(new Date());
 
 
         if (isShowFilterForm()) {

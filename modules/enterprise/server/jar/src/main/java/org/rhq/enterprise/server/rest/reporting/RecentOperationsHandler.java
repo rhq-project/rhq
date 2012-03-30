@@ -6,6 +6,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -23,6 +24,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
@@ -33,16 +35,32 @@ import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.format
 public class RecentOperationsHandler extends AbstractRestBean implements RecentOperationsLocal {
 
     private final Log log = LogFactory.getLog(RecentOperationsHandler.class);
+
     @EJB
     private OperationManagerLocal operationManager;
 
     @Override
-    public StreamingOutput recentOperations(final String operationRequestStatus, UriInfo uriInfo,
-        final HttpServletRequest request, HttpHeaders headers) {
+    public StreamingOutput recentOperations(final String operationRequestStatus,
+                                            final Long startTime, final Long endTime, final UriInfo uriInfo,
+                                            final HttpServletRequest request, final HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+                criteria.addSortEndTime(PageOrdering.DESC);
+
+                if(startTime != null){
+                    criteria.addFilterStartTime(startTime);
+                }
+                if(endTime != null){
+                    criteria.addFilterEndTime(endTime);
+                }
+                // lets default the end time for them to now if they didnt enter it
+                if(startTime != null && endTime == null){
+                    Date today = new Date();
+                    criteria.addFilterEndTime(today.getTime());
+                }
+
 
                 List<OperationRequestStatus> operationRequestStatusList = new ArrayList<OperationRequestStatus>(10);
                 String statuses[] = operationRequestStatus.split(",");

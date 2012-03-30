@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -126,7 +125,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         toDateFilter = new DateItem();
         toDateFilter.setUseTextField(true);
         toDateFilter.setTitle(MSG.filter_to_date());
-        toDateFilter.setValue(new Date());
 
         if (isShowFilterForm()) {
             setFilterFormItems(fromDateFilter, toDateFilter, priorityFilter);

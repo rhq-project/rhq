@@ -67,8 +67,7 @@ public class ASConnection {
     private int port;
 
     /**
-     * Construct an ASConnection object. The real "physical" connection is done in
-     * {@link #executeRaw(Operation)}.
+     * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
      *
      * @param host Host of the DomainController or standalone server
      * @param port Port of the JSON api.
@@ -135,7 +134,7 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation, int timeoutSec) {
-        long t1 = System.currentTimeMillis();
+        long requestStartTime = System.currentTimeMillis();
 
         HttpURLConnection conn;
         OutputStream out;
@@ -169,12 +168,9 @@ public class ASConnection {
             return ret;
         }
 
-        InputStream inputStream;
-        BufferedReader inputReader = null;
-        InputStream errorStream = null;
         try {
-            //add additional request property to include-defaults=true to all requests.
-            //if it's already set we leave it alone and assume that Operation creator is taking over control.
+            // Add additional request property to include-defaults=true to all requests.
+            // If it's already set, we leave it alone and assume that Operation creator is taking over control.
             if (operation.getAdditionalProperties().isEmpty()
                 || !operation.getAdditionalProperties().containsKey(INCLUDE_DEFAULT)) {
                 operation.addAdditionalProperty("include-defaults", "true");
@@ -182,13 +178,12 @@ public class ASConnection {
 
             String json_to_send = mapper.writeValueAsString(operation);
 
-            //check for spaces in the path which the AS7 server will reject. Log verbose error and
+            // Check for spaces in the path which the AS7 server will reject. Log verbose error and
             // generate failure indicator.
             if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
                 if (containsSpaces(operation.getAddress().getPath())) {
                     Result noResult = new Result();
-                    String outcome = "- Path '" + operation.getAddress().getPath()
-                        + "' is invalid as it contains spaces -";
+                    String outcome = "- Path '" + operation.getAddress().getPath() + "' is invalid as it contains spaces -";
                     if (verbose) {
                         log.error(outcome);
                     }
@@ -208,15 +203,11 @@ public class ASConnection {
             out.flush();
             out.close();
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                inputStream = conn.getInputStream();
-            } else {
-                inputStream = conn.getErrorStream();
-            }
+            InputStream inputStream = (conn.getInputStream() != null) ? conn.getInputStream() : conn.getErrorStream();
 
             if (inputStream != null) {
-                inputReader = new BufferedReader(new InputStreamReader(inputStream));
+                BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream));
+                // Note: slurp() will close the stream once it's done slurping it.
                 String responseBody = StreamUtil.slurp(inputReader);
 
                 String outcome;
@@ -240,18 +231,20 @@ public class ASConnection {
 
                 return operationResult;
             } else {
-                //if not properly authorized sends plugin exception for visual indicator in the ui.
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED
-                    || responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+                // Empty response body - probably some sort of error - check the response code.
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                     if (log.isDebugEnabled()) {
                         log.debug("Response to " + operation + " was empty and response code was " + responseCode + " "
-                            + conn.getResponseMessage() + ".");
+                            + conn.getResponseMessage() + " - throwing InvalidPluginConfigurationException...");
                     }
+                    // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
+                    // warning message in the GUI.
                     throw new InvalidPluginConfigurationException(
-                        "Credentials for plugin to connect to AS7 management interface are invalid. Update Connection Settings with valid credentials.");
+                        "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.");
                 } else {
-                    log.error("Response to " + operation + " was empty and response code was " + responseCode + " ("
-                        + conn.getResponseMessage() + ").");
+                    log.warn("Response body for " + operation + " was empty and response code was " + responseCode + " ("
+                            + conn.getResponseMessage() + ").");
                 }
             }
         } catch (IllegalArgumentException iae) {
@@ -267,25 +260,24 @@ public class ASConnection {
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
         } catch (IOException e) {
-            log.error("Failed to get data: " + e);
-
-            //the following code is in place to help keep-alive http connection re-use to occur.
-            if (conn != null) {//on error conditions it's still necessary to read the response so JDK knows can reuse
-                //the http connections behind the scenes.
-                errorStream = conn.getErrorStream();
-                if (errorStream != null) {
-                    BufferedReader dr = new BufferedReader(new InputStreamReader(errorStream));
-                    String ignore = null;
-                    try {
-                        while ((ignore = dr.readLine()) != null) {
-                            //already reported error. just empty stream.
-                        }
-                        errorStream.close();
-                    } catch (IOException e1) {
-                        // ignore
-                    }
-                }
+            // On error conditions, it's still necessary to slurp the response stream so the JDK knows it can reuse the
+            // persistent HTTP connection behind the scenes.
+            String responseBody;
+            if (conn.getErrorStream() != null) {
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                // Note: slurp() will close the stream once it's done slurping it.
+                responseBody = StreamUtil.slurp(errorReader);
+            } else {
+                responseBody = "";
             }
+
+            String responseCodeString;
+            try {
+                responseCodeString = conn.getResponseCode() + " (" + conn.getResponseMessage() + ")";
+            } catch (IOException ioe) {
+                responseCodeString = "unknown response code";
+            }
+            log.error(operation + " failed with " + responseCodeString + " - response body was [" + responseBody + "].");
 
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
@@ -294,27 +286,11 @@ public class ASConnection {
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
-
         } finally {
-            if (inputReader != null) {
-                try {
-                    inputReader.close();
-                } catch (IOException e) {
-                    log.error("Failed to close HTTP connection input stream: " + e.getMessage());
-                }
-            }
-            if (errorStream != null) {
-                try {
-                    errorStream.close();
-                } catch (IOException e) {
-                    log.error("Failed to close HTTP connection error stream: " + e.getMessage());
-                }
-            }
-
-            long t2 = System.currentTimeMillis();
+            long requestEndTime = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();
             stats.incrementRequestCount();
-            stats.addRequestTime(t2 - t1);
+            stats.addRequestTime(requestEndTime - requestStartTime);
         }
 
         return null;

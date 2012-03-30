@@ -171,6 +171,13 @@ public class Domain2Descriptor {
                 if (key.equals("write-attribute")) {
                     continue;
                 }
+                //exclude a few more shared operations: whoami, undefine-attribute
+                if (key.equals("whoami")) {
+                    continue;
+                }
+                if (key.equals("undefine-attribute")) {
+                    continue;
+                }
 
                 //for each custom operation found, retrieve child hierarchy and pass into
                 Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);

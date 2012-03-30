@@ -2387,11 +2387,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </resource-configuration>
     </server>
 
-    <server name="Naming"
+    <service name="Naming"
         discovery="SubsystemDiscovery"
         class="NamingComponent"
-        singleton="true"
-        >
+        singleton="true">
 
         <runs-inside>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
@@ -2420,67 +2419,85 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 </c:list-property>
             </results>
         </operation>
-    </server>
 
+        <service name="Binding"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="JNDI bindings for primitive types"
+                 singleton="true">
 
-  <service name="Transactions Subsystem"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true"
-          description="The transactions subsystem."
-          >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="binding"/>
+            </plugin-configuration>
 
-      <runs-inside>
-          <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-          <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-      </runs-inside>
+            <resource-configuration>
+                <c:simple-property name="binding-type" required="false" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory"/>
+				<c:simple-property name="class" required="false" type="string" readOnly="false" description="The object factory class name for object factory bindings"/>
+				<c:simple-property name="lookup" required="false" type="string" readOnly="false" description="The entry to lookup in JNDI for lookup bindings"/>
+				<c:simple-property name="module" required="false" type="string" readOnly="false" description="The module to load the object factory from for object factory bindings"/>
+				<c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
+				<c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
+            </resource-configuration>
+        </service>
 
-      <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
-      </plugin-configuration>
+    </service>
 
-     <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created."
-           measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-     <metric property="number-of-timed-out-transactions" description="The number of transactions that have rolled back due to timeout."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-     <metric property="number-of-committed-transactions" description="The number of committed transactions."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-     <metric property="number-of-transactions" description="The total number of transactions (top-level and nested) created"
-             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-     <metric property="number-of-heuristics" description="The number of transactions which have terminated with heuristic outcomes."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-     <metric property="number-of-aborted-transactions" description="The number of aborted (i.e. rolledback) transactions."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-     <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
-     <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
-     <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure."
-             measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+	<service name="Transactions Subsystem"
+	        discovery="SubsystemDiscovery"
+	        class="BaseComponent"
+	        singleton="true"
+	        description="The transactions subsystem.">
 
-     <resource-configuration>
-        <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
-                 description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
-        <c:simple-property name="process-id-uuid" required="false" type="boolean" readOnly="false" description="Indicates whether the transaction manager should use a UUID based process id."/>
-        <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the recovery environment."/>
-        <c:simple-property name="jts" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true this enables the Java Transaction Service"/>
-        <c:simple-property name="object-store-path" required="false" type="string" readOnly="false" defaultValue="tx-object-store"
-                 description="Denotes a relative or absolute filesystem path denoting where the transaction manager object store should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
-        <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="var" description="Denotes a relative or absolute filesystem path denoting where the transaction manager core should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
-        <c:simple-property name="process-id-socket-binding" required="false" type="string" readOnly="false" description="The name of the socket binding configuration to use if the transaction manager should use a socket-based process id. Will be 'undefined' if 'process-id-uuid' is 'true'; otherwise must be set."/>
-        <c:simple-property name="default-timeout" required="false" type="integer" readOnly="false" defaultValue="300" description="The default timeout."/>
-        <c:simple-property name="process-id-socket-max-ports" required="false" type="integer" readOnly="false" defaultValue="10" description="The maximum number of ports to search for an open port if the transaction manager should use a socket-based process id. If the port specified by the socket binding referenced in 'process-id-socket-binding' is occupied, the next higher port will be tried until an open port is found or the number of ports specified by this attribute have been tried. Will be 'undefined' if 'process-id-uuid' is 'true'."/>
-        <c:simple-property name="recovery-listener" required="false" type="boolean" readOnly="false" defaultValue="false" description="Used to specify if the recovery system should listen on a network socket or not."/>
-        <c:simple-property name="status-socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the transaction status manager."/>
-        <c:simple-property name="node-identifier" required="false" type="string" readOnly="false" defaultValue="1" description="Used to set the node identifier on the core environment."/>
-        <c:simple-property name="enable-tsm-status" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the transaction status manager (TSM) service, needed for out of process recovery, should be provided or not.."/>
-        <c:simple-property name="object-store-relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
-                 description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
-        <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
-     </resource-configuration>
+	    <runs-inside>
+	        <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+	        <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+	    </runs-inside>
 
-  </service>
+	    <plugin-configuration>
+	        <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
+	    </plugin-configuration>
 
+	   <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created."
+	         measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+	   <metric property="number-of-timed-out-transactions" description="The number of transactions that have rolled back due to timeout."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+	   <metric property="number-of-committed-transactions" description="The number of committed transactions."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+	   <metric property="number-of-transactions" description="The total number of transactions (top-level and nested) created"
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+	   <metric property="number-of-heuristics" description="The number of transactions which have terminated with heuristic outcomes."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+	   <metric property="number-of-aborted-transactions" description="The number of aborted (i.e. rolledback) transactions."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+	   <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+	   <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+	   <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure."
+	           measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+
+	   <resource-configuration>
+	      <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+	               description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+	      <c:simple-property name="process-id-uuid" required="false" type="boolean" readOnly="false" description="Indicates whether the transaction manager should use a UUID based process id."/>
+	      <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the recovery environment."/>
+	      <c:simple-property name="jts" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true this enables the Java Transaction Service"/>
+	      <c:simple-property name="object-store-path" required="false" type="string" readOnly="false" defaultValue="tx-object-store"
+	               description="Denotes a relative or absolute filesystem path denoting where the transaction manager object store should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+	      <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="var" description="Denotes a relative or absolute filesystem path denoting where the transaction manager core should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+	      <c:simple-property name="process-id-socket-binding" required="false" type="string" readOnly="false" description="The name of the socket binding configuration to use if the transaction manager should use a socket-based process id. Will be 'undefined' if 'process-id-uuid' is 'true'; otherwise must be set."/>
+	      <c:simple-property name="default-timeout" required="false" type="integer" readOnly="false" defaultValue="300" description="The default timeout."/>
+	      <c:simple-property name="process-id-socket-max-ports" required="false" type="integer" readOnly="false" defaultValue="10" description="The maximum number of ports to search for an open port if the transaction manager should use a socket-based process id. If the port specified by the socket binding referenced in 'process-id-socket-binding' is occupied, the next higher port will be tried until an open port is found or the number of ports specified by this attribute have been tried. Will be 'undefined' if 'process-id-uuid' is 'true'."/>
+	      <c:simple-property name="recovery-listener" required="false" type="boolean" readOnly="false" defaultValue="false" description="Used to specify if the recovery system should listen on a network socket or not."/>
+	      <c:simple-property name="status-socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the transaction status manager."/>
+	      <c:simple-property name="node-identifier" required="false" type="string" readOnly="false" defaultValue="1" description="Used to set the node identifier on the core environment."/>
+	      <c:simple-property name="enable-tsm-status" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the transaction status manager (TSM) service, needed for out of process recovery, should be provided or not.."/>
+	      <c:simple-property name="object-store-relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+	               description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+	      <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
+	   </resource-configuration>
+
+	</service>
 
     <service name="Network Interface"
              discovery="SubsystemDiscovery"
@@ -2498,15 +2515,15 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
     </service>
 
+
     <service name="SocketBindingGroup"
              discovery="SubsystemDiscovery"
-             class="SocketBindingGroupComponent"
-            >
+             class="SocketBindingGroupComponent">
+
         <runs-inside>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
         </runs-inside>
-
 
         <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="socket-binding-group"/>
@@ -2897,8 +2914,16 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" default="subsystem=cmp" readOnly="true"/>
         </plugin-configuration>
 
-        <resource-configuration>
-            <c:group name="child:hilo-keygenerator=hilo-keygenerator" displayName="HiLo based key generators.">
+        <service name="HiloKeygenerator"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 description="HiLo based key generators.">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="hilo-keygenerator"/>
+            </plugin-configuration>
+
+            <resource-configuration>
                 <c:simple-property name="block-size" required="false" type="long" readOnly="true" description="The block size"/>
                 <c:simple-property name="create-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create create the tables"/>
                 <c:simple-property name="create-table-ddl" required="false" type="string" readOnly="true" description="The DDL used to create the table"/>
@@ -2909,9 +2934,35 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 <c:simple-property name="sequence-column" required="false" type="string" readOnly="true" description="The sequence column name"/>
                 <c:simple-property name="sequence-name" required="false" type="string" readOnly="true" description="The name of the sequence"/>
                 <c:simple-property name="table-name" required="false" type="string" readOnly="true" description="The table name"/>
-            </c:group>
-        </resource-configuration>
+            </resource-configuration>
+        </service>
 
+     </service>
+
+     <service name="EE"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the EE subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=ee" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+	        <c:simple-property name="ear-subdeployments-isolated" required="false" type="boolean" readOnly="false" defaultValue="false" description="Flag indicating whether each of the subdeployments within a .ear can access classes belonging to another subdeployment within the same .ear. A value of false means the subdeployments can see classes belonging to other subdeployments within the .ear. The default value is false."/>
+	        <c:list-property name="global-modules" description="A list of modules that should be made available to all deployments." >
+	            <c:map-property name="globalmodule" displayName="Global module">
+                   <c:simple-property name="name" type="string" displayName="Name" required="true"/>
+                   <c:simple-property name="slot" type="string" displayName="Slot" required="true"/>
+                </c:map-property>
+	        </c:list-property>
+        </resource-configuration>
      </service>
 
 </plugin>

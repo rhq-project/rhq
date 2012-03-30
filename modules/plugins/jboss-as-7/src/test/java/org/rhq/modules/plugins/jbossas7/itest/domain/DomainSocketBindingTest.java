@@ -78,6 +78,10 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
     public void addBinding() throws Exception {
 
         Configuration configuration = loadConfig();
+        PropertyList pl = (PropertyList) configuration.get("*");
+        int count = pl.getList().size();
+
+        // Now add a binding
         PropertyMap map = new PropertyMap("binding");
         PropertySimple ps = new PropertySimple("name","bla");
         map.put(ps);
@@ -87,18 +91,17 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         map.put(ps);
         ps = new PropertySimple("multicast-port:expr","${foo.bar.baz:12346}");
         map.put(ps);
-        PropertyList pl = (PropertyList) configuration.get("*");
-        int count = pl.getList().size();
         pl.add(map);
 
         ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,configuration,getResource().getId());
         ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
         assert response!=null;
+        assert response.getConfigurationUpdateId() == 1 : "Expected update id 1, but got " + response.getConfigurationUpdateId();
         assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
 
         configuration = loadConfig();
         pl = (PropertyList) configuration.get("*");
-        assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ count+1;
+        assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ (count+1);
     }
 
     @Test(priority = 11)
@@ -117,7 +120,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         PropertyList pl = (PropertyList) configuration.get("*");
         pl.add(map);
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,configuration,getResource().getId());
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(2,configuration,getResource().getId());
         ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
         assert response!=null;
         assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
@@ -136,7 +139,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         assert map != null : "Did not find 'bla2' in the returned config";
         map.put(new PropertySimple("port:expr",22355));
         map.put(new PropertySimple("fixed-port",true));
-        request = new ConfigurationUpdateRequest(2,configuration,getResource().getId());
+        request = new ConfigurationUpdateRequest(3,configuration,getResource().getId());
         response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
         assert response!=null;
         assert response.getErrorMessage()==null: "Config update resulted in this error: " + response.getErrorMessage();
@@ -160,7 +163,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         int count = pl.getList().size();
         pl.add(map);
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,configuration,getResource().getId());
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(4,configuration,getResource().getId());
         ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
         assert response!=null;
         assert response.getErrorMessage()==null: "Config add resulted in this error: " + response.getErrorMessage();
@@ -180,7 +183,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         }
         assert pl.getList().size() == count;
 
-        request = new ConfigurationUpdateRequest(3,configuration,getResource().getId());
+        request = new ConfigurationUpdateRequest(5,configuration,getResource().getId());
         response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
         assert response!=null;
         assert response.getErrorMessage()==null: "Property removal resulted in this error: " + response.getErrorMessage();

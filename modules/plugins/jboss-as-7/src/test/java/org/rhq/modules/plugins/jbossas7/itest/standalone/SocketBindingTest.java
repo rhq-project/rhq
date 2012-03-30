@@ -95,7 +95,7 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
 
         configuration = loadConfig();
         pl = (PropertyList) configuration.get("*");
-        assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ count+1;
+        assert pl.getList().size() == count+1 : "Got only " + pl.getList().size() + " items, expected "+ (count+1);
     }
 
     @Test(priority = 11)

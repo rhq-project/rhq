@@ -156,7 +156,7 @@ public class ASConnection {
             // This most likely just means the server is down.
             if (log.isDebugEnabled()) {
                 log.debug("Failed to open connection to [" + urlString + "] in order to invoke [" + operation + "]: "
-                        + e);
+                    + e);
             }
             // TODO (ips): Would it make more sense to return null here, since we didn't even connect?
             Result failure = new Result();
@@ -182,7 +182,8 @@ public class ASConnection {
             if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
                 if (containsSpaces(operation.getAddress().getPath())) {
                     Result noResult = new Result();
-                    String outcome = "- Path '" + operation.getAddress().getPath() + "' is invalid as it contains spaces -";
+                    String outcome = "- Path '" + operation.getAddress().getPath()
+                        + "' is invalid as it contains spaces -";
                     if (verbose) {
                         log.error(outcome);
                     }
@@ -229,22 +230,6 @@ public class ASConnection {
                 }
 
                 return operationResult;
-            } else {
-                // Empty response body - probably some sort of error - check the response code.
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Response to " + operation + " was empty and response code was " + responseCode + " "
-                            + conn.getResponseMessage() + " - throwing InvalidPluginConfigurationException...");
-                    }
-                    // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
-                    // warning message in the GUI.
-                    throw new InvalidPluginConfigurationException(
-                        "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.");
-                } else {
-                    log.warn("Response body for " + operation + " was empty and response code was " + responseCode + " ("
-                            + conn.getResponseMessage() + ").");
-                }
             }
         } catch (IllegalArgumentException iae) {
             log.error("Illegal argument for input " + operation + ": " + iae.getMessage());
@@ -273,11 +258,28 @@ public class ASConnection {
             String responseCodeString;
             try {
                 responseCodeString = conn.getResponseCode() + " (" + conn.getResponseMessage() + ")";
+
+                // Process response code to generate plugin configuration exception and/or logging 
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Response to " + operation + " was " + responseCode + " " + conn.getResponseMessage()
+                            + " - throwing InvalidPluginConfigurationException...");
+                    }
+                    // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
+                    // warning message in the GUI.
+                    throw new InvalidPluginConfigurationException(
+                        "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.");
+                } else {
+                    log.warn("Response body for " + operation + " was empty and response code was " + responseCode
+                        + " (" + conn.getResponseMessage() + ").");
+                }
+
             } catch (IOException ioe) {
                 responseCodeString = "unknown response code";
             }
             String failureDescription = operation + " failed with " + responseCodeString + " - response body was ["
-                    + responseBody + "].";
+                + responseBody + "].";
             log.error(failureDescription, e);
 
             JsonNode operationResult = null;
@@ -331,7 +333,7 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public Result execute(Operation op) {
-        return execute(op, false,10);
+        return execute(op, false, 10);
     }
 
     /**
@@ -342,8 +344,8 @@ public class ASConnection {
      * @return Result of the execution
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
-    public Result execute(Operation op,int timeoutSec) {
-        return execute(op, false,timeoutSec);
+    public Result execute(Operation op, int timeoutSec) {
+        return execute(op, false, timeoutSec);
     }
 
     /**
@@ -354,7 +356,7 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public ComplexResult executeComplex(Operation op) {
-        return (ComplexResult) execute(op, true,10);
+        return (ComplexResult) execute(op, true, 10);
     }
 
     /**
@@ -365,8 +367,8 @@ public class ASConnection {
      * @return ComplexResult of the execution
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
-    public ComplexResult executeComplex(Operation op,int timeoutSec) {
-        return (ComplexResult) execute(op, true,timeoutSec);
+    public ComplexResult executeComplex(Operation op, int timeoutSec) {
+        return (ComplexResult) execute(op, true, timeoutSec);
     }
 
     /**
@@ -390,7 +392,7 @@ public class ASConnection {
      * @return ComplexResult of the execution
      */
     public Result execute(Operation op, boolean isComplex, int timeoutSec) {
-        JsonNode node = executeRaw(op,timeoutSec);
+        JsonNode node = executeRaw(op, timeoutSec);
 
         if (node == null) {
             log.warn("Operation [" + op + "] returned null");

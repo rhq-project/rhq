@@ -2079,9 +2079,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                  class="BaseComponent"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="endpoint"/>
+                <c:simple-property name="path" readOnly="true" default="endpoint-config"/>
             </plugin-configuration>
 
+<!--
             <metric property="average-processing-time" description="Average endpoint processing time." displayType="summary" units="milliseconds"/>
             <metric property="min-processing-time" description="Minimal endpoint processing time." units="milliseconds"/>
             <metric property="max-processing-time" description="Maximal endpoint processing time." units="milliseconds"/>
@@ -2089,7 +2090,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <metric property="request-count" description="Count of requests the endpoint processed." displayType="summary" measurementType="trendsup"/>
             <metric property="response-count" description="Count of responses the endpoint generated." measurementType="trendsup"/>
             <metric property="fault-count" description="Count of faults the endpoint generated." displayType="summary" measurementType="trendsup"/>
-
+-->
             <resource-configuration>
                 <c:simple-property name="name" required="true" type="string" readOnly="true" description="Webservice endpoint name."/>
                 <c:simple-property name="context" required="true" type="string" readOnly="true" description="Webservice endpoint context."/>

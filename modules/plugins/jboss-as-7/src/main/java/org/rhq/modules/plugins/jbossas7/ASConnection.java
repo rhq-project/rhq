@@ -259,6 +259,10 @@ public class ASConnection {
             try {
                 responseCodeString = conn.getResponseCode() + " (" + conn.getResponseMessage() + ")";
 
+                //spinder 3/31/12 NOTE: This means that when the Mgmt user has not been configured you will 
+                // NOT get the usual json details with failure-descriptions.  Most of the time this is ok as it will 
+                // likely be a customer who does not have the right configuration and needs to know why without digging
+                // through agent logs.
                 // Process response code to generate plugin configuration exception and/or logging 
                 int responseCode = conn.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {

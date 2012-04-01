@@ -23,6 +23,7 @@ package org.rhq.enterprise.gui.coregui.client.components;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 import java.util.Date;
@@ -87,12 +88,6 @@ public class ReportExporter {
         return new ReportExporter(reportUrl);
     }
 
-    public static ReportExporter createStandardExporter(String reportUrl, Date fromDate, Date toDate) {
-        ReportExporter newExporter = new ReportExporter(reportUrl);
-        newExporter.setStartDate(fromDate);
-        newExporter.setEndDate(toDate);
-        return newExporter;
-    }
 
     public static ReportExporter createExporterForRecentDrift(String reportUrl, String definition,
                                                               String snapshot, String[] driftCategories, String path,
@@ -141,9 +136,9 @@ public class ReportExporter {
         StringBuilder queryString = new StringBuilder();
 
         if (showAllDetail) {
-            queryString.append("showAllDetails=").append("true");
+            queryString.append("showAllDetails=").append("true").append("&");
         } else if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
-            queryString.append("resourceTypeId=").append(StringUtility.toString(resourceTypeIds));
+            queryString.append("resourceTypeId=").append(StringUtility.toString(resourceTypeIds)).append("&");
         }
 
         if(!isEmpty(operationRequestStatuses)){
@@ -153,7 +148,7 @@ public class ReportExporter {
                 operationRequestStatusBuffer.append(",");
             }
 
-            queryString.append("operationRequestStatus=").append(operationRequestStatusBuffer.toString());
+            queryString.append("operationRequestStatus=").append(operationRequestStatusBuffer.toString()).append("&");
         }
         if(!isEmpty(alertPriorityFilters)){
             StringBuilder alertsPriorityBuffer = new StringBuilder();
@@ -161,7 +156,7 @@ public class ReportExporter {
                 alertsPriorityBuffer.append(alertPriority);
                 alertsPriorityBuffer.append(",");
             }
-            queryString.append("alertPriority=").append(alertsPriorityBuffer.toString());
+            queryString.append("alertPriority=").append(alertsPriorityBuffer.toString()).append("&");
         }
 
         // Drift Related
@@ -170,27 +165,26 @@ public class ReportExporter {
             for (String category : driftCategories) {
                 driftCategoriesBuffer.append(category).append(",");
             }
-            queryString.append("categories=").append(driftCategoriesBuffer.toString());
+            queryString.append("categories=").append(driftCategoriesBuffer.toString()).append("&");
         }
         if (driftDefinition != null) {
-            queryString.append("definition=").append(driftDefinition);
+            queryString.append("definition=").append(driftDefinition).append("&");
         }
         if (driftPath != null) {
-            queryString.append("path=").append(driftDefinition);
+            queryString.append("path=").append(driftDefinition).append("&");
         }
         if (driftSnapshot != null) {
-            queryString.append("snapshot=").append(driftSnapshot);
+            queryString.append("snapshot=").append(driftSnapshot).append("&");
         }
 
         // to/from Dates
         if(startDate != null){
-            queryString.append("startTime=").append(startDate.getTime());
+            queryString.append("startTime=").append(startDate.getTime()).append("&");
         }
         if(endDate != null){
-            queryString.append("endTime=").append(endDate.getTime());
+            queryString.append("endTime=").append(endDate.getTime()).append("&");
         }
 
-        
         return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+queryString);
     }
 
@@ -227,7 +221,9 @@ public class ReportExporter {
     }
 
     public void export(){
-        Window.open(determineUrl(), "download", null);
+        String reportUrl = determineUrl();
+        Log.info("Opening Export CSV report on url: "+reportUrl);
+        Window.open(reportUrl, "download", null);
 
     }
 

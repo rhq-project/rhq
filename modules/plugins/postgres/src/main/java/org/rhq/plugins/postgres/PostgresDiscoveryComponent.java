@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.ProcExe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
@@ -194,15 +195,21 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         //now try to extract the version information by asking the server executable itself
         if (version == null && processInfo != null) {
             try {
-                String postgresExe = processInfo.getExecutable().getName();
-                ProcessExecution execution = new ProcessExecution(postgresExe);
-                execution.setArguments(new String[] { "--version" });
-                execution.setCaptureOutput(true);
-                ProcessExecutionResults results = systemInfo.executeProcess(execution);
-                String versionInfo = results.getCapturedOutput();
-                Matcher m = VERSION_FROM_COMMANDLINE.matcher(versionInfo);
-                if (m.find()) {
-                    version = versionInfo.substring(m.start(), m.end());
+                ProcExe executable = processInfo.getExecutable();
+                if (executable != null) {
+                    String postgresExe = executable.getName();
+                    ProcessExecution execution = new ProcessExecution(postgresExe);
+                    execution.setArguments(new String[] { "--version" });
+                    execution.setCaptureOutput(true);
+                    ProcessExecutionResults results = systemInfo.executeProcess(execution);
+                    String versionInfo = results.getCapturedOutput();
+                    Matcher m = VERSION_FROM_COMMANDLINE.matcher(versionInfo);
+                    if (m.find()) {
+                        version = versionInfo.substring(m.start(), m.end());
+                    }
+                    else {
+                        log.debug("Can't get the process executable - does the agent have the right permissions?");
+                    }
                 }
             } catch (Exception e) {
                 log.info("Failed to obtain Postgres version information from the executable file.", e);
@@ -230,9 +237,9 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             return DriverManager.getConnection(url, principal, credentials);
         } catch (SQLException e) {
             if (logFailure) {
-                log.info("Failed to connect to the database", e);
+                log.info("Failed to connect to the database: " + e.getMessage());
             } else {
-                log.debug("Failed to connect to the database", e);
+                log.debug("Failed to connect to the database: " + e.getMessage());
             }
             return null;
         }
@@ -299,7 +306,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         if (conn == null) {
             return Collections.emptyList();
         }
-        
+
         try {
             List<String> ret = new ArrayList<String>();
 

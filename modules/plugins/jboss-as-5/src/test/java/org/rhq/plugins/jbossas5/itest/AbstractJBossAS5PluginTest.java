@@ -37,4 +37,10 @@ public abstract class AbstractJBossAS5PluginTest extends AbstractAgentPluginTest
     protected String getPluginName() {
         return PLUGIN_NAME;
     }
+
+    @Override
+    protected int getTypeHierarchyDepth() {
+        return 4;
+    }
+
 }

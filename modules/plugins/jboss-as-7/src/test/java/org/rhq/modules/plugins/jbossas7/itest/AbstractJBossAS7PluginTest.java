@@ -112,6 +112,11 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         return PLUGIN_NAME;
     }
 
+    @Override
+    protected int getTypeHierarchyDepth() {
+        return 5;
+    }
+
     protected static Resource getResourceByTypeAndKey(Resource parent, final ResourceType type, String key) {
         Set<Resource> childResources = ResourceUtility.getChildResources(parent,
                 new TypeAndKeyResourceFilter(type, key));

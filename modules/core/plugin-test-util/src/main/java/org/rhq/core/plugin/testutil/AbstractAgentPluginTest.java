@@ -24,9 +24,9 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +140,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         this.serverInventory = new FakeServerInventory();
         System.out.println("\n====== Waiting for discovery to complete...");
         // TODO: Calculate the expected depth by recursively descending the types defined by the plugin.
-        this.discoveryCompleteChecker = serverInventory.createAsyncDiscoveryCompletionChecker(4);
+        this.discoveryCompleteChecker = serverInventory.createAsyncDiscoveryCompletionChecker(getTypeHierarchyDepth());
 
         try {
             this.serverServices.resetMocks();
@@ -150,6 +150,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             e.printStackTrace();
         }
     }
+
+    protected abstract int getTypeHierarchyDepth();
 
     @AfterDiscovery
     public void waitForAsyncDiscoveries() throws Exception {
@@ -274,7 +276,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected Set<String> getMetricsWithNullValues(Resource resource, Set<MeasurementDefinition> metricDefs)
             throws Exception {
-        Set<String> metricsWithNullValues = new LinkedHashSet<String>();
+        Set<String> metricsWithNullValues = new TreeSet<String>();
         for (MeasurementDefinition metricDef : metricDefs) {                        
             if (!metricDef.getResourceType().equals(resource.getResourceType())) {
                 throw new IllegalArgumentException(metricDef + " is not defined by " + resource.getResourceType());

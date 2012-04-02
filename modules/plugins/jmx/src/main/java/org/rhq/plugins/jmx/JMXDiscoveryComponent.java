@@ -23,6 +23,7 @@
 package org.rhq.plugins.jmx;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.MalformedURLException;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanServerConnection;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.TabularData;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -250,13 +253,19 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
     private String getJavaVersion(EmsConnection connection) {
         String version = null;
-        EmsBean runtimeMXBean = connection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
-        if (runtimeMXBean != null) {
-            EmsAttribute systemPropertiesAttribute = runtimeMXBean.getAttribute("systemProperties");
-            if (systemPropertiesAttribute != null) {
-                Map<String, String> systemProperties = (Map<String, String>) systemPropertiesAttribute.getValue();
-                version = systemProperties.get("java.version");
+        try {
+            EmsBean runtimeMXBean = connection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
+            if (runtimeMXBean != null) {
+                EmsAttribute systemPropertiesAttribute = runtimeMXBean.getAttribute("systemProperties");
+                TabularData systemProperties = (TabularData) systemPropertiesAttribute.getValue();
+                CompositeData compositeData = systemProperties.get(new String[]{"java.version"});
+                if (compositeData != null) {
+                    version = (String) compositeData.get("value");
+                }
             }
+        } catch (Exception e) {
+            log.error("An error occurred while trying to determine Java version of remote JVM at ["
+                    + connection.getConnectionProvider().getConnectionSettings().getServerUrl() + "].", e);
         }
         return version;
     }
@@ -306,9 +315,20 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 throw new RuntimeException("Failed to parse connector address: " + connectorAddress, e);
             }
 
+            JMXConnector jmxConnector;
+            try {
+                jmxConnector = connect(jmxServiceURL);
+            } catch (IOException e) {
+                // The JVM's not currently running, which means we won't be able to figure out its main class name,
+                // which is needed to upgrade its key. This is not an error, so return null.
+                log.debug("Unable to upgrade key of JVM Resource with key [" + inventoriedResource.getResourceKey()
+                        + "], since connecting to its JMX service URL [" + jmxServiceURL + "] failed: " + e);
+                return null;
+            }
+
             Long pid;
             try {
-                JMXConnector jmxConnector = JMXConnectorFactory.connect(jmxServiceURL);
+
                 MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();                
                 RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
                     ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
@@ -317,7 +337,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                     throw new RuntimeException("Failed to determine JVM pid by parsing JVM name.");
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Failed to determine JVM pid.", e);
+                throw new RuntimeException("Failed to determine pid of JVM at [" + jmxServiceURL + "].", e);
             }
 
             List<ProcessInfo> processes = inventoriedResource.getSystemInformation().getProcesses(
@@ -410,7 +430,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
         String version;
         try {
-            JMXConnector jmxConnector = JMXConnectorFactory.connect(jmxServiceURL);
+            JMXConnector jmxConnector = connect(jmxServiceURL);
             MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
             RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
                 ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
@@ -434,6 +454,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         
         return new DiscoveredResourceDetails(context.getResourceType(), key.toString(), name, version, description,
             pluginConfig, process);
+    }
+
+    private static JMXConnector connect(JMXServiceURL jmxServiceURL) throws IOException {
+        JMXConnector jmxConnector;
+        try {
+            jmxConnector = JMXConnectorFactory.connect(jmxServiceURL);
+        } catch (IOException e) {
+            throw new IOException("Failed to connect to JMX service URL [" + jmxServiceURL + "].");
+        }
+        return jmxConnector;
     }
 
     private String buildResourceName(JvmResourceKey key) {

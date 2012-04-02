@@ -3045,7 +3045,6 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
             <metric property="current-thread-count" description="The current number of threads in the pool."/>
             <metric property="keepalive-time:time" description="The time"/>
-            <metric property="keepalive-time:unit" description="The time unit"/>
             <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
             <metric property="rejected-count" description="The number of tasks that have been rejected."/>
             <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>

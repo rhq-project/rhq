@@ -24,19 +24,21 @@ package org.rhq.enterprise.gui.coregui.client.report.inventory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.ChangedEvent;
+import com.smartgwt.client.widgets.grid.events.ChangedHandler;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -44,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.report.ExportChangeHandler;
 
 /**
 * @author jsanda
@@ -53,7 +54,9 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
     private boolean exportAll;
 
-    private ExportChangeHandler exportChangeHandler;
+    private Set<Integer> resourceTypeIdsForExport = new TreeSet<Integer>();
+
+    private CheckboxItem exportAllDetails;
 
     public InventorySummaryReportTable(String locatorId) {
         super(locatorId);
@@ -62,9 +65,6 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
     @Override
     protected void configureTable() {
-        exportChangeHandler = new ExportChangeHandler(getListGrid(), InventorySummaryDataSource.TYPEID,
-            InventorySummaryDataSource.EXPORT);
-
         List<ListGridField> fields = createListGridFields();
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
@@ -179,7 +179,27 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
         field.setCanToggle(true);
         field.setCanEdit(true);
-        field.addChangedHandler(exportChangeHandler);
+        field.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                ListGridRecord record = getListGrid().getRecord(event.getRowNum());
+                Integer id = record.getAttributeAsInt(InventorySummaryDataSource.TYPEID);
+                boolean export = !record.getAttributeAsBoolean(InventorySummaryDataSource.EXPORT);
+
+                record.setAttribute(InventorySummaryDataSource.EXPORT, export);
+                if (export) {
+                    resourceTypeIdsForExport.add(id);
+                    if (resourceTypeIdsForExport.size() == getListGrid().getTotalRows()) {
+                        exportAllDetails.setValue(true);
+                        exportAll = true;
+                    }
+                } else {
+                    resourceTypeIdsForExport.remove(id);
+                    exportAllDetails.setValue(false);
+                    exportAll = false;
+                }
+            }
+        });
 
         return field;
     }
@@ -194,7 +214,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 ReportExporter exportModalWindow = ReportExporter.createExporterForInventorySummary(
-                    getReportNameForDownloadURL(), exportAll, exportChangeHandler.getResourceTypeIds());
+                    getReportNameForDownloadURL(), exportAll, resourceTypeIdsForExport);
                 exportModalWindow.export();
                 refreshTableInfo();
             }
@@ -203,22 +223,32 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
 
     @Override
     protected void configureTableFilters() {
-        CheckboxItem exportAllDetails = new CheckboxItem("exportAllDetails", "Export All Details");
+        exportAllDetails = new CheckboxItem("exportAllDetails", "Export All Details");
         exportAllDetails.setLabelAsTitle(true);
 
         setShowFilterForm(true);
         setFilterFormItems(exportAllDetails);
 
-        exportAllDetails.addChangedHandler(new ChangedHandler() {
+        exportAllDetails.addChangedHandler(new com.smartgwt.client.widgets.form.fields.events.ChangedHandler() {
             @Override
-            public void onChanged(ChangedEvent event) {
+            public void onChanged(com.smartgwt.client.widgets.form.fields.events.ChangedEvent event) {
                 exportAll = !exportAll;
                 ListGrid table = getListGrid();
                 int numColumns = table.getFields().length;
                 int row = 0;
-                for (ListGridRecord record : table.getRecords()) {
-                    record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
-                    table.refreshCell(row++, numColumns - 1);
+
+                if (exportAll) {
+                    for (ListGridRecord record : table.getRecords()) {
+                        record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
+                        table.refreshCell(row++, numColumns - 1);
+                        resourceTypeIdsForExport.add(record.getAttributeAsInt(InventorySummaryDataSource.TYPEID));
+                    }
+                } else{
+                    for (ListGridRecord record : table.getRecords()) {
+                        record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
+                        table.refreshCell(row++, numColumns - 1);
+                    }
+                    resourceTypeIdsForExport.clear();
                 }
             }
         });

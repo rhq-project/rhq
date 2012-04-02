@@ -165,7 +165,10 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             Subject modifiedSubject;
             synchronized (subjectLock) {
                 if (!updateSubject) {
+                    //make sure to use the prefs passed to us. getSubjectById() would overwrite them
+                    Configuration prefs = subjectToModify.getUserConfiguration();                    
                     subjectToModify = subjectManager.getSubjectById(subjectToModify.getId());
+                    subjectToModify.setUserConfiguration(prefs);
                 }
                 
                 Configuration persistedPrefs = SubjectPreferencesCache.getInstance().getPreferences(subjectToModify.getId());

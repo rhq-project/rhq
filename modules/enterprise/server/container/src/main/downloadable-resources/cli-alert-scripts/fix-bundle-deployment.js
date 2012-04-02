@@ -34,12 +34,29 @@ var destinationId = null;
 var bundleVersionId = null;
 
 /**
- * A deployment of the bundle version may require configuration. Normally, this can be
- * provided as a simple javascript object (using the curly braces notation). Please see
- * the documentation of the <code>asConfiguration</code> function further down to understand
- * the limitations of this approach. Should the simple format using the javascript object
- * be not possible, you have to build up a full org.rhq.core.domain.configuration.Configuration
- * object.
+ * A deployment of the bundle version may require configuration. 
+ * Normally, this can be provided as a simple javascript object (using the curly braces notation). 
+ * Each key in the object corresponds to a name of one "rhq:input-property" in the
+ * recipe of the bundle.
+ * 
+ * For example, if your deploy.xml recipe contains the following input properties:
+ * 
+ * <rhq:input-property type="string" name="my-string-property" />
+ * <rhq:input-property type="boolean" name="my-bool-property" />
+ * <rhq:input-property type="integer" name="my-int-property" />
+ * 
+ * You would provide values for those properties as:
+ * 
+ * var deploymentConfig = {
+ *     "my-string-property" : "value",
+ *     "my-bool-property" : false,
+ *     "my-int-property" : 42
+ * };
+ * 
+ * 
+ * Note that the bundle recipes support only a limited set of types of these properties.
+ * Please consult the provisioning subsystem documentation for a complete coverage of the bundle recipe
+ * capabilities.
  */
 var deploymentConfig = null;
 

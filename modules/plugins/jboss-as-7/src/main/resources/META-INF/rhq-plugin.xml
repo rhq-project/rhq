@@ -673,26 +673,6 @@
                 <c:simple-property name="path" readOnly="true" default="hornetq-server"/>
             </plugin-configuration>
 
-
-            <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
-                <parameters>
-                    <c:simple-property name="name" description="Name of the Destination" required="true"/>
-                    <c:list-property name="entries" description="The JNDI names the destination should be bound to." required="true">
-                        <c:simple-property name="entry" description="A single JNDI name. Note, this is relative to java:jboss/jms/"/>
-                    </c:list-property>
-                    <c:simple-property name="type" description="Type of Destination to create" default="Queue">
-                        <c:property-options>
-                            <c:option value="jms-queue" name="Queue"/>
-                            <c:option value="jms-topic" name="Topic"/>
-                        </c:property-options>
-                    </c:simple-property>
-                    <c:simple-property name="durable" description="Defines whether the queue is durable (for Queues only)." type="boolean" default="false"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult"/>
-                </results>
-            </operation>
-
             <resource-configuration>
                 <c:simple-property name="journal-min-files" />
                 <c:simple-property name="journal-type" />

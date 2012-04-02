@@ -87,10 +87,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     
     protected abstract String getPortOffsetSystemPropertyName();
 
-    public void testMetricsHaveNonNullValues() throws Exception {
-        assertAllNumericMetricsAndTraitsHaveNonNullValues(getServerResource());
-    }
-
     public void testReleaseVersionTrait() throws Exception {
         String releaseVersion = collectTrait(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
         String as7Version = System.getProperty( "as7.version" );

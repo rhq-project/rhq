@@ -72,12 +72,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(priority = 2, enabled = true)
-    public void testMetricsHaveNonNullValues() throws Exception {
-        super.testMetricsHaveNonNullValues();
-    }
-
-    @Override
     @Test(priority = 3, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();

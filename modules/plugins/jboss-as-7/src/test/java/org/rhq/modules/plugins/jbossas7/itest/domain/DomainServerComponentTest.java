@@ -65,12 +65,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(priority = 1001, enabled = true)
-    public void testMetricsHaveNonNullValues() throws Exception {
-        super.testMetricsHaveNonNullValues();
-    }
-
-    @Override
     @Test(priority = 1002, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();

@@ -119,10 +119,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
-        fromDateFilter = new DateItem();
+        fromDateFilter = new DateItem("startDateFilter");
         fromDateFilter.setUseTextField(true);
         fromDateFilter.setTitle(MSG.filter_from_date());
-        toDateFilter = new DateItem();
+        toDateFilter = new DateItem("endDateFilter");
         toDateFilter.setUseTextField(true);
         toDateFilter.setTitle(MSG.filter_to_date());
 

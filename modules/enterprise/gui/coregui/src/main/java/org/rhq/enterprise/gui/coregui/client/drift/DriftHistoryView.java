@@ -67,8 +67,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     protected TextItem definitionFilter;
     protected TextItem changeSetFilter;
     protected TextItem pathFilter;
-    protected DateItem toDateFilter;
-    protected DateItem fromDateFilter;
+    protected DateItem startDateFilter;
+    protected DateItem endDateFilter;
 
 
     private EntityContext context;
@@ -141,16 +141,16 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
-        fromDateFilter = new DateItem();
-        fromDateFilter.setUseTextField(true);
-        fromDateFilter.setTitle(MSG.filter_from_date());
-        toDateFilter = new DateItem();
-        toDateFilter.setUseTextField(true);
-        toDateFilter.setTitle(MSG.filter_to_date());
+        endDateFilter = new DateItem("startDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setTitle(MSG.filter_from_date());
+        startDateFilter = new DateItem("endDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setTitle(MSG.filter_to_date());
 
 
         if (isShowFilterForm()) {
-            setFilterFormItems(fromDateFilter, toDateFilter, definitionFilter, changeSetFilter, categoryFilter, pathFilter );
+            setFilterFormItems(endDateFilter, startDateFilter, definitionFilter, changeSetFilter, categoryFilter, pathFilter );
         }
     }
 

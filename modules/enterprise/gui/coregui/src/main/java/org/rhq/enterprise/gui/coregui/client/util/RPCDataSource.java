@@ -18,26 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.data.*;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -48,7 +32,6 @@ import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -66,6 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import java.util.*;
+
 /**
  * Base GWT-RPC oriented DataSource class.
  * 
@@ -78,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
+    protected static final DateTimeFormat dateTimeFormatter = DateTimeFormat.getFormat("EEE MMM dd hh:mm:ss z yyyy");
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;
@@ -635,6 +621,11 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
+            } else if (type == Date.class) {
+                //@todo: fixme
+                // date format: Mon Apr 02 10:19:45 PDT 2012
+                //Date date = dateTimeFormatter.parse(strValue);
+                //result = (S) date;
             } else if (type == Long.class) {
                 result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {

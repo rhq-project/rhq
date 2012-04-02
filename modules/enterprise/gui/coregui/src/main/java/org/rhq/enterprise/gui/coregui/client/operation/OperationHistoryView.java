@@ -66,8 +66,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
     protected SelectItem statusFilter;
-    protected DateItem toDateFilter;
-    protected DateItem fromDateFilter;
+    protected DateItem startDateFilter;
+    protected DateItem endDateFilter;
     
     EntityContext context;
     boolean hasControlPermission;
@@ -137,15 +137,15 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
         statusFilter.setWidth(325);
 
-        fromDateFilter = new DateItem();
-        fromDateFilter.setUseTextField(true);
-        fromDateFilter.setTitle(MSG.filter_from_date());
-        toDateFilter = new DateItem();
-        toDateFilter.setUseTextField(true);
-        toDateFilter.setTitle(MSG.filter_to_date());
+        endDateFilter = new DateItem("startDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setTitle(MSG.filter_from_date());
+        startDateFilter = new DateItem("endDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setTitle(MSG.filter_to_date());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(fromDateFilter, toDateFilter, statusFilter);
+            setFilterFormItems(endDateFilter, startDateFilter, statusFilter);
         }
     }
 

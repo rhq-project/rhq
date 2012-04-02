@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -40,7 +36,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -64,6 +59,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author Jay Shaughnessy
@@ -373,6 +373,16 @@ public class OperationHistoryDataSource extends
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
 
         criteria.addFilterStatuses(statusFilter);
+
+        Date startDateFilter = getFilter(request, "startDateFilter", Date.class);
+        if(startDateFilter != null){
+            criteria.addFilterStartTime(startDateFilter.getTime());
+        }
+
+        Date endDateFilter = getFilter(request, "endDateFilter", Date.class);
+        if( endDateFilter!= null){
+            criteria.addFilterEndTime(endDateFilter.getTime());
+        }
 
         switch (entityContext.type) {
         case Resource:

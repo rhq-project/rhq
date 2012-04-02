@@ -65,12 +65,13 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         boolean showAllDetails, final String resourceTypeIds) {
         final List<ResourceInstallCount> results = getSummaryCounts();
         final MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Set<Integer> ids = parseIds(resourceTypeIds);
 
         if (showAllDetails) {
-            Set<Integer> ids = Collections.emptySet();
+            ids = Collections.emptySet();
             return new OutputDetailedInventorySummary(results, ids);
-        } else if (resourceTypeIds != null) {
-            return new OutputDetailedInventorySummary(results, parseIds(resourceTypeIds));
+        } else if (!ids.isEmpty()) {
+            return new OutputDetailedInventorySummary(results, ids);
         } else {
             return new StreamingOutput() {
                 @Override
@@ -104,8 +105,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
     private Set<Integer> parseIds(String resourceTypeIdParam) {
         Set<Integer> ids = new TreeSet<Integer>();
-        for (String id : resourceTypeIdParam.split(",")) {
-            ids.add(Integer.parseInt(id));
+        if (resourceTypeIdParam != null && !resourceTypeIdParam.isEmpty()) {
+            for (String id : resourceTypeIdParam.split(",")) {
+                ids.add(Integer.parseInt(id));
+            }
         }
         return ids;
     }
@@ -150,8 +153,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                     ResourceInstallCountKey key = new ResourceInstallCountKey(resource.getResourceType().getId(),
                         resource.getVersion());
                     ResourceInstallCount installCount = installCounts.get(key);
-                    String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
-                    output.write(record.getBytes());
+                    if (installCount != null) {
+                        String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
+                        output.write(record.getBytes());
+                    }
                 }
             } else {
                 for (ResourceInstallCount installCount : installCounts.values()) {

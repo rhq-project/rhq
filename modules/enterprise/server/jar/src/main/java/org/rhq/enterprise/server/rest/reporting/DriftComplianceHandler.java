@@ -41,7 +41,7 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean showAllDetails,
         String resourceTypeIds) {
-        return super.generateReport(uriInfo, request, headers, showAllDetails, "");
+        return super.generateReport(uriInfo, request, headers, showAllDetails, resourceTypeIds);
     }
 
     @Override

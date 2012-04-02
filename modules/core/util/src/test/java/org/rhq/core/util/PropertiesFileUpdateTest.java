@@ -37,6 +37,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.util.stream.StreamUtil;
 
+/**
+ * A unit test for {@link PropertiesFileUpdate}.
+ */
 @Test
 public class PropertiesFileUpdateTest {
     private File existingPropertiesFile;
@@ -52,7 +55,7 @@ public class PropertiesFileUpdateTest {
         ps.println("two = 12"); // a single space on either side of the equals
         ps.println();
         ps.println("# third comment");
-        ps.println("three  =  123"); // multiple spaces around the equals
+        ps.print("three  =  123"); // multiple spaces around the equals - no newline!
         ps.flush();
         ps.close();
     }

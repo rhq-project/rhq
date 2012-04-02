@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.Properties;
 
@@ -69,28 +70,9 @@ public class PropertiesFileUpdate {
      * @param  key   the property name whose value is to be updated
      * @param  value the new property value
      *
-     * @return true if the specified property was already defined in the properties file and was updated, or false if
-     *              the property was not already defined and was added
-     *
-     * @throws IOException
+     * @throws IOException if an error occurs reading or writing the properties file
      */
-    public boolean update(String key, String value) throws IOException {
-        return update(key, value, false);
-    }
-
-    /**
-     * Updates the properties file so it will contain the key with the value. If value is <code>null</code>, an empty
-     * string will be used in the properties file. If the property does not yet exist in the properties file, it will be
-     * appended to the end of the file.
-     *
-     *
-     * @param  key   the property name whose value is to be updated
-     * @param  value the new property value
-     *
-     * @param startWithNewline If true a newline is written before a new property is written
-     * @throws IOException
-     */
-    public boolean  update(String key, String value, boolean startWithNewline) throws IOException {
+    public boolean  update(String key, String value) throws IOException {
         if (value == null) {
             value = "";
         }
@@ -100,11 +82,12 @@ public class PropertiesFileUpdate {
         // if the given property is new (doesn't exist in the file yet) just append it and return
         // if the property exists, update the value in place (ignore if the value isn't really changing)
         if (!existingProps.containsKey(key)) {
+            boolean fileIsLineSeparatorTerminated = isFileLineSeparatorTerminated();
             FileOutputStream fos = new FileOutputStream(file, true);
             try {
                 PrintStream ps = new PrintStream(fos, true, CHAR_ENCODING_8859_1);
                 try {
-                    if (startWithNewline) {
+                    if (!fileIsLineSeparatorTerminated) {
                         ps.println();
                     }
                     ps.println(key + "=" + value);
@@ -234,6 +217,25 @@ public class PropertiesFileUpdate {
         }
 
         return ((start > 0) || (end < str.length())) ? str.substring(start, end) : str;
+    }
+
+    private boolean isFileLineSeparatorTerminated() throws IOException {
+        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+        int lastByteOfFile;
+        try {
+            randomAccessFile.seek(file.length() - 1);
+            lastByteOfFile = randomAccessFile.read();
+        } finally {
+            randomAccessFile.close();
+        }
+
+        boolean fileIsLineSeparatorTerminated = false;
+        if ((lastByteOfFile == '\n') ||
+                ((lastByteOfFile == '\r') && "\r".equals(System.getProperty("line.separator")))) {
+            fileIsLineSeparatorTerminated = true;
+        }
+
+        return fileIsLineSeparatorTerminated;
     }
 
 }

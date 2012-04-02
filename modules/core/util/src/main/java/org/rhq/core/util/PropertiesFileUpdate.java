@@ -75,6 +75,22 @@ public class PropertiesFileUpdate {
      * @throws IOException
      */
     public boolean update(String key, String value) throws IOException {
+        return update(key, value, false);
+    }
+
+    /**
+     * Updates the properties file so it will contain the key with the value. If value is <code>null</code>, an empty
+     * string will be used in the properties file. If the property does not yet exist in the properties file, it will be
+     * appended to the end of the file.
+     *
+     *
+     * @param  key   the property name whose value is to be updated
+     * @param  value the new property value
+     *
+     * @param startWithNewline If true a newline is written before a new property is written
+     * @throws IOException
+     */
+    public boolean  update(String key, String value, boolean startWithNewline) throws IOException {
         if (value == null) {
             value = "";
         }
@@ -88,6 +104,9 @@ public class PropertiesFileUpdate {
             try {
                 PrintStream ps = new PrintStream(fos, true, CHAR_ENCODING_8859_1);
                 try {
+                    if (startWithNewline) {
+                        ps.println();
+                    }
                     ps.println(key + "=" + value);
                 } finally {
                     ps.close();

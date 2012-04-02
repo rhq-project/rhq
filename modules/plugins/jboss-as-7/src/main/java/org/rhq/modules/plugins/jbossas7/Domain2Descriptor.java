@@ -359,7 +359,7 @@ public class Domain2Descriptor {
         if (replyMap != null && !replyMap.isEmpty()) {
             generatePropertiesForMap(builder, replyMap);
         } else {
-            builder.append("     <c:simple-property name=\"operationResult\"/>\n");
+            builder.append("     <c:simple-property name=\"operationResult\" description=\"" + description + "\" />\n");
         }
         builder.append("  </results>\n");
 
@@ -456,6 +456,8 @@ public class Domain2Descriptor {
         sb.append(" type=\"");
         if (expressionsAllowed && type.isNumeric()) {
             sb.append("string");
+        } else if (type.rhqName.equalsIgnoreCase("-option-list-")) {
+            sb.append("string");
         } else {
             sb.append(type.rhqName);
         }
@@ -477,8 +479,44 @@ public class Domain2Descriptor {
 
         String description = (String) props.get("description");
         appendDescription(sb, description, defaultValueDescription);
-        sb.append("/>");
+        //Detect whether type PROPERTY and insert known supported properties before close.
+        if (type.rhqName.equalsIgnoreCase("-option-list-")) {
+            sb.append(generateOptionList(indent));
+        } else {
+            sb.append("/>");
+        }
         return sb;
+    }
+
+    private String generateOptionList(int indent) {
+        StringBuilder optionList = new StringBuilder();
+        optionList.append(">\n");
+        doIndent(indent + 1, optionList);
+        optionList.append("<c:property-options>\n");
+        //spinder 3/28/12: There is not way to query this option list and process is not used much. Hardcoding for now. JIRA coming.
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"cpu\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"mem\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"heap\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"sessions\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"requests\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"send-traffic\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"receive-traffic\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"busyness\"/>\n");
+        doIndent(indent + 2, optionList);
+        optionList.append("<c:option value=\"connection-pool\"/>\n");
+        doIndent(indent + 1, optionList);
+        optionList.append("</c:property-options>\n");
+        doIndent(indent, optionList);
+        optionList.append("</c:simple-property>");
+        return optionList.toString();
     }
 
     private void doIndent(int indent, StringBuilder sb) {
@@ -511,7 +549,8 @@ public class Domain2Descriptor {
     public enum Type {
 
         STRING(false, "string"), INT(true, "integer"), BOOLEAN(false, "boolean"), LONG(true, "long"), BIG_DECIMAL(true,
-            "long"), OBJECT(false, "-object-"), LIST(false, "-list-"), DOUBLE(true, "long");
+            "long"), OBJECT(false, "-object-"), LIST(false, "-list-"), DOUBLE(true, "long"), PROPERTY(false,
+            "-option-list-");
 
         private boolean numeric;
         private String rhqName;

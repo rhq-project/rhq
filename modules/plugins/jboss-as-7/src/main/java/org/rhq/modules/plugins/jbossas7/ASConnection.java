@@ -144,6 +144,7 @@ public class ASConnection {
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept", "application/json");
+            conn.setInstanceFollowRedirects(false);
             int timeoutMillis = timeoutSec * 1000;
             conn.setConnectTimeout(timeoutMillis);
             conn.setReadTimeout(timeoutMillis);
@@ -168,13 +169,6 @@ public class ASConnection {
         }
 
         try {
-            // Add additional request property to include-defaults=true to all requests.
-            // If it's already set, we leave it alone and assume that Operation creator is taking over control.
-            if (operation.getAdditionalProperties().isEmpty()
-                || !operation.getAdditionalProperties().containsKey(INCLUDE_DEFAULT)) {
-                operation.addAdditionalProperty("include-defaults", "true");
-            }
-
             String json_to_send = mapper.writeValueAsString(operation);
 
             // Check for spaces in the path which the AS7 server will reject. Log verbose error and
@@ -259,21 +253,26 @@ public class ASConnection {
             try {
                 responseCodeString = conn.getResponseCode() + " (" + conn.getResponseMessage() + ")";
 
-                //spinder 3/31/12 NOTE: This means that when the Mgmt user has not been configured you will 
-                // NOT get the usual json details with failure-descriptions.  Most of the time this is ok as it will 
+                //spinder 3/31/12 NOTE: This means that when the Mgmt user has not been configured you will
+                // NOT get the usual json details with failure-descriptions.  Most of the time this is ok as it will
                 // likely be a customer who does not have the right configuration and needs to know why without digging
                 // through agent logs.
-                // Process response code to generate plugin configuration exception and/or logging 
+                // Process response code to generate plugin configuration exception and/or logging
                 int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == 307 ) {
                     if (log.isDebugEnabled()) {
                         log.debug("Response to " + operation + " was " + responseCode + " " + conn.getResponseMessage()
                             + " - throwing InvalidPluginConfigurationException...");
                     }
                     // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
                     // warning message in the GUI.
+                    String message;
+                    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED)
+                        message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
+                    else
+                        message = "Authorization with AS7 failed - Did you install a management user?";
                     throw new InvalidPluginConfigurationException(
-                        "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.");
+                            message);
                 } else {
                     log.warn("Response body for " + operation + " was empty and response code was " + responseCode
                         + " (" + conn.getResponseMessage() + ").");
@@ -284,7 +283,8 @@ public class ASConnection {
             }
             String failureDescription = operation + " failed with " + responseCodeString + " - response body was ["
                 + responseBody + "].";
-            log.error(failureDescription, e);
+            if (verbose)
+                log.debug(failureDescription);
 
             JsonNode operationResult = null;
             if (!responseBody.isEmpty()) {

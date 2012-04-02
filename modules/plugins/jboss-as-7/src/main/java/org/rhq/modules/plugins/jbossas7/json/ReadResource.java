@@ -32,11 +32,20 @@ public class ReadResource extends Operation {
         super(READ_RESOURCE,resourceType,typeValue);
     }
 
+    public ReadResource(String resourceType,String typeValue,boolean includeDefaults) {
+        super(READ_RESOURCE,resourceType,typeValue);
+        includeDefaults(includeDefaults);
+    }
+
     public ReadResource(Address address) {
         super(READ_RESOURCE,address);
     }
 
     public void includeRuntime(boolean arg) {
         addAdditionalProperty("include-runtime",arg);
+    }
+
+    public void includeDefaults(boolean arg) {
+        addAdditionalProperty("include-defaults",arg);
     }
 }

@@ -80,9 +80,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @throws Exception If anything goes wrong.
      */
     public Configuration loadResourceConfiguration() throws Exception {
-
         throw new IllegalAccessException("Please use ConfigurationLoadDelegate");
-
     }
 
 
@@ -94,7 +92,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         Configuration conf = report.getConfiguration();
-
         CompositeOperation cop = updateGenerateOperationFromProperties(conf, _address);
 
         Result result = connection.execute(cop);
@@ -241,58 +238,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
     }
 
-    private void createWriteAttributePropertyMap(CompositeOperation cop, PropertyMap prop,
-        PropertyDefinitionMap propDef, Address address) {
-
-        SimpleEntry<String, Map<String, Object>> entry = this.prepareMap(prop, propDef);
-        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
-        cop.addStep(writeAttribute);
-    }
-
-    private SimpleEntry<String, Map<String, Object>> prepareMap(PropertyMap prop, PropertyDefinitionMap propDef) {
-        Map<String,Object> results;
-
-        String propName = stripNumberIdentifier(prop.getName());
-        if (propName.endsWith(":collapsed")) {
-            propName = propName.substring(0, propName.indexOf(':'));
-            results = preparedCollapsedMap(prop, propDef);
-        }
-        else {
-            results = prepareSimpleMap(prop, propDef);
-        }
-
-        return new SimpleEntry<String, Map<String, Object>>(propName, results);
-    }
-
-    private Map<String, Object> preparedCollapsedMap(PropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
-        String first=null;
-        String second=null;
-
-        for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getMap().entrySet()) {
-            PropertyDefinition def = entry.getValue();
-            if (!def.getName().contains(":"))
-                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
-
-            Property prop = propertyMap.get(def.getName());
-            if (prop==null) {
-                throw new IllegalArgumentException("Property " + def.getName() + " was null - must not happen");
-            }
-
-            PropertySimple ps = (PropertySimple) prop;
-            if (def.getName().endsWith(":0"))
-                first = ps.getStringValue();
-            else if (def.getName().endsWith(":1"))
-                second = ps.getStringValue(); // TODO other types?
-            else
-                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
-        }
-
-
-        Map<String,Object> resultMap = new HashMap<String,Object>();
-        resultMap.put(first, second);
-
-        return resultMap;
-    }
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                                 Address address, List<String> existingPropNames) {
@@ -362,35 +307,99 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     operation.addAdditionalProperty(key1, value);
                 }
             }
-                cop.addStep(operation);
+
+            cop.addStep(operation);
         }
     }
 
 
-    private void createWriteAttributePropertyList(CompositeOperation cop, PropertyList prop,
-        PropertyDefinitionList propDef, Address address) {
+    private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple property,
+        PropertyDefinitionSimple propertyDefinition, Address address) {
 
-        SimpleEntry<String, List<Object>> entry = preparePropertyList(prop, propDef);
+        // If the property value is null and the property is optional, skip too
+        if (property.getStringValue() == null && !propertyDefinition.isRequired())
+            return;
+
+        SimpleEntry<String, Object> entry = this.preparePropertySimple(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
         cop.addStep(writeAttribute);
     }
 
-    private SimpleEntry<String, List<Object>> preparePropertyList(PropertyList prop, PropertyDefinitionList propDef) {
+    private void createWriteAttributePropertyList(CompositeOperation cop, PropertyList property,
+        PropertyDefinitionList propertyDefinition, Address address) {
 
-        PropertyDefinition memberDef = propDef.getMemberDefinition();
-        List<Property> embeddedProps = prop.getList();
+        SimpleEntry<String, List<Object>> entry = preparePropertyList(property, propertyDefinition);
+        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
+        cop.addStep(writeAttribute);
+    }
+
+
+    private void createWriteAttributePropertyMap(CompositeOperation cop, PropertyMap property,
+        PropertyDefinitionMap propertyDefinition, Address address) {
+
+        SimpleEntry<String, Map<String, Object>> entry = this.prepareMap(property, propertyDefinition);
+        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
+        cop.addStep(writeAttribute);
+    }
+
+
+    /**
+     * Simple property parsing.
+     * 
+     * @param property raw simple property
+     * @param propertyDefinition property definition
+     * @return parsed simple property
+     */
+    private SimpleEntry<String, Object> preparePropertySimple(PropertySimple property,
+        PropertyDefinitionSimple propertyDefinition) {
+
+        SimpleEntry<String, Object> entry = null;
+
+        String name = stripNumberIdentifier(property.getName());
+        if (name.endsWith(":expr")) {
+
+            String realName = name.substring(0, name.indexOf(":"));
+            try {
+                Integer num = Integer.parseInt(property.getStringValue());
+                entry = new SimpleEntry<String, Object>(realName, property.getStringValue());
+            } catch (NumberFormatException nfe) {
+                // Not a number, and expressions are allowed, so send an expression
+                Map<String, String> expr = new HashMap<String, String>(1);
+                expr.put("EXPRESSION_VALUE", property.getStringValue());
+                entry = new SimpleEntry<String, Object>(realName, expr);
+            }
+        } else {
+            entry = new SimpleEntry<String, Object>(name, property.getStringValue());
+        }
+
+        return entry;
+    }
+
+
+    /**
+     * List property parsing.
+     * 
+     * @param property raw list property
+     * @param propertyDefinition property definition
+     * @return parsed list
+     */
+    private SimpleEntry<String, List<Object>> preparePropertyList(PropertyList property,
+        PropertyDefinitionList propertyDefinition) {
+
+        PropertyDefinition memberDef = propertyDefinition.getMemberDefinition();
+        List<Property> embeddedProps = property.getList();
         List<Object> values = new ArrayList<Object>();
         for (Property inner : embeddedProps) {
             if (memberDef instanceof PropertyDefinitionSimple) {
                 PropertySimple ps = (PropertySimple) inner;
-                if (ps.getStringValue()!=null)
+                if (ps.getStringValue() != null)
                     values.add(ps.getStringValue()); // TODO handling of optional vs required
 
             }
             if (memberDef instanceof PropertyDefinitionMap) {
                 Map<String, Object> mapResult = null;
                 if (memberDef.getName().endsWith(":collapsed")) {
-                    mapResult = preparedCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                    mapResult = prepareCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 } else {
                     mapResult = prepareSimpleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 }
@@ -398,51 +407,81 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         }
 
-        String name = stripNumberIdentifier(prop.getName());
+        String name = stripNumberIdentifier(property.getName());
 
         return new SimpleEntry<String, List<Object>>(name, values);
     }
 
 
-    private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple propertySimple,
-        PropertyDefinitionSimple propDef, Address address) {
+    /**
+     * Map property parsing.
+     * 
+     * @param property raw map property
+     * @param propertyDefinition property definition
+     * @return parsed map
+     */
+    private SimpleEntry<String, Map<String, Object>> prepareMap(PropertyMap property,
+        PropertyDefinitionMap propertyDefinition) {
+        Map<String, Object> results;
 
-        // If the property value is null and the property is optional, skip too
-        if (propertySimple.getStringValue() == null && !propDef.isRequired())
-            return;
-
-        SimpleEntry<String, Object> entry = this.preparePropertySimple(propertySimple, propDef);
-        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
-        cop.addStep(writeAttribute);
-    }
-
-    private SimpleEntry<String, Object> preparePropertySimple(PropertySimple propertySimple,
-        PropertyDefinitionSimple propDef) {
-
-        SimpleEntry<String, Object> entry = null;
-
-        String name = stripNumberIdentifier(propertySimple.getName());
-        if (name.endsWith(":expr")) {
-
-            String realName = name.substring(0, name.indexOf(":"));
-            try {
-                Integer num = Integer.parseInt(propertySimple.getStringValue());
-                entry = new SimpleEntry<String, Object>(realName, propertySimple.getStringValue());
-            } catch (NumberFormatException nfe) {
-                // Not a number, and expressions are allowed, so send an expression
-                Map<String, String> expr = new HashMap<String, String>(1);
-                expr.put("EXPRESSION_VALUE", propertySimple.getStringValue());
-                entry = new SimpleEntry<String, Object>(realName, expr);
-            }
+        String propName = stripNumberIdentifier(property.getName());
+        if (propName.endsWith(":collapsed")) {
+            propName = propName.substring(0, propName.indexOf(':'));
+            results = prepareCollapsedMap(property, propertyDefinition);
         } else {
-            entry = new SimpleEntry<String, Object>(name, propertySimple.getStringValue());
+            results = prepareSimpleMap(property, propertyDefinition);
         }
 
-        return entry;
+        return new SimpleEntry<String, Map<String, Object>>(propName, results);
     }
 
-    private Map<String, Object> prepareSimpleMap(PropertyMap map, PropertyDefinitionMap mapDef) {
-        Map<String,PropertyDefinition> memberDefinitions = mapDef.getMap();
+
+    /**
+     * Collapsed map property parsing.
+     * 
+     * @param property raw map property
+     * @param propertyDefinition property definition
+     * @return parsed map
+     */
+    private Map<String, Object> prepareCollapsedMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
+        String key = null;
+        String value = null;
+
+        for (Map.Entry<String, PropertyDefinition> entry : propertyDefinition.getMap().entrySet()) {
+            PropertyDefinition def = entry.getValue();
+            if (!def.getName().contains(":"))
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+
+            Property prop = property.get(def.getName());
+            if (prop == null) {
+                throw new IllegalArgumentException("Property " + def.getName() + " was null - must not happen");
+            }
+
+            PropertySimple ps = (PropertySimple) prop;
+            if (def.getName().endsWith(":0"))
+                key = ps.getStringValue();
+            else if (def.getName().endsWith(":1"))
+                value = ps.getStringValue(); // TODO other types?
+            else
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+        }
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put(key, value);
+
+        return resultMap;
+    }
+
+
+    /**
+     * Simple map property parsing.
+     * 
+     * @param property raw map property
+     * @param propertyDefinition property definition
+     * @return parsed map
+     */
+    private Map<String, Object> prepareSimpleMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
+        Map<String,PropertyDefinition> memberDefinitions = propertyDefinition.getMap();
 
         Map<String,Object> results = new HashMap<String,Object>();
         for (String name : memberDefinitions.keySet()) {
@@ -453,7 +492,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
             if (memberDefinition instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
-                PropertySimple ps = (PropertySimple) map.get(name);
+                PropertySimple ps = (PropertySimple) property.get(name);
                 if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
                     continue;
                 if (ps!=null)

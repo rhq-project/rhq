@@ -23,7 +23,9 @@ import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
+import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
@@ -87,7 +90,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     @ArquillianResource
     protected PluginContainer pluginContainer;
 
-    private FakeServerInventory serverInventory = new FakeServerInventory();
+    private FakeServerInventory serverInventory;
+
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
     @Deployment(name = "platform", order = 1)
     public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
@@ -130,7 +135,13 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      */
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
-        System.out.println("\n=== Resetting Server services prior to running discovery scan...");
+        System.out.println("\n=== Resetting fake Server prior to running discovery scan...");
+
+        this.serverInventory = new FakeServerInventory();
+        System.out.println("\n====== Waiting for discovery to complete...");
+        // TODO: Calculate the expected depth by recursively descending the types defined by the plugin.
+        this.discoveryCompleteChecker = serverInventory.createAsyncDiscoveryCompletionChecker(4);
+
         try {
             this.serverServices.resetMocks();
             Mockito.when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
@@ -138,6 +149,19 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @AfterDiscovery
+    public void waitForAsyncDiscoveries() throws Exception {
+        try {
+            discoveryCompleteChecker.waitForDiscoveryComplete(12000);
+            System.out.println("\n====== Discovery completed.");
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Discovery did not complete within 12 seconds.");
+        }
+        // Wait a few extra seconds to give all Resource components a chance to start.
+        // TODO: Do this more intelligently so we don't sleep longer than needed.
+        Thread.sleep(6000);
     }
 
     /**
@@ -202,8 +226,38 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         return operationResult;
     }
 
-    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(Resource resource)
-            throws PluginContainerException {
+    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues() throws Exception {
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType = new LinkedHashMap<ResourceType, Set<String>>();
+        findNumericMetricsAndTraitsWithNullValuesRecursively(platform, metricsWithNullValuesByType);
+        assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: " +
+                metricsWithNullValuesByType.toString());
+    }
+
+    private void findNumericMetricsAndTraitsWithNullValuesRecursively(Resource resource,
+                                                                      Map<ResourceType, Set<String>> metricsWithNullValuesByType)
+            throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        // Only check metrics on types of Resources from the plugin under test.
+        if (resourceType.getPlugin().equals(getPluginName())) {
+            Set<String> metricsWithNullValues = getNumericMetricsAndTraitsWithNullValues(resource);
+            if (!metricsWithNullValues.isEmpty()) {
+                Set<String> metricsWithNullValuesForType = metricsWithNullValuesByType.get(resourceType);
+                if (metricsWithNullValuesForType != null) {
+                    metricsWithNullValuesForType.addAll(metricsWithNullValues);
+                } else {
+                    metricsWithNullValuesByType.put(resourceType, metricsWithNullValues);
+                }
+            }
+        }
+
+        // Recurse.
+        for (Resource childResource : resource.getChildResources()) {
+            findNumericMetricsAndTraitsWithNullValuesRecursively(childResource, metricsWithNullValuesByType);
+        }
+    }
+    
+    protected Set<String> getNumericMetricsAndTraitsWithNullValues(Resource resource) throws Exception {
         ResourceType type = resource.getResourceType();
         Set<MeasurementDefinition> numericMetricAndTraitDefs =
                 ResourceTypeUtility.getMeasurementDefinitions(type,
@@ -214,11 +268,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 return acceptableDataTypes.contains(metricDef.getDataType());
             }
         });
-        assertMetricsHaveNonNullValues(resource, numericMetricAndTraitDefs);
+        Set<String> metricsWithNullValues = getMetricsWithNullValues(resource, numericMetricAndTraitDefs);
+        return metricsWithNullValues;
     }
 
-    protected void assertMetricsHaveNonNullValues(Resource resource, Set<MeasurementDefinition> metricDefs) 
-            throws PluginContainerException {        
+    protected Set<String> getMetricsWithNullValues(Resource resource, Set<MeasurementDefinition> metricDefs)
+            throws Exception {
         Set<String> metricsWithNullValues = new LinkedHashSet<String>();
         for (MeasurementDefinition metricDef : metricDefs) {                        
             if (!metricDef.getResourceType().equals(resource.getResourceType())) {
@@ -237,12 +292,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 metricsWithNullValues.add(metricDef.getName());
             }            
         }
-        assertTrue(metricsWithNullValues.isEmpty(), "Null values were collected for the following metrics: "
-                + metricsWithNullValues);
+        return metricsWithNullValues;
     }
     
     @Nullable
-    protected Double collectNumericMetric(Resource resource, String metricName) throws PluginContainerException {
+    protected Double collectNumericMetric(Resource resource, String metricName) throws Exception {
         System.out.println("=== Collecting numeric metric [" + metricName + "] for " + resource + "...");
         MeasurementReport report = collectMetric(resource, metricName);
         if (report.getNumericData().isEmpty()) {
@@ -259,7 +313,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     @Nullable
-    protected String collectTrait(Resource resource, String traitName) throws PluginContainerException {
+    protected String collectTrait(Resource resource, String traitName) throws Exception {
         System.out.println("=== Collecting trait [" + traitName + "] for " + resource + "...");
         MeasurementReport report = collectMetric(resource, traitName);
         if (report.getTraitData().isEmpty()) {
@@ -284,7 +338,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      */
     @NotNull
     private MeasurementReport collectMetric(Resource resource, String metricName)
-            throws PluginContainerException {
+            throws Exception {
         ResourceType resourceType = resource.getResourceType();
         MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
                 metricName);
@@ -293,6 +347,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
+        if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
+            throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
+        }
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
                 FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();

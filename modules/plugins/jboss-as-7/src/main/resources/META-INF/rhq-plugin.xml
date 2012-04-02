@@ -3032,7 +3032,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	        <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
         </resource-configuration>
 
-<!--        <service name="ThreadPool"
+        <service name="EJB3 Thread Pool"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  description="A thread pool executor with an unbounded queue.  Such a thread pool has a core size and a queue with no upper bound.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, the task is placed in queue.  If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.">
@@ -3059,9 +3059,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	            <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
 	            <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
             </resource-configuration>
-        </service>-->
+        </service>
 
-        <service name="FilePassivationStore"
+        <service name="File Passivation Store"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  description="A file system based passivation store.">
@@ -3081,7 +3081,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             </resource-configuration>
         </service>
 
-        <service name="StrictMaxBeanInstancePool"
+        <service name="Strict Max Bean Instance Pool"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  description="A bean instance pool with a strict upper limit">
@@ -3097,7 +3097,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             </resource-configuration>
         </service>
 
-<!--        <service name="Cache"
+       <service name="EJB3 Cache"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  description="A SFSB cache.">
@@ -3112,9 +3112,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 </c:list-property>
                 <c:simple-property name="passivation-store" required="false" type="string" readOnly="false" description="The passivation store used by this cache"/>
             </resource-configuration>
-        </service>-->
+        </service>
 
-        <service name="ClusterPassivationStore"
+        <service name="Cluster Passivation Store"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                  description="A clustered passivation store.">

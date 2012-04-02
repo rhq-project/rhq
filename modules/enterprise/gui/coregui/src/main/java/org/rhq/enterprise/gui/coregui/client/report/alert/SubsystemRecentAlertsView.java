@@ -1,13 +1,9 @@
 package org.rhq.enterprise.gui.coregui.client.report.alert;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -31,19 +27,8 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                List<AlertPriority> alertPriorityList = new ArrayList<AlertPriority>(3);
-                String[] priorities = priorityFilter.getValues();
-                for (String priority : priorities) {
-                   if(priority.equals(AlertPriority.HIGH.getDisplayName())){
-                        alertPriorityList.add(AlertPriority.HIGH);
-                    } else if(priority.equals(AlertPriority.MEDIUM.getDisplayName())){
-                        alertPriorityList.add(AlertPriority.MEDIUM);
-                    } else if(priority.equals(AlertPriority.LOW.getDisplayName())){
-                        alertPriorityList.add(AlertPriority.LOW);
-                    }
-                }
                 ReportExporter exporter = ReportExporter.createExporterForRecentAlerts(
-                        "recentAlerts", alertPriorityList.toArray(new String[alertPriorityList.size()]), fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate());
+                        "recentAlerts", priorityFilter.getValues(), fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate());
                 exporter.export();
                 refreshTableInfo();
             }

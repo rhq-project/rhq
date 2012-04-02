@@ -41,6 +41,7 @@ public class ReportExporter {
     private static final String FORMAT = "csv"; //CSV is all we need right now
 
     private String reportUrl;
+    private StringBuilder queryString;
 
     private boolean showAllDetail;
 
@@ -132,13 +133,23 @@ public class ReportExporter {
         this.operationRequestStatuses = operationRequestStatuses;
     }
 
-    public String determineUrl() {
-        StringBuilder queryString = new StringBuilder();
+    private String buildUrl() {
+        buildQueryParameters();
+
+        // trim the last "&" off the url if exists
+        final String cleanQueryString = queryString.toString().endsWith("&") ? queryString.substring(0,queryString.toString().length() -1)  : queryString.toString();
+        final String queryStringNotEndingWithQuestionMark = cleanQueryString.toString().endsWith("?") ? cleanQueryString.substring(0,cleanQueryString.toString().length() -1)  : cleanQueryString.toString();
+        return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+  queryStringNotEndingWithQuestionMark);
+    }
+
+    private void buildQueryParameters() {
+        queryString = new StringBuilder();
 
         if (showAllDetail) {
-            queryString.append("showAllDetails=").append("true").append("&");
+            addQueryParameter("showAllDetails","true");
+
         } else if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
-            queryString.append("resourceTypeId=").append(StringUtility.toString(resourceTypeIds)).append("&");
+            addQueryParameter("resourceTypeId", StringUtility.toString(resourceTypeIds));
         }
 
         if(!isEmpty(operationRequestStatuses)){
@@ -147,16 +158,16 @@ public class ReportExporter {
                 operationRequestStatusBuffer.append(operationRequestStatus);
                 operationRequestStatusBuffer.append(",");
             }
-
-            queryString.append("operationRequestStatus=").append(operationRequestStatusBuffer.toString()).append("&");
+            addQueryParameter("operationRequestStatus", operationRequestStatusBuffer.toString().substring(0,operationRequestStatusBuffer.toString().length() -1));
         }
+
         if(!isEmpty(alertPriorityFilters)){
             StringBuilder alertsPriorityBuffer = new StringBuilder();
             for (String alertPriority : alertPriorityFilters) {
                 alertsPriorityBuffer.append(alertPriority);
                 alertsPriorityBuffer.append(",");
             }
-            queryString.append("alertPriority=").append(alertsPriorityBuffer.toString()).append("&");
+            addQueryParameter("alertPriority", alertsPriorityBuffer.toString().substring(0,alertsPriorityBuffer.toString().length() -1));
         }
 
         // Drift Related
@@ -165,27 +176,27 @@ public class ReportExporter {
             for (String category : driftCategories) {
                 driftCategoriesBuffer.append(category).append(",");
             }
-            queryString.append("categories=").append(driftCategoriesBuffer.toString()).append("&");
+            addQueryParameter("categories", driftCategoriesBuffer.toString());
         }
-        if (driftDefinition != null) {
-            queryString.append("definition=").append(driftDefinition).append("&");
-        }
-        if (driftPath != null) {
-            queryString.append("path=").append(driftDefinition).append("&");
-        }
-        if (driftSnapshot != null) {
-            queryString.append("snapshot=").append(driftSnapshot).append("&");
-        }
+
+        addQueryParameter("definition", driftDefinition);
+        addQueryParameter("path", driftPath);
+        addQueryParameter("snapshot", driftSnapshot);
 
         // to/from Dates
-        if(startDate != null){
-            queryString.append("startTime=").append(startDate.getTime()).append("&");
-        }
-        if(endDate != null){
-            queryString.append("endTime=").append(endDate.getTime()).append("&");
-        }
+        addQueryParameter("startTime", startDate);
+        addQueryParameter("endTime", endDate);
+    }
 
-        return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+queryString);
+    private void addQueryParameter(String parameterName, String parameterValue){
+        if(parameterValue != null){
+           queryString.append(parameterName).append("=").append(parameterValue).append("&");
+        }
+    }
+    private void addQueryParameter(String parameterName, Date parameterValue){
+        if(parameterValue != null){
+            addQueryParameter(parameterName, String.valueOf(parameterValue.getTime()));
+        }
     }
 
     private boolean isEmpty(String[] array) {
@@ -220,9 +231,12 @@ public class ReportExporter {
         this.endDate = endDate;
     }
 
+    /**
+     * Using the url built in buildUrl() open the RESTful CSV report in a new window.
+     */
     public void export(){
-        String reportUrl = determineUrl();
-        Log.info("Opening Export CSV report on url: "+reportUrl);
+        String reportUrl = buildUrl();
+        Log.info("Opening Export CSV report on url: " + reportUrl);
         Window.open(reportUrl, "download", null);
 
     }

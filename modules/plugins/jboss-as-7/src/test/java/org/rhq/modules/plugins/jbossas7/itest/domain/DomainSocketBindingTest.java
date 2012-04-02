@@ -53,6 +53,8 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("SocketBindingGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "socket-binding-group=standard-sockets";
+    private static final String PORT_EXPR = "port:expr";
+    private static final String MULTICAST_PORT_EXPR = "multicast-port:expr";
 
     @Test(priority = 1010,groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
@@ -85,11 +87,11 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         PropertyMap map = new PropertyMap("binding");
         PropertySimple ps = new PropertySimple("name","bla");
         map.put(ps);
-        ps = new PropertySimple("port:expr",12345);
+        ps = new PropertySimple(PORT_EXPR,12345);
         map.put(ps);
         ps = new PropertySimple("fixed-port",false);
         map.put(ps);
-        ps = new PropertySimple("multicast-port:expr","${foo.bar.baz:12346}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12346}");
         map.put(ps);
         pl.add(map);
 
@@ -111,11 +113,11 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         PropertyMap map = new PropertyMap("binding");
         PropertySimple ps = new PropertySimple("name","bla2");
         map.put(ps);
-        ps = new PropertySimple("port:expr",12355);
+        ps = new PropertySimple(PORT_EXPR,12355);
         map.put(ps);
         ps = new PropertySimple("fixed-port",false);
         map.put(ps);
-        ps = new PropertySimple("multicast-port:expr","${foo.bar.baz:12356}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12356}");
         map.put(ps);
         PropertyList pl = (PropertyList) configuration.get("*");
         pl.add(map);
@@ -137,7 +139,7 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
             map = pm;
         }
         assert map != null : "Did not find 'bla2' in the returned config";
-        map.put(new PropertySimple("port:expr",22355));
+        map.put(new PropertySimple(PORT_EXPR,22355));
         map.put(new PropertySimple("fixed-port",true));
         request = new ConfigurationUpdateRequest(3,configuration,getResource().getId());
         response = pluginContainer.getConfigurationManager().executeUpdateResourceConfigurationImmediately(request);
@@ -153,11 +155,11 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         PropertyMap map = new PropertyMap("binding");
         PropertySimple ps = new PropertySimple("name","bla3");
         map.put(ps);
-        ps = new PropertySimple("port:expr",12365);
+        ps = new PropertySimple(PORT_EXPR,12365);
         map.put(ps);
         ps = new PropertySimple("fixed-port",false);
         map.put(ps);
-        ps = new PropertySimple("multicast-port:expr","${foo.bar.baz:12366}");
+        ps = new PropertySimple(MULTICAST_PORT_EXPR,"${foo.bar.baz:12366}");
         map.put(ps);
         PropertyList pl = (PropertyList) configuration.get("*");
         int count = pl.getList().size();

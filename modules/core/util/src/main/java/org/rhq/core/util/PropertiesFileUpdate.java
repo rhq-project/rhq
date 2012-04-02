@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,9 +69,12 @@ public class PropertiesFileUpdate {
      * @param  key   the property name whose value is to be updated
      * @param  value the new property value
      *
+     * @return true if the specified property was already defined in the properties file and was updated, or false if
+     *              the property was not already defined and was added
+     *
      * @throws IOException
      */
-    public void update(String key, String value) throws IOException {
+    public boolean update(String key, String value) throws IOException {
         if (value == null) {
             value = "";
         }
@@ -93,12 +96,12 @@ public class PropertiesFileUpdate {
                 fos.close();
             }
         } else if (!value.equals(existingProps.getProperty(key))) {
-            Properties newProp = new Properties();
-            newProp.setProperty(key, value);
-            update(newProp);
+            Properties newProps = new Properties();
+            newProps.setProperty(key, value);
+            update(newProps);
         }
 
-        return;
+        return existingProps.containsKey(key);
     }
 
     /**

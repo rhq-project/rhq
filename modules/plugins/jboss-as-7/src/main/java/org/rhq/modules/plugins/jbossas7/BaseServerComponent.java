@@ -25,7 +25,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -312,9 +311,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         boolean userAlreadyExisted;
         try {
             PropertiesFileUpdate propsFileUpdate = new PropertiesFileUpdate(propertiesFilePath);
-            Properties existingProps = propsFileUpdate.loadExistingProperties();
-            userAlreadyExisted = existingProps.containsKey(user);
-            propsFileUpdate.update(user, encryptedPassword);
+            userAlreadyExisted = propsFileUpdate.update(user, encryptedPassword);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update management users properties file [" + propertiesFilePath
                     + "].", e);

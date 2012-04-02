@@ -9,7 +9,9 @@ import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
 import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -35,9 +37,8 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
                 Date fromDate = fromDateFilter.getValueAsDate();
                 Date toDate = toDateFilter.getValueAsDate();
 
-                if (fromDate.equals(toDate)) {
-                    toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, fromDate, END);
-                }
+                fromDate = DateUtil.getAbsoluteDate(START_OF_TODAY, fromDate, START);
+                toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, toDate, END);
 
                 ReportExporter exporter = ReportExporter.createExporterForRecentAlerts("recentAlerts",
                     priorityFilter.getValues(), fromDate, toDate);

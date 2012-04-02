@@ -29,7 +29,9 @@ import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import java.util.Date;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
 import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 
 /**
  * @author Ian Springer
@@ -61,9 +63,8 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
                 Date fromDate = startDateFilter.getValueAsDate();
                 Date toDate = endDateFilter.getValueAsDate();
 
-                if (fromDate.equals(toDate)) {
-                    toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, fromDate, END);
-                }
+                fromDate = DateUtil.getAbsoluteDate(START_OF_TODAY, fromDate, START);
+                toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, toDate, END);
 
                 ReportExporter exporter = ReportExporter.createExporterForRecentOperations("recentOperations",
                     statusFilter.getValues(), fromDate, toDate);

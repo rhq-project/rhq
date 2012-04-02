@@ -136,8 +136,9 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             Address address1 = new Address(address);
             address1.addSegment(subPath);
             operation = new ReadResource(address1);
-        } else {
-            throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
+        } else {//no special handling of <c:groups> details required.
+            //Just assume normal group operations aggregation semantics.
+            return;
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
         loadHandleProperties(config, listedDefs, operation);

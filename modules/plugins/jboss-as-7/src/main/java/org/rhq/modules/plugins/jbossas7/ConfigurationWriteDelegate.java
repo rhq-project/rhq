@@ -18,6 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -109,13 +110,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
     protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf, Address address) {
-
         CompositeOperation cop = new CompositeOperation();
 
         for (PropertyDefinition propDef : configurationDefinition.getNonGroupedProperties()) {
-
             updateProperty(conf, cop, propDef, address);
         }
+
         for (PropertyGroupDefinition pgd: configurationDefinition.getGroupDefinitions()) {
             String groupName = pgd.getName();
             namePropLocator = null;
@@ -141,6 +141,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     log.error("Group name " + groupName + " contains no property name locator ");
                     return cop;
                 }
+
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address);
@@ -157,8 +158,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address1);
                 }
-
-
             } // TODO handle attribute: case
         }
 
@@ -223,13 +222,15 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             Property prop = conf.get(propDefName);
 
             if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
-                updateHandlePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef, baseAddress);
+                createWriteAttributePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef,
+                    baseAddress);
             }
             else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
-                updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef, baseAddress);
+                createWriteAttributePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef,
+                    baseAddress);
             }
             else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
-                updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef, baseAddress);
+                createWriteAttributePropertyMap(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef, baseAddress);
             }
             else {
                 String s = "Property and definition are not matching:\n";
@@ -240,27 +241,33 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
     }
 
-    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef, Address address) {
-        Operation writeAttribute;
+    private void createWriteAttributePropertyMap(CompositeOperation cop, PropertyMap prop,
+        PropertyDefinitionMap propDef, Address address) {
+
+        SimpleEntry<String, Map<String, Object>> entry = this.prepareMap(prop, propDef);
+        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
+        cop.addStep(writeAttribute);
+    }
+
+    private SimpleEntry<String, Map<String, Object>> prepareMap(PropertyMap prop, PropertyDefinitionMap propDef) {
         Map<String,Object> results;
 
         String propName = stripNumberIdentifier(prop.getName());
         if (propName.endsWith(":collapsed")) {
-            String realName = propName.substring(0, propName.indexOf(':'));
-            results = handleCollapsedMap(prop, propDef);
-            writeAttribute = new WriteAttribute(address, realName,results);
+            propName = propName.substring(0, propName.indexOf(':'));
+            results = preparedCollapsedMap(prop, propDef);
         }
         else {
-            results = updateHandleMap(prop,propDef, address);
-            writeAttribute = new WriteAttribute(address, propName,results);
+            results = prepareSimpleMap(prop, propDef);
         }
-        cop.addStep(writeAttribute);
+
+        return new SimpleEntry<String, Map<String, Object>>(propName, results);
     }
 
-    private Map<String, Object> handleCollapsedMap(PropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
-
+    private Map<String, Object> preparedCollapsedMap(PropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
         String first=null;
         String second=null;
+
         for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getMap().entrySet()) {
             PropertyDefinition def = entry.getValue();
             if (!def.getName().contains(":"))
@@ -289,7 +296,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                                 Address address, List<String> existingPropNames) {
-        Map<String,Object> results = updateHandleMap(prop,propDef, address);
+        Map<String, Object> results = prepareSimpleMap(prop, propDef);
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
@@ -360,12 +367,17 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
 
-    private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,
-                                          Address address) {
+    private void createWriteAttributePropertyList(CompositeOperation cop, PropertyList prop,
+        PropertyDefinitionList propDef, Address address) {
+
+        SimpleEntry<String, List<Object>> entry = preparePropertyList(prop, propDef);
+        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
+        cop.addStep(writeAttribute);
+    }
+
+    private SimpleEntry<String, List<Object>> preparePropertyList(PropertyList prop, PropertyDefinitionList propDef) {
+
         PropertyDefinition memberDef = propDef.getMemberDefinition();
-
-        // We need to collect the list members, create an array and attach this to the cop
-
         List<Property> embeddedProps = prop.getList();
         List<Object> values = new ArrayList<Object>();
         for (Property inner : embeddedProps) {
@@ -378,51 +390,58 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             if (memberDef instanceof PropertyDefinitionMap) {
                 Map<String, Object> mapResult = null;
                 if (memberDef.getName().endsWith(":collapsed")) {
-                    mapResult = handleCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                    mapResult = preparedCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 } else {
-                    mapResult = updateHandleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef, address);
+                    mapResult = prepareSimpleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 }
                 values.add(mapResult);
             }
         }
 
         String name = stripNumberIdentifier(prop.getName());
-        Operation writeAttribute = new WriteAttribute(address,name,values);
-        cop.addStep(writeAttribute);
+
+        return new SimpleEntry<String, List<Object>>(name, values);
     }
 
 
-    private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple,
-                                            PropertyDefinitionSimple propDef, Address address) {
+    private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple propertySimple,
+        PropertyDefinitionSimple propDef, Address address) {
 
         // If the property value is null and the property is optional, skip too
-        if (propertySimple.getStringValue()==null && !propDef.isRequired())
+        if (propertySimple.getStringValue() == null && !propDef.isRequired())
             return;
 
-        Operation writeAttribute = new WriteAttribute(address);
+        SimpleEntry<String, Object> entry = this.preparePropertySimple(propertySimple, propDef);
+        Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
+        cop.addStep(writeAttribute);
+    }
+
+    private SimpleEntry<String, Object> preparePropertySimple(PropertySimple propertySimple,
+        PropertyDefinitionSimple propDef) {
+
+        SimpleEntry<String, Object> entry = null;
+
         String name = stripNumberIdentifier(propertySimple.getName());
         if (name.endsWith(":expr")) {
 
-            String realName = name.substring(0,name.indexOf(":"));
+            String realName = name.substring(0, name.indexOf(":"));
             try {
                 Integer num = Integer.parseInt(propertySimple.getStringValue());
-                writeAttribute.addAdditionalProperty("name",realName);
-                writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+                entry = new SimpleEntry<String, Object>(realName, propertySimple.getStringValue());
             } catch (NumberFormatException nfe) {
                 // Not a number, and expressions are allowed, so send an expression
-                Map<String,String> expr = new HashMap<String, String>(1);
-                expr.put("EXPRESSION_VALUE",propertySimple.getStringValue());
-                writeAttribute.addAdditionalProperty("name", realName);
-                writeAttribute.addAdditionalProperty("value",expr);
+                Map<String, String> expr = new HashMap<String, String>(1);
+                expr.put("EXPRESSION_VALUE", propertySimple.getStringValue());
+                entry = new SimpleEntry<String, Object>(realName, expr);
             }
         } else {
-            writeAttribute.addAdditionalProperty("name",name);
-            writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+            entry = new SimpleEntry<String, Object>(name, propertySimple.getStringValue());
         }
-        cop.addStep(writeAttribute);
+
+        return entry;
     }
 
-    private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef, Address address) {
+    private Map<String, Object> prepareSimpleMap(PropertyMap map, PropertyDefinitionMap mapDef) {
         Map<String,PropertyDefinition> memberDefinitions = mapDef.getMap();
 
         Map<String,Object> results = new HashMap<String,Object>();

@@ -541,9 +541,15 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return ret;
     }
 
+    /**
+     * Strip :number from the property name.
+     * The post-fixed number was added in the descriptor as unique identifier but it is not
+     * needed (and will result in an error) when writing the property back to AS configuration.
+     * 
+     * @param name property name
+     * @return
+     */
     private String stripNumberIdentifier(String name) {
-        //strip :number from the property name, it's not needed
-        //it was added in the descriptor as unique identifier
         if (name.contains(":")) {
             try {
                 Integer.parseInt(name.substring(name.lastIndexOf(':') + 1));

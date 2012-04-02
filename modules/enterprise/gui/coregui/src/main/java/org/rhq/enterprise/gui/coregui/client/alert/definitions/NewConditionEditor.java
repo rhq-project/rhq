@@ -58,7 +58,9 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -346,8 +348,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
                 newCondition.setName(getValueAsString(AVAILABILITY_DURATION_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                // user enters value in minutes but the value is stored in seconds
-                int duration = 60 * Integer.valueOf(getValueAsString(AVAILABILITY_DURATION_VAL_ITEMNAME));
+                // entered in minutes, converted to seconds by DurationItem, and stored in seconds
+                int duration = Integer.valueOf(getValueAsString(AVAILABILITY_DURATION_VAL_ITEMNAME));
                 newCondition.setOption(String.valueOf(duration));
                 newCondition.setMeasurementDefinition(null);
                 break;
@@ -820,13 +822,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
         selection.setShowIfCondition(ifFunc);
         formItems.add(selection);
 
-        TextItem durationValue = new TextItem(AVAILABILITY_DURATION_VAL_ITEMNAME, MSG.common_title_duration());
+        TreeSet<TimeUnit> supportedTimeUnits = new TreeSet<TimeUnit>();
+        supportedTimeUnits.add(TimeUnit.MINUTES);
+        supportedTimeUnits.add(TimeUnit.HOURS);
+        DurationItem durationValue = new DurationItem(AVAILABILITY_DURATION_VAL_ITEMNAME, MSG.common_title_duration(),
+            TimeUnit.SECONDS, supportedTimeUnits, false, false, this);
         durationValue.setWrapTitle(false);
         durationValue.setRequired(true);
         durationValue.setTooltip(MSG.view_alert_definition_condition_editor_availabilityDuration_tooltip_duration());
         durationValue.setHoverWidth(200);
-        durationValue.setValidateOnChange(true);
-        durationValue.setValidators(new NumberWithUnitsValidator(MeasurementUnits.MINUTES));
         durationValue.setShowIfCondition(ifFunc);
         formItems.add(durationValue);
 

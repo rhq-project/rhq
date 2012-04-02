@@ -1,9 +1,15 @@
 package org.rhq.enterprise.gui.coregui.client.report.alert;
 
+import java.util.Date;
+
+import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -26,9 +32,15 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                Date fromDate = fromDateFilter.getValueAsDate();
+                Date toDate = toDateFilter.getValueAsDate();
 
-                ReportExporter exporter = ReportExporter.createExporterForRecentAlerts(
-                        "recentAlerts", priorityFilter.getValues(), fromDateFilter.getValueAsDate(), toDateFilter.getValueAsDate());
+                if (fromDate.equals(toDate)) {
+                    toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, fromDate, END);
+                }
+
+                ReportExporter exporter = ReportExporter.createExporterForRecentAlerts("recentAlerts",
+                    priorityFilter.getValues(), fromDate, toDate);
                 exporter.export();
                 refreshTableInfo();
             }

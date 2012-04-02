@@ -204,6 +204,23 @@ public class ResourceSearchView extends Table {
                     }
                 }) {
 
+                @Override
+                public boolean isEnabled(ListGridRecord[] records) {
+                    boolean result = super.isEnabled(records);
+
+                    if (result) {
+                        for (Record record : records) {
+                            if (record.getAttribute(ResourceDataSourceField.CATEGORY.propertyName()).equals(
+                                ResourceCategory.PLATFORM.name())) {
+                                result = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
@@ -251,6 +268,23 @@ public class ResourceSearchView extends Table {
                         return result;
                     }
                 }) {
+
+                @Override
+                public boolean isEnabled(ListGridRecord[] records) {
+                    boolean result = super.isEnabled(records);
+
+                    if (result) {
+                        for (Record record : records) {
+                            if (record.getAttribute(ResourceDataSourceField.CATEGORY.propertyName()).equals(
+                                ResourceCategory.PLATFORM.name())) {
+                                result = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    return result;
+                }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     int[] resourceIds = TableUtility.getIds(selection);

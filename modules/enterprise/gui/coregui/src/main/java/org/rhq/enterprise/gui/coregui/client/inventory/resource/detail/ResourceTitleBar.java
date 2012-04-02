@@ -292,8 +292,9 @@ public class ResourceTitleBar extends LocatableVLayout {
             });
     }
 
-    public void setResource(ResourceComposite resourceComposite) {
-        if (this.resourceComposite == null || resourceComposite.getResource().getId() != this.resource.getId()) {
+    public void setResource(ResourceComposite resourceComposite, boolean isRefresh) {
+        if (this.resourceComposite == null || resourceComposite.getResource().getId() != this.resource.getId()
+            || isRefresh) {
             this.resource = resourceComposite.getResource();
             this.resourceComposite = resourceComposite;
             update();

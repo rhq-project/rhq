@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -40,7 +39,7 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-import com.smartgwt.client.widgets.tree.Tree;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -62,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -85,7 +84,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         super(locatorId);
     }
 
-    public void showContextMenu(final Tree tree, final TreeNode node, final ResourceGroup group) {
+    public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, final ResourceGroup group) {
         // we need the group composite to access permissions for context menu authz, so get it now
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(group.getId());
@@ -114,13 +113,13 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_group_detail_failLoadComp(String.valueOf(group.getId())));
                     } else {
-                        showContextMenu(tree, node, result.get(0));
+                        showContextMenu(treeGrid, node, result.get(0));
                     }
                 }
             });
     }
 
-    public void showContextMenu(final Tree tree, final TreeNode node, ResourceGroupComposite groupComposite) {
+    public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
         group = groupComposite.getResourceGroup();
         groupMemberType = group.getResourceType();
@@ -137,13 +136,13 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 public void onTypesLoaded(ResourceType type) {
 
                     groupMemberType = type;
-                    buildResourceGroupContextMenu(tree, node, group, type);
+                    buildResourceGroupContextMenu(treeGrid, node, group, type);
                     showContextMenu();
                 }
             });
     }
 
-    private void buildResourceGroupContextMenu(final Tree tree, final TreeNode node, final ResourceGroup group,
+    private void buildResourceGroupContextMenu(final TreeGrid treeGrid, final TreeNode node, final ResourceGroup group,
         final ResourceType resourceType) {
         // name
         setItems(new MenuItem(group.getName()));
@@ -164,13 +163,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
             refresh.addClickHandler(new ClickHandler() {
 
                 public void onClick(MenuItemClickEvent event) {
-                    // autogroup nodes are in the resource tree and reloads are performed only on resource nodes.
-                    // so find the actual resource parent node, traversing through subcategory nodes as needed.
-                    TreeNode resourceNode = tree.getParent(node);
-                    while (!(resourceNode instanceof ResourceTreeNode)) {
-                        resourceNode = tree.getParent(resourceNode);
-                    }
-                    tree.reloadChildren(resourceNode);
+                    // refresh the tree and detail
+                    ResourceTreeView.contextMenuRefresh(treeGrid, node);
                 }
             });
             addItem(refresh);
@@ -186,7 +180,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (pluginConfigEnabled) {
             pluginConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Inventory", "ConnectionSettings"));
+                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Inventory",
+                        "ConnectionSettings"));
                 }
             });
         }
@@ -200,7 +195,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Configuration", "Current"));
+                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Configuration",
+                        "Current"));
                 }
             });
         }
@@ -230,8 +226,10 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group), ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
-                            + "/0/" + operationDefinition.getId();
+                        String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
+                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            + "/0/"
+                            + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }
                 });
@@ -365,8 +363,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                                         CoreGUI
                                                             .getErrorHandler()
                                                             .handleError(
-                                                                MSG
-                                                                    .view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
                                                                 caught);
                                                     }
 
@@ -427,9 +424,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                                     b.setCallback(new RequestCallback() {
                                                         public void onResponseReceived(final Request request,
                                                             final Response response) {
-                                                            Log
-                                                                .trace("Successfully submitted request to add graph to view:"
-                                                                        + url);
+                                                            Log.trace("Successfully submitted request to add graph to view:"
+                                                                + url);
 
                                                             //kick off a page reload.
                                                             String currentViewPath = History.getToken();

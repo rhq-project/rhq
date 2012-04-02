@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;

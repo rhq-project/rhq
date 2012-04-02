@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -89,8 +88,8 @@ public class ResourceTreeDatasource extends DataSource {
         DataSourceTextField nameDataField = new DataSourceTextField("name", MSG.common_title_name());
         nameDataField.setCanEdit(false);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", MSG
-            .common_title_description());
+        DataSourceTextField descriptionDataField = new DataSourceTextField("description",
+            MSG.common_title_description());
         descriptionDataField.setCanEdit(false);
 
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.common_title_id_parent());
@@ -194,7 +193,7 @@ public class ResourceTreeDatasource extends DataSource {
         if (treeGrid == null || treeGrid.getTree() == null) {
             throw new ViewChangedException(ResourceTopView.VIEW_ID.getName() + "/*");
         }
-        
+
         List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
         for (Resource resource : resources) {
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));

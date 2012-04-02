@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
@@ -100,7 +99,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
 
-    protected void updateTabContent(T selectedItem) {
+    protected void updateTabContent(T selectedItem, boolean isRefresh) {
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(this.baseViewPath)) {
             throw new ViewChangedException(this.baseViewPath + "/" + getSelectedItemId());
@@ -221,7 +220,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         // to the default subtab for the tab and overriding our explicit navigation to a non-default subtab. 
         this.tabSet.setIgnoreSelectEvents(true);
 
-        if (getSelectedItemId() == null || getSelectedItemId() != id) {
+        if (getSelectedItemId() == null || getSelectedItemId() != id || viewPath.isRefresh()) {
             // A different entity (resource or group), load it and try to navigate to the same tabs if possible.
             this.loadSelectedItem(id, viewPath);
 
@@ -229,7 +228,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // Same Resource - just switch tabs.
             //
             // until we finish the following work we're susceptible to fast-click issues in
-            // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+            // tree navigation.  So, wait until after it's done to notify listeners that the view is
             // safely rendered.  Make sure to notify even on failure.            
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);

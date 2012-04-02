@@ -191,7 +191,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                 // only show the context menu for cluster nodes and our top root node
                 if (contextNode.isCompatibleGroupTopNode() || contextNode.isAutoClusterNode()) {
-                    contextMenu.showContextMenu(treeGrid.getTree(), contextNode);
+                    contextMenu.showContextMenu(treeGrid, contextNode);
                 }
             }
         });
@@ -217,8 +217,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                     if (newNode.isCompatibleGroupTopNode()) {
                         currentNodeId = newNode.getID();
-                        Log.debug("Selecting compatible group [" + currentNodeId
-                            + "]...");
+                        Log.debug("Selecting compatible group [" + currentNodeId + "]...");
                         String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(currentNodeId));
                         String currentViewPath = History.getToken();
                         if (!currentViewPath.startsWith(viewPath.substring(1))) {
@@ -566,8 +565,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             node.setTitle(title);
 
             // "1 out of 2 group members have "foo" child resources"
-            node.setTooltip(MSG.group_tree_partialClusterTooltip(String.valueOf(memberCount), String
-                .valueOf(clusterSize), child.getName()));
+            node.setTooltip(MSG.group_tree_partialClusterTooltip(String.valueOf(memberCount),
+                String.valueOf(clusterSize), child.getName()));
         }
 
         return node;

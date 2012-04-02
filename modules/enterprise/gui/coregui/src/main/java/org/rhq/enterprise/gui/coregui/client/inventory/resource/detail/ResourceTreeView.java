@@ -1,5 +1,5 @@
 /*
- * RHQ Management Platform
+fcontext * RHQ Management Platform
  * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -52,6 +51,7 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.DataArrivedEvent;
@@ -350,7 +350,7 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             public void onSuccess(ResourceGroup result) {
-                autoGroupContextMenu.showContextMenu(treeGrid.getTree(), agNode, result);
+                autoGroupContextMenu.showContextMenu(treeGrid, agNode, result);
             }
         });
     }
@@ -422,7 +422,7 @@ public class ResourceTreeView extends LocatableVLayout {
         refresh.addClickHandler(new ClickHandler() {
 
             public void onClick(MenuItemClickEvent event) {
-                treeGrid.getTree().reloadChildren(node);
+                contextMenuRefresh(treeGrid, node);
             }
         });
         resourceContextMenu.addItem(refresh);
@@ -438,8 +438,7 @@ public class ResourceTreeView extends LocatableVLayout {
             pluginConfiguration.addClickHandler(new ClickHandler() {
 
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager
-                        .getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
+                    CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
                 }
             });
         }
@@ -487,7 +486,8 @@ public class ResourceTreeView extends LocatableVLayout {
                     public void onClick(MenuItemClickEvent event) {
                         String viewPath = LinkManager.getResourceTabLink(resource.getId(),
                             ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
-                            + "/0/" + operationDefinition.getId();
+                            + "/0/"
+                            + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }
                 });
@@ -553,6 +553,35 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     }
 
+    /**
+     * Update the tree node (and all of its siblings, as reload is done from the parent). Also, refresh
+     * the detail view.
+     *  
+     * @param treeGrid
+     * @param node
+     */
+    static public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node) {
+        // refresh the view. This won't refresh the tree since the resource hasn't changed, and
+        // we don't really want to refresh the whole tree anyway.
+        CoreGUI.refresh();
+
+        // if this is the root just refresh from the top
+        Tree tree = treeGrid.getTree();
+        TreeNode refreshNode = tree.getParent(node);
+        if (null == refreshNode.getName()) {
+            tree.reloadChildren(node);
+            return;
+        }
+
+        // reloads are performed only on resource nodes. find the first parental resource node, traversing
+        // through autogroup and subcategory nodes as needed.
+        while (!(refreshNode instanceof ResourceTreeNode)) {
+            refreshNode = tree.getParent(refreshNode);
+        }
+
+        tree.reloadChildren(refreshNode);
+    }
+
     private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
@@ -616,9 +645,8 @@ public class ResourceTreeView extends LocatableVLayout {
                                                         .getMessageCenter()
                                                         .notify(
                                                             new Message(
-                                                                MSG
-                                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                                        .getName()), Message.Severity.Info));
+                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                    .getName()), Message.Severity.Info));
                                                 }
                                             });
 
@@ -654,8 +682,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                                 b.setCallback(new RequestCallback() {
                                                     public void onResponseReceived(final Request request,
                                                         final Response response) {
-                                                            Log
-                                                                .trace("Successfully submitted request to add graph to view:"
+                                                        Log.trace("Successfully submitted request to add graph to view:"
                                                             + url);
 
                                                         //kick off a page reload.

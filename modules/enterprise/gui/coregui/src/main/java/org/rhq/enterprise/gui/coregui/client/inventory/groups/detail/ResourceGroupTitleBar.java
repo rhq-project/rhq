@@ -235,7 +235,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
             });
     }
 
-    public void setGroup(ResourceGroupComposite groupComposite) {
+    public void setGroup(ResourceGroupComposite groupComposite, boolean isRefresh) {
         this.group = groupComposite.getResourceGroup();
         update();
 

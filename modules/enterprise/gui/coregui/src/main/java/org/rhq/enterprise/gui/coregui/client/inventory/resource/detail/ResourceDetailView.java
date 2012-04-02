@@ -274,8 +274,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return new ResourceTitleBar(extendLocatorId("TitleBar"));
     }
 
-    protected void updateTabContent(ResourceComposite resourceComposite) {
-        super.updateTabContent(resourceComposite);
+    protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {
+        super.updateTabContent(resourceComposite, isRefresh);
 
         try {
             this.resourceComposite = resourceComposite;
@@ -283,7 +283,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 selectListener.onResourceSelected(this.resourceComposite);
             }
             Resource resource = this.resourceComposite.getResource();
-            getTitleBar().setResource(this.resourceComposite);
+            getTitleBar().setResource(this.resourceComposite, isRefresh);
 
             // wipe the canvas views for the current set of subtabs.
             this.getTabSet().destroyViews();
@@ -650,7 +650,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                     // safely rendered.  Make sure to notify even on failure.
                     try {
                         resourceComposite.getResource().setResourceType(type);
-                        updateTabContent(resourceComposite);
+                        updateTabContent(resourceComposite, viewPath.isRefresh());
                         selectTab(getTabName(), getSubTabName(), viewPath);
                     } finally {
                         notifyViewRenderedListeners();

@@ -243,12 +243,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
-    protected void updateTabContent(ResourceGroupComposite groupComposite) {
-        super.updateTabContent(groupComposite);
+    protected void updateTabContent(ResourceGroupComposite groupComposite, boolean isRefresh) {
+        super.updateTabContent(groupComposite, isRefresh);
 
         try {
             this.groupComposite = groupComposite;
-            getTitleBar().setGroup(groupComposite);
+            getTitleBar().setGroup(groupComposite, isRefresh);
 
             // wipe the canvas views for the current set of subtabs.
             this.getTabSet().destroyViews();
@@ -568,7 +568,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                         // safely rendered.  Make sure to notify even on failure.
                         try {
                             group.setResourceType(type);
-                            updateTabContent(groupComposite);
+                            updateTabContent(groupComposite, viewPath.isRefresh());
                             selectTab(getTabName(), getSubTabName(), viewPath);
                         } finally {
                             notifyViewRenderedListeners();
@@ -577,7 +577,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 });
         } else {
             try {
-                updateTabContent(groupComposite);
+                updateTabContent(groupComposite, viewPath.isRefresh());
                 selectTab(getTabName(), getSubTabName(), viewPath);
             } finally {
                 notifyViewRenderedListeners();

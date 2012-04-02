@@ -313,34 +313,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
-
         if (report.getPackageDetails() != null) { // Content deployment
             return deployContent(report);
         } else {
-            report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
-            Address createAddress = new Address(address);
-            createAddress.add(report.getPluginConfiguration().getSimpleValue("path", ""),
-                report.getUserSpecifiedResourceName());
-            Operation op = new Operation("add", createAddress);
-            for (Property prop : report.getResourceConfiguration().getProperties()) {
-                if (prop instanceof PropertySimple) {
-                    PropertySimple ps = (PropertySimple) prop;
-                    String value = ps.getStringValue();
-                    op.addAdditionalProperty(prop.getName(), value);
-                }
-                // TODO more types
-            }
-            Result result = getASConnection().execute(op);
-            if (result.isSuccess()) {
-                report.setStatus(CreateResourceStatus.SUCCESS);
-                report.setResourceKey(address.getPath());
-                report.setResourceName(report.getUserSpecifiedResourceName());
-            } else {
-                report.setStatus(CreateResourceStatus.FAILURE);
-                report.setErrorMessage(result.getFailureDescription());
-            }
+            ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+            CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
+            return delegate.createResource(report);
         }
-        return report;
     }
 
     /**

@@ -161,6 +161,30 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return cop;
     }
 
+
+    /**
+     * @return the address
+     */
+    protected Address getAddress() {
+        return this._address;
+    }
+
+
+    /**
+     * @return the connection
+     */
+    protected ASConnection getConnection() {
+        return connection;
+    }
+
+
+    /**
+     * @return the configurationDefinition
+     */
+    protected ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
+    }
+
     private void updateProperty(Configuration conf, CompositeOperation cop, PropertyDefinition propDef,
                                 Address baseAddress) {
 
@@ -241,7 +265,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                                 Address address, List<String> existingPropNames) {
-        Map<String, Object> results = prepareSimpleMap(prop, propDef);
+        Map<String, Object> results = prepareSimplePropertyMap(prop, propDef);
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
@@ -337,7 +361,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private void createWriteAttributePropertyMap(CompositeOperation cop, PropertyMap property,
         PropertyDefinitionMap propertyDefinition, Address address) {
 
-        SimpleEntry<String, Map<String, Object>> entry = this.prepareMap(property, propertyDefinition);
+        SimpleEntry<String, Map<String, Object>> entry = this.preparePropertyMap(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
         cop.addStep(writeAttribute);
     }
@@ -350,7 +374,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed simple property
      */
-    private SimpleEntry<String, Object> preparePropertySimple(PropertySimple property,
+    protected SimpleEntry<String, Object> preparePropertySimple(PropertySimple property,
         PropertyDefinitionSimple propertyDefinition) {
 
         SimpleEntry<String, Object> entry = null;
@@ -383,7 +407,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed list
      */
-    private SimpleEntry<String, List<Object>> preparePropertyList(PropertyList property,
+    protected SimpleEntry<String, List<Object>> preparePropertyList(PropertyList property,
         PropertyDefinitionList propertyDefinition) {
 
         PropertyDefinition memberDef = propertyDefinition.getMemberDefinition();
@@ -399,9 +423,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             if (memberDef instanceof PropertyDefinitionMap) {
                 Map<String, Object> mapResult = null;
                 if (memberDef.getName().endsWith(":collapsed")) {
-                    mapResult = prepareCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                    mapResult = prepareCollapsedPropertyMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 } else {
-                    mapResult = prepareSimpleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                    mapResult = prepareSimplePropertyMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
                 }
                 values.add(mapResult);
             }
@@ -420,16 +444,16 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed map
      */
-    private SimpleEntry<String, Map<String, Object>> prepareMap(PropertyMap property,
+    protected SimpleEntry<String, Map<String, Object>> preparePropertyMap(PropertyMap property,
         PropertyDefinitionMap propertyDefinition) {
         Map<String, Object> results;
 
         String propName = stripNumberIdentifier(property.getName());
         if (propName.endsWith(":collapsed")) {
             propName = propName.substring(0, propName.indexOf(':'));
-            results = prepareCollapsedMap(property, propertyDefinition);
+            results = prepareCollapsedPropertyMap(property, propertyDefinition);
         } else {
-            results = prepareSimpleMap(property, propertyDefinition);
+            results = prepareSimplePropertyMap(property, propertyDefinition);
         }
 
         return new SimpleEntry<String, Map<String, Object>>(propName, results);
@@ -443,7 +467,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed map
      */
-    private Map<String, Object> prepareCollapsedMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
+    protected Map<String, Object> prepareCollapsedPropertyMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
         String key = null;
         String value = null;
 
@@ -480,7 +504,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * @param propertyDefinition property definition
      * @return parsed map
      */
-    private Map<String, Object> prepareSimpleMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
+    protected Map<String, Object> prepareSimplePropertyMap(PropertyMap property, PropertyDefinitionMap propertyDefinition) {
         Map<String,PropertyDefinition> memberDefinitions = propertyDefinition.getMap();
 
         Map<String,Object> results = new HashMap<String,Object>();

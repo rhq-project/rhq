@@ -95,8 +95,10 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
 
                 stream.write((getHeader() + "\n").getBytes());
                 for (DriftComposite alert : query) {
-                    String record = toCSV(alert)  + "\n";
-                    stream.write(record.getBytes());
+                    if(alert.getDriftDefinitionName() != null && alert.getDriftDefinitionName().contains(definition)){
+                        String record = toCSV(alert)  + "\n";
+                        stream.write(record.getBytes());
+                    }
                 }
 
             }

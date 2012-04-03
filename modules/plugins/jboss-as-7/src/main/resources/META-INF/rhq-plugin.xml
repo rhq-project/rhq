@@ -3034,7 +3034,8 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <service name="HiloKeygenerator"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="HiLo based key generators.">
+                 description="HiLo based key generators."
+                 createDeletePolicy="both">
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="hilo-keygenerator"/>
@@ -3044,7 +3045,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 <c:simple-property name="block-size" required="false" type="long" readOnly="true" description="The block size"/>
                 <c:simple-property name="create-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create create the tables"/>
                 <c:simple-property name="create-table-ddl" required="false" type="string" readOnly="true" description="The DDL used to create the table"/>
-                <c:simple-property name="data-source" required="false" type="string" readOnly="true" description="The datasource used for sequence generation"/>
+                <c:simple-property name="data-source" required="true" type="string" readOnly="true" description="The datasource used for sequence generation">
+                    <c:option-source target="resource" expression="type=DataSource plugin=jboss-as-7"/>
+                </c:simple-property>
                 <c:simple-property name="drop-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create drop the tables"/>
                 <c:simple-property name="id-column" required="false" type="string" readOnly="true" description="The ID column name"/>
                 <c:simple-property name="select-hi-ddl" required="false" type="string" readOnly="true" description="The DDL used to select the hi value"/>

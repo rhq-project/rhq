@@ -3085,47 +3085,6 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </resource-configuration>
      </service>
 
-
-     <service name="ResourceAdapters"
-            discovery="SubsystemDiscovery"
-            class="BaseComponent"
-            singleton="true">
-
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
-        </plugin-configuration>
-
-        <service name="ResourceAdapter"
-                 class="BaseComponent"
-                 discovery="SubsystemDiscovery"
-                 description="The configuration of the resource adapter.">
-
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="resource-adapter"/>
-            </plugin-configuration>
-
-            <operation name="activate" description="Force the resource adapter config activation without server reload">
-                <results>
-                   <c:simple-property name="operationResult"/>
-                </results>
-            </operation>
-
-            <resource-configuration>
-                <c:simple-property name="archive" required="true" type="string" readOnly="false" description="Specifies the resource adapter archive"/>
-                <c:simple-property name="beanvalidationgroups" required="false" type="string" readOnly="false" description="Specifies the bean validation groups that should be used"/>
-                <c:simple-property name="bootstrapcontext" required="false" type="string" readOnly="false" description="Specifies the unique name of the bootstrap context that should be used"/>
-                <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter"/>
-            </resource-configuration>
-        </service>
-
-    </service>
-
-
     <service name="Security"
         discovery="SubsystemDiscovery"
         class="BaseComponent"
@@ -3390,6 +3349,94 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                 <c:simple-property name="use-management-endpoint" required="false" type="boolean" readOnly="false" defaultValue="true" description="If true the connector will use the management endpoint, otherwise it will use the remoting subsystem one. The default value is true."/>
             </c:group>
         </resource-configuration>
+
+    </service>
+
+
+    <service name="Resource Adapters"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        description="Configuration of the resource adapters subsystem."
+        singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+        </plugin-configuration>
+
+        <service name="Resource Adapter"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="The configuration of a resource adapter."
+                 createDeletePolicy="both">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="resource-adapter"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="archive" required="true" type="string" readOnly="false" description="Specifies the resource adapter archive"/>
+                <c:simple-property name="beanvalidationgroups" required="false" type="string" readOnly="false" description="Specifies the bean validation groups that should be used"/>
+                <c:simple-property name="bootstrapcontext" required="false" type="string" readOnly="false" description="Specifies the unique name of the bootstrap context that should be used"/>
+                <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter"/>
+            </resource-configuration>
+
+            <service name="Admin Objects"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="Specifies the administration objects."
+                 createDeletePolicy="both">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="admin-objects"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+	                <c:simple-property name="class-name" required="true" type="string" readOnly="false" description="Specifies the fully qualified class name of a managed connection factory or admin object"/>
+	                <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies if the resource adapter should be enabled. The default value is true."/>
+	                <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="Specifies the JNDI name for the connection factory or admin object"/>
+	                <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="false" defaultValue="true" description="Setting this to false will bind the object into global JNDI. The default value is true."/>
+                </resource-configuration>
+
+            </service>
+
+            <service name="Config Properties"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="Custom defined config properties."
+                 createDeletePolicy="both">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="config-properties"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+                  <c:simple-property name="value" required="false" type="string" readOnly="true" description="Custom defined config property value"/>
+                </resource-configuration>
+
+            </service>
+
+            <service name="Connection Definitions"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="Specifies the connection definitions."
+                 createDeletePolicy="both">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="connection-definitions"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+                    <c:simple-property name="allocation-retry:expr" required="false" type="string" readOnly="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>
+                </resource-configuration>
+
+            </service>
+
+        </service>
 
     </service>
 

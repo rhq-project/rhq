@@ -44,7 +44,7 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
         report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
-        Address createAddress = new Address(this.getAddress());
+        Address createAddress = new Address(this.address);
         createAddress.add(report.getPluginConfiguration().getSimpleValue("path", ""),
             report.getUserSpecifiedResourceName());
 
@@ -54,28 +54,28 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
 
             if (prop instanceof PropertySimple) {
                 PropertySimple propertySimple = (PropertySimple) prop;
-                PropertyDefinitionSimple propertyDefinition = this.getConfigurationDefinition()
+                PropertyDefinitionSimple propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionSimple(propertySimple.getName());
                 entry = preparePropertySimple(propertySimple, propertyDefinition);
             } else if (prop instanceof PropertyList) {
                 PropertyList propertyList = (PropertyList) prop;
-                PropertyDefinitionList propertyDefinition = this.getConfigurationDefinition()
+                PropertyDefinitionList propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionList(propertyList.getName());
                 entry = preparePropertyList(propertyList, propertyDefinition);
             } else if (prop instanceof PropertyMap) {
                 PropertyMap propertyMap = (PropertyMap) prop;
-                PropertyDefinitionMap propertyDefinition = this.getConfigurationDefinition().getPropertyDefinitionMap(
-                    propertyMap.getName());
+                PropertyDefinitionMap propertyDefinition = this.configurationDefinition
+                    .getPropertyDefinitionMap(propertyMap.getName());
                 entry = preparePropertyMap(propertyMap, propertyDefinition);
             }
 
             op.addAdditionalProperty(entry.getKey(), entry.getValue());
         }
 
-        Result result = this.getConnection().execute(op);
+        Result result = this.connection.execute(op);
         if (result.isSuccess()) {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(this.getAddress().getPath());
+            report.setResourceKey(this.address.getPath());
             report.setResourceName(report.getUserSpecifiedResourceName());
         } else {
             report.setStatus(CreateResourceStatus.FAILURE);

@@ -54,9 +54,10 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     final Log log = LogFactory.getLog(this.getClass());
 
-    private Address _address;
-    private ASConnection connection;
-    private ConfigurationDefinition configurationDefinition;
+    protected Address address;
+    protected ASConnection connection;
+    protected ConfigurationDefinition configurationDefinition;
+
     private String namePropLocator;
     private String type;
     private boolean addNewChildren;
@@ -71,7 +72,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     public ConfigurationWriteDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
-        this._address = address;
+        this.address = address;
     }
 
     /**
@@ -92,7 +93,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         Configuration conf = report.getConfiguration();
-        CompositeOperation cop = updateGenerateOperationFromProperties(conf, _address);
+        CompositeOperation cop = updateGenerateOperationFromProperties(conf, address);
 
         Result result = connection.execute(cop);
         if (!result.isSuccess()) {
@@ -161,29 +162,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return cop;
     }
 
-
-    /**
-     * @return the address
-     */
-    protected Address getAddress() {
-        return this._address;
-    }
-
-
-    /**
-     * @return the connection
-     */
-    protected ASConnection getConnection() {
-        return connection;
-    }
-
-
-    /**
-     * @return the configurationDefinition
-     */
-    protected ConfigurationDefinition getConfigurationDefinition() {
-        return configurationDefinition;
-    }
 
     private void updateProperty(Configuration conf, CompositeOperation cop, PropertyDefinition propDef,
                                 Address baseAddress) {

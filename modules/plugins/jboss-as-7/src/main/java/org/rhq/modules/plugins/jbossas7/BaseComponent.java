@@ -316,7 +316,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (report.getPackageDetails() != null) { // Content deployment
             return deployContent(report);
         } else {
-            ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+            ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
             CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
             return delegate.createResource(report);
         }

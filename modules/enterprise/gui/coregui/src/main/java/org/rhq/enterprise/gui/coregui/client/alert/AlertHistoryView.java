@@ -19,21 +19,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -49,6 +45,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
@@ -70,6 +70,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
     private static final Criteria INITIAL_CRITERIA = new Criteria();
+
+    protected SelectItem priorityFilter;
+    protected DateItem fromDateFilter;
+    protected DateItem toDateFilter;
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -113,11 +117,17 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
         priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
-        SelectItem priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
+        priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
+        fromDateFilter = new DateItem("startDateFilter");
+        fromDateFilter.setUseTextField(true);
+        fromDateFilter.setTitle(MSG.filter_from_date());
+        toDateFilter = new DateItem("endDateFilter");
+        toDateFilter.setUseTextField(true);
+        toDateFilter.setTitle(MSG.filter_to_date());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(priorityFilter);
+            setFilterFormItems(fromDateFilter, toDateFilter, priorityFilter);
         }
     }
 

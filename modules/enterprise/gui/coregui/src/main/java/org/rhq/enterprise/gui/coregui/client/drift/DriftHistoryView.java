@@ -19,19 +19,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -43,6 +40,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the
@@ -62,6 +62,14 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SortDirection.DESCENDING);
 
     public static final Criteria INITIAL_CRITERIA = new Criteria();
+
+    protected SelectItem categoryFilter;
+    protected TextItem definitionFilter;
+    protected TextItem changeSetFilter;
+    protected TextItem pathFilter;
+    protected DateItem startDateFilter;
+    protected DateItem endDateFilter;
+
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -126,15 +134,23 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
             .getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
         categoryIcons.put(DriftCategory.FILE_REMOVED.name(), ImageManager
             .getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
-        SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
+        categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
-        TextItem definitionFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
-        TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
-        TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
+        definitionFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
+        changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
+        pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
+
+        endDateFilter = new DateItem("startDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setTitle(MSG.filter_from_date());
+        startDateFilter = new DateItem("endDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setTitle(MSG.filter_to_date());
+
 
         if (isShowFilterForm()) {
-            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter);
+            setFilterFormItems(endDateFilter, startDateFilter, definitionFilter, changeSetFilter, categoryFilter, pathFilter );
         }
     }
 

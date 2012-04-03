@@ -33,7 +33,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
@@ -45,6 +44,10 @@ import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.report.alert.SubsystemRecentAlertsView;
+import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.report.inventory.DriftComplianceReport;
+import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
@@ -107,16 +110,16 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()));
+                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()) );
                 }
             });
 
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
             ResourceConfigurationHistoryListView.VIEW_ID,  new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(extendLocatorId(
+                    return new SubsystemConfigurationHistoryListView(extendLocatorId(
                         ResourceConfigurationHistoryListView.VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY) );
                 }
             });
 
@@ -125,14 +128,14 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 public Canvas createView() {
                     return new SubsystemOperationHistoryListView(extendLocatorId(
                         OperationHistoryView.SUBSYSTEM_VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY) );
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemResourceAlertView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()),
+                    return new SubsystemRecentAlertsView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()),
                         getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
@@ -140,7 +143,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem alertDefinitionsItem = new NavigationItem(AlertDefinitionReportView.VIEW_ID,
                  new ViewFactory() {
             public Canvas createView() {
-                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()) );
             }
         });
 
@@ -168,14 +171,14 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()) );
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
              new ViewFactory() {
             public Canvas createView() {
-                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()), true);
             }
         });
 
@@ -189,8 +192,5 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem,
             driftComplianceItem);
     }
-
-
-
-
 }
+

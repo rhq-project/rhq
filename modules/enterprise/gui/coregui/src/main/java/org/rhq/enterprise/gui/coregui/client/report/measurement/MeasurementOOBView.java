@@ -22,13 +22,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
-import java.util.ArrayList;
-
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridField;
-
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
@@ -40,29 +40,41 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
-
+        super(locatorId);
         setDataSource(new MeasurementOOBDataSource());
     }
 
     @Override
     protected void configureTable() {
-        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
-        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-
-        super.configureTable();
+        setListGridFields(getDataSource().getListGridFields().toArray(new ListGridField[0]));
+        addExportAction();
     }
-
-
 
     @Override
     protected SelectionStyle getDefaultSelectionStyle() {
         return SelectionStyle.NONE;
     }
 
-
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
     }
+
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ReportExporter exporter = ReportExporter.createStandardExporter("suspectMetrics");
+                exporter.export();
+                refreshTableInfo();
+            }
+        });
+    }
+
 }

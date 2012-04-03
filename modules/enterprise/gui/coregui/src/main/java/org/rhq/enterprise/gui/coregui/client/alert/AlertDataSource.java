@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
@@ -40,12 +33,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.*;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -65,6 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.*;
 
 /**
  * @author Ian Springer
@@ -334,6 +324,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         // There's no need to add a priorities filter to the criteria if the user specified all priorities.
         if (prioritiesFilter.length != AlertPriority.values().length) {
             criteria.addFilterPriorities(prioritiesFilter);
+        }
+
+        Date startDateFilter = getFilter(request, "startDateFilter", Date.class);
+        if(startDateFilter != null){
+            criteria.addFilterStartTime(startDateFilter.getTime());
+        }
+
+        Date endDateFilter = getFilter(request, "endDateFilter", Date.class);
+        if( endDateFilter!= null){
+            criteria.addFilterEndTime(endDateFilter.getTime());
         }
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);

@@ -22,10 +22,37 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
     public SubsystemResourceDriftView(String locatorId, boolean hasWriteAccess) {
         super(locatorId, MSG.common_title_recent_drifts(), EntityContext.forSubsystemView(), hasWriteAccess);
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        addExportAction();
+    }
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift", definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(), pathFilter.getValueAsString(), endDateFilter.getValueAsDate(), startDateFilter.getValueAsDate());
+                exporter.export();
+                refreshTableInfo();
+            }
+
+        });
+
     }
 }

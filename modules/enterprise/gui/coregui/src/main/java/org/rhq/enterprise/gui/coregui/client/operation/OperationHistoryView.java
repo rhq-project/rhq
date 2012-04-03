@@ -29,6 +29,8 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.DateItem;
+import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,7 +41,6 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -48,6 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import static com.smartgwt.client.types.DateDisplayFormat.TOUSSHORTDATE;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -66,9 +69,14 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
+    protected SelectItem statusFilter;
+    protected DateItem startDateFilter;
+    protected DateItem endDateFilter;
+    
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
+
 
     static {
         OperationRequestStatus[] statusValues = OperationRequestStatus.values();
@@ -129,12 +137,19 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusIcons.put(OperationRequestStatus.FAILURE.name(),
             ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
 
-        SelectItem statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
+        statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
         statusFilter.setWidth(325);
 
+        endDateFilter = new DateItem("startDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setTitle(MSG.filter_from_date());
+        startDateFilter = new DateItem("endDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setTitle(MSG.filter_to_date());
+
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter);
+            setFilterFormItems(endDateFilter, startDateFilter, statusFilter);
         }
     }
 

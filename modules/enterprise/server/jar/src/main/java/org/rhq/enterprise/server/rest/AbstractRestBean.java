@@ -69,7 +69,7 @@ public class AbstractRestBean {
     Log log = LogFactory.getLog(getClass().getName());
 
     /** Subject of the caller that gets injected via {@link SetCallerInterceptor} */
-    Subject caller;
+    protected Subject caller;
 
     /** The cache to use */
     @javax.annotation.Resource(name="cache")

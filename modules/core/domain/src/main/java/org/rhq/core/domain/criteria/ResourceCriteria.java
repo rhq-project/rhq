@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -53,6 +54,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Integer filterResourceTypeId; // needs overrides
     private String filterResourceTypeName; // needs overrides
     private List<ResourceCategory> filterResourceCategories; // needs overrides
+    private List<Integer> filterResourceTypeIds;
     private String filterPluginName; // needs overrides
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
@@ -128,6 +130,7 @@ public class ResourceCriteria extends TaggedCriteria {
             + "          JOIN ires.implicitGroups implicitGroup " //
             + "         WHERE implicitGroup.id IN ( ? ) )");
         filterOverrides.put("rootResourceId", "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
+        filterOverrides.put("resourceTypeIds", "resourceType.id IN (?)");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -169,6 +172,10 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterResourceTypeId(Integer filterResourceTypeId) {
         this.filterResourceTypeId = filterResourceTypeId;
+    }
+
+    public void addFilterResourceTypeIds(Integer... filterResourceTypeIds) {
+        this.filterResourceTypeIds = Arrays.asList(filterResourceTypeIds);
     }
 
     public void addFilterResourceTypeName(String filterResourceTypeName) {

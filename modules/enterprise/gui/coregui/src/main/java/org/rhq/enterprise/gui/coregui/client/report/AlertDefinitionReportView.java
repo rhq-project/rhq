@@ -22,11 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -35,14 +30,9 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.*;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -56,7 +46,9 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -66,6 +58,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
  * 
@@ -73,16 +70,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(),
-        IconEnum.ALERT_DEFINITIONS);
+    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions",
+        MSG.view_reports_alertDefinitions(), IconEnum.ALERT_DEFINITIONS);
 
-    public AlertDefinitionReportView(String locatorId) {
+
+    public AlertDefinitionReportView(String locatorId ) {
         super(locatorId);
         setDataSource(new DataSource());
     }
 
     @Override
     protected void configureTable() {
+        super.configureTable();
+
         ListGrid listGrid = getListGrid();
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
@@ -101,7 +101,26 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                 }
             }
         });
+        addExportAction();
+
     }
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ReportExporter exporter = ReportExporter.createStandardExporter("alertDefinitions");
+                exporter.export();
+            }
+
+        });
+    }
+
 
     @Override
     public ViewName getViewName() {
@@ -117,7 +136,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterResourceOnly(true); // guarantees that all alert defs we get will have a non-null Resource object
-
+            criteria.setPageControl(getPageControl(request));
             criteria.fetchResource(true);
             criteria.fetchGroupAlertDefinition(true);
             return criteria;
@@ -207,8 +226,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                         int typeId = result.get(0).getResourceType().getId();
                                         CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(
                                             AlertDefinitionTemplateTypeView.VIEW_ID.getName(), typeId)
-                                            + "/"
-                                            + templateId);
+                                            + "/" + templateId);
                                     }
                                 }
 
@@ -220,8 +238,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                             });
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getEntityTabLink(
-                            EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef
+                            .getResourceGroup()), "Alert", "Definitions")
                             + "/" + groupAlertDef.getId());
                     }
                 }
@@ -231,7 +249,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
                 }
             });
@@ -333,7 +352,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record
+                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
                     response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set

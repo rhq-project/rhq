@@ -18,16 +18,16 @@
  */
 package org.rhq.core.domain.criteria;
 
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageOrdering;
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
 /**
  * The generic implementation of DriftCriteria makes no assumptions about the actual drift server
@@ -233,6 +233,12 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     @Override
     public boolean isStrict() {
         return this.strict;
+    }
+
+    @Override
+    public void setPaging(int pageNumber, int pageSize) {
+        pageControl.setPageNumber(pageNumber);
+        pageControl.setPageSize(pageSize);
     }
 
 }

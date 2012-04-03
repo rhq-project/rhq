@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -36,7 +29,6 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -57,6 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.*;
 
 /**
  * @author Jay Shaughnessy
@@ -324,6 +318,17 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
 
         // do not get planned drifts
         criteria.addFilterDriftHandlingModes(DriftHandlingMode.normal);
+
+        Date startDateFilter = getFilter(request, "startDateFilter", Date.class);
+        if(startDateFilter != null){
+            criteria.addFilterStartTime(startDateFilter.getTime());
+        }
+
+        Date endDateFilter = getFilter(request, "endDateFilter", Date.class);
+        if( endDateFilter!= null){
+            criteria.addFilterEndTime(endDateFilter.getTime());
+        }
+
 
         switch (entityContext.getType()) {
         case Resource:

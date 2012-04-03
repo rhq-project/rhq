@@ -19,10 +19,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
-
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 
 /**
  * A collection of utility methods for working with Strings.
@@ -50,6 +51,36 @@ public class StringUtility {
         }
 
         return res;
+    }
+
+    /**
+     * Converts the collection into a comma-delimited list, Use
+     * {@link #toString(Collection, String)} if you need a different delimiter.
+     *
+     * @param collection The collection to convert to a String
+     * @param <T> The type of elements in the collection
+     * @return A comma-delimited list as a String
+     */
+    public static <T> String toString(Collection<T> collection) {
+        return toString(collection, ",");
+    }
+
+    /**
+     * Converts the collection into a delimited list with the specified delimiter.
+     *
+     * @param collection The collection to convert to a String
+     * @param delimiter The delimiter to use
+     * @param <T> The type of elements in the collection
+     * @return A delimited list as a String
+     */
+    public static <T> String toString(Collection<T> collection, String delimiter) {
+        StringBuilder builder = new StringBuilder();
+        for (T obj : collection) {
+            builder.append(obj).append(delimiter);
+        }
+        builder.delete(builder.length() - delimiter.length(), builder.length());
+
+        return builder.toString();
     }
 
     // TODO: I18N. The logic here may need to be pluggable for different localizations.

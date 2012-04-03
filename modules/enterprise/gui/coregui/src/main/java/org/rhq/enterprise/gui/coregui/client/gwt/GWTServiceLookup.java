@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.util.logging.Logger;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -201,6 +200,10 @@ public class GWTServiceLookup {
 
     public static TestGWTServiceAsync getTestService() {
         return secure(TestGWTServiceAsync.Util.getInstance());
+    }
+
+    public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService() {
+        return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
 
     @SuppressWarnings("unchecked")

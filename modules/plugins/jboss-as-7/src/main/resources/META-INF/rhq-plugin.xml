@@ -3368,4 +3368,29 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
      </service>
 
+
+    <service name="JMX"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        description="The configuration of the JMX subsystem."
+        singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=jmx"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="show-model" required="false" type="boolean" readOnly="false" description="Set to 'true' to include MBeans for the model controller resources"/>
+            <c:group name="child:remoting-connector=jmx" displayName="JBoss remoting connector for the JMX subsystem.">
+                <c:simple-property name="use-management-endpoint" required="false" type="boolean" readOnly="false" defaultValue="true" description="If true the connector will use the management endpoint, otherwise it will use the remoting subsystem one. The default value is true."/>
+            </c:group>
+        </resource-configuration>
+
+    </service>
+
 </plugin>

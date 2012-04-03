@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -72,8 +73,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     protected SelectItem priorityFilter;
-    protected DateItem fromDateFilter;
-    protected DateItem toDateFilter;
+    protected DateItem startDateFilter;
+    protected DateItem endDateFilter;
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -119,15 +120,18 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
-        fromDateFilter = new DateItem("startDateFilter");
-        fromDateFilter.setUseTextField(true);
-        fromDateFilter.setTitle(MSG.filter_from_date());
-        toDateFilter = new DateItem("endDateFilter");
-        toDateFilter.setUseTextField(true);
-        toDateFilter.setTitle(MSG.filter_to_date());
+        startDateFilter = new DateItem("startDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setEnforceDate(true);
+        startDateFilter.setTitle(MSG.filter_from_date());
+        endDateFilter = new DateItem("endDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setEndDate(new Date());
+        endDateFilter.setEnforceDate(true);
+        endDateFilter.setTitle(MSG.filter_to_date());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(fromDateFilter, toDateFilter, priorityFilter);
+            setFilterFormItems(startDateFilter, endDateFilter, priorityFilter);
         }
     }
 

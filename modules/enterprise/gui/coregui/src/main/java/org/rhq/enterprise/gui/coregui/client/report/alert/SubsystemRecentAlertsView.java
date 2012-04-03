@@ -1,12 +1,12 @@
 package org.rhq.enterprise.gui.coregui.client.report.alert;
 
-import java.util.Date;
-
 import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+
+import java.util.Date;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
 import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
@@ -34,8 +34,8 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                Date fromDate = fromDateFilter.getValueAsDate();
-                Date toDate = toDateFilter.getValueAsDate();
+                Date fromDate = startDateFilter.getValueAsDate();
+                Date toDate = endDateFilter.getValueAsDate();
 
                 if (fromDate != null) {
                     fromDate = DateUtil.getAbsoluteDate(START_OF_TODAY, fromDate, START);

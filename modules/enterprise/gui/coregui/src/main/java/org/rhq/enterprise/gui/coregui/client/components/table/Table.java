@@ -18,23 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.ResultSet;
-import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.data.*;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -49,10 +34,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.*;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
@@ -68,7 +50,6 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -79,15 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
+
+import java.util.*;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -284,7 +259,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * </pre>
      * This is called from onInit() and guarantees grid not null.
      * 
-     * @param contents
+     * @param ListGrid grid
      */
     protected void configureListGrid(ListGrid grid) {
         listGrid.setWidth100();
@@ -1136,6 +1111,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 if (nextFormItem instanceof TextItem) {
                     nextFormItem.addKeyPressHandler(this);
                 } else if (nextFormItem instanceof SelectItem) {
+                    nextFormItem.addChangedHandler(this);
+                } else if (nextFormItem instanceof DateItem) {
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof SearchBarItem) {
                     searchBarItem = (SearchBarItem) nextFormItem;

@@ -37,8 +37,13 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
                 Date fromDate = fromDateFilter.getValueAsDate();
                 Date toDate = toDateFilter.getValueAsDate();
 
-                fromDate = DateUtil.getAbsoluteDate(START_OF_TODAY, fromDate, START);
-                toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, toDate, END);
+                if (fromDate != null) {
+                    fromDate = DateUtil.getAbsoluteDate(START_OF_TODAY, fromDate, START);
+                }
+
+                if (toDate != null) {
+                    toDate = DateUtil.getAbsoluteDate(END_OF_TODAY, toDate, END);
+                }
 
                 ReportExporter exporter = ReportExporter.createExporterForRecentAlerts("recentAlerts",
                     priorityFilter.getValues(), fromDate, toDate);

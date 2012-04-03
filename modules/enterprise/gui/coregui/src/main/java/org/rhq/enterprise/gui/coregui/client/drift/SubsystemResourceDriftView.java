@@ -22,10 +22,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import java.util.Date;
+
+import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
     public SubsystemResourceDriftView(String locatorId, boolean hasWriteAccess) {
@@ -47,7 +55,20 @@ public class SubsystemResourceDriftView extends DriftHistoryView {
 
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift", definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(), pathFilter.getValueAsString(), endDateFilter.getValueAsDate(), startDateFilter.getValueAsDate());
+                Date startDate = startDateFilter.getValueAsDate();
+                Date endDate = endDateFilter.getValueAsDate();
+
+                if (startDate != null) {
+                    startDate = DateUtil.getAbsoluteDate(START_OF_TODAY, startDate, START);
+                }
+
+                if (endDate != null) {
+                    endDate = DateUtil.getAbsoluteDate(END_OF_TODAY, endDate, END);
+                }
+
+                ReportExporter exporter = ReportExporter.createExporterForRecentDrift("recentDrift",
+                    definitionFilter.getValueAsString(), changeSetFilter.getValueAsString(), categoryFilter.getValues(),
+                    pathFilter.getValueAsString(), startDate, endDate);
                 exporter.export();
                 refreshTableInfo();
             }

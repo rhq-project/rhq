@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.*;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
@@ -62,6 +63,7 @@ import java.util.*;
 public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
+    private static final DateTimeFormat format = DateTimeFormat .getFormat("EEE MMM dd yyyy");
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;
@@ -619,6 +621,11 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
+            } else if (type == Date.class) {
+                // Date.toString() will produce an dateformat unparsable by GWT
+                Log.info(" *** Date before conversion: "+ strValue);
+                result = (S) convertStandardDateString(strValue);
+                Log.info(" *** Date after conversion: "+ result  );
             } else if (type == Long.class) {
                 result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {
@@ -633,6 +640,22 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         }
 
         return result;
+    }
+
+    /**
+     * Used to convert the text format from standard Date.toString() to a Date.
+     * Motivation: we need to cut out the timezone as we are working in the users timezone
+     * and we don't care about the time portion because there are no time conversions
+     * occuring and we are ony interested in the date portion for date filtering.
+     * <i>Incoming date format: Mon Apr 02 10:19:45 PDT 2012</i>
+     * @param defaultFormatDateString from Date.toString() using standard default date format
+     * @return Date representing the dateString
+     */
+    private static Date convertStandardDateString(final String defaultFormatDateString){
+        // fabricated format cutting out the timezone and time portions
+        final String partialDateString = defaultFormatDateString.substring(0,10) +" "+ defaultFormatDateString.substring(24,28);
+
+        return format.parse(partialDateString);
     }
 
     protected static DataSourceTextField createTextField(String name, String title, Integer minLength,

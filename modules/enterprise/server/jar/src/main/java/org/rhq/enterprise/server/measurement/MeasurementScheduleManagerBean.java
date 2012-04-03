@@ -50,7 +50,6 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -233,7 +232,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private long verifyMinimumCollectionInterval(long collectionInterval) {
         // Reset the schedule to the minimum collection interval if necessary.
         long validCollectionInterval;
-        if (collectionInterval > 0 && collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
+        if (collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
             validCollectionInterval = MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS;
         } else {
             validCollectionInterval = collectionInterval;
@@ -680,6 +679,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
+    /*
     private boolean isTriggerScheduled(Scheduler scheduler, String name, String group) {
         boolean isScheduled = false;
         try {
@@ -692,6 +692,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
         return isScheduled;
     }
+    */
 
     private boolean isJobScheduled(Scheduler scheduler, String name, String group) {
         boolean isScheduled = false;

@@ -1,7 +1,23 @@
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -12,20 +28,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
@@ -41,7 +43,7 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
 
     @Override
     public StreamingOutput recentDrift(final String categories, final Integer snapshot, final String path,
-        final String definition, final Long startTime, final Long endTime, final UriInfo uriInfo,
+        final String definitionName, final Long startTime, final Long endTime, final UriInfo uriInfo,
         final HttpServletRequest request, final HttpHeaders headers) {
 
         return new StreamingOutput() {
@@ -66,16 +68,16 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 }
 
 
-                if(snapshot != null){
+                if(snapshot != null) {
                     log.info("Drift Snapshot version Filter set for: " + snapshot);
                     criteria.addFilterChangeSetEndVersion(snapshot);
                 }
-                if(path != null){
+                if(path != null) {
                     log.info("Drift Path Filter set for: " + path);
                     criteria.addFilterPath(path);
                 }
-                if(definition != null){
-                    log.info("Drift Definition Filter set for: " + definition);
+                if(definitionName != null) {
+                    log.info("Drift Definition Filter set for: " + definitionName);
                     //@todo: drift sorting is done in the resultset after no criteria for definition
                 }
 
@@ -94,13 +96,20 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                         new CriteriaQuery<DriftComposite, DriftCriteria>(criteria, queryExecutor);
 
                 stream.write((getHeader() + "\n").getBytes());
-                for (DriftComposite alert : query) {
-                    if(alert.getDriftDefinitionName() != null && alert.getDriftDefinitionName().contains(definition)){
+                if (definitionName != null) {
+                    for (DriftComposite alert : query) {
+                        if(alert.getDriftDefinitionName() != null && alert.getDriftDefinitionName().contains(
+                            definitionName)){
+                            String record = toCSV(alert)  + "\n";
+                            stream.write(record.getBytes());
+                        }
+                    }
+                } else {
+                    for (DriftComposite alert : query) {
                         String record = toCSV(alert)  + "\n";
                         stream.write(record.getBytes());
                     }
                 }
-
             }
 
             private DriftCategory[] getCategories() {

@@ -22,7 +22,7 @@ public interface RecentDriftLocal {
             @QueryParam("categories") String categories,
             @QueryParam("snapshot") Integer snapshot,
             @QueryParam("path") String path,
-            @QueryParam("definition") String definition,
+            @QueryParam("definition") String definitionName,
             @QueryParam("startTime") Long startTime,
             @QueryParam("endTime") Long endTime,
             @Context UriInfo uriInfo,

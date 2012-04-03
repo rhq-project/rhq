@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,12 +52,14 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
@@ -215,6 +217,20 @@ public class ResourceContainer implements Serializable {
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
         synchronized (this) {
             this.measurementSchedule = measurementSchedule;
+
+            // this should not happen but if it does, protect against it because it will sink the agent
+            if (null != this.measurementSchedule) {
+                for (MeasurementScheduleRequest sched : this.measurementSchedule) {
+                    if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                        String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
+                        String msg = "Invalid collection interval [" + sched + "] for Resource [" + resource
+                            + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
+                            + smallStack;
+                        LogFactory.getLog(ResourceContainer.class).error(msg);
+                        sched.setInterval(20L * 60L * 1000L);
+                    }
+                }
+            }
         }
     }
 
@@ -226,6 +242,23 @@ public class ResourceContainer implements Serializable {
     * @return true if the schedule was updated successfully, false otherwise
     */
     public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
+        // this should not happen but if it does, protect against it because it will sink the agent
+        if (null != measurementScheduleUpdate) {
+            for (MeasurementScheduleRequest sched : measurementScheduleUpdate) {
+                if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                    String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
+                    String msg = "Invalid collection interval ["
+                        + sched
+                        + "] for Resource ["
+                        + resource
+                        + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
+                        + smallStack;
+                    LogFactory.getLog(ResourceContainer.class).error(msg);
+                    sched.setInterval(20L * 60L * 1000L);
+                }
+            }
+        }
+
         Set<Integer> updateScheduleIds = new HashSet<Integer>();
         for (MeasurementScheduleRequest update : measurementScheduleUpdate) {
             updateScheduleIds.add(update.getScheduleId());

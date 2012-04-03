@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,6 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -679,6 +678,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
+    /*
     private boolean isTriggerScheduled(Scheduler scheduler, String name, String group) {
         boolean isScheduled = false;
         try {
@@ -691,6 +691,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
         return isScheduled;
     }
+    */
 
     private boolean isJobScheduled(Scheduler scheduler, String name, String group) {
         boolean isScheduled = false;

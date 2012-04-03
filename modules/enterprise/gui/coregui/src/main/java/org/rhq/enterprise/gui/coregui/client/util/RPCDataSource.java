@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.*;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
@@ -63,7 +62,6 @@ import java.util.*;
 public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
-    protected static final DateTimeFormat dateTimeFormatter = DateTimeFormat.getFormat("EEE MMM dd hh:mm:ss z yyyy");
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;
@@ -621,11 +619,6 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
-            } else if (type == Date.class) {
-                //@todo: fixme
-                // date format: Mon Apr 02 10:19:45 PDT 2012
-                //Date date = dateTimeFormatter.parse(strValue);
-                //result = (S) date;
             } else if (type == Long.class) {
                 result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {

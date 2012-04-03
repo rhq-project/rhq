@@ -29,14 +29,14 @@ public enum AS7Mode {
     HOST("host.xml", "domain", "--host-config", "bin/domain.sh","hostConfig");
 
     private String defaultXmlFile;
-    private String baseDir;
+    private String defaultBaseDir;
     private String configArg;
     private String startScript;
     private String configPropertyName;
 
-    private AS7Mode(String defaultXmlFile, String baseDir, String configArg, String startScript, String configPropertyName) {
+    private AS7Mode(String defaultXmlFile, String defaultBaseDir, String configArg, String startScript, String configPropertyName) {
         this.defaultXmlFile = defaultXmlFile;
-        this.baseDir = baseDir;
+        this.defaultBaseDir = defaultBaseDir;
         this.configArg = configArg;
         this.startScript = startScript;
         this.configPropertyName = configPropertyName;
@@ -46,8 +46,8 @@ public enum AS7Mode {
         return defaultXmlFile;
     }
 
-    public String getBaseDir() {
-        return baseDir;
+    public String getDefaultBaseDir() {
+        return defaultBaseDir;
     }
 
     public String getConfigArg() {

@@ -113,13 +113,14 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
     protected OperationResult startServer(AS7Mode mode) {
         OperationResult operationResult = new OperationResult();
         String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
+
         String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
         if (homeDir.isEmpty()) {
             operationResult.setErrorMessage("No home directory provided.");
             return operationResult;
         }
         String script = homeDir + File.separator + startScript;
-
+        String startScriptArgs = pluginConfiguration.getSimpleValue("startScriptArgs", "");
         ProcessExecution processExecution;
         processExecution = ProcessExecutionUtility.createProcessExecution(new File("/bin/sh"));
 
@@ -131,6 +132,12 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
 
         arguments.add(script);
+        // split the start script args by spaces and add them individually
+        if (!startScriptArgs.isEmpty()) {
+            for (String arg : startScriptArgs.split("\\s+"))
+                arguments.add(arg);
+        }
+
 
         if (!config.equals(mode.getDefaultXmlFile())) {
             arguments.add(mode.getConfigArg());

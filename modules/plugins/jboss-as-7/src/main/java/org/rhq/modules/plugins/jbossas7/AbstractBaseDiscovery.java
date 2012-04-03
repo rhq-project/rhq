@@ -51,7 +51,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
 
     private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption("bmanagement", null);
-    
+    private static final String DJBOSS_SERVER_BASE_DIR = "-Djboss.server.base.dir";
+    private static final String DJBOSS_DOMAIN_BASE_DIR = "-Djboss.domain.base.dir";
+    private static final String DJBOSS_SOCKET_BIND_OFFSET = "-Djboss.socket.binding.port-offset";
+
+
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
@@ -295,7 +299,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
             String cwd = processInfo.getExecutable().getCwd();
             homeDir = new File(cwd, home);
         }
-        
+
         return new File(FileUtils.getCanonicalPath(homeDir.getPath()));
     }
 
@@ -348,7 +352,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                                                              String defaultValue) {
         String prefix = "-D" + systemPropertyName;
         String prefixWithEqualsSign = prefix + "=";
-        for (String arg : commandLine) {            
+        for (String arg : commandLine) {
             if (arg.startsWith(prefixWithEqualsSign)) {
                 return (prefixWithEqualsSign.length() < arg.length()) ?
                     arg.substring(prefixWithEqualsSign.length()) : "";
@@ -358,6 +362,24 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
         return defaultValue;
     }
+
+    /**
+     * Determine the parameters that need to be passed as
+     * arguments to the start script when starting this instance.
+     *
+     * @param commandLine command line arguments of the process
+     * @return start script arguments separated by spaces if found or empty string otherwise
+     */
+    String getStartScriptArgumentsFromCommandLine(String[] commandLine) {
+        String args = "";
+        for (String line : commandLine) {
+            if (line.startsWith(DJBOSS_SERVER_BASE_DIR) || line.startsWith(DJBOSS_DOMAIN_BASE_DIR)
+                || line.startsWith(DJBOSS_SOCKET_BIND_OFFSET))
+                args += " " + line;
+        }
+        return args;
+    }
+
 
     @Nullable
     protected static String getOptionFromCommandLine(String[] commandLine, AS7CommandLineOption option) {
@@ -395,7 +417,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
         return null;
     }
-    
+
     protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
         String value = getSystemPropertyFromCommandLine(commandLine, SOCKET_BINDING_PORT_OFFSET_SYSPROP);
         if (value != null) {

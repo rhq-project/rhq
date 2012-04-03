@@ -112,6 +112,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("baseDir", baseDir));
         pluginConfig.put(new PropertySimple("configDir", configDir));
         pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
+        pluginConfig.put(new PropertySimple("startScriptArgs",getStartScriptArgumentsFromCommandLine(commandLine)));
         pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process, configDir))));
         fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, baseDir));

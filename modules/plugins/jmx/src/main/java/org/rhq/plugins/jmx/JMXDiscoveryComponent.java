@@ -113,7 +113,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
      */
     private static final String[] DEFAULT_PROCESS_EXCLUDES = new String[] {
         "org.rhq.enterprise.agent.AgentMain", // RHQ Agent
-        "org.jboss.Main",                     // JBoss AS
+        "org.jboss.Main",                     // JBoss AS 3.x-6.x
         "catalina.startup.Bootstrap"          // Tomcat
     };
 
@@ -232,7 +232,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             connection = connectionProvider.connect();
             connection.loadSynchronous(false);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to connection to connector address [" + connectorAddress + "].", e);
+            if (e.getCause() instanceof SecurityException) {
+                throw new InvalidPluginConfigurationException("Failed to authenticate to JVM with connector address ["
+                        + connectorAddress + "] - principal and/or credentials connection properties are not set correctly.");
+            }
+            throw new RuntimeException("Failed to connect to JVM with connector address [" + connectorAddress + "].", e);
         }
                         
         String key = connectorAddress;
@@ -318,6 +322,13 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             JMXConnector jmxConnector;
             try {
                 jmxConnector = connect(jmxServiceURL);
+            } catch (SecurityException e) {
+                // Authentication failed, which most likely means the username and password are not set correctly in
+                // the Resource's plugin config. This is not an error, so return null.
+                log.info("Unable to upgrade key of JVM Resource with key [" + inventoriedResource.getResourceKey()
+                        + "], since authenticating to its JMX service URL [" + jmxServiceURL + "] failed: "
+                        + e.getMessage());
+                return null;
             } catch (IOException e) {
                 // The JVM's not currently running, which means we won't be able to figure out its main class name,
                 // which is needed to upgrade its key. This is not an error, so return null.
@@ -328,7 +339,6 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
             Long pid;
             try {
-
                 MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();                
                 RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
                     ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
@@ -407,7 +417,26 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext context, ProcessInfo process,
                                                              JMXServiceURL jmxServiceURL, Integer jmxRemotingPort) {
-        JvmResourceKey key;                        
+        JvmResourceKey key = buildResourceKey(process, jmxRemotingPort);
+        if (key == null) {
+            return null;
+        }
+        String name = buildResourceName(key);
+        String version = getJavaVersion(process, jmxServiceURL);
+        String description = "JVM, monitored via " + ((jmxRemotingPort != null) ? "JMX Remoting" : "Sun JVM Attach API");
+
+        Configuration pluginConfig = context.getDefaultPluginConfiguration();
+        pluginConfig.put(new PropertySimple(CONNECTION_TYPE, J2SE5ConnectionTypeDescriptor.class.getName()));
+        if (jmxRemotingPort != null) {
+            pluginConfig.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, jmxServiceURL));
+        }        
+        
+        return new DiscoveredResourceDetails(context.getResourceType(), key.toString(), name, version, description,
+            pluginConfig, process);
+    }
+
+    private JvmResourceKey buildResourceKey(ProcessInfo process, Integer jmxRemotingPort) {
+        JvmResourceKey key;
         String mainClassName = getJavaMainClassName(process);
         String keyString = getSystemPropertyValue(process, SYSPROP_RHQ_RESOURCE_KEY);
         if (keyString != null && !keyString.equals("")) {
@@ -422,38 +451,42 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                     + Arrays.asList(process.getCommandLine())
                     + "] cannot be discovered, because it does not specify either of the following system properties: "
                     + "-D" + SYSPROP_JMXREMOTE_PORT + "=12345, -D" + SYSPROP_RHQ_RESOURCE_KEY + "=UNIQUE_KEY");
-                return null;
+                key = null;
             }
         }
+        return key;
+    }
 
-        String name = buildResourceName(key);
-
-        String version;
+    protected String getJavaVersion(ProcessInfo process, JMXServiceURL jmxServiceURL) {
+        JMXConnector jmxConnector = null;
         try {
-            JMXConnector jmxConnector = connect(jmxServiceURL);
-            MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
-            RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
-                ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
-            version = runtimeMXBean.getSystemProperties().get(SYSPROP_JAVA_VERSION);
-            if (version == null) {
-                throw new IllegalStateException("System property [" + SYSPROP_JAVA_VERSION + "] is not defined.");
+            jmxConnector = connect(jmxServiceURL);
+        } catch (SecurityException e) {
+            log.warn("Unable to to authenticate to JMX service URL [" + jmxServiceURL + "]: " + e.getMessage());
+        } catch (IOException e) {
+            log.error("Failed to connect to JMX service URL [" + jmxServiceURL + "].", e);
+        }
+        String version;
+        if (jmxConnector != null) {
+            try {
+
+                MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
+                RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
+                        ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
+                version = runtimeMXBean.getSystemProperties().get(SYSPROP_JAVA_VERSION);
+                if (version == null) {
+                    throw new IllegalStateException("System property [" + SYSPROP_JAVA_VERSION + "] is not defined.");
+                }
+            } catch (Exception e) {
+                log.error("Failed to determine JVM version for process [" + process.getPid() + "] with command line [" +
+                    Arrays.asList(process.getCommandLine()) + "].", e);
+                version = null;
             }
-        } catch (Exception e) {
-            log.error("Failed to determine JVM version for process [" + process.getPid() + "] with command line [" +
-                Arrays.asList(process.getCommandLine()) + "].", e);
+        } else {
+            // TODO: We could exec "java -version" here.
             version = null;
         }
-
-        String description = "JVM, monitored via " + ((jmxRemotingPort != null) ? "JMX Remoting" : "Sun JVM Attach API");
-
-        Configuration pluginConfig = context.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(CONNECTION_TYPE, J2SE5ConnectionTypeDescriptor.class.getName()));
-        if (jmxRemotingPort != null) {
-            pluginConfig.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, jmxServiceURL));
-        }        
-        
-        return new DiscoveredResourceDetails(context.getResourceType(), key.toString(), name, version, description,
-            pluginConfig, process);
+        return version;
     }
 
     private static JMXConnector connect(JMXServiceURL jmxServiceURL) throws IOException {
@@ -491,6 +524,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
     }
 
     protected String getJavaMainClassName(ProcessInfo process) {
+        // TODO (ips, 04/02/12): If command line contains "-jar foo.jar", pull the main class name out of foo.jar's
+        //                       MANIFEST.MF.
         String className = null;
         for (int i = 1; i < process.getCommandLine().length; i++) {
             String arg = process.getCommandLine()[i];

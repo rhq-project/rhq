@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.

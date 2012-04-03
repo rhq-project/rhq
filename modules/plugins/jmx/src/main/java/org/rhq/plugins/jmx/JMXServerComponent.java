@@ -30,6 +30,7 @@ import org.mc4j.ems.connection.support.ConnectionProvider;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
@@ -64,17 +65,16 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         this.context = context;
         log.debug("Starting connection to " + context.getResourceType() + "[" + context.getResourceKey() + "]...");
 
-        // If connecting to the EMS fails, log a warning but still succeed in starting. getAvailablity() will keep
+        // If connecting to the EMS fails, log a warning but still succeed in starting. getAvailability() will keep
         // trying to connect each time it is called.
         try {
             internalStart();
         } catch (Exception e) {
+            if (e.getCause() instanceof SecurityException) {
+                throw new InvalidPluginConfigurationException("Failed to authenticate to managed JVM - "
+                        + "principal and/or credentials connection properties are not set correctly.");
+            }
             log.warn("Failed to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].", e);
-
-        }
-
-        if (connection == null) {
-            log.warn("Unable to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].");
         }
     }
 
@@ -110,7 +110,7 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
     }
 
     public AvailabilityType getAvailability() {
-        if (connectionProvider == null || !connectionProvider.isConnected()) {
+        if ((connectionProvider) == null || !connectionProvider.isConnected()) {
             try {
                 internalStart();
             } catch (Exception e) {

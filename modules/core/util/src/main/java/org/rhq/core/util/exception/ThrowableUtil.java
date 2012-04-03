@@ -319,6 +319,38 @@ public class ThrowableUtil {
         return baos.toString();
     }
 
+    /**
+     * The same as calling <code>getFilteredStackAsString(t, "org.rhq")</code>
+     * 
+     * @param t
+     * @return the filtered stack, as a String
+     */
+    public static String getFilteredStackAsString(Throwable t) {
+        return getFilteredStackAsString(t, "org.rhq");
+    }
+
+    /**
+     * Returns the stack for <code>t</code>, filtering out all <code>StackTraceElement</code>'s that don't start
+     * with <code>filter</code>.
+     * 
+     * @param t
+     * @param filter Not Null
+     * @return the filtered stack, as a String
+     */
+    public static String getFilteredStackAsString(Throwable t, String filter) {
+        StringBuilder smallStack = new StringBuilder();
+
+        StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();
+        for (int i = 1; i < stack.length; i++) {
+            StackTraceElement ste = stack[i];
+            if (ste.getClassName().startsWith(filter)) {
+                smallStack.append(ste.toString());
+                smallStack.append("\n");
+            }
+        }
+        return smallStack.toString();
+    }
+
     public static String getRootMessage(Throwable t) {
         while ((t.getCause() != null) && (t != t.getCause())) {
             t = t.getCause();

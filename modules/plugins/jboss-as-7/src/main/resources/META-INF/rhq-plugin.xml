@@ -207,23 +207,23 @@
                 <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
             </plugin-configuration>
 
-		<operation name="add-custom-metric" description="Add new custom metric to the load balancer provider.">
+<operation name="add-custom-metric" description="Add new custom metric to the load balancer provider.">
 		  <parameters>
 		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
 		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
 		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness" >
 		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
+		      <c:option value="cpu" name="cpu"/>
+		      <c:option value="mem" name="mem"/>
+		      <c:option value="heap" name="heap"/>
+		      <c:option value="sessions" name="sessions"/>
+		      <c:option value="requests" name="requests"/>
+		      <c:option value="send-traffic" name="send-traffic"/>
+		      <c:option value="receive-traffic" name="receive-traffic"/>
+		      <c:option value="busyness" name="busyness"/>
+		      <c:option value="connection-pool" name="connection-pool"/>
+		</c:property-options>
 		    </c:simple-property>
 		  </parameters>
 		  <results>
@@ -236,18 +236,18 @@
 		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
 		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
 		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness" >
 		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
+		      <c:option value="cpu" name="cpu"/>
+		      <c:option value="mem" name="mem"/>
+		      <c:option value="heap" name="heap"/>
+		      <c:option value="sessions" name="sessions"/>
+		      <c:option value="requests" name="requests"/>
+		      <c:option value="send-traffic" name="send-traffic"/>
+		      <c:option value="receive-traffic" name="receive-traffic"/>
+		      <c:option value="busyness" name="busyness"/>
+		      <c:option value="connection-pool" name="connection-pool"/>
+		</c:property-options>
 		    </c:simple-property>
 		  </parameters>
 		  <results>
@@ -799,18 +799,18 @@
 		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
 		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
 		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness" >
 		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
+		      <c:option value="cpu" name="cpu"/>
+		      <c:option value="mem" name="mem"/>
+		      <c:option value="heap" name="heap"/>
+		      <c:option value="sessions" name="sessions"/>
+		      <c:option value="requests" name="requests"/>
+		      <c:option value="send-traffic" name="send-traffic"/>
+		      <c:option value="receive-traffic" name="receive-traffic"/>
+		      <c:option value="busyness" name="busyness"/>
+		      <c:option value="connection-pool" name="connection-pool"/>
+		</c:property-options>
 		    </c:simple-property>
 		  </parameters>
 		  <results>
@@ -823,18 +823,18 @@
 		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
 		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
 		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness" >
 		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
+		      <c:option value="cpu" name="cpu"/>
+		      <c:option value="mem" name="mem"/>
+		      <c:option value="heap" name="heap"/>
+		      <c:option value="sessions" name="sessions"/>
+		      <c:option value="requests" name="requests"/>
+		      <c:option value="send-traffic" name="send-traffic"/>
+		      <c:option value="receive-traffic" name="receive-traffic"/>
+		      <c:option value="busyness" name="busyness"/>
+		      <c:option value="connection-pool" name="connection-pool"/>
+		</c:property-options>
 		    </c:simple-property>
 		  </parameters>
 		  <results>
@@ -859,7 +859,6 @@
 		     <c:simple-property name="operationResult" description="Add new metric to the load balancer provider." />
 		  </results>
 		</operation>
-
 		<resource-configuration>
 
 		       <c:group name="proxy" displayName="Proxy Options">

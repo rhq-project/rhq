@@ -66,10 +66,36 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                     CriteriaQuery<AlertDefinition, AlertDefinitionCriteria> query =
                             new CriteriaQuery<AlertDefinition, AlertDefinitionCriteria>(criteria, queryExecutor);
 
+                    CsvWriter<AlertDefinition> csvWriter = new CsvWriter<AlertDefinition>();
+                    csvWriter.setColumns("name", "description", "enabled", "priority", "parent", "ancestry",
+                        "detailsURL");
+
+                    csvWriter.setPropertyConverter("parent", new PropertyConverter<AlertDefinition>() {
+                        @Override
+                        public Object convert(AlertDefinition alertDef, String propertyName) {
+                            return  getParentURL(alertDef);
+                        }
+                    });
+
+                    csvWriter.setPropertyConverter("ancestry", new PropertyConverter<AlertDefinition>() {
+                        @Override
+                        public Object convert(AlertDefinition alertDef, String propertyName) {
+                            return ReportFormatHelper.parseAncestry(alertDef.getResource().getAncestry());
+                        }
+                    });
+
+                    csvWriter.setPropertyConverter("detailsURL", new PropertyConverter<AlertDefinition>() {
+                        @Override
+                        public Object convert(AlertDefinition alertDef, String propertyName) {
+                            return getDetailsURL(alertDef);
+                        }
+                    });
+
                     stream.write((getHeader() + "\n").getBytes());
-                    for (AlertDefinition alert : query) {
-                        String record = toCSV(alert)  + "\n";
-                        stream.write(record.getBytes());
+                    for (AlertDefinition alertDef : query) {
+//                        String record = toCSV(alert)  + "\n";
+//                        stream.write(record.getBytes());
+                        csvWriter.write(alertDef, stream);
                     }
 
                 }

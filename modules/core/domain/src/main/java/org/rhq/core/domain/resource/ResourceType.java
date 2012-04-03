@@ -891,8 +891,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Override
     public String toString() {
-        return "ResourceType[id=" + this.id  + ", name=" + this.name + ", plugin=" + this.plugin + ", category="
-            + this.category + "]";
+        return "{" + this.plugin + "}" + this.name;
     }
 
 }

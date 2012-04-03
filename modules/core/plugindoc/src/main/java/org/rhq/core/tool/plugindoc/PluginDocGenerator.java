@@ -33,6 +33,7 @@ import org.codehaus.swizzle.confluence.SwizzleException;
 
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -50,8 +51,8 @@ public class PluginDocGenerator {
     private static final String CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH = "confluence-macros.vm";
     private static final String DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH = "docbook-macros.vm";
 
-    private String confluenceUrl; // The main Confluence URL (e.g. "http://support.rhq-project.org/").
-    private String confluenceSpace; // The Confluence space (e.g. "RHQ").
+    private String confluenceUrl; // The main Confluence URL (e.g. "http://rhq-project.org/").
+    private String confluenceSpace; // The Confluence space (e.g. "JOPR2").
     private String confluenceParentPageTitle; // The Confluence parent page name (e.g. "Managed Resources").
     private String confluenceUserName;
     private String confluencePassword;
@@ -83,9 +84,9 @@ public class PluginDocGenerator {
                 + ioe.getMessage());
         }
 
-        this.confluenceUrl = props.getProperty("confluenceUrl");
-        this.confluenceSpace = props.getProperty("confluenceSpace");
-        this.confluenceParentPageTitle = props.getProperty("confluenceParentPageTitle");
+        this.confluenceUrl = props.getProperty("confluenceUrl", "http://rhq-project.org/");
+        this.confluenceSpace = props.getProperty("confluenceSpace", "JOPR2");
+        this.confluenceParentPageTitle = props.getProperty("confluenceParentPageTitle", "Managed Resources");
         this.confluenceUserName = props.getProperty("confluenceUserName");
         this.confluencePassword = props.getProperty("confluencePassword");
     }
@@ -118,9 +119,16 @@ public class PluginDocGenerator {
         }
 
         String pluginName = pluginDescriptor.getName();
+        log.info("Generating plugin docs for " + pluginName + " plugin...");
         File baseOutputDir = new File(projectBaseDir.getParentFile(), OUTPUT_DIR_PATH);
-        File outputDir = new File(baseOutputDir, pluginName);
-        outputDir.mkdirs();
+
+        File confluenceBaseOutputDir = new File(baseOutputDir, "confluence");
+        File confluenceOutputDir = new File(confluenceBaseOutputDir, pluginName);
+        confluenceOutputDir.mkdirs();
+
+        File docbookBaseOutputDir = new File(baseOutputDir, "docbook");
+        File docbookOutputDir = new File(docbookBaseOutputDir, pluginName);
+        docbookOutputDir.mkdirs();
 
         VelocityTemplateProcessor confluenceTemplateProcessor = new VelocityTemplateProcessor(
             CONFLUENCE_TEMPLATE_RESOURCE_PATH, CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH, EscapeConfluenceReference.class);
@@ -140,21 +148,27 @@ public class PluginDocGenerator {
         }
 
         // generate content for Confluence
-        if (this.confluenceUrl != null) {
+        String endpoint;
+        if ((this.confluenceUserName != null) && (this.confluencePassword != null)) {
             log.debug("Using Confluence URL: " + this.confluenceUrl);
-            String endpoint = this.confluenceUrl + "/rpc/xmlrpc";
+            endpoint = this.confluenceUrl + "/rpc/xmlrpc";
+        } else {
+            endpoint = null;
+        }
 
-            for (ResourceType resourceType : resourceTypes) {
-                String htmlHelpText = resourceType.getHelpText();
-                String confluenceHelpText = DocConverter.htmlToConfluence(htmlHelpText);
-                resourceType.setHelpText(confluenceHelpText);
+        for (ResourceType resourceType : resourceTypes) {
+            String htmlHelpText = resourceType.getHelpText();
+            String confluenceHelpText = DocConverter.htmlToConfluence(htmlHelpText);
+            resourceType.setHelpText(confluenceHelpText);
 
-                log.info("Generating Confluence content for '" + resourceType.getName() + "' Resource type...");
+            log.info("Generating Confluence content for " + resourceType + " Resource type...");
 
-                confluenceTemplateProcessor.getContext().put("resourceType", resourceType);
-                String confluenceOutputFileName = escapeFileName(resourceType.getName() + ".wiki");
-                File confluenceOutputFile = new File(outputDir, confluenceOutputFileName);
-                confluenceTemplateProcessor.processTemplate(confluenceOutputFile);
+            confluenceTemplateProcessor.getContext().put("resourceType", resourceType);
+            String confluenceOutputFileName = escapeFileName(resourceType.getName() + ".wiki");
+            File confluenceOutputFile = new File(confluenceOutputDir, confluenceOutputFileName);
+            confluenceTemplateProcessor.processTemplate(confluenceOutputFile);
+
+            if ((this.confluenceUserName != null) && (this.confluencePassword != null)) {
                 publishPage(confluenceOutputFile, resourceType, endpoint);
             }
         }
@@ -165,11 +179,11 @@ public class PluginDocGenerator {
             String docBookHelpText = DocConverter.htmlToDocBook(htmlHelpText);
             resourceType.setHelpText(docBookHelpText);
 
-            log.info("Generating Docbook content for '" + resourceType.getName() + "' Resource type...");
+            log.info("Generating Docbook content for " + resourceType + " Resource type...");
 
             docbookTemplateProcessor.getContext().put("resourceType", resourceType);
             String docbookOutputFileName = escapeFileName(resourceType.getName() + ".xml");
-            File docbookOutputFile = new File(outputDir, docbookOutputFileName);
+            File docbookOutputFile = new File(docbookOutputDir, docbookOutputFileName);
             docbookTemplateProcessor.processTemplate(docbookOutputFile);
         }
     }
@@ -223,32 +237,98 @@ public class PluginDocGenerator {
 
     private void publishPage(File contentFile, ResourceType resourceType, String endpoint)
         throws PluginDocGeneratorException {
-        log.info("Publishing plugin doc page for '" + resourceType.getName() + "' Resource type to Confluence...");
-        String title = getPageTitle(resourceType);
+        System.out.println("*** Publishing plugin doc page for " + resourceType + " Resource type to Confluence...");
+        String pageTitle = getPageTitle(resourceType);
         try {
             Confluence confluence = new Confluence(endpoint);
             confluence.login(this.confluenceUserName, this.confluencePassword);
-            Page page;
-            try {
-                page = confluence.getPage(this.confluenceSpace, title);
-                log.warn("Page with title '" + title + "' already exists - overwriting it...");
-            } catch (SwizzleException e) {
-                page = new Page();
-                page.setSpace(this.confluenceSpace);
-                if (this.confluenceParentPageTitle != null) {
-                    Page parentPage = confluence.getPage(this.confluenceSpace, this.confluenceParentPageTitle);
-                    if (parentPage != null)
-                        page.setParentId(parentPage.getId());
-                    else
-                        log.error("Specified parent page ('" + this.confluenceParentPageTitle + "') does not exist.");
+            Page page = getPage(confluence, pageTitle);
+            if (page == null) {
+                page = createPage(pageTitle);
+            } else {
+                log.warn("Page with title '" + pageTitle + "' already exists - overwriting it...");
+            }
+            if (this.confluenceParentPageTitle != null) {
+                Page baseParentPage = getPage(confluence, this.confluenceParentPageTitle);
+                if (baseParentPage == null) {
+                    log.error("Specified parent page ('" + this.confluenceParentPageTitle
+                            + "') does not exist - creating it...");
+                    baseParentPage = createPage(this.confluenceParentPageTitle);
+                    baseParentPage.setContent("{children:depth=3}\n");
+                    baseParentPage = storePage(confluence, baseParentPage);
                 }
-                page.setTitle(title);
+                String parentPageTitle;
+                boolean topLevelParentPage;
+                if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
+                    parentPageTitle = "Managed Platforms";
+                    topLevelParentPage = true;
+                } else if (resourceType.getParentResourceTypes().isEmpty()) {
+                    if (resourceType.getCategory() == ResourceCategory.SERVER) {
+                        parentPageTitle = "Managed Servers";
+                    } else {
+                        throw new IllegalStateException("Service type " + resourceType + " has no parent types.");
+                    }
+                    topLevelParentPage = true;
+                } else {
+                    ResourceType parentType = resourceType.getParentResourceTypes().iterator().next();
+                    if (resourceType.getPlugin().equals("Platforms") &&
+                            (parentType.getCategory() == ResourceCategory.PLATFORM)) {
+                        parentPageTitle = "Managed Platform Services";
+                        topLevelParentPage = true;
+                    } else {
+                        parentPageTitle = getPageTitle(parentType);
+                        topLevelParentPage = false;
+                    }
+                }
+                Page parentPage = getPage(confluence, parentPageTitle);
+                if (parentPage == null) {
+                    parentPage = createPage(parentPageTitle);
+                }
+                if (topLevelParentPage) {
+                    parentPage.setParentId(baseParentPage.getId());
+                }
+                parentPage = storePage(confluence, parentPage);
+                System.out.println("Using parent page [" + parentPage.getTitle() + "] with ID [" + parentPage.getId()
+                        + "] for page [" + page.getTitle() + "]...");
+                page.setParentId(parentPage.getId());
             }
             page.setContent(getContentAsString(contentFile));
-            confluence.storePage(page);
+            page = storePage(confluence, page);
             confluence.logout();
         } catch (Exception e) {
-            throw new PluginDocGeneratorException("Failed to publish plugin doc page to Confluence.", e);
+            throw new PluginDocGeneratorException("Failed to publish page [" + pageTitle + "] to Confluence.", e);
+        }
+    }
+
+    private Page storePage(Confluence confluence, Page page) throws Exception {
+        System.out.println("Storing page [" + page.getTitle() + "] with parent ID [" + page.getParentId() + "]...");
+        Page storedPage;
+        try {
+            storedPage = confluence.storePage(page);
+        } catch (SwizzleException e) {
+            throw new Exception("Failed to publish page [" + page.getTitle() + "] with parent ID [" + page.getParentId()
+                    + "]: " + e.getMessage());
+        }
+        System.out.println("Stored page [" + storedPage.getTitle() + "] with ID [" + storedPage.getId()
+                + "] and parent ID [" + storedPage.getParentId() + "].");
+        return storedPage;
+    }
+
+    private Page createPage(String pageTitle) {
+        System.out.println("Creating page [" + pageTitle + "]...");
+        Page page = new Page();
+        page.setSpace(this.confluenceSpace);
+        page.setTitle(pageTitle);
+        page.setContent("{children}\n");
+        return page;
+    }
+
+    private Page getPage(Confluence confluence, String pageTitle) throws SwizzleException {
+        try {
+            return confluence.getPage(this.confluenceSpace, pageTitle);
+        } catch (SwizzleException e) {
+            // This either means the page doesn't exist or that we don't have access to view it.
+            return null;
         }
     }
 
@@ -257,6 +337,7 @@ public class PluginDocGenerator {
         if (!resourceType.getName().endsWith(resourceType.getCategory().toString())) {
             title += " " + resourceType.getCategory();
         }
+        title += " (" + resourceType.getPlugin() + ")";
         return escapePageTitle(title);
     }
 

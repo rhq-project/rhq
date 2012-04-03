@@ -1,3 +1,2 @@
 #macro( displayResourceTypeName $resourceType )
-${resourceType.name}#if ( !${resourceType.name.endsWith("${resourceType.category}")} ) ${resourceType.category}#end
-#end
+${resourceType.name}#if ( !${resourceType.name.endsWith("${resourceType.category}")} ) ${resourceType.category}#end (${resourceType.plugin})#end

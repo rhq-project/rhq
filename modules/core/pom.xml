@@ -25,6 +25,7 @@
         <version>${cobertura.version}</version>
      </dependency>
   </dependencies>
+
    <profiles>
 
       <profile>
@@ -53,6 +54,13 @@
             <module>plugin-container-itest</module>
          </modules>
       </profile>
+
+     <profile>
+        <id>plugindoc</id>
+        <modules>
+           <module>plugindoc</module>
+        </modules>
+     </profile>
 
       <profile>
          <id>rhq-perf</id>

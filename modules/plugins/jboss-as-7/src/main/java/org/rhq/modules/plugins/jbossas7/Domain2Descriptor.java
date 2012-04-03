@@ -36,6 +36,10 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 @SuppressWarnings("unchecked")
 public class Domain2Descriptor {
 
+    //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384 
+    private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
+        "busyness", "connection-pool" };
+
     public static void main(String[] args) throws Exception {
 
         if (args.length < 1) {
@@ -480,39 +484,31 @@ public class Domain2Descriptor {
         String description = (String) props.get("description");
         appendDescription(sb, description, defaultValueDescription);
         //Detect whether type PROPERTY and insert known supported properties before close.
-        if (type.rhqName.equalsIgnoreCase("-option-list-")) {
-            sb.append(generateOptionList(indent));
-        } else {
+        if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
+            sb.append(generateOptionList(indent, properties, properties[7]));
+        } else { //no default provided close tag.
             sb.append("/>");
         }
         return sb;
     }
 
-    private String generateOptionList(int indent) {
+    private String generateOptionList(int indent, String[] properties, String defaultSelection) {
         StringBuilder optionList = new StringBuilder();
-        optionList.append(">\n");
+
+        if ((defaultSelection != null) && (!defaultSelection.trim().isEmpty())) {
+            optionList.append(" defaultValue=\"" + defaultSelection + "\" >\n");
+        } else {//no default provided
+            optionList.append(">\n");
+        }
+
         doIndent(indent + 1, optionList);
         optionList.append("<c:property-options>\n");
-        //spinder 3/28/12: There is not way to query this option list and process is not used much. Hardcoding for now. JIRA coming.
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"cpu\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"mem\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"heap\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"sessions\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"requests\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"send-traffic\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"receive-traffic\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"busyness\"/>\n");
-        doIndent(indent + 2, optionList);
-        optionList.append("<c:option value=\"connection-pool\"/>\n");
-        doIndent(indent + 1, optionList);
+        //spinder 3/28/12: There is not way to query this option list and process is not used much. Hardcoding for now. 
+        //https://issues.jboss.org/browse/AS7-4384
+        for (String prop : properties) {
+            doIndent(indent + 2, optionList);
+            optionList.append("<c:option value=\"" + prop + "\" name=\"" + prop + "\"/>\n");
+        }
         optionList.append("</c:property-options>\n");
         doIndent(indent, optionList);
         optionList.append("</c:simple-property>");

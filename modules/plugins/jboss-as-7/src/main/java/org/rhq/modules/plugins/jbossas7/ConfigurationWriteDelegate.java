@@ -361,14 +361,19 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (name.endsWith(":expr")) {
 
             String realName = name.substring(0, name.indexOf(":"));
-            try {
-                Integer num = Integer.parseInt(property.getStringValue());
-                entry = new SimpleEntry<String, Object>(realName, property.getStringValue());
-            } catch (NumberFormatException nfe) {
-                // Not a number, and expressions are allowed, so send an expression
-                Map<String, String> expr = new HashMap<String, String>(1);
-                expr.put("EXPRESSION_VALUE", property.getStringValue());
-                entry = new SimpleEntry<String, Object>(realName, expr);
+
+            if (property.getStringValue() != null) {
+                try {
+                    Integer num = Integer.parseInt(property.getStringValue());
+                    entry = new SimpleEntry<String, Object>(realName, property.getStringValue());
+                } catch (NumberFormatException nfe) {
+                    // Not a number, and expressions are allowed, so send an expression
+                    Map<String, String> expr = new HashMap<String, String>(1);
+                    expr.put("EXPRESSION_VALUE", property.getStringValue());
+                    entry = new SimpleEntry<String, Object>(realName, expr);
+                }
+            } else {
+                entry = new SimpleEntry<String, Object>(realName, null);
             }
         } else {
             entry = new SimpleEntry<String, Object>(name, property.getStringValue());

@@ -190,6 +190,133 @@
                 <c:simple-property name="path" default="profile" readOnly="true"/>
             </plugin-configuration>
 
+	    <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
+		 list is different. Update similar Standalone service if changes are necesassary. -->
+	    <service name="ModCluster Domain Service"
+		     class="ModClusterComponent"
+		     discovery="ModClusterDiscoveryComponent"
+		     description="Mod_cluster support"
+		     singleton="true"
+		    >
+
+		<runs-inside>
+		    <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+		</runs-inside>
+
+            <plugin-configuration>
+                <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
+            </plugin-configuration>
+
+		<operation name="add-custom-metric" description="Add new custom metric to the load balancer provider.">
+		  <parameters>
+		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
+		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
+		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		     <c:property-options>
+		      <c:option value="cpu"/>
+		      <c:option value="mem"/>
+		      <c:option value="heap"/>
+		      <c:option value="sessions"/>
+		      <c:option value="requests"/>
+		      <c:option value="send-traffic"/>
+		      <c:option value="receive-traffic"/>
+		      <c:option value="busyness"/>
+		      <c:option value="connection-pool"/>
+		     </c:property-options>
+		    </c:simple-property>
+		  </parameters>
+		  <results>
+		     <c:simple-property name="operationResult" description="Add new custom metric to the load balancer provider." />
+		  </results>
+		</operation>
+
+		<operation name="add-metric" description="Add new metric to the load balancer provider.">
+		  <parameters>
+		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
+		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
+		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
+		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
+		     <c:property-options>
+		      <c:option value="cpu"/>
+		      <c:option value="mem"/>
+		      <c:option value="heap"/>
+		      <c:option value="sessions"/>
+		      <c:option value="requests"/>
+		      <c:option value="send-traffic"/>
+		      <c:option value="receive-traffic"/>
+		      <c:option value="busyness"/>
+		      <c:option value="connection-pool"/>
+		     </c:property-options>
+		    </c:simple-property>
+		  </parameters>
+		  <results>
+		     <c:simple-property name="operationResult" description="Add new metric to the load balancer provider." />
+		  </results>
+		</operation>
+
+		<operation name="remove-custom-metric" description="Remove a custom metric from the load balancer provider.">
+		  <parameters>
+		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
+		  </parameters>
+		  <results>
+		     <c:simple-property name="operationResult" description="Remove a custom metric from the load balancer provider." />
+		  </results>
+		</operation>
+
+		<operation name="remove-metric" description="Add new metric to the load balancer provider.">
+		  <parameters>
+		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
+		  </parameters>
+		  <results>
+		     <c:simple-property name="operationResult" description="Add new metric to the load balancer provider." />
+		  </results>
+		</operation>
+
+		<resource-configuration>
+
+		       <c:group name="proxy" displayName="Proxy Options">
+			<c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separed with comas."/>
+			<c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+		       </c:group>
+
+		      <c:group name="advertise" displayName="Advertise Options">
+		        <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
+			description="Name of Socket binding to use for the Advertise socket."/>
+			<c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>
+			<c:simple-property name="advertise-security-key" required="false" type="string" readOnly="false" description="String containing the security key for the Advertise logic."/>
+	      		<c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
+			<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
+		      </c:group>
+
+		       <c:group name="context" displayName="Web Context Options">
+			<c:simple-property name="excluded-contexts" required="false" type="string" readOnly="false" defaultValue="ROOT,admin-console,invoker,jbossws,jmx-console,juddi,web-console"
+				 description="List of contexts mod_cluster should ignore, Format String separed with comas."/>
+			<c:simple-property name="auto-enable-contexts" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable contexts even if disabled in mod_cluster_manger (httpd)."/>
+		       </c:group>
+
+		       <c:group name="session" displayName="Session Options">
+			<c:simple-property name="sticky-session" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use sticky sessions for requests."/>
+			<c:simple-property name="sticky-session-remove" required="false" type="boolean" readOnly="false" defaultValue="false" description="Remove session information on failover."/>
+			<c:simple-property name="sticky-session-force" required="false" type="boolean" readOnly="false" defaultValue="false" description="Don't failover a request with session information."/>
+		       </c:group>
+
+		       <c:group name="network" displayName="Network Options">
+			<c:simple-property name="worker-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout to wait in httpd for an available worker to process the requests."/>
+			<c:simple-property name="max-attemps" required="false" type="integer" readOnly="false" defaultValue="1" description="Max attempts to process an idempotent request."/>
+			<c:simple-property name="flush-packets" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables/disables packet flushing in httpd."/>
+			<c:simple-property name="flush-wait" required="false" type="integer" readOnly="false" defaultValue="-1" description="Time to wait before flushing packets in httpd."/>
+			<c:simple-property name="ping" required="false" type="integer" readOnly="false" defaultValue="10" description="Time (in seconds) in which to wait for a pong answer to a ping."/>
+			<c:simple-property name="smax" required="false" type="integer" readOnly="false" description="Soft maximum idle connection count in httpd"/>
+			<c:simple-property name="ttl" required="false" type="integer" readOnly="false" defaultValue="60" description="Time to live (in seconds) for idle connections above smax"/>
+			<c:simple-property name="node-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout (in seconds) for proxy connections to a node."/>
+			<c:simple-property name="stop-context-timeout" required="false" type="integer" readOnly="false" defaultValue="10" description="Max time to wait for context to process pending requests."/>
+			<c:simple-property name="socket-timeout" required="false" type="integer" readOnly="false" defaultValue="20" description="Timeout to wait for httpd to answer a MCMP message."/>
+
+		       </c:group>
+		</resource-configuration>
+	    </service>
+
         </server>
 
         <server name="ServerGroup"
@@ -422,133 +549,6 @@
             </resource-configuration>
         </service>
 
-	    <!-- Necesary to duplicate the ModCluster component for Standalone and Domain because supported operations
-		 list is different. Update similar Standalone service if changes are necesassary. -->
-	    <service name="ModCluster Domain Service"
-		     class="ModClusterComponent"
-		     discovery="SubsystemDiscovery"
-		     description="Mod_cluster support"
-		     singleton="true"
-		    >
-
-		<runs-inside>
-		    <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-		</runs-inside>
-
-		<plugin-configuration>
-		    <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
-		</plugin-configuration>
-
-		<operation name="add-custom-metric" description="Add new custom metric to the load balancer provider.">
-		  <parameters>
-		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
-		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
-		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
-		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
-		    </c:simple-property>
-		  </parameters>
-		  <results>
-		     <c:simple-property name="operationResult" description="Add new custom metric to the load balancer provider." />
-		  </results>
-		</operation>
-
-		<operation name="add-metric" description="Add new metric to the load balancer provider.">
-		  <parameters>
-		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
-		    <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
-		    <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-		    <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric.">
-		     <c:property-options>
-		      <c:option value="cpu"/>
-		      <c:option value="mem"/>
-		      <c:option value="heap"/>
-		      <c:option value="sessions"/>
-		      <c:option value="requests"/>
-		      <c:option value="send-traffic"/>
-		      <c:option value="receive-traffic"/>
-		      <c:option value="busyness"/>
-		      <c:option value="connection-pool"/>
-		     </c:property-options>
-		    </c:simple-property>
-		  </parameters>
-		  <results>
-		     <c:simple-property name="operationResult" description="Add new metric to the load balancer provider." />
-		  </results>
-		</operation>
-
-		<operation name="remove-custom-metric" description="Remove a custom metric from the load balancer provider.">
-		  <parameters>
-		    <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
-		  </parameters>
-		  <results>
-		     <c:simple-property name="operationResult" description="Remove a custom metric from the load balancer provider." />
-		  </results>
-		</operation>
-
-		<operation name="remove-metric" description="Add new metric to the load balancer provider.">
-		  <parameters>
-		    <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
-		  </parameters>
-		  <results>
-		     <c:simple-property name="operationResult" description="Add new metric to the load balancer provider." />
-		  </results>
-		</operation>
-
-		<resource-configuration>
-
-		       <c:group name="proxy" displayName="Proxy Options">
-			<c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separed with comas."/>
-			<c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
-		       </c:group>
-
-		      <c:group name="advertise" displayName="Advertise Options">
-		        <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
-			description="Name of Socket binding to use for the Advertise socket."/>
-			<c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>
-			<c:simple-property name="advertise-security-key" required="false" type="string" readOnly="false" description="String containing the security key for the Advertise logic."/>
-	      		<c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
-			<c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
-		      </c:group>
-
-		       <c:group name="context" displayName="Web Context Options">
-			<c:simple-property name="excluded-contexts" required="false" type="string" readOnly="false" defaultValue="ROOT,admin-console,invoker,jbossws,jmx-console,juddi,web-console"
-				 description="List of contexts mod_cluster should ignore, Format String separed with comas."/>
-			<c:simple-property name="auto-enable-contexts" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable contexts even if disabled in mod_cluster_manger (httpd)."/>
-		       </c:group>
-
-		       <c:group name="session" displayName="Session Options">
-			<c:simple-property name="sticky-session" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use sticky sessions for requests."/>
-			<c:simple-property name="sticky-session-remove" required="false" type="boolean" readOnly="false" defaultValue="false" description="Remove session information on failover."/>
-			<c:simple-property name="sticky-session-force" required="false" type="boolean" readOnly="false" defaultValue="false" description="Don't failover a request with session information."/>
-		       </c:group>
-
-		       <c:group name="network" displayName="Network Options">
-			<c:simple-property name="worker-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout to wait in httpd for an available worker to process the requests."/>
-			<c:simple-property name="max-attemps" required="false" type="integer" readOnly="false" defaultValue="1" description="Max attempts to process an idempotent request."/>
-			<c:simple-property name="flush-packets" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables/disables packet flushing in httpd."/>
-			<c:simple-property name="flush-wait" required="false" type="integer" readOnly="false" defaultValue="-1" description="Time to wait before flushing packets in httpd."/>
-			<c:simple-property name="ping" required="false" type="integer" readOnly="false" defaultValue="10" description="Time (in seconds) in which to wait for a pong answer to a ping."/>
-			<c:simple-property name="smax" required="false" type="integer" readOnly="false" description="Soft maximum idle connection count in httpd"/>
-			<c:simple-property name="ttl" required="false" type="integer" readOnly="false" defaultValue="60" description="Time to live (in seconds) for idle connections above smax"/>
-			<c:simple-property name="node-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout (in seconds) for proxy connections to a node."/>
-			<c:simple-property name="stop-context-timeout" required="false" type="integer" readOnly="false" defaultValue="10" description="Max time to wait for context to process pending requests."/>
-			<c:simple-property name="socket-timeout" required="false" type="integer" readOnly="false" defaultValue="20" description="Timeout to wait for httpd to answer a MCMP message."/>
-
-		       </c:group>
-		</resource-configuration>
-	    </service>
-
     </server>
 
 
@@ -672,7 +672,7 @@
         </resource-configuration>
 
 
-	    <!-- Necesary to duplicate the ModCluster component for Standalone and Domain because supported operations
+	    <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
 		 list is different. Update similar Domain service if changes are necessary. -->
 	    <service name="ModCluster Standalone Service"
 		     class="ModClusterComponent"

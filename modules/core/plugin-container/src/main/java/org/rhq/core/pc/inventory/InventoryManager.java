@@ -2498,7 +2498,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         if (resource.getId() == 0) {
-            log.warn("RESOURCE ID IS 0! Operation features may not work - resource needs to be synced with server");
+            log.info("Resource ID is 0! Operation features will not work until the resource is synced with server");
         }
 
         OperationContext operationContext = new OperationContextImpl(resource.getId());
@@ -2523,7 +2523,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return null;
         }
         if (resource.getId() == 0) {
-            log.warn("RESOURCE ID IS 0! Content features may not work - Resource needs to be synced with server");
+            log.info("Resource ID is 0! Content features will not work until the resource is synced with server");
         }
         ContentContext contentContext = new ContentContextImpl(resource.getId());
         return contentContext;

@@ -38,9 +38,11 @@
                               <pathelement location="../hosts/target/rhq-hosts-plugin-${project.version}.jar" />
                               <pathelement location="../hudson/target/rhq-hudson-plugin-${project.version}.jar" />
                               <pathelement location="../iis/target/rhq-iis-plugin-${project.version}.jar" />
+<!--
                               <pathelement location="../jboss-as/target/jopr-jboss-as-plugin-${project.version}.jar" />                              
                               <pathelement location="../jboss-as-5/target/jopr-jboss-as-5-plugin-${project.version}.jar" />                              
                               <pathelement location="../jboss-as-7/target/rhq-jboss-as-7-plugin-${project.version}.jar" />                              
+-->
                               <!--<pathelement location="../jira/target/rhq-jira-plugin-${project.version}.jar" />--> 
                               <pathelement location="../jmx/target/rhq-jmx-plugin-${project.version}.jar" />
                               <!--<pathelement location="../mysql/target/rhq-mysql-plugin-${project.version}.jar" />-->

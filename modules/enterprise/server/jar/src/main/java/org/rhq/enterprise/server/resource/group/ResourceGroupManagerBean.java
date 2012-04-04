@@ -1411,10 +1411,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
             + "  (SELECT count(ir) " // DOWN implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
-            + "        AND ir.currentAvailability.availabilityType = 0 ), g \n"
+            + "        AND ir.currentAvailability.availabilityType = 0 ),\n"
             + "  (SELECT count(ir) " // DISABLED implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
-            + "        AND ir.currentAvailability.availabilityType = 3 ), g \n"
+            + "        AND ir.currentAvailability.availabilityType = 3 )\n,"
+            + "    g "
             + "FROM ResourceGroup g where g.id = :groupId";
 
         Query query = entityManager.createQuery(queryString);
@@ -1427,7 +1428,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         Object[] data = results.get(0);
 
-        ResourceGroup group = (ResourceGroup) data[4];
+        ResourceGroup group = (ResourceGroup) data[6];
         ResourceType type = group.getResourceType();
         ResourceFacets facets;
         if (type == null) {
@@ -1439,19 +1440,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         ResourceGroupComposite composite = null;
-        if (((Number) data[2]).longValue() > 0) {
+        if (((Number) data[3]).longValue() > 0) {
             long explicitCount = ((Number) data[0]).longValue();
-            long explicitDownCount = ((Number) data[1]).longValue();
-            long explicitDisabledCount = ((Number) data[2]).longValue();
+            long explicitDown = ((Number) data[1]).longValue();
+            long explicitDisabled = ((Number) data[2]).longValue();
             long implicitCount = ((Number) data[3]).longValue();
-            long implicitDownCount = ((Number) data[4]).longValue();
-            long implicitDisabledCount = ((Number) data[5]).longValue();
+            long implicitDown = ((Number) data[4]).longValue();
+            long implicitDisabled = ((Number) data[5]).longValue();
             // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
             // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of a ratio of
             // of UP vs DOWN it is now handled with counts. This is handled in the composite.
 
-            composite = new ResourceGroupComposite(explicitCount, explicitDownCount, explicitDisabledCount,
-                implicitCount, implicitDownCount, implicitDisabledCount, group, facets);
+            composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitDisabled,
+                implicitCount, implicitDown, implicitDisabled, group, facets);
         } else {
             composite = new ResourceGroupComposite(0L, 0L, 0L, 0L, 0L, 0L, group, facets);
         }
@@ -1542,11 +1543,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitUpCount," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitUpCount," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitUpCount," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitUpCount," // implicit member count with DISABLED avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias% ) "; // ResourceGroup
             break;
         case ROLE_OWNED:
@@ -1554,11 +1555,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitUpCount," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitUpCount," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitUpCount," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitUpCount," // implicit member count with DISABLED avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias%, " // ResourceGroup
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE

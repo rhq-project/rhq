@@ -255,7 +255,7 @@ public class ResourceGroup extends Group {
         + "                        ON eres.id = expMap.resource_id "
         + "                     WHERE expMap.resource_group_id = rg.id "
         + "                       AND eresAvail.availability_type = 0 "
-        + "              ) as explicitAvail, "
+        + "              ) as explicitDown, "
         + "" //
         + "              (     SELECT COUNT(eresAvail.ID) " // DISABLED explicit members
         + "                      FROM rhq_resource_avail eresAvail "
@@ -265,7 +265,7 @@ public class ResourceGroup extends Group {
         + "                        ON eres.id = expMap.resource_id "
         + "                     WHERE expMap.resource_group_id = rg.id "
         + "                       AND eresAvail.availability_type = 3 "
-        + "              ) as explicitAvail, "
+        + "              ) as explicitDisabled, "
         + "" //
         + "              (     SELECT COUNT(iresAvail.ID) " // total implicit members
         + "                      FROM rhq_resource_avail iresAvail "
@@ -284,7 +284,7 @@ public class ResourceGroup extends Group {
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "                       AND iresAvail.availability_type = 0 "
-        + "              ) as implicitAvail, "
+        + "              ) as implicitDown, "
         + "" //
         + "              (     SELECT COUNT(iresAvail.ID) " // DISABLED implicit members 
         + "                      FROM rhq_resource_avail iresAvail "
@@ -294,7 +294,7 @@ public class ResourceGroup extends Group {
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "                       AND iresAvail.availability_type = 3 "
-        + "              ) as implicitAvail, "
+        + "              ) as implicitDisabled, "
         + "" //
         + "                rg.id as groupId, "
         + "                rg.name as groupName, "

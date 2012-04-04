@@ -2446,6 +2446,16 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <c:simple-property name="path" readOnly="true" default="endpoint-config"/>
       </plugin-configuration>
 
+      <resource-configuration>
+	<c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
+        <c:list-property name="property" description="A list of generic key/value properties.">
+         <c:map-property name="property:collapsed" displayName="Property">
+           <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
+           <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
+         </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+
       <service name="Post Handler Chain"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
@@ -2453,11 +2463,25 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="post-handler-chain"/>
         </plugin-configuration>
-        <resource-configuration>
-          <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
-        </resource-configuration>
 
-      </service>
+		<service name="Post Handler"
+			 discovery="SubsystemDiscovery"
+			 class="BaseComponent"
+		    >
+
+			<runs-inside>
+			    <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
+			    <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
+			</runs-inside>
+
+		     <plugin-configuration>
+			<c:simple-property name="path" readOnly="true" default="handler"/>
+		     </plugin-configuration>
+		     <resource-configuration>
+			<c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+		     </resource-configuration>
+		   </service>
+      </service><!-- End of post handler chain service -->
 
       <service name="Pre Handler Chain"
                discovery="SubsystemDiscovery"
@@ -2469,28 +2493,25 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <resource-configuration>
           <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
         </resource-configuration>
-      </service>
-      <!--
-       <service name="Handler"
-      discovery="SubsystemDiscovery"
-      class="BaseComponent"
-                  singleton="true"
-       >
 
-     <runs-inside>
-         <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
-         <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
-     </runs-inside>
+		<service name="Pre Handler"
+			 discovery="SubsystemDiscovery"
+			 class="BaseComponent"
+		    >
+ 
+			<runs-inside>
+			    <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
+			    <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
+			</runs-inside>
 
-        <plugin-configuration>
-     <c:simple-property name="path" readOnly="true" default="handler"/>
-        </plugin-configuration>
-        <resource-configuration>
-     <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
-        </resource-configuration>
-      </service>-->
-
-    </service>
+		     <plugin-configuration>
+			<c:simple-property name="path" readOnly="true" default="handler"/>
+		     </plugin-configuration>
+		     <resource-configuration>
+			<c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+		     </resource-configuration>
+		   </service><!-- End of Pre Handler service definition -->
+    </service> <!-- End of Pre Handler Chain service definition -->
   </server>
 
   <service name="Naming"

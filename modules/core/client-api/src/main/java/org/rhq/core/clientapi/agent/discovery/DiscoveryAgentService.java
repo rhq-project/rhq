@@ -109,23 +109,23 @@ public interface DiscoveryAgentService {
     AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport);
 
     /**
-     * Returns the current availablity for the specified Resource if no other thread currently possesses a write lock
+     * Returns the current availability for the specified Resource if no other thread currently possesses a write lock
      * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource. If
      * the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the returned
-     * Availablity will be set to <code>null</code>).
+     * Availability will be set to <code>null</code>).
      *
      * @param  resource a Resource
      *
-     * @return the current availablity for the specified Resource if no other thread currently possesses a write lock
+     * @return the current availability for the specified Resource if no other thread currently possesses a write lock
      *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource; if
      *         the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the
-     *         returned Availablity will be set to <code>null</code>).
+     *         returned Availability will be set to <code>null</code>).
      */
     @NotNull
     Availability getCurrentAvailability(Resource resource);
 
     /**
-     * This call will request that the agent produce a full availability report on its next availability scan. 
+     * This call will request that the agent produce a full availability report on its next availability scan.
      */
     void requestFullAvailabilityReport();
 
@@ -154,13 +154,13 @@ public interface DiscoveryAgentService {
         PluginContainerException;
 
     /**
-     * Shuts down and removes a Resource and its descendents from the PC's inventory.
+     * Shuts down and removes a Resource and its descendants from the PC's inventory.
      *
      * @param resourceId the id of the Resource to remove
      */
     void uninventoryResource(int resourceId);
 
-    // TODO GH: Everything below here is not used yet, nor implemented
+    // TODO GH: Everything below here is not used yet
     /**
      * Enable periodic scans for new services for the specified server, using the specified discovery configuration. If
      * service scans were already enabled, the server's discovery configuration is updated on the agent.

@@ -95,7 +95,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         File homeDir = getHomeDir(process);
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
         File baseDir = getBaseDir(process, homeDir);
-        String configName = baseDir.getName();
         String key = baseDir.getPath();
         File configDir = getConfigDir(process, baseDir);
         File hostXmlFile = getHostXmlFile(process, configDir);
@@ -105,7 +104,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         readStandaloneOrHostXmlFromFile(hostXmlFile.getPath()); // this sets this.hostXml
         HostPort hostPort = getHostPortFromHostXml();
 
-        String name = buildDefaultResourceName(hostPort, configName, productType);
+        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("homeDir", homeDir));
@@ -117,7 +117,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
-        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
+
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
@@ -268,7 +268,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
 
     protected abstract String getLogFileName();
 
-    protected abstract String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType);
+    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType);
 
     protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
 

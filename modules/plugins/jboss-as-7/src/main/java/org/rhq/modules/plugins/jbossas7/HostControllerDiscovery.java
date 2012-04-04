@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.File;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -81,10 +79,11 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType) {
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType) {
         boolean isDomainController = hostPort.isLocal;
-        String suffix = (isDomainController) ? "Domain Controller" : "Host Controller";
-        return configName + " " + productType.NAME + " " + suffix;
+        String instanceType = (isDomainController) ? "Domain Controller" : "Host Controller";
+        return String.format("%s %s (%s:%d)", productType.SHORT_NAME, instanceType, managementHostPort.host,
+                managementHostPort.port);
     }
 
     @Override
@@ -92,7 +91,7 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         boolean isDomainController = hostPort.isLocal;
         String prefix = (isDomainController) ? "Domain controller" : "Host controller";
         String suffix = (isDomainController) ? "domain" : "host";
-        return prefix + " for a " + productType.FULL_NAME + " " + suffix;
+        return String.format("%s for a %s %s", prefix, productType.FULL_NAME, suffix);
     }
 
     @Override

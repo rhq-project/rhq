@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.File;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -81,19 +79,13 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, String configName, JBossProductType productType) {
-        String hostName = findHostName();
-        StringBuilder name = new StringBuilder();
-        name.append(configName).append(" ").append(productType.SHORT_NAME);
-        if ((hostName != null) && !hostName.isEmpty()) {
-            name.append(" (").append(hostName).append(")");
-        }
-        return name.toString();
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType) {
+        return String.format("%s (%s:%d)", productType.SHORT_NAME, managementHostPort.host, managementHostPort.port);
     }
 
     @Override
     protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
-        return "Standalone " + productType.FULL_NAME + " server";
+        return String.format("Standalone %s server", productType.FULL_NAME);
     }
 
     @Override

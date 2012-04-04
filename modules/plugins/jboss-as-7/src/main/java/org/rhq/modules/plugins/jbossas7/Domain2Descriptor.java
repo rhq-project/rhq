@@ -276,8 +276,12 @@ public class Domain2Descriptor {
                 if (ptype == Type.OBJECT) {
                     HashMap<String, Object> myMap = (HashMap<String, Object>) props.get("value-type");
                     for (Map.Entry<String, Object> myEntry : myMap.entrySet()) {
+                        if (myEntry.getValue() instanceof String && myEntry.getValue().equals("STRING")) {
+                            createMetricEntry(indent, props, key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                        } else if (myEntry.getValue() instanceof Map<?, ?>) {
                         createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
                             key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                        }
                     }
                 } else {
                     if (!accessType.equals("metric")) {

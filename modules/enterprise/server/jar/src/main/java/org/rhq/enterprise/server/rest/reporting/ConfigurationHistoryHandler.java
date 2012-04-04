@@ -62,18 +62,18 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
 
             }
             private String toCSV(ResourceConfigurationUpdate configurationUpdate) {
-                return cleanForCSV(configurationUpdate.getResource().getName()) + ","
-                        + configurationUpdate.getId() + ","
+                return  configurationUpdate.getId() + ","
                         + formatDateTime(configurationUpdate.getCreatedTime())+","
                         + formatDateTime(configurationUpdate.getModifiedTime())+","
                         + configurationUpdate.getStatus()+","
+                        + cleanForCSV(configurationUpdate.getResource().getName())+ ","
                         + cleanForCSV(ReportFormatHelper.parseAncestry(configurationUpdate.getResource().getAncestry())) + ","
                         + getDetailsURL(configurationUpdate);
                 //@todo: check dates, user, update-type
             }
 
             private String getHeader(){
-                return "Name,Version,Date Submitted,Date Completed,Status,Ancestry,Details URL";
+                return "Version,Date Submitted,Date Completed,Status,Name,Ancestry,Details URL";
             }
 
             private String getDetailsURL(ResourceConfigurationUpdate configUpdate) {

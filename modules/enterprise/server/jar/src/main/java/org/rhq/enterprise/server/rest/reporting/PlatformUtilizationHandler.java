@@ -62,10 +62,34 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
 
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
+                CsvWriter<PlatformMetricsSummary> csvWriter = new CsvWriter<PlatformMetricsSummary>();
+                csvWriter.setColumns("resource.name", "resource.version", "CPUUsage", "memoryUsage", "swapUsage");
+
+                csvWriter.setPropertyConverter("CPUUsage", new PropertyConverter<PlatformMetricsSummary>() {
+                    @Override
+                    public Object convert(PlatformMetricsSummary summary, String propertyName) {
+                        return calculateCPUUsage(summary);
+                    }
+                });
+
+                csvWriter.setPropertyConverter("memoryUsage", new PropertyConverter<PlatformMetricsSummary>() {
+                    @Override
+                    public Object convert(PlatformMetricsSummary summary, String propertyName) {
+                        return calculateMemoryUsage(summary);
+                    }
+                });
+
+                csvWriter.setPropertyConverter("swapUsage", new PropertyConverter<PlatformMetricsSummary>() {
+                    @Override
+                    public Object convert(PlatformMetricsSummary summary, String propertyName) {
+                        return calculateSwapUsage(summary);
+                    }
+                });
+
                 output.write((getHeader() + "\n").getBytes());
                 PageList<PlatformMetricsSummary> summaries = platformUtilizationMgr.loadPlatformMetrics(caller);
                 for (PlatformMetricsSummary summary : summaries) {
-                    output.write((toCSV(summary) + "\n").getBytes());
+                    csvWriter.write(summary, output);
                 }
             }
 
@@ -73,23 +97,19 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
                 return "Name,Version,CPU,Memory,Swap";
             }
 
-            private String toCSV(PlatformMetricsSummary summary) {
-                if (summary.isMetricsAvailable()) {
-                    return summary.getResource().getName() + "," + summary.getResource().getVersion() + "," +
-                        calculateCPUUsage(summary) + "," + calculateMemoryUsage(summary) + "," + calculateSwapUsage(summary);
-
-                }
-
-                return summary.getResource().getName() + "," + summary.getResource().getVersion() + ",NA,NA,NA";
-            }
-
             private String calculateCPUUsage(PlatformMetricsSummary summary) {
+                if (!summary.isMetricsAvailable()) {
+                    return "NA";
+                }
                 Double systemCPU = (Double) summary.getSystemCPU().getValue();
                 Double userCPU = (Double) summary.getUserCPU().getValue();
                 return numberFormat.format((systemCPU + userCPU));
             }
 
             private String calculateMemoryUsage(PlatformMetricsSummary summary) {
+                if (!summary.isMetricsAvailable()) {
+                    return "NA";
+                }
                 Double totalMemory = (Double) summary.getTotalMemory().getValue();
                 Double freeMemory = (Double) summary.getFreeMemory().getValue();
                 Double usedMemory = totalMemory - freeMemory;
@@ -97,6 +117,9 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
             }
 
             private String calculateSwapUsage(PlatformMetricsSummary summary) {
+                if (!summary.isMetricsAvailable()) {
+                    return "NA";
+                }
                 Double totalSwap = (Double) summary.getTotalSwap().getValue();
                 Double usedSwap = (Double) summary.getUsedSwap().getValue();
                 return numberFormat.format((usedSwap / totalSwap));

@@ -39,6 +39,7 @@ public enum Command {
     INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations.\n Parameters are given as key=value; key-value-pairs are separated by ||"), //
     MEASURE("m", "datatype property+", 1, "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
     NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
+    PRINT("p","[id]",0,"Prints information about the resource with id 'id'. If no id is given, the current resource is printed."),//
     QUIT("quit", "", 0, "Terminates the application"), //
     RESOURCES("res", "", 0, "Shows the discovered resources"), //
     SET("set", "'resource' N", 2,

@@ -254,6 +254,9 @@ public class StandaloneContainer {
         case NATIVE:
             doNative(tokens);
             break;
+        case PRINT:
+            printResource(tokens);
+            break;
         case QUIT:
             System.out.println("Terminating ..");
             return true;
@@ -286,7 +289,28 @@ public class StandaloneContainer {
         return false;
     }
 
-    /**
+   /**
+    * Prints details about a resource
+    * @param tokens tokenized command line tokens[0] is the command itself
+    */
+   private void printResource(String[] tokens)
+   {
+      int id;
+      if (tokens.length>1)
+         id = Integer.valueOf(tokens[1]);
+      else
+         id = resourceId;
+      ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
+      if (resourceContainer != null) {
+         Resource r = resourceContainer.getResource();
+         System.out.println(r);
+      }
+      else {
+         System.err.println("There is no resource with id " + id);
+      }
+   }
+
+   /**
      * Invokes an operation
      * @param tokens tokenized command line tokens[0] is the command itself
      * @throws Exception if anything goes wrong
@@ -517,7 +541,14 @@ public class StandaloneContainer {
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void find(String[] tokens) {
-        String pattern = tokens[2];
+       StringBuilder builder = new StringBuilder();
+       int len = tokens.length;
+       for (int i = 2; i < len ; i++) {
+          builder.append(tokens[i]);
+          if (i<len-1)
+             builder.append(" ");
+       }
+       String pattern = builder.toString();
         pattern = pattern.replaceAll("\\*", "\\.\\*");
 
         if (tokens[1].equals("r") || tokens[1].startsWith("res")) {

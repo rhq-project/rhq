@@ -1119,6 +1119,10 @@ public class AgentConfiguration {
             AgentConfigurationConstants.PLUGINS_SERVICE_DISCOVERY_INITIAL_DELAY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_SERVICE_DISCOVERY_INITIAL_DELAY);
 
+        long childResourceDiscoveryDelay = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CHILD_RESOURCE_DISOVERY_PERIOD,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CHILD_RESOURCE_DISCOVERY_PERIOD);
+
         // get the time interval in which availability scans run
         long avail_scan_period = m_preferences.getLong(AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_PERIOD,
             AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD);
@@ -1220,6 +1224,7 @@ public class AgentConfiguration {
         config.setServerDiscoveryPeriod(server_discovery_period);
         config.setServiceDiscoveryInitialDelay(service_discovery_initial_delay);
         config.setServiceDiscoveryPeriod(service_discovery_period);
+        config.setChildResourceDiscoveryDelay(childResourceDiscoveryDelay);
         config.setAvailabilityScanInitialDelay(avail_scan_initial_delay);
         config.setAvailabilityScanPeriod(avail_scan_period);
         config.setMeasurementCollectionThreadPoolSize(meas_threadpool_size);

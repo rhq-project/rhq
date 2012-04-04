@@ -64,6 +64,8 @@ public class PluginContainerConfiguration {
     public static final long SERVICE_DISCOVERY_INITIAL_DELAY_DEFAULT = 20L; // in seconds
     private static final String SERVICE_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "service-discovery-period";
     public static final long SERVICE_DISCOVERY_PERIOD_DEFAULT = 24 * 60 * 60L; // in seconds
+    private static final String CHILD_RESOURCE_DISCOVERY_DELAY_PROP = PROP_PREFIX + "child-resource-discovery-delay";
+    public static final long CHILD_RESOURCE_DISCOVERY_DELAY_DEFAULT = 5L; //in seconds
     private static final String RESOURCE_FACTORY_CORE_POOL_SIZE_PROP = PROP_PREFIX + "resource-factory-core-pool-size";
     public static final int RESOURCE_FACTORY_CORE_POOL_SIZE_DEFAULT = 1;
     private static final String RESOURCE_FACTORY_MAX_POOL_SIZE_PROP = PROP_PREFIX + "resource-factory-max-pool-size";
@@ -456,6 +458,28 @@ public class PluginContainerConfiguration {
      */
     public void setServiceDiscoveryPeriod(long period) {
         configuration.put(SERVICE_DISCOVERY_PERIOD_PROP, Long.valueOf(period));
+    }
+
+    /**
+     * The length of time, in seconds, before the discovery of child resources on newly
+     * committed resources begins.
+     *
+     * @return the number of seconds between importing newly committed resources and child resource discovery
+     */
+    public long getChildResourceDiscoveryDelay() {
+        Long delay = (Long) configuration.get(CHILD_RESOURCE_DISCOVERY_DELAY_PROP);
+        return (delay == null) ? CHILD_RESOURCE_DISCOVERY_DELAY_DEFAULT : delay.longValue();
+    }
+
+
+    /**
+     * Sets the length of time, in seconds, before the discovery of child resources on newly
+     * committed resources begins.
+     *
+     * @param delay the number of seconds between importing newly committed resources and child resource discovery
+     */
+    public void setChildResourceDiscoveryDelay(long delay) {
+        configuration.put(CHILD_RESOURCE_DISCOVERY_DELAY_PROP, Long.valueOf(delay));
     }
 
     /**

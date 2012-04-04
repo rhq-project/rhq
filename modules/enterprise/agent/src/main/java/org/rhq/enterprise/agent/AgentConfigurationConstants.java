@@ -581,6 +581,16 @@ public interface AgentConfigurationConstants {
     long DEFAULT_PLUGINS_SERVICE_DISCOVERY_PERIOD = PluginContainerConfiguration.SERVICE_DISCOVERY_PERIOD_DEFAULT;
 
     /**
+     * Defines, in seconds, the delay between resource committed into the inventory and child resource discovery scan
+     */
+    String PLUGINS_CHILD_RESOURCE_DISOVERY_PERIOD = PROPERTY_NAME_PREFIX + "plugins.child-discovery.delay-secs";
+
+    /**
+     * The default time period between resource committed into the inventory and child discovery scan, in seconds.
+     */
+    long DEFAULT_PLUGINS_CHILD_RESOURCE_DISCOVERY_PERIOD = PluginContainerConfiguration.CHILD_RESOURCE_DISCOVERY_DELAY_DEFAULT;
+
+    /**
      * Defines, in seconds, the initial delay before the first availability scan is run.
      */
     String PLUGINS_AVAILABILITY_SCAN_INITIAL_DELAY = PROPERTY_NAME_PREFIX

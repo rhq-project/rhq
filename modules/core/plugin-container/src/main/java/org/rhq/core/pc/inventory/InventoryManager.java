@@ -1110,7 +1110,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (!resourceUpgradeDelegate.enabled()
                 && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
-                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
+                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, configuration.getChildResourceDiscoveryDelay(),
                     TimeUnit.SECONDS);
             }
         } catch (Throwable t) {

@@ -168,6 +168,15 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                                            Configuration parameters) throws InterruptedException, Exception {
 
         Operation op = new Operation(name,getAddress());
+
+        if (parameters!= null) {
+           String tmp  = parameters.getSimpleValue("blocking",null);
+           if (tmp!=null) {
+              Boolean blocking = Boolean.valueOf(tmp);
+              op.addAdditionalProperty("blocking",blocking);
+           }
+        }
+
         Result res = getASConnection().execute(op);
 
         OperationResult opRes;

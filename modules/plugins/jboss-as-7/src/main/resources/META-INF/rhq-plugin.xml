@@ -460,16 +460,25 @@
       </plugin-configuration>
 
       <operation name="start" description="Start this server instance." displayName="Start">
+        <parameters>
+          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is started." default="false" type="boolean"/>
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
       <operation name="stop" description="Stop this server instance." displayName="Stop">
+        <parameters>
+          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is stopped." default="false" type="boolean"/>
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
       <operation name="restart" description="Restart this server instance." displayName="Restart">
+        <parameters>
+          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is restarted." default="false" type="boolean"/>
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>

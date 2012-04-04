@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
 import static org.rhq.core.domain.util.PageOrdering.ASC;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -92,10 +93,12 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                             throw new WebApplicationException(e);
                         }
                     } else if (mediaType.toString().equals("text/csv")) {
+                        CsvWriter<ResourceInstallCount> csvWriter = new CsvWriter<ResourceInstallCount>();
+                        csvWriter.setColumns("typeName", "typePlugin", "category.displayName", "version", "count");
+
                         stream.write((getHeader() + "\n").getBytes());
                         for (ResourceInstallCount installCount : results) {
-                            String record = toCSV(installCount) + "\n";
-                            stream.write(record.getBytes());
+                            csvWriter.write(installCount, stream);
                         }
                     }
                 }
@@ -136,6 +139,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor;
             CriteriaQuery<Resource, ResourceCriteria> query;
 
+            CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
+            csvWriter.setColumns("typeName", "plugin", "category", "version", "count", "resourceName", "ancestry",
+                "description", "resourceTypeName", "resourceVersion", "currentAvailability");
+
             output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
 
             // if there are no resource type ids, that means we are fetching everything,
@@ -154,8 +161,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                         resource.getVersion());
                     ResourceInstallCount installCount = installCounts.get(key);
                     if (installCount != null) {
-                        String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
-                        output.write(record.getBytes());
+                          csvWriter.write(new DetailedSummary(installCount, resource), output);
                     }
                 }
             } else {
@@ -170,12 +176,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                         };
                         query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                         for (Resource resource : query) {
-                            String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
-                            output.write(record.getBytes());
+                            csvWriter.write(new DetailedSummary(installCount, resource), output);
                         }
                     } else {
-                        String record = toCSV(installCount) + ",,,,,,,\n";
-                        output.write(record.getBytes());
+                        csvWriter.write(new DetailedSummary(installCount, null), output);
                     }
                 }
             }
@@ -216,7 +220,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String toCSV(Resource resource) {
-        return resource.getName() + "," + ReportFormatHelper.parseAncestry(resource.getAncestry()) + "," +
+        return resource.getName() + "," + parseAncestry(resource.getAncestry()) + "," +
             resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
             "," + resource.getCurrentAvailability().getAvailabilityType();
     }

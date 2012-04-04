@@ -397,6 +397,7 @@ public class Domain2Descriptor {
             description = description.replace("<", "&lt;");
             description = description.replace(">", "&gt;");
             description = description.replace("\"", "\'");
+            description = description.replace("'", "&apos;");
 
             builder.append(description);
 

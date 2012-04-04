@@ -47,8 +47,8 @@ public enum Command {
     WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
     P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
     R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource."),
-    SR_CONFIG("rcs", "", 1, "[-m] [parameters] set resource config. '-m' merges with current config; default is overwrite."),
-    SP_CONFIG("pcs", "", 1, "[-m] [parameters] set plugin config.'-m' merges with current config; default is overwrite.")
+    SR_CONFIG("rcs", "", 1, "[-m] [parameters] set resource config. '-m' merges with current config; default is overwrite. Properties are separated by ||."),
+    SP_CONFIG("pcs", "", 1, "[-m] [parameters] set plugin config.'-m' merges with current config; default is overwrite. Properties are separated by ||.")
     ;
 
     private String abbrev;

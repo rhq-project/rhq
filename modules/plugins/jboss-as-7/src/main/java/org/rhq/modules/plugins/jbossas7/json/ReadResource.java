@@ -48,4 +48,8 @@ public class ReadResource extends Operation {
     public void includeDefaults(boolean arg) {
         addAdditionalProperty("include-defaults",arg);
     }
+
+    public void recursive(boolean arg) {
+        addAdditionalProperty("recursive",arg);
+    }
 }

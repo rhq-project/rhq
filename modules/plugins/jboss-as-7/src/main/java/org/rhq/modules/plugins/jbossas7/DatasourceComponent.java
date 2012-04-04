@@ -1,6 +1,9 @@
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,13 +13,19 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -30,7 +39,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
 
     @Override
     public OperationResult invokeOperation(String operationName,
-                                           Configuration parameters) throws Exception {
+                                           Configuration parameters) throws Exception { // TODO still needed ? Check with plugin descriptor
 
         OperationResult result = new OperationResult();
         ASConnection connection = getASConnection();
@@ -154,5 +163,35 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         op = new Operation("enable",getAddress());
         res = getASConnection().execute(op);
 
+    }
+
+    @Override
+    public void getValues(MeasurementReport report, Set theMetrics) throws Exception {
+
+        Set<MeasurementScheduleRequest> metrics = theMetrics;
+
+        ReadResource op = new ReadResource(address);
+        op.includeRuntime(true);
+        op.recursive(true);
+        ComplexResult res = getASConnection().executeComplex(op);
+        if (!res.isSuccess())
+            return;
+
+        Map<String,Object> results = new HashMap<String, Object>();
+        Map<String,Object> statistics = (Map<String, Object>) res.getResult().get("statistics");
+        results.putAll((Map<? extends String,? extends Object>) statistics.get("pool"));
+        results.putAll((Map<? extends String,? extends Object>) statistics.get("jdbc"));
+
+        for (MeasurementScheduleRequest metric : metrics) {
+            String name = metric.getName();
+
+            Object o = results.get(name);
+            if (o != null) {
+                String tmp = (String) o;
+                Double val = Double.valueOf(tmp);
+                MeasurementDataNumeric data = new MeasurementDataNumeric(metric,val);
+                report.addData(data);
+            }
+        }
     }
 }

@@ -48,19 +48,19 @@ public class FlyweightCache {
     private Map<Integer, ResourceFlyweight> resources = new HashMap<Integer, ResourceFlyweight>();
     private Map<Integer, ResourceTypeFlyweight> resourceTypes = new HashMap<Integer, ResourceTypeFlyweight>();
     private Map<Integer, ResourceSubCategoryFlyweight> subCategories = new HashMap<Integer, ResourceSubCategoryFlyweight>();
-    
+
     public Map<Integer, ResourceFlyweight> getResources() {
         return resources;
     }
-    
+
     public Map<Integer, ResourceTypeFlyweight> getResourceTypes() {
         return resourceTypes;
     }
-    
+
     public Map<Integer, ResourceSubCategoryFlyweight> getSubCategories() {
         return subCategories;
-    } 
-    
+    }
+
     /**
      * @see #constructResource(int, String, String, Integer, int, AvailabilityType)
      * 
@@ -75,11 +75,11 @@ public class FlyweightCache {
         Resource parent = original.getParentResource();
         ResourceType type = original.getResourceType();
         ResourceAvailability avail = original.getCurrentAvailability();
-        
+
         return constructResource(id, name, uuid, resourceKey, parent != null ? parent.getId() : null, type.getId(),
-            avail != null ? avail.getAvailabilityType() : null);
+            avail != null ? avail.getAvailabilityType() : AvailabilityType.UNKNOWN);
     }
-    
+
     /**
      * Constructs a fully initialized instance of the resource flyweight.
      * The resource type, sub-category and parent are looked up
@@ -106,7 +106,7 @@ public class FlyweightCache {
      */
     public ResourceFlyweight constructResource(int id, String name, String uuid, String resourceKey, Integer parentId,
         int typeId, AvailabilityType currentAvailability) {
-        
+
         ResourceFlyweight ret = getResources().get(id);
         if (ret == null) {
             ret = new ResourceFlyweight();
@@ -138,7 +138,7 @@ public class FlyweightCache {
 
         return ret;
     }
-    
+
     /**
      * @see #constructSubCategory(int, String, Integer, FlyweightCache)
      * 
@@ -151,7 +151,7 @@ public class FlyweightCache {
         ResourceSubCategory parent = original.getParentSubCategory();
         Integer parentId = parent != null ? parent.getId() : null;
         String parentName = parent != null ? parent.getName() : null;
-        
+
         return constructSubCategory(id, name, parentId, parentName);
     }
 
@@ -193,7 +193,7 @@ public class FlyweightCache {
         }
 
         return ret;
-    }    
+    }
 
     /**
      * @see #construct(int, String, String, ResourceCategory, Integer, FlyweightCache)
@@ -209,7 +209,8 @@ public class FlyweightCache {
         ResourceCategory category = original.getCategory();
         ResourceSubCategory subCategory = original.getSubCategory();
 
-        return constructResourceType(id, name, plugin, singleton, category, subCategory != null ? subCategory.getId() : null);
+        return constructResourceType(id, name, plugin, singleton, category, subCategory != null ? subCategory.getId()
+            : null);
     }
 
     /**
@@ -230,16 +231,16 @@ public class FlyweightCache {
      * @param cache the flyweight cache
      * @return
      */
-    public ResourceTypeFlyweight constructResourceType(int id, String name, String plugin, boolean singleton, ResourceCategory category,
-        Integer subCategory) {
+    public ResourceTypeFlyweight constructResourceType(int id, String name, String plugin, boolean singleton,
+        ResourceCategory category, Integer subCategory) {
 
         ResourceTypeFlyweight ret = getResourceTypes().get(id);
-        
+
         if (ret == null) {
             ret = new ResourceTypeFlyweight();
             getResourceTypes().put(id, ret);
         }
-        
+
         ret.setId(id);
         ret.setName(name);
         ret.setPlugin(plugin);
@@ -250,7 +251,7 @@ public class FlyweightCache {
         } else {
             ret.setSubCategory(null);
         }
-        
+
         return ret;
     }
 }

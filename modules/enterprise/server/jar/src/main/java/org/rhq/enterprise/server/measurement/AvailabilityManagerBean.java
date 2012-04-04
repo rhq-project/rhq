@@ -196,14 +196,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 c.addFilterInterval(fullRangeBeginTime, fullRangeEndTime);
                 c.addSortStartTime(PageOrdering.ASC);
                 availabilities = findAvailabilityByCriteria(subject, c);
-                //availabilities = findAvailabilityWithinInterval(context.resourceId, fullRangeBeginDate,
-                //    fullRangeEndDate);
+
             } else if (context.type == EntityContext.Type.ResourceGroup) {
                 availabilities = findResourceGroupAvailabilityWithinInterval(context.groupId, fullRangeBeginDate,
                     fullRangeEndDate);
+
             } else if (context.type == EntityContext.Type.AutoGroup) {
                 availabilities = findAutoGroupAvailabilityWithinInterval(context.parentResourceId,
                     context.resourceTypeId, fullRangeBeginDate, fullRangeEndDate);
+
             } else {
                 throw new IllegalArgumentException("Do not yet support retrieving availability history for Context["
                     + context.toShortString() + "]");
@@ -232,15 +233,16 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         if (availabilities.size() > 0) {
             Availability earliestAvailability = availabilities.get(0);
             if (earliestAvailability.getStartTime() > fullRangeBeginDate.getTime()) {
-                Availability surrogateAvailability = new Availability(earliestAvailability.getResource(),
-                    fullRangeBeginDate.getTime(), null);
+                Availability surrogateAvailability = new SurrogateAvailability(earliestAvailability.getResource(),
+                    fullRangeBeginDate.getTime());
                 surrogateAvailability.setEndTime(earliestAvailability.getStartTime());
                 availabilities.add(0, surrogateAvailability); // add at the head of the list
             }
         } else {
             Resource surrogateResource = context.type == EntityContext.Type.Resource ? entityManager.find(
                 Resource.class, context.resourceId) : new Resource(-1);
-            Availability surrogateAvailability = new Availability(surrogateResource, fullRangeBeginDate.getTime(), null);
+            Availability surrogateAvailability = new SurrogateAvailability(surrogateResource,
+                fullRangeBeginDate.getTime());
             surrogateAvailability.setEndTime(fullRangeEndDate.getTime());
             availabilities.add(surrogateAvailability); // add as the only element
         }
@@ -251,7 +253,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         if (fullRangeEndDate.getTime() > now) {
             Availability latestAvailability = availabilities.get(availabilities.size() - 1);
             latestAvailability.setEndTime(now);
-            Availability unknownFuture = new Availability(latestAvailability.getResource(), now, null);
+            Availability unknownFuture = new SurrogateAvailability(latestAvailability.getResource(), now);
             availabilities.add(unknownFuture);
         }
 
@@ -289,10 +291,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             if (dataPointStartBarrier >= availabilityStartBarrier) {
 
                 // end the data point
-                if (currentAvailability.getAvailabilityType() == null) {
-                    // we are on the edge of the range, the null avail type indicates a surrogate for
-                    // this data point.  Be pessimistic, if we have had any down time, set to down, then disabled,
-                    // then up, and finally unknown.
+                if (currentAvailability instanceof SurrogateAvailability) {
+                    // we are on the edge of the range with a surrogate for this data point.  Be pessimistic, 
+                    // if we have had any down time, set to down, then disabled, then up, and finally unknown.
                     if (hasDownPeriods) {
                         availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
 
@@ -433,6 +434,17 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         return availabilityPoints;
+    }
+
+    // This class does nothing more than give us a way to identify that this is not a real Availability, it's
+    // a surrogate used in the AvailabilityPoint logic above.  We used to use a null availType but to flag the
+    // surrogate but that is no longer allowed in Availability, and this is more explicit anyway.
+    private static class SurrogateAvailability extends Availability {
+        private static final long serialVersionUID = 1L;
+
+        public SurrogateAvailability(Resource resource, Long startTime) {
+            super(resource, startTime, null);
+        }
     }
 
     @SuppressWarnings("unchecked")

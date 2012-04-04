@@ -112,14 +112,14 @@ public interface DiscoveryAgentService {
      * Returns the current availability for the specified Resource if no other thread currently possesses a write lock
      * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource. If
      * the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the returned
-     * Availability will be set to <code>null</code>).
+     * Availability will be set to <code>UNKNOWN</code>).
      *
      * @param  resource a Resource
      *
      * @return the current availability for the specified Resource if no other thread currently possesses a write lock
      *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource; if
      *         the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the
-     *         returned Availability will be set to <code>null</code>).
+     *         returned Availablity will be set to <code>UNKNOWN</code>).
      */
     @NotNull
     Availability getCurrentAvailability(Resource resource);

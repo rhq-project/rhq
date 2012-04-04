@@ -124,13 +124,13 @@ public class SerializableTest {
         assert ensureSerializable(report).getResourceAvailability().size() == 1;
 
         report = new AvailabilityReport("the-agent-name");
-        report.addAvailability(new Availability(new Resource(), null));
+        report.addAvailability(new Availability(new Resource(), AvailabilityType.UNKNOWN));
         assert ensureSerializable(report).getResourceAvailability().size() == 1;
 
         report = new AvailabilityReport("the-agent-name");
         report.addAvailability(new Availability(new Resource(), AvailabilityType.UP));
         report.addAvailability(new Availability(new Resource(), AvailabilityType.DOWN));
-        report.addAvailability(new Availability(new Resource(), null));
+        report.addAvailability(new Availability(new Resource(), AvailabilityType.UNKNOWN));
         assert ensureSerializable(report).getResourceAvailability().size() == 3;
     }
 

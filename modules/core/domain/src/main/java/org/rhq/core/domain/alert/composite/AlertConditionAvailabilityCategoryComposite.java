@@ -42,7 +42,7 @@ public class AlertConditionAvailabilityCategoryComposite extends AbstractAlertCo
         super(condition);
 
         this.resourceId = resourceId;
-        // For a resource with no Availability records, ensure we initialize to UNKNOWN as opposed to null 
+        // For a resource with no Availability records we initialize to UNKNOWN
         this.availabilityType = (null != availabilityType) ? availabilityType : AvailabilityType.UNKNOWN;
     }
 

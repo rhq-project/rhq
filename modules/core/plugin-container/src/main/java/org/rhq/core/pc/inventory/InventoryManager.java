@@ -621,7 +621,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @NotNull
     // TODO (ips): Perhaps refactor this so that it shares code with AvailabilityExecutor.checkInventory().
     public Availability getCurrentAvailability(Resource resource) {
-        AvailabilityType availType = null; // i.e. UNKNOWN;
+        AvailabilityType availType = AvailabilityType.UNKNOWN;
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer != null) {
             if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {

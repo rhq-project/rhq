@@ -183,21 +183,21 @@ public class Availability implements Serializable {
     }
 
     /**
-     * StartTime defaults to current time
+     * StartTime defaults to current time, no end time is set.
      *
      * @param resource
-     * @param type
+     * @param type if null this will be set to UNKNOWN
      */
     public Availability(Resource resource, AvailabilityType type) {
         this(resource, System.currentTimeMillis(), type);
     }
 
     /**
-     * Constructor for {@link Availability}. If <code>type</code> is <code>null</code>, it will be considered unknown.
+     * No end time is set.
      *
      * @param resource
      * @param startTime if null set to current time
-     * @param type
+     * @param type if null this will be set to UNKNOWN 
      */
     public Availability(Resource resource, Long startTime, AvailabilityType type) {
         if (resource == null) {
@@ -205,8 +205,8 @@ public class Availability implements Serializable {
         }
 
         this.resource = resource;
-        this.availabilityType = type;
-        this.startTime = (startTime != null) ? startTime : System.currentTimeMillis();
+        this.availabilityType = (null == type) ? AvailabilityType.UNKNOWN : type;
+        this.startTime = (null == startTime) ? System.currentTimeMillis() : startTime;
         this.endTime = null;
     }
 

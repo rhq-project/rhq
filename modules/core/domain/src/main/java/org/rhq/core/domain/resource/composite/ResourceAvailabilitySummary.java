@@ -59,7 +59,7 @@ public class ResourceAvailabilitySummary implements Serializable {
         int failures = 0;
         int disabled = 0;
         long lastChange = 0;
-        AvailabilityType current = null;
+        AvailabilityType current = AvailabilityType.UNKNOWN;
 
         for (Availability avail : availabilities) {
             switch (avail.getAvailabilityType()) {

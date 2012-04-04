@@ -40,7 +40,7 @@ import static org.testng.Assert.assertNotNull;
  * Test dealing with managed servers
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
+@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true, enabled = false)
 public class ManagedServerTest extends AbstractJBossAS7PluginTest
 {
 
@@ -61,7 +61,7 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest
    }
 
 
-   @Test(priority = 1021)
+   @Test(priority = 1021, enabled = false)
    public void testRestart() throws Exception {
 
       Resource resource = getResource();

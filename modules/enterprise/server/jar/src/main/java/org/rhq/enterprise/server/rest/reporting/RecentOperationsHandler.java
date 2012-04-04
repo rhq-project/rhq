@@ -1,7 +1,23 @@
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -12,23 +28,6 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -82,21 +81,29 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
                 CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria> query =
                         new CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria>(criteria, queryExecutor);
 
+                CsvWriter<ResourceOperationHistory> csvWriter = new CsvWriter<ResourceOperationHistory>();
+                csvWriter.setColumns("startedTime", "operationDefinition.displayName", "subjectName", "status",
+                    "resource.name", "ancestry", "detailsURL");
+
+                csvWriter.setPropertyConverter("ancestry", new PropertyConverter<ResourceOperationHistory>() {
+                    @Override
+                    public Object convert(ResourceOperationHistory history, String propertyName) {
+                        return ReportFormatHelper.parseAncestry(history.getResource().getAncestry());
+                    }
+                });
+
+                csvWriter.setPropertyConverter("detailsURL", new PropertyConverter<ResourceOperationHistory>() {
+                    @Override
+                    public Object convert(ResourceOperationHistory history, String propertyName) {
+                        return getDetailsURL(history);
+                    }
+                });
+
                 stream.write((getHeader() + "\n").getBytes());
-                for (ResourceOperationHistory alert : query) {
-                    String record = toCSV(alert)  + "\n";
-                    stream.write(record.getBytes());
+                for (ResourceOperationHistory history : query) {
+                    csvWriter.write(history, stream);
                 }
 
-            }
-            private String toCSV(ResourceOperationHistory operation) {
-                return formatDateTime(operation.getStartedTime()) + "," +
-                        cleanForCSV(operation.getOperationDefinition().getDisplayName()) + "," +
-                        operation.getSubjectName() + "," +
-                        operation.getStatus() + "," +
-                        cleanForCSV(operation.getResource().getName()) +","+
-                        cleanForCSV(ReportFormatHelper.parseAncestry(operation.getResource().getAncestry())) + "," +
-                        getDetailsURL(operation);
             }
 
             private String getHeader(){

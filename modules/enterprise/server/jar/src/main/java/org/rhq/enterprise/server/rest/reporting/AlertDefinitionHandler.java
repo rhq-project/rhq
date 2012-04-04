@@ -22,8 +22,6 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
-
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class AlertDefinitionHandler extends AbstractRestBean implements AlertDefinitionLocal {
@@ -93,21 +91,9 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
                     stream.write((getHeader() + "\n").getBytes());
                     for (AlertDefinition alertDef : query) {
-//                        String record = toCSV(alert)  + "\n";
-//                        stream.write(record.getBytes());
                         csvWriter.write(alertDef, stream);
                     }
 
-                }
-                private String toCSV(AlertDefinition alertDefinition) {
-                    return cleanForCSV(alertDefinition.getName()) + ","
-                            + cleanForCSV(alertDefinition.getDescription()) + ","
-                            + alertDefinition.getEnabled() + ","
-                            + alertDefinition.getPriority() + ","
-                            + getParentURL(alertDefinition) + ","
-                            + cleanForCSV(ReportFormatHelper.parseAncestry(alertDefinition.getResource()
-                                .getAncestry())) + ","
-                            + getDetailsURL(alertDefinition);
                 }
 
                 private String getParentURL(AlertDefinition alertDef) {

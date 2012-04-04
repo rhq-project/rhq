@@ -1,17 +1,11 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.alert.*;
-import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -21,15 +15,25 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.rest.AbstractRestBean;
+import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -76,10 +80,42 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                 CriteriaQuery<Alert, AlertCriteria> query =
                         new CriteriaQuery<Alert, AlertCriteria>(criteria, queryExecutor);
 
+                CsvWriter<Alert> csvWriter = new CsvWriter<Alert>();
+                csvWriter.setColumns("ctime", "alertDefinition.name", "conditionText", "alertDefinition.priority",
+                    "status", "alertDefinition.resource.name", "ancestry", "detailsURL");
+
+                csvWriter.setPropertyConverter("ctime", csvWriter.DATE_CONVERTER);
+                csvWriter.setPropertyConverter("conditionText", new PropertyConverter<Alert>() {
+                    @Override
+                    public Object convert(Alert alert, String propertyName) {
+                        return getConditionText(alert);
+                    }
+                });
+
+                csvWriter.setPropertyConverter("status", new PropertyConverter<Alert>() {
+                    @Override
+                    public Object convert(Alert alert, String propertyName) {
+                        return getStatus(alert);
+                    }
+                });
+
+                csvWriter.setPropertyConverter("ancestry", new PropertyConverter<Alert>() {
+                    @Override
+                    public Object convert(Alert alert, String propertyName) {
+                        return ReportFormatHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry());
+                    }
+                });
+
+                csvWriter.setPropertyConverter("detailsURL", new PropertyConverter<Alert>() {
+                    @Override
+                    public Object convert(Alert alert, String propertyName) {
+                        return getDetailsURL(alert);
+                    }
+                });
+
                 stream.write((getHeader() + "\n").getBytes());
                 for (Alert alert : query) {
-                    String record = toCSV(alert)  + "\n";
-                    stream.write(record.getBytes());
+                    csvWriter.write(alert, stream);
                 }
 
             }
@@ -93,17 +129,6 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                 }
 
                 return alertPriorityList.toArray(new AlertPriority[alertPriorityList.size()]);
-            }
-
-            private String toCSV(Alert alert) {
-                return formatDateTime(alert.getCtime()) + "," +
-                        cleanForCSV(alert.getAlertDefinition().getName()) + "," +
-                        getConditionText(alert) + ", " +
-                        alert.getAlertDefinition().getPriority() + "," +
-                        getStatus(alert) + "," +
-                        cleanForCSV(alert.getAlertDefinition().getResource().getName()) + "," +
-                        cleanForCSV(ReportFormatHelper.parseAncestry(alert.getAlertDefinition().getResource().getAncestry()))
-                        + "," + getDetailsURL(alert);
             }
 
             private String getHeader(){

@@ -410,7 +410,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         return pluginScannerService;
     }
 
-    public void preparePluginScannerService() {
+    protected void preparePluginScannerService() {
         preparePluginScannerService(null);
     }
 

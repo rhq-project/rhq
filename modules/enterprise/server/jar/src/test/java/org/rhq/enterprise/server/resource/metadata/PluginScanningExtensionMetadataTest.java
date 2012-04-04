@@ -84,7 +84,7 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     @Override
     @Test(enabled = false)
     // this method isn't a test method
-    public void preparePluginScannerService() {
+    protected void preparePluginScannerService() {
         if (this.pluginScanner == null) {
             this.pluginScanner = new PluginDeploymentScanner();
 

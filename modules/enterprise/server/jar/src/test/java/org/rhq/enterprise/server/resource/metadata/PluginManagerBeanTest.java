@@ -20,10 +20,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Unit tests for {@link PluginManagerBean}.
  */
+@Test(groups = { "plugin.metadata", "PluginManagerBean" }, priority = 100000)
 public class PluginManagerBeanTest extends MetadataBeanTest {
 
-    SubjectManagerLocal subjectMgr;
-    PluginManagerLocal pluginMgr;
+    private SubjectManagerLocal subjectMgr;
+    private PluginManagerLocal pluginMgr;
 
     // Our test class wants to deploy plugins that other test methods use.
     // We need to keep intact our plugin scanner throughout our methods
@@ -36,14 +37,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     }
 
     @Override
-    public void preparePluginScannerService() {
+    protected void preparePluginScannerService() {
         if (this.pluginScanner == null) {
             this.pluginScanner = new PluginDeploymentScanner();
         }
         super.preparePluginScannerService(this.pluginScanner);
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" })
     public void registerPlugins() throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
@@ -64,7 +64,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPlugin("test-plugin3", "1.0", "plugin_3.xml");
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "registerPlugins" })
+    @Test(dependsOnMethods = { "registerPlugins" })
     public void disablePlugin() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin3");
 
@@ -74,7 +74,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertFalse("Failed to disable plugin", plugin.isEnabled());
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "registerPlugins" })
+    @Test(dependsOnMethods = { "registerPlugins" })
     public void doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
         EJBException exception = null;
@@ -91,7 +91,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             exception.getCausedByException() instanceof IllegalArgumentException);
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled" })
+    @Test(dependsOnMethods = { "doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled" })
     public void disablePluginAndDependentPlugins() throws Exception {
         Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
         Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
@@ -119,7 +119,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertTrue("Failed to enable plugin", plugin2.isEnabled());
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "enablePlugins" })
+    @Test(dependsOnMethods = { "enablePlugins" })
     public void doNotDeletePluginIfDependentPluginIsNotAlsoDeleted() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
         EJBException exception = null;
@@ -136,7 +136,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             exception.getCausedByException() instanceof IllegalArgumentException);
     }
 
-    @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "doNotDeletePluginIfDependentPluginIsNotAlsoDeleted" })
+    @Test(dependsOnMethods = { "doNotDeletePluginIfDependentPluginIsNotAlsoDeleted" })
     public void deletePlugins() throws Exception {
         Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
         Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
@@ -150,7 +150,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertTrue("Expected plugin status to be set to DELETED", plugin2.getStatus() == PluginStatusType.DELETED);
     }
 
-    @Test(enabled = false, groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "deletePlugins" })
+    @Test(enabled = false, dependsOnMethods = { "deletePlugins" })
     public void purgePlugins() throws Exception {
         Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1",
             "Deleting a plugin should not remove it from the database");
@@ -162,17 +162,17 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
     }
 
-    Plugin getPlugin(String name) {
+    private Plugin getPlugin(String name) {
         Plugin plugin = pluginMgr.getPlugin(name);
-        assertNotNull("Failed to find plugin <$name>", plugin);
+        assertNotNull("Failed to find plugin [" + name + "].", plugin);
 
         return plugin;
     }
 
-    Plugin getPlugin(String name, String msg) {
+    private Plugin getPlugin(String name, String msg) {
         List<Plugin> plugins = getEntityManager().createQuery("from Plugin where name = :name")
             .setParameter("name", name).getResultList();
-        assertTrue("Failed to find plugin <$name>: $msg", plugins.size() == 1);
+        assertTrue("Failed to find plugin [" + name + "]: " + msg, plugins.size() == 1);
 
         return plugins.get(0);
     }

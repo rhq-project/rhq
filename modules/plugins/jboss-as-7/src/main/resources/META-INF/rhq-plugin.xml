@@ -920,8 +920,73 @@
       </resource-configuration>
     </service>
 
-  </server>
+    <service name="Osgi"
+	discovery="SubsystemDiscovery"
+	class="BaseComponent"
+	singleton="true">
 
+	<runs-inside>
+	    <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+	    <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+	</runs-inside>
+
+	<plugin-configuration>
+	    <c:simple-property name="path" readOnly="true" default="subsystem=osgi"/>
+	</plugin-configuration>
+
+	<operation name="activate" description="Activate the OSGi subsystem.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Activate the OSGi subsystem." />
+	  </results>
+	</operation>
+
+        <resource-configuration>
+	  <c:simple-property name="activation" required="false" type="string" readOnly="false" defaultValue="LAZY" description="Activation flag for the OSGi subsystem. Possible values: lazy, eager. The default value is LAZY."/>
+	  <c:simple-property name="startlevel" required="false" type="integer" readOnly="false" description="The current Start Level of the OSGi Framework. Changing this value will change the Start Level of the Framework accordingly."/>
+          <c:list-property name="property" description="A list of generic key/value properties.">
+           <c:map-property name="property:collapsed" displayName="Property">
+             <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
+             <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
+           </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+
+	    <service name="Capability"
+		discovery="SubsystemDiscovery"
+		class="BaseComponent"
+		singleton="true">
+
+		<runs-inside>
+		    <parent-resource-type name="Osgi"  plugin="jboss-as-7"/>
+		</runs-inside>
+
+		<plugin-configuration>
+		    <c:simple-property name="path" readOnly="true" default="capability"/>
+		</plugin-configuration>
+
+		<operation name="add" description="Add a framework capability.">
+		  <parameters>
+		    <c:simple-property name="startlevel" required="false" type="integer" readOnly="false" description="The startlevel for the capability. Can only be specified for OSGi bundles."/>
+		  </parameters>
+		  <results>
+		     <c:simple-property name="operationResult" description="Add a framework capability." />
+		  </results>
+		</operation>
+
+		<operation name="remove" description="Remove a framework capability.">
+		  <results>
+		     <c:simple-property name="operationResult" description="Remove a framework capability." />
+		  </results>
+		</operation>
+
+                <resource-configuration>
+		  <c:simple-property name="startlevel" required="false" type="integer" readOnly="true" description="The startlevel for the capability. Can only be specified for OSGi bundles."/>
+                </resource-configuration>
+            </service><!-- End of Capability service definition -->
+
+    </service><!-- End of Osgi service definition -->
+
+  </server><!-- End of AS7 standalone server definition -->
 
   <server name="JVM"
           discovery="JVMDiscoveryComponent"

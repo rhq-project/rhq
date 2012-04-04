@@ -28,9 +28,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.drift.DriftComplianceStatus;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 
@@ -67,22 +64,17 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     }
 
     @Override
-    protected String toCSV(ResourceInstallCount installCount) {
-        return super.toCSV(installCount) + "," + installCount.isInCompliance();
+    protected List<String> getColumns() {
+        List<String> columns = super.getColumns();
+        columns.add("inCompliance");
+        return columns;
     }
 
     @Override
-    protected String toCSV(Resource resource) {
-        return super.toCSV(resource) + "," + isInCompliance(resource);
-    }
-
-    private boolean isInCompliance(Resource resource) {
-        for (DriftDefinition def : resource.getDriftDefinitions()) {
-            if (def.getComplianceStatus() != DriftComplianceStatus.IN_COMPLIANCE) {
-                return false;
-            }
-        }
-        return true;
+    protected List<String> getDetailsColumns() {
+        List<String> columns = super.getDetailsColumns();
+        columns.add("resourceInCompliance");
+        return columns;
     }
 
 }

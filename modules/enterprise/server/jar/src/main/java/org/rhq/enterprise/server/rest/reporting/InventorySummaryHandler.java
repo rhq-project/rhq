@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,7 +53,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
 import static org.rhq.core.domain.util.PageOrdering.ASC;
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -93,12 +93,13 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                             throw new WebApplicationException(e);
                         }
                     } else if (mediaType.toString().equals("text/csv")) {
-                        CsvWriter<ResourceInstallCount> csvWriter = new CsvWriter<ResourceInstallCount>();
-                        csvWriter.setColumns("typeName", "typePlugin", "category.displayName", "version", "count");
+                        CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
+                        List<String> columns = getColumns();
+                        csvWriter.setColumns(columns.toArray(new String[columns.size()]));
 
                         stream.write((getHeader() + "\n").getBytes());
                         for (ResourceInstallCount installCount : results) {
-                            csvWriter.write(installCount, stream);
+                            csvWriter.write(new DetailedSummary(installCount, null), stream);
                         }
                     }
                 }
@@ -140,8 +141,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             CriteriaQuery<Resource, ResourceCriteria> query;
 
             CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
-            csvWriter.setColumns("typeName", "plugin", "category", "version", "count", "resourceName", "ancestry",
-                "description", "resourceTypeName", "resourceVersion", "currentAvailability");
+            List<String> columns = getColumns();
+            columns.addAll(getDetailsColumns());
+            csvWriter.setColumns(columns.toArray(new String[columns.size()]));
 
             output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
 
@@ -186,6 +188,19 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         }
     }
 
+    protected List<String> getColumns() {
+        List<String> columns = new ArrayList<String>(20);
+        Collections.addAll(columns, "typeName", "plugin", "category", "version", "count");
+        return columns;
+    }
+
+    protected List<String> getDetailsColumns() {
+        List<String> columns = new ArrayList<String>(10);
+        Collections.addAll(columns, "resourceName", "ancestry", "description", "resourceTypeName", "resourceVersion",
+            "currentAvailability");
+        return columns;
+    }
+
     protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterInventoryStatus(COMMITTED);
@@ -213,17 +228,6 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         return "Name,Ancestry,Description,Type,Version,Availability";
     }
 
-    protected String toCSV(ResourceInstallCount installCount) {
-        return installCount.getTypeName() + "," + installCount.getTypePlugin() + "," +
-            installCount.getCategory().getDisplayName() + "," + installCount.getVersion() + "," +
-            installCount.getCount();
-    }
-
-    protected String toCSV(Resource resource) {
-        return resource.getName() + "," + parseAncestry(resource.getAncestry()) + "," +
-            resource.getDescription() + "," + resource.getResourceType().getName() + "," + resource.getVersion() +
-            "," + resource.getCurrentAvailability().getAvailabilityType();
-    }
 
     private static class ResourceInstallCountKey {
         private int resourceTypeId;

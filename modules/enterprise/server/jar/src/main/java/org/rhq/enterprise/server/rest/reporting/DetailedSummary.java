@@ -21,6 +21,8 @@
 
 package org.rhq.enterprise.server.rest.reporting;
 
+import org.rhq.core.domain.drift.DriftComplianceStatus;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 
@@ -56,6 +58,10 @@ public class DetailedSummary {
 
     public String getCount() {
         return Long.toString(installCount.getCount());
+    }
+
+    public boolean isInCompliance() {
+        return installCount.isInCompliance();
     }
 
     public String getResourceName() {
@@ -98,5 +104,14 @@ public class DetailedSummary {
             return "";
         }
         return resource.getCurrentAvailability().getAvailabilityType().toString();
+    }
+
+    public boolean isResourceInCompliance() {
+        for (DriftDefinition def : resource.getDriftDefinitions()) {
+            if (def.getComplianceStatus() != DriftComplianceStatus.IN_COMPLIANCE) {
+                return false;
+            }
+        }
+        return true;
     }
 }

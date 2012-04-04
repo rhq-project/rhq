@@ -20,6 +20,7 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,9 +80,9 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
     }
 
 
-    public void getValues(MeasurementReport report, Set metrics) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
-        Set<MeasurementScheduleRequest> requests = metrics;
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
         for (MeasurementScheduleRequest request: requests) {
             if (request.getName().equals("startTime")) {
@@ -98,11 +99,14 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                     MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
                     report.addData(data);
                 }
-
+            }
+           else {
+               leftovers.add(request);
             }
         }
 
-        super.getValues(report, metrics);
+       if (!leftovers.isEmpty())
+          super.getValues(report, leftovers);
     }
 
     @Override

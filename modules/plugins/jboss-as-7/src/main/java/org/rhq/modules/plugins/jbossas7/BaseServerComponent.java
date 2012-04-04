@@ -334,8 +334,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         return result;
     }
 
-    public void getValues(MeasurementReport report, Set metrics) throws Exception {
-        Set<MeasurementScheduleRequest> requests = metrics;
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());

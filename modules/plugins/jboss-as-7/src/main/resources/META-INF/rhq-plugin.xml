@@ -409,11 +409,15 @@
     <server name="Host"
             description="Host involved in this domain"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="HostComponent"
         >
       <plugin-configuration>
         <c:simple-property name="path" default="host" readOnly="true"/>
       </plugin-configuration>
+
+      <metric property="host-state" dataType="trait" displayName="Host state" description="Detailed host state"
+              displayType="summary"/>
+      <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
 
       <resource-configuration>

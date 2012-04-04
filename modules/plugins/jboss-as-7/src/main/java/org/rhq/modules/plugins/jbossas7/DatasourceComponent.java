@@ -13,7 +13,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -32,7 +31,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Handle JDBC-driver related stuff
  * @author Heiko W. Rupp
  */
-public class DatasourceComponent extends BaseComponent implements OperationFacet, ConfigurationFacet {
+public class DatasourceComponent extends BaseComponent<BaseComponent<?>> implements OperationFacet, ConfigurationFacet {
 
     private static final String NOTSET = "-notset-";
     private final Log log = LogFactory.getLog(DatasourceComponent.class);
@@ -166,9 +165,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
     }
 
     @Override
-    public void getValues(MeasurementReport report, Set theMetrics) throws Exception {
-
-        Set<MeasurementScheduleRequest> metrics = theMetrics;
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
         ReadResource op = new ReadResource(address);
         op.includeRuntime(true);

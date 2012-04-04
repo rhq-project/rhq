@@ -29,8 +29,7 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
+import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -95,19 +94,35 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 CriteriaQuery<DriftComposite, DriftCriteria> query =
                         new CriteriaQuery<DriftComposite, DriftCriteria>(criteria, queryExecutor);
 
+                CsvWriter<DriftComposite> csvWriter = new CsvWriter<DriftComposite>();
+                csvWriter.setColumns("drift.ctime", "driftDefinitionName", "drift.changeSet.version", "drift.category",
+                    "drift.path", "resource.name", "ancestry", "detailsURL");
+
+                csvWriter.setPropertyConverter("ancestry", new PropertyConverter<DriftComposite>() {
+                    @Override
+                    public Object convert(DriftComposite driftComposite, String propertyName) {
+                        return parseAncestry(driftComposite.getResource().getAncestry());
+                    }
+                });
+
+                csvWriter.setPropertyConverter("detailsURL", new PropertyConverter<DriftComposite>() {
+                    @Override
+                    public Object convert(DriftComposite driftComposite, String propertyName) {
+                        return getDetailsURL(driftComposite);
+                    }
+                });
+
                 stream.write((getHeader() + "\n").getBytes());
                 if (definitionName != null) {
-                    for (DriftComposite alert : query) {
-                        if(alert.getDriftDefinitionName() != null && alert.getDriftDefinitionName().contains(
-                            definitionName)){
-                            String record = toCSV(alert)  + "\n";
-                            stream.write(record.getBytes());
+                    for (DriftComposite driftComposite : query) {
+                        if(driftComposite.getDriftDefinitionName() != null &&
+                            driftComposite.getDriftDefinitionName().contains(definitionName)) {
+                            csvWriter.write(driftComposite, stream);
                         }
                     }
                 } else {
-                    for (DriftComposite alert : query) {
-                        String record = toCSV(alert)  + "\n";
-                        stream.write(record.getBytes());
+                    for (DriftComposite driftComposite : query) {
+                        csvWriter.write(driftComposite, stream);
                     }
                 }
             }
@@ -120,17 +135,6 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                     driftCategoryList.add(DriftCategory.valueOf(category.toUpperCase()));
                 }
                 return (driftCategoryList.toArray(new DriftCategory[driftCategoryList.size()]));
-            }
-
-            private String toCSV(DriftComposite drift) {
-                return formatDateTime(drift.getDrift().getCtime()) + "," +
-                        cleanForCSV(drift.getDriftDefinitionName()) + "," +
-                        drift.getDrift().getChangeSet().getVersion()+","+
-                        drift.getDrift().getCategory() + "," +
-                        drift.getDrift().getPath() + "," +
-                        cleanForCSV(drift.getResource().getName()) +","+
-                        cleanForCSV(ReportFormatHelper.parseAncestry(drift.getResource().getAncestry())) + "," +
-                        getDetailsURL(drift);
             }
 
             private String getHeader(){

@@ -25,7 +25,6 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
 @Interceptors(SetCallerInterceptor.class)
@@ -39,50 +38,6 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
 
     @Override
     public StreamingOutput suspectMetrics(UriInfo uriInfo, Request request, HttpHeaders headers ) {
-//        StringBuilder sb;
-//        log.info(" ** Suspect Metric History REST invocation");
-//
-//        PageControl pageControl = new PageControl(0, 200); // not sure what the paging size should be?
-//        PageList<MeasurementOOBComposite> comps =  measurementOOBMManager.getSchedulesWithOOBs(caller, null, null, null, pageControl);
-//        log.info(" Found MeasurementOOBComposite records: " + comps.size());
-//        Response.ResponseBuilder  builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
-//        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-//        log.debug(" Suspect Metric media type: "+mediaType.toString());
-//        if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
-//            builder = Response.ok(comps.getValues(), mediaType);
-//
-//        } else if (mediaType.toString().equals("text/csv")) {
-//            // CSV version
-//            log.info("text/csv Suspect handler for REST");
-//            sb = new StringBuilder("Id,Name,ResourceTypeId,\n"); // set title row
-//            if(!comps.isEmpty()){
-//                for (MeasurementOOBComposite oobComposite : comps) {
-//                    sb.append( oobComposite.getResourceName());
-//                    sb.append(",");
-//                    sb.append(ReportFormatHelper.parseAncestry(oobComposite.getResourceAncestry()));
-//                    sb.append(",");
-//                    sb.append( oobComposite.getUnits()); // Metric
-//                    sb.append(",");
-//                    sb.append( oobComposite.getFormattedBaseband());
-//                    sb.append(",");
-//                    sb.append( oobComposite.getOutlier());
-//                    sb.append(",");
-//                    sb.append( oobComposite.getFactor());
-//                    sb.append("\n");
-//                }
-//            } else {
-//                //empty
-//                sb.append("No Data Available");
-//            }
-//            builder = Response.ok(sb.toString(), mediaType);
-//
-//        } else {
-//            log.debug("Unknown Media Type: "+ mediaType.toString());
-//            builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE);
-//
-//        }
-//        return  builder.build();
-
         return new StreamingOutput() {
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
@@ -105,12 +60,22 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
                 CriteriaQuery<MeasurementOOBComposite, Criteria> query =
                     new CriteriaQuery<MeasurementOOBComposite, Criteria>(criteria, queryExecutor);
 
+                CsvWriter<MeasurementOOBComposite> csvWriter = new CsvWriter<MeasurementOOBComposite>();
+                csvWriter.setColumns("resourceName", "ancestry", "scheduleName", "formattedBaseband",
+                    "formattedOutlier");
+
+                csvWriter.setPropertyConverter("ancestry", new PropertyConverter<MeasurementOOBComposite>() {
+                    @Override
+                    public Object convert(MeasurementOOBComposite composite, String propertyName) {
+                        return parseAncestry(composite.getResourceAncestry());
+                    }
+                });
+
                 output.write((getHeader() + "\n").getBytes());
                 for (MeasurementOOBComposite composite : query) {
                     applyFormatting(composite);
                     formatBaseband(composite);
-                    String record = toCSV(composite) + "\n";
-                    output.write(record.getBytes());
+                    csvWriter.write(composite, output);
                 }
             }
         };
@@ -118,15 +83,6 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
 
     private String getHeader() {
         return "Resource,Ancestry,Metric,Band,Outlier,Out of Range Factor (%)";
-    }
-
-    private String toCSV(MeasurementOOBComposite composite) {
-        return cleanForCSV(composite.getResourceName()) + "," +
-            cleanForCSV(parseAncestry(composite.getResourceAncestry())) + "," +
-            cleanForCSV(composite.getScheduleName()) + "," +
-            cleanForCSV(composite.getFormattedBaseband()) + "," +
-            cleanForCSV(composite.getFormattedOutlier()) + "," +
-            composite.getFactor();
     }
 
     private void applyFormatting(MeasurementOOBComposite oob) {

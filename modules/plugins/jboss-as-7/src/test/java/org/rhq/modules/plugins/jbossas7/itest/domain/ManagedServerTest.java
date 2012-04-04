@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import org.testng.annotations.Test;
@@ -40,14 +39,13 @@ import static org.testng.Assert.assertNotNull;
  * Test dealing with managed servers
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true, enabled = false)
-public class ManagedServerTest extends AbstractJBossAS7PluginTest
-{
+@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
+public class ManagedServerTest extends AbstractJBossAS7PluginTest {
 
    public static final ResourceType RESOURCE_TYPE = new ResourceType("Managed Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
    private static final String RESOURCE_KEY = "master/server-one";
 
-   @Test(priority = 1020,groups = "discovery")
+   @Test(priority = 1020, groups = "discovery", enabled = false)
    @RunDiscovery(discoverServices = true, discoverServers = true)
    public void runDiscovery() throws Exception {
        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -59,7 +57,6 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest
 
        Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
    }
-
 
    @Test(priority = 1021, enabled = false)
    public void testRestart() throws Exception {
@@ -107,4 +104,5 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest
        assert mServer != null : "Did not find " + RESOURCE_KEY;
        return mServer;
    }
+
 }

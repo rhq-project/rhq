@@ -2576,7 +2576,8 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 			<c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
 		     </resource-configuration>
 		   </service><!-- End of Pre Handler service definition -->
-    </service> <!-- End of Pre Handler Chain service definition -->
+      </service> <!-- End of Pre Handler Chain service definition -->
+    </service> <!-- End of Endpoint service definition -->
   </server>
 
   <service name="Naming"

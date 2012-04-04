@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -41,8 +42,10 @@ import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -61,6 +64,8 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -161,9 +166,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         } catch (InterruptedException e) {
             throw new RuntimeException("Discovery did not complete within 12 seconds.");
         }
-        // Wait a few extra seconds to give all Resource components a chance to start.
+        // Wait a while longer to give all Resource components a chance to start.
         // TODO: Do this more intelligently so we don't sleep longer than needed.
-        Thread.sleep(6000);
+        Thread.sleep(10000);
     }
 
     /**
@@ -228,12 +233,79 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         return operationResult;
     }
 
+    @NotNull
+    protected Configuration loadResourceConfiguration(Resource resource) throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        ConfigurationDefinition resourceConfigDef = resourceType.getResourceConfigurationDefinition();
+        assertNotNull(resourceConfigDef, "No resource config is defined for ResourceType " + resourceType + ".");
+        System.out.println("=== Loading Resource config for " + resource + "...");
+        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+        long timeoutMillis = 5000;
+        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
+                FacetLockType.READ, timeoutMillis, false, false);
+        return configurationFacet.loadResourceConfiguration();
+    }
+
+    @NotNull
+    protected ConfigurationUpdateReport updateResourceConfiguration(Resource resource, Configuration resourceConfig) throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        ConfigurationDefinition resourceConfigDef = resourceType.getResourceConfigurationDefinition();
+        assertNotNull(resourceConfigDef, "No resource config is defined for ResourceType " + resourceType + ".");
+        System.out.println("=== Updating Resource config for " + resource + "...");
+        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+        long timeoutMillis = 5000;
+        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
+                FacetLockType.WRITE, timeoutMillis, false, false);
+        ConfigurationUpdateReport report = new ConfigurationUpdateReport(resourceConfig);
+        configurationFacet.updateResourceConfiguration(report);
+        return report;
+    }
+
+    protected void assertAllResourceConfigsLoad() throws Exception {
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Map<ResourceType, Exception> resourceConfigLoadExceptionsByType = new LinkedHashMap<ResourceType, Exception>();
+        findResourceConfigsThatFailToLoadRecursively(platform, resourceConfigLoadExceptionsByType);
+        assertTrue(resourceConfigLoadExceptionsByType.isEmpty(), "Resource configs that failed to load by type: " +
+                resourceConfigLoadExceptionsByType);
+    }
+
+    private void findResourceConfigsThatFailToLoadRecursively(Resource resource,
+                                                              Map<ResourceType, Exception> resourceConfigLoadExceptionsByType)
+            throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        // Only check resource configs on types of Resources from the plugin under test.
+        if (resourceType.getPlugin().equals(getPluginName()) &&
+                (resourceType.getResourceConfigurationDefinition() != null) &&
+                !resourceConfigLoadExceptionsByType.containsKey(resourceType)) {
+            Exception exception = null;
+            try {
+                Configuration resourceConfig = loadResourceConfiguration(resource);
+                List<String> validationErrors =
+                        ConfigurationUtility.validateConfiguration(resourceConfig,
+                                resourceType.getResourceConfigurationDefinition());
+                if (!validationErrors.isEmpty()) {
+                    exception = new Exception("Resource config is not valid: " + validationErrors.toString());
+                }
+            } catch (Exception e) {
+                exception = e;
+            }
+            if (exception != null) {
+                resourceConfigLoadExceptionsByType.put(resourceType, exception);
+            }
+        }
+
+        // Recurse.
+        for (Resource childResource : resource.getChildResources()) {
+            findResourceConfigsThatFailToLoadRecursively(childResource, resourceConfigLoadExceptionsByType);
+        }
+    }
+
     protected void assertAllNumericMetricsAndTraitsHaveNonNullValues() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType = new LinkedHashMap<ResourceType, Set<String>>();
         findNumericMetricsAndTraitsWithNullValuesRecursively(platform, metricsWithNullValuesByType);
         assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: " +
-                metricsWithNullValuesByType.toString());
+                metricsWithNullValuesByType);
     }
 
     private void findNumericMetricsAndTraitsWithNullValuesRecursively(Resource resource,

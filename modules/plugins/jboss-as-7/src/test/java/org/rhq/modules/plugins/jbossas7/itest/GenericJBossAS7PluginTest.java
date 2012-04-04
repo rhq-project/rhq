@@ -19,4 +19,11 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
         assertAllNumericMetricsAndTraitsHaveNonNullValues();
     }
 
+    // **************************** RESOURCE CONFIG ************************** //
+    @Test(priority = 2)
+    @RunDiscovery
+    public void testAllResourceConfigsLoad() throws Exception {
+        assertAllResourceConfigsLoad();
+    }
+
 }

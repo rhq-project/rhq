@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -64,34 +65,36 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest
    public void testRestart() throws Exception {
 
       Resource resource = getResource();
+      // No parameter -> AS7 api call does not block
       invokeOperationAndAssertSuccess(resource,"restart",null);
-      int count = 0;
-      do {
-         Thread.sleep(5000L); // We need to wait a little as this is non-blocking
-         count ++ ;
-      } while (getAvailability(resource)!=AvailabilityType.UP || count>10);
-
-      AvailabilityType avail = getAvailability(getResource());
-      assertEquals(avail, AvailabilityType.UP);
+      waitForServerToBeUpAgain(resource);
 
       // Now test explicit parameters
       Configuration configuration = new Configuration();
+
+      // API is supposed to block until managed server is up
       configuration.put(new PropertySimple("blocking", true));
       invokeOperationAndAssertSuccess(resource, "restart", configuration);
+      waitForServerToBeUpAgain(resource);
+
+      // API call does not block
       configuration.put(new PropertySimple("blocking", false));
       invokeOperationAndAssertSuccess(resource, "restart", null);
 
-      // wait again as following tests expect a running server
-      count = 0;
-      do {
-         Thread.sleep(5000L); // We need to wait a little as this is non-blocking
-         count ++ ;
-      } while (getAvailability(resource)!=AvailabilityType.UP || count>10);
+      waitForServerToBeUpAgain(resource);
 
    }
 
+    private void waitForServerToBeUpAgain(Resource resource) throws InterruptedException, PluginContainerException {
+        int count = 0;
+        do {
+            Thread.sleep(5000L); // We need to wait a little as this is non-blocking
+            count++;
+        } while (getAvailability(resource) != AvailabilityType.UP && count < 10);
 
-
+        AvailabilityType avail = getAvailability(getResource());
+        assertEquals(avail, AvailabilityType.UP);
+    }
 
    private Resource getResource() {
 

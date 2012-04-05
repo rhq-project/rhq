@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.alert.engine.model;
 import java.text.DateFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
@@ -50,7 +51,11 @@ public class CallTimeDataCacheElement extends AbstractCacheElement<CallTimeDataV
 
         compareValue = value;
         if (callDestPattern != null)
-            this.callDestPattern = Pattern.compile(fixPattern(callDestPattern));
+            try {
+                this.callDestPattern = Pattern.compile(fixPattern(callDestPattern));
+            } catch (PatternSyntaxException e) {
+                throw new InvalidCacheElementException("The destination regular expression '" + callDestPattern + "' is invalid: " + e.getMessage());
+            }
         else
             this.callDestPattern = null;
 

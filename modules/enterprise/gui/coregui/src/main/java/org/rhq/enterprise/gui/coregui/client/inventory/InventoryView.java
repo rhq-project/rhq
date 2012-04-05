@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataS
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -67,7 +68,10 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         IconEnum.ALL_RESOURCES);
     private static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms(),
         IconEnum.PLATFORMS);
-    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(), IconEnum.SERVERS);
+    private static final ViewName PAGE_SERVERS_TOP = new ViewName("ServersTop", MSG.view_inventory_serversTop(),
+        IconEnum.SERVERS);
+    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(),
+        IconEnum.SERVERS);
     private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services(),
         IconEnum.SERVICES);
     private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers",
@@ -164,6 +168,15 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
+        NavigationItem topLevelServersItem = new NavigationItem(PAGE_SERVERS_TOP, new ViewFactory() {
+            public Canvas createView() {
+                Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
+                    ResourceCategory.SERVER.name());
+                initialCriteria.addCriteria(ResourceDatasource.FILTER_PARENT_CATEGORY, ResourceCategory.PLATFORM.name());
+                return createResourceSearchView(PAGE_SERVERS_TOP, initialCriteria);
+            }
+        });
+
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, new ViewFactory() {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
@@ -193,7 +206,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         });
 
         return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem,
-            platformsItem, serversItem, servicesItem, downServersItem);
+            platformsItem, topLevelServersItem, serversItem, servicesItem, downServersItem);
     }
 
     private NavigationSection buildGroupsSection() {

@@ -69,6 +69,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
 
     public static final String FILTER_GROUP_ID = "groupId";
     public static final String FILTER_RESOURCE_IDS = "resourceIds";
+    public static final String FILTER_PARENT_CATEGORY = "parentCategory";
 
     private static ResourceDatasource INSTANCE;
 
@@ -243,6 +244,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         criteria.addFilterVersion(getFilter(request, "version", String.class));
+        criteria.addFilterParentResourceCategory(getFilter(request, FILTER_PARENT_CATEGORY, ResourceCategory.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;

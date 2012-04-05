@@ -2578,6 +2578,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
   </service>
 
 
+  <service name="Subdeployment"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="Runtime resources associated with a child deployment packaged inside another deployment; for example a war packaged inside an ear.">
+
+    <runs-inside>
+      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+    </runs-inside>
+    <plugin-configuration>
+      <c:simple-property name="path" default="subdeployment" readOnly="true"/>
+    </plugin-configuration>
+
+  </service>
+
+
   <service name="Web Runtime"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
@@ -2586,6 +2601,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2619,6 +2635,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2816,6 +2833,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2910,6 +2928,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3100,6 +3119,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>

@@ -2950,6 +2950,195 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
   </service>
 
+  <service name="EJB3 Runtime"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="Runtime resources exposed by EJBs components included in this deployment."
+           singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" default="subsystem=ejb3" readOnly="true"/>
+    </plugin-configuration>
+
+    <service name="Message Driven Bean Runtime"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="Bean component included in the deployment.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="message-driven-bean" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
+      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-current-size" description="The current size of the pool."/>
+      <metric property="pool-max-size" description="The maximum size of the pool."/>
+      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+
+      <resource-configuration>
+        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
+          <c:simple-property name="declared-role" />
+        </c:list-property>
+        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
+        <c:list-property name="timers" readOnly="true" description="EJB timers associated with the component.">
+          <c:map-property name="timer" readOnly="true" description="EJB timer associated with the component.">
+            <c:simple-property name="time-remaining" required="false" type="long" readOnly="true" description="The number of milliseconds that will elapse before the next scheduled timer expiration, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="next-timeout" required="false" type="long" readOnly="true" description="The point in time (in ms since the epoch) at which the next timer expiration is scheduled to occur, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="calendar-timer" required="false" type="boolean" readOnly="true" description="Whether this timer is a calendar-based timer, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:simple-property name="persistent" required="false" type="boolean" readOnly="true" description="Whether this timer has persistent semantics, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:map-property name="schedule" readOnly="true" description="The schedule expression corresponding to this timer, or 'undefined' if the timer was not created using a schedule expression, is expired, or has been cancelled.">
+              <c:simple-property name="year" required="false" type="string" readOnly="true" description="A particular calendar year."/>
+              <c:simple-property name="month" required="false" type="string" readOnly="true" description="One or more months within a year."/>
+              <c:simple-property name="day-of-month" required="false" type="string" readOnly="true" description="One or more days within a month."/>
+              <c:simple-property name="day-of-week" required="false" type="string" readOnly="true" description="One or more days within a week."/>
+              <c:simple-property name="hour" required="false" type="string" readOnly="true" description="One or more hours within a day."/>
+              <c:simple-property name="minute" required="false" type="string" readOnly="true" description="One or more minutes within a hour."/>
+              <c:simple-property name="second" required="false" type="string" readOnly="true" description="One or more seconds within a minute."/>
+              <c:simple-property name="timezone" required="false" type="string" readOnly="true" description="A non-default time zone in whose context the schedule specification is to be evaluated."/>
+              <c:simple-property name="start" required="false" type="string" readOnly="true" description="The start date for the timer, in ms since the epoch."/>
+              <c:simple-property name="end" required="false" type="string" readOnly="true" description="The end date for the timer, in ms since the epoch."/>
+            </c:map-property>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="Singleton Bean Runtime"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="Singleton bean component included in the deployment.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="singleton-bean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
+          <c:simple-property name="declared-role" />
+        </c:list-property>
+        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
+        <c:list-property name="timers" readOnly="true" description="EJB timers associated with the component.">
+          <c:map-property name="timer" readOnly="true" description="EJB timer associated with the component.">
+            <c:simple-property name="time-remaining" required="false" type="long" readOnly="true" description="The number of milliseconds that will elapse before the next scheduled timer expiration, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="next-timeout" required="false" type="long" readOnly="true" description="The point in time (in ms since the epoch) at which the next timer expiration is scheduled to occur, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="calendar-timer" required="false" type="boolean" readOnly="true" description="Whether this timer is a calendar-based timer, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:simple-property name="persistent" required="false" type="boolean" readOnly="true" description="Whether this timer has persistent semantics, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:map-property name="schedule" readOnly="true" description="The schedule expression corresponding to this timer, or 'undefined' if the timer was not created using a schedule expression, is expired, or has been cancelled.">
+              <c:simple-property name="year" required="false" type="string" readOnly="true" description="A particular calendar year."/>
+              <c:simple-property name="month" required="false" type="string" readOnly="true" description="One or more months within a year."/>
+              <c:simple-property name="day-of-month" required="false" type="string" readOnly="true" description="One or more days within a month."/>
+              <c:simple-property name="day-of-week" required="false" type="string" readOnly="true" description="One or more days within a week."/>
+              <c:simple-property name="hour" required="false" type="string" readOnly="true" description="One or more hours within a day."/>
+              <c:simple-property name="minute" required="false" type="string" readOnly="true" description="One or more minutes within a hour."/>
+              <c:simple-property name="second" required="false" type="string" readOnly="true" description="One or more seconds within a minute."/>
+              <c:simple-property name="timezone" required="false" type="string" readOnly="true" description="A non-default time zone in whose context the schedule specification is to be evaluated."/>
+              <c:simple-property name="start" required="false" type="string" readOnly="true" description="The start date for the timer, in ms since the epoch."/>
+              <c:simple-property name="end" required="false" type="string" readOnly="true" description="The end date for the timer, in ms since the epoch."/>
+            </c:map-property>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="Stateless Session Bean Runtime"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="Stateless session bean component included in the deployment.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="stateless-session-bean" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
+      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-current-size" description="The current size of the pool."/>
+      <metric property="pool-max-size" description="The maximum size of the pool."/>
+      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+
+      <resource-configuration>
+        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
+          <c:simple-property name="declared-role" />
+        </c:list-property>
+        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
+        <c:list-property name="timers" readOnly="true" description="EJB timers associated with the component.">
+          <c:map-property name="timer" readOnly="true" description="EJB timer associated with the component.">
+            <c:simple-property name="time-remaining" required="false" type="long" readOnly="true" description="The number of milliseconds that will elapse before the next scheduled timer expiration, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="next-timeout" required="false" type="long" readOnly="true" description="The point in time (in ms since the epoch) at which the next timer expiration is scheduled to occur, or 'undefined' if the timer has no future timeouts, is expired, or has been cancelled."/>
+            <c:simple-property name="calendar-timer" required="false" type="boolean" readOnly="true" description="Whether this timer is a calendar-based timer, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:simple-property name="persistent" required="false" type="boolean" readOnly="true" description="Whether this timer has persistent semantics, or 'undefined' if the timer has expired or been cancelled."/>
+            <c:map-property name="schedule" readOnly="true" description="The schedule expression corresponding to this timer, or 'undefined' if the timer was not created using a schedule expression, is expired, or has been cancelled.">
+              <c:simple-property name="year" required="false" type="string" readOnly="true" description="A particular calendar year."/>
+              <c:simple-property name="month" required="false" type="string" readOnly="true" description="One or more months within a year."/>
+              <c:simple-property name="day-of-month" required="false" type="string" readOnly="true" description="One or more days within a month."/>
+              <c:simple-property name="day-of-week" required="false" type="string" readOnly="true" description="One or more days within a week."/>
+              <c:simple-property name="hour" required="false" type="string" readOnly="true" description="One or more hours within a day."/>
+              <c:simple-property name="minute" required="false" type="string" readOnly="true" description="One or more minutes within a hour."/>
+              <c:simple-property name="second" required="false" type="string" readOnly="true" description="One or more seconds within a minute."/>
+              <c:simple-property name="timezone" required="false" type="string" readOnly="true" description="A non-default time zone in whose context the schedule specification is to be evaluated."/>
+              <c:simple-property name="start" required="false" type="string" readOnly="true" description="The start date for the timer, in ms since the epoch."/>
+              <c:simple-property name="end" required="false" type="string" readOnly="true" description="The end date for the timer, in ms since the epoch."/>
+            </c:map-property>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="Entity Bean Runtime"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Entity bean component included in the deployment.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="entity-bean" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
+      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-current-size" description="The current size of the pool."/>
+      <metric property="pool-max-size" description="The maximum size of the pool."/>
+      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+
+      <resource-configuration>
+        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
+          <c:simple-property name="declared-roles" />
+        </c:list-property>
+        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
+      </resource-configuration>
+    </service>
+
+    <service name="Stateful Session Bean Runtime"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Stateful session bean component included in the deployment.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="stateful-session-bean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
+          <c:simple-property name="declared-role" />
+        </c:list-property>
+        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
+      </resource-configuration>
+    </service>
+
+  </service>
+
 
   <service name="DeploymentScanner"
            class="BaseComponent"

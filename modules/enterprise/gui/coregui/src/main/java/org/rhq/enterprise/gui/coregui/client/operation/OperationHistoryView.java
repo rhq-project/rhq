@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -30,11 +26,9 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.DateItem;
-import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -50,7 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-import static com.smartgwt.client.types.DateDisplayFormat.TOUSSHORTDATE;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -139,17 +135,19 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
         statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
-        statusFilter.setWidth(325);
+        statusFilter.setColSpan(4);
 
         endDateFilter = new DateItem("startDateFilter");
         endDateFilter.setUseTextField(true);
+        endDateFilter.setEnforceDate(true);
         endDateFilter.setTitle(MSG.filter_from_date());
         startDateFilter = new DateItem("endDateFilter");
         startDateFilter.setUseTextField(true);
+        startDateFilter.setEnforceDate(true);
         startDateFilter.setTitle(MSG.filter_to_date());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(endDateFilter, startDateFilter, statusFilter);
+            setFilterFormItems(statusFilter, endDateFilter, startDateFilter );
         }
     }
 

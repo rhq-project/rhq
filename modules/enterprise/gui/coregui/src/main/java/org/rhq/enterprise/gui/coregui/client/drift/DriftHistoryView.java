@@ -143,14 +143,16 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
         endDateFilter = new DateItem("startDateFilter");
         endDateFilter.setUseTextField(true);
+        endDateFilter.setEnforceDate(true);
         endDateFilter.setTitle(MSG.filter_from_date());
         startDateFilter = new DateItem("endDateFilter");
         startDateFilter.setUseTextField(true);
         startDateFilter.setTitle(MSG.filter_to_date());
+        startDateFilter.setEnforceDate(true);
 
 
         if (isShowFilterForm()) {
-            setFilterFormItems(endDateFilter, startDateFilter, definitionFilter, changeSetFilter, categoryFilter, pathFilter );
+            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter, endDateFilter, startDateFilter);
         }
     }
 

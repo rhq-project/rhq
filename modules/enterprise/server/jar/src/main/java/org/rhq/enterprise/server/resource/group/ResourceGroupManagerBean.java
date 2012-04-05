@@ -88,7 +88,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -357,14 +356,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, group.getId());
 
             for (GroupOperationSchedule schedule : ops) {
-                try {
                     operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
-                } catch (UnscheduleException e) {
-                    log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]", e);
-                }
             }
         } catch (Exception e) {
-            log.warn("Failed to get jobs for a group being deleted [" + group
+            throw new ResourceGroupDeleteException( "Failed to get jobs for a group being deleted [" + group
                 + "]; will not attempt to unschedule anything", e);
         }
 

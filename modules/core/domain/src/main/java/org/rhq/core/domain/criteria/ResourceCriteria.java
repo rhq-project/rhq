@@ -59,6 +59,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private Integer filterParentResourceTypeId; // needs overrides
+    private ResourceCategory filterParentResourceCategory; // needs overrides    
     private String filterAgentName; // needs overrides
     private Integer filterAgentId; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
@@ -113,6 +114,7 @@ public class ResourceCriteria extends TaggedCriteria {
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("parentResourceTypeId", "parentResource.resourceType.id = ?");
+        filterOverrides.put("parentResourceCategory", "parentResource.resourceType.category = ?");
         filterOverrides.put("agentName", "agent.name like ?");
         filterOverrides.put("agentId", "agent.id = ?");
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
@@ -200,6 +202,10 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterParentResourceTypeId(int filterParentResourceTypeId) {
         this.filterParentResourceTypeId = filterParentResourceTypeId;
+    }
+
+    public void addFilterParentResourceCategory(ResourceCategory filterParentResourceCategory) {
+        this.filterParentResourceCategory = filterParentResourceCategory;
     }
 
     public void addFilterAgentName(String filterAgentName) {

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource.test;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,6 +46,20 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     private void init() {
         try {
             resourceGroupManager = LookupUtil.getResourceGroupManager();
+            prepareScheduler();
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    @AfterMethod
+    @SuppressWarnings("unused")
+    private void after() {
+        try {
+            unprepareScheduler();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!

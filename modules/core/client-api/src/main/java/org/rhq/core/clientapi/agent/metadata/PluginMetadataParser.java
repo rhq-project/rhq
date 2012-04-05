@@ -74,13 +74,14 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  */
 public class PluginMetadataParser {
+
     private static final Log LOG = LogFactory.getLog(PluginMetadataParser.class);
 
     private PluginDescriptor pluginDescriptor;
 
     private List<ResourceType> resourceTypes = new ArrayList<ResourceType>();
 
-    private LinkedHashSet<ResourceType> rootResourceTypes = new LinkedHashSet<ResourceType>();
+    private Set<ResourceType> rootResourceTypes = new LinkedHashSet<ResourceType>();
 
     // TODO: this isn't the most elegant... should we put these in the domain objects? or perhaps build another place for them to live?
     private Map<ResourceType, String> discoveryClasses = new HashMap<ResourceType, String>();
@@ -120,7 +121,7 @@ public class PluginMetadataParser {
     }
 
     public void parseDescriptor() throws InvalidPluginDescriptorException {
-        ResourceType type = null;
+        ResourceType type;
 
         // the plugin's root platforms
         for (PlatformDescriptor descriptor : pluginDescriptor.getPlatforms()) {
@@ -199,13 +200,16 @@ public class PluginMetadataParser {
             LOG.debug("Parsed server Resource type: " + serverResourceType);
         } else if ((sourcePlugin.length() > 0) && (sourceServer.length() > 0)) {
             // using Embedded extension model - the defined type is actually a copy of another plugin's server type
+            LOG.debug("Parsing embedded server type {" + pluginDescriptor.getName() + "}"
+                    + serverDescriptor.getName() + ", which extends server type {" + sourcePlugin + "}" + sourceServer + "...");
+
             Map<String, ServerDescriptor> pluginServerDescriptors = getPluginServerDescriptors(sourcePlugin);
             ServerDescriptor sourceServerDescriptor = pluginServerDescriptors.get(sourceServer);
 
             if (sourceServerDescriptor == null) {
-                LOG.info("There is no server type named [" + sourceServer + "] from a plugin named [" + sourcePlugin
-                    + "]. This is probably because that plugin is missing. Resource Type ["
-                    + serverDescriptor.getName() + "] will be ignored.");
+                LOG.warn("There is no server type named [" + sourceServer + "] from a plugin named [" + sourcePlugin
+                        + "]. This is probably because that plugin is missing. Resource Type [{"
+                        + pluginDescriptor.getName() + "}" + serverDescriptor.getName() + "] will be ignored.");
                 return null;
             }
 
@@ -279,9 +283,10 @@ public class PluginMetadataParser {
                 } else {
                     // The parent plugin owning the resource that this resource can run inside of does not exist.
                     // We will ignore this runs-inside declaration, thus allowing optional plugins to be missing.
-                    LOG.info("There is no resource type named [" + parentTypeName + "] from a plugin named ["
-                        + parentTypePlugin + "]. This is probably because that plugin is missing. Resource Type ["
-                        + serverDescriptor.getName() + "] will not have that missing type as a possible parent.");
+                    LOG.warn("There is no resource type named [" + parentTypeName + "] from a plugin named ["
+                            + parentTypePlugin + "]. This is probably because that plugin is missing. Resource Type [{"
+                            + pluginDescriptor.getName() + "}" + serverDescriptor.getName()
+                            + "] will not have that missing type as a possible parent.");
                 }
             }
         }
@@ -290,20 +295,20 @@ public class PluginMetadataParser {
     }
 
     private ResourceType parseServiceDescriptor(ServiceDescriptor serviceDescriptor, ResourceType parentType,
-        String parentSource) throws InvalidPluginDescriptorException {
+        String parentSourcePlugin) throws InvalidPluginDescriptorException {
         ResourceType serviceResourceType;
+
         String sourcePlugin = serviceDescriptor.getSourcePlugin();
-        String sourceService = serviceDescriptor.getSourceType();
-
-        // Fallback to using the source type of your parent if you don't override
+        // Fallback to using the source plugin of your parent if you don't override.
         if (sourcePlugin == null) {
-            sourcePlugin = parentSource;
+            sourcePlugin = parentSourcePlugin;
         }
+        sourcePlugin = (sourcePlugin != null) ? sourcePlugin.trim() : "";
 
-        sourcePlugin = (sourcePlugin == null) ? "" : sourcePlugin.trim();
-        sourceService = (sourceService == null) ? "" : sourceService.trim();
+        String sourceType = serviceDescriptor.getSourceType();
+        sourceType = (sourceType != null) ? sourceType.trim() : "";
 
-        if ((sourcePlugin.length() == 0) && (sourceService.length() == 0)) {
+        if (sourcePlugin.isEmpty() && sourceType.isEmpty()) {
             // not using Embedded extension model
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
@@ -320,22 +325,27 @@ public class PluginMetadataParser {
                 LOG.warn("Child services are not auto-discovered via process scans. "
                     + "The <process-scan> elements will be ignored in resource type: " + serviceResourceType);
             }
-        } else if (sourcePlugin.length() > 0) {
-            // using Embedded extension model - the defined type is actually a copy of another plugin's service type
+        } else {
+            // Using Embedded extension model - the defined type is actually a copy of another plugin's service or server type.
+            LOG.debug("Parsing embedded service type {" + pluginDescriptor.getName() + "}"
+                    + serviceDescriptor.getName() + ", which extends type {" + sourcePlugin + "}" + sourceType + "...");
 
-            ServiceDescriptor sourceServiceDescriptor;
-            if (sourceService.length() == 0) {
-                sourceServiceDescriptor = serviceDescriptor;
+            ResourceDescriptor sourceTypeDescriptor;
+            if (sourceType.isEmpty()) {
+                sourceTypeDescriptor = serviceDescriptor;
             } else {
                 Map<String, ServiceDescriptor> pluginServiceDescriptors = getPluginServiceDescriptors(sourcePlugin);
-
-                sourceServiceDescriptor = pluginServiceDescriptors.get(sourceService);
+                sourceTypeDescriptor = pluginServiceDescriptors.get(sourceType);
+                if (sourceTypeDescriptor == null) {
+                    Map<String, ServerDescriptor> pluginServerDescriptors = getPluginServerDescriptors(sourcePlugin);
+                    sourceTypeDescriptor = pluginServerDescriptors.get(sourceType);
+                }
             }
 
-            if (sourceServiceDescriptor == null) {
-                LOG.info("There is no service type named [" + sourceService + "] from a plugin named [" + sourcePlugin
-                    + "]. This is probably because that plugin is missing. Resource Type ["
-                    + serviceDescriptor.getName() + "] will be ignored.");
+            if (sourceTypeDescriptor == null) {
+                LOG.warn("There is no service or server type named [" + sourceType + "] from a plugin named ["
+                        + sourcePlugin + "]. This is probably because that plugin is missing. Resource Type [{"
+                        + pluginDescriptor.getName() + "}" + serviceDescriptor.getName() + "] will be ignored.");
                 return null;
             }
 
@@ -353,30 +363,25 @@ public class PluginMetadataParser {
             serviceResourceType.setSingleton(serviceDescriptor.isSingleton());
 
             String discoveryClass;
-            String componentClass;
-
             if (serviceDescriptor.getDiscovery() != null) {
                 discoveryClass = getFullyQualifiedComponentClassName(getPluginPackage(sourcePlugin), serviceDescriptor
                     .getDiscovery());
             } else {
                 discoveryClass = getFullyQualifiedComponentClassName(getPluginPackage(sourcePlugin),
-                    sourceServiceDescriptor.getDiscovery());
+                        sourceTypeDescriptor.getDiscovery());
             }
 
+            String componentClass;
             if (serviceDescriptor.getClazz() != null) {
                 componentClass = getFullyQualifiedComponentClassName(getPluginPackage(sourcePlugin), serviceDescriptor
                     .getClazz());
             } else {
                 componentClass = getFullyQualifiedComponentClassName(getPluginPackage(sourcePlugin),
-                    sourceServiceDescriptor.getClazz());
+                        sourceTypeDescriptor.getClazz());
             }
 
-            parseResourceDescriptor(sourceServiceDescriptor, serviceResourceType, discoveryClass, componentClass,
+            parseResourceDescriptor(sourceTypeDescriptor, serviceResourceType, discoveryClass, componentClass,
                 sourcePlugin);
-        } else {
-            // this should never happen - the XML parser should have failed to even get this far
-            throw new InvalidPluginDescriptorException("Both sourcePlugin and sourceType must be defined: "
-                + serviceDescriptor.getName());
         }
 
         serviceResourceType.setSupportsManualAdd(serviceDescriptor.isSupportsManualAdd());
@@ -399,9 +404,11 @@ public class PluginMetadataParser {
                     } else {
                         // The parent plugin owning the resource that this resource can run inside of does not exist.
                         // We will ignore this runs-inside declaration, thus allowing optional plugins to be missing.
-                        LOG.info("There is no resource type named [" + parentTypeName + "] from a plugin named ["
-                            + parentTypePlugin + "]. This is probably because that plugin is missing. Resource Type ["
-                            + serviceDescriptor.getName() + "] will not have that missing type as a possible parent.");
+                        LOG.warn("There is no resource type named [" + parentTypeName + "] from a plugin named ["
+                                + parentTypePlugin
+                                + "]. This is probably because that plugin is missing. Resource Type [{"
+                                + pluginDescriptor.getName() + "}" + serviceDescriptor.getName()
+                                + "] will not have that missing type as a possible parent.");
                     }
                 }
             }
@@ -707,13 +714,14 @@ public class PluginMetadataParser {
         Map<String, ServiceDescriptor> descriptors) {
         if (parents != null) {
             for (ResourceDescriptor parent : parents) {
-                List<ServiceDescriptor> services = null;
+                List<ServiceDescriptor> services;
                 if (parent instanceof ServerDescriptor) {
                     services = ((ServerDescriptor) parent).getServices();
-                }
-
-                if (parent instanceof ServiceDescriptor) {
+                } else if (parent instanceof ServiceDescriptor) {
                     services = ((ServiceDescriptor) parent).getServices();
+                } else {
+                    throw new IllegalStateException("Unsupported parent descriptor type: "
+                            + parent.getClass().getName());
                 }
 
                 for (ServiceDescriptor service : services) {
@@ -799,4 +807,5 @@ public class PluginMetadataParser {
 
         return null;
     }
+
 }

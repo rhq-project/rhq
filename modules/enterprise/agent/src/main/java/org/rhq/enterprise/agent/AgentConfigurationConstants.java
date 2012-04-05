@@ -223,6 +223,16 @@ public interface AgentConfigurationConstants {
     boolean DEFAULT_UPDATE_PLUGINS_AT_STARTUP = true;
 
     /**
+     * The flag that, if <code>true</code>, will tell the agent to test connectivity to all servers in the failover list.
+     */
+    String TEST_FAILOVER_LIST_AT_STARTUP = PROPERTY_NAME_PREFIX + "test-failover-list-at-startup";
+
+    /**
+     * If the test failover list at startup property is not specified, this is the default.
+     */
+    boolean DEFAULT_TEST_FAILOVER_LIST_AT_STARTUP = true;
+
+    /**
      * The file path to the location of the agent's data directory (where the agent will persist its internal data).
      */
     String DATA_DIRECTORY = PROPERTY_NAME_PREFIX + "data-directory";

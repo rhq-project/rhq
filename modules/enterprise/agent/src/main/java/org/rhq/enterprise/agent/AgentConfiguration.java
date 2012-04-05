@@ -481,6 +481,20 @@ public class AgentConfiguration {
     }
 
     /**
+     * Returns <code>true</code> if the agent should test connectivity to all servers in
+     * its failover list. Warning messages will be logged if one or more servers cannot be
+     * connected to.
+     *
+     * @return <code>true</code> if the agent should try to test connectivity to all servers in the failover list.
+     */
+    public boolean isTestFailoverListAtStartupEnabled() {
+        boolean flag = m_preferences.getBoolean(AgentConfigurationConstants.TEST_FAILOVER_LIST_AT_STARTUP,
+            AgentConfigurationConstants.DEFAULT_TEST_FAILOVER_LIST_AT_STARTUP);
+
+        return flag;
+    }
+
+    /**
      * Returns the data directory where all internally persisted data can be written to. If the data directory does not
      * exist, it will be created.
      *

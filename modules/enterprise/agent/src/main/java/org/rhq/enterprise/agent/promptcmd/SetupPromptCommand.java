@@ -489,6 +489,12 @@ public class SetupPromptCommand implements AgentPromptCommand {
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_UPDATEPLUGINSATSTARTUP_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_UPDATEPLUGINSATSTARTUP_HELP)));
 
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_DEFAULT,
+            new BooleanSetupValidityChecker(), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_HELP)));
+
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_DEFAULT, new BooleanSetupValidityChecker(),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_PROMPT), SETUPMSG

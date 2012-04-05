@@ -784,6 +784,17 @@ public interface AgentSetupInstructions {
         + "the plugins; the agent will use its current plugins.") })
     String SETUP_INSTRUCTION_UPDATEPLUGINSATSTARTUP_HELP = "PromptCommand.setup.instruction.updateplugins.help";
 
+    // TEST FAILOVER LIST AT STARTUP
+    String SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_PREF = AgentConfigurationConstants.TEST_FAILOVER_LIST_AT_STARTUP;
+    String SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_DEFAULT = Boolean
+        .toString(AgentConfigurationConstants.DEFAULT_TEST_FAILOVER_LIST_AT_STARTUP);
+    @I18NMessages({ @I18NMessage("Test Failover List at Startup") })
+    String SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_PROMPT = "PromptCommand.setup.instruction.testfailoverlist.prompt";
+    @I18NMessages({ @I18NMessage("If true, the agent will attempt to connect to all servers found\\n\\\n"
+        + "in its failover list. Warning messages will be logged if errors occur while\\n\\\n"
+        + "attempting to connect to one or more servers.") })
+    String SETUP_INSTRUCTION_TESTFAILOVERLISTATSTARTUP_HELP = "PromptCommand.setup.instruction.testfailoverlist.help";
+
     // AGENT UPDATE ENABLED
     String SETUP_INSTRUCTION_AGENTUPDATEENABLED_PREF = AgentConfigurationConstants.AGENT_UPDATE_ENABLED;
     String SETUP_INSTRUCTION_AGENTUPDATEENABLED_DEFAULT = Boolean

@@ -186,6 +186,19 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.test-failover-list-at-startup
+
+               If true, the agent will test connectivity to all server
+               endpoints found in the agent's failover list. This helps
+               provide a mechanism to quickly detect problems with the
+               public endpoints configured for all RHQ Servers.
+               -->
+               <!--
+               <entry key="rhq.agent.test-failover-list-at-startup" value="true" />
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.agent.agent-update.enabled
 
                If true, the agent will be allowed to update itself if it

@@ -1381,20 +1381,26 @@ public class AgentMain {
                                     //    the agent will eventually switchover to one of the live servers.
                                     // But if all servers in the list are unreachable, we need to keep retrying hoping
                                     // someone fixes the servers' public endpoints so the agent can reach one or more of them.
-                                    List<String> failed = testFailoverList(failover_list);
-                                    if (failed.size() > 0) {
-                                        if (failed.size() == failover_list.size()) {
-                                            retry = true;
-                                            retry_interval = 30000L;
-                                            if (!hide_failover_list_warning) {
-                                                String msg_id = AgentI18NResourceKeys.FAILOVER_LIST_CHECK_FAILED;
-                                                LOG.warn(msg_id, failed.size(), failed.toString());
-                                                getOut().println(MSG.getMsg(msg_id, failed.size(), failed.toString()));
-                                                getOut().println();
-                                                hide_failover_list_warning = true; // don't bother logging more than once
+                                    boolean test_failover_list = m_configuration.isTestFailoverListAtStartupEnabled();
+                                    if (test_failover_list) {
+                                        List<String> failed = testFailoverList(failover_list);
+                                        if (failed.size() > 0) {
+                                            if (failed.size() == failover_list.size()) {
+                                                retry = true;
+                                                retry_interval = 30000L;
+                                                if (!hide_failover_list_warning) {
+                                                    String msg_id = AgentI18NResourceKeys.FAILOVER_LIST_CHECK_FAILED;
+                                                    LOG.warn(msg_id, failed.size(), failed.toString());
+                                                    getOut().println(
+                                                        MSG.getMsg(msg_id, failed.size(), failed.toString()));
+                                                    getOut().println();
+                                                    hide_failover_list_warning = true; // don't bother logging more than once
+                                                }
+                                                continue; // immediately go back and start the retry
                                             }
-                                            continue; // immediately go back and start the retry
                                         }
+                                    } else {
+                                        LOG.info(AgentI18NResourceKeys.TEST_FAILOVER_LIST_AT_STARTUP_DISABLED);
                                     }
 
                                     m_registration = results;
@@ -2683,6 +2689,7 @@ public class AgentMain {
                 ServerEntry server = failoverList.get(i);
                 Socket socket = null;
                 try {
+                    LOG.debug(AgentI18NResourceKeys.TEST_FAILOVER_LIST_ENTRY, server.address, server.port);
                     socket = new Socket(server.address, server.port);
                 } catch (UnknownHostException e) {
                     LOG.error(AgentI18NResourceKeys.FAILOVER_LIST_UNKNOWN_HOST, server.address);

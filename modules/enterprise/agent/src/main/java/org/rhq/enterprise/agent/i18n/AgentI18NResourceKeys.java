@@ -254,6 +254,12 @@ public interface AgentI18NResourceKeys {
         + "THIS AGENT WILL WAIT UNTIL ONE OF ITS SERVERS BECOMES REACHABLE!")
     String FAILOVER_LIST_CHECK_FAILED = "AgentMain.failover-list-check-failed";
 
+    @I18NMessage("Testing failover connectivity to server [{0}:{1,number,#}]")
+    String TEST_FAILOVER_LIST_ENTRY = "AgentMain.test-failover-list-entry";
+
+    @I18NMessage("Testing connectivity to servers found in the failover list has been DISABLED and will be skipped.")
+    String TEST_FAILOVER_LIST_AT_STARTUP_DISABLED = "AgentMain.test-failover-list-at-startup-disabled";
+
     @I18NMessage("The prompt input reader returned null. EOF?")
     String INPUT_EOF = "AgentMain.input-eof";
 

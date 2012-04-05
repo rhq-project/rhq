@@ -1057,6 +1057,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
         Integer resourceId, Integer groupId, PageControl pc) {
 
+        if ((resourceId == null) && (groupId == null)) {
+            return new PageList<ResourceGroupComposite>(0, pc);
+        }
+
         String query = ResourceGroup.QUERY_NATIVE_FIND_FILTERED_MEMBER;
         if (authorizationManager.isInventoryManager(subject)) {
             query = query.replace("%SECURITY_FRAGMENT_JOIN%", "");
@@ -1211,7 +1215,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             JDBCUtil.safeClose(conn, stmt, null);
         }
 
-        Query queryCount = null;
+        Query queryCount;
         if (authorizationManager.isInventoryManager(subject)) {
             queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN);
         } else {

@@ -43,7 +43,6 @@ public class ReportExporter {
     private String reportUrl;
     private StringBuilder queryString;
 
-    private boolean showAllDetail;
 
     // optional Fields
 
@@ -79,12 +78,6 @@ public class ReportExporter {
     }
 
 
-    private ReportExporter(String reportUrl, boolean showDetail, Set<Integer> resourceTypeIds) {
-        this.reportUrl = reportUrl;
-        this.showAllDetail = showDetail;
-        this.resourceTypeIds = resourceTypeIds;
-    }
-
     public static ReportExporter createStandardExporter(String reportUrl) {
         return new ReportExporter(reportUrl);
     }
@@ -119,9 +112,8 @@ public class ReportExporter {
         return newExportDialog;
     }
 
-    public static ReportExporter createExporterForInventorySummary(String reportUrl, boolean showAllDetails,
-                                                                   Set<Integer> resourceTypeIdsForExport) {
-        return new ReportExporter(reportUrl, showAllDetails, resourceTypeIdsForExport);
+    public static ReportExporter createExporterForInventorySummary(String reportUrl  ) {
+        return new ReportExporter(reportUrl);
     }
 
 
@@ -138,17 +130,14 @@ public class ReportExporter {
 
         // trim the last "&" off the url if exists
         final String cleanQueryString = queryString.toString().endsWith("&") ? queryString.substring(0,queryString.toString().length() -1)  : queryString.toString();
-        final String queryStringNotEndingWithQuestionMark = cleanQueryString.toString().endsWith("?") ? cleanQueryString.substring(0,cleanQueryString.toString().length() -1)  : cleanQueryString.toString();
+        final String queryStringNotEndingWithQuestionMark = cleanQueryString.endsWith("?") ? cleanQueryString.substring(0,cleanQueryString.length() -1)  : cleanQueryString;
         return URL.encode(BASE_URL + reportUrl + "." + FORMAT  + "?"+  queryStringNotEndingWithQuestionMark);
     }
 
     private void buildQueryParameters() {
         queryString = new StringBuilder();
 
-        if (showAllDetail) {
-            addQueryParameter("showAllDetails","true");
-
-        } else if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
+        if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
             addQueryParameter("resourceTypeId", StringUtility.toString(resourceTypeIds));
         }
 
@@ -203,9 +192,6 @@ public class ReportExporter {
         return array == null || array.length == 0;
     }
 
-    public boolean isShowAllDetail(){
-        return showAllDetail;
-    }
 
     public void setDriftDefinition(String driftDefinition) {
         this.driftDefinition = driftDefinition;

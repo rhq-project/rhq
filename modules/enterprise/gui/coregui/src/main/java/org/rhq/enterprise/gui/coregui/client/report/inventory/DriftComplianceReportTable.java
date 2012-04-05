@@ -21,13 +21,12 @@
 
 package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.ListGridField;
-
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author jsanda
@@ -66,8 +65,5 @@ public class DriftComplianceReportTable extends InventorySummaryReportTable {
         return "DriftCompliance";
     }
 
-    @Override
-    protected String getReportNameForDownloadURL() {
-        return "driftCompliance";
-    }
+
 }

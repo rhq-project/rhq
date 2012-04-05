@@ -21,25 +21,11 @@
 
 package org.rhq.enterprise.gui.coregui.client.report.inventory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.ChangedEvent;
-import com.smartgwt.client.widgets.grid.events.ChangedHandler;
-
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -47,16 +33,14 @@ import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 /**
 * @author jsanda
 */
 public class InventorySummaryReportTable extends Table<InventorySummaryDataSource> {
-
-    private boolean exportAll;
-
-    private Set<Integer> resourceTypeIdsForExport = new TreeSet<Integer>();
-
-    private CheckboxItem exportAllDetails;
 
     public InventorySummaryReportTable(String locatorId) {
         super(locatorId);
@@ -92,7 +76,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
         fields.add(createCategoryField());
         fields.add(createVersionField());
         fields.add(createCountField());
-        fields.add(createExportField());
+        //fields.add(createExportField());
 
         // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
         //                       uncomment these lines to allow grouping by the plugin or category fields.
@@ -162,6 +146,23 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
         return field;
     }
 
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ReportExporter exportModalWindow = ReportExporter.createExporterForInventorySummary(getReportNameForDownloadURL());
+                exportModalWindow.export();
+                refreshTableInfo();
+            }
+        });
+    }
+
+
     protected ListGridField createVersionField() {
         ListGridField field = new ListGridField(InventorySummaryDataSource.VERSION, MSG.common_title_version());
         field.setWidth("*");
@@ -174,85 +175,7 @@ public class InventorySummaryReportTable extends Table<InventorySummaryDataSourc
         return field;
     }
 
-    protected ListGridField createExportField() {
-        ListGridField field = new ListGridField("exportDetails", "Export Details");
 
-        field.setCanToggle(true);
-        field.setCanEdit(true);
-        field.addChangedHandler(new ChangedHandler() {
-            @Override
-            public void onChanged(ChangedEvent event) {
-                ListGridRecord record = getListGrid().getRecord(event.getRowNum());
-                Integer id = record.getAttributeAsInt(InventorySummaryDataSource.TYPEID);
-                boolean export = !record.getAttributeAsBoolean(InventorySummaryDataSource.EXPORT);
-
-                record.setAttribute(InventorySummaryDataSource.EXPORT, export);
-                if (export) {
-                    resourceTypeIdsForExport.add(id);
-                    if (resourceTypeIdsForExport.size() == getListGrid().getTotalRows()) {
-                        exportAllDetails.setValue(true);
-                        exportAll = true;
-                    }
-                } else {
-                    resourceTypeIdsForExport.remove(id);
-                    exportAllDetails.setValue(false);
-                    exportAll = false;
-                }
-            }
-        });
-
-        return field;
-    }
-
-    private void addExportAction() {
-        addTableAction("Export", "Export", new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ReportExporter exportModalWindow = ReportExporter.createExporterForInventorySummary(
-                    getReportNameForDownloadURL(), exportAll, resourceTypeIdsForExport);
-                exportModalWindow.export();
-                refreshTableInfo();
-            }
-        });
-    }
-
-    @Override
-    protected void configureTableFilters() {
-        exportAllDetails = new CheckboxItem("exportAllDetails", "Export All Details");
-        exportAllDetails.setLabelAsTitle(true);
-
-        setShowFilterForm(true);
-        setFilterFormItems(exportAllDetails);
-
-        exportAllDetails.addChangedHandler(new com.smartgwt.client.widgets.form.fields.events.ChangedHandler() {
-            @Override
-            public void onChanged(com.smartgwt.client.widgets.form.fields.events.ChangedEvent event) {
-                exportAll = !exportAll;
-                ListGrid table = getListGrid();
-                int numColumns = table.getFields().length;
-                int row = 0;
-
-                if (exportAll) {
-                    for (ListGridRecord record : table.getRecords()) {
-                        record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
-                        table.refreshCell(row++, numColumns - 1);
-                        resourceTypeIdsForExport.add(record.getAttributeAsInt(InventorySummaryDataSource.TYPEID));
-                    }
-                } else{
-                    for (ListGridRecord record : table.getRecords()) {
-                        record.setAttribute(InventorySummaryDataSource.EXPORT, exportAll);
-                        table.refreshCell(row++, numColumns - 1);
-                    }
-                    resourceTypeIdsForExport.clear();
-                }
-            }
-        });
-    }
 
     private String getResourceTypeTableUrl(ListGridRecord selected) {
         String url = null;

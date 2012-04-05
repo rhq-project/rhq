@@ -2642,8 +2642,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     <service name="Servlet"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
-           description="Runtime information about the servlets in the deployment."
-           singleton="true">
+           description="Runtime information about the servlets in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="servlet" readOnly="true"/>

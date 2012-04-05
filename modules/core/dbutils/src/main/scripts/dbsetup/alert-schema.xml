@@ -117,8 +117,7 @@
         </index>
     </table>
 
-    <table name="RHQ_ALERT_NOTIFICATION" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
-           storage-options="freelists 5" cache="true" logging="false">
+    <table name="RHQ_ALERT_NOTIFICATION">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>

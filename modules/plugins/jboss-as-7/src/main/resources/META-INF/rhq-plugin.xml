@@ -153,7 +153,7 @@
             <c:simple-property name="socket-timeout" required="false" type="integer" readOnly="false" defaultValue="20" description="Timeout to wait for httpd to answer a MCMP message."/>
 
           </c:group>
-        </resource-configuration>    
+        </resource-configuration>
 '>
 
 ]>
@@ -1838,13 +1838,15 @@
     </operation>
 
     <resource-configuration>
-      <c:map-property name="root-logger" description="The root logger for this log context.">
-        <c:simple-property name="level" readOnly="true"
-                           description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-        <c:list-property name="handlers" readOnly="true">
-          <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
-        </c:list-property>
-      </c:map-property>
+      <c:group name="child:root-logger=ROOT" displayName="Root logger">
+        <c:map-property name="root-logger" description="The root logger for this log context.">
+          <c:simple-property name="level" readOnly="true"
+                             description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+          <c:list-property name="handlers" readOnly="true">
+            <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
+          </c:list-property>
+        </c:map-property>
+      </c:group>
     </resource-configuration>
 
 
@@ -2352,7 +2354,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 			 discovery="SubsystemDiscovery"
 			 class="BaseComponent"
 		    >
- 
+
 			<runs-inside>
 			    <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
 			    <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
@@ -3307,7 +3309,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <resource-configuration>
       <c:simple-property name="ear-subdeployments-isolated" required="false" type="boolean" readOnly="false" defaultValue="false" description="Flag indicating whether each of the subdeployments within a .ear can access classes belonging to another subdeployment within the same .ear. A value of false means the subdeployments can see classes belonging to other subdeployments within the .ear. The default value is false."/>
-      <c:list-property name="global-modules" description="A list of modules that should be made available to all deployments.">
+      <c:list-property name="global-modules" description="A list of modules that should be made available to all deployments." required="false">
         <c:map-property name="globalmodule" displayName="Global module">
           <c:simple-property name="name" type="string" displayName="Name" required="true"/>
           <c:simple-property name="slot" type="string" displayName="Slot" required="true"/>

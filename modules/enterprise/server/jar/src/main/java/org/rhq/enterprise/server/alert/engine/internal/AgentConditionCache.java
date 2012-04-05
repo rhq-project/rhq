@@ -193,7 +193,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 } catch (InvalidCacheElementException icee) {
                     log.info("Failed to create CallTimeDataCacheElement with parameters: "
                         + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                            null, alertCondition.getThreshold()));
+                            null, alertCondition.getThreshold(), icee));
                 }
             } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
                 AlertConditionScheduleCategoryComposite thresholdComposite = (AlertConditionScheduleCategoryComposite) composite;
@@ -208,7 +208,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 } catch (InvalidCacheElementException icee) {
                     log.info("Failed to create CallTimeDataCacheElement with parameters: "
                         + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                            null, alertCondition.getThreshold()));
+                            null, alertCondition.getThreshold(), icee));
                 }
 
             }// last call-time case
@@ -236,7 +236,7 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create MeasurementBaselineCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, calculatedValue));
+                        null, calculatedValue, icee));
             }
         } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
             AlertConditionChangesCategoryComposite changesComposite = (AlertConditionChangesCategoryComposite) composite;
@@ -252,7 +252,7 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create MeasurementNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, numeric));
+                        null, numeric, icee));
             }
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             AlertConditionTraitCategoryComposite traitsComposite = (AlertConditionTraitCategoryComposite) composite;
@@ -272,7 +272,7 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create MeasurementTraitCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, value));
+                        null, value, icee));
             }
 
         } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
@@ -286,7 +286,7 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create MeasurementNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, thresholdValue));
+                        null, thresholdValue, icee));
             }
 
             if (cacheElement != null) {
@@ -310,7 +310,7 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create EventCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        eventDetails, eventSeverity));
+                        eventDetails, eventSeverity, icee));
             }
 
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
@@ -346,11 +346,11 @@ class AgentConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create MeasurementRangeNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        hiValueStr, loValue));
+                        hiValueStr, loValue, icee));
             } catch (NumberFormatException nfe) {
                 log.info("Failed to create MeasurementRangeNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        hiValueStr, loValue));
+                        hiValueStr, loValue, nfe));
             }
 
             if (cacheElement != null) {

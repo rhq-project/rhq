@@ -157,7 +157,7 @@ class GlobalConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create AvailabilityCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        availabilityComposite.getAvailabilityType(), AvailabilityType.UP));
+                        availabilityComposite.getAvailabilityType(), AvailabilityType.UP, icee));
             }
         } else if (alertConditionCategory == AlertConditionCategory.AVAIL_DURATION) {
             AlertConditionAvailabilityCategoryComposite availabilityComposite = (AlertConditionAvailabilityCategoryComposite) composite;
@@ -171,7 +171,7 @@ class GlobalConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create AvailabilityCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        availabilityComposite.getAvailabilityType(), alertConditionOperator.toString()));
+                        availabilityComposite.getAvailabilityType(), alertConditionOperator.toString(), icee));
             }
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             AlertConditionControlCategoryComposite controlComposite = (AlertConditionControlCategoryComposite) composite;
@@ -188,7 +188,7 @@ class GlobalConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create ResourceOperationCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, operationRequestStatus));
+                        null, operationRequestStatus, icee));
             }
         } else if (alertConditionCategory == AlertConditionCategory.RESOURCE_CONFIG) {
             AlertConditionResourceConfigurationCategoryComposite resourceConfigurationComposite = (AlertConditionResourceConfigurationCategoryComposite) composite;
@@ -200,7 +200,7 @@ class GlobalConditionCache extends AbstractConditionCache {
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create EventCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
-                        null, null));
+                        null, null, icee));
             }
 
             addTo("resourceConfigurationCache", resourceConfigurationCache,

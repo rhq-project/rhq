@@ -123,9 +123,10 @@ class AlertConditionCacheUtils {
     }
 
     public static String getCacheElementErrorString(int conditionId, AlertConditionOperator operator, Object option,
-        Object value) {
+        Object value, Throwable exception) {
         return "id=" + conditionId + ", " + "operator=" + operator + ", "
-            + ((option != null) ? ("option=" + option + ", ") : "") + "value=" + value;
+            + ((option != null) ? ("option=" + option + ", ") : "") + "value=" + value + ", error message: "
+            + exception.getMessage();
     }
 
     public static <T extends AbstractCacheElement<?>> void printListCache(String cacheName, Map<Integer, List<T>> cache) {

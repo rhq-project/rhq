@@ -25,7 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -41,16 +44,18 @@ import org.rhq.core.domain.resource.ResourceType;
  * it would be fairly easy to create rules where different ranges of characters (e.g., [A-Z], [a-z], etc) could be used
  * to represent different resource types or, at the very least, different categories. A more flexible solution could be
  * to enable a separate specification mechanism for resource types and categories. For example, we might use a compound,
- * paranthetical annotation for category-type specification. So if we assume that, p = platform s = server v = service
+ * parenthetical annotation for category-type specification. So if we assume that, p = platform s = server v = service
  * Then our annotated resource would look like A(p1) This would set A's resource type to the newly created resource type
- * with the name of "fake platform 1", and set A's resource category to ResoueceCategory.PLATFORM Thus, the new
+ * with the name of "fake platform 1", and set A's resource category to ResourceCategory.PLATFORM Thus, the new
  * short-hand would look like: A(p1)=1,2; 1(s1)=a,b; a(v1)=i,ii; b(v2)=iii,iv; B(p2)=3; 2(s2); 3(s3) However, as you can
  * see, this requires a slightly more verbose specification because the type information is parenthetically attached to
  * the LHS of the relationship, requiring leaf nodes in the resource hierarchy to be specified solely to attach this
  * information to it.
  */
 public class ResourceTreeHelper {
-    private static int fakeTypeId = 0;
+    private static int fakeTypeId = 1;
+    private static final String FAKE_TYPE_NAME = "fakeType";
+    private static final String FAKE_PLUGIN_NAME = "fakePlugin";
 
     /*
      * This will create the resource tree, but won't persist it
@@ -67,16 +72,23 @@ public class ResourceTreeHelper {
         flatStructure = flatStructure.replaceAll("\\s", "");
 
         // if necessary, create the fakeType which ALL resources will be attached too
-        ResourceType fakeType = null;
+        ResourceType fakeType;
         if (null != entityManager) {
-            fakeType = entityManager.find(ResourceType.class, fakeTypeId);
-            if (null == fakeType) {
-                fakeType = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
+            Query namedQuery = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+            namedQuery.setParameter("name", FAKE_TYPE_NAME);
+            namedQuery.setParameter("plugin", FAKE_PLUGIN_NAME);
+            try {
+                fakeType = (ResourceType) namedQuery.getSingleResult();
+            } catch (NoResultException e) {
+                fakeType = null;
+            }
+            if (fakeType == null) {
+                fakeType = new ResourceType(FAKE_TYPE_NAME, FAKE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
                 persist(entityManager, fakeType);
                 fakeTypeId = fakeType.getId();
             }
         } else {
-            fakeType = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
+            fakeType = new ResourceType(FAKE_TYPE_NAME, FAKE_PLUGIN_NAME, ResourceCategory.PLATFORM, null);
         }
 
         // create the map that will hold all of the resources - root, leaf, or inner node
@@ -228,7 +240,11 @@ public class ResourceTreeHelper {
 
     private static void persist(EntityManager entityManager, Object object) {
         if (entityManager != null) {
-            entityManager.persist(object);
+            try {
+                entityManager.persist(object);
+            } catch (EntityExistsException e) {
+                // ignore
+            }
         }
     }
 

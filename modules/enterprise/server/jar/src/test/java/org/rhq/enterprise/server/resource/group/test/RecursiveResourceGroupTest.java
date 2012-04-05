@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.group.test;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -105,8 +107,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             resourcesFromTreeA.add(newChildOfNodeA);
             verifyEqualByIds("Failed: simple implicit resources", resourcesFromTreeA, updatedImplicitResources);
         } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
+            handleThrowable(t);
         } finally {
             getTransactionManager().rollback();
         }
@@ -167,8 +168,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             verifyEqual("Failed: updateImplicitGroupMembership gen3", getIds(treeGen3), newLineageG3);
             verifyEqual("Failed: updateImplicitGroupMembership gen4", getIds(treeGen4), newLineageG4);
         } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
+            handleThrowable(t);
         } finally {
             getTransactionManager().rollback();
         }
@@ -181,11 +181,11 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         ResourceGroup recursiveGroup = null;
         List<Resource> fullTree = null;
 
-        Resource nodeBigA;
-        Resource nodeOne;
-        Resource nodeThree;
-        Resource nodeLittleA;
-        Resource nodeTripleLittleI;
+        Resource nodeBigA = null;
+        Resource nodeOne = null;
+        Resource nodeThree = null;
+        Resource nodeLittleA = null;
+        Resource nodeTripleLittleI = null;
 
         List<Resource> resultsExplicit = null;
 
@@ -252,8 +252,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 expectedExplicit.add(nodeTripleLittleI);
                 verifyEqualByIds("explicit add 5", expectedExplicit, resultsExplicit);
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
@@ -263,8 +262,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // removing the subtree nodeTripleLittleI shouldn't affect the expected set
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
@@ -282,8 +280,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA,
                     ResourceTreeHelper.getSubtree(nodeLittleA));
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
@@ -300,8 +297,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     // expected
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 // throwing the RGUE will already mark this xaction for rollback
                 //getTransactionManager().commit();
@@ -313,8 +309,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // removing the last resource should leave an empty list
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeLittleA, new ArrayList<Resource>());
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
@@ -332,8 +327,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     // expected
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 // throwing the RGUE will already mark this xaction for rollback
                 //getTransactionManager().commit();
@@ -346,8 +340,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     PageControl.getUnlimitedInstance());
                 verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
@@ -375,12 +368,21 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 }
 
             } catch (Throwable t) {
-                t.printStackTrace();
-                throw t;
+                handleThrowable(t);
             } finally {
                 getTransactionManager().commit();
             }
         }
+    }
+
+    private void handleThrowable(Throwable t) throws Throwable {
+        if (t instanceof SQLException) {
+            String error = JDBCUtil.convertSQLExceptionToString((SQLException) t);
+            System.err.println(error);
+        } else {
+            t.printStackTrace();
+        }
+        throw t;
     }
 
     private void printGroup(String prefix, Subject subject, ResourceGroup group) {
@@ -447,4 +449,5 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private List<Resource> getSimpleTree(EntityManager em) {
         return ResourceTreeHelper.createTree(em, "A=1,2; 1=a,b; a=i,ii; b=iii,iv; B=3");
     }
+
 }

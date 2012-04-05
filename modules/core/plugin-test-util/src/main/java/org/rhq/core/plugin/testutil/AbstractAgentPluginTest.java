@@ -20,9 +20,11 @@ package org.rhq.core.plugin.testutil;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,6 +263,37 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         return report;
     }
 
+    protected void assertAllResourceComponentsStarted() throws Exception {
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType =
+                new LinkedHashMap<ResourceType, ResourceContainer>();
+        findNonStartedResourceComponentsRecursively(platform, nonStartedResourceContainersByType);
+        assertTrue(nonStartedResourceContainersByType.isEmpty(),
+                "Resource containers with non-started Resource components by type: "
+                        + nonStartedResourceContainersByType);
+    }
+
+    private void findNonStartedResourceComponentsRecursively(Resource resource,
+                                                             Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType)
+            throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        if (!nonStartedResourceContainersByType.containsKey(resourceType)) {
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
+                nonStartedResourceContainersByType.put(resourceType, resourceContainer);
+            } else if (resourceContainer.getResourceComponent() == null) {
+                System.err.println("****** Resource container " + resourceContainer
+                        + " says its Resource component is started, but the component is null. ******");
+                nonStartedResourceContainersByType.put(resourceType, resourceContainer);
+            }
+        }
+
+        // Recurse.
+        for (Resource childResource : resource.getChildResources()) {
+            findNonStartedResourceComponentsRecursively(childResource, nonStartedResourceContainersByType);
+        }
+    }
+
     protected void assertAllResourceConfigsLoad() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Map<ResourceType, Exception> resourceConfigLoadExceptionsByType = new LinkedHashMap<ResourceType, Exception>();
@@ -277,6 +310,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         if (resourceType.getPlugin().equals(getPluginName()) &&
                 (resourceType.getResourceConfigurationDefinition() != null) &&
                 !resourceConfigLoadExceptionsByType.containsKey(resourceType)) {
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
+                return;
+            }
+
             Exception exception = null;
             try {
                 Configuration resourceConfig = loadResourceConfiguration(resource);
@@ -300,12 +338,35 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         }
     }
 
-    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues() throws Exception {
+    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(
+            Map<ResourceType, String[]> excludedMetricNamesByType) throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType = new LinkedHashMap<ResourceType, Set<String>>();
         findNumericMetricsAndTraitsWithNullValuesRecursively(platform, metricsWithNullValuesByType);
+        removeExcludedMetricNames(metricsWithNullValuesByType, excludedMetricNamesByType);
         assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: " +
                 metricsWithNullValuesByType);
+    }
+
+    private void removeExcludedMetricNames(LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType, Map<ResourceType, String[]> excludedMetricNamesByType) {
+        for (Iterator<ResourceType> mapIterator = metricsWithNullValuesByType.keySet().iterator(); mapIterator.hasNext(); ) {
+            ResourceType resourceType = mapIterator.next();
+            if (excludedMetricNamesByType.get(resourceType) == null) {
+                continue;
+            }
+
+            Set<String> namesOfMetricsWithNullValues = metricsWithNullValuesByType.get(resourceType);
+            List<String> excludedMetricNames = Arrays.asList(excludedMetricNamesByType.get(resourceType));
+            for (Iterator<String> setIterator = namesOfMetricsWithNullValues.iterator(); setIterator.hasNext(); ) {
+                String nameOfMetricWithNullValue = setIterator.next();
+                if (excludedMetricNames.contains(nameOfMetricWithNullValue)) {
+                    setIterator.remove();
+                }
+            }
+            if (namesOfMetricsWithNullValues.isEmpty()) {
+                mapIterator.remove();
+            }
+        }
     }
 
     private void findNumericMetricsAndTraitsWithNullValuesRecursively(Resource resource,
@@ -314,6 +375,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceType resourceType = resource.getResourceType();
         // Only check metrics on types of Resources from the plugin under test.
         if (resourceType.getPlugin().equals(getPluginName())) {
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
+                return;
+            }
+
             Set<String> metricsWithNullValues = getNumericMetricsAndTraitsWithNullValues(resource);
             if (!metricsWithNullValues.isEmpty()) {
                 Set<String> metricsWithNullValuesForType = metricsWithNullValuesByType.get(resourceType);

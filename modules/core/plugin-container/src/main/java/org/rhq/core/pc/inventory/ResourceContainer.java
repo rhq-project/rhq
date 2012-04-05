@@ -357,7 +357,10 @@ public class ResourceContainer implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[resource=" + this.resource + "]";
+        AvailabilityType avail = (this.availability != null) ? this.availability.getAvailabilityType() : null;
+        return this.getClass().getSimpleName() + "[resource=" + this.resource + ", syncState="
+                + this.synchronizationState + ", componentState=" + this.resourceComponentState + ", avail=" + avail
+                + "]";
     }
 
     /**

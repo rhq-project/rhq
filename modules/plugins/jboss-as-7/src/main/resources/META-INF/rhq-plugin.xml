@@ -2205,25 +2205,6 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
   </server>
 
-  <server name="JGroups"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true"
-      >
-
-    <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-    </runs-inside>
-
-    <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
-    </plugin-configuration>
-
-    <resource-configuration>
-      <c:simple-property name="default-stack" description="Default stack to use"/>
-    </resource-configuration>
-  </server>
 
   <server name="Remoting"
           discovery="SubsystemDiscovery"
@@ -3998,5 +3979,24 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
   </service>
 
+
+  <service name="JGroups"
+          discovery="SubsystemDiscovery"
+          class="BaseComponent"
+          singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="default-stack" description="Default stack to use"/>
+    </resource-configuration>
+  </service>
 
 </plugin>

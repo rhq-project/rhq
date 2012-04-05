@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Status;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -53,12 +55,17 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
 
     @BeforeMethod
-    @SuppressWarnings({ "unused" })
-    private void init() {
+    protected void init() {
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         resourceManager = LookupUtil.getResourceManager();
         roleManager = LookupUtil.getRoleManager();
         subjectManager = LookupUtil.getSubjectManager();
+        prepareScheduler();
+    }
+
+    @AfterMethod
+    protected void after() throws Exception {
+        unprepareScheduler();
     }
 
     @Test(groups = "integration.session")
@@ -193,8 +200,9 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         List<Resource> expectedExplicit = new ArrayList<Resource>();
 
         try {
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
+
                 EntityManager em = getEntityManager();
                 // setup simple test structures
                 subject = SessionTestHelper.createNewSubject(em, "fake subject");
@@ -254,21 +262,22 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                getTransactionManager().commit();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
                 // removing the subtree nodeTripleLittleI shouldn't affect the expected set
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                getTransactionManager().commit();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
+
                 // removing a descendant of a node that is also in the explicit list should be a no-op
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
 
@@ -282,11 +291,12 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                getTransactionManager().commit();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
+
                 // remove a node that wasn't in the group - negative testing
                 try {
                     // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
@@ -299,23 +309,22 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                // throwing the RGUE will already mark this xaction for rollback
-                //getTransactionManager().commit();
-                getTransactionManager().rollback();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
+
                 // removing the last resource should leave an empty list
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeLittleA, new ArrayList<Resource>());
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                getTransactionManager().commit();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
                 // remove a node that wasn't in the group - negative testing
                 try {
                     // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
@@ -329,26 +338,25 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                // throwing the RGUE will already mark this xaction for rollback
-                //getTransactionManager().commit();
-                getTransactionManager().rollback();
+                handleTransaction();
             }
 
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
                 resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
-                getTransactionManager().commit();
+                handleTransaction();
             }
 
         } finally {
             // clean up anything that may have gotten created
-            getTransactionManager().begin();
             try {
+                getTransactionManager().begin();
+
                 EntityManager em = getEntityManager();
 
                 Subject overlord = subjectManager.getOverlord();
@@ -370,8 +378,20 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             } catch (Throwable t) {
                 handleThrowable(t);
             } finally {
+                handleTransaction();
+            }
+        }
+    }
+
+    private void handleTransaction() {
+        try {
+            if (getTransactionManager().getTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK) {
+                getTransactionManager().rollback();
+            } else {
                 getTransactionManager().commit();
             }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 

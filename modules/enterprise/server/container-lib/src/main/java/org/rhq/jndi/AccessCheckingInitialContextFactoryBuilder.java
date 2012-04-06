@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.jndi;
 
 import java.net.InetAddress;
@@ -178,8 +177,8 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         String providerUrl = (String) environment.get(Context.PROVIDER_URL);
 
         if (providerUrl == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. No provider URL detected.");
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. No provider URL detected.");
             }
             return getAccessCheckingFactory(factory);
         } else {
@@ -190,13 +189,13 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                 //check if we are accessing the RHQ server through some remoting
                 //interface.
                 if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. The provider URL points to this server.");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. The provider URL points to this server.");
                     }
                     return getAccessCheckingFactory(factory);
                 } else {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an URL preferring wrapper to enable remote connections.");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Wrapping " + factory + " of class " + factory.getClass() + " in an URL preferring wrapper to enable remote connections.");
                     }
                     return getURLPreferringFactory(factory);
                 }

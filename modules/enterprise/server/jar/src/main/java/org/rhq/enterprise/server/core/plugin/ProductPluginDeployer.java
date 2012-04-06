@@ -256,7 +256,7 @@ public class ProductPluginDeployer {
     /**
      * Process the specified plugin jar to figure out the plugin name and version. If it is the only plugin with this
      * name, or if it has the newest version among other plugins with the same name, then add it to our master set of
-     * plugins to be registered. Once all EJBs are started, {@link #startDeployer()} will be called and will take care
+     * plugins to be registered. Once all EJBs are started, {@link #startDeployment()} will be called and will take care
      * of registering the plugins.
      */
     private String preprocessPlugin(DeploymentInfo deploymentInfo) throws Exception {

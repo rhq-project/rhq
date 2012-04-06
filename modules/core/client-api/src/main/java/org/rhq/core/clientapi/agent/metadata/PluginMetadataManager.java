@@ -191,7 +191,7 @@ public class PluginMetadataManager {
         return null;
     }
 
-    // TODO Is this really appropriate? Its inconvient to look up including the parent but
+    // TODO Is this really appropriate? It's inconvenient to look up including the parent but
     // that is currently the accurate limiter... need to consider type keys
     // Otherwise we could use the business key which is the "plugin" name and the type name.
     public ResourceType getType(String typeName, ResourceCategory category) {

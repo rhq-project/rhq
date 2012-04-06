@@ -304,10 +304,9 @@ public class PluginManager implements ContainerService {
      * This will create a {@link PluginEnvironment} for the plugin at the given URL. The plugin's descriptor is parsed.
      * Once this method returns, the plugin's components are ready to be created and used.
      *
-     *
      * @param  pluginUrl   the new plugin's jar location
      * @param  classLoader the new plugin's classloader
-     * @param pluginDescriptor THe already parsed plugin descriptor for this plugin
+     * @param  pluginDescriptor the already parsed plugin descriptor for this plugin
      * @throws PluginContainerException if the plugin fails to load
      */
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader, PluginDescriptor pluginDescriptor) throws PluginContainerException {

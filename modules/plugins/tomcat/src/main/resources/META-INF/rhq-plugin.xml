@@ -213,15 +213,14 @@
          displayType="summary"
          description="Tomcat server release identifier" />
 
-      <server
+      <service
          name="Tomcat Server JVM"
          description="JVM of the Tomcat Server"
          sourcePlugin="JMX"
          sourceType="JMX Server"
          discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
          class="org.rhq.plugins.jmx.JMXServerComponent"
-         singleton="true">
-      </server>
+         singleton="true"/>
 
       <service
          name="Tomcat Virtual Host"

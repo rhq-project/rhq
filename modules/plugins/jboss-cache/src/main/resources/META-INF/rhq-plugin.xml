@@ -10,7 +10,7 @@
    <depends plugin="JMX" />
    <depends plugin="JBossAS" useClasses="true"/>
 
-   <server name="JBossCacheSubsystem"
+   <service name="JBossCacheSubsystem"
            class="JBossCacheSubsystemComponent"
            discovery="JBossCacheSubsystemDiscovery"
            description="The JBoss Cache instances on this server"
@@ -35,7 +35,7 @@
 
          <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
          <operation name="listAssociatedMBeans" displayName="List associated MBeans" description="List all MBeans that form this Cache instance">
-            <results><c:simple-property name="mbeans"></c:simple-property></results>
+            <results><c:simple-property name="mbeans"/></results>
          </operation>
 
          <metric property=":numberOfNodes" displayName="Number of Nodes" displayType="summary" />
@@ -168,6 +168,6 @@
          </service>
        </service>
 
-    </server>
+    </service>
 
 </plugin>

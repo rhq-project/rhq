@@ -591,14 +591,13 @@
          </c:group>
       </resource-configuration>
 
-      <server name="RHQ Agent JVM"
+      <service name="RHQ Agent JVM"
               description="JVM of the Management Agent"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
               class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true">
-      </server>
+              singleton="true"/>
 
       <service name="Measurement Subsystem"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

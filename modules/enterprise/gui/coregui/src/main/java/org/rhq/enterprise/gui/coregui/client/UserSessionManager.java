@@ -36,6 +36,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
@@ -484,6 +485,8 @@ public class UserSessionManager {
 
         Log.info("Destroying HTTP session refresh timer...");
         httpSessionTimer.cancel();
+
+        ResourceTypeRepository.Cache.getInstance().clear();
 
         CoreGUI.get().reset();
 

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -52,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  * @author Ian Springer
  */
 public class ResourceTypeRepository {
+
     static private final Messages MSG = CoreGUI.getMessages();
 
     private Map<Integer, ResourceType> typeCache = new HashMap<Integer, ResourceType>();
@@ -449,4 +449,12 @@ public class ResourceTypeRepository {
             }
         });
     }
+
+    public void clear() {
+        Log.info("Clearing cache...");
+        typeCache.clear();
+        typeCacheLevel.clear();
+        topLevelServerAndServiceTypes = null;
+    }
+
 }

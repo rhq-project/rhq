@@ -412,9 +412,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         eventMetadataMgr.updateMetadata(existingType, resourceType);
 
         // Update the type itself
-        existingType.setDescription(resourceType.getDescription());
+        if (resourceType.getCategory() != existingType.getCategory()) {
+            log.info("Changing category of Resource type [" + resourceType + "] from " + existingType.getCategory()
+                    + " to " + resourceType.getCategory() + "...");
+            existingType.setCategory(resourceType.getCategory());
+        }
+
         existingType.setCreateDeletePolicy(resourceType.getCreateDeletePolicy());
         existingType.setCreationDataType(resourceType.getCreationDataType());
+        existingType.setDescription(resourceType.getDescription());
         existingType.setSingleton(resourceType.isSingleton());
         existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
 

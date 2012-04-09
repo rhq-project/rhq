@@ -18,7 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -465,7 +467,7 @@ public class Domain2Descriptor {
         sb.append(" type=\"");
         if (expressionsAllowed && type.isNumeric()) {
             sb.append("string");
-        } else if (type.rhqName.equalsIgnoreCase("-option-list-")) {
+        } else if (type.rhqName.equalsIgnoreCase("-option-list-") || type.rhqName.equalsIgnoreCase("-object-")) {
             sb.append("string");
         } else {
             sb.append(type.rhqName);
@@ -491,12 +493,56 @@ public class Domain2Descriptor {
         //Detect whether type PROPERTY and insert known supported properties before close.
         if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
             sb.append(generateOptionList(indent, properties, properties[7]));
+        } else if (type.rhqName.equalsIgnoreCase("-object-")) {
+            sb.append(useAvailableOptionsList(indent, props, null));
         } else { //no default provided close tag.
             sb.append("/>");
         }
         return sb;
     }
 
+    /** Assumes that -object- is a json type where allowable values are defined
+     *  in the 'allowed' child. Generates the matching <c:property-options> entries.
+     * 
+     * @param indent
+     * @param props
+     * @param defaultSelection
+     * @return
+     */
+    private String useAvailableOptionsList(int indent, Map<String, Object> props, String defaultSelection) {
+        StringBuilder optionList = new StringBuilder();
+
+        if ((defaultSelection != null) && (!defaultSelection.trim().isEmpty())) {
+            optionList.append(" defaultValue=\"" + defaultSelection + "\" >\n");
+        } else {//no default provided
+            optionList.append(">\n");
+        }
+
+        //see if 'allowed' is set
+        ArrayList<String> options = (ArrayList<String>) props.get("allowed");
+        Collections.sort(options);
+        if (!options.isEmpty()) {
+            doIndent(indent + 1, optionList);
+            optionList.append("<c:property-options>\n");
+            for (String prop : options) {
+                doIndent(indent + 2, optionList);
+                optionList.append("<c:option value=\"" + prop + "\" name=\"" + prop + "\"/>\n");
+            }
+            optionList.append("</c:property-options>\n");
+            doIndent(indent, optionList);
+            optionList.append("</c:simple-property>");
+        }
+        return optionList.toString();
+    }
+
+    /** Generates hardcoded list of options not available because of JIRA
+     *  https://issues.jboss.org/browse/AS7-4384
+     * 
+     * @param indent
+     * @param properties
+     * @param defaultSelection
+     * @return
+     */
     private String generateOptionList(int indent, String[] properties, String defaultSelection) {
         StringBuilder optionList = new StringBuilder();
 

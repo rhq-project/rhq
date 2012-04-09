@@ -2202,11 +2202,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
   </server>
 
 
-  <server name="Webservices"
+  <service name="Webservices"
           discovery="SubsystemDiscovery"
           class="WebservicesComponent"
-          singleton="true"
-      >
+          singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
@@ -2319,7 +2318,8 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 		   </service><!-- End of Pre Handler service definition -->
       </service> <!-- End of Pre Handler Chain service definition -->
     </service> <!-- End of Endpoint service definition -->
-  </server>
+
+  </service>
 
   <service name="Naming"
            discovery="SubsystemDiscovery"

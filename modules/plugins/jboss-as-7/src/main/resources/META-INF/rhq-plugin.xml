@@ -1773,7 +1773,7 @@
 
   </server>
 
-  <server name="Logging"
+  <service name="Logging"
           discovery="SubsystemDiscovery"
           class="LoggerComponent"
           singleton="true"
@@ -2096,7 +2096,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
       </resource-configuration>
     </service>
 
-  </server>
+  </service>
 
 
   <service name="Datagrid Endpoints"

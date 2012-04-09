@@ -60,6 +60,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
@@ -225,7 +226,7 @@ public class ResourceContainer implements Serializable {
             if (null != this.measurementSchedule) {
                 for (MeasurementScheduleRequest sched : this.measurementSchedule) {
                     if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                        String smallStack = getSmallStackTrace(new Throwable());
+                        String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
                         String msg = "Invalid collection interval [" + sched + "] for Resource [" + resource
                             + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
                             + smallStack;
@@ -235,20 +236,6 @@ public class ResourceContainer implements Serializable {
                 }
             }
         }
-    }
-
-    static private String getSmallStackTrace(Throwable t) {
-        StringBuilder smallStack = new StringBuilder();
-
-        StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();
-        for (int i = 1; i < stack.length; i++) {
-            StackTraceElement ste = stack[i];
-            if (ste.getClassName().startsWith("org.rhq")) {
-                smallStack.append(ste.toString());
-                smallStack.append("\n");
-            }
-        }
-        return smallStack.toString();
     }
 
     public MeasurementScheduleRequest getAvailabilitySchedule() {
@@ -306,7 +293,7 @@ public class ResourceContainer implements Serializable {
         if (null != measurementScheduleUpdate) {
             for (MeasurementScheduleRequest sched : measurementScheduleUpdate) {
                 if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                    String smallStack = getSmallStackTrace(new Throwable());
+                    String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
                     String msg = "Invalid collection interval ["
                         + sched
                         + "] for Resource ["

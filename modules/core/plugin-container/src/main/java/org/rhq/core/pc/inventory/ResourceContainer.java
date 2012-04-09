@@ -53,6 +53,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
@@ -70,7 +71,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResourceContainer implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public enum SynchronizationState {
         NEW, SYNCHRONIZED, DELETED_ON_AGENT, DELETED_ON_SERVER
@@ -219,7 +220,35 @@ public class ResourceContainer implements Serializable {
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
         synchronized (this) {
             this.measurementSchedule = measurementSchedule;
+
+            // this should not happen but if it does, protect against it because it will sink the agent
+            if (null != this.measurementSchedule) {
+                for (MeasurementScheduleRequest sched : this.measurementSchedule) {
+                    if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                        String smallStack = getSmallStackTrace(new Throwable());
+                        String msg = "Invalid collection interval [" + sched + "] for Resource [" + resource
+                            + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
+                            + smallStack;
+                        LogFactory.getLog(ResourceContainer.class).error(msg);
+                        sched.setInterval(20L * 60L * 1000L);
+                    }
+                }
+            }
         }
+    }
+
+    static private String getSmallStackTrace(Throwable t) {
+        StringBuilder smallStack = new StringBuilder();
+
+        StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();
+        for (int i = 1; i < stack.length; i++) {
+            StackTraceElement ste = stack[i];
+            if (ste.getClassName().startsWith("org.rhq")) {
+                smallStack.append(ste.toString());
+                smallStack.append("\n");
+            }
+        }
+        return smallStack.toString();
     }
 
     public MeasurementScheduleRequest getAvailabilitySchedule() {
@@ -273,6 +302,23 @@ public class ResourceContainer implements Serializable {
     * @return true if the schedule was updated successfully, false otherwise
     */
     public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
+        // this should not happen but if it does, protect against it because it will sink the agent
+        if (null != measurementScheduleUpdate) {
+            for (MeasurementScheduleRequest sched : measurementScheduleUpdate) {
+                if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                    String smallStack = getSmallStackTrace(new Throwable());
+                    String msg = "Invalid collection interval ["
+                        + sched
+                        + "] for Resource ["
+                        + resource
+                        + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
+                        + smallStack;
+                    LogFactory.getLog(ResourceContainer.class).error(msg);
+                    sched.setInterval(20L * 60L * 1000L);
+                }
+            }
+        }
+
         Set<Integer> updateScheduleIds = new HashSet<Integer>();
         for (MeasurementScheduleRequest update : measurementScheduleUpdate) {
             updateScheduleIds.add(update.getScheduleId());

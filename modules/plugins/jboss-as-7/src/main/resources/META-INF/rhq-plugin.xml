@@ -2099,8 +2099,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
   </server>
 
 
-
-  <server name="Datagrid Endpoints"
+  <service name="Datagrid Endpoints"
           discovery="SubsystemDiscovery"
           class="BaseComponent"
           singleton="true"
@@ -2199,7 +2198,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
       </resource-configuration>
     </service>
 
-  </server>
+  </service>
 
 
   <service name="Webservices"

@@ -1839,13 +1839,10 @@
 
     <resource-configuration>
       <c:group name="child:root-logger=ROOT" displayName="Root logger">
-        <c:map-property name="root-logger" description="The root logger for this log context.">
-          <c:simple-property name="level" readOnly="true"
-                             description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-          <c:list-property name="handlers" readOnly="true">
-            <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
-          </c:list-property>
-        </c:map-property>
+        <c:simple-property name="level" readOnly="true" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+        <c:list-property name="handlers" readOnly="true">
+          <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
+        </c:list-property>
       </c:group>
     </resource-configuration>
 

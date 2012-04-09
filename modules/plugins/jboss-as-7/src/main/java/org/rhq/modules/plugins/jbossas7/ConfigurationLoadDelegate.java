@@ -238,15 +238,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                     if (propertyList != null)
                         config.put(propertyList);
                 } else if (propDef instanceof PropertyDefinitionMap) {
-
-                    PropertyGroupDefinition propertyGroupDefinition = propDef.getPropertyGroupDefinition();
-                    if (propertyGroupDefinition != null ) {
-                       if (propertyGroupDefinition.getName().startsWith("child:")) {
-                          valueObject = results;
-                       }
-                    }
-
-
                     PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject, null);
 
                     if (propertyMap != null)

@@ -3926,7 +3926,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <c:simple-property name="default-cache" required="false" type="string" readOnly="false" description="The default infinispan cache"/>
         <!-- TODO select from child cache services -->
         <c:list-property name="aliases" description="The list of aliases for this cache container">
-          <c:simple-property name="aliases"/>
+          <c:simple-property name="alias"/>
         </c:list-property>
         <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi name to which to bind this cache container"/>
         <c:simple-property name="start" required="false" type="string" readOnly="false" defaultValue="LAZY" description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">

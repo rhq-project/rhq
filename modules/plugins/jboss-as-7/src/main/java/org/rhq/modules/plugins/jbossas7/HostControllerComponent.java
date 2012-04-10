@@ -95,7 +95,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             operationResult = super.invokeOperation(name, parameters);
         }
 
-        context.getAvailabilityContext().requestAvailabilityCheck();
+//        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
     }

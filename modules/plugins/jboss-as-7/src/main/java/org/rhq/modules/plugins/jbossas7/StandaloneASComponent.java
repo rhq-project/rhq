@@ -73,7 +73,7 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
         if (name.equals("reload"))
             waitUntilReloaded(operationResult);
 
-        context.getAvailabilityContext().requestAvailabilityCheck();
+//        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
     }

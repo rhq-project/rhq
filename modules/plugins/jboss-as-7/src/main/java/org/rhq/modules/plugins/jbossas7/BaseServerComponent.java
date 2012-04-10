@@ -78,7 +78,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             return tmp;
         }
 
-        context.getAvailabilityContext().requestAvailabilityCheck();
+//        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return startServer(mode);
     }
@@ -200,7 +200,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
 
 
-        context.getAvailabilityContext().requestAvailabilityCheck();
+//        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
 
@@ -329,7 +329,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         log.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
                 + " server with key [" + context.getResourceKey() + "].");
 
-        context.getAvailabilityContext().requestAvailabilityCheck();
+//        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return result;
     }

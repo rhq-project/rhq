@@ -55,7 +55,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
  * This is the service that receives inventory data from agents. As agents discover resources, they report back to the
- * server what they have found via this service. // TODO GH: Should this be renamed inventory server service?
+ * server what they have found via this service.
  *
  * @author John Mazzitelli
  */
@@ -65,6 +65,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     /**
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
+    @Override
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
         StaleTypeException {
         long start = System.currentTimeMillis();
@@ -102,6 +103,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return syncInfo;
     }
 
+    @Override
     public boolean mergeAvailabilityReport(AvailabilityReport availabilityReport) {
         AvailabilityReportSerializer.getSingleton().lock(availabilityReport.getAgentName());
         try {
@@ -133,6 +135,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         }
     }
 
+    @Override
     public Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -149,6 +152,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return resources;
     }
 
+    @Override
     public Map<Integer, InventoryStatus> getInventoryStatus(int rootResourceId, boolean descendents) {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -160,6 +164,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return statuses;
     }
 
+    @Override
     public void setResourceError(ResourceError resourceError) {
         try {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -170,21 +175,25 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         }
     }
 
+    @Override
     public void clearResourceConfigError(int resourceId) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         resourceManager.clearResourceConfigError(resourceId);
     }
 
+    @Override
     public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         return discoveryBoss.addResource(resource, creatorSubjectId);
     }
 
+    @Override
     public boolean updateResourceVersion(int resourceId, String version) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
+    @Override
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         return discoveryBoss.upgradeResources(upgradeRequests);
@@ -218,6 +227,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return pojoResource;
     }
 
+    @Override
     public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
         if (log.isDebugEnabled()) {
             log.debug("Post-processing " + resourceIds.size() + "newly committed resources");
@@ -287,4 +297,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
         return results;
     }
+
+    @Override
+    public void setResourceEnablement(int resourceId, boolean setEnabled) {
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        if (setEnabled) {
+            resourceManager.enableResources(overlord, new int[] { resourceId });
+        } else {
+            resourceManager.disableResources(overlord, new int[] { resourceId });
+        }
+    }
+
 }

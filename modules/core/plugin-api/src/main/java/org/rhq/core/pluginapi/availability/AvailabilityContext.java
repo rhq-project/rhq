@@ -76,4 +76,26 @@ public interface AvailabilityContext {
      * @return the last reported availability type, or null if not yet reported.
      */
     public AvailabilityType getLastReportedAvailability();
+
+    /**
+     * This method allows the component to request the server set the resource DISABLED in the same way that
+     * a user can set a resource DISABLED.  This should be used with care by component code as it will mean
+     * that alerting and availability reporting will essentionally be ignored for the resource until it is
+     * again enabled.  A user is free to enable a resource disabled by the component code.  If the resource is
+     * already disabled then the call has no effect.
+     * 
+     *  @see {@link #enable()}
+     */
+    public void disable();
+
+    /**
+     * This method allows the component to request the server set the resource ENABLED in the same way that
+     * a user can set a resource ENABLED.  This should be used with care by component code as it does not care
+     * how the resource was DISABLED. It can override a user action. If the resource is already disabled then
+     * the call has no effect.
+     * 
+     * @see {@link #disable()}
+     */
+    public void enable();
+
 }

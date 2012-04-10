@@ -25,13 +25,12 @@ package org.rhq.core.clientapi.server.discovery;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
-import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -91,6 +90,16 @@ public interface DiscoveryServerService {
      * @return a tree of resources with the latest data
      */
     Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants);
+
+    /**
+     * Set the specified resource enabled or disabled. The call has no effect if the resource is already
+     * in the desired state.
+     * 
+     * @param resourceId The resource to enable or disable.
+     * @param setEnabled Enable if true, disable if false.
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void setResourceEnablement(int resourceId, boolean setEnabled);
 
     /**
      * Indicates that an error occurred on a resource.

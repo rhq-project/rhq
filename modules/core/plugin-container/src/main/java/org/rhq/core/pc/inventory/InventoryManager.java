@@ -671,6 +671,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    public void setResourceEnablement(int resourceId, boolean setEnabled) {
+        configuration.getServerServices().getDiscoveryServerService().setResourceEnablement(resourceId, setEnabled);
+    }
+
     public MergeResourceResponse manuallyAddResource(ResourceType resourceType, int parentResourceId,
         Configuration pluginConfiguration, int ownerSubjectId) throws InvalidPluginConfigurationClientException,
         PluginContainerException {

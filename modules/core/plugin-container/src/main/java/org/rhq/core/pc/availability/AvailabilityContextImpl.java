@@ -69,4 +69,14 @@ public class AvailabilityContextImpl implements AvailabilityContext {
         Availability avail = PluginContainer.getInstance().getInventoryManager().getAvailabilityIfKnown(resource);
         return (null != avail) ? avail.getAvailabilityType() : null;
     }
+
+    @Override
+    public void disable() {
+        PluginContainer.getInstance().getInventoryManager().setResourceEnablement(resource.getId(), false);
+    }
+
+    @Override
+    public void enable() {
+        PluginContainer.getInstance().getInventoryManager().setResourceEnablement(resource.getId(), true);
+    }
 }

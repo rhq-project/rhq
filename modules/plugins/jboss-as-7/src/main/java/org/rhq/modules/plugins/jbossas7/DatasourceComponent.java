@@ -1,6 +1,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -165,8 +167,23 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
     }
 
     @Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
+        Set<MeasurementScheduleRequest> metrics = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for ( MeasurementScheduleRequest request : requests) {
+            if (request.getName().equals("connectionAvailable")) {
+                report.addData(getConnectionAvailable(request));
+            }
+            else {
+                metrics.add(request);
+            }
+        }
+
+
+        /*
+         * Remainder here are metrics that can be read from the resource.
+         * Those
+         */
         ReadResource op = new ReadResource(address);
         op.includeRuntime(true);
         op.recursive(true);
@@ -190,5 +207,15 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
                 report.addData(data);
             }
         }
+    }
+
+    private MeasurementDataTrait getConnectionAvailable(MeasurementScheduleRequest request)
+    {
+        Operation op = new Operation("test-connection-in-pool",getAddress());
+        Result res = getASConnection().execute(op);
+
+        MeasurementDataTrait trait = new MeasurementDataTrait(request,String.valueOf(res.isSuccess()));
+
+        return trait;
     }
 }

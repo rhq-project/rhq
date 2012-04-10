@@ -39,7 +39,7 @@ public class Address {
     }
 
     /**
-     * Create an Address with an intial path element
+     * Create an Address with an initial path element
      * @param key key part of the path
      * @param value value part of the path
      */
@@ -77,11 +77,18 @@ public class Address {
         this();
         if (path == null || path.isEmpty())
             return;
-        // strips / from the start or end of the key if it happens to be there and
-        String[] components = path.split("[,/]+");
+        // strips / from the start or end of the key if it happens to be there
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        if (path.endsWith("/")) {
+            path = path.substring(0,path.length()-1);
+        }
+        // Now split on comma boundaries
+        String[] components = path.split("[,]+");
         for (String component : components) {
             String tmp = component.trim();
-
+            // Split each segment on equals sign into key and value
             if (tmp.contains("=")) {
                 PROPERTY_VALUE valuePair = pathFromSegment(tmp);
                 this.path.add(valuePair);

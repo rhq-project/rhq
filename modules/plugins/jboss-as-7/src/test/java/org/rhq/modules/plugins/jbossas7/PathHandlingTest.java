@@ -93,13 +93,77 @@ public class PathHandlingTest {
      * @throws Exception
      */
     public void getParent4() throws Exception {
-        String path = "/subsystem=modcluster/mod-cluster-config=configuration/";
+        String path = "/subsystem=modcluster,mod-cluster-config=configuration/";
         Address a = new Address(path);
         //extract parent portion. Penultimate.
         Address b = a.getParent();
+        assert a.size() == 2 : "A.size was not 2, but " + a.size();
         assert b != null;
-        assert b.size() == 1;
+        assert b.size() == 1 : "B.size was not 1, but " + b.size();
         assert b.get(0).equals("subsystem=modcluster");
     }
+
+    public void pathWithColon() throws Exception {
+        String path = "subsystem=mail,jndi=java:/mail";
+        Address a = new Address(path);
+        assert a.size() == 2: "A.size was not 2, but " + a.size();
+
+        Address b = a.getParent();
+        assert b.size() == 1: "B.size was not 1, but " + b.size();
+        assert b.get(0).equals("subsystem=mail");
+
+        String segment = a.get(1);
+        assert !segment.isEmpty();
+        assert segment.equals("jndi=java:/mail") : "Segment is " + segment;
+    }
+
+    public void pathWithColon2() throws Exception {
+//        String path = "subsystem=mail,jndi=java:/mail";
+        Address a = new Address();
+        a.addSegment("subsystem=mail");
+        a.addSegment("jndi=java:/mail");
+        assert a.size() == 2: "A.size was not 2, but " + a.size();
+
+        Address b = a.getParent();
+        assert b.size() == 1: "B.size was not 1, but " + b.size();
+        assert b.get(0).equals("subsystem=mail");
+
+        String segment = a.get(1);
+        assert !segment.isEmpty();
+        assert segment.equals("jndi=java:/mail") : "Segment is " + segment;
+    }
+
+    public void pathWithColon3() throws Exception {
+//        String path = "subsystem=mail,jndi=java:/mail";
+        Address a = new Address();
+        a.add("subsystem","mail");
+        a.add("jndi","java:/mail");
+        assert a.size() == 2: "A.size was not 2, but " + a.size();
+
+        Address b = a.getParent();
+        assert b.size() == 1: "B.size was not 1, but " + b.size();
+        assert b.get(0).equals("subsystem=mail");
+
+        String segment = a.get(1);
+        assert !segment.isEmpty();
+        assert segment.equals("jndi=java:/mail") : "Segment is " + segment;
+    }
+
+
+    public void pathWithSpecial2() throws Exception {
+        String path = "subsystem=mail,jndi=java:\"mail";
+        Address a = new Address(path);
+        assert a.size() == 2: "A.size was not 2, but " + a.size();
+
+        Address b = a.getParent();
+        assert b.size() == 1: "B.size was not 1, but " + b.size();
+        assert b.get(0).equals("subsystem=mail");
+
+        String segment = a.get(1);
+        assert !segment.isEmpty();
+        assert segment.equals("jndi=java:\"mail") : "Segment is " + segment;
+    }
+
+
 
 }

@@ -41,6 +41,7 @@ public class Domain2Descriptor {
     //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384 
     private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
         "busyness", "connection-pool" };
+    private D2DMode mode = null;
 
     public static void main(String[] args) throws Exception {
 
@@ -57,7 +58,6 @@ public class Domain2Descriptor {
 
         //process and populate command line args passed in and determine
         //operation modes.
-        D2DMode mode = null;
         String user = null;
         String pass = null;
 
@@ -96,7 +96,7 @@ public class Domain2Descriptor {
         path = path.replaceAll("/", ","); // Allow path from jboss-cli.sh's
         // pwd command
 
-        //spinder 3/29/12: if additional child type info passed in then load it. What does this look like?
+        //spinder Mar-29-2012: if additional child type info passed in then load it. What does this look like?
         String childType = null;
         if (args.length > pos + 1) {
             childType = args[pos + 1];
@@ -467,7 +467,8 @@ public class Domain2Descriptor {
         sb.append(" type=\"");
         if (expressionsAllowed && type.isNumeric()) {
             sb.append("string");
-        } else if (type.rhqName.equalsIgnoreCase("-option-list-") || type.rhqName.equalsIgnoreCase("-object-")) {
+        } else if (type.rhqName.equalsIgnoreCase("-option-list-")
+            || ((mode == D2DMode.OPERATION) && type.rhqName.equalsIgnoreCase("-object-"))) {
             sb.append("string");
         } else {
             sb.append(type.rhqName);
@@ -493,7 +494,7 @@ public class Domain2Descriptor {
         //Detect whether type PROPERTY and insert known supported properties before close.
         if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
             sb.append(generateOptionList(indent, properties, properties[7]));
-        } else if (type.rhqName.equalsIgnoreCase("-object-")) {
+        } else if ((mode == D2DMode.OPERATION) && (type.rhqName.equalsIgnoreCase("-object-"))) {
             sb.append(useAvailableOptionsList(indent, props, null));
         } else { //no default provided close tag.
             sb.append("/>");
@@ -520,8 +521,8 @@ public class Domain2Descriptor {
 
         //see if 'allowed' is set
         ArrayList<String> options = (ArrayList<String>) props.get("allowed");
-        Collections.sort(options);
-        if (!options.isEmpty()) {
+        if (options != null && !options.isEmpty()) {
+            Collections.sort(options);
             doIndent(indent + 1, optionList);
             optionList.append("<c:property-options>\n");
             for (String prop : options) {

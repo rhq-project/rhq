@@ -27,6 +27,7 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -120,7 +121,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
-        priorityFilter.setColSpan(4);
         startDateFilter = new DateItem("startDateFilter");
         startDateFilter.setUseTextField(true);
         startDateFilter.setEnforceDate(true);
@@ -130,9 +130,11 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         endDateFilter.setEndDate(new Date());
         endDateFilter.setEnforceDate(true);
         endDateFilter.setTitle(MSG.filter_to_date());
+        SpacerItem spacerItem = new SpacerItem();
+        spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(priorityFilter, startDateFilter, endDateFilter );
+            setFilterFormItems(priorityFilter,   startDateFilter, spacerItem, endDateFilter );
         }
     }
 

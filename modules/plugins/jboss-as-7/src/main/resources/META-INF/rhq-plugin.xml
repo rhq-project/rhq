@@ -2002,7 +2002,7 @@
       <resource-configuration>
 	<c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
 	<c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-	<c:map-property name="filter" description="Defines a simple filter type." >
+	<c:map-property name="filter" required="false" description="Defines a simple filter type." >
 	    <c:simple-property name="all" required="false" type="string" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be unloggable,the message will not be logged and subsequent filters will not be checked.">
 	     <c:property-options>
 	      <c:option value="accept" name="accept"/>

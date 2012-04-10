@@ -27,6 +27,7 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
@@ -135,7 +136,6 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
         statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
-        statusFilter.setColSpan(4);
 
         endDateFilter = new DateItem("startDateFilter");
         endDateFilter.setUseTextField(true);
@@ -145,9 +145,11 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         startDateFilter.setUseTextField(true);
         startDateFilter.setEnforceDate(true);
         startDateFilter.setTitle(MSG.filter_to_date());
+        SpacerItem spacerItem = new SpacerItem();
+        spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter, endDateFilter, startDateFilter );
+            setFilterFormItems(statusFilter, endDateFilter, spacerItem, startDateFilter );
         }
     }
 

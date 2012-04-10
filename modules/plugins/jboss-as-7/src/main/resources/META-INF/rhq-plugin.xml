@@ -1124,88 +1124,59 @@
     </plugin-configuration>
 
     <resource-configuration>
-      <c:simple-property name="default-virtual-server" required="false" type="string" readOnly="true" defaultValue="localhost"
-                         description="The web container's default virtual server."/>
-      <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true"
-                         description="Add the native initialization listener to the web container."/>
+      <c:simple-property name="default-virtual-server" required="false" type="string" readOnly="true" defaultValue="localhost" description="The web container's default virtual server. The default value is default-host."/>
       <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
+      <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true" description="Add the native initialization listener to the web container. The default value is true."/>
+
       <c:group name="child:configuration=static-resources" displayName="Static Resources">
-        <c:simple-property name="listings" required="false" type="boolean" defaultValue="false"
-                           description="Enable folder listings."/>
-        <c:simple-property name="sendfile" required="false" type="integer" defaultValue="49152"
-                           description="Enable sendfile if possible, for files bigger than the specified byte size."/>
+        <c:simple-property name="disabled:0" required="false" type="boolean" defaultValue="false" description="Enable the default Servlet mapping. The default value is false."/>
         <c:simple-property name="file-encoding" required="false" description="Force a file encoding." type="string"/>
-        <c:simple-property name="read-only" required="false" type="boolean" defaultValue="true"
-                           description="Allow write HTTP methods (PUT, DELETE)."/>
-        <c:simple-property name="webdav" required="false" type="boolean" defaultValue="false"
-                           description="Enable WebDAV functionality."/>
+        <c:simple-property name="listings" required="false" type="boolean" defaultValue="false" description="Enable folder listings. The default value is false."/>
+        <c:simple-property name="max-depth" required="false" type="integer" defaultValue="3" description="Maximum recursion for PROPFIND. The default value is 3."/>
+        <c:simple-property name="read-only" required="false" type="boolean" defaultValue="true" description="Allow write HTTP methods (PUT, DELETE). The default value is true."/>
+        <c:simple-property name="sendfile" required="false" type="integer" defaultValue="49152" description="Enable sendfile if possible, for files bigger than the specified byte size. The default value is 49152."/>
         <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
-        <c:simple-property name="max-depth" required="false" type="integer" defaultValue="3"
-                           description="Maximum recursion for PROPFIND."/>
-        <c:simple-property name="disabled" required="false" type="boolean" defaultValue="false"
-                           description="Enable the default Servlet mapping."/>
+        <c:simple-property name="webdav" required="false" type="boolean" defaultValue="false" description="Enable WebDAV functionality. The default value is false."/>
       </c:group>
       <c:group name="child:configuration=jsp-configuration" displayName="JSP Configuration">
-        <c:simple-property name="development" required="false" type="boolean" default="false"
-                           description="Enable the development mode, which gives more information when an error occurs. And also enables automatic JSP recompiles."/>
-        <c:simple-property name="disabled" required="false" type="boolean" defaultValue="false"
-                           description="Enable the JSP container."/>
-        <c:simple-property name="keep-generated" required="false" type="boolean" defaultValue="true"
-                           description="Keep the generated Servlets."/>
-        <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="true"
-                           description="Trim some spaces from the generated Servlet."/>
-        <!-- TODO make r/w when https://issues.jboss.org/browse/AS7-3097 is solved -->
-        <c:simple-property name="tag-pooling" required="false" type="boolean" defaultValue="true"
-                           description="Enable tag pooling."/>
-        <c:simple-property name="mapped-file" required="false" type="boolean" defaultValue="true"
-                           description="Map to the JSP source."/>
-        <c:simple-property name="check-interval" required="false" type="integer" defaultValue="60"
-                           description="Check interval in seconds for JSP updates using a background thread."/>
-        <!-- TODO revisit default when https://issues.jboss.org/browse/AS7-3098 is fixed -->
-        <c:simple-property name="modification-test-interval" required="false" type="integer" defaultValue="4"
-                           description="Minimum amount of time between two tests for updates, in seconds."/>
-        <c:simple-property name="recompile-on-fail" required="false" type="boolean" defaultValue="false"
-                           description="Retry failed JSP compilations on each request."/>
-        <c:simple-property name="smap" required="false" type="boolean" defaultValue="false"
-                           description="Enable SMAP."/>
-        <c:simple-property name="dump-smap" required="false" type="boolean" defaultValue="false"
-                           description="Write SMAP data to a file."/>
-        <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean"
-                           defaultValue="false"
-                           description="Generate String constants as char arrays."/>
-        <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" defaultValue="false"
-                           description="Enable errors when using a bad class in useBean."/>
-        <c:simple-property name="scratch-dir" required="false" type="string" description="Specify a different work directory."/>
-        <c:simple-property name="source-vm" required="false" type="string" defaultValue="1.5"
-                           description="Source VM level for compilation."/>
-        <c:simple-property name="target-vm" required="false" type="string" defaultValue="1.5"
-                           description="Target VM level for compilation."/>
-        <c:simple-property name="java-encoding" required="false" type="string" defaultValue="UTF-8"
-                           description="Specify the encoding used for Java sources."/>
-        <c:simple-property name="x-powered-by" required="false" type="boolean" defaultValue="true"
-                           description="Enable advertising the JSP engine in x-powered-by."/>
-        <c:simple-property name="display-source-fragment" required="false" type="boolean" defaultValue="true"
-                           description="When a runtime error occurs, attempts to display corresponding JSP source fragment."/>
+        <c:simple-property name="check-interval" required="false" type="integer" readOnly="false" defaultValue="0" description="Check interval for JSP updates using a background thread. The default value is 0."/>
+        <c:simple-property name="development" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the development mode, which gives more information when an error occurs. The default value is false."/>
+        <c:simple-property name="disabled:1" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable the JSP container. The default value is false."/>
+        <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="false" defaultValue="true" description="When a runtime error occurs, attempts to display corresponding JSP source fragment. The default value is true."/>
+        <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="false" defaultValue="false" description="Write SMAP data to a file. The default value is false."/>
+        <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable errors when using a bad class in useBean. The default value is false."/>
+        <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="false" defaultValue="false" description="Generate String constants as char arrays. The default value is false."/>
+        <c:simple-property name="java-encoding" required="false" type="string" readOnly="false" defaultValue="UTF8" description="Specify the encoding used for Java sources. The default value is UTF8."/>
+        <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="false" defaultValue="true" description="Keep the generated Servlets. The default value is true."/>
+        <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="false" defaultValue="true" description="Map to the JSP source. The default value is true."/>
+        <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="false" defaultValue="4" description="Minimum amount of time between two tests for updates, in seconds. The default value is 4."/>
+        <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="false" defaultValue="false" description="Retry failed JSP compilations on each request. The default value is false."/>
+        <c:simple-property name="scratch-dir" required="false" type="string" readOnly="false" description="Specify a different work directory."/>
+        <c:simple-property name="smap" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable SMAP. The default value is true."/>
+        <c:simple-property name="source-vm" required="false" type="string" readOnly="false" defaultValue="1.5" description="Source VM level for compilation. The default value is 1.5."/>
+        <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable tag pooling. The default value is true."/>
+        <c:simple-property name="target-vm" required="false" type="string" readOnly="false" defaultValue="1.5" description="Target VM level for compilation. The default value is 1.5."/>
+        <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="false" defaultValue="false" description="Trim some spaces from the generated Servlet. The default value is false."/>
+        <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
       </c:group>
-      <!--           <c:group name="child:configuration=container" displayName="Container">
-                      <c:list-property name="mime-mapping" description="A mime-mapping definition." >
-                          <c:map-property name="mime-mapping" >
-                                  <c:simple-property name="name" description="A MIME mapping name"/>
-                                  <c:simple-property name="value" description="A MIME mapping value"/>
-                          </c:map-property>
-                      </c:list-property>
-                      <c:list-property name="welcome-file" description="A welcome file declaration." >
-                          <c:simple-property name="welcome-file" />
-                      </c:list-property>
-                  </c:group>
-      -->
+      <c:group name="child:configuration=container" displayName="Container">
+        <c:list-property name="mime-mapping" description="A mime-mapping definition." >
+          <c:map-property name="mime-mapping:collapsed" >
+            <c:simple-property name="name" description="A MIME mapping name"/>
+            <c:simple-property name="value" description="A MIME mapping value"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="welcome-file" required="false" description="A welcome file declaration." >
+          <c:simple-property name="welcome-file" type="string"/>
+        </c:list-property>
+      </c:group>
     </resource-configuration>
 
     <service name="Connector"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-             createDeletePolicy="both"
-        >
+             createDeletePolicy="both">
+
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="connector"/>
       </plugin-configuration>
@@ -1219,37 +1190,26 @@
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
 
       <resource-configuration>
-        <c:simple-property name="protocol" required="true" type="string" description="The web connector protocol."/>
-        <c:simple-property name="socket-binding" required="true" type="string"
-                           description="The web connector socket-binding reference, this connector should be bound to.">
+        <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
+        <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
+        <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
+        <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
+        <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
+        <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
+        <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The web connector protocol."/>
+        <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
+        <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
+        <c:simple-property name="redirect-port" required="false" type="integer" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
+        <c:simple-property name="scheme" required="false" type="string" readOnly="false" description="The web connector scheme."/>
+        <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
+        <c:simple-property name="socket-binding" required="true" type="string" description="The web connector socket-binding reference, this connector should be bound to.">
           <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
           <!-- TODO different for Domain vs standalone -->
         </c:simple-property>
-        <c:simple-property name="scheme" type="string" default="http" description="The web connector scheme." required="true"/>
-        <c:simple-property name="executor" type="string" required="false"
-                           description="The name of the executor that should be used for the processing threads of this connector. Defaults to using an internal pool."/>
-        <c:simple-property name="enabled" type="boolean" default="true"
-                           description="Defines whether the connector should be started on startup."/>
-        <c:simple-property name="enable-lookups" type="boolean" defaultValue="false"
-                           description="Enable DNS lookups for Servlet API."/>
-        <c:simple-property name="proxy-name" type="string" required="false"
-                           description="The host name that will be used when sending a redirect. The default value is null."/>
-        <c:simple-property name="proxy-port" type="integer" required="false"
-                           description="The port that will be used when sending a redirect."/>
-        <c:simple-property name="max-post-size" type="integer" defaultValue="2097152"
-                           description="Maximum size in bytes of a POST request that can be parsed by the container."/>
-        <c:simple-property name="max-save-post-size" type="integer" defaultValue="4096"
-                           description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes."/>
-        <c:simple-property name="secure" type="boolean" readOnly="true" defaultValue="false"
-                           description="Indicates if content sent or received by the connector is secured from the user perspective."/>
-        <c:simple-property name="redirect-port" type="integer" readOnly="true" defaultValue="8443"
-                           description="The port for redirection to a secure connector."/>
-        <c:simple-property name="max-connections" type="integer" required="false"
-                           description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
-        <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers." required="false">
-          <c:simple-property name="virtual-server"/>
-        </c:list-property>
-        <c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
+        <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
+
+        <!-- c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
           <c:simple-property name="name" type="string" readOnly="true" description="The configuration name." required="false"/>
           <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias." required="false"/>
           <c:simple-property name="password" type="password" readOnly="true" description="Password." required="false"/>
@@ -1268,7 +1228,7 @@
                              required="false" description="Certificate authority revocation list."/>
           <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache." required="false"/>
           <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout." required="false"/>
-        </c:map-property>
+        </c:map-property-->
       </resource-configuration>
 
     </service>
@@ -1276,6 +1236,7 @@
     <service name="VHost"
              discovery="SubsystemDiscovery"
              class="BaseComponent">
+
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="virtual-server"/>
       </plugin-configuration>
@@ -1284,9 +1245,11 @@
         <c:list-property name="alias" description="The virtual server aliases" displayName="Virtual server aliases">
           <c:simple-property name="alias"/>
         </c:list-property>
-        <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war"
-                           description="The web module deployment name that will be mapped as the root webapp."/>
-        <c:map-property name="access-log" description="The access log configuration for this virtual server.">
+        <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>     
+        <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
+        <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
+
+        <!-- c:map-property name="access-log" required="false" description="The access log configuration for this virtual server.">
           <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" required="false" description="The access log pattern."/>
           <c:simple-property name="resolve-hosts" type="boolean" readOnly="true" defaultValue="false" required="false" description="Host resolution."/>
           <c:simple-property name="extended" type="boolean" readOnly="true" defaultValue="false" required="false"
@@ -1299,9 +1262,8 @@
                                description="The folder the path is relative to."/>
           </c:map-property>
         </c:map-property>
-        <c:list-property name="rewrite" description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request.">
+        <c:list-property name="rewrite" required="false" description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request.">
           <c:map-property name="rewrite">
-
             <c:simple-property name="pattern" required="false" type="string" readOnly="true" description="The pattern that will be matched."/>
             <c:simple-property name="substitution" required="false" type="string" readOnly="true"
                                description="The string that will replace the original URL or vhost."/>
@@ -1310,11 +1272,9 @@
               <c:simple-property name="condition"/>
             </c:list-property>
           </c:map-property>
-        </c:list-property>
-        <c:simple-property name="enable-welcome-root" type="boolean" description="Whether or not the bundled welcome directory is used as the root web context."/>
+        </c:list-property-->
       </resource-configuration>
     </service>
-
 
   </service>
 

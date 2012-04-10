@@ -2528,7 +2528,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              class="BaseComponent"
              discovery="SubsystemDiscovery"
              description="JNDI bindings for primitive types"
-             singleton="true">
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="binding"/>

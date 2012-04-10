@@ -974,7 +974,7 @@
         </service><!-- End of server service definition -->
 
        </service><!-- End of mail-session service definition -->
- 
+
     </service><!-- End of Mail service definition -->
 
   </server><!-- End of AS7 standalone server definition -->
@@ -1254,7 +1254,7 @@
         <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
       </c:group>
       <c:group name="child:configuration=container" displayName="Container">
-        <c:list-property name="mime-mapping" description="A mime-mapping definition." >
+        <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false" >
           <c:map-property name="mime-mapping:collapsed" >
             <c:simple-property name="name" description="A MIME mapping name"/>
             <c:simple-property name="value" description="A MIME mapping value"/>
@@ -1339,7 +1339,7 @@
         <c:list-property name="alias" description="The virtual server aliases" displayName="Virtual server aliases">
           <c:simple-property name="alias"/>
         </c:list-property>
-        <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>     
+        <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>
         <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
 
@@ -3852,7 +3852,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <resource-configuration>
       <c:simple-property name="show-model" required="false" type="boolean" readOnly="false" description="Set to 'true' to include MBeans for the model controller resources"/>
-      <c:group name="child:remoting-connector=jmx" displayName="JBoss remoting connector for the JMX subsystem.">
+      <c:group name="children:remoting-connector" displayName="JBoss remoting connector for the JMX subsystem.">
         <c:simple-property name="use-management-endpoint" required="false" type="boolean" readOnly="false" defaultValue="true" description="If true the connector will use the management endpoint, otherwise it will use the remoting subsystem one. The default value is true."/>
       </c:group>
     </resource-configuration>

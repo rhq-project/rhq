@@ -208,8 +208,15 @@ public class Domain2Descriptor {
 
             Type ptype = getTypeFromProps(props);
             if (ptype == Type.OBJECT && mode != D2DMode.METRICS) {
-                System.out.println("<c:map-property name=\"" + key + "\" description=\"" + props.get("description")
-                    + "\" >");
+                StringBuilder requiredStatus = new StringBuilder();
+                Object required = props.get("required");
+                if (required != null && (Boolean) required) {
+                    requiredStatus.append(" required=\"true\"");
+                } else {
+                    requiredStatus.append(" required=\"false\"");
+                }
+                System.out.println("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
+                    + props.get("description") + "\" >");
 
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get("attributes");
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
@@ -416,14 +423,14 @@ public class Domain2Descriptor {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
 
             Object o = entry.getValue();
-            if (o instanceof Map) {
+            if (o instanceof Map) {// regular json type
                 Map<String, Object> entryValue = (Map<String, Object>) o;
                 String entryKey = entry.getKey();
 
                 Type type = getTypeFromProps(entryValue);
                 builder.append(generateProperty(4, entryValue, type, entryKey, null));
                 builder.append('\n');
-            } else {
+            } else {//do we list this as a comment because it's an as7 invalid type?
 
                 builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
                     .append("-->");
@@ -495,7 +502,37 @@ public class Domain2Descriptor {
         if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
             sb.append(generateOptionList(indent, properties, properties[7]));
         } else if ((mode == D2DMode.OPERATION) && (type.rhqName.equalsIgnoreCase("-object-"))) {
-            sb.append(useAvailableOptionsList(indent, props, null));
+            //detect map type if present an build map instead
+            if (props.get("allowed") == null) {
+                //<c:map-property name="filter" description="Defines a simple filter type." >
+                StringBuilder mb = new StringBuilder();
+                doIndent(indent, mb);
+                mb.append("<c:map-property name=\"");
+                mb.append(entryName);
+                mb.append('"');
+                if (required != null && (Boolean) required) {
+                    mb.append(" required=\"true\"");
+                } else {
+                    mb.append(" required=\"false\"");
+                }
+                appendDescription(mb, description, defaultValueDescription);
+                mb.append(">\n");
+                //iterate over map children
+                Map<String, Object> mapType = (Map<String, Object>) props.get("value-type");
+                for (Map.Entry<String, Object> entry : mapType.entrySet()) {
+                    Object o = entry.getValue();
+                    Map<String, Object> entryValue = (Map<String, Object>) o;
+                    String entryKey = entry.getKey();
+                    Type childType = getTypeFromProps(entryValue);
+                    mb.append(generateProperty(indent + 4, entryValue, childType, entryKey, null));
+                    mb.append('\n');
+                }
+                doIndent(indent, mb);
+                mb.append("</c:map-property>");
+                return mb;
+            } else {//contents of allowed defines the dropdown values.
+                sb.append(useAvailableOptionsList(indent, props, null));
+            }
         } else { //no default provided close tag.
             sb.append("/>");
         }

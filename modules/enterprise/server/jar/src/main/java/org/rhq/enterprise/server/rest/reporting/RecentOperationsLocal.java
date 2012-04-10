@@ -16,7 +16,7 @@ public interface RecentOperationsLocal {
     @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentOperations(
-            @QueryParam("operationRequestStatus") @DefaultValue("inprogress,success,failure,cancelled") String operationRequestStatus,
+            @QueryParam("status") @DefaultValue("inprogress,success,failure,canceled") String operationRequestStatus,
             @QueryParam("startTime") Long startTime,
             @QueryParam("endTime") Long endTime,
             @Context UriInfo uriInfo,

@@ -1318,7 +1318,7 @@
 
   </service>
 
-  <server name="General JCA connectors"
+  <service name="General JCA connectors"
           discovery="SubsystemDiscovery"
           class="BaseComponent"
           singleton="true"
@@ -1352,9 +1352,9 @@
                          description="enable/disable error information logging for cached connection manager"/>
     </resource-configuration>
 
-  </server>
+  </service>
 
-  <server name="Datasources"
+  <service name="Datasources"
           discovery="SubsystemDiscovery"
           class="DatasourceComponent"
           singleton="true"
@@ -1770,7 +1770,7 @@
             </service>
     -->
 
-  </server>
+  </service>
 
   <service name="Logging"
           discovery="SubsystemDiscovery"

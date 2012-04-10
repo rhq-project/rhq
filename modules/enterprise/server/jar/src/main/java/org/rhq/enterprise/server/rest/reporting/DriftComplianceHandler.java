@@ -18,13 +18,13 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -40,7 +40,7 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, String resourceTypeId,
+    public StreamingOutput generateReport(UriInfo uriInfo, HttpServletRequest request, HttpHeaders headers, String resourceTypeId,
         String version) {
         return super.generateReport(uriInfo, request, headers, resourceTypeId, version);
     }
@@ -64,7 +64,8 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
 
     @Override
     protected String getDetailsHeader() {
-        return super.getDetailsHeader() + ",In Compliance?";
+        return "Resource Type,Plugin,Category,Version,Name,Ancestry,Description,Availability,In Compliance?," +
+            "Details URL";
     }
 
     @Override
@@ -77,13 +78,13 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     @Override
     protected List<String> getDetailsColumns() {
         List<String> columns = super.getDetailsColumns();
-        columns.add("inCompliance");
+        columns.add(columns.size() - 1, "inCompliance");
         return columns;
     }
 
     @Override
-    protected Map<String, PropertyConverter<Resource>> getPropertyConverters() {
-        Map<String, PropertyConverter<Resource>> propertyConverters = super.getPropertyConverters();
+    protected LinkedHashMap<String, PropertyConverter<Resource>> getPropertyConverters(HttpServletRequest request) {
+        LinkedHashMap<String, PropertyConverter<Resource>> propertyConverters = super.getPropertyConverters(request);
         propertyConverters.put("inCompliance", new PropertyConverter<Resource>() {
             @Override
             public Object convert(Resource resource, String propertyName) {

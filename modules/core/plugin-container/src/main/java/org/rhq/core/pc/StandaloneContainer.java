@@ -91,12 +91,11 @@ public class StandaloneContainer {
             br = new BufferedReader(new InputStreamReader(System.in));
             isStdin = true;
             sc.run(br);
-        }
-        else {
+        } else {
             try {
                 br = new BufferedReader(new InputStreamReader(new FileInputStream(argv[0])));
                 try {
-                    isStdin=false;
+                    isStdin = false;
                     sc.run(br);
                 } finally {
                     try {
@@ -165,7 +164,7 @@ public class StandaloneContainer {
 
                 if (answer.equalsIgnoreCase(Command.STDIN.toString())) {
                     br = new BufferedReader(new InputStreamReader(System.in));
-                    isStdin=true;
+                    isStdin = true;
                 }
 
                 // Check for history commands
@@ -188,7 +187,6 @@ public class StandaloneContainer {
         pc.shutdown();
 
     }
-
 
     /**
      * Dispatches the input to various commands that do the actual work.
@@ -282,39 +280,37 @@ public class StandaloneContainer {
             setResourcePluginConfig(tokens, false);
             break;
         case SP_CONFIG:
-            setResourcePluginConfig(tokens,true);
+            setResourcePluginConfig(tokens, true);
             break;
         }
 
         return false;
     }
 
-   /**
-    * Prints details about a resource
-    * @param tokens tokenized command line tokens[0] is the command itself
-    */
-   private void printResource(String[] tokens)
-   {
-      int id;
-      if (tokens.length>1)
-         id = Integer.valueOf(tokens[1]);
-      else
-         id = resourceId;
-      ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
-      if (resourceContainer != null) {
-         Resource r = resourceContainer.getResource();
-         System.out.println(r);
-      }
-      else {
-         System.err.println("There is no resource with id " + id);
-      }
-   }
-
-   /**
-     * Invokes an operation
+    /**
+     * Prints details about a resource
      * @param tokens tokenized command line tokens[0] is the command itself
-     * @throws Exception if anything goes wrong
      */
+    private void printResource(String[] tokens) {
+        int id;
+        if (tokens.length > 1)
+            id = Integer.valueOf(tokens[1]);
+        else
+            id = resourceId;
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
+        if (resourceContainer != null) {
+            Resource r = resourceContainer.getResource();
+            System.out.println(r);
+        } else {
+            System.err.println("There is no resource with id " + id);
+        }
+    }
+
+    /**
+      * Invokes an operation
+      * @param tokens tokenized command line tokens[0] is the command itself
+      * @throws Exception if anything goes wrong
+      */
     private void invokeOps(String[] tokens) throws Exception {
         if (resourceId == 0) {
             System.err.println("No resource selected");
@@ -325,12 +321,13 @@ public class StandaloneContainer {
         if (operation.equals("-list")) {
             ResourceType rt = getTypeForResourceId();
             Set<OperationDefinition> opDefs = rt.getOperationDefinitions();
-            for (OperationDefinition def :opDefs) {
+            for (OperationDefinition def : opDefs) {
                 System.out.println(def.getName() + " : " + def.getDescription());
                 ConfigurationDefinition params = def.getParametersConfigurationDefinition();
-                if (params!=null && params.getPropertyDefinitions()!=null && !params.getPropertyDefinitions().isEmpty()) {
+                if (params != null && params.getPropertyDefinitions() != null
+                    && !params.getPropertyDefinitions().isEmpty()) {
                     System.out.println("  Parameters:");
-                    for (Map.Entry<String,PropertyDefinition> param : params.getPropertyDefinitions().entrySet()) {
+                    for (Map.Entry<String, PropertyDefinition> param : params.getPropertyDefinitions().entrySet()) {
                         System.out.println("    " + param.getKey()); // TODO add more info
                     }
                 }
@@ -340,7 +337,6 @@ public class StandaloneContainer {
             }
             return;
         }
-
 
         OperationContext operationContext = new OperationContextImpl(resourceId);
         OperationServices operationServices = operationContext.getOperationServices();
@@ -365,16 +361,15 @@ public class StandaloneContainer {
 
     }
 
-    private void setResourcePluginConfig(String[] tokens,boolean isPluginConfig) throws PluginContainerException {
+    private void setResourcePluginConfig(String[] tokens, boolean isPluginConfig) throws PluginContainerException {
         if (resourceId == 0) {
             System.err.println("No resource set");
             return;
         }
 
-
         Configuration newConfig = null;
         Configuration config = null;
-        boolean merge=false;
+        boolean merge = false;
         int pos = 1;
         if (tokens.length < 2) {
             System.err.println("Need at least 1 token");
@@ -384,7 +379,7 @@ public class StandaloneContainer {
             merge = true;
             pos++;
         }
-        if (tokens.length < pos+1) {
+        if (tokens.length < pos + 1) {
             System.err.println("Need at least 1 token");
             return;
         }
@@ -399,7 +394,7 @@ public class StandaloneContainer {
             if (merge) {
                 // copy over existing properties that are not in newConfig
                 for (Property p : config.getProperties()) {
-                    if (newConfig.get(p.getName())==null)
+                    if (newConfig.get(p.getName()) == null)
                         newConfig.put(p);
                 }
             }
@@ -410,16 +405,14 @@ public class StandaloneContainer {
             if (merge) {
                 // copy over existing properties that are not in newConfig
                 for (Property p : config.getProperties()) {
-                    if (newConfig.get(p.getName())==null)
+                    if (newConfig.get(p.getName()) == null)
                         newConfig.put(p);
                 }
             }
-            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,newConfig,resourceId);
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1, newConfig, resourceId);
             cm.updateResourceConfiguration(request);
         }
     }
-
-
 
     private ResourceType getTypeForResourceId() {
         ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
@@ -499,7 +492,7 @@ public class StandaloneContainer {
     private void children(String[] tokens) {
 
         int id;
-        if (tokens.length>1)
+        if (tokens.length > 1)
             id = Integer.valueOf(tokens[1]);
         else
             id = resourceId;
@@ -541,21 +534,22 @@ public class StandaloneContainer {
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void find(String[] tokens) {
-       StringBuilder builder = new StringBuilder();
-       int len = tokens.length;
-       for (int i = 2; i < len ; i++) {
-          builder.append(tokens[i]);
-          if (i<len-1)
-             builder.append(" ");
-       }
-       String pattern = builder.toString();
+        StringBuilder builder = new StringBuilder();
+        int len = tokens.length;
+        for (int i = 2; i < len; i++) {
+            builder.append(tokens[i]);
+            if (i < len - 1)
+                builder.append(" ");
+        }
+        String pattern = builder.toString();
         pattern = pattern.replaceAll("\\*", "\\.\\*");
 
         if (tokens[1].equals("r") || tokens[1].startsWith("res")) {
             Set<Resource> resources = getResources();
             for (Resource res : resources) {
                 if (res.getName().matches(pattern)) {
-                    System.out.println(res.getId() + ": " + res.getName() + " (parent= " + res.getParentResource() + " )");
+                    System.out.println(res.getId() + ": " + res.getName() + " (parent= " + res.getParentResource()
+                        + " )");
                     dollarR = res.getId();
                 }
             }
@@ -608,9 +602,9 @@ public class StandaloneContainer {
                 System.err.println("Sorry, but [" + arg + "] is no valid number");
             }
             ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
-            if (rc==null) {
+            if (rc == null) {
                 System.err.println("No resource with that id exists");
-                resourceId=0;
+                resourceId = 0;
             }
         } else
             System.err.println("Bad command " + tokens[1]);
@@ -667,7 +661,7 @@ public class StandaloneContainer {
         if (tokens[1].equals("-list")) {
             ResourceType rt = getTypeForResourceId();
             Set<MeasurementDefinition> defs = rt.getMetricDefinitions();
-            if (defs==null || defs.isEmpty()) {
+            if (defs == null || defs.isEmpty()) {
                 System.out.println("Resource has no metrics");
                 return;
             }
@@ -677,7 +671,7 @@ public class StandaloneContainer {
             return;
         }
 
-        if (tokens.length<3) {
+        if (tokens.length < 3) {
             System.err.println("measure needs at least two parameters");
             return;
         }
@@ -743,7 +737,7 @@ public class StandaloneContainer {
         String[] pairs = input.split("\\|\\|");
         for (String pair : pairs) {
             String[] kv = pair.split("=");
-            if (kv.length %2 ==1 ) {
+            if (kv.length % 2 == 1) {
                 System.err.println("Token " + pair + " is invalid as it contains no '='");
                 return null;
             }
@@ -759,7 +753,8 @@ public class StandaloneContainer {
             return;
         }
 
-        Configuration config = pc.getInventoryManager().getResourceContainer(resourceId).getResource().getPluginConfiguration();
+        Configuration config = pc.getInventoryManager().getResourceContainer(resourceId).getResource()
+            .getPluginConfiguration();
         showConfig(config);
     }
 

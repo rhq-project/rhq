@@ -20,8 +20,6 @@ package org.rhq.core.pc.standaloneContainer;
 
 import java.util.EnumSet;
 
-import org.rhq.core.pc.StandaloneContainer;
-
 /**
  * List of possible commands of the standalone container
  * @author Heiko W. Rupp
@@ -30,27 +28,50 @@ public enum Command {
     ASCAN("as", "", 0, "Triggers an availability scan"), //
     AVAIL("a", " ( id )", 0,
         "Shows an availability report. If id is given, only shows availability for resource with id id"), //
-    CHILDREN("chi", "[id]", 0, "Shows the direct children of the resource with the passed id, or if no id passed of the current resource"), //
+    CHILDREN("chi", "[id]", 0,
+        "Shows the direct children of the resource with the passed id, or if no id passed of the current resource"), //
     DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
     //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
     FIND("find", "r | t  | rt <name>", 2,
         "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
-            + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
-    INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations.\n Parameters are given as key=value; key-value-pairs are separated by ||"), //
-    MEASURE("m", "datatype property+", 1, "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
+            + " Will set $r for the last resource shown."),//
+    HELP("h", "", 0, "Shows this help"), //
+    INVOKE(
+        "i",
+        "operation [params]",
+        1,
+        "Triggers running an operation. If operation is '-list' it shows available operations.\n Parameters are given as key=value; key-value-pairs are separated by ||"), //
+    MEASURE(
+        "m",
+        "datatype property+",
+        1,
+        "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
     NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
-    PRINT("p","[id]",0,"Prints information about the resource with id 'id'. If no id is given, the current resource is printed."),//
+    PRINT("p", "[id]", 0,
+        "Prints information about the resource with id 'id'. If no id is given, the current resource is printed."), //
     QUIT("quit", "", 0, "Terminates the application"), //
     RESOURCES("res", "", 0, "Shows the discovered resources"), //
-    SET("set", "'resource' N", 2,
+    SET(
+        "set",
+        "'resource' N",
+        2,
         "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call. 'id' is an alias for 'res'"), //
-    STDIN("stdin","",0, "Stop reading the batch file and wait for commands on stdin"), //
+    STDIN("stdin", "", 0, "Stop reading the batch file and wait for commands on stdin"), //
     WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
-    P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
-    R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource."),
-    SR_CONFIG("rcs", "", 1, "[-m] [parameters] set resource config. '-m' merges with current config; default is overwrite. Properties are separated by ||."),
-    SP_CONFIG("pcs", "", 1, "[-m] [parameters] set plugin config.'-m' merges with current config; default is overwrite. Properties are separated by ||.")
-    ;
+    P_CONFIG("pc", "", 0,
+        "Shows the plugin configuration of the current resource."),
+    R_CONFIG("rc", "", 0,
+        "Shows the resource configuration of the current resource."),
+    SR_CONFIG(
+        "rcs",
+        "",
+        1,
+        "[-m] [parameters] set resource config. '-m' merges with current config; default is overwrite. Properties are separated by ||."),
+    SP_CONFIG(
+        "pcs",
+        "",
+        1,
+        "[-m] [parameters] set plugin config.'-m' merges with current config; default is overwrite. Properties are separated by ||.");
 
     private String abbrev;
     private String args;

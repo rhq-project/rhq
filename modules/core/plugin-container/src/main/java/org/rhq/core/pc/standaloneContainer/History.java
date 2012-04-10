@@ -40,7 +40,6 @@ public class History {
     /** Holder for the command history */
     List<String> history = new ArrayList<String>(10);
 
-
     /**
      * Handle processing of the command history. This gives some csh like commands
      * and records the commands given. Nice side effect is the possibility to write the

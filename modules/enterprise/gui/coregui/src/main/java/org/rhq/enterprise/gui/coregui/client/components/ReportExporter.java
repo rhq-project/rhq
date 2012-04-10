@@ -20,14 +20,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import java.util.Date;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
-import java.util.Date;
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * Exporter for building urls to reports (csv).
@@ -55,7 +54,8 @@ public class ReportExporter {
      */
     String[] operationRequestStatuses;
 
-    Set<Integer> resourceTypeIds;
+    String resourceTypeId;
+    String version;
     
     // for Recent Drift Report
     String driftDefinition;
@@ -112,10 +112,18 @@ public class ReportExporter {
         return newExportDialog;
     }
 
-    public static ReportExporter createExporterForInventorySummary(String reportUrl  ) {
+    public static ReportExporter createExporterForInventorySummary(String reportUrl) {
         return new ReportExporter(reportUrl);
     }
 
+    public static ReportExporter createExporterForInventorySummary(String reportUrl, String resourceTypeId,
+        String version) {
+        ReportExporter exporter = new ReportExporter(reportUrl);
+        exporter.resourceTypeId = resourceTypeId;
+        exporter.version = version;
+
+        return exporter;
+    }
 
     public void setAlertPriorityFilters(String[] alertPriorityFilters) {
         this.alertPriorityFilters = alertPriorityFilters;
@@ -137,8 +145,12 @@ public class ReportExporter {
     private void buildQueryParameters() {
         queryString = new StringBuilder();
 
-        if (null != resourceTypeIds && !resourceTypeIds.isEmpty()) {
-            addQueryParameter("resourceTypeId", StringUtility.toString(resourceTypeIds));
+        if (null != resourceTypeId && !resourceTypeId.isEmpty()) {
+            addQueryParameter("resourceTypeId", resourceTypeId);
+        }
+
+        if (null != version && !version.isEmpty()) {
+            addQueryParameter("version", version);
         }
 
         if(!isEmpty(operationRequestStatuses)){

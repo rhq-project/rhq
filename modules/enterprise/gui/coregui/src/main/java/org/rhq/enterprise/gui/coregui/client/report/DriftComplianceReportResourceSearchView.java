@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-
 import java.util.EnumSet;
 import java.util.List;
 
@@ -56,6 +54,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+
 /**
  * Extends the ResourceSearchView with drift compliance information.
  * 
@@ -66,8 +66,8 @@ public class DriftComplianceReportResourceSearchView extends ResourceSearchView 
 
     private final int resourceTypeId;
 
-    public DriftComplianceReportResourceSearchView(String locatorId, Criteria criteria) {
-        super(locatorId, criteria);
+    public DriftComplianceReportResourceSearchView(String locatorId, Criteria criteria, boolean exportable) {
+        super(locatorId, criteria, exportable);
 
         setInitialCriteriaFixed(true);
 

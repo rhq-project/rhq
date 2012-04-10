@@ -92,7 +92,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new DriftComplianceReportResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList = new DriftComplianceReportResourceSearchView(extendLocatorId("resourceList"), criteria, true);
         addMember(resourceList);
         markForRedraw();
     }

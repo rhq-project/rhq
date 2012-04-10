@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -28,6 +29,9 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 
@@ -36,9 +40,9 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean showAllDetails,
-        String resourceTypeIds) {
-        return super.generateReport(uriInfo, request, headers, showAllDetails, resourceTypeIds);
+    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, String resourceTypeId,
+        String version) {
+        return super.generateReport(uriInfo, request, headers, resourceTypeId, version);
     }
 
     @Override
@@ -47,8 +51,8 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     }
 
     @Override
-    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId) {
-        ResourceCriteria criteria = super.getDetailsQueryCriteria(resourceTypeId);
+    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId, String version) {
+        ResourceCriteria criteria = super.getDetailsQueryCriteria(resourceTypeId, version);
         criteria.fetchDriftDefinitions(true);
         return criteria;
     }
@@ -73,8 +77,25 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     @Override
     protected List<String> getDetailsColumns() {
         List<String> columns = super.getDetailsColumns();
-        columns.add("resourceInCompliance");
+        columns.add("inCompliance");
         return columns;
     }
 
+    @Override
+    protected Map<String, PropertyConverter<Resource>> getPropertyConverters() {
+        Map<String, PropertyConverter<Resource>> propertyConverters = super.getPropertyConverters();
+        propertyConverters.put("inCompliance", new PropertyConverter<Resource>() {
+            @Override
+            public Object convert(Resource resource, String propertyName) {
+                for (DriftDefinition def : resource.getDriftDefinitions()) {
+                    if (def.getComplianceStatus() != DriftComplianceStatus.IN_COMPLIANCE) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        });
+
+        return propertyConverters;
+    }
 }

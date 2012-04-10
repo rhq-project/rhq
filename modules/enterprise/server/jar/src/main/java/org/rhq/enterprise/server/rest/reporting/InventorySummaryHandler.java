@@ -22,10 +22,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.ejb.EJB;
@@ -37,14 +37,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -63,48 +61,98 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers,
-        boolean showAllDetails, final String resourceTypeIds) {
+        final String resourceTypeId, final String version) {
         final List<ResourceInstallCount> results = getSummaryCounts();
         final MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        Set<Integer> ids = parseIds(resourceTypeIds);
+        Set<Integer> ids = parseIds(resourceTypeId);
 
-        if (showAllDetails) {
-            ids = Collections.emptySet();
-            return new OutputDetailedInventorySummary(results, ids);
-        } else if (!ids.isEmpty()) {
-            return new OutputDetailedInventorySummary(results, ids);
-        } else {
+        if (StringUtil.isEmpty(resourceTypeId)) {
+            // output only resource types
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
-                    if (mediaType.toString().equals(MediaType.APPLICATION_XML)) {
-                        try {
-                            JAXBContext context = JAXBContext.newInstance(ResourceInstallCount.class);
-                            Marshaller marshaller = context.createMarshaller();
-                            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-                            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                    CsvWriter<ResourceInstallCount> csvWriter = new CsvWriter<ResourceInstallCount>();
+                    List<String> columns = getColumns();
+                    csvWriter.setColumns(columns.toArray(new String[columns.size()]));
 
-                            stream.write("<collection>".getBytes());
-                            for (ResourceInstallCount installCount : results) {
-                                marshaller.marshal(installCount, stream);
+                    stream.write((getHeader() + "\n").getBytes());
+                    for (ResourceInstallCount installCount : results) {
+                        csvWriter.write(installCount, stream);
+                    }
+                }
+            };
+        } else {
+            // output resource details for specified type and version
+            return new StreamingOutput() {
+                @Override
+                public void write(OutputStream stream) throws IOException, WebApplicationException {
+                    ResourceCriteria criteria = getDetailsQueryCriteria(Integer.parseInt(resourceTypeId), version);
+
+                    CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
+                        new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                            @Override
+                            public PageList<Resource> execute(ResourceCriteria criteria) {
+                                return resourceMgr.findResourcesByCriteria(caller, criteria);
                             }
-                            stream.write("</collection>".getBytes());
-                        } catch (JAXBException e) {
-                            throw new WebApplicationException(e);
-                        }
-                    } else if (mediaType.toString().equals("text/csv")) {
-                        CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
-                        List<String> columns = getColumns();
-                        csvWriter.setColumns(columns.toArray(new String[columns.size()]));
+                        };
 
-                        stream.write((getHeader() + "\n").getBytes());
-                        for (ResourceInstallCount installCount : results) {
-                            csvWriter.write(new DetailedSummary(installCount, null), stream);
-                        }
+                    CriteriaQuery<Resource, ResourceCriteria> query =
+                        new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+
+                    CsvWriter<Resource> csvWriter = new CsvWriter<Resource>();
+                    List<String> columns = getDetailsColumns();
+                    csvWriter.setColumns(columns.toArray(new String[columns.size()]));
+
+                    Map<String, PropertyConverter<Resource>> propertyConverters = getPropertyConverters();
+                    for (String property : propertyConverters.keySet()) {
+                        csvWriter.setPropertyConverter(property, propertyConverters.get(property));
+                    }
+
+                    stream.write((getDetailsHeader() + "\n").getBytes());
+                    for (Resource resource : query) {
+                        csvWriter.write(resource, stream);
                     }
                 }
             };
         }
+
+//        if (showAllDetails) {
+//            ids = Collections.emptySet();
+//            return new OutputDetailedInventorySummary(results, ids);
+//        } else if (!ids.isEmpty()) {
+//            return new OutputDetailedInventorySummary(results, ids);
+//        } else {
+//            return new StreamingOutput() {
+//                @Override
+//                public void write(OutputStream stream) throws IOException, WebApplicationException {
+//                    if (mediaType.toString().equals(MediaType.APPLICATION_XML)) {
+//                        try {
+//                            JAXBContext context = JAXBContext.newInstance(ResourceInstallCount.class);
+//                            Marshaller marshaller = context.createMarshaller();
+//                            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+//                            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+//
+//                            stream.write("<collection>".getBytes());
+//                            for (ResourceInstallCount installCount : results) {
+//                                marshaller.marshal(installCount, stream);
+//                            }
+//                            stream.write("</collection>".getBytes());
+//                        } catch (JAXBException e) {
+//                            throw new WebApplicationException(e);
+//                        }
+//                    } else if (mediaType.toString().equals("text/csv")) {
+//                        CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
+//                        List<String> columns = getColumns();
+//                        csvWriter.setColumns(columns.toArray(new String[columns.size()]));
+//
+//                        stream.write((getHeader() + "\n").getBytes());
+//                        for (ResourceInstallCount installCount : results) {
+//                            csvWriter.write(new DetailedSummary(installCount, null), stream);
+//                        }
+//                    }
+//                }
+//            };
+//        }
     }
 
     private Set<Integer> parseIds(String resourceTypeIdParam) {
@@ -117,100 +165,98 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         return ids;
     }
 
-    private class OutputDetailedInventorySummary implements StreamingOutput {
-
-        // map of counts keyed by resource type id
-        private Map<ResourceInstallCountKey, ResourceInstallCount> installCounts =
-            new LinkedHashMap<ResourceInstallCountKey, ResourceInstallCount>();
-
-        private Set<Integer> resourceTypeIds;
-
-        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCounts,
-            Set<Integer> resourceTypeIds) {
-            this.resourceTypeIds = resourceTypeIds;
-            for (ResourceInstallCount installCount : installCounts) {
-                this.installCounts.put(new ResourceInstallCountKey(installCount.getTypeId(), installCount.getVersion()),
-                    installCount);
-            }
-        }
-
-        @Override
-        public void write(OutputStream output) throws IOException, WebApplicationException {
-            ResourceCriteria criteria;
-            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor;
-            CriteriaQuery<Resource, ResourceCriteria> query;
-
-            CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
-            List<String> columns = getColumns();
-            columns.addAll(getDetailsColumns());
-            csvWriter.setColumns(columns.toArray(new String[columns.size()]));
-
-            output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
-
-            // if there are no resource type ids, that means we are fetching everything,
-            // that is all resource details for all types.
-            if (resourceTypeIds.isEmpty()) {
-                criteria = getDetailsQueryCriteria(null);
-                queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-                    @Override
-                    public PageList<Resource> execute(ResourceCriteria criteria) {
-                        return resourceMgr.findResourcesByCriteria(caller, criteria);
-                    }
-                };
-                query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-                for (Resource resource : query) {
-                    ResourceInstallCountKey key = new ResourceInstallCountKey(resource.getResourceType().getId(),
-                        resource.getVersion());
-                    ResourceInstallCount installCount = installCounts.get(key);
-                    if (installCount != null) {
-                          csvWriter.write(new DetailedSummary(installCount, resource), output);
-                    }
-                }
-            } else {
-                for (ResourceInstallCount installCount : installCounts.values()) {
-                    if (resourceTypeIds.contains(installCount.getTypeId())) {
-                        criteria = getDetailsQueryCriteria(installCount.getTypeId());
-                        queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-                            @Override
-                            public PageList<Resource> execute(ResourceCriteria criteria) {
-                                return resourceMgr.findResourcesByCriteria(caller, criteria);
-                            }
-                        };
-                        query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-                        for (Resource resource : query) {
-                            csvWriter.write(new DetailedSummary(installCount, resource), output);
-                        }
-                    } else {
-                        csvWriter.write(new DetailedSummary(installCount, null), output);
-                    }
-                }
-            }
-        }
-    }
+//    private class OutputDetailedInventorySummary implements StreamingOutput {
+//
+//        // map of counts keyed by resource type id
+//        private Map<ResourceInstallCountKey, ResourceInstallCount> installCounts =
+//            new LinkedHashMap<ResourceInstallCountKey, ResourceInstallCount>();
+//
+//        private Set<Integer> resourceTypeIds;
+//
+//        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCounts,
+//            Set<Integer> resourceTypeIds) {
+//            this.resourceTypeIds = resourceTypeIds;
+//            for (ResourceInstallCount installCount : installCounts) {
+//                this.installCounts.put(new ResourceInstallCountKey(installCount.getTypeId(), installCount.getVersion()),
+//                    installCount);
+//            }
+//        }
+//
+//        @Override
+//        public void write(OutputStream output) throws IOException, WebApplicationException {
+//            ResourceCriteria criteria;
+//            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor;
+//            CriteriaQuery<Resource, ResourceCriteria> query;
+//
+//            CsvWriter<DetailedSummary> csvWriter = new CsvWriter<DetailedSummary>();
+//            List<String> columns = getColumns();
+//            columns.addAll(getDetailsColumns());
+//            csvWriter.setColumns(columns.toArray(new String[columns.size()]));
+//
+//            output.write((getHeader() + "," + getDetailsHeader() + "\n").getBytes());
+//
+//            // if there are no resource type ids, that means we are fetching everything,
+//            // that is all resource details for all types.
+//            if (resourceTypeIds.isEmpty()) {
+//                criteria = getDetailsQueryCriteria(null);
+//                queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+//                    @Override
+//                    public PageList<Resource> execute(ResourceCriteria criteria) {
+//                        return resourceMgr.findResourcesByCriteria(caller, criteria);
+//                    }
+//                };
+//                query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+//                for (Resource resource : query) {
+//                    ResourceInstallCountKey key = new ResourceInstallCountKey(resource.getResourceType().getId(),
+//                        resource.getVersion());
+//                    ResourceInstallCount installCount = installCounts.get(key);
+//                    if (installCount != null) {
+//                          csvWriter.write(new DetailedSummary(installCount, resource), output);
+//                    }
+//                }
+//            } else {
+//                for (ResourceInstallCount installCount : installCounts.values()) {
+//                    if (resourceTypeIds.contains(installCount.getTypeId())) {
+//                        criteria = getDetailsQueryCriteria(installCount.getTypeId());
+//                        queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+//                            @Override
+//                            public PageList<Resource> execute(ResourceCriteria criteria) {
+//                                return resourceMgr.findResourcesByCriteria(caller, criteria);
+//                            }
+//                        };
+//                        query = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+//                        for (Resource resource : query) {
+//                            csvWriter.write(new DetailedSummary(installCount, resource), output);
+//                        }
+//                    } else {
+//                        csvWriter.write(new DetailedSummary(installCount, null), output);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     protected List<String> getColumns() {
         List<String> columns = new ArrayList<String>(20);
-        Collections.addAll(columns, "typeName", "plugin", "category", "version", "count");
+        Collections.addAll(columns, "typeName", "typePlugin", "category.displayName", "version", "count");
         return columns;
     }
 
     protected List<String> getDetailsColumns() {
         List<String> columns = new ArrayList<String>(10);
-        Collections.addAll(columns, "resourceName", "ancestry", "description", "resourceTypeName", "resourceVersion",
-            "currentAvailability");
+        Collections.addAll(columns, "resourceType.name", "resourceType.plugin", "resourceType.category.displayName",
+            "version", "id", "name", "ancestry", "description", "currentAvailability.availabilityType");
         return columns;
     }
 
-    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId) {
+    protected ResourceCriteria getDetailsQueryCriteria(Integer resourceTypeId, String version) {
         ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterResourceTypeId(resourceTypeId);
+        criteria.addFilterVersion(version);
         criteria.addFilterInventoryStatus(COMMITTED);
         criteria.addSortResourceCategory(ASC);
         criteria.addSortPluginName(ASC);
         criteria.addSortResourceTypeName(ASC);
-
-        if (resourceTypeId != null) {
-            criteria.addFilterResourceTypeId(resourceTypeId);
-        }
 
         return criteria;
     }
@@ -225,7 +271,19 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected String getDetailsHeader() {
-        return "Name,Ancestry,Description,Type,Version,Availability";
+        return "Resource Type,Plugin,Category,Version,ID,Name,Ancestry,Description,Availability";
+    }
+
+    protected Map<String, PropertyConverter<Resource>> getPropertyConverters() {
+        Map<String, PropertyConverter<Resource>> propertyConverters = new TreeMap<String, PropertyConverter<Resource>>();
+        propertyConverters.put("ancestry", new PropertyConverter<Resource>() {
+            @Override
+            public Object convert(Resource resource, String propertyName) {
+                return ReportFormatHelper.parseAncestry(resource.getAncestry());
+            }
+        });
+
+        return propertyConverters;
     }
 
 

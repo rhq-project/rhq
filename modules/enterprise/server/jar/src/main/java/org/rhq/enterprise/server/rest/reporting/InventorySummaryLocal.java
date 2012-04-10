@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 import javax.ejb.Local;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -41,7 +40,7 @@ public interface InventorySummaryLocal {
         @Context UriInfo uriInfo,
         @Context Request request,
         @Context HttpHeaders headers,
-        @QueryParam("showAllDetails") @DefaultValue("false") boolean includeDetails,
-        @QueryParam("resourceTypeId") String resourceTypeId);
+        @QueryParam("resourceTypeId") String resourceTypeId,
+        @QueryParam("version") String version);
 
 }

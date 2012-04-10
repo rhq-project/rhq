@@ -18,20 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -57,22 +43,39 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 /**
  * The list view for {@link Resource}s.
@@ -86,6 +89,8 @@ public class ResourceSearchView extends Table {
     private static final String DEFAULT_TITLE = MSG.common_title_resources();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+
+    private boolean exportable;
 
     /**
      * A list of all Resources in the system.
@@ -103,6 +108,11 @@ public class ResourceSearchView extends Table {
      */
     public ResourceSearchView(String locatorId, Criteria criteria) {
         this(locatorId, criteria, DEFAULT_TITLE);
+    }
+
+    public ResourceSearchView(String locatorId, Criteria criteria, boolean exportable) {
+        this(locatorId, criteria);
+        this.exportable = exportable;
     }
 
     /**
@@ -307,6 +317,10 @@ public class ResourceSearchView extends Table {
                 }
             });
 
+        if (exportable) {
+            addExportAction();
+        }
+
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
@@ -315,6 +329,34 @@ public class ResourceSearchView extends Table {
                     String selectedId = selectedRows[0].getAttribute("id");
                     CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
                 }
+            }
+        });
+    }
+
+    private void addExportAction() {
+        addTableAction("Export", "Export", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                Criteria criteria = getInitialCriteria();
+                String resourceTypeId = criteria.getAttribute(ResourceDataSourceField.TYPE.propertyName());
+                String version = criteria.getAttribute("version");
+                String reportType;
+
+                if (ResourceSearchView.this instanceof DriftComplianceReportResourceSearchView) {
+                    reportType = "driftCompliance";
+                } else {
+                    reportType = "inventorySummary";
+                }
+
+                ReportExporter exportModalWindow = ReportExporter.createExporterForInventorySummary(reportType,
+                    resourceTypeId, version);
+                exportModalWindow.export();
+                refreshTableInfo();
             }
         });
     }

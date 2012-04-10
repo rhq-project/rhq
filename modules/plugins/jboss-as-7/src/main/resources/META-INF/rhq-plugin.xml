@@ -1109,11 +1109,10 @@
     </server>
   </server>
 
-  <server name="JBossWeb"
+  <service name="JBossWeb"
           discovery="SubsystemDiscovery"
           class="BaseComponent"
-          singleton="true"
-      >
+          singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
@@ -1317,7 +1316,7 @@
     </service>
 
 
-  </server>
+  </service>
 
   <server name="General JCA connectors"
           discovery="SubsystemDiscovery"

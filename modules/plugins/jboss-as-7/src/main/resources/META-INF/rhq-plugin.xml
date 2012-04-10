@@ -1343,9 +1343,60 @@
         <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
       </resource-configuration>
-    </service>
 
-  </service>
+      <service name="Rewrite Rules"
+	     discovery="SubsystemDiscovery"
+	     description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request."
+	     class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="rewrite"/>
+        </plugin-configuration>
+
+	<operation name="add" description="Add a rule to the list of rewrite rules.">
+	  <parameters>
+	    <c:simple-property name="substitution" required="false" type="string" readOnly="false" description="The string that will replace the original URL or vhost."/>
+	    <c:simple-property name="flags" required="false" type="string" readOnly="false" description="Option flags for this rewrite rule."/>
+	    <c:simple-property name="pattern" required="false" type="string" readOnly="false" description="The pattern that will be matched."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Add a rule to the list of rewrite rules." />
+	  </results>
+	</operation>
+
+	<operation name="remove" description="Remove a rule from the list of rewrite rules.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Remove a rule from the list of rewrite rules." />
+	  </results>
+	</operation>
+
+        <resource-configuration>
+	  <c:simple-property name="flags" required="false" type="string" readOnly="false" description="Option flags for this rewrite rule."/>
+	  <c:simple-property name="pattern" required="false" type="string" readOnly="false" description="The pattern that will be matched."/>
+	  <c:simple-property name="substitution" required="false" type="string" readOnly="false" description="The string that will replace the original URL or vhost."/>
+        </resource-configuration>
+
+        <service name="Rewrite Rule Conditions"
+	     discovery="SubsystemDiscovery"
+	     description="A list of conditions this rule needs to match for rewrite to occur."
+	     class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="condition"/>
+          </plugin-configuration>
+          
+          <resource-configuration>
+	   <c:simple-property name="flags" required="false" type="string" readOnly="false" description="Option flags for this condition."/>
+	   <c:simple-property name="pattern" required="false" type="string" readOnly="false" description="The pattern to match."/>
+	   <c:simple-property name="test" required="false" type="string" readOnly="false" description="Test pattern for the condition."/>
+          </resource-configuration>
+       </service> <!-- End of Rewrite Rule Conditions service -->       
+     
+      </service> <!-- End of Rewrite Rules service -->
+
+    </service> <!-- End of VHost service -->
+
+  </service> <!-- End of JBossWeb service -->
 
   <service name="General JCA connectors"
           discovery="SubsystemDiscovery"

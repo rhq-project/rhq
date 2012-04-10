@@ -1942,6 +1942,7 @@
 
     <service name="ConsoleHandler"
              discovery="SubsystemDiscovery"
+	     description="Defines a handler which writes to the console."
              class="LoggerComponent"
         >
       <plugin-configuration>
@@ -1969,6 +1970,34 @@
 
       <operation name="enable" description="Enable a logging handler.">
       </operation>
+
+	<operation name="update-properties" description="Update the properties of an existing console handler.">
+	  <parameters>
+	    <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+	    <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+	    <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
+	    <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="all" name="all"/>
+	      <c:option value="any" name="any"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="not" name="not"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
+	    <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
+	    <c:simple-property name="target" required="false" type="string" readOnly="false" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Update the properties of an existing console handler." />
+	  </results>
+	</operation>
 
       <resource-configuration>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler's name."/>

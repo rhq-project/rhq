@@ -1342,31 +1342,6 @@
         <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>
         <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
-
-        <!-- c:map-property name="access-log" required="false" description="The access log configuration for this virtual server.">
-          <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" required="false" description="The access log pattern."/>
-          <c:simple-property name="resolve-hosts" type="boolean" readOnly="true" defaultValue="false" required="false" description="Host resolution."/>
-          <c:simple-property name="extended" type="boolean" readOnly="true" defaultValue="false" required="false"
-                             description="Enable extended pattern, with more options."/>
-          <c:simple-property name="prefix" type="string" readOnly="true" required="false" description="Prefix for the log file name."/>
-          <c:simple-property name="rotate" type="boolean" readOnly="true" defaultValue="true" required="false" description="Rotate the access log every day."/>
-          <c:map-property name="directory" description="The location for the access logging." required="false">
-            <c:simple-property name="path" required="false" type="string" readOnly="true" description="The relative folder path."/>
-            <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
-                               description="The folder the path is relative to."/>
-          </c:map-property>
-        </c:map-property>
-        <c:list-property name="rewrite" required="false" description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request.">
-          <c:map-property name="rewrite">
-            <c:simple-property name="pattern" required="false" type="string" readOnly="true" description="The pattern that will be matched."/>
-            <c:simple-property name="substitution" required="false" type="string" readOnly="true"
-                               description="The string that will replace the original URL or vhost."/>
-            <c:simple-property name="flags" required="false" type="string" readOnly="true" description="Option flags for this rewrite rule."/>
-            <c:list-property name="condition" description="A list of conditions this rule needs to match for rewrite to occur.">
-              <c:simple-property name="condition"/>
-            </c:list-property>
-          </c:map-property>
-        </c:list-property-->
       </resource-configuration>
     </service>
 

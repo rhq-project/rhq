@@ -2305,7 +2305,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
       <resource-configuration>
 	<c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
-        <c:list-property name="property" description="A list of generic key/value properties.">
+        <c:list-property name="property" required="false" description="A list of generic key/value properties.">
          <c:map-property name="property:collapsed" displayName="Property">
            <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
            <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>

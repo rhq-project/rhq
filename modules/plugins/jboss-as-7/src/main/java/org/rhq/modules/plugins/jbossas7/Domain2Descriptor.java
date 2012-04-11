@@ -288,8 +288,8 @@ public class Domain2Descriptor {
                         if (myEntry.getValue() instanceof String && myEntry.getValue().equals("STRING")) {
                             createMetricEntry(indent, props, key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
                         } else if (myEntry.getValue() instanceof Map<?, ?>) {
-                        createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
-                            key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                            createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
+                                key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
                         }
                     }
                 } else {
@@ -347,7 +347,6 @@ public class Domain2Descriptor {
      * @param operationMap Json node representation of operation details as Map<String,Object>.
      */
     private void createOperation(String name, Map<String, Object> operationMap) {
-
         if ((name == null) && (operationMap == null)) {
             return;
         }
@@ -478,7 +477,11 @@ public class Domain2Descriptor {
             || ((mode == D2DMode.OPERATION) && type.rhqName.equalsIgnoreCase("-object-"))) {
             sb.append("string");
         } else {
-            sb.append(type.rhqName);
+            if (type.rhqName.equalsIgnoreCase("-object-")) {
+                sb.append("string");
+            } else {
+                sb.append(type.rhqName);
+            }
         }
         sb.append("\"");
         sb.append(" readOnly=\"");
@@ -501,9 +504,10 @@ public class Domain2Descriptor {
         //Detect whether type PROPERTY and insert known supported properties before close.
         if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
             sb.append(generateOptionList(indent, properties, properties[7]));
-        } else if ((mode == D2DMode.OPERATION) && (type.rhqName.equalsIgnoreCase("-object-"))) {
+        } else if ((mode == D2DMode.OPERATION)
+            && ((type.rhqName.equalsIgnoreCase("-object-")) || (type.rhqName.equalsIgnoreCase("string")))) {
             //detect map type if present an build map instead
-            if (props.get("allowed") == null) {
+            if ((props.get("allowed") == null) && (props.get("value-type") != null)) {
                 //<c:map-property name="filter" description="Defines a simple filter type." >
                 StringBuilder mb = new StringBuilder();
                 doIndent(indent, mb);
@@ -519,17 +523,19 @@ public class Domain2Descriptor {
                 mb.append(">\n");
                 //iterate over map children
                 Map<String, Object> mapType = (Map<String, Object>) props.get("value-type");
-                for (Map.Entry<String, Object> entry : mapType.entrySet()) {
-                    Object o = entry.getValue();
-                    Map<String, Object> entryValue = (Map<String, Object>) o;
-                    String entryKey = entry.getKey();
-                    Type childType = getTypeFromProps(entryValue);
-                    mb.append(generateProperty(indent + 4, entryValue, childType, entryKey, null));
-                    mb.append('\n');
+                if (mapType != null) {
+                    for (Map.Entry<String, Object> entry : mapType.entrySet()) {
+                        Object o = entry.getValue();
+                        Map<String, Object> entryValue = (Map<String, Object>) o;
+                        String entryKey = entry.getKey();
+                        Type childType = getTypeFromProps(entryValue);
+                        mb.append(generateProperty(indent + 4, entryValue, childType, entryKey, null));
+                        mb.append("\n");
+                    }
+                    doIndent(indent, mb);
+                    mb.append("</c:map-property>");
+                    return mb;
                 }
-                doIndent(indent, mb);
-                mb.append("</c:map-property>");
-                return mb;
             } else {//contents of allowed defines the dropdown values.
                 sb.append(useAvailableOptionsList(indent, props, null));
             }
@@ -550,16 +556,17 @@ public class Domain2Descriptor {
     private String useAvailableOptionsList(int indent, Map<String, Object> props, String defaultSelection) {
         StringBuilder optionList = new StringBuilder();
 
+        //if default provided append.
         if ((defaultSelection != null) && (!defaultSelection.trim().isEmpty())) {
-            optionList.append(" defaultValue=\"" + defaultSelection + "\" >\n");
-        } else {//no default provided
-            optionList.append(">\n");
+            optionList.append(" defaultValue=\"" + defaultSelection + "\" ");
         }
 
         //see if 'allowed' is set
         ArrayList<String> options = (ArrayList<String>) props.get("allowed");
         if (options != null && !options.isEmpty()) {
             Collections.sort(options);
+            //close simple-property with children
+            optionList.append(">\n");
             doIndent(indent + 1, optionList);
             optionList.append("<c:property-options>\n");
             for (String prop : options) {
@@ -570,6 +577,8 @@ public class Domain2Descriptor {
             optionList.append("</c:property-options>\n");
             doIndent(indent, optionList);
             optionList.append("</c:simple-property>");
+        } else {//no additional child elements to add
+            optionList.append("/>\n");
         }
         return optionList.toString();
     }

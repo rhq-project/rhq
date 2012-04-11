@@ -225,6 +225,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
+    @Test(enabled = false)
     public void deployDatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -265,6 +266,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
+    @Test(enabled = false)
     public void deployXADatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);

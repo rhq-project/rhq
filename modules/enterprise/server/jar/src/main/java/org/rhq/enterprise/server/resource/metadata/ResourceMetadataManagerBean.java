@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -120,9 +122,20 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
         // when we recursively process type X's children.
         Set<ResourceType> allChildren = new HashSet<ResourceType>();
+
+        Queue<ResourceType> unvisitedChildren = new LinkedList<ResourceType>();
         for (ResourceType resourceType : resourceTypes) {
-            allChildren.addAll(resourceType.getChildResourceTypes());
+            unvisitedChildren.addAll(resourceType.getChildResourceTypes());
         }
+
+        while (!unvisitedChildren.isEmpty()) {
+            ResourceType childResourceType = unvisitedChildren.poll();
+            if (!allChildren.contains(childResourceType)) {
+                allChildren.add(childResourceType);
+                unvisitedChildren.addAll(childResourceType.getChildResourceTypes());
+            }
+        }
+
         Set<ResourceType> nonRunsInsideResourceTypes = new LinkedHashSet<ResourceType>();
         for (ResourceType resourceType : resourceTypes) {
             if (!allChildren.contains(resourceType)) {

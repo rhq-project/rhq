@@ -82,23 +82,20 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
         boolean reloaded=false;
         int count=0;
         while (!reloaded) {
+            try {
+                Thread.sleep(2000); // Wait 2s
+            } catch (InterruptedException e) {
+                ; // Ignore
+            }
+
             Operation op = new ReadAttribute(new Address(),"release-version");
             Result res = getASConnection().execute(op);
-            if (!res.isReloadRequired()) { //
+            if (res.isSuccess() && !res.isReloadRequired()) { //
                 reloaded=true;
             } else if (count > 20) {
                 operationResult.setErrorMessage("Was not able to reload the server");
                 return;
             }
-
-            if (!reloaded) {
-                try {
-                    Thread.sleep(1000); // Wait 1s
-                } catch (InterruptedException e) {
-                    ; // Ignore
-                }
-            }
-
             count++;
         }
         log.debug("waitUntilReloaded: Used " + count + " delay round(s) to reload");

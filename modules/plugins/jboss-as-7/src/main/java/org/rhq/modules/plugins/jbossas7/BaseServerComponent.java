@@ -226,7 +226,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             return operationResult;
         }
 
-        if (name.equals("shutdown") || name.equals("reload")) {
+        if (name.equals("shutdown") || name.equals("restart")) {
             /*
              * Shutdown needs a special treatment, because after sending the operation, if shutdown succeeds,
              * the server connection is closed and we can't read from it. So if we get connection refused for

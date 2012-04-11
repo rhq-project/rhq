@@ -75,7 +75,7 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
         Result result = this.connection.execute(op);
         if (result.isSuccess()) {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(this.address.getPath());
+            report.setResourceKey(createAddress.getPath());
             report.setResourceName(report.getUserSpecifiedResourceName());
         } else {
             report.setStatus(CreateResourceStatus.FAILURE);

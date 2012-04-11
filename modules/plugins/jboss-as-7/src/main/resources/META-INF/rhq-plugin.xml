@@ -1465,50 +1465,12 @@
             </operation>
     -->
 
-    <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
-      <parameters>
-        <c:simple-property name="name" required="true" description="Name of the datasource"/>
-        <c:simple-property name="driver-name" required="true">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
-        </c:simple-property>
-        <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
-        <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
-        <c:simple-property name="user-name" description="User name for DB-connections" required="false"/>
-        <c:simple-property name="password" description="Password" type="password" required="false"/>
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
-      <parameters>
-        <c:simple-property name="name" required="true" description="Name of the datasource"/>
-        <c:simple-property name="driver-name" required="true">
-          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
-        </c:simple-property>
-        <c:simple-property name="xa-datasource-class" required="true" description="xa-datasource-class"/>
-        <c:simple-property name="connection-url" required="true" description="Connection URL. Will be turned into an Xa-property)"/>
-        <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
-        <c:simple-property name="user-name" description="User name for DB-connections" required="false"/>
-        <c:simple-property name="password" description="Password" type="password" required="false"/>
-        <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties (connection url is set above)" required="false">
-          <c:map-property name="xa-properties">
-            <c:simple-property name="key" displayName="Key" description="Key of the property"/>
-            <c:simple-property name="value" displayName="Value" description="Value of the property"/>
-          </c:map-property>
-        </c:list-property>
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
 
     <service name="DataSource"
              discovery="SubsystemDiscovery"
              class="DatasourceComponent"
              description="A non-XA data source"
-             createDeletePolicy="delete-only"
+             createDeletePolicy="both"
         >
 
       <plugin-configuration>
@@ -1573,13 +1535,19 @@
 
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true"/>
+        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
+          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+        </c:simple-property>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="true"
                            description="The fully qualified name of the JDBC driver class"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true"
                            description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="driver" required="false" type="string" readOnly="true"
                            description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualified name of the JDBC driver class"/>
+        <c:simple-property name="user-name" type="string" readOnly="true" required="false"
+                           description="Specify the username used when creating a new connection."/>
+        <c:simple-property name="password" type="password" readOnly="true" required="false"
+                           description="Specify the password used when creating a new connection."/>
         <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false"
                            description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
         <c:simple-property name="url-delimiter" type="string" readOnly="true"
@@ -1597,10 +1565,6 @@
                            description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
         <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false"
                            description="Define if the min-pool-size should be considered a strictly."/>
-        <c:simple-property name="user-name" type="string" readOnly="true" required="false"
-                           description="Specify the username used when creating a new connection."/>
-        <c:simple-property name="password" type="password" readOnly="true" required="false"
-                           description="Specify the password used when creating a new connection."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
@@ -1632,7 +1596,15 @@
         <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true" required="false"
                            description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
         <c:simple-property name="transaction-isolation" type="string" readOnly="true" required="false"
-                           description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels and include: TRANSACTION_READ_UNCOMMITTED TRANSACTION_READ_COMMITTED TRANSACTION_REPEATABLE_READ TRANSACTION_SERIALIZABLE TRANSACTION_NONE"/>
+                           description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
+          <c:property-options>
+            <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
+            <c:option value="TRANSACTION_READ_COMMITTED"/>
+            <c:option value="TRANSACTION_REPEATABLE_READ"/>
+            <c:option value="TRANSACTION_SERIALIZABLE"/>
+            <c:option value="TRANSACTION_NONE"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true" required="false"
                            description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
         <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true" required="false"
@@ -1659,7 +1631,7 @@
              discovery="SubsystemDiscovery"
              class="DatasourceComponent"
              description="An XA data source"
-             createDeletePolicy="delete-only"
+             createDeletePolicy="both"
         >
 
       <plugin-configuration>
@@ -1729,7 +1701,11 @@
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
-        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
+        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit">
+          <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
+        </c:simple-property>
+        <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
+        <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
         <c:simple-property name="new-connection-sql" required="false" type="string" readOnly="true" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
@@ -1744,8 +1720,6 @@
         <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" description="Should the Xid be padded"/>
         <c:simple-property name="same-rm-override" required="false" type="boolean" readOnly="true" description="The is-same-rm-override element allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false"/>
         <c:simple-property name="wrap-xa-datasource" required="false" type="boolean" readOnly="true" description="Should the XAResource instances be wrapped in a org.jboss.tm.XAResourceWrapper instance"/>
-        <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
-        <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the password used when creating a new connection."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
         <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific purpose (i.e vendor)"/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
@@ -1766,7 +1740,15 @@
         <c:simple-property name="query-timeout" required="false" type="long" readOnly="true" description="Any configured query timeout in seconds The default is no timeout"/>
         <c:simple-property name="use-try-lock" required="false" type="long" readOnly="true" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
         <c:simple-property name="set-tx-query-timeout" required="false" type="boolean" readOnly="true" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
-        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels and include: TRANSACTION_READ_UNCOMMITTED TRANSACTION_READ_COMMITTED TRANSACTION_REPEATABLE_READ TRANSACTION_SERIALIZABLE TRANSACTION_NONE"/>
+        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
+          <c:property-options>
+            <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
+            <c:option value="TRANSACTION_READ_COMMITTED"/>
+            <c:option value="TRANSACTION_REPEATABLE_READ"/>
+            <c:option value="TRANSACTION_SERIALIZABLE"/>
+            <c:option value="TRANSACTION_NONE"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <!--

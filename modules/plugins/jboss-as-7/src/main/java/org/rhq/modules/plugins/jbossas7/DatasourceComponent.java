@@ -18,8 +18,11 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -31,10 +34,12 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Handle JDBC-driver related stuff
+ * Handle Datasorces (possibly jdbc-driver) related stuff
  * @author Heiko W. Rupp
  */
-public class DatasourceComponent extends BaseComponent<BaseComponent<?>> implements OperationFacet, ConfigurationFacet {
+public class DatasourceComponent extends BaseComponent<BaseComponent<?>> implements OperationFacet, ConfigurationFacet,
+        CreateChildResourceFacet
+{
 
     private static final String NOTSET = "-notset-";
     private final Log log = LogFactory.getLog(DatasourceComponent.class);
@@ -56,56 +61,6 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             op.addAdditionalProperty("driver-name", drivername);
             op.addAdditionalProperty("deployment-name", parameters.getSimpleValue("deployment-name", NOTSET));
             op.addAdditionalProperty("driver-class-name", parameters.getSimpleValue("driver-class-name", NOTSET));
-        } else if (operationName.equals("addDatasource")) {
-            String name = parameters.getSimpleValue("name", NOTSET);
-
-            Address theAddress = new Address(address);
-            theAddress.add("data-source", name);
-            op = new Operation("add", theAddress);
-            addRequiredToOp(op, parameters, "driver-name");
-            addRequiredToOp(op, parameters, "jndi-name");
-            addRequiredToOp(op, parameters, "connection-url");
-            addOptionalToOp(op, parameters, "user-name");
-            addOptionalToOp(op, parameters, "password");
-        } else if (operationName.equals("addXADatasource")) {
-            String name = parameters.getSimpleValue("name", NOTSET);
-
-            Address theAddress = new Address(address);
-            theAddress.add("xa-data-source", name);
-            op = new CompositeOperation();
-            Operation step1 = new Operation("add", theAddress);
-            addRequiredToOp(step1, parameters, "driver-name");
-            addRequiredToOp(step1, parameters, "jndi-name");
-            addOptionalToOp(step1, parameters, "user-name");
-            addOptionalToOp(step1, parameters, "password");
-            addRequiredToOp(step1, parameters, "xa-datasource-class");
-
-            ((CompositeOperation) op).addStep(step1);
-
-            // handling of xa-properties -- this is now a subresource in AS7 and at least needs a connection url
-            String connectionUrl = parameters.getSimpleValue("connection-url", null);
-            if (connectionUrl == null || connectionUrl.isEmpty())
-                throw new IllegalArgumentException("Connection-url must not be empty");
-            Address cuAddress = new Address(theAddress);
-            cuAddress.add("xa-datasource-properties", "connection-url");
-            Operation step2 = new Operation("add", cuAddress);
-            step2.addAdditionalProperty("value", connectionUrl);
-            ((CompositeOperation) op).addStep(step2);
-
-            PropertyList xaPropList = parameters.getList("xa-properties");
-            if (xaPropList != null) {
-                List<Property> xaProps = xaPropList.getList();
-                for (Property prop : xaProps) {
-                    PropertyMap pMap = (PropertyMap) prop;
-                    PropertySimple keyProp = pMap.getSimple("key");
-                    PropertySimple valProp = pMap.getSimple("value");
-                    Address propAddress = new Address(theAddress);
-                    propAddress.add("xa-datasource-properties", keyProp.getStringValue());
-                    Operation step = new Operation("add", propAddress);
-                    step.addAdditionalProperty("value", valProp.getStringValue()); // TODO ??
-                    ((CompositeOperation) op).addStep(step);
-                }
-            }
         } else {
             /*
              * This is a catch all for operations that are not explicitly treated above.
@@ -121,6 +76,49 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         }
 
         return result;
+    }
+
+    @Override
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        CreateResourceReport resourceReport = super.createResource(report);
+
+        // No success -> no point in continuing
+        if (resourceReport.getStatus() != CreateResourceStatus.SUCCESS)
+            return resourceReport;
+
+        // outer create resource did not cater for the xa properties, so lets add them now
+        if (report.getResourceType().getName().toLowerCase().contains("xa")) {
+            PropertyList listPropertyWrapper = report.getResourceConfiguration().getList("*2");
+            List<Property> listProperty = listPropertyWrapper.getList();
+
+            String baseAddress = resourceReport.getResourceKey();
+
+            if (!listProperty.isEmpty()) {
+                CompositeOperation cop = new CompositeOperation();
+                for (Property p : listProperty) {
+                    PropertyMap map = (PropertyMap) p;
+                    String key = map.getSimpleValue("key", null);
+                    String value = map.getSimpleValue("value", null);
+                    if (key == null || value == null)
+                        continue;
+
+                    Address propertyAddress = new Address(baseAddress);
+                    propertyAddress.add("xa-datasource-properties", key);
+                    Operation op = new Operation("add", propertyAddress);
+                    op.addAdditionalProperty("value", value);
+                    cop.addStep(op);
+
+                }
+
+                Result res = getASConnection().execute(cop);
+                if (!res.isSuccess()) {
+                    resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
+                        + res.getFailureDescription());
+                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                }
+            }
+        }
+        return resourceReport;
     }
 
     void addAdditionalToOp(Operation op, Configuration parameters, String parameterName, boolean optional) {

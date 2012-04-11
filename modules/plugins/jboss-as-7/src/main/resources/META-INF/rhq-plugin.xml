@@ -1569,6 +1569,7 @@
       <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
       <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
+      <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
 
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
@@ -1723,6 +1724,7 @@
       <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
       <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
+      <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
 
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>

@@ -26,6 +26,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
@@ -174,6 +175,9 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             if (request.getName().equals("connectionAvailable")) {
                 report.addData(getConnectionAvailable(request));
             }
+            else if (request.getName().equals("max-pool-size")) {
+                getMaxPoolSizeAsMetric(report, request);
+            }
             else {
                 metrics.add(request);
             }
@@ -206,6 +210,25 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
                 MeasurementDataNumeric data = new MeasurementDataNumeric(metric,val);
                 report.addData(data);
             }
+        }
+    }
+
+    private void getMaxPoolSizeAsMetric(MeasurementReport report, MeasurementScheduleRequest request)
+    {
+        Operation op = new ReadAttribute(getAddress(),"max-pool-size");
+        Result res = getASConnection().execute(op);
+
+        if (res.isSuccess()) {
+            String tmp = (String) res.getResult();
+            if (tmp==null) { // server r
+                tmp = "20"; // The default value
+            }
+            Double val = Double.valueOf(tmp);
+            MeasurementDataNumeric data = new MeasurementDataNumeric(request,val);
+            report.addData(data);
+        }
+        else {
+            log.warn("Could not read max-pool-size on " + getAddress() + ": " + res.getFailureDescription());
         }
     }
 

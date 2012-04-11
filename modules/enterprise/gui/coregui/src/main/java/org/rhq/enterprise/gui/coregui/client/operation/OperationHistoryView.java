@@ -137,19 +137,20 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
 
-        endDateFilter = new DateItem("startDateFilter");
-        endDateFilter.setUseTextField(true);
-        endDateFilter.setEnforceDate(true);
-        endDateFilter.setTitle(MSG.filter_from_date());
-        startDateFilter = new DateItem("endDateFilter");
+        startDateFilter = new DateItem("startDateFilter");
         startDateFilter.setUseTextField(true);
         startDateFilter.setEnforceDate(true);
-        startDateFilter.setTitle(MSG.filter_to_date());
+        startDateFilter.setTitle(MSG.filter_from_date());
+        endDateFilter = new DateItem("fromDateFilter");
+        endDateFilter.setUseTextField(true);
+        endDateFilter.setEnforceDate(true);
+        endDateFilter.setTitle(MSG.filter_to_date());
+
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter, endDateFilter, spacerItem, startDateFilter );
+            setFilterFormItems(statusFilter, startDateFilter, spacerItem, endDateFilter );
         }
     }
 

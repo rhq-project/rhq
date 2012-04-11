@@ -141,7 +141,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         startDateFilter.setUseTextField(true);
         startDateFilter.setEnforceDate(true);
         startDateFilter.setTitle(MSG.filter_from_date());
-        endDateFilter = new DateItem("fromDateFilter");
+        endDateFilter = new DateItem("endDateFilter");
         endDateFilter.setUseTextField(true);
         endDateFilter.setEnforceDate(true);
         endDateFilter.setTitle(MSG.filter_to_date());

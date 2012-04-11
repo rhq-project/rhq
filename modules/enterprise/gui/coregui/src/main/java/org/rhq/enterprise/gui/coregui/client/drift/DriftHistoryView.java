@@ -145,7 +145,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         startDateFilter.setUseTextField(true);
         startDateFilter.setTitle(MSG.filter_from_date());
         startDateFilter.setEnforceDate(true);
-        endDateFilter = new DateItem("fromDateFilter");
+        endDateFilter = new DateItem("endDateFilter");
         endDateFilter.setUseTextField(true);
         endDateFilter.setEnforceDate(true);
         endDateFilter.setTitle(MSG.filter_to_date());

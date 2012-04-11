@@ -123,6 +123,20 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         createPlugin("test-plugin.jar", "1.0", "plugin_v1.xml");
     }
 
+
+    @Test(dependsOnMethods = { "registerPluginWithDuplicateDriftDefinitions" }, groups = {
+        "plugin.resource.metadata.test", "plugin.metadata", "NewPlugin" })
+    public void registerParentResouceTypePlugin() throws Exception {
+        createPlugin("parent_resource_type-plugin.jar", "1.0", "parent_resource_type-plugin.xml");
+        assertResourceTypeAssociationEquals("Server A First Level", "ParentResourceTypeTestPlugin",
+            "childResourceTypes", asList("Server B Second Level", "Service A Second Level"));
+        assertResourceTypeAssociationEquals("Server B Second Level", "ParentResourceTypeTestPlugin",
+            "childResourceTypes", asList("Server C First Level", "Service B First Level"));
+        assertResourceTypeAssociationEquals("Service A Second Level", "ParentResourceTypeTestPlugin",
+            "childResourceTypes", asList("Service C First Level"));
+    }
+
+
     @Test(dependsOnMethods = { "registerPlugin" }, groups = { "plugin.resource.metadata.test", "plugin.metadata",
         "NewPlugin" })
     public void persistNewTypes() {

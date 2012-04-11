@@ -2140,6 +2140,100 @@
         <c:simple-property name="path" readOnly="true" default="logger"/>
       </plugin-configuration>
 
+      <!-- Operations section-->
+	<operation name="add" description="Add a new logger category.">
+	  <parameters>
+	    <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="all" name="all"/>
+	      <c:option value="any" name="any"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="not" name="not"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="handlers" required="false" type="string" readOnly="false" description="The Handlers associated with this Logger."/>
+	    <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" description="Specifies whether or not this logger should send its output to it&apos;s parent Logger."/>
+	    <c:simple-property name="category" required="true" type="string" readOnly="false" description="Specifies the category for the logger."/>
+
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Add a new logger category." />
+	  </results>
+	</operation>
+
+	<operation name="assign-handler" description="Assign a Handler to a Logger.">
+	  <parameters>
+	    <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Assign a Handler to a Logger." />
+	  </results>
+	</operation>
+
+	<operation name="change-log-level" description="Change the logging level for a logger category.">
+	  <parameters>
+	    <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Change the logging level for a logger category." />
+	  </results>
+	</operation>
+
+	<operation name="remove" description="Remove an existing logger category.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Remove an existing logger category." />
+	  </results>
+	</operation>
+
+	<operation name="unassign-handler" description="Unassign a Handler from a Logger.">
+	  <parameters>
+	    <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Unassign a Handler from a Logger." />
+	  </results>
+	</operation>
+
       <!-- Resource confuration section -->
       <resource-configuration>
 	<c:simple-property name="category" required="false" type="string" readOnly="true" description="Specifies the category for the logger."/>

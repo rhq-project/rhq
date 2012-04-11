@@ -503,7 +503,7 @@ public class Domain2Descriptor {
             || ((mode == D2DMode.OPERATION) && type.rhqName.equalsIgnoreCase("-object-"))) {
             sb.append("string");
         } else {
-            if (type.rhqName.equalsIgnoreCase("-object-")) {
+            if (type.rhqName.equalsIgnoreCase("-object-") || type.rhqName.equalsIgnoreCase("-list-")) {
                 sb.append("string");
             } else {
                 sb.append(type.rhqName);

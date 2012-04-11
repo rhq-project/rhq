@@ -1,5 +1,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -189,7 +190,13 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
 
                 Map<String,Map> hashMap = contentList.get(0);
                 Map<String,String> bvMap = hashMap.get("hash");
-                String content = bvMap.get("BYTES_VALUE");
+                String content;
+                if (bvMap!=null) {
+                    content = bvMap.get("BYTES_VALUE");
+                }
+                else {
+                    content = hashMap.get("relative-to") + File.separator + hashMap.get("path");
+                }
                 PackageDetailsKey pdKey = new PackageDetailsKey(key,
                         content, // no way to obtain the user defined version from the server
                         type.getName(),

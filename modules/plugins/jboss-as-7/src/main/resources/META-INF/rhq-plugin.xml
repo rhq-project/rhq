@@ -2065,7 +2065,7 @@
       </c:group>
     </resource-configuration>
 
-    <service name="ConsoleHandler"
+    <service name="Console Handler"
              discovery="SubsystemDiscovery"
 	     description="Defines a handler which writes to the console."
              class="LoggerComponent"
@@ -2077,7 +2077,7 @@
       &loggingHandlerOpsConfig;
     </service>
 
-    <service name="FileHandler"
+    <service name="File Handler"
              discovery="SubsystemDiscovery"
              class="LoggerComponent"
         >
@@ -2088,7 +2088,7 @@
       &loggingHandlerOpsConfig;
     </service>
 
-    <service name="PeriodicRotatingFileHandler"
+    <service name="Periodic Rotating File Handler"
              discovery="SubsystemDiscovery"
              class="LoggerComponent"
         >
@@ -2097,14 +2097,36 @@
       </plugin-configuration>
 
       &loggingHandlerOpsConfig;    
-</service>
+    </service>
 
-    <service name="SizeRotatingFileHandler"
+    <service name="Size Rotating File Handler"
              discovery="SubsystemDiscovery"
              class="LoggerComponent"
         >
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
+      </plugin-configuration>
+
+      &loggingHandlerOpsConfig;
+    </service>
+
+    <service name="Asynch Handler"
+             discovery="SubsystemDiscovery"
+             class="LoggerComponent"
+        >
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="asynch-handler"/>
+      </plugin-configuration>
+
+      &loggingHandlerOpsConfig;
+    </service>
+
+    <service name="Custom Handler"
+             discovery="SubsystemDiscovery"
+             class="LoggerComponent"
+        >
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="custom-handler"/>
       </plugin-configuration>
 
       &loggingHandlerOpsConfig;

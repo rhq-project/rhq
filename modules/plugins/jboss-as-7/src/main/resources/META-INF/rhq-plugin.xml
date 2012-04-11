@@ -2124,44 +2124,106 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
       </plugin-configuration>
 
-      <operation name="change-log-level" description="Change the logging level for a handler.">
-        <parameters>
-          <c:simple-property name="level" required="true" type="string" readOnly="false"
-                             description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
-            <c:property-options>
-              <c:option value="FATAL"/>
-              <c:option value="ERROR"/>
-              <c:option value="WARN"/>
-              <c:option value="INFO"/>
-              <c:option value="DEBUG"/>
-              <c:option value="TRACE"/>
-            </c:property-options>
-          </c:simple-property>
-        </parameters>
-      </operation>
+        <!-- Operations section -->
+	<operation name="change-file" description="Change the file for a handler.">
+	  <parameters>
+	    <c:map-property name="file" required="false" description="The file description consisting of the path and optional relative to path.">
+		<c:simple-property name="path" required="true" type="string" readOnly="false" description="The filesystem path."/>
+		<c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative-to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include:&lt;ul&gt;&lt;li&gt;jboss.home - the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home - user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir - user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home - java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir - root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir - directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir - directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir - directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+	    </c:map-property>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Change the file for a handler." />
+	  </results>
+	</operation>
 
-      <operation name="disable" description="Disable a logging handler.">
-      </operation>
+	<operation name="change-log-level" description="Change the logging level for a handler.">
+	  <parameters>
+	    <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Change the logging level for a handler." />
+	  </results>
+	</operation>
 
-      <operation name="enable" description="Enable a logging handler.">
-      </operation>
+	<operation name="disable" description="Disable a logging handler.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Disable a logging handler." />
+	  </results>
+	</operation>
 
-      <operation name="change-file" description="Change the file for a handler.">
-        <parameters>
-          <c:simple-property name="path" required="true" type="string" readOnly="false" description="The filesystem path."/>
-          <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
-                             description="The name of another previously named path, or of one of the standard paths provided by the system.
-If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute.
-The standard paths provided by the system include:&lt;ul&gt;&lt;li&gt;jboss.home - the root directory of the JBoss AS
-distribution&lt;/li&gt;&lt;li&gt;user.home - user's home directory&lt;/li&gt;&lt;li&gt;user.dir - user's current
-working directory&lt;/li&gt;&lt;li&gt;java.home - java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir -
-root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir - directory the server will
-use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir - directory the server will use for
-log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir - directory the server will use for temporary file
-storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir - directory under which a host controller will create the
-working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
-        </parameters>
-      </operation>
+	<operation name="enable" description="Enable a logging handler.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Enable a logging handler." />
+	  </results>
+	</operation>
+
+	<operation name="update-properties" description="Update the properties of an existing periodic rotating file handler.">
+	  <parameters>
+	    <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+	    <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+	    <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="all" name="all"/>
+	      <c:option value="any" name="any"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="not" name="not"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
+	    <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
+	    <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
+	    <c:map-property name="file" required="false" description="The file description consisting of the path and optional relative to path.">
+		<c:simple-property name="path" required="true" type="string" readOnly="false" description="The filesystem path."/>
+		<c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative-to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include:&lt;ul&gt;&lt;li&gt;jboss.home - the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home - user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir - user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home - java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir - root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir - directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir - directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir - directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+	    </c:map-property>
+	    <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
+
+	  </parameters>
+	  <results>
+	     <c:simple-property name="operationResult" description="Update the properties of an existing periodic rotating file handler." />
+	  </results>
+	</operation>
+
       <resource-configuration>
 	<c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
 	<c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
@@ -2171,16 +2233,16 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	    <c:simple-property name="relative-to" required="false" type="string" readOnly="true" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative-to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include:&lt;ul&gt;&lt;li&gt;jboss.home - the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home - user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir - user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home - java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir - root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir - directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir - directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir - directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	</c:map-property>
 	<c:map-property name="filter" required="false" description="Defines a simple filter type." >
-	    <c:simple-property name="all" required="false" type="-object-" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be unloggable,the message will not be logged and subsequent filters will not be checked."/>
-	    <c:simple-property name="any" required="false" type="-object-" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be loggable, the message will be logged and subsequent filters will not be checked."/>
+	    <c:simple-property name="all" required="false" type="string" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be unloggable,the message will not be logged and subsequent filters will not be checked."/>
+	    <c:simple-property name="any" required="false" type="string" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be loggable, the message will be logged and subsequent filters will not be checked."/>
 	    <c:simple-property name="accept" required="false" type="boolean" readOnly="true" defaultValue="true" description="Accepts all log messages. The default value is true."/>
 	    <c:simple-property name="change-level" required="false" type="string" readOnly="true" description="A filter which modifies the log record with a new level if the nested filter evaluates true for that record."/>
 	    <c:simple-property name="deny" required="false" type="boolean" readOnly="true" defaultValue="true" description="Denys all log messages. The default value is true."/>
 	    <c:simple-property name="level" required="false" type="string" readOnly="true" description="A filter which excludes a message with the specified level."/>
-	    <c:simple-property name="level-range" required="false" type="-object-" readOnly="true" description="A filter which logs only messages that fall within a level range."/>
+	    <c:simple-property name="level-range" required="false" type="string" readOnly="true" description="A filter which logs only messages that fall within a level range."/>
 	    <c:simple-property name="match" required="false" type="string" readOnly="true" description="A regular-expression-based filter. Used to exclude log records which match or don&apos;t match the expression. The regular expression is checked against the raw (unformatted) message."/>
-	    <c:simple-property name="not" required="false" type="-object-" readOnly="true" description="A filter that inverts the filter that is nested."/>
-	    <c:simple-property name="replace" required="false" type="-object-" readOnly="true" description="A filter which applies a text substitution on the message if the nested filter matches."/>
+	    <c:simple-property name="not" required="false" type="string" readOnly="true" description="A filter that inverts the filter that is nested."/>
+	    <c:simple-property name="replace" required="false" type="string" readOnly="true" description="A filter which applies a text substitution on the message if the nested filter matches."/>
 	</c:map-property>
 	<c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"
 		 description="Defines a formatter. The default value is %d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n."/>

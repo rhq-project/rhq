@@ -25,7 +25,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -36,6 +35,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -67,8 +67,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
     protected SelectItem statusFilter;
-    protected DateItem startDateFilter;
-    protected DateItem endDateFilter;
+    protected DateFilterItem startDateFilter;
+    protected DateFilterItem endDateFilter;
     
     EntityContext context;
     boolean hasControlPermission;
@@ -137,14 +137,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
 
-        startDateFilter = new DateItem("startDateFilter");
-        startDateFilter.setUseTextField(true);
-        startDateFilter.setEnforceDate(true);
-        startDateFilter.setTitle(MSG.filter_from_date());
-        endDateFilter = new DateItem("endDateFilter");
-        endDateFilter.setUseTextField(true);
-        endDateFilter.setEnforceDate(true);
-        endDateFilter.setTitle(MSG.filter_to_date());
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
 
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);

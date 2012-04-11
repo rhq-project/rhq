@@ -25,7 +25,6 @@ import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -37,6 +36,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -49,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.LinkedHashMap;
 
 /**
@@ -74,8 +73,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     protected SelectItem priorityFilter;
-    protected DateItem startDateFilter;
-    protected DateItem endDateFilter;
+    protected DateFilterItem startDateFilter;
+    protected DateFilterItem endDateFilter;
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -121,15 +120,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
         priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
             .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
-        startDateFilter = new DateItem("startDateFilter");
-        startDateFilter.setUseTextField(true);
-        startDateFilter.setEnforceDate(true);
-        startDateFilter.setTitle(MSG.filter_from_date());
-        endDateFilter = new DateItem("endDateFilter");
-        endDateFilter.setUseTextField(true);
-        endDateFilter.setEndDate(new Date());
-        endDateFilter.setEnforceDate(true);
-        endDateFilter.setTitle(MSG.filter_to_date());
+
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
+        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);
 

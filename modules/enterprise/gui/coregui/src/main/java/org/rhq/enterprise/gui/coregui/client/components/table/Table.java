@@ -34,7 +34,10 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
@@ -55,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -1112,7 +1116,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addKeyPressHandler(this);
                 } else if (nextFormItem instanceof SelectItem) {
                     nextFormItem.addChangedHandler(this);
-                } else if (nextFormItem instanceof DateItem) {
+                } else if (nextFormItem instanceof DateFilterItem) {
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof SearchBarItem) {
                     searchBarItem = (SearchBarItem) nextFormItem;

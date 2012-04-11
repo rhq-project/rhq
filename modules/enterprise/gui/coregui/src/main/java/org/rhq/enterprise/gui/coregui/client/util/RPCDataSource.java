@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
@@ -622,10 +621,6 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
-            } else if (type == Date.class) {
-                // Date.toString() will produce an dateformat unparsable by GWT
-                result = (S) convertStandardDateString(strValue);
-                Log.debug("Date after conversion: "+ result  );
             } else if (type == Long.class) {
                 result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {
@@ -642,29 +637,6 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         return result;
     }
 
-    /**
-     * Used to convert the text format from standard Date.toString() to a Date.
-     * Motivation: we need to cut out the timezone as we are working in the users timezone
-     * and we don't care about the time portion because there are no time conversions
-     * occurring and we are ony interested in the date portion for date filtering.
-     * @param defaultFormatDateString from Date.toString() using standard default date format
-     * @return Date representing the dateString
-     */
-    private static Date convertStandardDateString(final String defaultFormatDateString){
-        // Date formats are different in Prod mode vs Dev mode
-        if(GWT.isProdMode()){
-            //Production Mode date format: Tue Apr 10 12:00:00 GMT-700 2012
-            Log.debug("ProdMode Date Conversion before: "+defaultFormatDateString);
-            String partialDateString = defaultFormatDateString.substring(0,10) +" "+ defaultFormatDateString.substring(29,32);
-            return format.parse(partialDateString);
-        }else {
-            //Dev Mode date format: Mon Apr 02 10:19:45 PDT 2012
-            Log.debug("DevMode Date Conversion before: "+defaultFormatDateString);
-            String partialDateString = defaultFormatDateString.substring(0,10) +" "+ defaultFormatDateString.substring(24,28);
-            return format.parse(partialDateString);
-        }
-
-    }
 
     protected static DataSourceTextField createTextField(String name, String title, Integer minLength,
         Integer maxLength, Boolean required) {

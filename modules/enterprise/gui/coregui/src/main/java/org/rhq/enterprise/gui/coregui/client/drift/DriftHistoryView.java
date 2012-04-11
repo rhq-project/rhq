@@ -23,7 +23,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -34,6 +33,7 @@ import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -67,8 +67,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     protected TextItem definitionFilter;
     protected TextItem changeSetFilter;
     protected TextItem pathFilter;
-    protected DateItem startDateFilter;
-    protected DateItem endDateFilter;
+    protected DateFilterItem startDateFilter;
+    protected DateFilterItem endDateFilter;
 
 
     private EntityContext context;
@@ -141,14 +141,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
-        startDateFilter = new DateItem("startDateFilter");
-        startDateFilter.setUseTextField(true);
-        startDateFilter.setTitle(MSG.filter_from_date());
-        startDateFilter.setEnforceDate(true);
-        endDateFilter = new DateItem("endDateFilter");
-        endDateFilter.setUseTextField(true);
-        endDateFilter.setEnforceDate(true);
-        endDateFilter.setTitle(MSG.filter_to_date());
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
 
 
         if (isShowFilterForm()) {

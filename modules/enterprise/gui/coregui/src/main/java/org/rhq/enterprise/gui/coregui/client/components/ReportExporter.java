@@ -20,13 +20,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import java.util.Date;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
-
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+
+import java.util.Date;
 
 /**
  * Exporter for building urls to reports (csv).
@@ -85,30 +85,30 @@ public class ReportExporter {
 
     public static ReportExporter createExporterForRecentDrift(String reportUrl, String definition,
                                                               String snapshot, String[] driftCategories, String path,
-                                                              Date fromDate, Date toDate) {
+                                                              Integer startDateOffset , Integer endDateOffset) {
         ReportExporter newExporter = new ReportExporter(reportUrl);
         newExporter.setDriftCategories(driftCategories);
         newExporter.setDriftDefinition(definition);
         newExporter.setDriftPath(path);
         newExporter.setDriftSnapshot(snapshot);
-        newExporter.setStartDate(fromDate);
-        newExporter.setEndDate(toDate);
+        newExporter.setStartDate(addDateOffsetToNow(startDateOffset));
+        newExporter.setEndDate(addDateOffsetToNow(endDateOffset));
         return newExporter;
     }
 
-    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, Date fromDate, Date toDate) {
+    public static ReportExporter createExporterForRecentAlerts(String reportUrl, String[] alertPriorityList, Integer startDateOffset, Integer endDateOffset) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setAlertPriorityFilters(alertPriorityList);
-        newExportDialog.setStartDate(fromDate);
-        newExportDialog.setEndDate(toDate);
+        newExportDialog.setStartDate(addDateOffsetToNow(startDateOffset));
+        newExportDialog.setEndDate(addDateOffsetToNow(endDateOffset));
         return newExportDialog;
     }
 
-    public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses, Date fromDate, Date toDate) {
+    public static ReportExporter createExporterForRecentOperations(String reportUrl, String[] operationRequestStatuses, Integer startDateOffset, Integer endDateOffset) {
         ReportExporter newExportDialog = new ReportExporter(reportUrl);
         newExportDialog.setOperationRequestStatusList(operationRequestStatuses);
-        newExportDialog.setStartDate(fromDate);
-        newExportDialog.setEndDate(toDate);
+        newExportDialog.setStartDate(addDateOffsetToNow(startDateOffset));
+        newExportDialog.setEndDate(addDateOffsetToNow(endDateOffset));
         return newExportDialog;
     }
 
@@ -121,9 +121,16 @@ public class ReportExporter {
         ReportExporter exporter = new ReportExporter(reportUrl);
         exporter.resourceTypeId = resourceTypeId;
         exporter.version = version;
-
         return exporter;
     }
+
+    private static Date addDateOffsetToNow(final Integer dateOffset){
+        Date now = new Date();
+        CalendarUtil.addDaysToDate(now, dateOffset);
+        Log.debug(" Date Offset: "+dateOffset+"="+now);
+        return now;
+    }
+
 
     public void setAlertPriorityFilters(String[] alertPriorityFilters) {
         this.alertPriorityFilters = alertPriorityFilters;

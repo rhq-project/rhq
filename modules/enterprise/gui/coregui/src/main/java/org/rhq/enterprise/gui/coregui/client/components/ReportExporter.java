@@ -24,10 +24,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
+import com.smartgwt.client.util.DateUtil;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 import java.util.Date;
 
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 /**
  * Exporter for building urls to reports (csv).
  * The reports are RESTful urls opened up in a new window.
@@ -229,12 +234,13 @@ public class ReportExporter {
     }
 
     public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+        this.startDate = DateUtil.getAbsoluteDate(START_OF_TODAY, startDate, START);
     }
 
     public void setEndDate(Date endDate) {
-        this.endDate = endDate;
+        this.endDate = DateUtil.getAbsoluteDate(END_OF_TODAY, endDate, END);
     }
+
 
     /**
      * Using the url built in buildUrl() open the RESTful CSV report in a new window.

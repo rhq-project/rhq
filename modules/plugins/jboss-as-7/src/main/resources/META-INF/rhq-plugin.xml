@@ -2132,6 +2132,132 @@
       &loggingHandlerOpsConfig;
     </service>
 
+    <service name="Logger Category"
+             discovery="SubsystemDiscovery"
+             class="LoggerComponent"
+        >
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="logger"/>
+      </plugin-configuration>
+
+      <!-- Resource confuration section -->
+      <resource-configuration>
+	<c:simple-property name="category" required="false" type="string" readOnly="true" description="Specifies the category for the logger."/>
+
+	<c:map-property name="filter" required="false" description="Defines a simple filter type." >
+	    <c:simple-property name="all" required="false" type="string" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be unloggable,the message will not be logged and subsequent filters will not be checked.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="not" name="not"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="any" required="false" type="string" readOnly="true" description="A filter consisting of several filters in a chain.  If any filter finds the log message to be loggable, the message will be logged and subsequent filters will not be checked.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="not" name="not"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="accept" required="false" type="boolean" readOnly="true" defaultValue="true" description="Accepts all log messages. The default value is true."/>
+	    <c:simple-property name="change-level" required="false" type="string" readOnly="true" description="A filter which modifies the log record with a new level if the nested filter evaluates true for that record.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="deny" required="false" type="boolean" readOnly="true" defaultValue="true" description="Denys all log messages. The default value is true."/>
+	    <c:simple-property name="level" required="false" type="string" readOnly="true" description="A filter which excludes a message with the specified level.">
+	     <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="level-range" required="false" type="string" readOnly="true" description="A filter which logs only messages that fall within a level range.">
+	     <c:property-options>
+	      <c:option value="max-inclusive" name="max-inclusive"/>
+	      <c:option value="max-level" name="max-level"/>
+	      <c:option value="min-inclusive" name="min-inclusive"/>
+	      <c:option value="min-level" name="min-level"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="match" required="false" type="string" readOnly="true" description="A regular&#45;expression&#45;based filter. Used to exclude log records which match or don&apos;t match the expression. The regular expression is checked against the raw (unformatted) message."/>
+
+	    <c:simple-property name="not" required="false" type="string" readOnly="true" description="A filter that inverts the filter that is nested.">
+	     <c:property-options>
+	      <c:option value="accept" name="accept"/>
+	      <c:option value="change-level" name="change-level"/>
+	      <c:option value="deny" name="deny"/>
+	      <c:option value="level" name="level"/>
+	      <c:option value="level-range" name="level-range"/>
+	      <c:option value="match" name="match"/>
+	      <c:option value="replace" name="replace"/>
+	     </c:property-options>
+	    </c:simple-property>
+	    <c:simple-property name="replace" required="false" type="string" readOnly="true" description="A filter which applies a text substitution on the message if the nested filter matches.">
+	     <c:property-options>
+	      <c:option value="pattern" name="pattern"/>
+	      <c:option value="replace-all" name="replace-all"/>
+	      <c:option value="replacement" name="replacement"/>
+	     </c:property-options>
+	    </c:simple-property>
+	</c:map-property>
+	<c:list-property name="handlers" description="The Handlers associated with this Logger." >
+	    <c:simple-property name="handlers" />
+	</c:list-property>
+	<c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+	 <c:property-options>
+	  <c:option value="ALL" name="ALL"/>
+	  <c:option value="CONFIG" name="CONFIG"/>
+	  <c:option value="DEBUG" name="DEBUG"/>
+	  <c:option value="ERROR" name="ERROR"/>
+	  <c:option value="FATAL" name="FATAL"/>
+	  <c:option value="FINE" name="FINE"/>
+	  <c:option value="FINER" name="FINER"/>
+	  <c:option value="FINEST" name="FINEST"/>
+	  <c:option value="INFO" name="INFO"/>
+	  <c:option value="OFF" name="OFF"/>
+	  <c:option value="TRACE" name="TRACE"/>
+	  <c:option value="WARN" name="WARN"/>
+	  <c:option value="WARNING" name="WARNING"/>
+	 </c:property-options>
+	</c:simple-property>
+	<c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
+      </resource-configuration>
+    </service> <!-- End of Logger Category services -->   
+
   </service>
 
 

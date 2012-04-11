@@ -2328,7 +2328,7 @@
 	     </c:property-options>
 	    </c:simple-property>
 	</c:map-property>
-	<c:list-property name="handlers" description="The Handlers associated with this Logger." >
+	<c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
 	    <c:simple-property name="handlers" />
 	</c:list-property>
 	<c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">

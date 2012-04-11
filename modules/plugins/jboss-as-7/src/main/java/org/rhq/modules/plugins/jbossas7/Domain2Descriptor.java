@@ -258,6 +258,14 @@ public class Domain2Descriptor {
                 StringBuilder sb = new StringBuilder("<c:list-property name=\"");
                 sb.append(key);
                 sb.append("\"");
+                //include required status on plugin entry
+                Object required = props.get("required");
+                if (required != null && (Boolean) required) {
+                    sb.append(" required=\"true\"");
+                } else {
+                    sb.append(" required=\"false\"");
+                }
+
                 String description = (String) props.get("description");
                 appendDescription(sb, description, null);
 

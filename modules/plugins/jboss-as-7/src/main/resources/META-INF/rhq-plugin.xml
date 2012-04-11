@@ -2689,6 +2689,7 @@
            description="The transactions subsystem.">
 
     <runs-inside>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
     </runs-inside>
 
@@ -2724,6 +2725,7 @@
            description="The transactions subsystem.">
 
     <runs-inside>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
       <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 

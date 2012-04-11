@@ -21,7 +21,10 @@ package org.rhq.enterprise.gui.coregui.client.components;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 /**
+ * Deprecated in favor of TitleBar.
+ * Favoring actual components over free form HTML with HTMLFlow.
  * @author Greg Hinkle
+ * @see org.rhq.enterprise.gui.coregui.client.components.TitleBar
  */
 @Deprecated
 public class HeaderLabel extends HTMLFlow {

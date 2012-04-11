@@ -4148,7 +4148,13 @@
         <c:simple-property name="archive" required="true" type="string" readOnly="false" description="Specifies the resource adapter archive"/>
         <c:simple-property name="beanvalidationgroups" required="false" type="string" readOnly="false" description="Specifies the bean validation groups that should be used"/>
         <c:simple-property name="bootstrapcontext" required="false" type="string" readOnly="false" description="Specifies the unique name of the bootstrap context that should be used"/>
-        <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter"/>
+        <c:simple-property name="transaction-support" required="true" type="string" readOnly="false" description="Specifies the transaction support level of the resource adapter">
+          <c:property-options>
+            <c:option value="LocalTransaction"/>
+            <c:option value="XATransaction"/>
+            <c:option value="NoTransaction"/>
+          </c:property-options>
+        </c:simple-property>
       </resource-configuration>
 
       <service name="Admin Objects"
@@ -4197,11 +4203,37 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="allocation-retry:expr" required="false" type="string" readOnly="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>
+          <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies if the resource adapter should be enabled. The default value is true."/>
+          <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is FailingConnectionOnly."/>
+          <c:simple-property name="idle-timeout-minutes:expr" required="false" type="string" readOnly="false" description="The idle&#45;timeout&#45;minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle&#45;timeout&#45;minutes value of any pool. Changing this value requires a server restart."/>
+          <c:simple-property name="interleaving" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to enable interleaving for XA connections. The default value is false."/>
+          <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="Specifies the JNDI name for the connection factory or admin object"/>
+          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The max&#45;pool&#45;size element specifies the maximum number of connections for a pool. No more connections will be created in each sub&#45;pool. The default value is 20."/>
+          <c:simple-property name="min-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="0" description="The min&#45;pool&#45;size element specifies the minimum number of connections for a pool. The default value is 0."/>
+          <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="false" description="Specifies if the connection pool should be excluded from recovery"/>
+          <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="false" defaultValue="false" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub&#45;pools for the different contexts. The default value is false."/>
+          <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="false" defaultValue="false" description="Should the Xid be padded. The default value is false."/>
+          <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" defaultValue="false" description="Should the pool be prefilled. Changing this value requires a server restart. The default value is false."/>
+          <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" defaultValue="false" description="Specifies if the min&#45;pool&#45;size should be considered strictly. The default value is false."/>
+          <c:simple-property name="recovery-password" required="false" type="string" readOnly="false" description="The password used for recovery"/>
+          <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="false" description="The fully qualified class name of the recovery plugin implementation"/>
+          <c:map-property name="recovery-plugin-properties:collapsed" required="false" description="The properties for the recovery plugin" >
+            <c:simple-property name="recovery-plugin-properties" required="false" type="string" readOnly="false"/>
+          </c:map-property>
+          <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="false" description="The security domain used for recovery"/>
+          <c:simple-property name="recovery-username" required="false" type="string" readOnly="false" description="The user name used for recovery"/>
+          <c:simple-property name="same-rm-override" required="false" type="boolean" readOnly="false" description="The is&#45;same&#45;rm&#45;override element allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false"/>
+          <c:simple-property name="security-application" required="false" type="boolean" readOnly="false" description="Indicates that app supplied parameters (such as from getConnection(user, pw)) are used to distinguish connections in the pool"/>
+          <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Specifies the security domain which defines the javax.security.auth.Subject that are used to distinguish connections in the pool"/>
+          <c:simple-property name="security-domain-and-application" required="false" type="string" readOnly="false" description="Indicates that either app supplied parameters (such as from getConnection(user, pw)) or Subject (from security domain) are used to distinguish connections in the pool"/>
+          <c:simple-property name="use-ccm" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable the use of a cached connection manager. The default value is true."/>
+          <c:simple-property name="use-fast-fail" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to fail a connection allocation on the first try if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false). The default value is false."/>
+          <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="false" defaultValue="true" description="Setting this to false will bind the object into global JNDI. The default value is true."/>
+          <c:simple-property name="use-try-lock:expr" required="false" type="string" readOnly="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
+          <c:simple-property name="wrap-xa-resource" required="false" type="boolean" readOnly="false" defaultValue="true" description="Should the XAResource instances be wrapped in a org.jboss.tm.XAResourceWrapper instance. The default value is true."/>
+          <c:simple-property name="xa-resource-timeout:expr" required="false" type="string" readOnly="false" description="The value is passed to XAResource.setTransactionTimeout(), in seconds. Default is zero"/>
         </resource-configuration>
-
       </service>
-
     </service>
 
   </service>

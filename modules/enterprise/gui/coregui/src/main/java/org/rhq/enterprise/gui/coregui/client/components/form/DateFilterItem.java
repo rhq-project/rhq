@@ -68,7 +68,7 @@ public class DateFilterItem extends DateItem {
      */
     public Integer getValueAsDays() {
         if (getValueAsDate() == null) {
-            return 0;
+            return null;
         } else {
             return CalendarUtil.getDaysBetween(new Date(), getValueAsDate());
         }

@@ -130,10 +130,13 @@ public class ReportExporter {
     }
 
     private static Date addDateOffsetToNow(final Integer dateOffset){
-        Date now = new Date();
-        CalendarUtil.addDaysToDate(now, dateOffset);
-        Log.debug(" Date Offset: "+dateOffset+"="+now);
-        return now;
+        if(dateOffset == null || dateOffset.equals(new Integer(0))){
+            return null;
+        } else {
+            Date now = new Date();
+            CalendarUtil.addDaysToDate(now, dateOffset);
+            return now;
+        }
     }
 
 
@@ -234,11 +237,11 @@ public class ReportExporter {
     }
 
     public void setStartDate(Date startDate) {
-        this.startDate = DateUtil.getAbsoluteDate(START_OF_TODAY, startDate, START);
+        this.startDate = (startDate != null) ?  DateUtil.getAbsoluteDate(START_OF_TODAY, startDate, START) : null;
     }
 
     public void setEndDate(Date endDate) {
-        this.endDate = DateUtil.getAbsoluteDate(END_OF_TODAY, endDate, END);
+        this.endDate = (endDate != null ) ? DateUtil.getAbsoluteDate(END_OF_TODAY, endDate, END) : null;
     }
 
 

@@ -530,7 +530,7 @@ public class Domain2Descriptor {
         //Detect whether type PROPERTY and insert known supported properties before close.
         if (type.rhqName.equalsIgnoreCase("-option-list-")) {//if default provided then set it and close tag
             sb.append(generateOptionList(indent, properties, properties[7]));
-        } else if ((mode == D2DMode.OPERATION)
+        } else if (((mode == D2DMode.OPERATION) || (mode == D2DMode.PROPERTIES))
             && ((type.rhqName.equalsIgnoreCase("-object-")) || (type.rhqName.equalsIgnoreCase("string")))) {
             //detect map type if present an build map instead
             if ((props.get("allowed") == null) && (props.get("value-type") != null)) {

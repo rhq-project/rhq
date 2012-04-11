@@ -402,19 +402,45 @@ public class Domain2Descriptor {
                 if (description.charAt(description.length() - 1) != '.') {
                     description += ".";
                 }
+                defaultValueText = escapeHtmlCharacters(defaultValueText + "");
                 description = description + " " + defaultValueText;
             }
 
             //replace problematic strings with correct escaped xml references.
-            description = description.replace("<", "&lt;");
-            description = description.replace(">", "&gt;");
-            description = description.replace("\"", "\'");
-            description = description.replace("'", "&apos;");
+            description = escapeHtmlCharacters(description);
 
             builder.append(description);
 
             builder.append('"');
         }
+    }
+
+    /** Escape all known problematic html characters returned to prevent
+     *  xml or html parse issues.
+     *  
+     *  Currently includes a few popular and encountered escape characters. 
+     *  We may want to add them all later.  
+     * 
+     * @param description
+     * @return
+     */
+    private String escapeHtmlCharacters(String description) {
+        description = description.replace("<", "&lt;");
+        description = description.replace(">", "&gt;");
+        description = description.replace("\"", "\'");
+        description = description.replace("'", "&apos;");
+        //add a few more related to regex
+        description = description.replace("%", "&#37;");
+        description = description.replace(":", "&#58;");
+        description = description.replace("[", "&#91;");
+        description = description.replace("]", "&#93;");
+        description = description.replace("^", "&#94;");
+        description = description.replace("$", "&#36;");
+        description = description.replace("?", "&#63;");
+        description = description.replace("+", "&#43;");
+        description = description.replace("-", "&#45;");
+        //TODO: spinder should we add the other escape elements as well?
+        return description;
     }
 
     private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
@@ -495,8 +521,8 @@ public class Domain2Descriptor {
         Object defVal = props.get("default");
         String defaultValueDescription = null;
         if (defVal != null) {
-            sb.append(" defaultValue=\"").append(defVal).append('\"');
-            defaultValueDescription = "The default value is " + defVal + ".";
+            sb.append(" defaultValue=\"").append(escapeHtmlCharacters(defVal + "")).append('\"');
+            defaultValueDescription = "The default value is " + escapeHtmlCharacters(defVal + "") + ".";
         }
 
         String description = (String) props.get("description");
@@ -558,6 +584,7 @@ public class Domain2Descriptor {
 
         //if default provided append.
         if ((defaultSelection != null) && (!defaultSelection.trim().isEmpty())) {
+            defaultSelection = escapeHtmlCharacters(defaultSelection + "");
             optionList.append(" defaultValue=\"" + defaultSelection + "\" ");
         }
 
@@ -595,6 +622,7 @@ public class Domain2Descriptor {
         StringBuilder optionList = new StringBuilder();
 
         if ((defaultSelection != null) && (!defaultSelection.trim().isEmpty())) {
+            defaultSelection = escapeHtmlCharacters(defaultSelection + "");
             optionList.append(" defaultValue=\"" + defaultSelection + "\" >\n");
         } else {//no default provided
             optionList.append(">\n");

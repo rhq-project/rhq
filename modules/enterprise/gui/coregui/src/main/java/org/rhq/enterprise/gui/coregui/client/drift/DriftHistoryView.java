@@ -141,18 +141,18 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
-        endDateFilter = new DateItem("startDateFilter");
+        startDateFilter = new DateItem("startDateFilter");
+        startDateFilter.setUseTextField(true);
+        startDateFilter.setTitle(MSG.filter_from_date());
+        startDateFilter.setEnforceDate(true);
+        endDateFilter = new DateItem("fromDateFilter");
         endDateFilter.setUseTextField(true);
         endDateFilter.setEnforceDate(true);
-        endDateFilter.setTitle(MSG.filter_from_date());
-        startDateFilter = new DateItem("endDateFilter");
-        startDateFilter.setUseTextField(true);
-        startDateFilter.setTitle(MSG.filter_to_date());
-        startDateFilter.setEnforceDate(true);
+        endDateFilter.setTitle(MSG.filter_to_date());
 
 
         if (isShowFilterForm()) {
-            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter, endDateFilter, startDateFilter);
+            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, startDateFilter, pathFilter, endDateFilter );
         }
     }
 

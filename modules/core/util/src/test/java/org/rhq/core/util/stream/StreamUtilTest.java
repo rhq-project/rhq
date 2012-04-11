@@ -36,6 +36,24 @@ import org.testng.annotations.Test;
  */
 @Test
 public class StreamUtilTest {
+    public void testEscapeHtml() {
+        String dataString = "string with chars to be HTML-escaped: <>&|,'\"\\";
+        String escapedString = "string with chars to be HTML-escaped: &lt;&gt;&amp;&#124;&#44;&#039;&quot;&#092;";
+
+        // baseline check - see that not escaping works as usual
+        ByteArrayInputStream in = new ByteArrayInputStream(dataString.getBytes());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        assert StreamUtil.copy(in, out, true, false) == dataString.length();
+        assert out.toString().equals(dataString);
+
+        // now see that escaping works making sure copy() returns the proper count, too
+        in = new ByteArrayInputStream(dataString.getBytes());
+        out = new ByteArrayOutputStream();
+        long bytesRead = StreamUtil.copy(in, out, true, true);
+        assert bytesRead == escapedString.length() : "bad count: " + bytesRead + "<->" + escapedString.length();
+        assert out.toString().equals(escapedString);
+    }
+
     public void testCopyStreamRange() {
         String dataString = "a test string that will be copied";
         ByteArrayInputStream in;

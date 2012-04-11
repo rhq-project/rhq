@@ -251,7 +251,7 @@ public class StreamUtil {
 
             for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
                 if (htmlEscape) {
-                    String htmlEncodedStr = forHTMLTag(new String(buffer));
+                    String htmlEncodedStr = forHTMLTag(new String(buffer, 0, bytesRead));
                     bytesRead = htmlEncodedStr.length();
                     output.write(htmlEncodedStr.getBytes(), 0, bytesRead);
                 } else {

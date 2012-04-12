@@ -486,7 +486,7 @@ public class UserSessionManager {
         Log.info("Destroying HTTP session refresh timer...");
         httpSessionTimer.cancel();
 
-        ResourceTypeRepository.Cache.getInstance().clear();
+        //ResourceTypeRepository.Cache.getInstance().clear();
 
         CoreGUI.get().reset();
 

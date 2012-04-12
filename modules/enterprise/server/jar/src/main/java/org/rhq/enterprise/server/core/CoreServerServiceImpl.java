@@ -192,7 +192,8 @@ public class CoreServerServiceImpl implements CoreServerService {
                     String msg = "An agent is trying to register with an existing agent name ["
                         + request.getName()
                         + "] without providing a valid security token. If you are attempting to re-register this agent, "
-                        + "please consult an administrator to reconfigure this agent with its proper security token.";
+                        + "please consult an administrator to obtain the agent's proper security token "
+                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
                     throw new AgentRegistrationException(msg);
                 }
             }

@@ -64,12 +64,10 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
-import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
-import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
+import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -174,6 +172,9 @@ public class ConfigurationEditor extends LocatableVLayout {
     private boolean allPropertiesWritable = false;
     private Map<String, String> invalidPropertyNameToDisplayNameMap = new HashMap<String, String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
+
+    private FormItem blurValueItem;
+    private CheckboxItem blurUnsetItem;
 
     public static enum ConfigType {
         plugin, resource
@@ -676,8 +677,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 propertyList);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
-            SpacerItem unsetItem = new SpacerItem();
-            fields.add(unsetItem);
+            SpacerItem spacerItem = new SpacerItem();
+            fields.add(spacerItem);
 
             CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList);
             fields.add(listOfSimplesItem);
@@ -779,9 +780,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
             LocatableToolStrip buttonBar = new LocatableToolStrip(layout.extendLocatorId("ButtonBar"));
             buttonBar.setPadding(5);
-            buttonBar.setWidth100();
             buttonBar.setMembersMargin(15);
-            layout.addMember(buttonBar);
 
             final IButton newButton = new LocatableIButton(buttonBar.extendLocatorId("New"), MSG.common_button_new());
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
@@ -817,17 +816,16 @@ public class ConfigurationEditor extends LocatableVLayout {
             LocatableHLayout deleteControlsLayout = new LocatableHLayout(buttonBar.extendLocatorId("DeleteControls"));
             deleteControlsLayout.setMargin(3);
             deleteControlsLayout.setMembersMargin(3);
+            deleteControlsLayout.setWidth100();
             LocatableDynamicForm deleteForm = new LocatableDynamicForm(deleteControlsLayout.extendLocatorId("Form"));
-            deleteForm.setNumCols(3);
-            deleteControlsLayout.addMember(deleteForm);
-            buttonBar.addMember(deleteControlsLayout);
+            deleteForm.setWidth100();
 
             final SelectItem selectItem = new SelectItem();
-            selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
-                .toArray(new String[propertyDefinitionMap.getMap().size()]));
             selectItem.setMultiple(true);
             selectItem.setMultipleAppearance(MultipleAppearance.GRID);
             selectItem.setTitle(MSG.common_button_delete());
+            selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
+                .toArray(new String[propertyDefinitionMap.getMap().size()]));
 
             final LocatableIButton okButton = new LocatableIButton(buttonBar.extendLocatorId("OK"));
             okButton.setTitle(MSG.common_button_ok());
@@ -857,7 +855,6 @@ public class ConfigurationEditor extends LocatableVLayout {
                     });
                 }
             });
-            deleteControlsLayout.addMember(okButton);
 
             selectItem.addChangedHandler(new ChangedHandler() {
                 @Override
@@ -872,6 +869,11 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
 
             deleteForm.setFields(selectItem);
+            deleteControlsLayout.addMember(deleteForm);
+            deleteControlsLayout.addMember(okButton);
+
+            buttonBar.addMember(deleteControlsLayout);
+            layout.addMember(buttonBar);
         }
 
         CanvasItem canvasItem = buildComplexPropertyField(layout);
@@ -1451,10 +1453,16 @@ public class ConfigurationEditor extends LocatableVLayout {
             unsetItem.setShowTitle(false);
             unsetItem.setLabelAsTitle(false);
 
-            unsetItem.addChangeHandler(new ChangeHandler() {
-                public void onChange(ChangeEvent changeEvent) {
+            unsetItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changeEvent) {
+                    // treat the ChangedEvent as a possible focus change, since this is a checkbox 
+                    handleFocusChange(valueItem, unsetItem);
+
                     Boolean isUnset = (Boolean) changeEvent.getValue();
-                    valueItem.setDisabled(isUnset);
+                    if (isUnset != valueItem.isDisabled()) {
+                        valueItem.setDisabled(isUnset);
+                    }
+
                     if (isUnset) {
                         if (valueItem.getValue() != null) {
                             setValue(valueItem, null);
@@ -1464,6 +1472,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     } else {
                         valueItem.focusInItem();
                     }
+
                     valueItem.redraw();
                 }
             });
@@ -1477,12 +1486,16 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
-            valueItem.addBlurHandler(new BlurHandler() {
-                public void onBlur(BlurEvent event) {
-                    // When the user stops editing the input, disable it if its value is null.
-                    Object value = event.getItem().getValue();
-                    boolean isUnset = (value == null);
-                    event.getItem().setDisabled(isUnset);
+            // (Smartgwt 3.0) Certain FormItems, like SelectItem, generate a Blur event when we don't want them to. 
+            // For example, expanding the SelectItem drop down (via click) generates a Blur event (which makes no 
+            // sense to me since the user is obviously not leaving the widget, it should still be in focus imo). Anyway,
+            // to get around this behavior and to be able to unset config properties that a user has left as null values 
+            // when changing focus, we avoid BlurHandler and instead use FocusHandlers and a DIY blur handling
+            // approach.
+
+            valueItem.addFocusHandler(new FocusHandler() {
+                public void onFocus(FocusEvent event) {
+                    handleFocusChange(valueItem, unsetItem);
                 }
             });
 
@@ -1492,6 +1505,23 @@ public class ConfigurationEditor extends LocatableVLayout {
             item.setShowTitle(false);
         }
         return item;
+    }
+
+    private void handleFocusChange(FormItem valueItem, CheckboxItem unsetItem) {
+        if (!(null == blurValueItem || valueItem.equals(blurValueItem))) {
+            boolean isUnset = (null == blurValueItem.getValue());
+            if (isUnset != blurValueItem.isDisabled()) {
+                blurValueItem.setDisabled(isUnset);
+                blurValueItem.redraw();
+            }
+            if (isUnset != blurUnsetItem.getValueAsBoolean()) {
+                blurUnsetItem.setValue(isUnset);
+                blurUnsetItem.redraw();
+            }
+        }
+
+        blurValueItem = valueItem;
+        blurUnsetItem = unsetItem;
     }
 
     private boolean isUnset(PropertyDefinitionSimple propertyDefinition, PropertySimple propertySimple) {

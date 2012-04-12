@@ -2526,6 +2526,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                             + " and target configuration contains no ':'");
                         return;
                     }
+
+                    expr = expr.substring(expr.indexOf(':')+1);
+                    criteria.setSearchExpression(expr);
                 } else {
                     criteria.setSearchExpression(expression);
                 }
@@ -2573,21 +2576,29 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * Drill down in the case the user set up a target of "configuration". We need to check
      * that the target property actually exists and that it has a format we understand
-     * @param pds Propertydefinition to examine
+     * @param pds Property definition to examine
      * @param expression The whole expression starting with identifier: for the configuration
      * identifier. This looks like <i>listname</i> for list of
      * property simple or <i>mapname=mapkey</i> for a map with simple properties
-     * @param resource the
+     * @param resource the resource to look at
      * @return false if the property can not be resolved, true otherwise
      */
     private boolean handleConfigurationTarget(PropertyDefinitionSimple pds, String expression, Resource resource) {
         Configuration configuration = resource.getResourceConfiguration();
         Property p;
         String propName = expression.substring(0, expression.indexOf(":"));
-        boolean isMap = expression.contains("=");
+        boolean isMapOrList = expression.contains("=");
 
-        if (isMap) {
-            String mapPropName = propName.substring(0, propName.indexOf("="));
+        if (isMapOrList) {
+            String mapPropLocation = propName.substring(0, propName.indexOf("="));
+            String mapPropName;
+            if (mapPropLocation.contains("/")) {
+                // List of maps
+                mapPropName = mapPropLocation.substring(0,mapPropLocation.indexOf('/'));
+            }
+            else {
+                mapPropName = mapPropLocation;
+            }
             p = configuration.get(mapPropName);
         } else
             p = configuration.get(propName);
@@ -2609,7 +2620,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // Now List of simple or list of maps (of simple) ?
 
         if (propertyList.get(0) instanceof PropertySimple) {
-            if (isMap) {
+            if (isMapOrList) {
                 log.warn(" expected a List of Maps, but got a list of simple");
                 return false;
             }
@@ -2623,7 +2634,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
             }
         } else if (propertyList.get(0) instanceof PropertyMap) {
-            if (!isMap) {
+            if (!isMapOrList) {
                 log.warn(" expected a List of simple, but got a list of Maps");
                 return false;
             }

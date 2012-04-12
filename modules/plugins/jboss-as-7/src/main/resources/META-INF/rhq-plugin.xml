@@ -1412,23 +1412,35 @@
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
 
       <resource-configuration>
-        <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
+        <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">
+          <c:property-options>
+            <c:option value="http"/>
+            <c:option value="https"/>
+            <c:option value="ajp"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="socket-binding" required="true" type="string" description="The web connector socket-binding reference, this connector should be bound to.">
+          <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+        </c:simple-property>
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
+        <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
         <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
         <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
-        <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The web connector protocol."/>
+        <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
+<!-- TODO commented out until we know how the user could enter a custom value here.
+          <c:property-options allowCustomValue="true">
+            <c:option value="HTTP/1.1"/>
+            <c:option value="AJP"/>
+          </c:property-options>
+-->
+        </c:simple-property>
         <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
         <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
         <c:simple-property name="redirect-port" required="false" type="integer" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
-        <c:simple-property name="scheme" required="false" type="string" readOnly="false" description="The web connector scheme."/>
         <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
-        <c:simple-property name="socket-binding" required="true" type="string" description="The web connector socket-binding reference, this connector should be bound to.">
-          <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
-          <!-- TODO different for Domain vs standalone -->
-        </c:simple-property>
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
         <!-- c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">

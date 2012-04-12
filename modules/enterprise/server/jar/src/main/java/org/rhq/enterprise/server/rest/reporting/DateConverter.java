@@ -34,6 +34,6 @@ class DateConverter<T> implements PropertyConverter<T> {
         if (epochMillis == null) {
             return null;
         }
-        return ReportFormatHelper.formatDate(epochMillis);
+        return ReportFormatHelper.formatDateTime(epochMillis);
     }
 }

@@ -20,10 +20,10 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import org.rhq.core.domain.resource.Resource;
+
 import java.text.DateFormat;
 import java.util.Date;
-
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * Formatting tools for rest reporting.
@@ -54,7 +54,7 @@ public class ReportFormatHelper {
     public static String formatDateTime(long epochMillis){
         if(epochMillis != 0){
             Date date = new Date(epochMillis);
-            return DateFormat.getInstance().format(date);
+            return  DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(date);
         }else {
             return " ";
         }
@@ -69,7 +69,7 @@ public class ReportFormatHelper {
     public static String formatDate(long epochMillis){
         if(epochMillis != 0){
         Date date = new Date(epochMillis);
-        return DateFormat.getDateInstance().format(date);
+        return DateFormat.getDateInstance(DateFormat.SHORT).format(date);
         }else {
             return " ";
         }

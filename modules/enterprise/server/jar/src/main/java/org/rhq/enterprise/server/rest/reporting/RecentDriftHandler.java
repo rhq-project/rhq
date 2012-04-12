@@ -1,23 +1,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -28,6 +12,20 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
@@ -97,6 +95,8 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
                 CsvWriter<DriftComposite> csvWriter = new CsvWriter<DriftComposite>();
                 csvWriter.setColumns("drift.ctime", "driftDefinitionName", "drift.changeSet.version", "drift.category",
                     "drift.path", "resource.name", "ancestry", "detailsURL");
+
+                csvWriter.setPropertyConverter("drift.ctime", csvWriter.DATE_CONVERTER);
 
                 csvWriter.setPropertyConverter("ancestry", new PropertyConverter<DriftComposite>() {
                     @Override

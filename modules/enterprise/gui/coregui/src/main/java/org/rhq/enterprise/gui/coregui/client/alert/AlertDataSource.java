@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -326,20 +327,23 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             criteria.addFilterPriorities(prioritiesFilter);
         }
 
-        Date startDateFilter = getFilter(request, "startDateFilter", Date.class);
+        Date startDateFilter = getFilter(request, DateFilterItem.START_DATE_FILTER, Date.class);
         if(startDateFilter != null){
-            criteria.addFilterStartTime(startDateFilter.getTime());
+            Date startOfDay =   DateFilterItem.adjustTimeToStartOfDay(startDateFilter);
+            criteria.addFilterStartTime(startOfDay.getTime());
         }
 
-        Date endDateFilter = getFilter(request, "endDateFilter", Date.class);
+        Date endDateFilter = getFilter(request, DateFilterItem.END_DATE_FILTER, Date.class);
         if( endDateFilter!= null){
-            criteria.addFilterEndTime(endDateFilter.getTime());
+            Date endOfDay = DateFilterItem.adjustTimeToEndOfDay(endDateFilter);
+            criteria.addFilterEndTime(endOfDay.getTime());
         }
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 
         return criteria;
     }
+
 
     @Override
     protected String getSortFieldForColumn(String columnName) {

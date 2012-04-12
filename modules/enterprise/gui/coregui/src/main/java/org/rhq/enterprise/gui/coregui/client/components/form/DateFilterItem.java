@@ -19,9 +19,17 @@
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import com.google.gwt.user.datepicker.client.CalendarUtil;
+import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.form.fields.DateItem;
 
 import java.util.Date;
+
+import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
+import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
+import static com.smartgwt.client.types.RelativeDateRangePosition.END;
+import static com.smartgwt.client.types.RelativeDateRangePosition.START;
+
+
 
 /**
  * DateItem used for filtering. This component adds the ability to returns
@@ -31,6 +39,7 @@ import java.util.Date;
  * as Date.toString() in GWT creates a date format that has the local timezone
  * in it. GWT is not able to parse these dates with the local timezone in them.
  * GWT only knows how to parse RFC and GMT dates.
+ *
  * @author Mike Thompson
  */
 public class DateFilterItem extends DateItem {
@@ -53,7 +62,7 @@ public class DateFilterItem extends DateItem {
         standardConfiguration();
     }
 
-    private void standardConfiguration(){
+    private void standardConfiguration() {
         this.setUseTextField(true);
         this.setEnforceDate(true);
         this.setEndDate(new Date());
@@ -84,5 +93,23 @@ public class DateFilterItem extends DateItem {
         return String.valueOf(getValueAsDays());
     }
 
+    /**
+     * For inclusive date ranges the start date time portion needs to be set to the beginning of the day.
+     * @param startDate
+     * @return same day but the time is adjusted to start of day
+     */
+    public static Date adjustTimeToStartOfDay(Date startDate) {
+        return  DateUtil.getAbsoluteDate(START_OF_TODAY, startDate, START);
+    }
+
+    /**
+     * For inclusive date ranges the end date time needs to be the end of the day.
+     * @param endDate
+     * @return same day but time portion adjusted to end of day
+     */
+    public static Date adjustTimeToEndOfDay(Date endDate) {
+        return  DateUtil.getAbsoluteDate(END_OF_TODAY, endDate, END);
+
+    }
 
 }

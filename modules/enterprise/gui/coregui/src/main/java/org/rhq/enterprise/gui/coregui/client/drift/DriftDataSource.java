@@ -41,6 +41,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -319,14 +320,16 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         // do not get planned drifts
         criteria.addFilterDriftHandlingModes(DriftHandlingMode.normal);
 
-        Date startDateFilter = getFilter(request, "startDateFilter", Date.class);
+        Date startDateFilter = getFilter(request, DateFilterItem.START_DATE_FILTER, Date.class);
         if(startDateFilter != null){
-            criteria.addFilterStartTime(startDateFilter.getTime());
+            Date startOfDay =   DateFilterItem.adjustTimeToStartOfDay(startDateFilter);
+            criteria.addFilterStartTime(startOfDay.getTime());
         }
 
-        Date endDateFilter = getFilter(request, "endDateFilter", Date.class);
+        Date endDateFilter = getFilter(request, DateFilterItem.END_DATE_FILTER, Date.class);
         if( endDateFilter!= null){
-            criteria.addFilterEndTime(endDateFilter.getTime());
+            Date endOfDay = DateFilterItem.adjustTimeToEndOfDay(endDateFilter);
+            criteria.addFilterEndTime(endOfDay.getTime());
         }
 
 

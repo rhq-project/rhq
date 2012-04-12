@@ -511,36 +511,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
         } else if (what.equals("domain")) {
             operation = new Operation(op, new Address());
-        } else if (what.equals("domain-deployment")) {
-            if (op.equals("promote")) {
-                String serverGroup = parameters.getSimpleValue("server-group", "-not set-");
-                List<String> serverGroups = new ArrayList<String>();
-                if (serverGroup.equals("__all")) {
-                    serverGroups.addAll(getServerGroups());
-                } else {
-                    serverGroups.add(serverGroup);
-                }
-                String resourceKey = context.getResourceKey();
-                resourceKey = resourceKey.substring(resourceKey.indexOf("=") + 1);
-
-                log.info("Promoting [" + resourceKey + "] to server group(s) [" + Arrays.asList(serverGroups) + "]");
-
-                PropertySimple simple = parameters.getSimple("enabled");
-                Boolean enabled = false;
-                if (simple != null && simple.getBooleanValue() != null)
-                    enabled = simple.getBooleanValue();
-
-                operation = new CompositeOperation();
-                for (String theGroup : serverGroups) {
-                    theAddress = new Address();
-                    theAddress.add("server-group", theGroup);
-
-                    theAddress.add("deployment", resourceKey);
-                    Operation step = new Operation("add", theAddress);
-                    step.addAdditionalProperty("enabled", enabled);
-                    ((CompositeOperation) operation).addStep(step);
-                }
-            }
         } else if (what.equals("subsystem")) {
             operation = new Operation(op, new Address(this.path));
         }
@@ -570,13 +540,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return operationResult;
     }
 
-    @SuppressWarnings("unchecked")
-    private Collection<String> getServerGroups() {
-        Operation op = new ReadChildrenNames(new Address(), "server-group");
-        Result res = connection.execute(op);
-
-        return (Collection<String>) res.getResult();
-    }
 
     Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
 

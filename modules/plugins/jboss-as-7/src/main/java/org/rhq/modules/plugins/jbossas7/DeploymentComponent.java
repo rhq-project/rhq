@@ -185,7 +185,7 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
             Map<String,Object> deployment = (Map<String, Object>) deployments.get(key);
             log.info("Discover package [" + key + "] for type [" + type + "]");
 
-            List<Map> contentList = (List<Map>) deployment.get("content"); // TODO deployments on SG or ManagedServer level have no hash
+            List<Map> contentList = (List<Map>) deployment.get("content");
             if (contentList!=null) {
 
                 Map<String,Map> hashMap = contentList.get(0);

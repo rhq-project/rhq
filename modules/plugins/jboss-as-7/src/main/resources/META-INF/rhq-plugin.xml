@@ -664,7 +664,7 @@
         <c:simple-property name="path" default="deployment" readOnly="true"/>
       </plugin-configuration>
 
-      <operation name="domain-deployment:promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
+      <operation name="promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
         <parameters>
           <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string">
             <c:property-options>
@@ -2096,7 +2096,7 @@
         <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
       </plugin-configuration>
 
-      &loggingHandlerOpsConfig;    
+      &loggingHandlerOpsConfig;
     </service>
 
     <service name="Size Rotating File Handler"
@@ -2350,7 +2350,7 @@
 	</c:simple-property>
 	<c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
       </resource-configuration>
-    </service> <!-- End of Logger Category services -->   
+    </service> <!-- End of Logger Category services -->
 
   </service>
 

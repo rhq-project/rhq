@@ -1,7 +1,19 @@
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
@@ -9,7 +21,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Handle domain deployments
  * @author Heiko W. Rupp
  */
-public class DomainDeploymentComponent extends DeploymentComponent{
+public class DomainDeploymentComponent extends DeploymentComponent implements OperationFacet {
 
     @Override
     public AvailabilityType getAvailability() {
@@ -18,6 +30,64 @@ public class DomainDeploymentComponent extends DeploymentComponent{
         Operation op = new ReadResource(getAddress());
         Result res = getASConnection().execute(op);
 
-        return (res!=null && res.isSuccess()) ? AvailabilityType.UP: AvailabilityType.DOWN;
+        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
+
+    @Override
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
+
+        OperationResult operationResult = new OperationResult();
+
+        if (name.equals("promote")) {
+            String serverGroup = parameters.getSimpleValue("server-group", "-not set-");
+            List<String> serverGroups = new ArrayList<String>();
+            if (serverGroup.equals("__all")) {
+                serverGroups.addAll(getServerGroups());
+            } else {
+                serverGroups.add(serverGroup);
+            }
+            String resourceKey = context.getResourceKey();
+            resourceKey = resourceKey.substring(resourceKey.indexOf("=") + 1);
+
+            log.info("Promoting [" + resourceKey + "] to server group(s) [" + Arrays.asList(serverGroups) + "]");
+
+            PropertySimple simple = parameters.getSimple("enabled");
+            Boolean enabled = false;
+            if (simple != null && simple.getBooleanValue() != null)
+                enabled = simple.getBooleanValue();
+
+            CompositeOperation operation = new CompositeOperation();
+            for (String theGroup : serverGroups) {
+                Address theAddress = new Address();
+                theAddress.add("server-group", theGroup);
+
+                theAddress.add("deployment", resourceKey);
+                Operation step = new Operation("add", theAddress);
+                step.addAdditionalProperty("enabled", enabled);
+                operation.addStep(step);
+            }
+
+            Result res = getASConnection().execute(operation, 120); // wait up to 2 minutes
+            if (res.isSuccess()) {
+                operationResult
+                    .setSimpleResult("Successfully deployed to server groups " + Arrays.asList(serverGroups));
+            } else {
+                operationResult.setErrorMessage("Deployment to servergoups failed: " + res.getFailureDescription());
+            }
+        } else {
+            operationResult.setErrorMessage("Unknown operation " + name);
+        }
+
+        return operationResult;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Collection<String> getServerGroups() {
+        Operation op = new ReadChildrenNames(new Address(), "server-group");
+        Result res = connection.execute(op);
+
+        return (Collection<String>) res.getResult();
+    }
+
 }

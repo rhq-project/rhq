@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
@@ -749,13 +750,18 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 valueOptions.put(option.getValue(), option.getName());
             }
 
-            if (valueOptions.size() > 5) {
-                editorItem = new SelectItem();
+            if (propDef.getAllowCustomEnumeratedValue()) {
+                editorItem = new ComboBoxItem();
+                ((ComboBoxItem) editorItem).setAddUnknownValues(true);
             } else {
-                // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when
-                //       our listgrid does not have the "unset" boolean field also present. If its just the value
-                //       field, the radio group editor won't show.
-                editorItem = new SelectItem(); // new RadioGroupItem();
+                if (valueOptions.size() > 5) {
+                    editorItem = new SelectItem();
+                } else {
+                    // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when
+                    //       our listgrid does not have the "unset" boolean field also present. If its just the value
+                    //       field, the radio group editor won't show.
+                    editorItem = new SelectItem(); // new RadioGroupItem();
+                }
             }
             editorItem.setValueMap(valueOptions);
         } else {

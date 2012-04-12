@@ -54,6 +54,7 @@ import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FloatItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
@@ -1297,10 +1298,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueOptions.put(option.getValue(), option.getName());
                 }
 
-                if (valueOptions.size() > 5) {
-                    valueItem = new SelectItem();
+                if (propertyDefinitionSimple.getAllowCustomEnumeratedValue()) {
+                    valueItem = new ComboBoxItem();
+                    ((ComboBoxItem) valueItem).setAddUnknownValues(true);
                 } else {
-                    valueItem = new RadioGroupItem();
+                    if (valueOptions.size() > 5) {
+                        valueItem = new SelectItem();
+                    } else {
+                        valueItem = new RadioGroupItem();
+                    }
                 }
                 valueItem.setValueMap(valueOptions);
 

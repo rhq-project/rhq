@@ -20,8 +20,6 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +35,8 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -46,7 +46,9 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
@@ -66,7 +68,6 @@ import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -457,17 +458,20 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
 
-        if (!name.contains(":")) {
-            String simpleResult = "Operation with name [" + name + "] did not contain a ':'";
-            OperationResult badName = new OperationResult(simpleResult);
-            badName.setErrorMessage(simpleResult);
-            return badName;
-        }
+        String what;
+        String op;
 
-        int colonPos = name.indexOf(':');
-        String what = name.substring(0, colonPos);
-        String op = name.substring(colonPos + 1);
+        if (name.contains(":")) {
+            int colonPos = name.indexOf(':');
+            what = name.substring(0, colonPos);
+            op = name.substring(colonPos + 1);
+        }
+        else {
+            what=""; // dummy value
+            op = name;
+        }
         Operation operation = null;
+
 
         Address theAddress = new Address();
 
@@ -513,37 +517,143 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             operation = new Operation(op, new Address());
         } else if (what.equals("subsystem")) {
             operation = new Operation(op, new Address(this.path));
+        } else {
+            // We have a generic operation so we pass it literally
+            // with the parameters it has.
+            operation = new Operation(op, new Address((path)));
+            for (Property prop : parameters.getProperties()) {
+                if (prop instanceof PropertySimple) {
+                    PropertySimple ps = (PropertySimple) prop;
+                    if (ps.getStringValue() != null) {
+                        Object val = getObjectForProperty(ps,op);
+                        operation.addAdditionalProperty(ps.getName(),val);
+                    }
+                }
+                else if (prop instanceof PropertyList) {
+                    PropertyList pl = (PropertyList) prop;
+                    List<Object> items = new ArrayList<Object>(pl.getList().size());
+                    // Loop over the inner elements of the list
+                    for (Property p2 : pl.getList()) {
+                        if (p2 instanceof PropertySimple) {
+                            PropertySimple ps = (PropertySimple) p2;
+                            if (ps.getStringValue() != null) {
+                                Object val = getObjectForPropertyList(ps,pl,op);
+                                items.add(val);
+                            }
+                        }
+                    }
+                    operation.addAdditionalProperty(pl.getName(),items);
+                }
+                else {
+                    log.error("PropertyMap for " + prop.getName() + " not yet supported");
+                }
+            }
         }
 
         OperationResult operationResult = new OperationResult();
-        if (operation != null) {
-            Result result = connection.execute(operation);
+        Result result = connection.execute(operation);
 
-            if (result == null) {
-                operationResult.setErrorMessage("Connection was null - is the server running?");
-                return operationResult;
-            }
+        if (result == null) {
+            operationResult.setErrorMessage("Connection was null - is the server running?");
+            return operationResult;
+        }
 
-            if (!result.isSuccess()) {
-                operationResult.setErrorMessage(result.getFailureDescription());
-            } else {
-                String tmp;
-                if (result.getResult() == null)
-                    tmp = "-none provided by the server-";
-                else
-                    tmp = result.getResult().toString();
-                operationResult.setSimpleResult(tmp);
-            }
+        if (!result.isSuccess()) {
+            operationResult.setErrorMessage(result.getFailureDescription());
         } else {
-            operationResult.setErrorMessage("No valid operation was given for input [" + name + "]");
+            String tmp;
+            if (result.getResult() == null)
+                tmp = "-none provided by the server-";
+            else
+                tmp = result.getResult().toString();
+            operationResult.setSimpleResult(tmp);
         }
         return operationResult;
     }
 
+    /**
+     * Return a value object for the passed property. The type is determined by looking at the operation definition
+     * @param prop Property to evaluate
+     * @param operationName Name of the operation to look at
+     * @return Value or null on failure
+     */
+    Object getObjectForProperty(PropertySimple prop, String operationName) {
+        ConfigurationDefinition parameterDefinitions = getParameterDefinitionsForOperation(operationName);
+        if (parameterDefinitions==null)
+            return null;
 
+        PropertyDefinition pd = parameterDefinitions.get(prop.getName());
+        if (pd instanceof PropertyDefinitionSimple) {
+            PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+            return getObjectForProperty(prop, pds);
+        } else {
+            log.warn("Property [" + prop.getName() + "] is not understood yet");
+            return null;
+        }
+    }
+
+    /**
+     * Return a value object for the passed property, which is part of a list. The type is determined by
+     * looking at the operation definition and PropertyList#getMemberDefinition
+     * @param prop Property to evaluate
+     * @param propertyList Outer list
+     * @param operationName Name of the operation
+     * @return Value or null on failure
+     */
+    Object getObjectForPropertyList(PropertySimple prop, PropertyList propertyList, String operationName) {
+        ConfigurationDefinition parameterDefinitions = getParameterDefinitionsForOperation(operationName);
+        if (parameterDefinitions==null)
+            return null;
+
+        PropertyDefinition def = parameterDefinitions.get(propertyList.getName());
+        if (def instanceof  PropertyDefinitionList) {
+            PropertyDefinitionList definitionList = (PropertyDefinitionList) def;
+            PropertyDefinition tmp = definitionList.getMemberDefinition();
+            if (tmp instanceof  PropertyDefinitionSimple) {
+                return getObjectForProperty(prop, (PropertyDefinitionSimple) tmp);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return the parameter definition for the operation with the name passed
+     * @param operationName Name of the operation to look for
+     * @return A configuration definition or null on failure
+     */
+    ConfigurationDefinition getParameterDefinitionsForOperation(String operationName) {
+        ResourceType type = context.getResourceType();
+        Set<OperationDefinition> operationDefinitions = type.getOperationDefinitions();
+
+        for (OperationDefinition definition : operationDefinitions) {
+            if (definition.getName().equals(operationName)) {
+                return definition.getParametersConfigurationDefinition();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return a value object for the passed property with the passed definition
+     * @param prop Property to evaluate
+     * @param propDef Definition to determine the type from
+     * @return The value object
+     */
     Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
 
         PropertySimpleType type = propDef.getType();
+        return getObjectForProperty(prop, type);
+
+    }
+
+    /**
+     * Return the object representation of the passed PropertySimple for the passed type
+     * @param prop Property to evaluate
+     * @param type Type to convert into
+     * @return Converted object -- if no valid type is found, a String-value is returned.
+     */
+    private Object getObjectForProperty(PropertySimple prop, PropertySimpleType type)
+    {
         switch (type) {
         case STRING:
             return prop.getStringValue();
@@ -560,7 +670,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         default:
             return prop.getStringValue();
         }
-
     }
 
     ///// Those two are used to 'inject' the connection and the path from tests.

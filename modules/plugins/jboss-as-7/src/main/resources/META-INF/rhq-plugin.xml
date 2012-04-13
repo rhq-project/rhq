@@ -1182,13 +1182,102 @@
         <c:simple-property name="path" readOnly="true" default="type=threading"/>
       </plugin-configuration>
 
+      <operation name="dump-all-threads"
+                 description="Returns the thread info for all live threads with stack trace and synchronization information.">
+        <parameters>
+          <c:simple-property name="locked-monitors" required="true" type="boolean" readOnly="false"
+                             description="Whether the result should include information on locked monitors."/>
+          <c:simple-property name="locked-synchronizers" required="true" type="boolean" readOnly="false"
+                             description="Whether the result should include information on locked ownable synchronizers."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
+
+      <operation name="find-deadlocked-threads"
+                 description="Finds cycles of threads that are in deadlock waiting to acquire object monitors or ownable synchronizers.">
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="find-monitor-deadlocked-threads"
+                 description="Finds cycles of threads that are in deadlock waiting to acquire object monitors.">
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="get-thread-cpu-time"
+                 description="Returns the total CPU time for a thread of the specified ID in nanoseconds.">
+        <parameters>
+          <c:simple-property name="id" required="true" type="long" readOnly="false"
+                             description="The thread ID of the thread. Must be positive."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="get-thread-info"
+                 description="Returns the thread info for a thread of the specified id. The stack trace, locked monitors, and locked synchronizers in the returned reply object will be empty.">
+        <parameters>
+          <c:simple-property name="id" required="true" type="long" readOnly="false"
+                             description="The thread ID of the thread. Must be positive."/>
+          <c:simple-property name="max-depth" required="false" type="integer" readOnly="false" defaultValue="0"
+                             description="The maximum number of entries in the stack trace to be dumped. Integer.MAX_VALUE could be used to request the entire stack to be dumped. The default value is 0."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="get-thread-infos"
+                 description="Returns the thread info for each thread whose ID is in the input list.">
+        <parameters>
+          <c:list-property name="ids" description="A list of thread ids." >
+            <c:simple-property name="ids" required="true" type="long" readOnly="false"/>
+          </c:list-property>
+          <c:simple-property name="max-depth" required="false" type="integer" readOnly="false" defaultValue="0"
+                             description="The maximum number of entries in the stack trace to be dumped. Integer.MAX_VALUE could be used to request the entire stack to be dumped. The default value is 0."/>
+          <c:simple-property name="locked-monitors" required="false" type="boolean" readOnly="false"
+                             defaultValue="false"
+                             description="Whether the result should include information on locked monitors. The default value is false."/>
+          <c:simple-property name="locked-synchronizers" required="false" type="boolean" readOnly="false"
+                             defaultValue="false"
+                             description="Whether the result should include information on locked monitors. The default value is false."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="get-thread-user-time"
+                 description="Returns the CPU time that a thread of the specified ID has executed in user mode in nanoseconds.">
+        <parameters>
+          <c:simple-property name="id" required="true" type="long" readOnly="false"
+                             description="The thread ID of the thread. Must be positive."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+
+      <operation name="reset-peak-thread-count"
+                 description="Resets the peak thread count to the current number of live threads.">
+        <results>
+          <c:simple-property name="operationResult"
+                             description="Resets the peak thread count to the current number of live threads."/>
+        </results>
+      </operation>
+
       <metric property="thread-count" description="The current number of live threads including both daemon and non-daemon threads."/>
       <metric property="peak-thread-count" description="The peak live thread count since the Java virtual machine started or peak was reset."/>
       <metric property="total-started-thread-count" description="The total number of threads created and also started since the Java virtual machine started."/>
       <metric property="daemon-thread-count" description="The current number of live daemon threads."/>
       <metric property="current-thread-cpu-time" description="The total CPU time for the current thread in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' undefined."/>
       <metric property="current-thread-user-time" description="The CPU time that the current thread has executed in user mode in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' the result will be undefined "/>
-
       <resource-configuration>
         <c:simple-property name="thread-contention-monitoring-enabled" required="false" type="boolean" readOnly="false" description="Whether thread contention monitoring is enabled."/>
         <c:simple-property name="thread-cpu-time-enabled" required="false" type="boolean" readOnly="false" description="Whether thread CPU time measurement is enabled."/>

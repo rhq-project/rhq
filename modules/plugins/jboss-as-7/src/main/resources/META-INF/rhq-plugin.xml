@@ -4192,6 +4192,70 @@
       </resource-configuration>
     </service>
 
+    <service name="Async Service"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="The EJB3 Asynchronous Invocation Service"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="service=async"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="false" description="The name of the thread pool which handles asynchronous invocations"/>
+      </resource-configuration>
+    </service>
+
+    <service name="IIOP Service"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="The IIOP service"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="service=iiop"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="enable-by-default" required="false" type="boolean" readOnly="false" description="If this is true EJB&apos;s will be exposed over IIOP by default, otherwise it needs to be explicitly enabled in the deployment descriptor"/>
+        <c:simple-property name="use-qualified-name" required="false" type="boolean" readOnly="false" description="If true EJB names will be bound into the naming service with the application and module name prepended to the name (e.g. myapp/mymodule/MyEjb)"/>
+      </resource-configuration>
+    </service>
+
+    <service name="Remote Service"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="The EJB3 remote service"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="service=remote"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="connector-ref" required="false" type="string" readOnly="false" description="The name of the connector on which the EJB3 remoting channel is registered"/>
+        <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="false" description="The name of the thread pool that handles remote invocations"/>
+      </resource-configuration>
+    </service>
+
+    <service name="Timer Service"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="The EJB timer service"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="service=timer-service"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="path" required="false" type="string" readOnly="false" description="The directory to store persistent timer information in"/>
+        <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The relative path that is used to resolve the timer data store location"/>
+        <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="false" description="The name of the thread pool used to run timer service invocations"/>
+      </resource-configuration>
+    </service>
+
   </service>
 
 

@@ -171,7 +171,16 @@ public class Domain2Descriptor {
 
             for (String key : keys) {
                 //exclude typical 'read-' and 'write-attribute' operations typical to all types.
-                if (key.startsWith("read-")) {
+                if (key.startsWith("read-attribute")) {
+                    continue;
+                }
+                if (key.startsWith("read-children")) {
+                    continue;
+                }
+                if (key.startsWith("read-operation")) {
+                    continue;
+                }
+                if (key.startsWith("read-resource")) {
                     continue;
                 }
                 if (key.equals("write-attribute")) {
@@ -464,7 +473,7 @@ public class Domain2Descriptor {
                 builder.append(generateProperty(4, entryValue, type, entryKey, null));
                 builder.append('\n');
             } else {//do we list this as a comment because it's an as7 invalid type?
-
+                doIndent(4, builder);
                 builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
                     .append("-->\n");
             }

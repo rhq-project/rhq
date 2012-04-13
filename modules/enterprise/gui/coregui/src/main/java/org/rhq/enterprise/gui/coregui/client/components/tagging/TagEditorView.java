@@ -22,29 +22,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tagging;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.MouseOutEvent;
-import com.smartgwt.client.widgets.events.MouseOutHandler;
-import com.smartgwt.client.widgets.events.MouseOverEvent;
-import com.smartgwt.client.widgets.events.MouseOverHandler;
+import com.smartgwt.client.widgets.events.*;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -52,11 +40,9 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
+
+import java.util.*;
 
 /**
  * A reusable component that shows a set of tags and, if not read only, allows the user
@@ -97,7 +83,7 @@ public class TagEditorView extends LocatableLayout {
         this.callback = callback;
 
         // create the following widgets once and re-use as needed
-        tagTitleLabel = new HTMLFlow("<b>" + MSG.view_tags_tags() + ":</b>");
+        tagTitleLabel = new HTMLFlow("<nobr><b>" + MSG.view_tags_tags() + ":</b></nobr>");
         tagTitleLabel.setAutoWidth();
 
         if (!this.readOnly) {

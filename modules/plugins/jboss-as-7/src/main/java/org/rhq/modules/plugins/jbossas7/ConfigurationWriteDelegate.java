@@ -364,7 +364,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
             if (property.getStringValue() != null) {
                 try {
-                    Integer num = Integer.parseInt(property.getStringValue());
+                    if (propertyDefinition.getType().equals(PropertySimpleType.LONG)) {
+                        Long num = Long.parseLong(property.getStringValue());
+                    } else {
+                        Integer num = Integer.parseInt(property.getStringValue());
+                    }
+
                     entry = new SimpleEntry<String, Object>(realName, property.getStringValue());
                 } catch (NumberFormatException nfe) {
                     // Not a number, and expressions are allowed, so send an expression

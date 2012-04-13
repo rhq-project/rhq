@@ -52,24 +52,42 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
         for (Property prop : report.getResourceConfiguration().getProperties()) {
             SimpleEntry<String, ?> entry = null;
 
+            boolean isEntryEligible = true;
             if (prop instanceof PropertySimple) {
                 PropertySimple propertySimple = (PropertySimple) prop;
                 PropertyDefinitionSimple propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionSimple(propertySimple.getName());
-                entry = preparePropertySimple(propertySimple, propertyDefinition);
+
+                if (!propertyDefinition.isRequired() && propertySimple.getStringValue() == null) {
+                    isEntryEligible = false;
+                } else {
+                    entry = preparePropertySimple(propertySimple, propertyDefinition);
+                }
             } else if (prop instanceof PropertyList) {
                 PropertyList propertyList = (PropertyList) prop;
                 PropertyDefinitionList propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionList(propertyList.getName());
-                entry = preparePropertyList(propertyList, propertyDefinition);
+
+                if (!propertyDefinition.isRequired() && propertyList.getList().size() == 0) {
+                    isEntryEligible = false;
+                } else {
+                    entry = preparePropertyList(propertyList, propertyDefinition);
+                }
             } else if (prop instanceof PropertyMap) {
                 PropertyMap propertyMap = (PropertyMap) prop;
                 PropertyDefinitionMap propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionMap(propertyMap.getName());
-                entry = preparePropertyMap(propertyMap, propertyDefinition);
+
+                if (!propertyDefinition.isRequired() && propertyMap.getMap().size() == 0) {
+                    isEntryEligible = false;
+                } else {
+                    entry = preparePropertyMap(propertyMap, propertyDefinition);
+                }
             }
 
-            op.addAdditionalProperty(entry.getKey(), entry.getValue());
+            if (isEntryEligible) {
+                op.addAdditionalProperty(entry.getKey(), entry.getValue());
+            }
         }
 
         Result result = this.connection.execute(op);

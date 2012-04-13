@@ -3975,7 +3975,8 @@
 
     <service name="SecurityDomain"
              discovery="SubsystemDiscovery"
-             class="BaseComponent">
+             class="BaseComponent"
+	     createDeletePolicy="both">
 
       <runs-inside>
         <parent-resource-type name="Profile" plugin="jboss-as-7"/>
@@ -3986,18 +3987,30 @@
         <c:simple-property name="path" readOnly="true" default="security-domain"/>
       </plugin-configuration>
 
+        <!-- Operations Section -->
+	<operation name="flush-cache" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed." />
+	  </results>
+	</operation>
+
+	<operation name="list-cached-principals" description="Lists the principals stored in the authentication cache for this security domain.">
+	  <results>
+	     <c:simple-property name="operationResult" description="Lists the principals stored in the authentication cache for this security domain." />
+	  </results>
+	</operation>
+
       <resource-configuration>
-        <c:simple-property name="extends" required="false" type="string" readOnly="true" description="The parent security domain"/>
-        <c:simple-property name="cache-type" required="false" type="string" readOnly="true" description="Adds a cache to speed up authentication checks. Allowed values are 'default' to use simple map as the cache and 'infinispan' to use an Infinispan cache.">
+	<c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache.">
           <c:property-options>
             <c:option value="default"/>
             <c:option value="infinispan"/>
           </c:property-options>
-        </c:simple-property>
+	</c:simple-property>
       </resource-configuration>
-    </service>
+    </service><!-- End of Security Domain service -->
 
-  </service>
+  </service><!-- End of Security service -->
 
 
   <service name="Threads"

@@ -32,12 +32,12 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.system.ProcessInfo;
 
 /**
@@ -55,18 +55,12 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
     private static final String DJBOSS_DOMAIN_BASE_DIR = "-Djboss.domain.base.dir";
     private static final String DJBOSS_SOCKET_BIND_OFFSET = "-Djboss.socket.binding.port-offset";
 
-
     static final int DEFAULT_MGMT_PORT = 9990;
-    private static final String JBOSS_AS_PREFIX = "jboss-as-";
+
     static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
     private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
-    private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
-    public static final String EAP = "EAP";
-    public static final String JDG = "JDG";
-    public static final String EAP_PREFIX = EAP + " ";
-    public static final String JDG_PREFIX = JDG + " ";
     private XPathFactory factory;
 
     protected AbstractBaseDiscovery() {
@@ -96,7 +90,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      * @see #readStandaloneOrHostXmlFromFile(String) for how to obtain the parsed xml
      * @param commandLine Command line arguments of the process to
      */
-    protected HostPort getManagementHostPortFromHostXml(String[] commandLine) {
+    protected HostPort getManagementHostPortFromHostXml(AS7CommandLine commandLine) {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
@@ -181,7 +175,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      *                   the expression did not specify a default value
      * @return resolved value
      */
-    private String replaceDollarExpression(String value, String[] commandLine, String lastResort) {
+    private String replaceDollarExpression(String value, AS7CommandLine commandLine, String lastResort) {
         if (!value.contains("${"))
             return value;
 
@@ -200,10 +194,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         String resolvedValue = null;
         if (expression.equals(BIND_ADDRESS_MANAGEMENT_SYSPROP)) {
             // special case: mgmt address can be specified via either -bmanagement= or -Djboss.bind.address.management=
-            resolvedValue = getOptionFromCommandLine(commandLine, BIND_ADDRESS_MANAGEMENT_OPTION);
+            resolvedValue = commandLine.getClassOption(BIND_ADDRESS_MANAGEMENT_OPTION);
         }
         if (resolvedValue == null) {
-            resolvedValue = getSystemPropertyFromCommandLine(commandLine, expression);
+            resolvedValue = commandLine.getSystemProperties().get(expression);
         }
         if (resolvedValue == null) {
             resolvedValue = fallback;
@@ -287,9 +281,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         return securityPropertyFile.getPath();
     }
 
-    protected File getHomeDir(ProcessInfo processInfo) {
-        String home = getSystemPropertyFromCommandLine(processInfo.getCommandLine(), HOME_DIR_SYSPROP,
-                processInfo.getEnvironmentVariable("JBOSS_HOME"));
+    protected File getHomeDir(ProcessInfo processInfo, JavaCommandLine javaCommandLine) {
+        String home = javaCommandLine.getSystemProperties().get(HOME_DIR_SYSPROP);
         File homeDir = new File(home);
         if (!homeDir.isAbsolute()) {
             if (processInfo.getExecutable() == null) {
@@ -301,19 +294,6 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
 
         return new File(FileUtils.getCanonicalPath(homeDir.getPath()));
-    }
-
-    protected String determineServerVersionFromHomeDir(String homeDir) {
-        String version;
-        String tmp = homeDir.substring(homeDir.lastIndexOf("/") + 1);
-        if (tmp.startsWith(JBOSS_AS_PREFIX)) {
-            version = tmp.substring(JBOSS_AS_PREFIX.length());
-        } else if (tmp.startsWith(JBOSS_EAP_PREFIX)) {
-            version = tmp.substring(JBOSS_EAP_PREFIX.length());
-        } else {
-            version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
-        }
-        return version;
     }
 
     /**
@@ -342,27 +322,6 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
     }
 
-    @Nullable
-    protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName) {
-        return getSystemPropertyFromCommandLine(commandLine, systemPropertyName, null);
-    }
-
-    @Nullable
-    protected static String getSystemPropertyFromCommandLine(String[] commandLine, String systemPropertyName,
-                                                             String defaultValue) {
-        String prefix = "-D" + systemPropertyName;
-        String prefixWithEqualsSign = prefix + "=";
-        for (String arg : commandLine) {
-            if (arg.startsWith(prefixWithEqualsSign)) {
-                return (prefixWithEqualsSign.length() < arg.length()) ?
-                    arg.substring(prefixWithEqualsSign.length()) : "";
-            } else if (arg.equals(prefix)) {
-                return "";
-            }
-        }
-        return defaultValue;
-    }
-
     /**
      * Determine the parameters that need to be passed as
      * arguments to the start script when starting this instance.
@@ -380,46 +339,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         return args;
     }
 
-
-    @Nullable
-    protected static String getOptionFromCommandLine(String[] commandLine, AS7CommandLineOption option) {
-        String shortOptionPrefix;
-        String shortOption;
-        if (option.getShortName() != null) {
-            shortOption = "-" + option.getShortName();
-            shortOptionPrefix = shortOption + "=";
-        } else {
-            shortOption = null;
-            shortOptionPrefix = null;
-        }
-        String longOptionPrefix;
-        if (option.getLongName() != null) {
-            longOptionPrefix = "--" + option.getLongName() + "=";
-        } else {
-            longOptionPrefix = null;
-        }
-        for (int i = 0, commandLineLength = commandLine.length; i < commandLineLength; i++) {
-            String arg = commandLine[i];
-            if (option.getShortName() != null) {
-                if (arg.startsWith(shortOptionPrefix)) {
-                    return (shortOptionPrefix.length() < arg.length()) ? arg.substring(shortOptionPrefix.length()) : "";
-                } else if (arg.equals(shortOption)) {
-                    return (i != (commandLineLength - 1)) ? commandLine[i + 1] : "";
-                }
-            }
-            if (option.getLongName() != null) {
-                if (arg.startsWith(longOptionPrefix)) {
-                    return (longOptionPrefix.length() < arg.length()) ? arg.substring(longOptionPrefix.length()) : "";
-                }
-            }
-        }
-        // If we reached here, the option wasn't on the command line.
-
-        return null;
-    }
-
-    protected HostPort checkForSocketBindingOffset(HostPort managementPort, String[] commandLine) {
-        String value = getSystemPropertyFromCommandLine(commandLine, SOCKET_BINDING_PORT_OFFSET_SYSPROP);
+    protected HostPort checkForSocketBindingOffset(HostPort managementPort, AS7CommandLine commandLine) {
+        String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
         if (value != null) {
             int offset = Integer.valueOf(value);
             managementPort.port += offset;

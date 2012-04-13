@@ -23,7 +23,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -89,7 +88,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected HostPort getManagementHostPortFromHostXml(String[] commandLine) {
+    protected HostPort getManagementHostPortFromHostXml(AS7CommandLine commandLine) {
         HostPort managementPort = super.getManagementHostPortFromHostXml(commandLine);
         if (!managementPort.withOffset) {
             managementPort = checkForSocketBindingOffset(managementPort, commandLine);
@@ -101,9 +100,8 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) throws Exception {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
-        ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();
-        pluginConfig.put(new PropertySimple("config", getHostXmlFileName(process)));
+        pluginConfig.put(new PropertySimple("config", pluginConfig.getSimpleValue("hostXmlFileName", null)));
         return details;
     }
 

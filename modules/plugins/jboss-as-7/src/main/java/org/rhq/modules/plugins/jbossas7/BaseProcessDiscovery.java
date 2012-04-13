@@ -47,6 +47,7 @@ import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -58,6 +59,9 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         implements ResourceDiscoveryComponent, ManualAddFacet {
+
+    private static final String JBOSS_AS_PREFIX = "jboss-as-";
+    private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -91,13 +95,14 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         // IF SE, then look at domain/configuration/host.xml <management interface="default" port="9990
         // for management port
         ProcessInfo process = psr.getProcessInfo();
-        String[] commandLine = process.getCommandLine();
-        File homeDir = getHomeDir(process);
+        String[] processArgs = process.getCommandLine();
+        AS7CommandLine commandLine = new AS7CommandLine(processArgs);
+        File homeDir = getHomeDir(process, commandLine);
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
-        File baseDir = getBaseDir(process, homeDir);
+        File baseDir = getBaseDir(process, commandLine, homeDir);
         String key = baseDir.getPath();
-        File configDir = getConfigDir(process, baseDir);
-        File hostXmlFile = getHostXmlFile(process, configDir);
+        File configDir = getConfigDir(process, commandLine, baseDir);
+        File hostXmlFile = getHostXmlFile(commandLine, configDir);
         if (!hostXmlFile.exists()) {
             throw new Exception("Server configuration file not found at the expected location (" + hostXmlFile + ").");
         }
@@ -112,19 +117,20 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("baseDir", baseDir));
         pluginConfig.put(new PropertySimple("configDir", configDir));
         pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
-        pluginConfig.put(new PropertySimple("startScriptArgs",getStartScriptArgumentsFromCommandLine(commandLine)));
-        pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(process, configDir))));
+        pluginConfig.put(new PropertySimple("startScriptArgs",getStartScriptArgumentsFromCommandLine(processArgs)));
+        pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(commandLine, configDir))));
         fillUserPassFromFile(pluginConfig, getMode(), baseDir);
-        File logFile = getLogFile(getLogDir(process, baseDir));
+        File logFile = getLogFile(getLogDir(process, commandLine, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
         pluginConfig.put(new PropertySimple("productType", productType.name()));
+        pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
 
         String version;
-        String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir.getPath());
+        String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir);
         if (productType == JBossProductType.AS) {
             version = versionFromHomeDir;
         } else {
@@ -156,9 +162,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
             pluginConfig, process);
     }
 
-    protected File getBaseDir(ProcessInfo process, File homeDir) {
-        String baseDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
-                getBaseDirSystemPropertyName());
+    protected File getBaseDir(ProcessInfo process, JavaCommandLine javaCommandLine, File homeDir) {
+        String baseDirString = javaCommandLine.getSystemProperties().get(getBaseDirSystemPropertyName());
         File baseDir;
         if (baseDirString != null) {
             baseDir = new File(baseDirString);
@@ -184,9 +189,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return baseDir;
     }
 
-    protected File getConfigDir(ProcessInfo process, File baseDir) {
-        String configDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
-                getConfigDirSystemPropertyName());
+    protected File getConfigDir(ProcessInfo process, JavaCommandLine javaCommandLine, File baseDir) {
+        String configDirString = javaCommandLine.getSystemProperties().get(getConfigDirSystemPropertyName());
         File configDir;
         if (configDirString != null) {
             configDir = new File(configDirString);
@@ -205,9 +209,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return configDir;
     }
 
-    protected File getLogDir(ProcessInfo process, File baseDir) {
-        String logDirString = getSystemPropertyFromCommandLine(process.getCommandLine(),
-                getLogDirSystemPropertyName());
+    protected File getLogDir(ProcessInfo process, AS7CommandLine commandLine, File baseDir) {
+        String logDirString = commandLine.getSystemProperties().get(getLogDirSystemPropertyName());
         File logDir;
         if (logDirString != null) {
             logDir = new File(logDirString);
@@ -228,16 +231,15 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
 
     // Returns the name of the host config xml file (domain controller) or server config xml file (standalone server),
     // e.g. "standalone.xml" or "host.xml".
-    protected String getHostXmlFileName(ProcessInfo process) {
+    protected String getHostXmlFileName(AS7CommandLine commandLine) {
         AS7CommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
-        String optionValue = getOptionFromCommandLine(process.getCommandLine(), hostXmlFileNameOption);
+        String optionValue = commandLine.getClassOption(hostXmlFileNameOption);
         return (optionValue != null) ? optionValue : getDefaultHostXmlFileName();
     }
 
-
     // Returns the host config xml file (domain controller) or server config xml file (standalone server).
-    protected File getHostXmlFile(ProcessInfo process, File configDir) {
-        return new File(configDir, getHostXmlFileName(process));
+    protected File getHostXmlFile(AS7CommandLine commandLine, File configDir) {
+        return new File(configDir, getHostXmlFileName(commandLine));
     }
 
     protected String getDefaultConfigDirName() {
@@ -422,6 +424,21 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
             logEventSources.add(serverLogEventSource);
         }
+    }
+
+    protected String determineServerVersionFromHomeDir(File homeDir) {
+        String version;
+        String homeDirName = homeDir.getName();
+        if (homeDirName.startsWith(JBOSS_AS_PREFIX)) {
+            version = homeDirName.substring(JBOSS_AS_PREFIX.length());
+        } else if (homeDirName.startsWith(JBOSS_EAP_PREFIX)) {
+            version = homeDirName.substring(JBOSS_EAP_PREFIX.length());
+        } else if (homeDirName.indexOf('-') >= 0) {
+            version = homeDirName.substring(homeDirName.lastIndexOf('-') + 1);
+        } else {
+            version = "";
+        }
+        return version;
     }
 
     private class ProductInfo {

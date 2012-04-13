@@ -23,7 +23,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
 
 /**
  * Discovery component for "JBossAS7 Host Controller" Resources.
@@ -98,11 +97,10 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
                                                              ProcessScanResult psr) throws Exception {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
-        ProcessInfo process = psr.getProcessInfo();
         Configuration pluginConfig = details.getPluginConfiguration();
         String domainConfig = getServerConfigFromCommandLine(psr.getProcessInfo().getCommandLine(), getMode());
         pluginConfig.put(new PropertySimple("domainConfig", domainConfig));
-        pluginConfig.put(new PropertySimple("hostConfig", getHostXmlFileName(process)));
+        pluginConfig.put(new PropertySimple("hostConfig", pluginConfig.getSimpleValue("hostXmlFileName", null)));
         return details;
     }
 

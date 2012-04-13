@@ -759,6 +759,11 @@
                   description="For servers with more than one IP address, this attribute specifies which address will be used for listening on the specified port. By default, this port will be used on all IP addresses associated with the server." 
                   required="false"
                   readOnly="true" />
+               <c:simple-property
+                  name="sharedExecutorName"
+                  type="string"
+                  description="If this Connector is configured to use a shared Executor for its thread pool, this is the name of that Executor. This is required to successfully collect threadpool metrics for the Connector. Leave this unset if the Connector is not using a shared Executor for its threadpool."
+                  required="false" />
             </c:group>
 
             <c:group

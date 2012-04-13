@@ -78,6 +78,11 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
      * Plugin property name for the port the connector is listening on.
      */
     public static final String PLUGIN_CONFIG_PORT = "port";
+    /**
+     * Plugin property name for the optional shared executor the connector is using for its threadpool.
+     * If this property is left unset, the connector is not using a shared executor.
+     */
+    public static final String PLUGIN_CONFIG_SHARED_EXECUTOR = "sharedExecutorName";
 
     public static final String UNKNOWN = "?";
 
@@ -119,6 +124,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
         for (MeasurementScheduleRequest request : requests) {
             String name = request.getName();
+            name = switchConnectorThreadpoolName(name);
             name = getAttributeName(name);
 
             String beanName = name.substring(0, name.lastIndexOf(':'));
@@ -142,6 +148,56 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
                 log.error("Failed to obtain measurement [" + name + "]", e);
             }
         }
+    }
+
+    /**
+     * If the given name represents a property name for a threadpool metric, this will switch
+     * the name IF the connector is using a shared executor for its threadpool. If the connector is
+     * not using a shared executor, nothing has to be switched and we can use the original name
+     * passed to this method.
+     *
+     * See BZ 795531.
+     *
+     * @param name the metric property name that may need to be switched if it is a threadpool metric
+     * @return the name for the metric property, switched to use the shared executor name if appropriate
+     */
+    private String switchConnectorThreadpoolName(String name) {
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        String sharedExecutorName = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_SHARED_EXECUTOR, "");
+        if (sharedExecutorName == null || sharedExecutorName.trim().isEmpty()) {
+            return name; // there is nothing special to do if the connector isn't using a shared executor for its threadpool
+        }
+
+        // 1) Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy
+        //    will be replaced with:
+        //    Catalina:type=Executor,name=<name of shared executor>:activeCount
+        //
+        // 2) Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount
+        //    will be replaced with:
+        //    Catalina:type=Executor,name=<name of shared executor>:poolSize
+        //
+        // 3) Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads
+        //    will be replaced with
+        //    Catalina:type=Executor,name=<name of shared executor>:maxThreads
+        final String NON_SHARED_THREADS_ACTIVE = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy";
+        final String NON_SHARED_THREADS_ALLOCATED = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount";
+        final String NON_SHARED_THREADS_MAX = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads";
+        final String SHARED_THREADS_ACTIVE = "Catalina:type=Executor,name=XXX:activeCount";
+        final String SHARED_THREADS_ALLOCATED = "Catalina:type=Executor,name=XXX:poolSize";
+        final String SHARED_THREADS_MAX = "Catalina:type=Executor,name=XXX:maxThreads";
+
+        if (name.equals(NON_SHARED_THREADS_ACTIVE)) {
+            name = SHARED_THREADS_ACTIVE;
+        } else if (name.equals(NON_SHARED_THREADS_ALLOCATED)) {
+            name = SHARED_THREADS_ALLOCATED;
+        } else if (name.equals(NON_SHARED_THREADS_MAX)) {
+            name = SHARED_THREADS_MAX;
+        } else {
+            return name; // this isn't one of the names we need to switch, immediate return the original name as-is
+        }
+
+        name = name.replace("XXX", sharedExecutorName);
+        return name;
     }
 
     /**

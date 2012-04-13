@@ -4303,19 +4303,19 @@
           <c:simple-property name="path" readOnly="true" default="connection-definitions"/>
         </plugin-configuration>
 
-        <operation name="flush-all-connection-in-pool" description="Flushes all connections in the pool">
+        <operation name="subsystem:flush-all-connection-in-pool" displayName="Flush All Connections in Pool" description="Flushes all connections in the pool">
           <results>
              <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
           </results>
         </operation>
 
-        <operation name="flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
+        <operation name="subsystem:flush-idle-connection-in-pool" displayName="Flush Idle Connections in Pool"  description="Flushes all idle connections in the pool">
           <results>
              <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
           </results>
         </operation>
 
-        <operation name="test-connection-in-pool" description="Test if a connection can be obtained">
+        <operation name="subsystem:test-connection-in-pool" displayName="Test Connection in Pool" description="Test if a connection can be obtained">
           <results>
              <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
           </results>

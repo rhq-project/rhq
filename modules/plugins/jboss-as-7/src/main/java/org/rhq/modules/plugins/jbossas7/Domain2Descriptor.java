@@ -569,11 +569,16 @@ public class Domain2Descriptor {
                 if (mapType != null) {
                     for (Map.Entry<String, Object> entry : mapType.entrySet()) {
                         Object o = entry.getValue();
-                        Map<String, Object> entryValue = (Map<String, Object>) o;
-                        String entryKey = entry.getKey();
-                        Type childType = getTypeFromProps(entryValue);
-                        mb.append(generateProperty(indent + 4, entryValue, childType, entryKey, null));
-                        mb.append("\n");
+                        if (o instanceof String && o.equals("STRING")) {
+                            mb.append(generateProperty(indent + 4, mapType, getTypeFromProps(mapType), entry.getKey(),
+                                null));
+                        } else if (o instanceof Map<?, ?>) {
+                            Map<String, Object> entryValue = (Map<String, Object>) o;
+                            String entryKey = entry.getKey();
+                            Type childType = getTypeFromProps(entryValue);
+                            mb.append(generateProperty(indent + 4, entryValue, childType, entryKey, null));
+                            mb.append("\n");
+                        }
                     }
                     doIndent(indent, mb);
                     mb.append("</c:map-property>");

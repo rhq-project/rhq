@@ -106,7 +106,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     }
 
     private void addExportAction() {
-        addTableAction("Export", "Export", new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return true;

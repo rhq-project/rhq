@@ -19,7 +19,7 @@ public class SubsystemConfigurationHistoryListView extends ResourceConfiguration
     }
 
     private void addExportAction() {
-        addTableAction("Export", "Export", new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return true;

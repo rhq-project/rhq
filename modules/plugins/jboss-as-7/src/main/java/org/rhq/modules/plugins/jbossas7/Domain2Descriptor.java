@@ -466,7 +466,7 @@ public class Domain2Descriptor {
             } else {//do we list this as a comment because it's an as7 invalid type?
 
                 builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
-                    .append("-->");
+                    .append("-->\n");
             }
         }
     }

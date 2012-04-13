@@ -2044,13 +2044,13 @@
       <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
       <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
       <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
-      <c:list-property name="environment-variables" description="The JVM environment variables." >
+      <c:list-property name="environment-variables" required="false" description="The JVM environment variables." >
           <c:simple-property name="environment-variable" type="string"/>
       </c:list-property>
       <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
       <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
       <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
-      <c:list-property name="jvm-options" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
+      <c:list-property name="jvm-options" required="false" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
           <c:simple-property name="jvm-option" type="string"/>
       </c:list-property>
       <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>

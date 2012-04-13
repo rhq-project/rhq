@@ -1268,12 +1268,12 @@
 
   </server>
 
-  <server name="Messaging-Provider"
+  <service name="Messaging-Provider"
           discovery="SubsystemDiscovery"
           class="BaseComponent"
           description="The messaging subsystems"
-          singleton="true"
-      >
+          singleton="true">
+
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
@@ -1283,7 +1283,7 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
     </plugin-configuration>
 
-    <server name="HornetQ"
+    <service name="HornetQ"
             discovery="SubsystemDiscovery"
             class="HornetQComponent"
             description="The HornetQ based messaging subsystem"
@@ -1390,9 +1390,9 @@
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" description="True to use global pools."/>
         </resource-configuration>
       </service>
+    </service>
 
-    </server>
-  </server>
+  </service>
 
   <service name="JBossWeb"
           discovery="SubsystemDiscovery"

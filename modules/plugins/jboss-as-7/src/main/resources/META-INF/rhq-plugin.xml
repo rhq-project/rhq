@@ -4315,12 +4315,6 @@
           </results>
         </operation>
 
-        <operation name="remove" description="Remove the connection definition">
-          <results>
-             <c:simple-property name="operationResult" description="Remove the connection definition" />
-          </results>
-        </operation>
-
         <operation name="test-connection-in-pool" description="Test if a connection can be obtained">
           <results>
              <c:simple-property name="operationResult" description="Test if a connection can be obtained" />

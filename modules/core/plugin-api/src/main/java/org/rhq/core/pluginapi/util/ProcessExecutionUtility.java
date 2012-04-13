@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -34,7 +34,13 @@ import java.util.List;
  */
 import org.rhq.core.system.ProcessExecution;
 
+/**
+ * A set of utility methods for creating {@link ProcessExecution}s.
+ *
+ * @author Ian Springer
+ */
 public class ProcessExecutionUtility {
+
     private ProcessExecutionUtility() {
     }
 
@@ -130,4 +136,5 @@ public class ProcessExecutionUtility {
     private static boolean isWindows() {
         return File.separatorChar == '\\';
     }
+
 }

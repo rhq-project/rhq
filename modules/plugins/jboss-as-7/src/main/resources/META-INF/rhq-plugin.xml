@@ -4303,6 +4303,30 @@
           <c:simple-property name="path" readOnly="true" default="connection-definitions"/>
         </plugin-configuration>
 
+        <operation name="flush-all-connection-in-pool" description="Flushes all connections in the pool">
+          <results>
+             <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+          </results>
+        </operation>
+
+        <operation name="flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
+          <results>
+             <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+          </results>
+        </operation>
+
+        <operation name="remove" description="Remove the connection definition">
+          <results>
+             <c:simple-property name="operationResult" description="Remove the connection definition" />
+          </results>
+        </operation>
+
+        <operation name="test-connection-in-pool" description="Test if a connection can be obtained">
+          <results>
+             <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+          </results>
+        </operation>
+
         <resource-configuration>
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies if the resource adapter should be enabled. The default value is true."/>
           <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is FailingConnectionOnly."/>
@@ -4318,8 +4342,8 @@
           <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" defaultValue="false" description="Specifies if the min&#45;pool&#45;size should be considered strictly. The default value is false."/>
           <c:simple-property name="recovery-password" required="false" type="string" readOnly="false" description="The password used for recovery"/>
           <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="false" description="The fully qualified class name of the recovery plugin implementation"/>
-          <c:map-property name="recovery-plugin-properties:collapsed" required="false" description="The properties for the recovery plugin" >
-            <c:simple-property name="recovery-plugin-properties" required="false" type="string" readOnly="false"/>
+          <c:map-property name="recovery-plugin-properties:collapsed" required="false" displayName="Recovery Plugin Properties" description="The properties for the recovery plugin" >
+            <c:simple-property name="recovery-plugin-properties:0" required="false" type="string" readOnly="false"/>
           </c:map-property>
           <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="false" description="The security domain used for recovery"/>
           <c:simple-property name="recovery-username" required="false" type="string" readOnly="false" description="The user name used for recovery"/>
@@ -4334,6 +4358,21 @@
           <c:simple-property name="wrap-xa-resource" required="false" type="boolean" readOnly="false" defaultValue="true" description="Should the XAResource instances be wrapped in a org.jboss.tm.XAResourceWrapper instance. The default value is true."/>
           <c:simple-property name="xa-resource-timeout:expr" required="false" type="string" readOnly="false" description="The value is passed to XAResource.setTransactionTimeout(), in seconds. Default is zero"/>
         </resource-configuration>
+
+        <service name="Config Properties (Connection Definition)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="Custom defined config properties."
+               createDeletePolicy="both">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="config-properties"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="value" required="false" type="string" readOnly="true" description="Custom defined config property value"/>
+          </resource-configuration>
+        </service>
       </service>
     </service>
 

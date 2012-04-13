@@ -45,7 +45,7 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
  *
  * @author Heiko W. Rupp
  */
-@Test(enabled = UploadAndDeployTest.isEnabled)
+@Test(enabled = false)
 public class DatasourceDeployTest extends AbstractIntegrationTest {
 
     private static final String POSTGRES = "postgres";

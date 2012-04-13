@@ -644,6 +644,7 @@ public class Domain2Descriptor {
             doIndent(indent + 2, optionList);
             optionList.append("<c:option value=\"" + prop + "\" name=\"" + prop + "\"/>\n");
         }
+        doIndent(indent + 1, optionList);
         optionList.append("</c:property-options>\n");
         doIndent(indent, optionList);
         optionList.append("</c:simple-property>");

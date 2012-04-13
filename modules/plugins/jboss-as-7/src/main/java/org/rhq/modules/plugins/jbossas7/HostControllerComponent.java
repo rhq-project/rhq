@@ -138,7 +138,11 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             PropertySimple offset = rc.getSimple("socket-binding-port-offset");
             if (offset != null && offset.getStringValue() != null)
                 op.addAdditionalProperty("socket-binding-port-offset", offset.getIntegerValue());
-            // TODO add jvm info
+
+            PropertySimple jvm = rc.getSimple("jvm");
+            if (jvm!=null) {
+                op.addAdditionalProperty("jvm",jvm.getStringValue());
+            }
         }
         else if (targetTypeName.equals(BaseComponent.MANAGED_SERVER)) {
 
@@ -175,6 +179,8 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             }
             op.addAdditionalProperty("group",serverGroup);
 
+        } else if (targetTypeName.equals("JVM-Definition")) {
+            return super.createResource(report);
 
         }
         else {

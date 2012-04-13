@@ -503,37 +503,6 @@
             </c:map-property>
           </c:list-property>
         </c:group>
-        <!-- TODO commented out as it makes the whole config not show in the UI - fetch from AS works ok
-                        <c:group name="children:jvm:name+" displayName="JVMs">
-                            <c:list-property name="*3" displayName="JVM" required="false" description="JVM properties">
-                                <c:map-property name="*:name" displayName="Name" readOnly="false">
-                                    <c:simple-property name="name" required="true" type="string" readOnly="true" description="Name of this JVM definition"/>
-                                    <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
-                                    <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
-                                    <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
-                                    <c:list-property name="environment-variables" description="The JVM environment variables." >
-                                        <c:simple-property name="environment-variable" />
-                                    </c:list-property>
-                                    <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
-                                    <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
-                                    <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
-                                    <c:list-property name="jvm-options" description="The JVM options." >
-                                        <c:simple-property name="jvm-option" />
-                                    </c:list-property>
-                                    <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
-                                    <c:simple-property name="max-permgen-size" required="false" type="string" readOnly="false" description="The maximum size of the permanent generation."/>
-                                    <c:simple-property name="permgen-size" required="false" type="string" readOnly="false" description="The initial permanent generation size."/>
-                                    <c:simple-property name="stack-size" required="false" type="string" readOnly="false" description="The JVM stack size settings."/>
-                                    <c:simple-property name="type" required="false" type="string" readOnly="true" description="The JVM type can be either SUN or IBM" default="SUN">
-                                        <c:property-options>
-                                            <c:option value="SUN"/>
-                                            <c:option value="IBM"/>
-                                        </c:property-options>
-                                    </c:simple-property>
-                                </c:map-property>
-                            </c:list-property>
-                        </c:group>
-        -->
       </resource-configuration>
     </server>
 
@@ -636,6 +605,10 @@
 
         <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
 
+        <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
+          <c:option-source target="resource" expression="type='JVM Definition' plugin=jboss-as-7"/>
+        </c:simple-property>
+
         <c:group name="children:system-property:name+" displayName="System-properties">
           <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
             <c:map-property name="*:name" displayName="Name" readOnly="true">
@@ -694,6 +667,7 @@
         <c:simple-property name="content" readOnly="true"/>
       </resource-configuration>
     </service>
+
 
   </server>
 
@@ -2051,6 +2025,47 @@
     -->
 
   </service>
+
+  <service name="JVM Definition"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           createDeletePolicy="both">
+    <runs-inside>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
+      <parent-resource-type name="Host" plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" default="jvm" readOnly="true"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
+      <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
+      <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
+      <c:list-property name="environment-variables" description="The JVM environment variables." >
+          <c:simple-property name="environment-variable" type="string"/>
+      </c:list-property>
+      <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
+      <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
+      <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
+      <c:list-property name="jvm-options" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
+          <c:simple-property name="jvm-option" type="string"/>
+      </c:list-property>
+      <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
+      <c:simple-property name="max-permgen-size" required="false" type="string" readOnly="false" description="The maximum size of the permanent generation."/>
+      <c:simple-property name="permgen-size" required="false" type="string" readOnly="false" description="The initial permanent generation size."/>
+      <c:simple-property name="stack-size" required="false" type="string" readOnly="false" description="The JVM stack size settings."/>
+      <c:simple-property name="type" required="false" type="string" readOnly="true" description="The JVM type can be either SUN or IBM" default="SUN">
+          <c:property-options>
+              <c:option value="SUN"/>
+              <c:option value="IBM"/>
+          </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+   </service>
+
 
   <service name="Logging"
           discovery="SubsystemDiscovery"

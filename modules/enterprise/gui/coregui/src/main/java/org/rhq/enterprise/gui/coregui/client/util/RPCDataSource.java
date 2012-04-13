@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.*;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
@@ -63,7 +62,6 @@ import java.util.*;
 public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
-    private static final DateTimeFormat format = DateTimeFormat .getFormat("EEE MMM dd yyyy");
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;

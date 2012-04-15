@@ -74,6 +74,8 @@ public class Domain2Descriptor {
                     mode = D2DMode.PROPERTIES;
                 } else if (arg.equals("-o")) {
                     mode = D2DMode.OPERATION;
+                } else if (arg.equals("-r")) {
+                    mode = D2DMode.RECURSIVE;
                 } else if (arg.startsWith("-U")) {
                     String tmp = arg.substring(2);
                     if (!tmp.contains(":")) {
@@ -93,7 +95,6 @@ public class Domain2Descriptor {
         } while (optionFound);
 
         String path = arg;
-        path = path.replaceAll("/", ","); // Allow path from jboss-cli.sh's
         // pwd command
 
         //spinder Mar-29-2012: if additional child type info passed in then load it. What does this look like?
@@ -141,7 +142,7 @@ public class Domain2Descriptor {
         }
 
         //Determine which attributes to focus on.
-        Map<String, Object> attributesMap;
+        Map<String, Object> attributesMap = null;
 
         //when will childtype is actually passed then...
         if (childType != null) {
@@ -158,7 +159,12 @@ public class Domain2Descriptor {
                 return;
             }
             Map starMap = (Map) descriptionMap.get("*");
-            attributesMap = (Map<String, Object>) starMap.get(what);
+            if (starMap != null) {
+                attributesMap = (Map<String, Object>) starMap.get(what);
+            } else {//when no *map is provided check for 'classic'
+                Map classicMap = (Map) descriptionMap.get("classic");
+                attributesMap = (Map<String, Object>) classicMap.get(what);
+            }//spinder: What about 'jsapi'? This occurs on some nodes.
         } else {//no child type passed in just load typical map
             attributesMap = (Map<String, Object>) resMap.get(what);
         }
@@ -198,9 +204,119 @@ public class Domain2Descriptor {
                 Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
                 createOperation(key, value);
             }
+        } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
+            StringBuilder tree = new StringBuilder(path + " -> \n");
+            System.out.print(tree);
+            if (attributesMap != null) {
+                String[] keys = attributesMap.keySet().toArray(new String[attributesMap.size()]);
+                Arrays.sort(keys);
+                for (String key : keys) {
+                    StringBuilder sb = new StringBuilder();
+                    doIndent(3, sb);
+                    sb.append("- " + key);
+                    System.out.println(sb);
+                }
+            }
+            Map childMap = (Map) resMap.get("children");
+            listPropertiesAndChildren(3, childMap);
         } else {
             createProperties(mode, attributesMap, 0);
         }
+    }
+
+    private void listPropertiesAndChildren(int indent, Map<String, Object> childMap) {
+        if (childMap == null) {
+            return;
+        }
+
+        String[] keys = childMap.keySet().toArray(new String[childMap.size()]);
+        Arrays.sort(keys);
+
+        for (String key : keys) {
+            StringBuilder sb = new StringBuilder();
+            doIndent(indent, sb);
+            sb.append("[" + key + "]\n");
+            System.out.print(sb);
+            //display child attributes
+            Object childT = childMap.get(key);
+            //model-description *
+            Object modelDescription = ((Map<String, Object>) childT).get("model-description");
+            if (modelDescription != null) {
+                Object starMap = ((Map<String, Object>) modelDescription).get("*");
+                if (starMap != null) {
+
+                    Map<String, Object> cAttributeMap = (Map<String, Object>) ((Map<String, Object>) starMap)
+                        .get("attributes");
+                    if (cAttributeMap != null) {
+                        Map<String, Object> cAttributes = (Map<String, Object>) cAttributeMap;
+                        String[] ckeys = cAttributes.keySet().toArray(new String[cAttributes.size()]);
+                        Arrays.sort(ckeys);
+                        for (String ckey : ckeys) {
+                            StringBuilder sbc = new StringBuilder();
+                            doIndent(indent + 2, sbc);
+                            sbc.append("- " + ckey);
+                            System.out.println(sbc);
+                        }
+                    }
+                }
+            }
+
+            //now check for children
+            Object entry = childMap.get(key);
+            if (entry != null) {
+                modelDescription = ((Map<String, Object>) entry).get("model-description");
+                if (modelDescription != null) {
+                    Map<String, Object> metaMap = null;
+                    //look for *map
+                    Object starMap = ((Map<String, Object>) modelDescription).get("*");
+                    if (starMap == null) {//if no star map look for 'classic'
+                        Object classic = ((Map<String, Object>) modelDescription).get("classic");
+                        if (classic != null) {
+                            metaMap = (Map<String, Object>) classic;
+                        }
+                    } else {
+                        metaMap = (Map<String, Object>) starMap;
+                    }
+                    if (metaMap != null) {
+                        Object childrenType = ((Map<String, Object>) metaMap).get("children");
+                        if (childrenType != null) {
+                            Map<String, Object> childrenMap = (Map<String, Object>) childrenType;
+                            String[] childKeys = childrenMap.keySet().toArray(new String[childrenMap.size()]);
+                            Arrays.sort(childKeys);
+                            for (String ckey : childKeys) {
+                                StringBuilder sb2 = new StringBuilder();
+                                doIndent(indent + 2, sb2);
+                                sb2.append("[" + ckey + "]");
+                                System.out.println(sb2);
+                                //recurse
+                                Map<String, Object> child = (Map<String, Object>) childrenMap.get(ckey);
+                                Map<String, Object> retrievedType = locateAttributesFromMap(child);
+                                listPropertiesAndChildren(indent + 4, retrievedType);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<String, Object> locateAttributesFromMap(Map<String, Object> child) {
+        Map<String, Object> retrieved = null;
+        if (child != null) {
+            //model description
+            Object modelDescription = child.get("model-description");
+            if (modelDescription != null) {
+                //*map
+                Object starMap = ((Map<String, Object>) modelDescription).get("*");
+                if (starMap != null) {
+                    retrieved = (Map<String, Object>) ((Map<String, Object>) starMap).get("attributes");
+                } else {//check for classic
+                    Object classic = ((Map<String, Object>) modelDescription).get("classic");
+                    retrieved = (Map<String, Object>) ((Map<String, Object>) classic).get("attributes");
+                }
+            }
+        }
+        return retrieved;
     }
 
     private void createProperties(D2DMode mode, Map<String, Object> attributesMap, int indent) {
@@ -689,6 +805,7 @@ public class Domain2Descriptor {
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");
         System.out.println(" -o create operations");
+        System.out.println(" -r recurse node and list children and properties.");
         System.out.println(" -U<user>:<pass>  - supply credentials to talk to AS7");
     }
 
@@ -712,7 +829,7 @@ public class Domain2Descriptor {
     }
 
     private enum D2DMode {
-        METRICS, PROPERTIES, OPERATION
+        METRICS, PROPERTIES, OPERATION, RECURSIVE
     }
 
 }

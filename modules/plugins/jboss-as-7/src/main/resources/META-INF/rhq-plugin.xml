@@ -2904,50 +2904,6 @@
     </resource-configuration>
 
   </service>
-  <!--   <service name="SocketBindingGroupDomain"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-              >
-          <runs-inside>
-              <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
-          </runs-inside>
-
-
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="socket-binding-group"/>
-          </plugin-configuration>
-
-          <resource-configuration>
-              <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
-                                 description="Default Interface for these bindings. See Network Interfaces for its definition"
-                                 required="true">
-                  <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
-              </c:simple-property>
-              <c:list-property name="includes" required="false" readOnly="true"> &lt;!&ndash; read-only until AS7-1467 is fixed &ndash;&gt;
-                  <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
-              </c:list-property>
-              <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
-              <c:list-property name="*">
-                  <c:map-property name="binding">
-                      <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
-                      <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
-                                         required="false">
-                          <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
-                      </c:simple-property>
-
-                      <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
-                      <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
-                                         type="boolean" defaultValue="false"/>
-                      <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
-                      <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
-                  </c:map-property>
-              </c:list-property>
-              </c:group>
-          </resource-configuration>
-
-      </service>
-  -->
-
   <service name="Deployment"
            class="DeploymentComponent"
            discovery="SubsystemDiscovery"
@@ -4391,7 +4347,7 @@
           <c:simple-property name="background-validation" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value requires a server restart. The default value is false."/>
           <c:simple-property name="background-validation-millis:expr" required="false" type="integer" readOnly="false" displayName="Background Validation Millis" description="The background&#45;validation&#45;millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value requires a server restart"/>
           <c:simple-property name="blocking-timeout-wait-millis:expr" required="false" type="long" readOnly="false" displayName="Blocking Timeout Wait Millis" description="The blocking&#45;timeout&#45;millis element specifies the maximum time, in milliseconds, to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for locking a connection, and will never throw an exception if creating a new connection takes an inordinately long time"/>
-          <c:simple-property name="class-name" required="true" type="string" readOnly="false" description="Specifies the fully qualified class name of a managed connection factory or admin object"/>        
+          <c:simple-property name="class-name" required="true" type="string" readOnly="false" description="Specifies the fully qualified class name of a managed connection factory or admin object"/>
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies if the resource adapter should be enabled. The default value is true."/>
           <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is FailingConnectionOnly."/>
           <c:simple-property name="idle-timeout-minutes:expr" required="false" type="long" readOnly="false" displayName="Idle Timeout Minutes" description="The idle&#45;timeout&#45;minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle&#45;timeout&#45;minutes value of any pool. Changing this value requires a server restart."/>

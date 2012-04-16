@@ -207,100 +207,56 @@ public class Domain2Descriptor {
         } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
             StringBuilder tree = new StringBuilder(path + " -> \n");
             System.out.print(tree);
-            if (attributesMap != null) {
-                String[] keys = attributesMap.keySet().toArray(new String[attributesMap.size()]);
-                Arrays.sort(keys);
-                for (String key : keys) {
-                    StringBuilder sb = new StringBuilder();
-                    doIndent(3, sb);
-                    sb.append("- " + key);
-                    System.out.println(sb);
-                }
-            }
-            Map childMap = (Map) resMap.get("children");
-            listPropertiesAndChildren(3, childMap);
+            listPropertiesAndChildren(3, resMap);
         } else {
             createProperties(mode, attributesMap, 0);
         }
     }
 
-    private void listPropertiesAndChildren(int indent, Map<String, Object> childMap) {
-        if (childMap == null) {
+    /** Assume parent metadata type passed in with i)description ii)attributes iii)operations iv)children
+     * 
+     * @param indent
+     * @param childMap
+     */
+    private void listPropertiesAndChildren(int indent, Map<String, Object> metaDataNode) {
+        if (metaDataNode == null) {
             return;
         }
 
-        String[] keys = childMap.keySet().toArray(new String[childMap.size()]);
-        Arrays.sort(keys);
-
-        for (String key : keys) {
-            StringBuilder sb = new StringBuilder();
-            doIndent(indent, sb);
-            sb.append("[" + key + "]\n");
-            System.out.print(sb);
-            //display child attributes
-            Object childT = childMap.get(key);
-            //model-description *
-            Object modelDescription = ((Map<String, Object>) childT).get("model-description");
-            if (modelDescription != null) {
-                Object starMap = ((Map<String, Object>) modelDescription).get("*");
-                if (starMap != null) {
-
-                    Map<String, Object> cAttributeMap = (Map<String, Object>) ((Map<String, Object>) starMap)
-                        .get("attributes");
-                    if (cAttributeMap != null) {
-                        Map<String, Object> cAttributes = (Map<String, Object>) cAttributeMap;
-                        String[] ckeys = cAttributes.keySet().toArray(new String[cAttributes.size()]);
-                        Arrays.sort(ckeys);
-                        for (String ckey : ckeys) {
-                            StringBuilder sbc = new StringBuilder();
-                            doIndent(indent + 2, sbc);
-                            sbc.append("- " + ckey);
-                            System.out.println(sbc);
-                        }
-                    }
+        //retrieve the attributes for the node.
+        Map<String, Object> cAttributeMap = (Map<String, Object>) metaDataNode.get("attributes");
+        if (cAttributeMap != null) {
+            //retrieve keys and sort.
+            String[] ckeys = cAttributeMap.keySet().toArray(new String[cAttributeMap.size()]);
+            Arrays.sort(ckeys);
+            for (String ckey : ckeys) {//list each of the attributes.
+                StringBuilder sbc = new StringBuilder();
+                doIndent(indent + 2, sbc);
+                sbc.append("- " + ckey);
+                System.out.println(sbc);
                 }
-            }
+        }
 
-            //now check for children
-            Object entry = childMap.get(key);
-            if (entry != null) {
-                modelDescription = ((Map<String, Object>) entry).get("model-description");
-                if (modelDescription != null) {
-                    Map<String, Object> metaMap = null;
-                    //look for *map
-                    Object starMap = ((Map<String, Object>) modelDescription).get("*");
-                    if (starMap == null) {//if no star map look for 'classic'
-                        Object classic = ((Map<String, Object>) modelDescription).get("classic");
-                        if (classic != null) {
-                            metaMap = (Map<String, Object>) classic;
-                        }
-                    } else {
-                        metaMap = (Map<String, Object>) starMap;
-                    }
-                    if (metaMap != null) {
-                        Object childrenType = ((Map<String, Object>) metaMap).get("children");
-                        if (childrenType != null) {
-                            Map<String, Object> childrenMap = (Map<String, Object>) childrenType;
-                            String[] childKeys = childrenMap.keySet().toArray(new String[childrenMap.size()]);
-                            Arrays.sort(childKeys);
-                            for (String ckey : childKeys) {
-                                StringBuilder sb2 = new StringBuilder();
-                                doIndent(indent + 2, sb2);
-                                sb2.append("[" + ckey + "]");
-                                System.out.println(sb2);
-                                //recurse
-                                Map<String, Object> child = (Map<String, Object>) childrenMap.get(ckey);
-                                Map<String, Object> retrievedType = locateAttributesFromMap(child);
-                                listPropertiesAndChildren(indent + 4, retrievedType);
-                            }
-                        }
-                    }
+        //now check for children
+        Object childrenType = ((Map<String, Object>) metaDataNode).get("children");
+        if (childrenType != null) {
+            Map<String, Object> childrenMap = (Map<String, Object>) childrenType;
+            String[] childKeys = childrenMap.keySet().toArray(new String[childrenMap.size()]);
+            Arrays.sort(childKeys);
+            for (String ckey : childKeys) {
+                StringBuilder sb2 = new StringBuilder();
+                doIndent(indent + 2, sb2);
+                sb2.append("[" + ckey + "]");
+                System.out.println(sb2);
+                //recurse
+                Map<String, Object> child = (Map<String, Object>) childrenMap.get(ckey);
+                Map<String, Object> retrievedType = locateMetaDataNodeFromMap(child);
+                listPropertiesAndChildren(indent + 4, retrievedType);
                 }
-            }
         }
     }
 
-    private Map<String, Object> locateAttributesFromMap(Map<String, Object> child) {
+    private Map<String, Object> locateMetaDataNodeFromMap(Map<String, Object> child) {
         Map<String, Object> retrieved = null;
         if (child != null) {
             //model description
@@ -309,11 +265,11 @@ public class Domain2Descriptor {
                 //*map
                 Object starMap = ((Map<String, Object>) modelDescription).get("*");
                 if (starMap != null) {
-                    retrieved = (Map<String, Object>) ((Map<String, Object>) starMap).get("attributes");
+                    retrieved = (Map<String, Object>) starMap;
                 } else {//check for classic
                     Object classic = ((Map<String, Object>) modelDescription).get("classic");
-                    retrieved = (Map<String, Object>) ((Map<String, Object>) classic).get("attributes");
-                }
+                    retrieved = (Map<String, Object>) classic;
+                }//spinder: What about 'jsapi'? This occurs on some nodes.
             }
         }
         return retrieved;

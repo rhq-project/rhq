@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
@@ -27,6 +30,7 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
+
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -36,9 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A simple page to view the downloads the server provides (like
@@ -134,10 +135,10 @@ public class DownloadsView extends LocatableVLayout {
                 md5Item.setValue(md5);
                 md5Item.setWrapTitle(false);
 
-                LinkItem linkItem = new LinkItem("agentLink");
+                StaticTextItem linkItem = new StaticTextItem("agentLink");
                 linkItem.setTitle(MSG.view_admin_downloads_agent_link_label());
-                linkItem.setLinkTitle(MSG.view_admin_downloads_agent_link_value(version, build));
-                linkItem.setValue("/agentupdate/download");
+                linkItem.setValue("<a href=\"/agentupdate/download\">"
+                    + MSG.view_admin_downloads_agent_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("agentSpacer");
                 spacerItem.setHeight(10);
@@ -185,10 +186,10 @@ public class DownloadsView extends LocatableVLayout {
                 md5Item.setValue(md5);
                 md5Item.setWrapTitle(false);
 
-                LinkItem linkItem = new LinkItem("cliLink");
+                StaticTextItem linkItem = new StaticTextItem("cliLink");
                 linkItem.setTitle(MSG.view_admin_downloads_cli_link_label());
-                linkItem.setLinkTitle(MSG.view_admin_downloads_cli_link_value(version, build));
-                linkItem.setValue("/client/download");
+                linkItem.setValue("<a href=\"/client/download\">"
+                    + MSG.view_admin_downloads_cli_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("clientSpacer");
                 spacerItem.setHeight(1);
@@ -224,10 +225,10 @@ public class DownloadsView extends LocatableVLayout {
                 String name = result.keySet().iterator().next();
                 String url = result.values().iterator().next();
 
-                LinkItem linkItem = new LinkItem("bundleLink");
+                StaticTextItem linkItem = new StaticTextItem("bundleLink");
                 linkItem.setTitle(MSG.view_admin_downloads_bundle_link_label());
-                linkItem.setLinkTitle(MSG.view_admin_downloads_bundle_link_value(name));
-                linkItem.setValue(url);
+                linkItem.setValue("<a href=\"" + url + "\">" + MSG.view_admin_downloads_bundle_link_value(name)
+                    + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("bundleSpacer");
                 spacerItem.setHeight(1);

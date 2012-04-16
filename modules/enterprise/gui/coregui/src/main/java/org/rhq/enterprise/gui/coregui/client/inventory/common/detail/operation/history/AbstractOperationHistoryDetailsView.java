@@ -196,13 +196,11 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             }
             StaticTextItem errorLinkItem = new StaticTextItem("errorLink");
             errorLinkItem.setTextAlign(Alignment.LEFT);
-            errorLinkItem.setHoverWidth(200);
-            errorLinkItem.setPrompt(operationHistory.getErrorMessage());
             errorLinkItem.setAlign(Alignment.LEFT);
             errorLinkItem.setVAlign(VerticalAlignment.BOTTOM);
             errorLinkItem.setErrorOrientation(FormErrorOrientation.LEFT);
             errorLinkItem.setTitle(MSG.common_severity_error());
-            errorLinkItem.setValue(getShortErrorMessage(operationHistory));
+            errorLinkItem.setValue("<span style=\"text-decoration:underline;\">"+getShortErrorMessage(operationHistory)+"<span>");
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {

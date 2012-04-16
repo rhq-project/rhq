@@ -59,26 +59,7 @@ public class JavaCommandLine {
     private List<String> classArguments;
     private boolean includeSystemPropertiesFromClassArguments;
 
-    public JavaCommandLine(String commandLine) {
-        this(commandLine, false);
-    }
-
-    public JavaCommandLine(String commandLine, boolean includeSystemPropertiesFromClassArguments) {
-        if (commandLine == null) {
-            throw new IllegalArgumentException("'commandLine' parameter is null.");
-        }
-
-        if (commandLine.trim().isEmpty()) {
-            throw new IllegalArgumentException("'commandLine' parameter contains nothing but whitespace.");
-        }
-
-        this.includeSystemPropertiesFromClassArguments = includeSystemPropertiesFromClassArguments;
-
-        String[] args = commandLine.trim().split("[ \t]");
-        parseCommandLine(args);
-    }
-
-    public JavaCommandLine(String[] args) {
+    public JavaCommandLine(String ... args) {
         this(args, false);
     }
 
@@ -132,9 +113,8 @@ public class JavaCommandLine {
             } else {
                 if (arg.matches("-D.+")) {
                     parseSystemPropertyArgument(arg);
-                } else {
-                    this.javaOptions.add(arg);
                 }
+                this.javaOptions.add(arg);
             }
         }
 
@@ -149,9 +129,8 @@ public class JavaCommandLine {
             String classArg = args[i];
             if (this.includeSystemPropertiesFromClassArguments && classArg.matches("-D.+")) {
                 parseSystemPropertyArgument(classArg);
-            } else {
-                this.classArguments.add(classArg);
             }
+            this.classArguments.add(classArg);
         }
     }
 

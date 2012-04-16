@@ -24,10 +24,7 @@ package org.rhq.core.pluginapi.util;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -41,18 +38,8 @@ import org.testng.annotations.Test;
 public class JavaCommandLineTest {
 
     @Test(expectedExceptions = {IllegalArgumentException.class})
-    public void testNullStringParam() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine((String)null);
-    }
-
-    @Test(expectedExceptions = {IllegalArgumentException.class})
-    public void testEmptyStringParam() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine(" ");
-    }
-
-    @Test(expectedExceptions = {IllegalArgumentException.class})
     public void testNullArrayParam() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine((String[])null);
+        JavaCommandLine javaCommandLine = new JavaCommandLine(null);
     }
 
     @Test(expectedExceptions = {IllegalArgumentException.class})
@@ -61,57 +48,66 @@ public class JavaCommandLineTest {
     }
 
     public void testClass() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine("java -Dshape=circle -Xmx100M -Dcolor=blue -ea -cp a.jar:b.jar:c.jar org.example.Main -x blah");
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea", "-cp", "a.jar:b.jar:c.jar", "org.example.Main", "-x", "blah");
+
         Assert.assertEquals(javaCommandLine.getJavaExecutable(), new File("java"));
-        Assert.assertNotNull(javaCommandLine.getJavaOptions());
-        Set<String> javaOpts = new HashSet<String>(javaCommandLine.getJavaOptions());
-        Assert.assertTrue(javaOpts.contains("-Xmx100M"));
-        Assert.assertTrue(javaOpts.contains("-ea"));
+        Assert.assertEquals(javaCommandLine.getJavaOptions(), Arrays.asList("-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea"),
+                        javaCommandLine.getJavaOptions().toString());
+
         Map<String,String> sysprops = javaCommandLine.getSystemProperties();
         Assert.assertNotNull(sysprops);
         Assert.assertEquals(sysprops.get("shape"), "circle");
         Assert.assertEquals(sysprops.get("color"), "blue");
-        Assert.assertNotNull(javaCommandLine.getClassPath());
+
         Assert.assertEquals(javaCommandLine.getClassPath(), Arrays.asList("a.jar", "b.jar", "c.jar"),
                 javaCommandLine.getClassPath().toString());
+
         Assert.assertNull(javaCommandLine.getExecutableJarFile());
         Assert.assertEquals(javaCommandLine.getMainClassName(), "org.example.Main");
-        Assert.assertNotNull(javaCommandLine.getClassArguments());
-        Set<String> classArgs = new HashSet<String>(javaCommandLine.getClassArguments());
-        Assert.assertTrue(classArgs.contains("-x"));
-        Assert.assertTrue(classArgs.contains("blah"));
+        Assert.assertEquals(javaCommandLine.getClassArguments(), Arrays.asList("-x", "blah"),
+                javaCommandLine.getClassArguments().toString());
     }
 
     public void testJarFile() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine("java -Dshape=circle -Xmx100M -Dcolor=blue -ea -classpath a.jar:b.jar:c.jar -jar main.jar -x blah");
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea", "-cp", "a.jar:b.jar:c.jar", "-jar", "main.jar", "-x", "blah");
+
         Assert.assertEquals(javaCommandLine.getJavaExecutable(), new File("java"));
-        Assert.assertNotNull(javaCommandLine.getJavaOptions());
-        Set<String> javaOpts = new HashSet<String>(javaCommandLine.getJavaOptions());
-        Assert.assertTrue(javaOpts.contains("-Xmx100M"));
-        Assert.assertTrue(javaOpts.contains("-ea"));
+        Assert.assertEquals(javaCommandLine.getJavaOptions(), Arrays.asList("-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea"),
+                        javaCommandLine.getJavaOptions().toString());
+
         Map<String,String> sysprops = javaCommandLine.getSystemProperties();
         Assert.assertNotNull(sysprops);
         Assert.assertEquals(sysprops.get("shape"), "circle");
         Assert.assertEquals(sysprops.get("color"), "blue");
-        Assert.assertNotNull(javaCommandLine.getClassPath());
+
         Assert.assertEquals(javaCommandLine.getClassPath(), Arrays.asList("a.jar", "b.jar", "c.jar"),
                 javaCommandLine.getClassPath().toString());
+
         Assert.assertNull(javaCommandLine.getMainClassName());
         Assert.assertEquals(javaCommandLine.getExecutableJarFile(), new File("main.jar"));
-        Assert.assertNotNull(javaCommandLine.getClassArguments());
-        Set<String> classArgs = new HashSet<String>(javaCommandLine.getClassArguments());
-        Assert.assertTrue(classArgs.contains("-x"));
-        Assert.assertTrue(classArgs.contains("blah"));
+        Assert.assertEquals(javaCommandLine.getClassArguments(), Arrays.asList("-x", "blah"),
+                javaCommandLine.getClassArguments().toString());
     }
 
     public void testSysProps() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine("java -Dprop1=foo -Dprop2= -Dprop3 org.example.Main");
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dprop1=foo", "-Dprop2=", "-Dprop3", "org.example.Main", "-Dprop4=boo");
         Map<String,String> sysprops = javaCommandLine.getSystemProperties();
         Assert.assertNotNull(sysprops);
         Assert.assertEquals(sysprops.size(), 3);
         Assert.assertEquals(sysprops.get("prop1"), "foo");
         Assert.assertEquals(sysprops.get("prop2"), "");
         Assert.assertEquals(sysprops.get("prop3"), "");
+    }
+
+    public void testCombinedSysProps() throws Exception {
+        JavaCommandLine javaCommandLine = new JavaCommandLine(new String[] {"java", "-Dprop1=foo", "-Dprop2=", "-Dprop3", "org.example.Main", "-Dprop4=boo"}, true);
+        Map<String,String> sysprops = javaCommandLine.getSystemProperties();
+        Assert.assertNotNull(sysprops);
+        Assert.assertEquals(sysprops.size(), 4);
+        Assert.assertEquals(sysprops.get("prop1"), "foo");
+        Assert.assertEquals(sysprops.get("prop2"), "");
+        Assert.assertEquals(sysprops.get("prop3"), "");
+        Assert.assertEquals(sysprops.get("prop4"), "boo");
     }
 
 }

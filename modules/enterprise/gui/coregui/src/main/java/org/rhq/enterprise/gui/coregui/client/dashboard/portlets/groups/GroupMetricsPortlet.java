@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ContentsType;
@@ -228,20 +227,16 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-        if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+        if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
-            boolean isAdvanced = false;
-            //detect type of widget[Simple|Advanced]
-            property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-            if (property != null) {
-                isAdvanced = property.getBooleanValue();
-            }
+            boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
+                Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
             if (isAdvanced) {
                 //Advanced time settings
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
+                String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
+                    Constant.METRIC_RANGE_DEFAULT);
+                String[] range = currentSetting.split(",");
+                if (range.length == 2) {
                     start = Long.valueOf(range[0]);
                     end = Long.valueOf(range[1]);
                 }
@@ -249,10 +244,11 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                 //Simple time settings
                 property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
                 if (property != null) {
-                    int lastN = property.getIntegerValue();
-                    property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                    int lastUnits = property.getIntegerValue();
-                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(lastUnits));
+                    int lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                        Constant.METRIC_RANGE_LASTN_DEFAULT));
+                    int units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                        Constant.METRIC_RANGE_UNIT_DEFAULT));
+                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                     start = Long.valueOf(beginEnd.get(0));
                     end = Long.valueOf(beginEnd.get(1));
                 }
@@ -283,7 +279,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     setRefreshing(false);
                 }
 
@@ -333,9 +329,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                 @Override
                                                 public void onFailure(Throwable caught) {
-                                                    Log
-                                                        .debug("Error retrieving recent metrics charting data for group ["
-                                                            + groupId + "]:" + caught.getMessage());
+                                                    Log.debug("Error retrieving recent metrics charting data for group ["
+                                                        + groupId + "]:" + caught.getMessage());
                                                     setRefreshing(false);
                                                 }
 
@@ -437,10 +432,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             }
                                                         }
                                                         if (!someChartedData) {// when there are results but no chartable entries.
-                                                            LocatableDynamicForm row = AbstractActivityView
-                                                                .createEmptyDisplayRow(recentMeasurementsContent
-                                                                    .extendLocatorId("None"),
-                                                                    AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                            LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+                                                                recentMeasurementsContent.extendLocatorId("None"),
+                                                                AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                             column.addMember(row);
                                                         } else {
                                                             //insert see more link
@@ -448,15 +442,16 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("RecentMeasurementsContentSeeMore"));
                                                             String link = LinkManager
-                                                                .getGroupMonitoringGraphsLink(EntityContext.forGroup(groupId));
+                                                                .getGroupMonitoringGraphsLink(EntityContext
+                                                                    .forGroup(groupId));
                                                             AbstractActivityView.addSeeMoreLink(row, link, column);
                                                         }
                                                         //call out to 3rd party javascript lib
                                                         BrowserUtility.graphSparkLines();
                                                     } else {
                                                         LocatableDynamicForm row = AbstractActivityView
-                                                            .createEmptyDisplayRow(recentMeasurementsContent
-                                                                .extendLocatorId("None"),
+                                                            .createEmptyDisplayRow(
+                                                                recentMeasurementsContent.extendLocatorId("None"),
                                                                 AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                         column.addMember(row);
                                                     }
@@ -467,8 +462,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                 });
                         }
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentMeasurementsContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+                            recentMeasurementsContent.extendLocatorId("None"),
+                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                         column.addMember(row);
                         setRefreshing(false);
                     }

@@ -47,36 +47,32 @@ public class PortletConfigurationEditorComponent {
 
     public interface Constant {
         String ALERT_PRIORITY = "ALERT_PRIORITY";
-        String ALERT_PRIORITY_DEFAULT = "";//all priorities==no priorities
+        String ALERT_PRIORITY_DEFAULT = ""; // no filtering
         String METRIC_RANGE_ENABLE = "METRIC_RANGE_ENABLE";
-        String METRIC_RANGE_ENABLE_DEFAULT = String.valueOf(false);//disabled
+        String METRIC_RANGE_ENABLE_DEFAULT = String.valueOf(false); //disabled
         String METRIC_RANGE_BEGIN_END_FLAG = "METRIC_RANGE_BEGIN_END_FLAG";
         String METRIC_RANGE_BEGIN_END_FLAG_DEFAULT = String.valueOf(false);//disabled
         String METRIC_RANGE = "METRIC_RANGE";
-        String METRIC_RANGE_DEFAULT = "";//no previous range.
+        String METRIC_RANGE_DEFAULT = ""; //no previous range.
         String METRIC_RANGE_LASTN = "METRIC_RANGE_LASTN";
         String METRIC_RANGE_LASTN_DEFAULT = String.valueOf(8);
         String METRIC_RANGE_UNIT = "METRIC_RANGE_UNIT";
         String METRIC_RANGE_UNIT_DEFAULT = String.valueOf(MeasurementUtility.UNIT_HOURS);
-        String RESULT_SEVERITY = "severities";
-        String RESULT_SEVERITY_DEFAULT = "";//all severities
         String RESULT_SORT_ORDER = "RESULT_SORT_ORDER";
         String RESULT_SORT_ORDER_DEFAULT = PageOrdering.DESC.name();//descending
         String RESULT_SORT_PRIORITY = "sort.priority";
-        //        String RESULT_SORT_PRIORITY_DEFAULT = "sort.priority";
         String RESULT_COUNT = "RESULT_COUNT";
         String RESULT_COUNT_DEFAULT = "5";
         String CUSTOM_REFRESH = "CUSTOM_REFRESH";
         String OPERATION_STATUS = "OPERATION_STATUS";
-        String OPERATION_STATUS_DEFAULT = "";//empty
+        String OPERATION_STATUS_DEFAULT = ""; // no filtering
         String CONFIG_UPDATE_STATUS = "CONFIG_UPDATE_STATUS";
-        String CONFIG_UPDATE_STATUS_DEFAULT = "";
+        String CONFIG_UPDATE_STATUS_DEFAULT = ""; // no filtering
     }
 
     //configuration map initialization
     public static Map<String, String> CONFIG_PROPERTY_INITIALIZATION = new HashMap<String, String>();
     static {// Key, Default value
-        //alert priority, if empty initialize to "" i.e. all priorities
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
         //result sort order, if empty initialize to "DESC"
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.RESULT_SORT_ORDER, Constant.RESULT_SORT_ORDER_DEFAULT);
@@ -123,8 +119,8 @@ public class PortletConfigurationEditorComponent {
         }
         maximumResultsComboBox.setValueMap(displayValues);
         //reload current settings if they exist, otherwise enable all.
-        String currentValue = portletConfig.getSimple(Constant.RESULT_COUNT).getStringValue();
-        if (currentValue.isEmpty() || currentValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT)) {
+        String currentValue = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+        if (currentValue.isEmpty()) {
             maximumResultsComboBox.setValue(Constant.RESULT_COUNT_DEFAULT);
         } else {
             maximumResultsComboBox.setValue(currentValue);
@@ -137,7 +133,7 @@ public class PortletConfigurationEditorComponent {
      * @return Populated selectItem instance.
      */
     public static SelectItem getAlertPriorityEditor(Configuration portletConfig) {
-        SelectItem priorityFilter = new SelectItem(Constant.RESULT_SEVERITY, MSG.view_alerts_table_filter_priority());
+        SelectItem priorityFilter = new SelectItem(Constant.ALERT_PRIORITY, MSG.view_alerts_table_filter_priority());
         priorityFilter.setWrapTitle(false);
         priorityFilter.setWidth(200);
         priorityFilter.setMultiple(true);
@@ -154,9 +150,10 @@ public class PortletConfigurationEditorComponent {
         priorityFilter.setValueMap(priorities);
         priorityFilter.setValueIcons(priorityIcons);
         //reload current settings if they exist, otherwise enable all.
-        String currentValue = portletConfig.getSimple(Constant.ALERT_PRIORITY).getStringValue();
-        if (currentValue.isEmpty() || currentValue.split(",").length == AlertPriority.values().length) {
+        String currentValue = portletConfig.getSimpleValue(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
+        if (currentValue.trim().isEmpty() || currentValue.split(",").length == AlertPriority.values().length) {
             priorityFilter.setValues(AlertPriority.HIGH.name(), AlertPriority.MEDIUM.name(), AlertPriority.LOW.name());
+
         } else {
             //spinder:3/4/11 doing this nonsense due to some weird smartgwt issue with SelectItem in VLayout.
             if (currentValue.equalsIgnoreCase("HIGH")) {
@@ -173,6 +170,7 @@ public class PortletConfigurationEditorComponent {
                 priorityFilter.setValues(AlertPriority.LOW.name());
             }
         }
+
         return priorityFilter;
     }
 
@@ -199,11 +197,12 @@ public class PortletConfigurationEditorComponent {
         sortPrioritySelection.setImageURLSuffix(".png");
 
         //reload current settings if they exist, otherwise enable all.
-        String currentValue = portletConfig.getSimple(Constant.RESULT_SORT_ORDER).getStringValue();
-        if (currentValue.isEmpty() || currentValue.equalsIgnoreCase(PageOrdering.DESC.name())) {//default to descending order
-            sortPrioritySelection.setDefaultValue(PageOrdering.DESC.name());
+        String currentValue = portletConfig.getSimpleValue(Constant.RESULT_SORT_ORDER,
+            Constant.RESULT_SORT_ORDER_DEFAULT);
+        if (currentValue.isEmpty()) {
+            sortPrioritySelection.setDefaultValue(Constant.RESULT_SORT_ORDER_DEFAULT);
         } else {
-            sortPrioritySelection.setDefaultValue(PageOrdering.ASC.name());
+            sortPrioritySelection.setDefaultValue(currentValue);
         }
         return sortPrioritySelection;
     }
@@ -231,18 +230,19 @@ public class PortletConfigurationEditorComponent {
         stati.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
 
         LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
-        statusIcons.put(OperationRequestStatus.SUCCESS.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.SUCCESS));
-        statusIcons.put(OperationRequestStatus.INPROGRESS.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.INPROGRESS));
-        statusIcons.put(OperationRequestStatus.CANCELED.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.CANCELED));
-        statusIcons.put(OperationRequestStatus.FAILURE.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.FAILURE));
+        statusIcons.put(OperationRequestStatus.SUCCESS.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.SUCCESS));
+        statusIcons.put(OperationRequestStatus.INPROGRESS.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.INPROGRESS));
+        statusIcons.put(OperationRequestStatus.CANCELED.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.CANCELED));
+        statusIcons.put(OperationRequestStatus.FAILURE.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
         priorityFilter.setValueMap(stati);
         priorityFilter.setValueIcons(statusIcons);
         //reload current settings if they exist, otherwise enable all.
-        String currentValue = portletConfig.getSimple(Constant.OPERATION_STATUS).getStringValue();
+        String currentValue = portletConfig
+            .getSimpleValue(Constant.OPERATION_STATUS, Constant.OPERATION_STATUS_DEFAULT);
         if (currentValue.isEmpty() || currentValue.split(",").length == OperationRequestStatus.values().length) {
             priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS.name(),
                 OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
@@ -251,17 +251,18 @@ public class PortletConfigurationEditorComponent {
             if (currentValue.equalsIgnoreCase(OperationRequestStatus.SUCCESS.name())) {
                 priorityFilter.setValues(OperationRequestStatus.SUCCESS.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,CANCELED,FAILURE")) {
-                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
-                    .name(), OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(),
+                    OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED.name(),
+                    OperationRequestStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,CANCELED")) {
-                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
-                    .name(), OperationRequestStatus.CANCELED.name());
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(),
+                    OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,FAILURE")) {
-                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
-                    .name(), OperationRequestStatus.FAILURE.name());
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(),
+                    OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS")) {
-                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
-                    .name());
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(),
+                    OperationRequestStatus.INPROGRESS.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,CANCELED,FAILURE")) {
                 priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.CANCELED.name(),
                     OperationRequestStatus.FAILURE.name());
@@ -272,14 +273,14 @@ public class PortletConfigurationEditorComponent {
             } else if (currentValue.equalsIgnoreCase("INPROGRESS")) {
                 priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS,CANCELED,FAILURE")) {
-                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED
-                    .name(), OperationRequestStatus.FAILURE.name());
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(),
+                    OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS,CANCELED")) {
-                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED
-                    .name());
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(),
+                    OperationRequestStatus.CANCELED.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS,FAILURE")) {
-                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.FAILURE
-                    .name());
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(),
+                    OperationRequestStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("CANCELED")) {
                 priorityFilter.setValues(OperationRequestStatus.CANCELED.name());
             } else if (currentValue.equalsIgnoreCase("CANCELED,FAILURE")) {
@@ -292,8 +293,8 @@ public class PortletConfigurationEditorComponent {
     }
 
     public static SelectItem getConfigurationUpdateStatusEditor(Configuration portletConfig) {
-        SelectItem priorityFilter = new SelectItem(Constant.CONFIG_UPDATE_STATUS, MSG
-            .common_title_config_update_status());
+        SelectItem priorityFilter = new SelectItem(Constant.CONFIG_UPDATE_STATUS,
+            MSG.common_title_config_update_status());
         priorityFilter.setWrapTitle(false);
         priorityFilter.setWidth(335);
         priorityFilter.setMultiple(true);
@@ -306,46 +307,49 @@ public class PortletConfigurationEditorComponent {
         stati.put(ConfigurationUpdateStatus.FAILURE.name(), MSG.common_status_failed());
 
         LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
-        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
-        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
-        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
-        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
         priorityFilter.setValueMap(stati);
         priorityFilter.setValueIcons(statusIcons);
         //reload current settings if they exist, otherwise enable all.
-        String currentValue = portletConfig.getSimple(Constant.CONFIG_UPDATE_STATUS).getStringValue();
+        String currentValue = portletConfig.getSimpleValue(Constant.CONFIG_UPDATE_STATUS,
+            Constant.CONFIG_UPDATE_STATUS_DEFAULT);
         if (currentValue.isEmpty() || currentValue.split(",").length == ConfigurationUpdateStatus.values().length) {
-            priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
-                .name(), ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
+            priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.NOCHANGE.name(),
+                ConfigurationUpdateStatus.FAILURE.name());
         } else {
             //spinder:3/4/11 doing this nonsense due to some weird smartgwt issue with SelectItem in VLayout.
             if (currentValue.equalsIgnoreCase(ConfigurationUpdateStatus.SUCCESS.name())) {
                 priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,NOCHANGE,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
-                    .name(), ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.NOCHANGE.name(),
+                    ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,NOCHANGE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
-                    .name(), ConfigurationUpdateStatus.NOCHANGE.name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.NOCHANGE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
-                    .name(), ConfigurationUpdateStatus.FAILURE.name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
-                    .name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.INPROGRESS.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,NOCHANGE,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.NOCHANGE
-                    .name(), ConfigurationUpdateStatus.FAILURE.name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,NOCHANGE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.NOCHANGE
-                    .name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.NOCHANGE.name());
             } else if (currentValue.equalsIgnoreCase("SUCCESS,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.FAILURE
-                    .name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(),
+                    ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS")) {
                 priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS,NOCHANGE,FAILURE")) {
@@ -355,13 +359,13 @@ public class PortletConfigurationEditorComponent {
                 priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(),
                     ConfigurationUpdateStatus.NOCHANGE.name());
             } else if (currentValue.equalsIgnoreCase("INPROGRESS,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.FAILURE
-                    .name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(),
+                    ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("NOCHANGE")) {
                 priorityFilter.setValues(ConfigurationUpdateStatus.NOCHANGE.name());
             } else if (currentValue.equalsIgnoreCase("NOCHANGE,FAILURE")) {
-                priorityFilter.setValues(ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE
-                    .name());
+                priorityFilter.setValues(ConfigurationUpdateStatus.NOCHANGE.name(),
+                    ConfigurationUpdateStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("FAILURE")) {
                 priorityFilter.setValues(ConfigurationUpdateStatus.FAILURE.name());
             }

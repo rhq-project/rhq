@@ -434,8 +434,7 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
             criteria.addFilterResourceGroupIds(Arrays.asList(groupId));
         }
 
-        //initialize to only five for quick queries.
-        PageControl pageControl = new PageControl(0, 5);//default to displaying five
+        PageControl pageControl = new PageControl(0, Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
         //customize query with latest configuration selections
 
         //retrieve previous settings from portlet config
@@ -452,20 +451,16 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
             //            }
             //result timeframe if enabled
             PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-            if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+            if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
-                boolean isAdvanced = false;
-                //detect type of widget[Simple|Advanced]
-                property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-                if (property != null) {
-                    isAdvanced = property.getBooleanValue();
-                }
+                boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
+                    Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
                 if (isAdvanced) {
                     //Advanced time settings
-                    property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                    if (property != null) {
-                        String currentSetting = property.getStringValue();
-                        String[] range = currentSetting.split(",");
+                    String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
+                        Constant.METRIC_RANGE_DEFAULT);
+                    String[] range = currentSetting.split(",");
+                    if (range.length == 2) {
                         criteria.addFilterStartTime(Long.valueOf(range[0]));
                         criteria.addFilterEndTime(Long.valueOf(range[1]));
                     }
@@ -473,11 +468,11 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
                     //Simple time settings
                     property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
                     if (property != null) {
-                        int lastN = property.getIntegerValue();
-                        property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                        int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN,
-                            Integer.valueOf(lastUnits));
+                        Integer lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                            Constant.METRIC_RANGE_LASTN_DEFAULT));
+                        Integer units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                            Constant.METRIC_RANGE_UNIT_DEFAULT));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }
@@ -485,21 +480,19 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
             }
 
             //result count
-            property = portletConfig.getSimple(Constant.RESULT_COUNT);
-            if (property != null) {
-                String currentSetting = property.getStringValue();
-                if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                    pageControl.setPageSize(5);
-                } else {
-                    pageControl = new PageControl(0, Integer.valueOf(currentSetting));
-                }
+            String currentSetting = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+            if (currentSetting.trim().isEmpty()) {
+                pageControl.setPageSize(Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
+            } else {
+                pageControl.setPageSize(Integer.valueOf(currentSetting));
             }
             criteria.setPageControl(pageControl);
 
             //detect operation status filter
             property = portletConfig.getSimple(Constant.OPERATION_STATUS);
             if (property != null) {
-                String currentSetting = property.getStringValue();
+                currentSetting = portletConfig.getSimpleValue(Constant.OPERATION_STATUS,
+                    Constant.OPERATION_STATUS_DEFAULT);
                 String[] parsedValues = currentSetting.trim().split(",");
                 if (currentSetting.trim().isEmpty() || parsedValues.length == OperationRequestStatus.values().length) {
                     //all operation stati assumed

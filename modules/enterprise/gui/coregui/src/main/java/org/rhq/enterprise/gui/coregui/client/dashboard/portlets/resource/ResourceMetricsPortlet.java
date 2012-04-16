@@ -113,20 +113,16 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-        if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+        if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
-            boolean isAdvanced = false;
-            //detect type of widget[Simple|Advanced]
-            property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-            if (property != null) {
-                isAdvanced = property.getBooleanValue();
-            }
+            boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
+                Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
             if (isAdvanced) {
                 //Advanced time settings
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
+                String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
+                    Constant.METRIC_RANGE_DEFAULT);
+                String[] range = currentSetting.split(",");
+                if (range.length == 2) {
                     start = Long.valueOf(range[0]);
                     end = Long.valueOf(range[1]);
                 }
@@ -134,10 +130,11 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                 //Simple time settings
                 property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
                 if (property != null) {
-                    int lastN = property.getIntegerValue();
-                    property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                    int lastUnits = property.getIntegerValue();
-                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(lastUnits));
+                    int lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                        Constant.METRIC_RANGE_LASTN_DEFAULT));
+                    int units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                        Constant.METRIC_RANGE_UNIT_DEFAULT));
+                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                     start = Long.valueOf(beginEnd.get(0));
                     end = Long.valueOf(beginEnd.get(1));
                 }

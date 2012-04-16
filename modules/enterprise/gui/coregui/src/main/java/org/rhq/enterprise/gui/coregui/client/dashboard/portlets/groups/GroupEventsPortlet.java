@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -201,20 +200,16 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-        if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+        if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
-            boolean isAdvanced = false;
-            //detect type of widget[Simple|Advanced]
-            property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-            if (property != null) {
-                isAdvanced = property.getBooleanValue();
-            }
+            boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
+                Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
             if (isAdvanced) {
                 //Advanced time settings
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
+                String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
+                    Constant.METRIC_RANGE_DEFAULT);
+                String[] range = currentSetting.split(",");
+                if (range.length == 2) {
                     start = Long.valueOf(range[0]);
                     end = Long.valueOf(range[1]);
                 }
@@ -222,10 +217,11 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                 //Simple time settings
                 property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
                 if (property != null) {
-                    int lastN = property.getIntegerValue();
-                    property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                    int lastUnits = property.getIntegerValue();
-                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(lastUnits));
+                    int lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                        Constant.METRIC_RANGE_LASTN_DEFAULT));
+                    int units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                        Constant.METRIC_RANGE_UNIT_DEFAULT));
+                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                     start = Long.valueOf(beginEnd.get(0));
                     end = Long.valueOf(beginEnd.get(1));
                 }
@@ -237,9 +233,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log
-                        .debug("Error retrieving recent event counts for group [" + groupId + "]:"
-                                + caught.getMessage());
+                    Log.debug("Error retrieving recent event counts for group [" + groupId + "]:" + caught.getMessage());
                     setCurrentlyRefreshing(false);
                 }
 
@@ -268,8 +262,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                             row.setWidth(10);//pack.
 
                             //icon
-                            StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(ImageManager
-                                .getEventSeverityIcon(tuple.getLefty()), tuple.getLefty().name());
+                            StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
+                                ImageManager.getEventSeverityIcon(tuple.getLefty()), tuple.getLefty().name());
                             //count
                             StaticTextItem count = AbstractActivityView.newTextItem(String.valueOf(tuple.righty));
                             row.setItems(iconItem, count);
@@ -283,8 +277,9 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         String link = LinkManager.getGroupEventHistoryListLink(EntityContext.forGroup(groupId));
                         AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentEventsContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);
+                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+                            recentEventsContent.extendLocatorId("None"),
+                            AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);
                         column.addMember(row);
                     }
                     //cleanup

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -198,19 +197,18 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         final int groupId = this.groupId;
         GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
 
-        int resultCount = 5;//default to
+        PageControl pc = new PageControl();
+
         //result count
-        PropertySimple property = portletConfig.getSimple(Constant.RESULT_COUNT);
-        if (property != null) {
-            String currentSetting = property.getStringValue();
-            if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                resultCount = 5;
-            } else {
-                resultCount = Integer.valueOf(currentSetting);
-            }
+        String currentSetting = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+        if (currentSetting.trim().isEmpty()) {
+            pc.setPageSize(Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
+        } else {
+            pc.setPageSize(Integer.valueOf(currentSetting));
         }
-        PageControl pageControl = new PageControl(0, resultCount);
-        criteria.setPageControl(pageControl);
+
+        criteria.setPageControl(pc);
+
         criteria.addFilterResourceGroupIds(groupId);
         criteria.addSortStatus(PageOrdering.DESC);
         criteria.fetchDestination(true);

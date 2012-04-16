@@ -273,8 +273,9 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
             } else {//if disabled, reset time defaults
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
-                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
-                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(
+                    Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT),
+                    Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
                 //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
                     (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
@@ -386,33 +387,28 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
             }
 
             //result timeframe if enabled
-            currentSetting = this.configuration.getSimpleValue(Constant.METRIC_RANGE_ENABLE, null);
-            if (Boolean.valueOf(currentSetting)) {//then proceed setting
+            PropertySimple property = configuration.getSimple(Constant.METRIC_RANGE_ENABLE);
+            if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
-                boolean isAdvanced = false;
-                //detect type of widget[Simple|Advanced]
-                PropertySimple property = this.configuration.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-                if (property != null) {
-                    isAdvanced = property.getBooleanValue();
-                }
+                boolean isAdvanced = Boolean.valueOf(configuration.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
+                    Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
                 if (isAdvanced) {
                     //Advanced time settings
-                    property = this.configuration.getSimple(Constant.METRIC_RANGE);
-                    if (property != null) {
-                        currentSetting = property.getStringValue();
-                        String[] range = currentSetting.split(",");
+                    currentSetting = configuration.getSimpleValue(Constant.METRIC_RANGE, Constant.METRIC_RANGE_DEFAULT);
+                    String[] range = currentSetting.split(",");
+                    if (range.length == 2) {
                         criteria.addFilterStartTime(Long.valueOf(range[0]));
                         criteria.addFilterEndTime(Long.valueOf(range[1]));
                     }
                 } else {
                     //Simple time settings
-                    property = this.configuration.getSimple(Constant.METRIC_RANGE_LASTN);
+                    property = configuration.getSimple(Constant.METRIC_RANGE_LASTN);
                     if (property != null) {
-                        int lastN = property.getIntegerValue();
-                        property = this.configuration.getSimple(Constant.METRIC_RANGE_UNIT);
-                        int lastUnits = property.getIntegerValue();
-                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                            .valueOf(lastUnits));
+                        Integer lastN = Integer.valueOf(configuration.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                            Constant.METRIC_RANGE_LASTN_DEFAULT));
+                        Integer units = Integer.valueOf(configuration.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                            Constant.METRIC_RANGE_UNIT_DEFAULT));
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
                         criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
                         criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                     }

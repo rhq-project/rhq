@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -29,7 +28,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
@@ -84,20 +82,15 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
         final int resourceId = this.resourceId;
-        int resultCount = 5;//default to
 
         //result count
-        PropertySimple property = portletConfig.getSimple(Constant.RESULT_COUNT);
-        if (property != null) {
-            String currentSetting = property.getStringValue();
-            if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                resultCount = 5;
-            } else {
-                resultCount = Integer.valueOf(currentSetting);
-            }
+        String resultCount = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+        if (resultCount.trim().isEmpty()) {
+            resultCount = Constant.RESULT_COUNT_DEFAULT;
         }
 
-        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId, resultCount,
+        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId,
+            Integer.valueOf(resultCount),
             new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 @Override
                 public void onFailure(Throwable caught) {

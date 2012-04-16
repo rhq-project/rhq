@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import java.util.ArrayList;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -104,7 +103,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource composite for resource [" + resourceId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -224,7 +223,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
             criteria.addFilterResourceIds(resourceId);
 
             //initialize to only five for quick queries.
-            PageControl pageControl = new PageControl(0, 5);//default to displaying five
+            PageControl pageControl = new PageControl(0, Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
             //customize query with latest configuration selections
 
             //retrieve previous settings from portlet config
@@ -241,62 +240,60 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 //            }
                 //result timeframe if enabled
                 PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-                if (property != null && property.getBooleanValue()) {//then proceed setting
+                if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+
                     //detect type of widget[Simple|Advanced]
-                    property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-                    boolean isAdvanced = (property != null) && property.getBooleanValue();
+                    boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(
+                        Constant.METRIC_RANGE_BEGIN_END_FLAG, Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
                     if (isAdvanced) {
                         //Advanced time settings
-                        String metricRange = portletConfig.getSimpleValue(Constant.METRIC_RANGE, null);
-                        if (metricRange != null) {
-                            String[] range = metricRange.split(",");
+                        String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
+                            Constant.METRIC_RANGE_DEFAULT);
+                        String[] range = currentSetting.split(",");
+                        if (range.length == 2) {
                             criteria.addFilterStartTime(Long.valueOf(range[0]));
                             criteria.addFilterEndTime(Long.valueOf(range[1]));
                         }
                     } else {
                         //Simple time settings
                         property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
-                        if (property != null && property.getIntegerValue() != null) {
-                            int lastN = property.getIntegerValue();
-                            property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                            if (property != null && property.getIntegerValue() != null) {
-                                int lastUnits = property.getIntegerValue();
-                                ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                                    .valueOf(lastUnits));
-                                criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                                criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
-                            }
+                        if (property != null) {
+                            Integer lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
+                                Constant.METRIC_RANGE_LASTN_DEFAULT));
+                            Integer units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
+                                Constant.METRIC_RANGE_UNIT_DEFAULT));
+                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, units);
+                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
                         }
                     }
                 }
 
                 //result count
-                String resultCount = portletConfig.getSimpleValue(Constant.RESULT_COUNT, null);
-                if (resultCount != null) {
-                    if (resultCount.trim().isEmpty() || resultCount.equals("5")) {
-                        pageControl.setPageSize(5);
-                    } else {
-                        pageControl = new PageControl(0, Integer.valueOf(resultCount));
-                    }
+                String currentSetting = portletConfig.getSimpleValue(Constant.RESULT_COUNT,
+                    Constant.RESULT_COUNT_DEFAULT);
+                if (currentSetting.trim().isEmpty()) {
+                    pageControl.setPageSize(Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
+                } else {
+                    pageControl.setPageSize(Integer.valueOf(currentSetting));
                 }
                 criteria.setPageControl(pageControl);
 
                 //detect operation status filter
-                String configUpdateStatus = portletConfig.getSimpleValue(Constant.CONFIG_UPDATE_STATUS, null);
-                if (configUpdateStatus != null) {
-                    String[] parsedValues = configUpdateStatus.trim().split(",");
-                    if (configUpdateStatus.trim().isEmpty()
-                        || parsedValues.length == ConfigurationUpdateStatus.values().length) {
-                        //all operation stati assumed
-                    } else {
-                        ConfigurationUpdateStatus[] updateStatus = new ConfigurationUpdateStatus[parsedValues.length];
-                        int indx = 0;
-                        for (String priority : parsedValues) {
-                            ConfigurationUpdateStatus s = ConfigurationUpdateStatus.valueOf(priority);
-                            updateStatus[indx++] = s;
-                        }
-                        criteria.addFilterStatuses(updateStatus);
+                String configUpdateStatus = portletConfig.getSimpleValue(Constant.CONFIG_UPDATE_STATUS,
+                    Constant.CONFIG_UPDATE_STATUS_DEFAULT);
+                String[] parsedValues = configUpdateStatus.trim().split(",");
+                if (configUpdateStatus.trim().isEmpty()
+                    || parsedValues.length == ConfigurationUpdateStatus.values().length) {
+                    //all operation stati assumed
+                } else {
+                    ConfigurationUpdateStatus[] updateStatus = new ConfigurationUpdateStatus[parsedValues.length];
+                    int indx = 0;
+                    for (String priority : parsedValues) {
+                        ConfigurationUpdateStatus s = ConfigurationUpdateStatus.valueOf(priority);
+                        updateStatus[indx++] = s;
                     }
+                    criteria.addFilterStatuses(updateStatus);
                 }
             }
             return criteria;

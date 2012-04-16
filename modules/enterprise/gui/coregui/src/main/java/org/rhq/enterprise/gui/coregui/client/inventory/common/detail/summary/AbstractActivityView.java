@@ -483,7 +483,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         if ((resultCountSelector != null) && (portletConfig != null)) {
             String selectedValue = (null == resultCountSelector.getValue()) ? "" : resultCountSelector.getValue()
                 .toString();
-            if (selectedValue.trim().isEmpty() || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
+            if (selectedValue.trim().isEmpty()) {
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
             } else {
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
@@ -503,8 +503,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         String selectedValue = (null == operationStatusSelector.getValue()) ? "" : operationStatusSelector.getValue()
             .toString();
         if (selectedValue.trim().isEmpty()
-            || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {//then no operation status specified
-            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
+            || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, Constant.OPERATION_STATUS_DEFAULT));
         } else {
             portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
         }
@@ -522,7 +522,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         String selectedValue = (null == configStatusSelector.getValue()) ? "" : configStatusSelector.getValue()
             .toString();
         if (selectedValue.trim().isEmpty()
-            || (selectedValue.split(",").length == ConfigurationUpdateStatus.values().length)) {//then no operation status specified
+            || (selectedValue.split(",").length == ConfigurationUpdateStatus.values().length)) {
             portletConfig.put(new PropertySimple(Constant.CONFIG_UPDATE_STATUS, Constant.CONFIG_UPDATE_STATUS_DEFAULT));
         } else {//some subset of available configUpdate statuses will be used
             portletConfig.put(new PropertySimple(Constant.CONFIG_UPDATE_STATUS, selectedValue));
@@ -593,7 +593,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         String selectedValue = (String) alertPrioritySelector.getValue();
         if (null == selectedValue || selectedValue.trim().isEmpty()
             || (selectedValue.split(",").length == AlertPriority.values().length)) {//then no alertPriority specified
-            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
+            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT));
         } else {//some subset of available alertPriorities will be used
             portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
         }

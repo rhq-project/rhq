@@ -3037,7 +3037,7 @@
   </service>
 
 
-  <service name="XA Datasources Runtime"
+  <service name="Datasources Runtime"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
@@ -3153,7 +3153,7 @@
       </service>
     </service>
 
-    <service name="Datasources Runtime"
+    <service name="Datasource Runtime"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
              description="A JDBC data-source configuration"

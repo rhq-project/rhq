@@ -419,6 +419,20 @@
       </c:group>
     </resource-configuration>
 
+    <drift-definition
+          name="Template-Base Files"
+          description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+       <basedir>
+          <value-context>pluginConfiguration</value-context>
+          <value-name>homeDir</value-name>
+       </basedir>
+       <includes>
+          <include path="bin" />
+          <include path="appclient" />
+          <include path="welcome-content"/>
+       </includes>
+    </drift-definition>
+
 
     <server name="Profile"
             description="One profile in a domain. Profiles are assigned to server groups."
@@ -791,6 +805,21 @@
         </c:list-property>
       </c:group>
     </resource-configuration>
+
+    <drift-definition
+          name="Template-Base Files"
+          description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+       <basedir>
+          <value-context>pluginConfiguration</value-context>
+          <value-name>homeDir</value-name>
+       </basedir>
+       <includes>
+          <include path="bin" />
+          <include path="appclient" />
+          <include path="welcome-content"/>
+          <include path="standalone/deployment"/>
+       </includes>
+    </drift-definition>
 
 
     <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations

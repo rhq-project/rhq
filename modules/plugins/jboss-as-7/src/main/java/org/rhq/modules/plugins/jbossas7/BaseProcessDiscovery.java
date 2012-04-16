@@ -36,6 +36,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.ProcExe;
 import org.w3c.dom.Document;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -193,10 +194,11 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
 
             startScriptFile = new File(startScript);
             if (!startScriptFile.isAbsolute()) {
-                if (process.getExecutable() == null) {
+                ProcExe parentProcessExe = parentProcess.getExecutable();
+                if (parentProcessExe == null) {
                     startScriptFile = new File("bin", startScriptFile.getName());
                 } else {
-                    String cwd = process.getExecutable().getCwd();
+                    String cwd = parentProcessExe.getCwd();
                     startScriptFile = new File(cwd, startScriptFile.getPath());
                     startScriptFile = new File(FileUtils.getCanonicalPath(startScriptFile.getPath()));
                 }

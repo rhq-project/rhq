@@ -143,13 +143,15 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         String startScriptArgs = pluginConfiguration.getSimpleValue("startScriptArgs", "");
         if (!startScriptArgs.isEmpty()) {
             for (String arg : startScriptArgs.split("\n+")) {
-                arguments.add(arg.trim());
+                arg = arg.trim();
+                replacePropertyPatterns(arg);
+                arguments.add(arg);
             }
         }
 
         setEnvironmentVariables(processExecution);
 
-        String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
+        String homeDir = getHomeDir();
         processExecution.setWorkingDirectory(homeDir);
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
@@ -213,8 +215,11 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
         String envVars = pluginConfiguration.getSimpleValue("startScriptEnv", "");
         if (envVars.isEmpty()) {
-            errors.add("No start script environment variables are set. At a minimum, PATH and JAVA_HOME should be set.");
+            errors.add("No start script environment variables are set. At a minimum, PATH should be set "
+                     + "(on UNIX, it should contain at least /bin and /usr/bin). It is recommended that "
+                     + "JAVA_HOME also be set, otherwise the PATH will be used to find java.");
         }
+
         return errors;
     }
 
@@ -222,10 +227,14 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
         File startScriptFile = new File(startScript);
         if (!startScriptFile.isAbsolute()) {
-            String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
+            String homeDir = getHomeDir();
             startScriptFile = new File(homeDir, startScript);
         }
         return startScriptFile;
+    }
+
+    private String getHomeDir() {
+        return pluginConfiguration.getSimpleValue("homeDir", null);
     }
 
     private boolean waitForServerToStart() {
@@ -330,24 +339,23 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
         File baseDir = new File(baseDirString);
 
-        String configFile;
+        String configFileName;
         BaseProcessDiscovery processDiscovery;
         String configDir = pluginConfig.getSimpleValue("configDir",null);
         switch (mode) {
             case STANDALONE:
+                configFileName = pluginConfig.getSimpleValue("config", null);
                 processDiscovery = new StandaloneASDiscovery();
-                configFile = pluginConfig.getSimpleValue("config", null);
-                configFile = configDir + File.separator + configFile;
                 break;
             case HOST:
+                configFileName = pluginConfig.getSimpleValue("hostConfig", null);
                 processDiscovery = new HostControllerDiscovery();
-                configFile = pluginConfig.getSimpleValue("hostConfig", null);
-                configFile = configDir + File.separator + configFile;
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported mode: " + mode);
         }
-        processDiscovery.readStandaloneOrHostXmlFromFile(new File(configFile));
+        File configFile = new File(configDir, configFileName);
+        processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
         String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
@@ -457,13 +465,8 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
         // 'startScriptEnv' is a longString with "name=value" strings delimited by newlines.
         String envVars = pluginConfig.getSimpleValue("startScriptEnv", null);
-        if (envVars == null) {
-            throw new RuntimeException("'startScriptEnv' connection property was not set.");
-        }
 
-        Map<String, String> processExecutionEnvironmentVariables = new LinkedHashMap<String, String>();
-        Map<String, String> envVarsMap = createEnvironmentVariableMap(envVars);
-        processExecutionEnvironmentVariables.putAll(envVarsMap);
+        Map<String, String> processExecutionEnvironmentVariables = createEnvironmentVariableMap(envVars);
         processExecution.setEnvironmentVariables(processExecutionEnvironmentVariables);
     }
 
@@ -486,16 +489,18 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         return envVars;
     }
 
-    private String replacePropertyPatterns(String envVars) {
+    // Replace any "%xxx%" substrings with the values of plugin config props "xxx".
+    private String replacePropertyPatterns(String value) {
         Pattern pattern = Pattern.compile("(%([^%]*)%)");
-        Matcher matcher = pattern.matcher(envVars);
+        Matcher matcher = pattern.matcher(value);
         Configuration parentPluginConfig = context.getPluginConfiguration();
         StringBuffer buffer = new StringBuffer();
         while (matcher.find()) {
             String propName = matcher.group(2);
             PropertySimple prop = parentPluginConfig.getSimple(propName);
+            String propValue = ((prop != null) && (prop.getStringValue() != null)) ? prop.getStringValue() : "";
             String propPattern = matcher.group(1);
-            String replacement = (prop != null) ? prop.getStringValue() : propPattern;
+            String replacement = (prop != null) ? propValue : propPattern;
             matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
         }
 

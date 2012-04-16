@@ -121,6 +121,11 @@ public class Domain2Descriptor {
         if (mode == D2DMode.METRICS) {
             op.addAdditionalProperty("include-runtime", true);
         }
+        //additionally request both metric and operations metadata
+        if (mode == D2DMode.RECURSIVE) {
+            op.addAdditionalProperty("operations", true);
+            op.addAdditionalProperty("include-runtime", true);
+        }
 
         ComplexResult res = conn.executeComplex(op);
         if (res == null) {
@@ -177,40 +182,42 @@ public class Domain2Descriptor {
 
             for (String key : keys) {
                 //exclude typical 'read-' and 'write-attribute' operations typical to all types.
-                if (key.startsWith("read-attribute")) {
-                    continue;
+                if (!isExcludedOperation(key)) {
+                    //for each custom operation found, retrieve child hierarchy and pass into
+                    Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
+                    createOperation(key, value);
                 }
-                if (key.startsWith("read-children")) {
-                    continue;
-                }
-                if (key.startsWith("read-operation")) {
-                    continue;
-                }
-                if (key.startsWith("read-resource")) {
-                    continue;
-                }
-                if (key.equals("write-attribute")) {
-                    continue;
-                }
-                //exclude a few more shared operations: whoami, undefine-attribute
-                if (key.equals("whoami")) {
-                    continue;
-                }
-                if (key.equals("undefine-attribute")) {
-                    continue;
-                }
-
-                //for each custom operation found, retrieve child hierarchy and pass into
-                Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
-                createOperation(key, value);
             }
         } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
-            StringBuilder tree = new StringBuilder(path + " -> \n");
+            String legend = "Key: - property, -M metric, + operation, [] child node.";
+            StringBuilder tree = new StringBuilder(path + " ->\t\t\t" + legend + " \n");
             System.out.print(tree);
             listPropertiesAndChildren(3, resMap);
         } else {
             createProperties(mode, attributesMap, 0);
         }
+    }
+
+    private boolean isExcludedOperation(String operation) {
+        boolean excluded = false;
+        if (operation.startsWith("read-attribute")) {
+            excluded = true;
+        } else if (operation.startsWith("read-children")) {
+            excluded = true;
+        } else if (operation.startsWith("read-operation")) {
+            excluded = true;
+        } else if (operation.startsWith("read-resource")) {
+            excluded = true;
+        } else if (operation.equals("write-attribute")) {
+            excluded = true;
+        }
+        //exclude a few more shared operations: whoami, undefine-attribute
+        else if (operation.equals("whoami")) {
+            excluded = true;
+        } else if (operation.equals("undefine-attribute")) {
+            excluded = true;
+        }
+        return excluded;
     }
 
     /** Assume parent metadata type passed in with i)description ii)attributes iii)operations iv)children
@@ -223,6 +230,26 @@ public class Domain2Descriptor {
             return;
         }
 
+        //retrieve the operations for the node.
+        Map<String, Object> cOperationMap = (Map<String, Object>) metaDataNode.get("operations");
+        if (cOperationMap != null) {
+            //retrieve keys and sort.
+            String[] ckeys = cOperationMap.keySet().toArray(new String[cOperationMap.size()]);
+            Arrays.sort(ckeys);
+            for (String ckey : ckeys) {//list each of the operations.
+                if (!isExcludedOperation(ckey)) {
+                    StringBuilder sbc = new StringBuilder();
+                    doIndent(indent + 2, sbc);
+                    sbc.append("+ " + ckey + "{*}");
+                    System.out.println(sbc);
+                }
+            }
+            StringBuilder sbc = new StringBuilder();
+            doIndent(indent + 2, sbc);
+            sbc.append("------------------");
+            System.out.println(sbc);
+        }
+
         //retrieve the attributes for the node.
         Map<String, Object> cAttributeMap = (Map<String, Object>) metaDataNode.get("attributes");
         if (cAttributeMap != null) {
@@ -232,9 +259,15 @@ public class Domain2Descriptor {
             for (String ckey : ckeys) {//list each of the attributes.
                 StringBuilder sbc = new StringBuilder();
                 doIndent(indent + 2, sbc);
-                sbc.append("- " + ckey);
-                System.out.println(sbc);
+                Object attribute = cAttributeMap.get(ckey);
+                String accessType = (String) ((Map<String, Object>) attribute).get("access-type");
+                if (accessType.equalsIgnoreCase("metric")) {
+                    sbc.append("-M " + ckey);
+                } else {
+                    sbc.append("- " + ckey);
                 }
+                System.out.println(sbc);
+            }
         }
 
         //now check for children
@@ -252,7 +285,7 @@ public class Domain2Descriptor {
                 Map<String, Object> child = (Map<String, Object>) childrenMap.get(ckey);
                 Map<String, Object> retrievedType = locateMetaDataNodeFromMap(child);
                 listPropertiesAndChildren(indent + 4, retrievedType);
-                }
+            }
         }
     }
 
@@ -756,7 +789,7 @@ public class Domain2Descriptor {
     }
 
     private static void usage() {
-        System.out.println("Domain2Properties [-U<user>:<pass>] [-p|-m|-o] path type");
+        System.out.println("Domain2Properties [-U<user>:<pass>] [-p|-m|-o|-r] path type");
         System.out.println("   path is of kind 'key=value[,key=value]+");
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");

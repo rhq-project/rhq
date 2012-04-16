@@ -3956,9 +3956,8 @@
   </service>
 
   <service name="Security"
-           discovery="SubsystemDiscovery"
-           class="BaseComponent"
-           singleton="true">
+         discovery="SubsystemDiscovery"
+         class="BaseComponent">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
@@ -3969,49 +3968,341 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=security"/>
     </plugin-configuration>
 
-    <resource-configuration>
-      <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" defaultValue="false" description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads. The default value is false."/>
-    </resource-configuration>
+   <operation name="add" description="Adds the security subsystem.">
+     <parameters>
+       <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads."/>
+     </parameters>
+     <results>
+        <c:simple-property name="operationResult" description="Adds the security subsystem." />
+     </results>
+   </operation>
 
-    <service name="SecurityDomain"
-             discovery="SubsystemDiscovery"
-             class="BaseComponent"
-	     createDeletePolicy="both">
+   <operation name="remove" description="Removes the security subsystem.">
+     <results>
+        <c:simple-property name="operationResult" description="Removes the security subsystem." />
+     </results>
+   </operation>
 
-      <runs-inside>
-        <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-        <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      </runs-inside>
+   <resource-configuration>
+     <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" defaultValue="false"
+         description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads. The default value is false."/>
+   </resource-configuration>
 
-      <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="security-domain"/>
-      </plugin-configuration>
+     <service name="Security Domain"
+              discovery="SubsystemDiscovery"
+              class="BaseComponent">
 
-        <!-- Operations Section -->
-	<operation name="flush-cache" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed.">
-	  <results>
-	     <c:simple-property name="operationResult" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed." />
-	  </results>
-	</operation>
+       <plugin-configuration>
+           <c:simple-property name="path" readOnly="true" default="security-domain"/>
+       </plugin-configuration>
 
-	<operation name="list-cached-principals" description="Lists the principals stored in the authentication cache for this security domain.">
-	  <results>
-	     <c:simple-property name="operationResult" description="Lists the principals stored in the authentication cache for this security domain." />
-	  </results>
-	</operation>
+       <operation name="add" description="Add a security domain.">
+         <parameters>
+           <c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache."/>
+         </parameters>
+         <results>
+            <c:simple-property name="operationResult" description="Add a security domain." />
+         </results>
+       </operation>
 
-      <resource-configuration>
-	<c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache.">
-          <c:property-options>
-            <c:option value="default"/>
-            <c:option value="infinispan"/>
-          </c:property-options>
-	</c:simple-property>
-      </resource-configuration>
-    </service><!-- End of Security Domain service -->
+       <operation name="flush-cache" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed.">
+         <results>
+            <c:simple-property name="operationResult" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed." />
+         </results>
+       </operation>
 
-  </service><!-- End of Security service -->
+       <operation name="list-cached-principals" description="Lists the principals stored in the authentication cache for this security domain.">
+         <results>
+            <c:simple-property name="operationResult" description="Lists the principals stored in the authentication cache for this security domain." />
+         </results>
+       </operation>
 
+       <operation name="remove" description="Remove a security domain.">
+         <results>
+            <c:simple-property name="operationResult" description="Remove a security domain." />
+         </results>
+       </operation>
+
+       <resource-configuration>
+         <c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache."/>
+       </resource-configuration>
+
+         <service name="acl"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="acl"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds an ACL configuration">
+             <parameters>
+               <c:simple-property name="acl-modules" required="true" type="string" readOnly="false" description="List of acl modules"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds an ACL configuration" />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes an ACL configuration">
+             <results>
+                <c:simple-property name="operationResult" description="Removes an ACL configuration" />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="acl-modules" required="false" description="List of acl modules" >
+                 <c:simple-property name="acl-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+         <service name="audit"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="audit"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds an audit configuration">
+             <parameters>
+               <c:simple-property name="provider-modules" required="true" type="string" readOnly="false" description="List of provider modules"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds an audit configuration" />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes and audit configuration">
+             <results>
+                <c:simple-property name="operationResult" description="Removes and audit configuration" />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="provider-modules" required="false" description="List of provider modules" >
+                 <c:simple-property name="provider-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+         <service name="authentication"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="authentication"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds a traditional authentication configuration">
+             <parameters>
+               <c:simple-property name="login-modules" required="true" type="string" readOnly="false" description="List of authentication modules"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds a traditional authentication configuration" />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes a traditional authentication configuration">
+             <results>
+                <c:simple-property name="operationResult" description="Removes a traditional authentication configuration" />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="login-modules" required="false" description="List of authentication modules" >
+                 <c:simple-property name="login-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+         <service name="authorization"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="authorization"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds an authorization configuration">
+             <parameters>
+               <c:simple-property name="policy-modules" required="true" type="string" readOnly="false" description="List of authorization modules"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds an authorization configuration" />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes an authorization configuration">
+             <results>
+                <c:simple-property name="operationResult" description="Removes an authorization configuration" />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="policy-modules" required="false" description="List of authorization modules" >
+                 <c:simple-property name="policy-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+         <service name="identity-trust"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="identity-trust"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds an identity trust configuration.">
+             <parameters>
+               <c:simple-property name="trust-modules" required="true" type="string" readOnly="false" description="List of trust modules"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds an identity trust configuration." />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes an identity trust configuration.">
+             <results>
+                <c:simple-property name="operationResult" description="Removes an identity trust configuration." />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="trust-modules" required="false" description="List of trust modules" >
+                 <c:simple-property name="trust-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+         <service name="jsse"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="jsse"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds a JSSE configuration">
+             <parameters>
+               <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
+	    <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
+	    <c:simple-property name="truststore" required="false" type="string" readOnly="false" description="Configures a JSSE trust store"/>
+	    <c:simple-property name="trust-manager" required="false" type="string" readOnly="false" description="JSEE Trust Manager factory"/>
+	    <c:simple-property name="key-manager" required="false" type="string" readOnly="false" description="JSEE Key Manager factory"/>
+	    <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
+	    <c:simple-property name="keystore" required="false" type="string" readOnly="false" description="Configures a JSSE key store"/>
+	    <c:simple-property name="additional-properties" required="false" type="string" readOnly="false" description="Additional properties that may be necessary to configure JSSE."/>
+	    <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
+	    <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
+	    <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds a JSSE configuration" />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes a JSSE configuration.">
+             <results>
+                <c:simple-property name="operationResult" description="Removes a JSSE configuration." />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
+             <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
+             <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
+             <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory" >
+                 <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the KeyManagerFactory."/>
+                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyManagerFactory."/>
+             </c:map-property>
+             <c:map-property name="keystore" required="false" description="Configures a JSSE key store" >
+                 <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless."/>
+                 <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;."/>
+                 <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the keystore."/>
+                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyStore."/>
+                 <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the keystore Provider constructor when instantiating it."/>
+             </c:map-property>
+             <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
+             <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
+             <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
+             <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory" >
+                 <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the TrustManagerFactory."/>
+                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the TrustManagerFactory."/>
+             </c:map-property>
+             <c:map-property name="truststore" required="false" description="Configures a JSSE trust store" >
+                 <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless."/>
+                 <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;."/>
+                 <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the truststore."/>
+                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the truststore."/>
+                 <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the truststore Provider constructor when instantiating it."/>
+             </c:map-property>
+           </resource-configuration>
+
+         </service>
+         <service name="mapping"
+                  discovery="SubsystemDiscovery"
+                  class="BaseComponent">
+
+             <plugin-configuration>
+               <c:simple-property name="path" readOnly="true" default="mapping"/>
+             </plugin-configuration>
+
+           <operation name="add" description="Adds a mapping configuration.">
+             <parameters>
+               <c:simple-property name="mapping-modules" required="true" type="string" readOnly="false" description="List of modules that map principal, role, and credential information"/>
+             </parameters>
+             <results>
+                <c:simple-property name="operationResult" description="Adds a mapping configuration." />
+             </results>
+           </operation>
+
+           <operation name="remove" description="Removes a mapping configuration.">
+             <results>
+                <c:simple-property name="operationResult" description="Removes a mapping configuration." />
+             </results>
+           </operation>
+
+           <resource-configuration>
+             <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information" >
+                 <c:simple-property name="mapping-modules" />
+             </c:list-property>
+           </resource-configuration>
+
+         </service>
+     </service>
+     <service name="vault"
+              discovery="SubsystemDiscovery"
+              class="BaseComponent">
+
+         <plugin-configuration>
+           <c:simple-property name="path" readOnly="true" default="vault"/>
+         </plugin-configuration>
+
+       <operation name="add" description="Adds a security vault configuration">
+         <parameters>
+           <c:simple-property name="code" required="false" type="string" readOnly="false" description="Fully Qualified Name of the Security Vault Implementation."/>
+    <c:simple-property name="options" required="false" type="string" readOnly="false" description="Security Vault options."/>
+         </parameters>
+         <results>
+            <c:simple-property name="operationResult" description="Adds a security vault configuration" />
+         </results>
+       </operation>
+
+       <operation name="remove" description="Removes a security vault configuration">
+         <results>
+            <c:simple-property name="operationResult" description="Removes a security vault configuration" />
+         </results>
+       </operation>
+
+       <resource-configuration>
+         <c:simple-property name="code" required="false" type="string" readOnly="false" description="Fully Qualified Name of the Security Vault Implementation."/>
+       </resource-configuration>
+
+     </service>
+  </service><!-- End of Security subsystem service -->
 
   <service name="Threads"
            discovery="SubsystemDiscovery"

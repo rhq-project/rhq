@@ -1762,7 +1762,14 @@
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections, EntirePool"/>
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
+                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+          <c:property-options>
+            <c:option value="FailingConnectionOnly"/>
+            <c:option value="IdleConnections"/>
+            <c:option value="EntirePool"/>
+          </c:property-options>
+        </c:simple-property>
 
         <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false"
                            description="The number of prepared statements per connection in an LRU cache"/>
@@ -1919,7 +1926,14 @@
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections, EntirePool"/>
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
+                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+          <c:property-options>
+            <c:option value="FailingConnectionOnly"/>
+            <c:option value="IdleConnections"/>
+            <c:option value="EntirePool"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="prepared-statements-cacheSize" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
@@ -3053,7 +3067,14 @@
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
           <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is 'FailingConnectionOnly'."/>
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
+                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+          <c:property-options>
+            <c:option value="FailingConnectionOnly"/>
+            <c:option value="IdleConnections"/>
+            <c:option value="EntirePool"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="true" description="The idle-timeout-minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle-timeout-minutes value of any pool. Changing this value can be done only on disabled datasource, requires a server restart otherwise."/>
         <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" defaultValue="false" description="An element to enable interleaving for XA connections. The default value is false."/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
@@ -3154,7 +3175,14 @@
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
             <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is &apos;FailingConnectionOnly&apos;."/>
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
+                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+          <c:property-options>
+            <c:option value="FailingConnectionOnly"/>
+            <c:option value="IdleConnections"/>
+            <c:option value="EntirePool"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="true" description="The idle-timeout-minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle-timeout-minutes value of any pool. Changing this value can be done only on disabled datasource, requires a server restart otherwise."/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="jta" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable JTA integration. The default value is true."/>
@@ -4351,7 +4379,14 @@
           <c:simple-property name="blocking-timeout-wait-millis:expr" required="false" type="long" readOnly="false" displayName="Blocking Timeout Wait Millis" description="The blocking&#45;timeout&#45;millis element specifies the maximum time, in milliseconds, to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for locking a connection, and will never throw an exception if creating a new connection takes an inordinately long time"/>
           <c:simple-property name="class-name" required="true" type="string" readOnly="false" description="Specifies the fully qualified class name of a managed connection factory or admin object"/>
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specifies if the resource adapter should be enabled. The default value is true."/>
-          <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" defaultValue="FailingConnectionOnly" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections and EntirePool. The default value is FailingConnectionOnly."/>
+          <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
+                             description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+            <c:property-options>
+              <c:option value="FailingConnectionOnly"/>
+              <c:option value="IdleConnections"/>
+              <c:option value="EntirePool"/>
+            </c:property-options>
+          </c:simple-property>
           <c:simple-property name="idle-timeout-minutes:expr" required="false" type="long" readOnly="false" displayName="Idle Timeout Minutes" description="The idle&#45;timeout&#45;minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle&#45;timeout&#45;minutes value of any pool. Changing this value requires a server restart."/>
           <c:simple-property name="interleaving" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to enable interleaving for XA connections. The default value is false."/>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="Specifies the JNDI name for the connection factory or admin object"/>

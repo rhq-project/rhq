@@ -33,8 +33,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,7 +117,6 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -2286,9 +2283,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             return bytesRetrieved;
         } catch (SQLException sql) {
+            log.error("An error occurred while streaming package bits from the database.", sql);
             throw new RuntimeException("Did not download the package bits to the DB for [" + packageDetailsKey + "]",
                 sql);
         } catch (Exception e) {
+            log.error("An error occurred while streaming package bits from the database.", e);
             throw new RuntimeException("Could not stream package bits for [" + packageDetailsKey + "]", e);
         } finally {
             if (bitsStream != null) {

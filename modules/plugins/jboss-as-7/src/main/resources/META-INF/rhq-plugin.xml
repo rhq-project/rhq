@@ -1165,6 +1165,12 @@
         <c:simple-property name="path" readOnly="true" default="type=memory"/>
       </plugin-configuration>
 
+      <operation name="gc" displayName="Trigger GC" description="Runs the garbage collector.">
+        <results>
+           <c:simple-property name="operationResult" description="Runs the garbage collector." />
+        </results>
+      </operation>
+
       <metric property="object-pending-finalization-count" description="The approximate number of objects for which finalization is pending."/>
       <metric property="heap-memory-usage:init" displayName="Initial heap usage" units="bytes" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
       <metric property="heap-memory-usage:used" displayName="Used heap" units="bytes" displayType="summary" description="The amount of used memory in bytes."/>

@@ -3089,23 +3089,6 @@
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=web" readOnly="true"/>
     </plugin-configuration>
-
-    <service name="Servlet"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="Runtime information about the servlets in the deployment.">
-
-      <plugin-configuration>
-        <c:simple-property name="path" default="servlet" readOnly="true"/>
-      </plugin-configuration>
-
-      <metric property="load-time" description="Load time"/>
-      <metric property="maxTime" description="Maximum processing time of a request"/>
-      <metric property="min-time" description="Minimum processing time of a request"/>
-      <metric property="processingTime" description="Total execution time of the servlet's service method"/>
-      <metric property="requestCount" description="Number of requests processed by this servlet"/>
-    </service>
-
   </service>
 
 

@@ -152,6 +152,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private BundleDistributionFileUploadForm createUploadForm() {
         uploadDistroForm = new BundleDistributionFileUploadForm("BundleCreateUploadDistFile", false);
         uploadDistroForm.setPadding(20);
+        uploadDistroForm.setWidth(400);
         uploadDistroForm.addFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 processUpload();

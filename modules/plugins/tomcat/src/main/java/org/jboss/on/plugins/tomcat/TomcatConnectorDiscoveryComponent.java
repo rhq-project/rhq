@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -113,6 +114,23 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             String address = (null != configInfo) ? configInfo.getAddress() : null;
             if ((null != address) && !"".equals(address.trim())) {
                 pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_ADDRESS, address));
+            }
+
+            // Let's try to auto-discover if this Connector is using a shared executor for its thread pool.
+            // If it is, let's set the plugin config property automatically so we can collect the proper metrics.
+            // Note that if the "executorName" attribute on the Connector MBean is "Internal", that means it is NOT shared.
+            String connectorON = pluginConfiguration.getSimpleValue(TomcatConnectorComponent.OBJECT_NAME_PROP, null);
+            if (connectorON != null) {
+                EmsBean connectorBean = connection.getBean(connectorON);
+                EmsAttribute executorNameAttrib = connectorBean.getAttribute("executorName");
+                Object executorNameValue = executorNameAttrib.getValue();
+                if (executorNameValue != null) {
+                    String executorName = executorNameValue.toString();
+                    if (!executorName.isEmpty() && !executorName.equalsIgnoreCase("Internal")) {
+                        pluginConfiguration.put(new PropertySimple(
+                            TomcatConnectorComponent.PLUGIN_CONFIG_SHARED_EXECUTOR, executorName));
+                    }
+                }
             }
 
             if (log.isDebugEnabled()) {

@@ -187,18 +187,20 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
         Map<String, Object> results = new HashMap<String, Object>();
         Map<String, Object> statistics = (Map<String, Object>) res.getResult().get("statistics");
-        results.putAll((Map<? extends String, ? extends Object>) statistics.get("pool"));
-        results.putAll((Map<? extends String, ? extends Object>) statistics.get("jdbc"));
+        if (statistics!=null) {
+            results.putAll((Map<? extends String, ? extends Object>) statistics.get("pool"));
+            results.putAll((Map<? extends String, ? extends Object>) statistics.get("jdbc"));
 
-        for (MeasurementScheduleRequest metric : metrics) {
-            String name = metric.getName();
+            for (MeasurementScheduleRequest metric : metrics) {
+                String name = metric.getName();
 
-            Object o = results.get(name);
-            if (o != null) {
-                String tmp = (String) o;
-                Double val = Double.valueOf(tmp);
-                MeasurementDataNumeric data = new MeasurementDataNumeric(metric, val);
-                report.addData(data);
+                Object o = results.get(name);
+                if (o != null) {
+                    String tmp = (String) o;
+                    Double val = Double.valueOf(tmp);
+                    MeasurementDataNumeric data = new MeasurementDataNumeric(metric, val);
+                    report.addData(data);
+                }
             }
         }
     }

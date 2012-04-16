@@ -205,7 +205,7 @@ public class Domain2Descriptor {
             }
 
         } else {
-            createProperties(mode, attributesMap, 0);
+            createProperties(mode, attributesMap, 0, false);
         }
     }
 
@@ -384,14 +384,14 @@ public class Domain2Descriptor {
                 doIndent(indent, resCfg);
                 resCfg.append("<resource-configuration>\n");
                 System.out.print(resCfg);
-                createProperties(D2DMode.PROPERTIES, cAttributeMap, indent + 2);
+                createProperties(D2DMode.PROPERTIES, cAttributeMap, indent + 2, true);
                 resCfg = new StringBuilder();
                 doIndent(indent, resCfg);
                 resCfg.append("</resource-configuration>\n");
                 System.out.println(resCfg);
 
                 //metrics properties
-                createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
+                createProperties(D2DMode.METRICS, cAttributeMap, indent + 2, true);
             }
         }
 
@@ -443,7 +443,7 @@ public class Domain2Descriptor {
         return retrieved;
     }
 
-    private void createProperties(D2DMode mode, Map<String, Object> attributesMap, int indent) {
+    private void createProperties(D2DMode mode, Map<String, Object> attributesMap, int indent, boolean simpleProperty) {
         if (attributesMap == null) {
             return;
         }
@@ -467,8 +467,13 @@ public class Domain2Descriptor {
 
                 StringBuilder sb1 = new StringBuilder();
                 doIndent(indent, sb1);
-                sb1.append("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
-                    + props.get("description") + "\" ");
+                if (!simpleProperty) {
+                    sb1.append("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
+                        + props.get("description") + "\" ");
+                } else {
+                    sb1.append("<c:simple-property name=\"" + key + "\"" + requiredStatus + " description=\""
+                        + props.get("description") + "\" ");
+                }
 
                 sb1.append(useAvailableOptionsList(indent, props, null));
                 System.out.println(sb1);
@@ -477,7 +482,7 @@ public class Domain2Descriptor {
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
 
                 if (attributesMap1 != null) {
-                    createProperties(mode, attributesMap1, indent + 4);
+                    createProperties(mode, attributesMap1, indent + 4, false);
                 } else if (valueTypes != null) {
                     for (Map.Entry<String, Object> myEntry : valueTypes.entrySet()) {
                         if (myEntry instanceof Map) {// only display map instances otherwise STRING is child.
@@ -506,7 +511,9 @@ public class Domain2Descriptor {
 
                 sb1 = new StringBuilder();
                 doIndent(indent, sb1);
-                sb1.append("</c:map-property>");
+                if (!simpleProperty) {
+                    sb1.append("</c:map-property>");
+                }
                 System.out.println(sb1);
 
                 continue;
@@ -539,7 +546,7 @@ public class Domain2Descriptor {
                     doIndent(indent, sb);
                     sb.append("<c:map-property name=\"").append(key).append("\">\n");
                     System.out.println(sb.toString());
-                    createProperties(mode, (Map<String, Object>) props.get("attributes"), indent + 4);
+                    createProperties(mode, (Map<String, Object>) props.get("attributes"), indent + 4, false);
                     sb = new StringBuilder();
                     doIndent(indent, sb);
                     sb.append("</c:map-property>\n");

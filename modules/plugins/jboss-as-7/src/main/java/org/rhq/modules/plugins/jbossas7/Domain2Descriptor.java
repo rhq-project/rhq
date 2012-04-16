@@ -231,7 +231,7 @@ public class Domain2Descriptor {
     }
 
     private StringBuilder generateService(String terminal, int indent, boolean isRoot) {
-        int childIndent = indent + 4;
+        int childIndent = indent + 3;
         //Determine service name
         String node = terminal;
         String[] values = null;
@@ -239,6 +239,20 @@ public class Domain2Descriptor {
             values = terminal.split("=");
             node = values[1];
             node = node.substring(0, 1).toUpperCase() + node.substring(1);
+        } else {//generate more friendly service names
+            //convert dashes to spaces
+            node = node.replaceAll("[-]", " ");
+            //split on space and upcase first letter
+            String[] elements = node.split(" ");
+            if (elements.length > 1) {
+                String newNode = "";
+                for (String element : elements) {
+                    newNode += element.substring(0, 1).toUpperCase() + element.substring(1) + " ";
+                }
+                node = newNode.trim();
+            } else {
+                node = node.substring(0, 1).toUpperCase() + node.substring(1);
+            }
         }
 
         //construct node
@@ -376,7 +390,7 @@ public class Domain2Descriptor {
             System.out.println(resCfg);
 
             //metrics properties
-            //            createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
+            createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
         }
 
         //now check for children
@@ -392,7 +406,6 @@ public class Domain2Descriptor {
                 if (!descriptorSegment) {
                     System.out.println(sb2);
                 } else {
-                    //                    String serviceName = ckey.substring(0,1).toUpperCase()+ckey.substring(1);
                     System.out.println(generateService(ckey, indent + 2, false));
                 }
                 //recurse
@@ -401,8 +414,10 @@ public class Domain2Descriptor {
                 listPropertiesAndChildren(indent + 4, retrievedType);
                 StringBuilder serviceClose = new StringBuilder();
                 doIndent(indent + 2, serviceClose);
-                serviceClose.append("</service>");
-                System.out.println(serviceClose);
+                if (descriptorSegment) {
+                    serviceClose.append("</service>");
+                    System.out.println(serviceClose);
+                }
             }
         }
     }
@@ -447,22 +462,29 @@ public class Domain2Descriptor {
                 } else {
                     requiredStatus.append(" required=\"false\"");
                 }
-                //                System.out.println("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
-                //                    + props.get("description") + "\" >");
+
                 StringBuilder sb1 = new StringBuilder();
                 doIndent(indent, sb1);
                 sb1.append("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
                     + props.get("description") + "\" >");
-                System.out.println(sb1);
 
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get("attributes");
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
+                //determine if there are any map entries worth showing
+                boolean emptyMap = false;
+                if ((attributesMap1 == null) && noMapEntriesLocated(valueTypes)) {
+                    emptyMap = true;
+                } else {
+                    System.out.println(sb1);
+                }
 
                 if (attributesMap1 != null) {
                     createProperties(mode, attributesMap1, indent + 4);
                 } else if (valueTypes != null) {
                     for (Map.Entry<String, Object> myEntry : valueTypes.entrySet()) {
-                        createSimpleProp(indent + 4, myEntry);
+                        if (myEntry instanceof Map) {// only display map instances otherwise STRING is child.
+                            createSimpleProp(indent + 4, myEntry);
+                        }
                     }
                 } else {
                     for (Map.Entry<String, Object> emapEntry : props.entrySet()) {
@@ -483,11 +505,13 @@ public class Domain2Descriptor {
 
                     }
                 }
-                //                System.out.println("</c:map-property>");
-                sb1 = new StringBuilder();
-                doIndent(indent, sb1);
-                sb1.append("</c:map-property>");
-                System.out.println(sb1);
+
+                if (!emptyMap) {
+                    sb1 = new StringBuilder();
+                    doIndent(indent, sb1);
+                    sb1.append("</c:map-property>");
+                    System.out.println(sb1);
+                }
 
                 continue;
 
@@ -536,6 +560,7 @@ public class Domain2Descriptor {
             if (mode == D2DMode.METRICS) {
                 if (ptype == Type.OBJECT) {
                     HashMap<String, Object> myMap = (HashMap<String, Object>) props.get("value-type");
+                    if (accessType.equals("metric")) {
                     for (Map.Entry<String, Object> myEntry : myMap.entrySet()) {
                         if (myEntry.getValue() instanceof String && myEntry.getValue().equals("STRING")) {
                             createMetricEntry(indent, props, key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
@@ -543,6 +568,7 @@ public class Domain2Descriptor {
                             createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
                                 key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
                         }
+                    }
                     }
                 } else {
                     if (!accessType.equals("metric")) {
@@ -561,6 +587,16 @@ public class Domain2Descriptor {
                 System.out.println(sb.toString());
             }
         }
+    }
+
+    private boolean noMapEntriesLocated(Map<String, Object> valueTypes) {
+        int located = 0;
+        for (Map.Entry<String, Object> myEntry : valueTypes.entrySet()) {
+            if (myEntry instanceof Map) {// only display map instances otherwise STRING is child.
+                located++;
+            }
+        }
+        return located > 0;
     }
 
     private void createMetricEntry(int indent, Map<String, Object> props, String entryName, Type ptype) {

@@ -132,9 +132,7 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
 
         String cmdLineArgsString = params.getSimpleValue(COMMAND_LINE_ARGUMENTS_PARAM_PROP, null);
         List<String> cmdLineArgs = createCommandLineArgumentList(cmdLineArgsString);
-        if (null != cmdLineArgs) {
-            processExecutionArguments.addAll(cmdLineArgs);
-        }
+        processExecutionArguments.addAll(cmdLineArgs);
     }
 
     private void setEnvironmentVariables(ProcessExecution processExecution) {
@@ -192,16 +190,17 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
         return envVars;
     }
 
-    private String replacePropertyPatterns(String envVars) {
+    private String replacePropertyPatterns(String value) {
         Pattern pattern = Pattern.compile("(%([^%]*)%)");
-        Matcher matcher = pattern.matcher(envVars);
+        Matcher matcher = pattern.matcher(value);
         Configuration parentPluginConfig = this.resourceContext.getParentResourceComponent().getPluginConfiguration();
         StringBuffer buffer = new StringBuffer();
         while (matcher.find()) {
             String propName = matcher.group(2);
             PropertySimple prop = parentPluginConfig.getSimple(propName);
+            String propValue = ((prop != null) && (prop.getStringValue() != null)) ? prop.getStringValue() : "";
             String propPattern = matcher.group(1);
-            String replacement = (prop != null) ? prop.getStringValue() : propPattern;
+            String replacement = (prop != null) ? propValue : propPattern;
             matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
         }
 

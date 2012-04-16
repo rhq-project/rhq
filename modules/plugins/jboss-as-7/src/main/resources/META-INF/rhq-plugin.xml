@@ -1820,6 +1820,14 @@
         <c:simple-property name="spy" type="boolean" readOnly="true" required="false"
                            description="whatever spy or not the jdbc connection"/>
         <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
+        <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
+          <c:list-property name="*1" displayName="Connection Property" readOnly="false" required="false">
+            <c:map-property name="*:pname" displayName="Name" readOnly="false">
+              <c:simple-property name="pname" displayName="Property-Name" readOnly="true"/>
+              <c:simple-property name="value" displayName="Value" />
+            </c:map-property>
+          </c:list-property>
+        </c:group>
       </resource-configuration>
     </service>
 
@@ -3220,6 +3228,15 @@
             <c:simple-property name="valid-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" defaultValue="false" description="The validate-on-match element specifies if connection validation should be done when a connection factory attempts to match a managed connection. This is typically exclusive to the use of background validation. The default value is false."/>
+        <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
+          <c:list-property name="*1" displayName="Connection Property" readOnly="true" required="false">
+            <c:map-property name="*:pname" displayName="Name" readOnly="true">
+              <c:simple-property name="pname" displayName="Property-Name" readOnly="true"/>
+              <c:simple-property name="value" displayName="Value" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+        </c:group>
+
       </resource-configuration>
 
       <service name="Connection Properties Runtime"

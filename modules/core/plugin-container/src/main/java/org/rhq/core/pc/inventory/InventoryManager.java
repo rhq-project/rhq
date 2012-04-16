@@ -217,7 +217,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
 
-            //make sure the avail collectors are available before we instantiate any 
+            //make sure the avail collectors are available before we instantiate any
             //resource context - either from disk or from anywhere else.
             availabilityCollectors = new AvailabilityCollectorThreadPool();
             availabilityCollectors.initialize();
@@ -290,12 +290,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * the discovered resources' details as returned by the discovery component. This may return
      * an empty set if nothing is discovered. This may return <code>null</code> if for some reason
      * we could not invoke the discovery component.
-     * 
+     *
      * @param parentResourceContainer the container of the resource under which we are going to execute the discovery
      * @param component the discovery component that will actually go out and discover resources
      * @param context the context for use by the discovery component
      * @return the details of all discovered resources, may be empty or <code>null</code>
-     * 
+     *
      * @throws DiscoverySuspendedException if the discovery is suspended due to a resource upgrade failure
      * @throws Exception if the discovery component threw an exception
      */
@@ -373,12 +373,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Invokes the given discovery component's ClassLoaderFacet in order to obtain
      * additional jars for the resource's classloader. This will return
      * the discovered resources' details as returned.
-     * 
+     *
      * @param resource the resource whose component is to be invoked
      * @param component the discovery component that will actually go out and discover resources
      * @param parentContainer the activated parent container
      * @return the additional jars for the resource's classloader
-     * 
+     *
      * @throws Throwable if the discovery component threw an exception
      */
     public List<URL> invokeDiscoveryComponentClassLoaderFacet(Resource resource, ResourceDiscoveryComponent component,
@@ -1076,7 +1076,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
         Set<String> allServerSideUuids = new HashSet<String>();
 
-        // rhq-980 Adding agent-side logging to report any unexpected synch failure. 
+        // rhq-980 Adding agent-side logging to report any unexpected synch failure.
         try {
             getAllUuids(syncInfo, allServerSideUuids);
 
@@ -1435,8 +1435,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * is initialized will miss the activation notifications. This method is here so those managers
      * can be notified during their initialization phase by simply passing in their listener
      * which will be called for every resource currently activated in inventory.
-     *  
-     * @param listener the listener that will be notified for every resource currently active 
+     *
+     * @param listener the listener that will be notified for every resource currently active
      */
     public void notifyForAllActivatedResources(InventoryEventListener listener) {
         List<Resource> activatedResources = new ArrayList<Resource>();
@@ -1503,7 +1503,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * After this method has processed the resource and container, it is enough
      * to call ResourceComponent.start(). All the datastructures needed for that
      * call are prepared in the container by this method.
-     * 
+     *
      * @param resource the resource that we are activating
      * @param container the container to hold the datastructures
      * @throws InvalidPluginConfigurationException
@@ -1679,8 +1679,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 resource.setConnected(true); // This tells the server-side that the resource has connected successfully.
 
             } catch (Throwable t) {
-                // Don't leave in a STARTING state. Don't actually call component.stop(), 
-                // because we're not actually STARTED 
+                // Don't leave in a STARTING state. Don't actually call component.stop(),
+                // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
@@ -1846,7 +1846,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     // commenting out dead code, leaving for reference -jshaughn
-    //    
+    //
     //    private void activateFromDisk(Resource resource) throws PluginContainerException {
     //        if (resource.getId() == 0) {
     //            return; // This is for the case of a resource that hadn't been synced to the server (there are probably better places to handle this)
@@ -2150,7 +2150,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private boolean supportsDriftManagement(Resource r) {
         PluginMetadataManager metaDataMgr = PluginContainer.getInstance().getPluginManager().getMetadataManager();
         ResourceType type = metaDataMgr.getType(r.getResourceType());
-        return type.getDriftDefinitionTemplates() != null && !type.getDriftDefinitionTemplates().isEmpty();
+        return type != null && type.getDriftDefinitionTemplates() != null &&
+                !type.getDriftDefinitionTemplates().isEmpty();
     }
 
     private void syncSchedules(Set<Resource> resources) {
@@ -2219,7 +2220,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             PluginContainer.getInstance().getMeasurementManager().scheduleCollection(scheduleRequests);
         } else {
             // MeasurementManager hasn't yet been started (or is unavailable due to locking)
-            // rhq-980 Adding defensive logging to report any issues installing schedules.            
+            // rhq-980 Adding defensive logging to report any issues installing schedules.
             log.info("MeasurementManager not available, persisting but not yet scheduling schedule requests.");
             for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
                 if (log.isDebugEnabled()) {
@@ -2288,7 +2289,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    /** 
+    /**
      * @return true if the inventory manager failed to merge the upgrade requests with the server during startup.
      */
     public boolean hasUpgradeMergeFailed() {
@@ -2298,7 +2299,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Always use this before accessing the event listeners because this ensures
      * thread safety.
-     * 
+     *
      * @return all inventory event listeners
      */
     private Set<InventoryEventListener> getInventoryEventListeners() {

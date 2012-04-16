@@ -660,8 +660,7 @@ public class Domain2Descriptor {
         Map<String, Object> reqMap = (Map<String, Object>) operationMap.get("request-properties");
         if (reqMap != null && !reqMap.isEmpty()) {//if present build parameters segment for plugin descriptor.
             builder.append("  <parameters>\n");
-            doIndent(indent, builder);
-            generatePropertiesForMap(builder, reqMap);
+            generatePropertiesForMap(builder, reqMap, indent + 4);
             doIndent(indent, builder);
             builder.append("  </parameters>\n");
             doIndent(indent, builder);
@@ -671,7 +670,7 @@ public class Domain2Descriptor {
         builder.append("  <results>\n");
         doIndent(indent, builder);
         if (replyMap != null && !replyMap.isEmpty()) {
-            generatePropertiesForMap(builder, replyMap);
+            generatePropertiesForMap(builder, replyMap, indent + 4);
         } else {
             builder.append("     <c:simple-property name=\"operationResult\" description=\"" + description + "\" />\n");
             doIndent(indent, builder);
@@ -744,6 +743,10 @@ public class Domain2Descriptor {
     }
 
     private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
+        generatePropertiesForMap(builder, map, 0);
+    }
+
+    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map, int indent) {
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
 
@@ -753,10 +756,10 @@ public class Domain2Descriptor {
                 String entryKey = entry.getKey();
 
                 Type type = getTypeFromProps(entryValue);
-                builder.append(generateProperty(4, entryValue, type, entryKey, null));
+                builder.append(generateProperty(indent, entryValue, type, entryKey, null));
                 builder.append('\n');
             } else {//do we list this as a comment because it's an as7 invalid type?
-                doIndent(4, builder);
+                doIndent(indent, builder);
                 builder.append("<!--").append(entry.getKey()).append("..").append(entry.getValue().toString())
                     .append("-->\n");
             }

@@ -322,23 +322,6 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
     }
 
-    /**
-     * Determine the parameters that need to be passed as
-     * arguments to the start script when starting this instance.
-     *
-     * @param commandLine command line arguments of the process
-     * @return start script arguments separated by spaces if found or empty string otherwise
-     */
-    String getStartScriptArgumentsFromCommandLine(String[] commandLine) {
-        String args = "";
-        for (String line : commandLine) {
-            if (line.startsWith(DJBOSS_SERVER_BASE_DIR) || line.startsWith(DJBOSS_DOMAIN_BASE_DIR)
-                || line.startsWith(DJBOSS_SOCKET_BIND_OFFSET))
-                args += " " + line;
-        }
-        return args;
-    }
-
     protected HostPort checkForSocketBindingOffset(HostPort managementPort, AS7CommandLine commandLine) {
         String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
         if (value != null) {

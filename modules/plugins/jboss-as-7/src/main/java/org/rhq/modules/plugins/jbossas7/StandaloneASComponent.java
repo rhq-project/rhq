@@ -56,13 +56,12 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
             return startServer(AS7Mode.STANDALONE);
         } else if (name.equals("restart")) {
             return restartServer(parameters, AS7Mode.STANDALONE);
-
         } else if (name.equals("installRhqUser")) {
             return installManagementUser(parameters, pluginConfiguration, AS7Mode.STANDALONE);
         }
 
         // reload, shutdown go to the remote server
-        Operation op = new Operation(name,new Address());
+        Operation op = new Operation(name, new Address());
         Result res = getASConnection().execute(op);
 
         OperationResult operationResult = postProcessResult(name, res);

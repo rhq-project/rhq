@@ -24,8 +24,11 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -49,6 +52,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfo;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -63,6 +67,12 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
 
+    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new HashSet<String>();
+    static {
+        START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList(
+                "PATH", "LD_LIBRARY_PATH", "RUN_CONF", "JBOSS_HOME", "MAX_FD", "PROFILER", "JAVA_HOME", "JAVA",
+                "PRESERVE_JAVA_OPTS", "JAVA_OPTS", "JBOSS_BASE_DIR", "JBOSS_LOG_DIR", "JBOSS_CONFIG_DIR"));
+    }
     private final Log log = LogFactory.getLog(this.getClass());
 
     // Auto-discover running AS7 instances.
@@ -74,8 +84,9 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
             try {
                 DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, processScanResult);
                 discoveredResources.add(details);
-                log.info("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
-                        + details.getResourceKey() + "].");
+                log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
+                        + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
+                        + details.getResourceVersion() + "]).");
             } catch (RuntimeException e) {
                 // Only barf a stack trace for runtime exceptions.
                 log.error("Discovery of a " + discoveryContext.getResourceType().getName()
@@ -90,11 +101,11 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     }
 
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult psr) throws Exception {
+                                                             ProcessScanResult processScanResult) throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        // IF SE, then look at domain/configuration/host.xml <management interface="default" port="9990
+        // If SE, then look at domain/configuration/host.xml <management interface="default" port="9990
         // for management port
-        ProcessInfo process = psr.getProcessInfo();
+        ProcessInfo process = processScanResult.getProcessInfo();
         String[] processArgs = process.getCommandLine();
         AS7CommandLine commandLine = new AS7CommandLine(processArgs);
         File homeDir = getHomeDir(process, commandLine);
@@ -116,8 +127,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("homeDir", homeDir));
         pluginConfig.put(new PropertySimple("baseDir", baseDir));
         pluginConfig.put(new PropertySimple("configDir", configDir));
-        pluginConfig.put(new PropertySimple("startScript", getMode().getStartScript()));
-        pluginConfig.put(new PropertySimple("startScriptArgs",getStartScriptArgumentsFromCommandLine(processArgs)));
         pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(commandLine, configDir))));
         fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, commandLine, baseDir));
@@ -128,6 +137,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
         pluginConfig.put(new PropertySimple("productType", productType.name()));
         pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
+
+        setStartScriptPluginConfigProps(discoveryContext.getSystemInformation(), process, commandLine, pluginConfig);
 
         String version;
         String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir);
@@ -160,6 +171,80 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
+    }
+
+    private void setStartScriptPluginConfigProps(SystemInfo systemInfo, ProcessInfo process,
+                                                 AS7CommandLine commandLine, Configuration pluginConfig) {
+        ProcessInfo parentProcess = getParentProcess(systemInfo, process);
+
+        // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
+        //      Windows: "standalone.bat --server-config=standalone-full.xml"
+        int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;
+        String[] startScriptCommandLine = parentProcess.getCommandLine();
+        String startScript = (startScriptCommandLine.length > startScriptIndex) ? startScriptCommandLine[startScriptIndex] : null;
+
+        Map<String, String> startScriptEnvMap;
+        List<String> startScriptArgsList = new ArrayList<String>();
+
+        File startScriptFile;
+        // TODO: What if CygWin was used to start AS7 on Windows via a shell script?
+        if (startScript != null && (startScript.endsWith(".sh") || startScript.endsWith(".bat"))) {
+            // The parent process is a script - assume it's standalone.sh, domain.sh, or some custom start script.
+
+            startScriptFile = new File(startScript);
+            if (!startScriptFile.isAbsolute()) {
+                if (process.getExecutable() == null) {
+                    startScriptFile = new File("bin", startScriptFile.getName());
+                } else {
+                    String cwd = process.getExecutable().getCwd();
+                    startScriptFile = new File(cwd, startScriptFile.getPath());
+                    startScriptFile = new File(FileUtils.getCanonicalPath(startScriptFile.getPath()));
+                }
+            }
+            startScriptEnvMap = parentProcess.getEnvironmentVariables();
+
+            // Skip past the script to get the arguments that were passed to the script.
+            for (int i = (startScriptIndex + 1); i < startScriptCommandLine.length; i++) {
+                startScriptArgsList.add(startScriptCommandLine[i]);
+            }
+        } else {
+            // The parent process is not a script - the user may have started AS7 via some other mechanism.
+
+            AS7Mode mode = getMode();
+            startScriptFile = new File(mode.getStartScript());
+            startScriptEnvMap = process.getEnvironmentVariables();
+            startScriptArgsList = commandLine.getClassArguments();
+        }
+
+        if (!startScriptFile.exists()) {
+            log.warn("Start script [" + startScriptFile + "] does not exist.");
+        }
+        pluginConfig.put(new PropertySimple("startScript", startScriptFile));
+
+        StringBuilder startScriptArgs = new StringBuilder();
+        for (String startScriptArg : startScriptArgsList) {
+            startScriptArgs.append(startScriptArg).append('\n');
+        }
+        pluginConfig.put(new PropertySimple("startScriptArgs", startScriptArgs));
+
+        StringBuilder startScriptEnv = new StringBuilder();
+        for (String varName : START_SCRIPT_ENV_VAR_NAMES) {
+            if (startScriptEnvMap.containsKey(varName)) {
+                String varValue = startScriptEnvMap.get(varName);
+                startScriptEnv.append(varName).append('=').append(varValue).append('\n');
+            }
+        }
+        pluginConfig.put(new PropertySimple("startScriptEnv", startScriptEnv));
+    }
+
+    private static ProcessInfo getParentProcess(SystemInfo systemInfo, ProcessInfo process) {
+        long parentPid = process.getParentPid();
+        List<ProcessInfo> processes = systemInfo.getProcesses("process|pid|match="
+                + parentPid);
+        if (processes.size() != 1) {
+            throw new IllegalStateException("Failed to obtain parent process of " + process + ".");
+        }
+        return processes.get(0);
     }
 
     protected File getBaseDir(ProcessInfo process, JavaCommandLine javaCommandLine, File homeDir) {

@@ -2,6 +2,14 @@
 
 <!DOCTYPE plugin [
 
+    <!ENTITY startScriptPluginConfigGroup '
+    <c:group name="startScript">
+        <c:simple-property name="startScript" type="file" default="" description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is relative to the server home directory." required="false" />
+        <c:simple-property name="startScriptEnv" type="longString" default="" description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
+        <c:simple-property name="startScriptArgs" type="longString" default="" description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
+    </c:group>
+'>
+
     <!ENTITY logSources '
     <c:group name="event" displayName="Events">
         <c:list-property name="logEventSources">
@@ -314,15 +322,10 @@
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
-      <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
-      <c:simple-property name="startScriptArgs" type="string" default="" description="Any required arguments to the start script" displayName="Start script arguments" required="false" />
-      <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
-                         description="The absolute path to a JRE or JDK installation directory containing
-                                      the JVM that should be used to start and shutdown the HostController instance;
-                                      defaults to the home directory of the RHQ Agent JRE."/>
       <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
+      &startScriptPluginConfigGroup;
       &logSources;
     </plugin-configuration>
 
@@ -703,16 +706,10 @@
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
-      <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
-      <c:simple-property name="startScriptArgs" type="string" default="" description="Any required arguments to the start script" displayName="Start script arguments" required="false" />
-      <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
-                         description="The absolute path to a JRE or JDK installation directory containing
-                                      the JVM that should be used to start and shutdown the JBossAS instance;
-                                      defaults to the home directory of the RHQ Agent JRE."/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
+      &startScriptPluginConfigGroup;
       &logSources;
-
     </plugin-configuration>
 
     <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>

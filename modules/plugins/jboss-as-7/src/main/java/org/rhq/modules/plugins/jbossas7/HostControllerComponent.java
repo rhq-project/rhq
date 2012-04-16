@@ -72,7 +72,6 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             operationResult = startServer(AS7Mode.DOMAIN);
         } else if (name.equals("restart")) {
             operationResult = restartServer(parameters, AS7Mode.DOMAIN);
-
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
             String domainHost = pluginConfiguration.getSimpleValue("domainHost", "");

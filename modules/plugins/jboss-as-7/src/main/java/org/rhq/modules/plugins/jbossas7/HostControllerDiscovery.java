@@ -95,10 +95,10 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult psr) throws Exception {
-        DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
+                                                             ProcessScanResult processScanResult) throws Exception {
+        DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, processScanResult);
         Configuration pluginConfig = details.getPluginConfiguration();
-        String domainConfig = getServerConfigFromCommandLine(psr.getProcessInfo().getCommandLine(), getMode());
+        String domainConfig = getServerConfigFromCommandLine(processScanResult.getProcessInfo().getCommandLine(), getMode());
         pluginConfig.put(new PropertySimple("domainConfig", domainConfig));
         pluginConfig.put(new PropertySimple("hostConfig", pluginConfig.getSimpleValue("hostXmlFileName", null)));
         return details;

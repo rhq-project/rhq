@@ -100,8 +100,8 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult psr) throws Exception {
-        DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
+                                                             ProcessScanResult processScanResult) throws Exception {
+        DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, processScanResult);
         Configuration pluginConfig = details.getPluginConfiguration();
         pluginConfig.put(new PropertySimple("config", pluginConfig.getSimpleValue("hostXmlFileName", null)));
 

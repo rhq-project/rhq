@@ -23,9 +23,13 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,8 +66,8 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
     final Log log = LogFactory.getLog(BaseServerComponent.class);
 
     /**
-     * Restart the server by first executing a 'shutdown' operation via its API. Then call
-     * the #startServer method to start it again.
+     * Restart the server by first executing a 'shutdown' operation via its API, and then calling
+     * the {@link #startServer(AS7Mode)} method to start it again.
      *
      * @param parameters Parameters to pass to the (recursive) invocation of #invokeOperation
      * @param mode Mode of the server to start (domain or standalone)
@@ -71,10 +75,17 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
      * @throws Exception If anything goes wrong
      */
     protected OperationResult restartServer(Configuration parameters, AS7Mode mode) throws Exception {
+        List<String> errors = validateStartScriptPluginConfigProps(mode);
+        if (!errors.isEmpty()) {
+            OperationResult result  = new OperationResult();
+            setErrorMessage(result, errors);
+            return result;
+        }
+
         OperationResult tmp = invokeOperation("shutdown", parameters);
 
-        if (tmp.getErrorMessage()!=null) {
-            tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
+        if (tmp.getErrorMessage() != null) {
+            tmp.setErrorMessage("Restart failed while attempting to shut down: " + tmp.getErrorMessage());
             return tmp;
         }
 
@@ -112,98 +123,132 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
      */
     protected OperationResult startServer(AS7Mode mode) {
         OperationResult operationResult = new OperationResult();
-        String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
 
-        String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
-        if (homeDir.isEmpty()) {
-            operationResult.setErrorMessage("No home directory provided.");
+        List<String> errors = validateStartScriptPluginConfigProps(mode);
+        if (!errors.isEmpty()) {
+            setErrorMessage(operationResult, errors);
             return operationResult;
         }
-        String script = homeDir + File.separator + startScript;
-        String startScriptArgs = pluginConfiguration.getSimpleValue("startScriptArgs", "");
-        ProcessExecution processExecution;
-        processExecution = ProcessExecutionUtility.createProcessExecution(new File("/bin/sh"));
 
-        String config = pluginConfiguration.getSimpleValue(mode.getConfigPropertyName(), mode.getDefaultXmlFile());
+        File startScriptFile = getStartScriptFile(mode);
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
+
         List<String> arguments = processExecution.getArguments();
-        if (arguments==null) {
+        if (arguments == null) {
             arguments = new ArrayList<String>();
             processExecution.setArguments(arguments);
         }
 
-        arguments.add(script);
-        // split the start script args by spaces and add them individually
+        // 'startScriptArgs' is a longString with the args delimited by newlines.
+        String startScriptArgs = pluginConfiguration.getSimpleValue("startScriptArgs", "");
         if (!startScriptArgs.isEmpty()) {
-            for (String arg : startScriptArgs.split("\\s+"))
-                arguments.add(arg);
-        }
-
-
-        if (!config.equals(mode.getDefaultXmlFile())) {
-            arguments.add(mode.getConfigArg());
-            arguments.add(config);
-        }
-        if (mode==AS7Mode.DOMAIN) {
-            // We also need to check for host-config
-            config =  pluginConfiguration.getSimpleValue(AS7Mode.HOST.getConfigPropertyName(),AS7Mode.HOST.getDefaultXmlFile());
-            if (!config.equals(AS7Mode.HOST.getDefaultXmlFile())) {
-                arguments.add(AS7Mode.HOST.getConfigArg());
-                arguments.add(config);
-
+            for (String arg : startScriptArgs.split("\n+")) {
+                arguments.add(arg.trim());
             }
         }
+
+        setEnvironmentVariables(processExecution);
+
+        String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
         processExecution.setWorkingDirectory(homeDir);
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
-
-        String javaHomeDir = pluginConfiguration.getSimpleValue("javaHomePath",null);
-        if (javaHomeDir!=null) {
-            processExecution.getEnvironmentVariables().put("JAVA_HOME", javaHomeDir);
-        }
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
         ProcessExecutionResults results = context.getSystemInformation().executeProcess(processExecution);
         logExecutionResults(results);
-        if (results.getError()!=null) {
+        if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
-        } else if (results.getExitCode()!=null) {
+        } else if (results.getExitCode() != null) {
             operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
         } else {
-
-            // Lets try to connect to the server
-            boolean up=false;
-            int count=0;
-            while (!up) {
-                Operation op = new ReadAttribute(new Address(),"release-version");
-                Result res = getASConnection().execute(op);
-                if (res.isSuccess()) { // If op succeeds, server is not down
-                    up=true;
-                } else if (count > 20) {
-                    operationResult.setErrorMessage("Was not able to start the server");
-                    return operationResult;
-                }
-                if (!up) {
-                    try {
-                        Thread.sleep(1000); // Wait 1s
-                    } catch (InterruptedException e) {
-                        ; // Ignore
-                    }
-                }
-                count++;
+            // Try to connect to the server - ping once per second, timing out after 20s.
+            boolean up = waitForServerToStart();
+            if (up) {
+                operationResult.setSimpleResult("Success");
+            } else {
+                operationResult.setErrorMessage("Was not able to start the server");
             }
-
-            operationResult.setSimpleResult("Success");
         }
-
-
-
 //        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
 
+    }
+
+    private void setErrorMessage(OperationResult operationResult, List<String> errors) {
+        StringBuilder buffer = new StringBuilder("This Resource's connection properties contain errors: ");
+        for (int i = 0, errorsSize = errors.size(); i < errorsSize; i++) {
+            if (i != 0) {
+                buffer.append(", ");
+            }
+            String error = errors.get(i);
+            buffer.append('[').append(error).append(']');
+        }
+        operationResult.setErrorMessage(buffer.toString());
+    }
+
+    private List<String> validateStartScriptPluginConfigProps(AS7Mode mode) {
+        List<String> errors = new ArrayList<String>();
+
+        File startScriptFile = getStartScriptFile(mode);
+
+        if (!startScriptFile.exists()) {
+            errors.add("Start script '" + startScriptFile + "' does not exist.");
+        } else {
+            if (!startScriptFile.isFile()) {
+                errors.add("Start script '" + startScriptFile + "' is not a regular file.");
+            } else {
+                if (!startScriptFile.canRead()) {
+                    errors.add("Start script '" + startScriptFile + "' is not readable.");
+                }
+                if (!startScriptFile.canExecute()) {
+                    errors.add("Start script '" + startScriptFile + "' is not executable.");
+                }
+            }
+        }
+
+        String envVars = pluginConfiguration.getSimpleValue("startScriptEnv", "");
+        if (envVars.isEmpty()) {
+            errors.add("No start script environment variables are set. At a minimum, PATH and JAVA_HOME should be set.");
+        }
+        return errors;
+    }
+
+    private File getStartScriptFile(AS7Mode mode) {
+        String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
+        File startScriptFile = new File(startScript);
+        if (!startScriptFile.isAbsolute()) {
+            String homeDir = pluginConfiguration.getSimpleValue("homeDir", "");
+            startScriptFile = new File(homeDir, startScript);
+        }
+        return startScriptFile;
+    }
+
+    private boolean waitForServerToStart() {
+        boolean up = false;
+        int count = 0;
+        while (!up) {
+            Operation op = new ReadAttribute(new Address(),"release-version");
+            Result res = getASConnection().execute(op);
+            if (res.isSuccess()) { // If op succeeds, server is not down
+                up = true;
+            } else if (count > 20) {
+                break;
+            }
+            if (!up) {
+                try {
+                    Thread.sleep(1000); // Wait 1s
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+            count++;
+        }
+        return up;
     }
 
     private void logExecutionResults(ProcessExecutionResults results) {
@@ -405,6 +450,57 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
 
         super.getValues(report, leftovers);
+    }
+
+    private void setEnvironmentVariables(ProcessExecution processExecution) {
+        Configuration pluginConfig = context.getPluginConfiguration();
+
+        // 'startScriptEnv' is a longString with "name=value" strings delimited by newlines.
+        String envVars = pluginConfig.getSimpleValue("startScriptEnv", null);
+        if (envVars == null) {
+            throw new RuntimeException("'startScriptEnv' connection property was not set.");
+        }
+
+        Map<String, String> processExecutionEnvironmentVariables = new LinkedHashMap<String, String>();
+        Map<String, String> envVarsMap = createEnvironmentVariableMap(envVars);
+        processExecutionEnvironmentVariables.putAll(envVarsMap);
+        processExecution.setEnvironmentVariables(processExecutionEnvironmentVariables);
+    }
+
+    private Map<String, String> createEnvironmentVariableMap(String envVarsString) {
+        StringTokenizer tokenizer = new StringTokenizer(envVarsString, "\n");
+        Map<String, String> envVars = new LinkedHashMap<String, String>(tokenizer.countTokens());
+        while (tokenizer.hasMoreTokens()) {
+            String var = tokenizer.nextToken().trim();
+            int equalsIndex = var.indexOf('=');
+            if (equalsIndex == -1) {
+                throw new IllegalStateException("Malformed environment entry: " + var);
+            }
+
+            String varName = var.substring(0, equalsIndex);
+            String varValue = var.substring(equalsIndex + 1);
+            varValue = replacePropertyPatterns(varValue);
+            envVars.put(varName, varValue);
+        }
+
+        return envVars;
+    }
+
+    private String replacePropertyPatterns(String envVars) {
+        Pattern pattern = Pattern.compile("(%([^%]*)%)");
+        Matcher matcher = pattern.matcher(envVars);
+        Configuration parentPluginConfig = context.getPluginConfiguration();
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            String propName = matcher.group(2);
+            PropertySimple prop = parentPluginConfig.getSimple(propName);
+            String propPattern = matcher.group(1);
+            String replacement = (prop != null) ? prop.getStringValue() : propPattern;
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+        }
+
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
 
 }

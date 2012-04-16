@@ -3651,6 +3651,155 @@
 
   </service>
 
+  <service name="JPA Runtime"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery"
+           description="The configuration of the JPA subsystem."
+           singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
+    </plugin-configuration>
+
+    <service name="Hibernate Persistence Unit"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Runtime information about JPA use in the deployment."
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="hibernate-persistance-unit" readOnly="true"/>
+      </plugin-configuration>
+
+      <operation name="subsystem:clear" description="Clear statistics.">
+        <results>
+           <c:simple-property name="operationResult" description="Clear statistics." />
+        </results>
+      </operation>
+
+      <operation name="subsystem:evict-all" description="Evict all entities from second level cache.">
+        <results>
+           <c:simple-property name="operationResult" description="Evict all entities from second level cache." />
+        </results>
+      </operation>
+
+      <operation name="subsystem:summary" description="Log the statistics.">
+        <results>
+           <c:simple-property name="operationResult" description="Log the statistics." />
+        </results>
+      </operation>
+
+      <metric property="close-statement-count" displayType="summary" measurementType="trendsup" description="Number of released prepared statements."/>
+      <metric property="collection-fetch-count" displayType="summary" measurementType="trendsup" description="Number of collections fetched."/>
+      <metric property="collection-load-count" displayType="summary" measurementType="trendsup" description="Number of collections loaded."/>
+      <metric property="collection-recreated-count" displayType="summary" measurementType="trendsup" description="Number of collections recreated."/>
+      <metric property="collection-remove-count" displayType="summary" measurementType="trendsup" description="Number of collections removed."/>
+      <metric property="collection-update-count" displayType="summary" measurementType="trendsup" description="Number of collections updated."/>
+      <metric property="completed-transaction-count" displayType="summary" measurementType="trendsup" description="Number of completed transactions."/>
+      <metric property="connect-count" displayType="summary" measurementType="trendsup" description="Get the number of connections asked for by the sessions."/>
+      <metric property="entity-delete-count" displayType="summary" measurementType="trendsup" description="Get number of entity deletes."/>
+      <metric property="entity-fetch-count" displayType="summary" measurementType="trendsup" description="Get number of entity fetches."/>
+      <metric property="entity-insert-count" displayType="summary" measurementType="trendsup" description="Get number of entity inserts."/>
+      <metric property="entity-load-count" displayType="summary" measurementType="trendsup" description="Get number of entity loads."/>
+      <metric property="entity-update-count" displayType="summary" measurementType="trendsup" description="Get number of entity updates."/>
+      <metric property="flush-count" displayType="summary" measurementType="trendsup" description="Get the number of flushes executed by sessions (either implicit or explicit)."/>
+      <metric property="optimistic-failure-count" displayType="summary" measurementType="trendsup" description="Number of optimistic lock exceptions."/>
+      <metric property="prepared-statement-count" displayType="summary" measurementType="trendsup" description="Number of acquired prepared statements."/>
+      <metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of cached queries successfully retrieved from cache."/>
+      <metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of cached queries not found in cache."/>
+      <metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of cacheable queries put in cache."/>
+      <metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of executed queries."/>
+      <metric property="query-execution-max-time" description="Get the time in milliseconds of the slowest query."/>
+      <metric property="query-execution-max-time-query-string" dataType="trait" description="Get the query string for the slowest query."/>
+      <metric property="second-level-cache-hit-count" displayType="summary" measurementType="trendsup" description="Number of cacheable entities/collections successfully retrieved from the cache."/>
+      <metric property="second-level-cache-miss-count" displayType="summary" measurementType="trendsup" description="Number of cacheable entities/collections not found in the cache and loaded."/>
+      <metric property="second-level-cache-put-count" displayType="summary" measurementType="trendsup" description="Number of cacheable entities/collections put in the cache."/>
+      <metric property="session-close-count" displayType="summary" measurementType="trendsup" description="Number of sessions closed."/>
+      <metric property="session-open-count" displayType="summary" measurementType="trendsup" description="Number of sessions opened."/>
+      <metric property="successful-transaction-count" displayType="summary" measurementType="trendsup" description="Number of successful transactions."/>
+
+      <resource-configuration>
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" description="Determine if statistics are enabled."/>           
+      </resource-configuration>
+
+      <service name="Entity Cache"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="Statistics for a Hibernate Second Level Cache region."
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="entity-cache" readOnly="true"/>
+        </plugin-configuration>
+
+        <metric property="element-count-in-memory" description="Number of cacheable entities/collections currently stored in memory."/>
+        <metric property="hit-count" description="Number of cacheable entities/collections successfully retrieved from the cache."/>
+        <metric property="miss-count" description="Number of cacheable entities/collections not found in the cache and loaded."/>
+        <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
+      </service>
+
+      <service name="Query Cache"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="Statistics for individual queries."
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="query-cache" readOnly="true"/>
+        </plugin-configuration>
+
+        <metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>
+        <metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>
+        <metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>
+        <metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>
+        <metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>
+        <metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>
+        <metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>
+        <metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>
+        <metric property="query-name" dataType="trait" description="Query name."/>
+      </service>
+
+      <service name="Entity"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="Statistics for individual entities.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="entity" readOnly="true"/>
+        </plugin-configuration>
+
+        <metric property="entity-delete-count" displayType="summary" measurementType="trendsup" description="Get number of entity deletes."/>
+        <metric property="entity-fetch-count" displayType="summary" measurementType="trendsup" description="Get number of entity fetches."/>
+        <metric property="entity-insert-count" displayType="summary" measurementType="trendsup" description="Get number of entity inserts."/>
+        <metric property="entity-load-count" displayType="summary" measurementType="trendsup" description="Get number of entity loads."/>
+        <metric property="entity-update-count" displayType="summary" measurementType="trendsup" description="Get number of entity updates."/>
+        <metric property="optimistic-failure-count" displayType="summary" measurementType="trendsup" description="Number of optimistic lock exceptions."/>
+      </service>
+
+      <service name="Collection"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="Statistics for individual collections.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="collection" readOnly="true"/>
+        </plugin-configuration>
+
+        <metric property="collection-fetch-count" displayType="summary" measurementType="trendsup" description="Number of times collection was fetched."/>
+        <metric property="collection-load-count" displayType="summary" measurementType="trendsup" description="Number of times collection was loaded."/>
+        <metric property="collection-recreated-count" displayType="summary" measurementType="trendsup" description="Number of times collection was recreated."/>
+        <metric property="collection-remove-count" displayType="summary" measurementType="trendsup" description="Number of times collection was removed."/>
+        <metric property="collection-update-count" displayType="summary" measurementType="trendsup" description="Number of times collection was updated."/>
+      </service>
+    </service>
+
+  </service>
+
 
   <service name="DeploymentScanner"
            class="BaseComponent"
@@ -3661,6 +3810,7 @@
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
     </runs-inside>
+
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=deployment-scanner" readOnly="true"/>
     </plugin-configuration>

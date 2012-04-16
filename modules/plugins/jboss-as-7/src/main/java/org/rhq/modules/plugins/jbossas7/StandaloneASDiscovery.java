@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -102,6 +104,14 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, psr);
         Configuration pluginConfig = details.getPluginConfiguration();
         pluginConfig.put(new PropertySimple("config", pluginConfig.getSimpleValue("hostXmlFileName", null)));
+
+        // Set deployment directory, which only exists for standalone servers
+        String baseDir = pluginConfig.getSimpleValue("baseDir", null);
+        if (baseDir!= null) {
+            String tmp = baseDir + File.separator + "deployment";
+            pluginConfig.put(new PropertySimple("deployDir",tmp));
+        }
+
         return details;
     }
 

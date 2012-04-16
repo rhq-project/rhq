@@ -702,6 +702,7 @@
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
+      <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
       <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
       <c:simple-property name="startScriptArgs" type="string" default="" description="Any required arguments to the start script" displayName="Start script arguments" required="false" />
       <c:simple-property name="javaHomePath" type="file" displayName="JAVA_HOME Path" required="false"
@@ -817,10 +818,23 @@
           <include path="bin" />
           <include path="appclient" />
           <include path="welcome-content"/>
-          <include path="standalone/deployment"/>
        </includes>
     </drift-definition>
+    <drift-definition
+          name="Template-Deploy Files"
+          description="Monitor standalone deployment dir for drift. ">
+       <basedir>
+          <value-context>pluginConfiguration</value-context>
+          <value-name>deployDir</value-name>
+       </basedir>
+    </drift-definition>
 
+    <bundle-target>
+      <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
+        <value-context>pluginConfiguration</value-context>
+        <value-name>deployDir</value-name>
+      </destination-base-dir>
+    </bundle-target>
 
     <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
       list is different. Update similar Domain service if changes are necessary. -->

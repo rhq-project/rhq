@@ -379,18 +379,20 @@ public class Domain2Descriptor {
             }
         } else {
             //resource configuration props
-            StringBuilder resCfg = new StringBuilder();
-            doIndent(indent, resCfg);
-            resCfg.append("<resource-configuration>\n");
-            System.out.print(resCfg);
-            createProperties(D2DMode.PROPERTIES, cAttributeMap, indent + 2);
-            resCfg = new StringBuilder();
-            doIndent(indent, resCfg);
-            resCfg.append("</resource-configuration>\n");
-            System.out.println(resCfg);
+            if ((cAttributeMap != null) && cAttributeMap.size() > 0) {
+                StringBuilder resCfg = new StringBuilder();
+                doIndent(indent, resCfg);
+                resCfg.append("<resource-configuration>\n");
+                System.out.print(resCfg);
+                createProperties(D2DMode.PROPERTIES, cAttributeMap, indent + 2);
+                resCfg = new StringBuilder();
+                doIndent(indent, resCfg);
+                resCfg.append("</resource-configuration>\n");
+                System.out.println(resCfg);
 
-            //metrics properties
-            createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
+                //metrics properties
+                createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
+            }
         }
 
         //now check for children
@@ -415,7 +417,7 @@ public class Domain2Descriptor {
                 StringBuilder serviceClose = new StringBuilder();
                 doIndent(indent + 2, serviceClose);
                 if (descriptorSegment) {
-                    serviceClose.append("</service>");
+                    serviceClose.append("</service><!-- End of " + ckey + " service -->\n");
                     System.out.println(serviceClose);
                 }
             }
@@ -466,17 +468,13 @@ public class Domain2Descriptor {
                 StringBuilder sb1 = new StringBuilder();
                 doIndent(indent, sb1);
                 sb1.append("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
-                    + props.get("description") + "\" >");
+                    + props.get("description") + "\" ");
+
+                sb1.append(useAvailableOptionsList(indent, props, null));
+                System.out.println(sb1);
 
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get("attributes");
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
-                //determine if there are any map entries worth showing
-                boolean emptyMap = false;
-                if ((attributesMap1 == null) && noMapEntriesLocated(valueTypes)) {
-                    emptyMap = true;
-                } else {
-                    System.out.println(sb1);
-                }
 
                 if (attributesMap1 != null) {
                     createProperties(mode, attributesMap1, indent + 4);
@@ -506,12 +504,10 @@ public class Domain2Descriptor {
                     }
                 }
 
-                if (!emptyMap) {
-                    sb1 = new StringBuilder();
-                    doIndent(indent, sb1);
-                    sb1.append("</c:map-property>");
-                    System.out.println(sb1);
-                }
+                sb1 = new StringBuilder();
+                doIndent(indent, sb1);
+                sb1.append("</c:map-property>");
+                System.out.println(sb1);
 
                 continue;
 
@@ -561,14 +557,14 @@ public class Domain2Descriptor {
                 if (ptype == Type.OBJECT) {
                     HashMap<String, Object> myMap = (HashMap<String, Object>) props.get("value-type");
                     if (accessType.equals("metric")) {
-                    for (Map.Entry<String, Object> myEntry : myMap.entrySet()) {
-                        if (myEntry.getValue() instanceof String && myEntry.getValue().equals("STRING")) {
-                            createMetricEntry(indent, props, key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
-                        } else if (myEntry.getValue() instanceof Map<?, ?>) {
-                            createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
-                                key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                        for (Map.Entry<String, Object> myEntry : myMap.entrySet()) {
+                            if (myEntry.getValue() instanceof String && myEntry.getValue().equals("STRING")) {
+                                createMetricEntry(indent, props, key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                            } else if (myEntry.getValue() instanceof Map<?, ?>) {
+                                createMetricEntry(indent, (Map<String, Object>) myEntry.getValue(),
+                                    key + ":" + myEntry.getKey(), getTypeFromProps(myMap));
+                            }
                         }
-                    }
                     }
                 } else {
                     if (!accessType.equals("metric")) {

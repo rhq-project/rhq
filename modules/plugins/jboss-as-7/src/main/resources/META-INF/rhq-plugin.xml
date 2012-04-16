@@ -1554,26 +1554,24 @@
         <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
-        <!-- c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
-          <c:simple-property name="name" type="string" readOnly="true" description="The configuration name." required="false"/>
-          <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias." required="false"/>
-          <c:simple-property name="password" type="password" readOnly="true" description="Password." required="false"/>
-          <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate." required="false"/>
-          <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite." required="false"/>
-          <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled." required="false"/>
-          <c:simple-property name="verify-client" type="string" readOnly="true" required="false"
-                             description="Enable client certificate verification."/>
-          <c:simple-property name="verify-depth" type="integer" readOnly="true" required="false"
-                             description="Limit certificate nesting."/>
-          <c:simple-property name="certificate-file" type="string" readOnly="true" required="false"
-                             description="Server certificate file."/>
-          <c:simple-property name="ca-certificate-file" type="string" readOnly="true"
-                             required="false" description="Certificate authority."/>
-          <c:simple-property name="ca-revocation-url" type="string" readOnly="true"
-                             required="false" description="Certificate authority revocation list."/>
-          <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache." required="false"/>
-          <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout." required="false"/>
-        </c:map-property-->
+        <c:group name="child:ssl=configuration" displayName="SSL Configuration">
+          <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
+          <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
+          <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
+          <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file."/>
+          <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
+          <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
+          <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+          <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
+          <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
+          <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
+          <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled."/>
+          <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="false" description="SSL session cache."/>
+          <c:simple-property name="session-timeout" required="false" type="integer" readOnly="false" description="SSL session cache timeout."/>
+          <c:simple-property name="truststore-type" required="false" type="string" readOnly="false" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
+          <c:simple-property name="verify-client" required="false" type="string" readOnly="false" description="Enable client certificate verification."/>
+          <c:simple-property name="verify-depth" required="false" type="integer" readOnly="false" description="Limit certificate nesting."/>
+        </c:group>
       </resource-configuration>
 
     </service>
@@ -1581,8 +1579,7 @@
     <service name="VHost"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-             createDeletePolicy="both"
-        >
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="virtual-server"/>
@@ -1595,6 +1592,13 @@
         <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war" description="The web module deployment name that will be mapped as the root webapp."/>
         <c:simple-property name="enable-welcome-root" type="boolean" defaultValue="false" description="Whether or not the bundled welcome directory is used as the root web context. The default value is false."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
+
+        <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
+          <c:simple-property name="cache-container" required="false" type="string" readOnly="false" description="Enables clustered SSO using the specified clustered cache container."/>
+          <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
+          <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
+          <c:simple-property name="reauthenticate" required="false" type="boolean" readOnly="false" description="Enables reauthentication with the realm when using SSO."/>
+        </c:group>
       </resource-configuration>
 
 
@@ -1602,7 +1606,7 @@
                discovery="SubsystemDiscovery"
                description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request. Those follow the rules for mod_rewrite. Please consult the manual for help on settings"
                class="BaseComponent"
-          >
+               createDeletePolicy="both">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="rewrite"/>
@@ -1623,14 +1627,36 @@
               </c:map-property>
             </c:list-property>
           </c:group>
-
         </resource-configuration>
-
       </service>
 
+      <service name="Access Log"
+               discovery="SubsystemDiscovery"
+               description="The access log configuration for this virtual server."
+               class="BaseComponent"
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="access-log=configuration"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="extended" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable extended pattern, with more options. The default value is false."/>
+          <c:simple-property name="pattern" required="false" type="string" readOnly="false" defaultValue="common" description="The access log pattern. The default value is common."/>
+          <c:simple-property name="prefix" required="false" type="string" readOnly="false" defaultValue="false" description="Prefix for the log file name. The default value is false."/>
+          <c:simple-property name="resolve-hosts" required="false" type="boolean" readOnly="false" defaultValue="false" description="Host resolution. The default value is false."/>
+          <c:simple-property name="rotate" required="false" type="boolean" readOnly="false" defaultValue="true" description="Rotate the access log every day. The default value is true."/>
+
+          <c:group name="child:directory=configuration" displayName="The location for the access logging.">
+            <c:simple-property name="path" required="false" type="string" readOnly="false" description="The relative folder path."/>
+            <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.log.dir" description="The folder the path is relative to. The default value is jboss.server.log.dir."/>
+          </c:group>
+        </resource-configuration>
+      </service>
     </service> <!-- End of VHost service -->
 
   </service> <!-- End of JBossWeb service -->
+
 
   <service name="General JCA connectors"
           discovery="SubsystemDiscovery"

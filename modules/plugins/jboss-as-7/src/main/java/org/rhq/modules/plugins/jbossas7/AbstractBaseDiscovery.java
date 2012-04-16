@@ -69,7 +69,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
     }
 
-    protected void readStandaloneOrHostXmlFromFile(String hostXmlFile) {
+    protected void readStandaloneOrHostXmlFromFile(File hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();

@@ -82,7 +82,10 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         List<ProcessScanResult> processScanResults = discoveryContext.getAutoDiscoveredProcesses();
         for (ProcessScanResult processScanResult : processScanResults) {
             try {
-                DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, processScanResult);
+                ProcessInfo process = processScanResult.getProcessInfo();
+                String[] processArgs = process.getCommandLine();
+                AS7CommandLine commandLine = new AS7CommandLine(processArgs);
+                DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, process, commandLine);
                 discoveredResources.add(details);
                 log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
                         + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
@@ -101,44 +104,56 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     }
 
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult processScanResult) throws Exception {
+                                                             ProcessInfo process, AS7CommandLine commandLine)
+            throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        // If SE, then look at domain/configuration/host.xml <management interface="default" port="9990
-        // for management port
-        ProcessInfo process = processScanResult.getProcessInfo();
-        String[] processArgs = process.getCommandLine();
-        AS7CommandLine commandLine = new AS7CommandLine(processArgs);
+
         File homeDir = getHomeDir(process, commandLine);
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
+
+        pluginConfig.put(new PropertySimple("homeDir", homeDir));
+
         File baseDir = getBaseDir(process, commandLine, homeDir);
-        String key = baseDir.getPath();
+        pluginConfig.put(new PropertySimple("baseDir", baseDir));
         File configDir = getConfigDir(process, commandLine, baseDir);
+        pluginConfig.put(new PropertySimple("configDir", configDir));
+
         File hostXmlFile = getHostXmlFile(commandLine, configDir);
         if (!hostXmlFile.exists()) {
             throw new Exception("Server configuration file not found at the expected location (" + hostXmlFile + ").");
         }
-        readStandaloneOrHostXmlFromFile(hostXmlFile.getPath()); // this sets this.hostXml
-        HostPort hostPort = getHostPortFromHostXml();
+        // This sets this.hostXml, which lots of other methods depend on being set.
+        readStandaloneOrHostXmlFromFile(hostXmlFile);
 
-        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
-        String description = buildDefaultResourceDescription(hostPort, productType);
+        String domainHost = findHost(hostXmlFile);
+        pluginConfig.put(new PropertySimple("domainHost", domainHost));
 
-        pluginConfig.put(new PropertySimple("homeDir", homeDir));
-        pluginConfig.put(new PropertySimple("baseDir", baseDir));
-        pluginConfig.put(new PropertySimple("configDir", configDir));
-        pluginConfig.put(new PropertySimple("domainHost", findHost(getHostXmlFile(commandLine, configDir))));
-        fillUserPassFromFile(pluginConfig, getMode(), baseDir);
         File logFile = getLogFile(getLogDir(process, commandLine, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
+        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
         pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
+        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
         pluginConfig.put(new PropertySimple("productType", productType.name()));
         pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
 
         setStartScriptPluginConfigProps(discoveryContext.getSystemInformation(), process, commandLine, pluginConfig);
+
+        String user = getManagementUsername(getMode(), baseDir);
+        if (user != null) {
+            pluginConfig.put(new PropertySimple("user", user));
+            // Note, we don't set the "password" prop, since the password is encrypted in mgmt-users.properties, and we
+            // need to return an unencrypted value.
+        } else {
+            pluginConfig.put(new PropertySimple("user", "rhqadmin"));
+            pluginConfig.put(new PropertySimple("password", "rhqadmin"));
+        }
+
+        String key = baseDir.getPath();
+        HostPort hostPort = getHostPortFromHostXml();
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String description = buildDefaultResourceDescription(hostPort, productType);
 
         String version;
         String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir);
@@ -153,21 +168,6 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
             //       to the server to obtain it.
             version = productType.SHORT_NAME + " " + productVersion;
         }
-
-        //            String javaClazz = psr.getProcessInfo().getName();
-
-        /*
-* We'll connect to the discovered VM on the local host, so set the jmx connection
-* properties accordingly. This may only work on JDK6+, but then JDK5 is deprecated
-* anyway.
-*/
-        //                config.put(new PropertySimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY,
-        //                        javaClazz));
-        //                config.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-        //                        LocalVMTypeDescriptor.class.getName()));
-        //
-        //                // TODO vmid will change when the detected server is bounced - how do we follow this?
-        //                config.put(new PropertySimple(JMXDiscoveryComponent.VMID_CONFIG_PROPERTY,psr.getProcessInfo().getPid()));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
@@ -407,17 +407,19 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return (String) res.getResult();
     }
 
-    private void fillUserPassFromFile(Configuration config, AS7Mode mode, File baseDir) {
+    private String getManagementUsername(AS7Mode mode, File baseDir) {
         String realm = getManagementSecurityRealmFromHostXml();
         String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
         File file = new File(fileName);
         if (!file.exists() || !file.canRead()) {
-            if (log.isDebugEnabled())
-                log.debug("No console user properties file found at [" + file.getAbsolutePath()
-                    + "] or file is not readable");
-            return;
+            if (log.isDebugEnabled()) {
+                log.debug("No management user properties file found at [" + file.getAbsolutePath()
+                    + "], or file is not readable");
+            }
+            return null;
         }
+
         // TODO (ips): Can't we use Properties.load() to read the file?
         BufferedReader br = null;
         try {
@@ -433,10 +435,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                     continue;
                 // found a candidate
                 String user = line.substring(0, line.indexOf("="));
-
-                config.put(new PropertySimple("user", user));
-                //    String pass = line.substring(line.indexOf("=") + 1);
-                //    config.put(new PropertySimple("password", pass));  // this is now hashed, so no point in supplying it
+                return user;
             }
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -448,6 +447,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
                     // empty
                 }
         }
+        return null;
     }
 
     private String findHost(File hostXmlFile) {

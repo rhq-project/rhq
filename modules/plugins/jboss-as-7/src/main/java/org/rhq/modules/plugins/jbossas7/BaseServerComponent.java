@@ -347,7 +347,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             default:
                 throw new IllegalArgumentException("Unsupported mode: " + mode);
         }
-        processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
+        processDiscovery.readStandaloneOrHostXmlFromFile(new File(configFile));
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
         String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);

@@ -1,5 +1,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
 import java.net.URL;
 
 import org.testng.annotations.Test;
@@ -15,7 +16,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         AbstractBaseDiscovery.HostPort hp = bd.getManagementHostPortFromHostXml(new AS7CommandLine(new String [] {"java"}));
         System.out.println(hp);
@@ -27,7 +28,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         AbstractBaseDiscovery.HostPort hp = bd.getManagementHostPortFromHostXml(new AS7CommandLine(new String[] {"java"}));
         System.out.println(hp);
@@ -40,7 +41,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host1.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert hp.isLocal : "DC is not local as expected: " + hp;
@@ -51,7 +52,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new HostControllerDiscovery();
         URL url = getClass().getClassLoader().getResource("host2.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         AbstractBaseDiscovery.HostPort hp = bd.getHostPortFromHostXml();
         assert "192.168.100.1".equals(hp.host) : "DC is at " + hp.host;
@@ -64,7 +65,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
 /*
         String realm = bd.obtainXmlPropertyViaXPath("/management/management-interfaces/http-interface/@security-realm");
@@ -90,7 +91,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         String realm = bd.obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
         assert "ManagementRealm".equals(realm) : "Realm was " + realm;
@@ -116,7 +117,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone711.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         String realm = bd.obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
         assert "ManagementRealm".equals(realm) : "Realm was " + realm;
@@ -147,7 +148,7 @@ public class XmlFileReadingTest {
 
         BaseProcessDiscovery bd = new StandaloneASDiscovery();
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
-        bd.readStandaloneOrHostXmlFromFile(url.getFile());
+        bd.readStandaloneOrHostXmlFromFile(new File(url.getPath()));
 
         String realm = bd.obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
         assert "ManagementRealm".equals(realm) : "Realm was " + realm;
@@ -161,4 +162,5 @@ public class XmlFileReadingTest {
         assert "jboss.server.config.dir".equals(propsFilePathRel) : "Path was " + propsFileName;
 
     }
+
 }

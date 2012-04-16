@@ -23,8 +23,8 @@ import java.io.File;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -36,6 +36,8 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     private static final String SERVER_BASE_DIR_SYSPROP = "jboss.server.base.dir";
     private static final String SERVER_CONFIG_DIR_SYSPROP = "jboss.server.config.dir";
     private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
+
+    private static final String DEFAULT_SERVER_CONFIG_FILE_NAME = "standalone.xml";
 
     private AS7CommandLineOption SERVER_CONFIG_OPTION = new AS7CommandLineOption('c', "server-config");
 
@@ -71,7 +73,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected String getDefaultHostXmlFileName() {
-        return "standalone.xml";
+        return DEFAULT_SERVER_CONFIG_FILE_NAME;
     }
 
     @Override
@@ -99,20 +101,21 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessScanResult processScanResult) throws Exception {
-        DiscoveredResourceDetails details = super.buildResourceDetails(discoveryContext, processScanResult);
-        Configuration pluginConfig = details.getPluginConfiguration();
+    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, ProcessInfo process, AS7CommandLine commandLine) throws Exception {
+        DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);//To change body of overridden methods use File | Settings | File Templates.
+
+        Configuration pluginConfig = resourceDetails.getPluginConfiguration();
+
         pluginConfig.put(new PropertySimple("config", pluginConfig.getSimpleValue("hostXmlFileName", null)));
 
         // Set deployment directory, which only exists for standalone servers
         String baseDir = pluginConfig.getSimpleValue("baseDir", null);
-        if (baseDir!= null) {
+        if (baseDir != null) {
             String tmp = baseDir + File.separator + "deployment";
             pluginConfig.put(new PropertySimple("deployDir",tmp));
         }
 
-        return details;
+        return resourceDetails;
     }
 
 }

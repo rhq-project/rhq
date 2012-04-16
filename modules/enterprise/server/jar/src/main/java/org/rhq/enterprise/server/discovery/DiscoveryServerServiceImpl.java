@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -140,8 +140,10 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         Set<Resource> resources = new HashSet<Resource>();
         for (Integer resourceId : resourceIds) {
             Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);
-            resource = convertToPojoResource(resource, includeDescendants);
-            resources.add(resource);
+            if (isVisibleInInventory(resource)) {
+                resource = convertToPojoResource(resource, includeDescendants);
+                resources.add(resource);
+            }
         }
         if (log.isDebugEnabled()) {
             log.debug("Performance: get Resources [" + resourceIds + "], recursive=" + includeDescendants
@@ -213,12 +215,20 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         }
         if (includeDescendants) {
             for (Resource childResource : resource.getChildResources()) {
-                pojoResource.addChildResource(convertToPojoResource(childResource, true));
+                if (isVisibleInInventory(childResource)) {
+                    pojoResource.addChildResource(convertToPojoResource(childResource, true));
+                }
             }
         }
         return pojoResource;
     }
 
+    private static boolean isVisibleInInventory(Resource resource) {
+        return resource.getInventoryStatus() != InventoryStatus.DELETED &&
+            resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
+    }
+
+    @Override
     public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
         if (log.isDebugEnabled()) {
             log.debug("Post-processing " + resourceIds.size() + "newly committed resources");

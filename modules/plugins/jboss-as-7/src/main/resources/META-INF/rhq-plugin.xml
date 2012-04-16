@@ -3110,12 +3110,29 @@
     <service name="XA Datasource Runtime"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
-           description="A JDBC XA data-source configuration"
-           singleton="true">
+           description="A JDBC XA data-source configuration">
 
       <plugin-configuration>
         <c:simple-property name="path" default="xa-data-source" readOnly="true"/>
       </plugin-configuration>
+
+      <operation name="subsystem:flush-all-connection-in-pool" description="Flushes all connections in the pool">
+        <results>
+          <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+        </results>
+      </operation>
+
+      <operation name="subsystem:flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
+        <results>
+           <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+        </results>
+      </operation>
+
+      <operation name="subsystem:test-connection-in-pool" description="Test if a connection can be obtained">
+        <results>
+           <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+        </results>
+      </operation>
 
       <resource-configuration>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>
@@ -3130,8 +3147,7 @@
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
           <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
-                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
           <c:property-options>
             <c:option value="FailingConnectionOnly"/>
             <c:option value="IdleConnections"/>
@@ -3190,29 +3206,22 @@
         <c:simple-property name="wrap-xa-resource" required="false" type="boolean" readOnly="true" defaultValue="true" description="Should the XAResource instances be wrapped in a org.jboss.tm.XAResourceWrapper instance. The default value is true."/>
         <c:simple-property name="xa-datasource-class" required="false" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="xa-resource-timeout" required="false" type="integer" readOnly="true" description="The value is passed to XAResource.setTransactionTimeout(), in seconds. Default is zero"/>
+
+        <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
+          <c:list-property name="*2" displayName="Properties" required="false" readOnly="true">
+            <c:map-property name="*:key" displayName="Name" readOnly="true">
+              <c:simple-property name="key" displayName="Property-Name" readOnly="true"/>
+              <c:simple-property name="value" displayName="Value" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+        </c:group>
       </resource-configuration>
-
-      <service name="XA Datasource Properties Runtime"
-               class="BaseComponent"
-               discovery="SubsystemDiscovery"
-               description="Specifies a property value to assign to the XADataSource implementation class. Each property is identified by the name attribute and the property value is given by the xa-datasource-property element content. The property is mapped onto the XADataSource implementation by looking for a JavaBeans style getter method for the property name. If found, the value of the property is set using the JavaBeans setter with the element text translated to the true property type using the java.beans.PropertyEditor."
-               singleton="true">
-
-        <plugin-configuration>
-          <c:simple-property name="path" default="xa-datasource-properties" readOnly="true"/>
-        </plugin-configuration>
-
-        <resource-configuration>
-          <c:simple-property name="value" required="false" type="string" readOnly="true" description="Specifies a property value to assign to the XADataSource implementation class. Each property is identified by the name attribute and the property value is given by the xa-datasource-property element content. The property is mapped onto the XADataSource implementation by looking for a JavaBeans style getter method for the property name. If found, the value of the property is set using the JavaBeans setter with the element text translated to the true property type using the java.beans.PropertyEditor"/>
-        </resource-configuration>
-      </service>
     </service>
 
     <service name="Datasource Runtime"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
-             description="A JDBC data-source configuration"
-             singleton="true">
+             description="A JDBC data-source configuration">
 
       <runs-inside>
         <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
@@ -3221,6 +3230,24 @@
       <plugin-configuration>
         <c:simple-property name="path" default="data-source" readOnly="true"/>
       </plugin-configuration>
+
+      <operation name="subsystem:flush-all-connection-in-pool" description="Flushes all connections in the pool">
+        <results>
+          <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+        </results>
+      </operation>
+
+      <operation name="subsystem:flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
+        <results>
+           <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+        </results>
+      </operation>
+
+      <operation name="subsystem:test-connection-in-pool" description="Test if a connection can be obtained">
+        <results>
+           <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+        </results>
+      </operation>
 
       <resource-configuration>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>
@@ -3238,8 +3265,7 @@
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
             <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true"
-                           description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
           <c:property-options>
             <c:option value="FailingConnectionOnly"/>
             <c:option value="IdleConnections"/>
@@ -3283,6 +3309,7 @@
             <c:simple-property name="valid-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" defaultValue="false" description="The validate-on-match element specifies if connection validation should be done when a connection factory attempts to match a managed connection. This is typically exclusive to the use of background validation. The default value is false."/>
+
         <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
           <c:list-property name="*1" displayName="Connection Property" readOnly="true" required="false">
             <c:map-property name="*:pname" displayName="Name" readOnly="true">
@@ -3291,27 +3318,9 @@
             </c:map-property>
           </c:list-property>
         </c:group>
-
       </resource-configuration>
-
-      <service name="Connection Properties Runtime"
-             class="BaseComponent"
-             discovery="SubsystemDiscovery"
-             description="The connection-properties element allows you to pass in arbitrary connection properties to the Driver.connect(url, props) method."
-             singleton="true">
-
-        <plugin-configuration>
-          <c:simple-property name="path" default="connection-properties" readOnly="true"/>
-        </plugin-configuration>
-
-        <resource-configuration>
-          <c:simple-property name="value" required="false" type="string" readOnly="true" description="Each connection-property specifies a string name/value pair with the property name coming from the name attribute and the value coming from the element content"/>
-        </resource-configuration>
-      </service>
     </service>
-
   </service>
-
 
   <service name="Messaging Runtime"
            class="BaseComponent"

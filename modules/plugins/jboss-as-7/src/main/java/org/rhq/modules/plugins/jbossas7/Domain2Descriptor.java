@@ -42,6 +42,7 @@ public class Domain2Descriptor {
     private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
         "busyness", "connection-pool" };
     private D2DMode mode = null;
+    private boolean descriptorSegment = false;
 
     public static void main(String[] args) throws Exception {
 
@@ -76,6 +77,9 @@ public class Domain2Descriptor {
                     mode = D2DMode.OPERATION;
                 } else if (arg.equals("-r")) {
                     mode = D2DMode.RECURSIVE;
+                } else if (arg.equals("-rd")) {
+                    mode = D2DMode.RECURSIVE;
+                    descriptorSegment = true;
                 } else if (arg.startsWith("-U")) {
                     String tmp = arg.substring(2);
                     if (!tmp.contains(":")) {
@@ -191,11 +195,84 @@ public class Domain2Descriptor {
         } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
             String legend = "Key: - property, -M metric, + operation, [] child node.";
             StringBuilder tree = new StringBuilder(path + " ->\t\t\t" + legend + " \n");
-            System.out.print(tree);
-            listPropertiesAndChildren(3, resMap);
+            if (!descriptorSegment) {
+                System.out.print(tree);
+                listPropertiesAndChildren(3, resMap);
+            } else {
+                System.out.println(generateSegment(path, 0));
+                listPropertiesAndChildren(3, resMap);
+                System.out.println("</service>\n");
+            }
+
         } else {
             createProperties(mode, attributesMap, 0);
         }
+    }
+
+    private StringBuilder generateSegment(String path, int indent) {
+        StringBuilder segment = new StringBuilder();
+        if ((path != null) && !path.trim().isEmpty()) {
+            //strip off slashes
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            //split on , and take last node
+            String[] elements = path.split(",");
+            String terminal = elements[elements.length - 1];
+            String node = terminal;
+            StringBuilder serviceElement = generateService(node, indent, true);
+            System.out.print(serviceElement);
+        }
+
+        return segment;
+    }
+
+    private StringBuilder generateService(String terminal, int indent, boolean isRoot) {
+        int childIndent = indent + 4;
+        //Determine service name
+        String node = terminal;
+        String[] values = null;
+        if (isRoot) {
+            values = terminal.split("=");
+            node = values[1];
+            node = node.substring(0, 1).toUpperCase() + node.substring(1);
+        }
+
+        //construct node
+        StringBuilder element = new StringBuilder();
+        doIndent(indent, element);
+        element.append("<service name=\"" + node + "\"\n");
+        doIndent(indent + 9, element);
+        element.append("discovery=\"SubsystemDiscovery\"\n");
+        doIndent(indent + 9, element);
+        element.append("class=\"BaseComponent\">\n");
+
+        if (values != null && (values[0].equals("subsystem"))) {
+            //runs inside
+            element.append("\n");
+            doIndent(childIndent, element);
+            element.append("<runs-inside>\n");
+            doIndent(childIndent + 2, element);
+            element.append("<parent-resource-type name=\"Profile\" plugin=\"jboss-as-7\"/>\n");
+            doIndent(childIndent + 2, element);
+            element.append("<parent-resource-type name=\"JBossAS7 Standalone Server\" plugin=\"jboss-as-7\"/>\n");
+            doIndent(childIndent, element);
+            element.append("</runs-inside>\n");
+        }
+
+        //plugin config 
+        element.append("\n");
+        doIndent(childIndent, element);
+        element.append("<plugin-configuration>\n");
+        doIndent(childIndent + 2, element);
+        element.append("<c:simple-property name=\"path\" readOnly=\"true\" default=\"" + terminal + "\"/>\n");
+        doIndent(childIndent, element);
+        element.append("</plugin-configuration>\n");
+
+        return element;
     }
 
     private boolean isExcludedOperation(String operation) {
@@ -232,42 +309,74 @@ public class Domain2Descriptor {
 
         //retrieve the operations for the node.
         Map<String, Object> cOperationMap = (Map<String, Object>) metaDataNode.get("operations");
-        if (cOperationMap != null) {
-            //retrieve keys and sort.
-            String[] ckeys = cOperationMap.keySet().toArray(new String[cOperationMap.size()]);
-            Arrays.sort(ckeys);
-            for (String ckey : ckeys) {//list each of the operations.
-                if (!isExcludedOperation(ckey)) {
-                    StringBuilder sbc = new StringBuilder();
-                    doIndent(indent + 2, sbc);
-                    sbc.append("+ " + ckey + "{*}");
-                    System.out.println(sbc);
+        if (!descriptorSegment) {
+            if (cOperationMap != null) {
+                //retrieve keys and sort.
+                String[] ckeys = cOperationMap.keySet().toArray(new String[cOperationMap.size()]);
+                Arrays.sort(ckeys);
+                for (String ckey : ckeys) {//list each of the operations.
+                    if (!isExcludedOperation(ckey)) {
+                        StringBuilder sbc = new StringBuilder();
+                        doIndent(indent + 2, sbc);
+                        sbc.append("+ " + ckey + "{*}");
+                        System.out.println(sbc);
+                    }
+                }
+                StringBuilder sbc = new StringBuilder();
+                doIndent(indent + 2, sbc);
+                sbc.append("------------------");
+                System.out.println(sbc);
+            }
+        } else {
+            //populate operations(each special map type) and sort them for ordered listing
+            Set<String> strings = cOperationMap.keySet();
+            String[] keys = strings.toArray(new String[strings.size()]);
+            Arrays.sort(keys);
+
+            for (String key : keys) {
+                //exclude typical 'read-' and 'write-attribute' operations typical to all types.
+                if (!isExcludedOperation(key)) {
+                    //for each custom operation found, retrieve child hierarchy and pass into
+                    Map<String, Object> value = (Map<String, Object>) cOperationMap.get(key);
+                    createOperation(key, value, indent);
                 }
             }
-            StringBuilder sbc = new StringBuilder();
-            doIndent(indent + 2, sbc);
-            sbc.append("------------------");
-            System.out.println(sbc);
         }
 
         //retrieve the attributes for the node.
         Map<String, Object> cAttributeMap = (Map<String, Object>) metaDataNode.get("attributes");
-        if (cAttributeMap != null) {
-            //retrieve keys and sort.
-            String[] ckeys = cAttributeMap.keySet().toArray(new String[cAttributeMap.size()]);
-            Arrays.sort(ckeys);
-            for (String ckey : ckeys) {//list each of the attributes.
-                StringBuilder sbc = new StringBuilder();
-                doIndent(indent + 2, sbc);
-                Object attribute = cAttributeMap.get(ckey);
-                String accessType = (String) ((Map<String, Object>) attribute).get("access-type");
-                if (accessType.equalsIgnoreCase("metric")) {
-                    sbc.append("-M " + ckey);
-                } else {
-                    sbc.append("- " + ckey);
+        if (!descriptorSegment) {
+            if (cAttributeMap != null) {
+                //retrieve keys and sort.
+                String[] ckeys = cAttributeMap.keySet().toArray(new String[cAttributeMap.size()]);
+                Arrays.sort(ckeys);
+                for (String ckey : ckeys) {//list each of the attributes.
+                    StringBuilder sbc = new StringBuilder();
+                    doIndent(indent + 2, sbc);
+                    Object attribute = cAttributeMap.get(ckey);
+                    String accessType = (String) ((Map<String, Object>) attribute).get("access-type");
+                    if (accessType.equalsIgnoreCase("metric")) {
+                        sbc.append("-M " + ckey);
+                    } else {
+                        sbc.append("- " + ckey);
+                    }
+                    System.out.println(sbc);
                 }
-                System.out.println(sbc);
             }
+        } else {
+            //resource configuration props
+            StringBuilder resCfg = new StringBuilder();
+            doIndent(indent, resCfg);
+            resCfg.append("<resource-configuration>\n");
+            System.out.print(resCfg);
+            createProperties(D2DMode.PROPERTIES, cAttributeMap, indent + 2);
+            resCfg = new StringBuilder();
+            doIndent(indent, resCfg);
+            resCfg.append("</resource-configuration>\n");
+            System.out.println(resCfg);
+
+            //metrics properties
+            //            createProperties(D2DMode.METRICS, cAttributeMap, indent + 2);
         }
 
         //now check for children
@@ -280,11 +389,20 @@ public class Domain2Descriptor {
                 StringBuilder sb2 = new StringBuilder();
                 doIndent(indent + 2, sb2);
                 sb2.append("[" + ckey + "]");
-                System.out.println(sb2);
+                if (!descriptorSegment) {
+                    System.out.println(sb2);
+                } else {
+                    //                    String serviceName = ckey.substring(0,1).toUpperCase()+ckey.substring(1);
+                    System.out.println(generateService(ckey, indent + 2, false));
+                }
                 //recurse
                 Map<String, Object> child = (Map<String, Object>) childrenMap.get(ckey);
                 Map<String, Object> retrievedType = locateMetaDataNodeFromMap(child);
                 listPropertiesAndChildren(indent + 4, retrievedType);
+                StringBuilder serviceClose = new StringBuilder();
+                doIndent(indent + 2, serviceClose);
+                serviceClose.append("</service>");
+                System.out.println(serviceClose);
             }
         }
     }
@@ -329,8 +447,13 @@ public class Domain2Descriptor {
                 } else {
                     requiredStatus.append(" required=\"false\"");
                 }
-                System.out.println("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
+                //                System.out.println("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
+                //                    + props.get("description") + "\" >");
+                StringBuilder sb1 = new StringBuilder();
+                doIndent(indent, sb1);
+                sb1.append("<c:map-property name=\"" + key + "\"" + requiredStatus + " description=\""
                     + props.get("description") + "\" >");
+                System.out.println(sb1);
 
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get("attributes");
                 Map<String, Object> valueTypes = (Map<String, Object>) props.get("value-type");
@@ -360,8 +483,11 @@ public class Domain2Descriptor {
 
                     }
                 }
-
-                System.out.println("</c:map-property>");
+                //                System.out.println("</c:map-property>");
+                sb1 = new StringBuilder();
+                doIndent(indent, sb1);
+                sb1.append("</c:map-property>");
+                System.out.println(sb1);
 
                 continue;
 
@@ -369,7 +495,9 @@ public class Domain2Descriptor {
 
             if (ptype == Type.LIST && mode != D2DMode.METRICS) {
 
-                StringBuilder sb = new StringBuilder("<c:list-property name=\"");
+                StringBuilder sb = new StringBuilder();
+                doIndent(indent, sb);
+                sb.append("<c:list-property name=\"");
                 sb.append(key);
                 sb.append("\"");
                 //include required status on plugin entry
@@ -385,6 +513,7 @@ public class Domain2Descriptor {
 
                 sb.append(" >\n");
                 if (!props.containsKey("attributes")) {
+                    doIndent(indent, sb);
                     sb.append("    <c:simple-property name=\"").append(key).append("\" />\n");
                 } else {
                     doIndent(indent, sb);
@@ -395,6 +524,7 @@ public class Domain2Descriptor {
                     doIndent(indent, sb);
                     sb.append("</c:map-property>\n");
                 }
+                doIndent(indent, sb);
                 sb.append("</c:list-property>");
 
                 System.out.println(sb.toString());
@@ -463,19 +593,24 @@ public class Domain2Descriptor {
         System.out.println(sb.toString());
     }
 
+    private void createOperation(String name, Map<String, Object> operationMap) {
+        createOperation(name, operationMap, 0);
+    }
+
     /** Assumes custom operation for AS7 node.
      * 
      * @param name of custom operation.
      * @param operationMap Json node representation of operation details as Map<String,Object>.
      */
-    private void createOperation(String name, Map<String, Object> operationMap) {
+    private void createOperation(String name, Map<String, Object> operationMap, int indent) {
         if ((name == null) && (operationMap == null)) {
             return;
         }
 
         //container for flexible string concatenation and each operation
-        StringBuilder builder = new StringBuilder("<operation name=\"");
-
+        StringBuilder builder = new StringBuilder();
+        doIndent(indent, builder);
+        builder.append("<operation name=\"");
         builder.append(name).append('"');
 
         //description attribute
@@ -483,23 +618,30 @@ public class Domain2Descriptor {
         appendDescription(builder, description, null);
         //close xml tag
         builder.append(">\n");
+        doIndent(indent, builder);
 
         //detect operation parameters if present.
         Map<String, Object> reqMap = (Map<String, Object>) operationMap.get("request-properties");
         if (reqMap != null && !reqMap.isEmpty()) {//if present build parameters segment for plugin descriptor.
             builder.append("  <parameters>\n");
+            doIndent(indent, builder);
             generatePropertiesForMap(builder, reqMap);
+            doIndent(indent, builder);
             builder.append("  </parameters>\n");
+            doIndent(indent, builder);
 
         }
         Map replyMap = (Map) operationMap.get("reply-properties");
         builder.append("  <results>\n");
+        doIndent(indent, builder);
         if (replyMap != null && !replyMap.isEmpty()) {
             generatePropertiesForMap(builder, replyMap);
         } else {
             builder.append("     <c:simple-property name=\"operationResult\" description=\"" + description + "\" />\n");
+            doIndent(indent, builder);
         }
         builder.append("  </results>\n");
+        doIndent(indent, builder);
 
         builder.append("</operation>\n");
         System.out.println(builder.toString());
@@ -789,12 +931,13 @@ public class Domain2Descriptor {
     }
 
     private static void usage() {
-        System.out.println("Domain2Properties [-U<user>:<pass>] [-p|-m|-o|-r] path type");
+        System.out.println("Domain2Properties [-U<user>:<pass>] [-p|-m|-o|-r|-rd] path type");
         System.out.println("   path is of kind 'key=value[,key=value]+");
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");
         System.out.println(" -o create operations");
-        System.out.println(" -r recurse node and list children and properties.");
+        System.out.println(" -r recurse node and list children, properties and operations.");
+        System.out.println(" -rd recurse node and descriptor segment.");
         System.out.println(" -U<user>:<pass>  - supply credentials to talk to AS7");
     }
 

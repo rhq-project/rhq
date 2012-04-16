@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -26,7 +29,6 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
@@ -192,9 +194,15 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             } else {
                 statusItem.setTooltip(MSG.common_status_failed());
             }
-            LinkItem errorLinkItem = new LinkItem("errorLink");
+            StaticTextItem errorLinkItem = new StaticTextItem("errorLink");
+            errorLinkItem.setTextAlign(Alignment.LEFT);
+            errorLinkItem.setHoverWidth(200);
+            errorLinkItem.setPrompt(operationHistory.getErrorMessage());
+            errorLinkItem.setAlign(Alignment.LEFT);
+            errorLinkItem.setVAlign(VerticalAlignment.BOTTOM);
+            errorLinkItem.setErrorOrientation(FormErrorOrientation.LEFT);
             errorLinkItem.setTitle(MSG.common_severity_error());
-            errorLinkItem.setLinkTitle(getShortErrorMessage(operationHistory));
+            errorLinkItem.setValue(getShortErrorMessage(operationHistory));
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {

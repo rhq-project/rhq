@@ -13,7 +13,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -167,7 +166,9 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             if (request.getName().equals("connectionAvailable")) {
                 report.addData(getConnectionAvailable(request));
             } else if (request.getName().equals("max-pool-size")) {
-                getMaxPoolSizeAsMetric(report, request);
+                getRCAsMetric(report, request);
+            } else if (request.getName().equals("min-pool-size")) {
+                getRCAsMetric(report, request);
             } else {
                 metrics.add(request);
             }
@@ -202,20 +203,25 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         }
     }
 
-    private void getMaxPoolSizeAsMetric(MeasurementReport report, MeasurementScheduleRequest request) {
-        Operation op = new ReadAttribute(getAddress(), "max-pool-size");
+    private void getRCAsMetric(MeasurementReport report, MeasurementScheduleRequest request) {
+        Operation op = new ReadAttribute(getAddress(), request.getName());
         Result res = getASConnection().execute(op);
 
         if (res.isSuccess()) {
             String tmp = (String) res.getResult();
-            if (tmp == null) { // server r
-                tmp = "20"; // The default value
+            if (tmp == null) { // server
+                if (request.getName().equals("max-pool-size"))
+                    tmp = "20"; // The default value
+                else if (request.getName().equals("min-pool-size"))
+                    tmp = "0"; // The default value
+                else
+                    tmp ="-1"; // Fallback for unknown requests
             }
             Double val = Double.valueOf(tmp);
             MeasurementDataNumeric data = new MeasurementDataNumeric(request, val);
             report.addData(data);
         } else {
-            log.warn("Could not read max-pool-size on " + getAddress() + ": " + res.getFailureDescription());
+            log.warn("Could not read [" + request.getName() + "] on " + getAddress() + ": " + res.getFailureDescription());
         }
     }
 

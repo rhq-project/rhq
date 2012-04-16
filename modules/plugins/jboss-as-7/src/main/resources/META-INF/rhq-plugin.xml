@@ -1719,6 +1719,7 @@
       <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
       <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
+      <metric property="min-pool-size" displayName="Min Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The min pool size setting"/>
       <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
 
       <resource-configuration>
@@ -1884,6 +1885,7 @@
       <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
       <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
+      <metric property="min-pool-size" displayName="Min Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The min pool size setting"/>
       <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
 
       <resource-configuration>

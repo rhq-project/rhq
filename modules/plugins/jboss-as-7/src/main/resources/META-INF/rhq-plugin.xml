@@ -4850,9 +4850,10 @@
      </service>
   </service><!-- End of Security subsystem service -->
 
+
   <service name="Threads"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="ThreadsComponent"
            singleton="true">
 
     <runs-inside>
@@ -4866,7 +4867,9 @@
 
     <service name="ThreadFactory"
              discovery="SubsystemDiscovery"
-             class="BaseComponent">
+             class="BaseComponent"
+             description="A thread factory (implementing java.util.concurrent.ThreadFactory)."
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="thread-factory"/>
@@ -4875,7 +4878,7 @@
       <resource-configuration>
         <c:simple-property name="group-name" required="false" type="string" readOnly="false" description="Specifies the name of a  thread group to create for this thread factory."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the created thread factory."/>
-        <c:simple-property name="priority:expr" required="false" type="string" readOnly="false" defaultValue="-1" description="May be used to specify the thread priority of created threads. The default value is -1."/>
+        <c:simple-property name="priority:expr" required="false" type="string" readOnly="false" defaultValue="-1" displayName="Priority" description="May be used to specify the thread priority of created threads. The default value is -1."/>
         <c:simple-property name="thread-name-pattern" required="false" type="string" readOnly="false" description="The template used to create names for threads.  The following patterns may be used:
               %% - emit a percent sign
               %t - emit the per-factory thread sequence number
@@ -4887,7 +4890,9 @@
 
     <service name="ThreadPool"
              discovery="SubsystemDiscovery"
-             class="BaseComponent">
+             class="ThreadPoolComponent"
+             description="A thread pool executor"
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
@@ -4896,20 +4901,39 @@
       <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
       <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
       <metric property="current-thread-count" description="The current number of threads in the pool."/>
-      <metric property="keepalive-time:time" description="The time"/>
-      <metric property="keepalive-time:unit" description="The time unit"/>
       <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
       <metric property="rejected-count" description="The number of tasks that have been rejected."/>
       <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
       <resource-configuration>
-        <c:map-property name="keepalive-time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-          <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+        <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+          <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
+          <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
         </c:map-property>
-        <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" description="The maximum thread pool size."/>
+        <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
         <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+
+        <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
+          <c:property-options>
+            <c:option value="bounded-queue-thread-pool"/>
+            <c:option value="queueless-thread-pool"/>
+            <c:option value="unbounded-queue-thread-pool"/>
+            <c:option value="scheduled-thread-pool"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
+          <c:simple-property name="type" readOnly="true" default="bounded-queue-thread-pool"/>
+        </c:template>
+        <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
+          <c:simple-property name="type" readOnly="true" default="queueless-thread-pool"/>
+        </c:template>
+        <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
+          <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool"/>
+        </c:template>
+        <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
+          <c:simple-property name="type" readOnly="true" default="unbounded-queue-thread-pool"/>
+        </c:template>
       </resource-configuration>
     </service>
 

@@ -87,10 +87,20 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         // Construct the full path including the parent
         String path;
         String parentPath = parentComponent.getPath();
-        if (parentPath == null || parentPath.isEmpty())
-            path = "";
-        else
-            path = parentPath;
+        if (parentPath == null || parentPath.isEmpty()) {
+            parentPath = "";
+        }
+        path = parentPath;
+
+        PropertySimple managedRuntimeProp = config.getSimple("managedRuntime");
+        if (managedRuntimeProp != null && managedRuntimeProp.getBooleanValue() != null
+            && managedRuntimeProp.getBooleanValue()) {
+
+            // path correction for managed servers, where the config is below host=x,server-config=y but
+            // the runtime resource is below host=x,server=y
+            path = path.replaceAll(",server-config=", ",server=");
+            parentPath = parentPath.replaceAll(",server-config=", ",server=");
+        }
 
         if (Boolean.getBoolean("as7plugin.verbose"))
             log.info("total path: [" + path + "]");

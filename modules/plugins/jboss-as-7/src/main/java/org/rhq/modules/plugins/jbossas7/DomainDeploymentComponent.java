@@ -50,12 +50,17 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
             String resourceKey = context.getResourceKey();
             resourceKey = resourceKey.substring(resourceKey.indexOf("=") + 1);
 
-            log.info("Promoting [" + resourceKey + "] to server group(s) [" + Arrays.asList(serverGroups) + "]");
+            log.info("Promoting [" + resourceKey + "] to server group(s) [" + serverGroups + "]");
 
             PropertySimple simple = parameters.getSimple("enabled");
             Boolean enabled = false;
             if (simple != null && simple.getBooleanValue() != null)
                 enabled = simple.getBooleanValue();
+
+            PropertySimple runtimeNameProperty = parameters.getSimple("runtime-name");
+            String runtimeName = null;
+            if (runtimeNameProperty != null)
+                runtimeName = runtimeNameProperty.getStringValue();
 
             CompositeOperation operation = new CompositeOperation();
             for (String theGroup : serverGroups) {
@@ -65,15 +70,16 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
                 theAddress.add("deployment", resourceKey);
                 Operation step = new Operation("add", theAddress);
                 step.addAdditionalProperty("enabled", enabled);
+                if (runtimeName != null && !runtimeName.isEmpty())
+                    step.addAdditionalProperty("runtime-name", runtimeName);
                 operation.addStep(step);
             }
 
             Result res = getASConnection().execute(operation, 120); // wait up to 2 minutes
             if (res.isSuccess()) {
-                operationResult
-                    .setSimpleResult("Successfully deployed to server groups " + Arrays.asList(serverGroups));
+                operationResult.setSimpleResult("Successfully deployed to server groups " + serverGroups);
             } else {
-                operationResult.setErrorMessage("Deployment to servergoups failed: " + res.getFailureDescription());
+                operationResult.setErrorMessage("Deployment to server groups failed: " + res.getFailureDescription());
             }
         } else {
             operationResult.setErrorMessage("Unknown operation " + name);

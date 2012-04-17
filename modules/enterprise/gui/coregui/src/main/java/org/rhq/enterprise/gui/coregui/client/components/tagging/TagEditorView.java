@@ -155,8 +155,8 @@ public class TagEditorView extends LocatableLayout {
             tagLayout.setHeight(18);
             tagLayout.setHeight(16);
 
-            HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
-                + tag.toString() + "</a>");
+            HTMLFlow tagString = new HTMLFlow("<nobr><a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
+                + tag.toString() + "</a></nobr>");
             tagString.setAutoWidth();
             tagLayout.addMember(tagString);
 

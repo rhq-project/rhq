@@ -2761,16 +2761,6 @@
 
      </service><!-- End of periodic-rotating-file-handler service -->
 
-     <service name="Root Logger"
-              discovery="SubsystemDiscovery"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="root-logger"/>
-        </plugin-configuration>
-
-     </service><!-- End of root-logger service -->
-
      <service name="Size Rotating File Handler"
               discovery="SubsystemDiscovery"
               class="BaseComponent">

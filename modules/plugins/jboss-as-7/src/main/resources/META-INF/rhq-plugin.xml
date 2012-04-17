@@ -1452,22 +1452,24 @@
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
         <c:group name="child:ssl=configuration" displayName="SSL Configuration">
-          <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
-          <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
-          <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
-          <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file."/>
-          <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
-          <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
-          <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
-          <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-          <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
-          <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
-          <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled."/>
-          <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="false" description="SSL session cache."/>
-          <c:simple-property name="session-timeout" required="false" type="integer" readOnly="false" description="SSL session cache timeout."/>
-          <c:simple-property name="truststore-type" required="false" type="string" readOnly="false" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
-          <c:simple-property name="verify-client" required="false" type="string" readOnly="false" description="Enable client certificate verification."/>
-          <c:simple-property name="verify-depth" required="false" type="integer" readOnly="false" description="Limit certificate nesting."/>
+          <c:map-property name="Configuration" readOnly="false" required="false">
+            <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
+            <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
+            <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
+            <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file."/>
+            <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
+            <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
+            <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+            <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
+            <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
+            <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
+            <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled."/>
+            <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="false" description="SSL session cache."/>
+            <c:simple-property name="session-timeout" required="false" type="integer" readOnly="false" description="SSL session cache timeout."/>
+            <c:simple-property name="truststore-type" required="false" type="string" readOnly="false" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
+            <c:simple-property name="verify-client" required="false" type="string" readOnly="false" description="Enable client certificate verification."/>
+            <c:simple-property name="verify-depth" required="false" type="integer" readOnly="false" description="Limit certificate nesting."/>
+          </c:map-property>
         </c:group>
       </resource-configuration>
 
@@ -1491,10 +1493,15 @@
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
 
         <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
-          <c:simple-property name="cache-container" required="false" type="string" readOnly="false" description="Enables clustered SSO using the specified clustered cache container."/>
-          <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
-          <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
-          <c:simple-property name="reauthenticate" required="false" type="boolean" readOnly="false" description="Enables reauthentication with the realm when using SSO."/>
+          <c:map-property name="Configuration" readOnly="false" required="false">
+            <c:simple-property name="cache-container" required="false" type="string" readOnly="false"
+                               description="Enables clustered SSO using the specified clustered cache container.">
+              <c:option-source target="resource" expression="type='Cache Container' plugin=jboss-as-7"/>
+            </c:simple-property>
+            <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
+            <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
+            <c:simple-property name="reauthenticate" required="false" type="boolean" readOnly="false" description="Enables reauthentication with the realm when using SSO."/>
+          </c:map-property>
         </c:group>
       </resource-configuration>
 
@@ -2257,7 +2264,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
@@ -2353,7 +2360,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
@@ -2445,7 +2452,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
@@ -2540,7 +2547,7 @@
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
 
-         
+
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
            <c:option value="accept" name="accept"/>
@@ -2555,7 +2562,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
@@ -2634,7 +2641,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
              <c:simple-property name="handlers" />
          </c:list-property>
@@ -2729,7 +2736,7 @@
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
 
-         
+
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
            <c:option value="accept" name="accept"/>
@@ -2744,7 +2751,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
@@ -2850,7 +2857,7 @@
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
 
-         
+
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
            <c:option value="accept" name="accept"/>
@@ -2865,7 +2872,7 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-         
+
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>

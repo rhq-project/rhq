@@ -152,6 +152,11 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
         Result operationResult = connection.execute(op);
         if (!operationResult.isSuccess()) {
+            // check if the definition is needed -- required==true or not. Only complain for required ones
+            if (definitions.size()==1 && definitions.get(0).isRequired()==false) {
+                return;
+            }
+
             throw new IOException("Operation " + op + " failed: " + operationResult.getFailureDescription());
         }
 

@@ -14,6 +14,7 @@
 
 # source function library
 . /etc/init.d/functions
+lockfile=/var/lock/subsys/jon-agent-ec2
 
 RHQ_AGENT_HOME=/usr/share/rhq-agent-<VERSION>
 export RHQ_AGENT_HOME
@@ -27,44 +28,72 @@ export RHQ_AGENT_PIDFILE_DIR
 RHQ_AGENT_ADDITIONAL_JAVA_OPTS="-Drhq.agent.data-directory=/var/lib/jon-agent/data -Djava.util.prefs.userRoot=/var/lib/jon-agent/prefs"
 export RHQ_AGENT_ADDITIONAL_JAVA_OPTS
 
-function set_server_params() {
+set_server_params() {
     local USER_DATA SERVER_URL SERVER_PORT INSTANCE_ID
-    USER_DATA="$(curl http://169.254.169.254/1.0/user-data/ 2>/dev/null)"
-    INSTANCE_ID="$(curl 169.254.169.254/1.0/meta-data/instance-id 2>/dev/null)"
-    if [ $? != 0 ]; then
-	echo -n $"Unable to retrieve EC2 user data for JON Agent"
-	echo_failure
-        echo
-	exit 1
+
+    ## load initial configuration
+    if [ ! -f /etc/sysconfig/jon-agent-ec2 ]; then
+       curl -s http://169.254.169.254/1.0/user-data/ > /etc/sysconfig/jon-agent-ec2
+       if [ $? != 0 ]; then
+          failure $"Unable to retrieve EC2 user data"
+          echo
+	  exit 1
+       fi
     fi
-    for token in $USER_DATA; do
-	if strstr "$token" "jon.server.url"; then
-	    # remove prefix
-	    SERVER_URL="${token##*jon.server.url=}"
-	    # remove any trailing comma-separated values
-	    SERVER_URL="${SERVER_URL%%,*}"
-	fi
-	if strstr "$token" "jon.server.port"; then
-	    SERVER_PORT="${token##*jon.server.port=}"
-	    SERVER_PORT="${SERVER_PORT%%,*}"
-	fi
-    done
-    if [ -z "$SERVER_URL" ]; then
-	echo -n $"No jon.server.url present in EC2 user data"
-	echo_failure
-	echo
-	exit 1
+    . /etc/sysconfig/jon-agent-ec2
+
+    if [ -z "$JON_AGENT_NAME" ]; then
+       JON_AGENT_NAME="$(curl 169.254.169.254/1.0/meta-data/instance-id 2>/dev/null)"
+       if [ $? != 0 ]; then
+	  failure $"Unable to retrieve EC2 instance id"
+          echo
+	  exit 1
+       fi
     fi
-    RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.name=$INSTANCE_ID"
-    RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.server.bind-address=$SERVER_URL"
-    if [ -n "$SERVER_PORT" ]; then
-	RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.server.bind-port=$SERVER_PORT"
+
+    if [ -z "$JON_SERVER_ADDR" ]; then
+       failure $"JON_SERVER_URL not specified"
+       echo
+       exit 1
     fi
+
+    RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.name=$JON_AGENT_NAME"
+    RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.server.bind-address=$JON_SERVER_ADDR"
+
+    if [ -n "$JON_SERVER_PORT" ]; then
+	RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.server.bind-port=$JON_SERVER_PORT"
+    fi
+
+    if [ -n "$JON_AGENT_ADDR" ]; then
+        RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.communications.connector.bind-address=$JON_AGENT_ADDR"
+    fi
+
+    if [ -n "$JON_AGENT_PORT" ]; then
+        RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.communications.connector.bind-port=$JON_AGENT_PORT"
+    fi
+
+    if [ -n "$JON_AGENT_TOKEN" ]; then
+        RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS -Drhq.agent.security-token='$JON_AGENT_TOKEN'"
+    fi
+
+    if [ -n "$JON_AGENT_OPTS" ]; then
+        RHQ_AGENT_ADDITIONAL_JAVA_OPTS="$RHQ_AGENT_ADDITIONAL_JAVA_OPTS $JON_AGENT_OPTS"
+    fi
+
     export RHQ_AGENT_ADDITIONAL_JAVA_OPTS
 }
 
-if [ "$1" = "start" ]; then
-    set_server_params
-fi
+case "$1" in
+    start|restart)
+        set_server_params
+        touch "$lockfile"
+        ;;
+    stop)
+        rm "$lockfile"
+        ;;
+    cleanconfig)
+        exec $RHQ_AGENT_HOME/bin/rhq-agent.sh --cleanconfig --nostart --daemon
+        ;;
+esac
 
 exec $RHQ_AGENT_HOME/bin/rhq-agent-wrapper.sh "$@"

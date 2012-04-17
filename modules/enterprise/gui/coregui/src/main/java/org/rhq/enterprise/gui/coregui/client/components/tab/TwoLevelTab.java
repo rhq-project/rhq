@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
-
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
@@ -32,8 +32,22 @@ public class TwoLevelTab extends NamedTab {
     private TwoLevelTab actualNext;
     private TwoLevelTab visibleNext;
 
+    /**
+     * Use the more type safe version instead.<br/>
+     * <code>TwoLevelTab(String locatorId, ViewName viewName, String icon)</code>
+     * @param locatorId
+     * @param viewName
+     * @param icon String representation of Icon not as typesafe as IconEnum.
+     */
+    @Deprecated
     public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName, icon);
+
+        layout = new SubTabLayout(locatorId);
+    }
+
+    public TwoLevelTab(String locatorId, ViewName viewName, IconEnum iconEnum) {
+        super(locatorId, viewName, iconEnum.getIcon16x16DisabledPath());
 
         layout = new SubTabLayout(locatorId);
     }

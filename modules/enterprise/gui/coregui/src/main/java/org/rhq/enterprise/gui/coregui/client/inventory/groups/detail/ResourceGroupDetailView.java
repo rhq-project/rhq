@@ -18,14 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
@@ -40,10 +34,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
@@ -71,6 +62,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 // TODO: Re-enable and flesh out Drift support        
 
 /**
@@ -83,7 +79,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
-    public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
+   // public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -163,6 +159,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), new ViewName("Summary",
             MSG.common_title_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, AvailabilityType.UP));
+
         summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity",
             MSG.view_tabs_common_activity()), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline",
@@ -171,7 +168,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory",
-            MSG.view_tabs_common_inventory()), "/images/icons/Inventory_grey_16.png");
+            MSG.view_tabs_common_inventory()), IconEnum.INVENTORY_SUMMARY);
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), new ViewName("Members",
             MSG.view_tabs_common_members()), null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
@@ -182,7 +179,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts",
-            MSG.common_title_alerts()), "/images/icons/Alert_grey_16.png");
+            MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History",
             MSG.view_tabs_common_history()), null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions",
@@ -191,7 +188,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(alertsTab);
 
         monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), new ViewName("Monitoring",
-            MSG.view_tabs_common_monitoring()), "/images/icons/Monitor_grey_16.png");
+            MSG.view_tabs_common_monitoring()), IconEnum.SUSPECT_METRICS);
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs",
             MSG.view_tabs_common_graphs()), null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
@@ -207,14 +204,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events",
-            MSG.view_tabs_common_events()), "/images/icons/Events_grey_16.png");
+            MSG.view_tabs_common_events()), IconEnum.EVENTS);
         this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History",
             MSG.view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations",
-            MSG.common_title_operations()), "/images/icons/Operation_grey_16.png");
+            MSG.common_title_operations()), IconEnum.RECENT_OPERATIONS);
         this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules",
             MSG.view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History",
@@ -223,7 +220,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
-            MSG.common_title_configuration()), "/images/icons/Configure_grey_16.png");
+            MSG.common_title_configuration()), IconEnum.CONFIGURATION_HISTORY);
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), new ViewName("Current",
             MSG.view_tabs_common_current()), null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), new ViewName("History",
@@ -610,7 +607,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         if ("AutoCluster".equals(viewPath.getCurrent().getPath())) {
             super.renderView(viewPath.next());
         } else {
-            // if we are traversing to the Members subtab assume this is happening after a save, 
+            // if we are traversing to the Members subtab assume this is happening after a save,
             // which means the group type and membership may have changed - get it so we refresh everything.
             if ((null != this.groupId) && this.inventoryTab.getName().equals(currentTabName)
                 && this.inventoryMembers.getName().equals(currentSubTabName)) {

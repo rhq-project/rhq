@@ -55,6 +55,18 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         if(!"DOMAIN".equals(mode)) {
             throw new InvalidPluginConfigurationException("Discovered Server is in domain mode, but runtime says " + mode);
         }
+        // Now check product type
+        op = new ReadAttribute(new Address(),"product-name");
+        res = getASConnection().execute(op);
+        String discoveredType = context.getPluginConfiguration().getSimpleValue("productType","AS");
+        String runtimeType = (String) res.getResult();
+        if (runtimeType==null || runtimeType.isEmpty()) {
+            runtimeType = "AS";
+        }
+        if (!discoveredType.equals(runtimeType)) {
+            throw new InvalidPluginConfigurationException("Discovered Servers is of " + discoveredType + " type, but runtime says " + runtimeType);
+        }
+
         return AvailabilityType.UP;
     }
 

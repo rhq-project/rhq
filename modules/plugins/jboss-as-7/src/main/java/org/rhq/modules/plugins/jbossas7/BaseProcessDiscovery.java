@@ -385,8 +385,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         String description;
         if (productName.contains("EAP")) {
             description = "Standalone" + JBossProductType.EAP.FULL_NAME + " server";
-        } else if (productName.contains("EDG")) {
-            description = "Standalone" + JBossProductType.EDG.FULL_NAME + " server";
+        } else if (productName.contains("JDG")) {
+            description = "Standalone" + JBossProductType.JDG.FULL_NAME + " server";
         } else {
             description = context.getResourceType().getDescription();
         }

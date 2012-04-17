@@ -32,7 +32,7 @@ public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6"),
-    EDG("EDG", "JBoss EDG 6", "JBoss Enterprise Data Grid 6"),
+    JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6"),
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6"),
     SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)");
@@ -50,7 +50,7 @@ public enum JBossProductType {
     /**
      * Determines the product type of a JBoss product installation.
      *
-     * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final) 
+     * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
      *
      * @return the product type
      */
@@ -84,7 +84,7 @@ public enum JBossProductType {
             if (slot.equals("eap")) {
                 productType = JBossProductType.EAP;
             } else if (slot.equals("edg")) {
-                productType = JBossProductType.EDG;
+                productType = JBossProductType.JDG;
             } else if (slot.equals("epp")) {
                 productType = JBossProductType.EPP;
             } else if (slot.equals("soa-p")) {
@@ -106,8 +106,8 @@ public enum JBossProductType {
             productType = JBossProductType.AS;
         } else if (homeDirName.contains("-eap-")) {
             productType = JBossProductType.EAP;
-        } else if (homeDirName.contains("-edg-")) {
-            productType = JBossProductType.EDG;
+        } else if (homeDirName.contains("-jdg-")) {
+            productType = JBossProductType.JDG;
         } else if (homeDirName.contains("-epp-")) {
              productType = JBossProductType.EPP;
         } else if (homeDirName.contains("soa-p-")) {
@@ -118,7 +118,7 @@ public enum JBossProductType {
 
         return productType;
     }
-    
+
     @Override
     public String toString() {
         return this.NAME;

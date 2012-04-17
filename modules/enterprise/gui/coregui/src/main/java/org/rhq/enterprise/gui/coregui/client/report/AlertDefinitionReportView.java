@@ -236,12 +236,20 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                         MSG.view_reports_alertDefinitions_resTypeLoadError(), caught);
                                 }
                             });
+
+
+                    } else if (alertDef.getParentId() != null && alertDef.getParentId() == 0) {
+                        // handle "View Group Definition"
+                        int resourceId = alertDef.getResource().getId();
+                        int alertDefId = alertDef.getId();
+                        CoreGUI.goToView(LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId));
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
                         CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef
                             .getResourceGroup()), "Alert", "Definitions")
                             + "/" + groupAlertDef.getId());
                     }
+
                 }
             });
             fields.add(parentField);

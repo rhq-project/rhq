@@ -601,6 +601,7 @@
         </results>
       </operation>
 
+      &serverKindMetrics;
       <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
               displayType="summary"/>
       <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>

@@ -83,30 +83,66 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+        Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for (MeasurementScheduleRequest req : requests) {
+            if (req.getName().startsWith("_skm:"))
+                skmRequests.add(req);
+        }
 
-        for (MeasurementScheduleRequest request: requests) {
+        for (MeasurementScheduleRequest request : requests) {
             if (request.getName().equals("startTime")) {
                 String path = getPath();
-                path = path.replace("server-config","server");
+                path = path.replace("server-config", "server");
                 Address address = new Address(path);
-                address.add("core-service","platform-mbean");
-                address.add("type","runtime");
-                Operation op = new ReadAttribute(address,"start-time");
+                address.add("core-service", "platform-mbean");
+                address.add("type", "runtime");
+                Operation op = new ReadAttribute(address, "start-time");
                 Result res = getASConnection().execute(op);
 
                 if (res.isSuccess()) {
-                    Long startTime= (Long) res.getResult();
-                    MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
+                    Long startTime = (Long) res.getResult();
+                    MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
                     report.addData(data);
                 }
+            } else if (!request.getName().startsWith("_skm:")) {
+                leftovers.add(request);
             }
-           else {
-               leftovers.add(request);
+        }
+        // Now handle the skm (this could go into a common method with BaseServerComponent's impl.
+        if (skmRequests.size() > 0) {
+            Address address = new Address();
+            ReadResource op = new ReadResource(address);
+            op.includeRuntime(true);
+            ComplexResult res = getASConnection().executeComplex(op);
+            if (res.isSuccess()) {
+                Map<String, Object> props = res.getResult();
+
+                for (MeasurementScheduleRequest request : skmRequests) {
+                    String requestName = request.getName();
+                    String realName = requestName.substring(requestName.indexOf(':') + 1);
+                    String val = null;
+                    if (props.containsKey(realName)) {
+                        val = getStringValue(props.get(realName));
+                    }
+
+                    if ("null".equals(val)) {
+                        if (realName.equals("product-name"))
+                            val = "JBoss AS";
+                        else if (realName.equals("product-version"))
+                            val = getStringValue(props.get("release-version"));
+                        else
+                            log.debug("Value for " + realName + " was 'null' and no replacement found");
+                    }
+                    MeasurementDataTrait data = new MeasurementDataTrait(request, val);
+                    report.addData(data);
+                }
+            } else {
+                log.debug("getSKMRequests failed: " + res.getFailureDescription());
             }
         }
 
-       if (!leftovers.isEmpty())
-          super.getValues(report, leftovers);
+        if (!leftovers.isEmpty())
+            super.getValues(report, leftovers);
     }
 
     @Override

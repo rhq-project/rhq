@@ -623,9 +623,11 @@
 
         <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
 
+<!--
         <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
           <c:option-source target="resource" expression="type='JVM Definition' plugin=jboss-as-7"/>
         </c:simple-property>
+-->
 
         <c:group name="children:system-property:name+" displayName="System-properties">
           <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
@@ -3725,7 +3727,7 @@
       <metric property="successful-transaction-count" displayType="summary" measurementType="trendsup" description="Number of successful transactions."/>
 
       <resource-configuration>
-        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" description="Determine if statistics are enabled."/>           
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" description="Determine if statistics are enabled."/>
       </resource-configuration>
 
       <service name="Entity Cache"

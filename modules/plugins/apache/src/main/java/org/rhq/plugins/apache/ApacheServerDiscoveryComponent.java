@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +43,6 @@ import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -292,7 +290,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
 
         if (!isSupportedVersion(binaryInfo.getVersion())) {
-            throw new DiscoveryFailureException("Apache " + binaryInfo.getVersion() + " is not suppported.");
+            throw new DiscoveryFailureException("Apache " + binaryInfo.getVersion() + " is not supported.");
         }
 
         String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
@@ -359,7 +357,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (snmpAddresses != null && snmpAddresses.size() > 0) {
             InetSocketAddress addr = snmpAddresses.get(0);
             int port = addr.getPort();
-            InetAddress host = addr.getAddress() == null ? InetAddress.getLocalHost() : addr.getAddress();
+
+            InetAddress host = ((addr.getAddress() == null) || addr.getAddress().isAnyLocalAddress()) ?
+                    InetAddress.getLocalHost() : addr.getAddress();
 
             pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host
                 .getHostAddress()));
@@ -787,7 +787,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                         port = addr.substring(0, atIdx);
                     }
 
-                    InetSocketAddress address = null;
+                    InetSocketAddress address;
                     if (host != null) {
                         address = new InetSocketAddress(host, Integer.parseInt(port));
                     } else {

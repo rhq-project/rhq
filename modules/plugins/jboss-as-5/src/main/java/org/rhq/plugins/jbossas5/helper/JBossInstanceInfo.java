@@ -33,6 +33,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -72,6 +73,10 @@ public class JBossInstanceInfo {
         this.processInfo = processInfo;
         int i;
         String[] args = this.processInfo.getCommandLine();
+
+        Map<String, String> envVars = this.processInfo.getEnvironmentVariables();
+        printEnvVars(envVars);
+
         for (i = 0; i < args.length; i++) {
             if (args[i].equals(JBOSS_MAIN_CLASS_NAME)) {
                 break;
@@ -84,7 +89,8 @@ public class JBossInstanceInfo {
         System.arraycopy(args, i + 1, jbossArgs, 0, jbossArgs.length);
         processJBossArgs(processInfo.getCurrentWorkingDirectory(), jbossArgs);
         finalizeSysProps();
-        printSysProps();
+
+        printSysProps(args);
     }
 
     public Properties getSystemProperties() {
@@ -312,18 +318,26 @@ public class JBossInstanceInfo {
         }
     }
 
-    private void printSysProps() {
-        if (log.isDebugEnabled()) {
+    private void printEnvVars(Map<String, String> envVars) {
+        log.info("******** Env Vars=" + envVars);
+    }
+
+    private void printSysProps(String[] commandLine) {
+        if (null != commandLine) {
+            log.info("******** commandLine=" + Arrays.toString(commandLine));
+        }
+        //if (log.isDebugEnabled()) {
             printSysProp(JBossProperties.HOME_DIR);
             printSysProp(JBossProperties.SERVER_HOME_DIR);
             printSysProp(JBossProperties.SERVER_NAME);
             printSysProp(JBossProperties.BIND_ADDRESS);
-        }
+        //}
     }
 
     private void printSysProp(String name) {
         String value = this.sysProps.getProperty(name);
         log.debug(name + "=" + ((value != null) ? "\"" + value + "\"" : null));
+        log.info(name + "=" + ((value != null) ? "\"" + value + "\"" : null));
     }
 
     /**

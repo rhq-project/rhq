@@ -950,6 +950,20 @@
                                             (e.g. /opt/jboss-5.2.0.GA/bin/run.sh); if the path is not absolute,
                                             then it will be resolved relative to {jbossHomeDir};
                                             defaults to 'bin/run.sh' on UNIX or 'bin\run.bat' on Windows."/>
+               <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables"
+                               required="false" 
+                               type="longString" 
+                               default="" 
+                               description="The variables that the Start and Restart operations will add to the environment 
+                                            of the server start script. Each name=value pair should be on a new line.
+                                            For example: JAVA_OPTS=-Xms=128M" /> 
+               <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" 
+                               required="false" 
+                               type="longString" 
+                               default="" 
+                               description="The arguments that the Start and Restart operations will pass to the server
+                                            start script. Each argument should be on a new line.
+                                            For example: -b 127.0.0.2" />                                            
                <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
                                description="The path to the script used by the Shut Down operation
                                             to shut down this JBossAS server

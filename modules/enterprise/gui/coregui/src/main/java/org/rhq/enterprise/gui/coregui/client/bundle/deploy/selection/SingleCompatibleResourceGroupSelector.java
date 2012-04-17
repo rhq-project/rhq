@@ -55,7 +55,21 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
 
         @Override
         protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
-            ResourceGroupCriteria result = super.getFetchCriteria(request);
+            // We don't want to use the superclass's getFetchCriteria because our selected value
+            // is either a Integer (when a real group has been selected) or a String (when a partial search string is selected).
+            // So, here we create our own criteria. See BZ 802528.
+            ResourceGroupCriteria result = new ResourceGroupCriteria();
+            String filterString = getFilter(request, "id", String.class);
+            if (filterString != null) {
+                try {
+                    Integer id = new Integer(filterString);
+                    result.addFilterId(id);
+                } catch (Exception e) {
+                    result.addFilterName(filterString);
+                }
+            }
+
+            // we only want to show those groups that can have bundles deployed to them
             result.addFilterBundleTargetableOnly(true);
             return result;
         }

@@ -274,8 +274,18 @@ public class ASConnection {
                     throw new InvalidPluginConfigurationException(
                             message);
                 } else {
-                    log.warn("Response body for " + operation + " was empty and response code was " + responseCode
+                    if (responseBody==null || responseBody.isEmpty()) {
+                        log.warn("Response body for " + operation + " was empty and response code was " + responseCode
                         + " (" + conn.getResponseMessage() + ").");
+                    } else {
+                        if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) { // management resource not found or not readable or no known child-type
+                            if (log.isDebugEnabled())
+                                log.debug("Requested management resource not found " + operation.getAddress());
+                        }
+                        else {
+                            log.warn("We got a " + responseCode + " with the following response body back: " + responseBody);
+                        }
+                    }
                 }
 
             } catch (IOException ioe) {

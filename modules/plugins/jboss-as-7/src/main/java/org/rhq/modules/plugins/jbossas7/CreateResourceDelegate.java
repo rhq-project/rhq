@@ -45,8 +45,21 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
     public CreateResourceReport createResource(CreateResourceReport report) {
         report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
         Address createAddress = new Address(this.address);
-        createAddress.add(report.getPluginConfiguration().getSimpleValue("path", ""),
-            report.getUserSpecifiedResourceName());
+
+        String path = report.getPluginConfiguration().getSimpleValue("path", "");
+        String resourceName;
+        if (!path.contains("=")) {
+            //this is not a singleton subsystem
+            //resources like  example=test1 and example=test2 can be created
+            resourceName = report.getUserSpecifiedResourceName();
+        } else {
+            //this is a request to create a true singleton subsystem
+            //both the path and the name are set at resource level configuration
+            resourceName = path.substring(path.indexOf('=') + 1);
+            path = path.substring(0, path.indexOf('='));
+        }
+
+        createAddress.add(path, resourceName);
 
         Operation op = new Operation("add", createAddress);
         for (Property prop : report.getResourceConfiguration().getProperties()) {

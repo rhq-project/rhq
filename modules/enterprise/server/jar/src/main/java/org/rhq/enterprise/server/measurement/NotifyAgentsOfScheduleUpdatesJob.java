@@ -1,16 +1,16 @@
 package org.rhq.enterprise.server.measurement;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
-import org.quartz.SchedulerException;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.SchedulerException;
+
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AbstractStatefulJob;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.common.EntityContext;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Job that asynchronously notifies agents of metric schedule updates.

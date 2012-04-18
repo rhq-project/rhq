@@ -751,6 +751,24 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return measurementScheduleManager.findSchedulesByCriteria(subject, criteria);
     }
 
+    public void disableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        boolean updateExistingSchedules) {
+        measurementScheduleManager.disableSchedulesForResourceType(subject, measurementDefinitionIds,
+            updateExistingSchedules);
+    }
+
+    public void enableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        boolean updateExistingSchedules) {
+        measurementScheduleManager.enableSchedulesForResourceType(subject, measurementDefinitionIds,
+            updateExistingSchedules);
+    }
+
+    public void updateSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        long collectionInterval, boolean updateExistingSchedules) {
+        measurementScheduleManager.updateSchedulesForResourceType(subject, measurementDefinitionIds,
+            collectionInterval, updateExistingSchedules);
+    }
+
     //MEASUREMENTSCHEDULEMANAGER: END ----------------------------------
 
     //OPERATIONMANAGER: BEGIN ----------------------------------

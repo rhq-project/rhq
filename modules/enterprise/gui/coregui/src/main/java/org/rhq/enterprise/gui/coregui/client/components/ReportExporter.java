@@ -175,7 +175,7 @@ public class ReportExporter {
                 operationRequestStatusBuffer.append(operationRequestStatus);
                 operationRequestStatusBuffer.append(",");
             }
-            addQueryParameter("operationRequestStatus", operationRequestStatusBuffer.toString().substring(0,operationRequestStatusBuffer.toString().length() -1));
+            addQueryParameter("status", operationRequestStatusBuffer.toString().substring(0,operationRequestStatusBuffer.toString().length() -1));
         }
 
         if(!isEmpty(alertPriorityFilters)){

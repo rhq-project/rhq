@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,7 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.apache.util.PluginUtility;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -71,6 +72,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  */
 public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
+
     private static final Log log = LogFactory.getLog(ApacheVirtualHostServiceComponent.class);
 
     public static final String URL_CONFIG_PROP = "url";
@@ -134,7 +136,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public AvailabilityType getAvailability() {
         if (url != null) {
-            return WWWUtils.isAvailable(url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            int timeout = PluginUtility.getAvailabilityFacetTimeout();
+            return WWWUtils.isAvailable(url, timeout) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } else {
             try {
                 //we don't need the SNMP connection to figure out the index on which the SNMP
@@ -629,4 +632,5 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
         return parent.isAugeasEnabled();
     }
+
 }

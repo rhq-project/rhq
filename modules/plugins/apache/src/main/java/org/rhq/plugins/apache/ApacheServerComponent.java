@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,7 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.PluginUtility;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
@@ -283,7 +284,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         try {
             if (this.url != null) {
                 long t1 = System.currentTimeMillis();
-                available = WWWUtils.isAvailable(this.url);
+                int timeout = PluginUtility.getAvailabilityFacetTimeout();
+                available = WWWUtils.isAvailable(this.url, timeout);
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
                 available = getSNMPSession().ping();
@@ -1048,4 +1050,5 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     ResourceContext getResourceContext() {
         return this.resourceContext;
     }
+
 }

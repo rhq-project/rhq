@@ -125,6 +125,10 @@ public class WWWUtils {
         try {
             int readTimeout = (timeout > 0) ? (timeout - connectDuration) : 0;
             connection.setReadTimeout(readTimeout);
+            if (connection.getReadTimeout() != readTimeout) {
+                LOG.debug("Failed to set read timeout on URLConnection for [" + httpURL
+                        + "] - this most likely means we're running in a non-standard JRE.");
+            }
 
             // Now actually send the request and read the response.
             long readStartTime = System.currentTimeMillis();

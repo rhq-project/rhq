@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -122,8 +122,8 @@ public class ProcessInfo {
                     handleSigarCallException(e, "getProcArgs");
                 }
 
-                this.name = (procExe != null) ? procExe.getName() : UNKNOWN;
-                this.baseName = determineBaseName(procExe, procState);
+                this.name = determineName(procArgs, procExe, procState);
+                // NOTE: for the sake of efficiency, this.baseName is lazily initialized by its getter.
                 this.commandLine = (procArgs != null) ? procArgs : new String[0];
 
                 this.procEnv = null;
@@ -234,27 +234,19 @@ public class ProcessInfo {
         return File.separatorChar == '\\';
     }
 
-    private String determineBaseName(ProcExe exe, ProcState state) {
-        String base = null;
-
-        if (exe != null) {
-            base = exe.getName();
-
-            if (base != null) {
-                int slash = Math.max(base.lastIndexOf('\\'), base.lastIndexOf('/'));
-                if ((slash > -1) && ((slash + 1) < base.length())) {
-                    base = base.substring(slash + 1);
-                }
-            }
+    private String determineName(String[] procArgs, ProcExe procExe, ProcState procState) {
+        String name;
+        if ((procArgs != null) && (procArgs.length != 0)) {
+            name = procArgs[0];
+        } else if ((procExe != null) && (procExe.getName() != null)) {
+            name = procExe.getName();
+        } else if ((procState != null) && (procState.getName() != null)) {
+            String stateName = procState.getName();
+            name = ((stateName.indexOf(File.separatorChar) >= 0) && (new File(stateName).exists())) ? stateName : UNKNOWN;
+        } else {
+            name = UNKNOWN;
         }
-
-        if (base == null) {
-            if ((state != null) && (state.getName() != null)) {
-                base = state.getName();
-            }
-        }
-
-        return (base != null) ? base : UNKNOWN;
+        return name;
     }
 
     public long getPid() {
@@ -286,6 +278,9 @@ public class ProcessInfo {
      * @see    #getCommandLine()
      */
     public String getBaseName() {
+        if (baseName == null) {
+            baseName = (getName() != null) ? new File(getName()).getName() : UNKNOWN;
+        }
         return baseName;
     }
 
@@ -298,7 +293,7 @@ public class ProcessInfo {
             return Collections.emptyMap();
         }
         if (this.environmentVariables == null) {
-            this.environmentVariables = new HashMap(this.procEnv.size());
+            this.environmentVariables = new HashMap<String, String>(this.procEnv.size());
             SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
             boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
             if (isWindows) {

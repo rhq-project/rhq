@@ -48,7 +48,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
@@ -56,10 +55,8 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
  * Test some measurement schedule handling
  * 
  * @author Jay Shaughnessy
- * @author Heiko Rupp
  */
-
-public class MeasurementScheduleManagerTest extends AbstractEJB3Test {
+public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleManagerTest {
 
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
@@ -69,11 +66,13 @@ public class MeasurementScheduleManagerTest extends AbstractEJB3Test {
     private MeasurementDefinition definitionCt1;
     private ResourceType theResourceType;
     private Agent theAgent;
+    private MeasurementScheduleTestServerCommunicationsService testCommService;
 
     @BeforeMethod
     public void beforeMethod() {
         try {
             prepareScheduler();
+            testCommService = (MeasurementScheduleTestServerCommunicationsService) prepareForTestAgents();
 
             this.measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -121,6 +120,7 @@ public class MeasurementScheduleManagerTest extends AbstractEJB3Test {
         } finally {
             try {
                 unprepareScheduler();
+                unprepareForTestAgents();
             } catch (Exception e) {
             }
 
@@ -224,7 +224,102 @@ public class MeasurementScheduleManagerTest extends AbstractEJB3Test {
         } finally {
             commitAndClose(em);
         }
+    }
 
+    @Test
+    public void testBug811696() {
+
+        EntityManager em = null;
+
+        try {
+            em = beginTx();
+
+            setupResources(em);
+            long defaultInterval = definitionCt1.getDefaultInterval();
+            long updatedInterval = defaultInterval * 2;
+
+            // first, establish a schedule for the test resource
+            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
+            schedule1.setInterval(defaultInterval);
+            em.persist(schedule1);
+            definitionCt1.addSchedule(schedule1);
+            resource1.addSchedule(schedule1);
+            resource1 = em.merge(resource1);
+
+            commitAndClose(em);
+            em = null;
+
+            // Test interval update of metrics at the template level
+            testCommService.init();
+
+            testCommService.setExpectedInterval(updatedInterval);
+            testCommService.setExpectedIsEnabled(true);
+
+            measurementScheduleManager.updateSchedulesForResourceType(overlord, new int[] { definitionCt1.getId() },
+                updatedInterval, true);
+            Assert.assertTrue(testCommService.isTested());
+            if (testCommService.hasFailures()) {
+                Assert.fail(testCommService.getFailures().get(0));
+            }
+
+            Set<ResourceMeasurementScheduleRequest> resScheds = measurementScheduleManager
+                .findSchedulesForResourceAndItsDescendants(new int[] { resource1.getId() }, false);
+            Assert.assertEquals(1, resScheds.size());
+            ResourceMeasurementScheduleRequest rmsr = resScheds.iterator().next();
+            Set<MeasurementScheduleRequest> scheds = rmsr.getMeasurementSchedules();
+            Assert.assertEquals(1, scheds.size());
+            MeasurementScheduleRequest msr = scheds.iterator().next();
+            Assert.assertEquals(updatedInterval, msr.getInterval());
+            Assert.assertEquals(true, msr.isEnabled());
+
+            // Test disable of metrics at the template level, this should have no effect on the interval in the client
+            // or in the db
+            testCommService.init();
+
+            testCommService.setExpectedInterval(updatedInterval);
+            testCommService.setExpectedIsEnabled(false);
+
+            measurementScheduleManager.disableSchedulesForResourceType(overlord, new int[] { definitionCt1.getId() },
+                true);
+            Assert.assertTrue(testCommService.isTested());
+
+            resScheds = measurementScheduleManager.findSchedulesForResourceAndItsDescendants(
+                new int[] { resource1.getId() }, false);
+            Assert.assertEquals(1, resScheds.size());
+            rmsr = resScheds.iterator().next();
+            scheds = rmsr.getMeasurementSchedules();
+            Assert.assertEquals(1, scheds.size());
+            msr = scheds.iterator().next();
+            Assert.assertEquals(updatedInterval, msr.getInterval());
+            Assert.assertEquals(false, msr.isEnabled());
+
+            // Test enable of metrics at the template level, this should have no effect on the interval in the client
+            // or in the db
+            testCommService.init();
+
+            testCommService.setExpectedInterval(updatedInterval);
+            testCommService.setExpectedIsEnabled(false);
+
+            measurementScheduleManager.enableSchedulesForResourceType(overlord, new int[] { definitionCt1.getId() },
+                true);
+            Assert.assertTrue(testCommService.isTested());
+
+            resScheds = measurementScheduleManager.findSchedulesForResourceAndItsDescendants(
+                new int[] { resource1.getId() }, false);
+            Assert.assertEquals(1, resScheds.size());
+            rmsr = resScheds.iterator().next();
+            scheds = rmsr.getMeasurementSchedules();
+            Assert.assertEquals(1, scheds.size());
+            msr = scheds.iterator().next();
+            Assert.assertEquals(updatedInterval, msr.getInterval());
+            Assert.assertEquals(true, msr.isEnabled());
+
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+
+        } finally {
+            commitAndClose(em);
+        }
     }
 
     /**

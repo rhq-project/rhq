@@ -1525,7 +1525,7 @@
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
         <c:group name="child:ssl=configuration" displayName="SSL Configuration">
-          <c:map-property name="Configuration" readOnly="false" required="false">
+          <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
             <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
             <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
             <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
@@ -1566,7 +1566,7 @@
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique virtual host name"/>
 
         <c:group name="child:sso=configuration" displayName="The SSO configuration for this virtual server.">
-          <c:map-property name="Configuration" readOnly="false" required="false">
+          <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
             <c:simple-property name="cache-container" required="false" type="string" readOnly="false"
                                description="Enables clustered SSO using the specified clustered cache container.">
               <c:option-source target="resource" expression="type='Cache Container' plugin=jboss-as-7"/>

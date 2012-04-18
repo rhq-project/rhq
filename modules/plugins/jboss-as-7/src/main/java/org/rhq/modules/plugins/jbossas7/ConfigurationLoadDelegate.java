@@ -181,8 +181,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             if (propDef instanceof PropertyDefinitionList && (propertyName.startsWith("*"))) {
                 propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
 
-                String innerPropdefName = propDef.getName();
-
                 if (!(propDef instanceof PropertyDefinitionMap)) {
                     log.error("Embedded child is not a map");
                     return;
@@ -208,6 +206,12 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 }
 
                 config.put(list);
+            } else if (propDef instanceof PropertyDefinitionMap && (propertyName.startsWith("*"))) {
+                // a map in a group with name child:type=name
+                Map<String, Object> mapResult = results;
+                PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, mapResult,
+                    propertyName);
+                config.put(propertyMap);
 
             } else { // standard case
 

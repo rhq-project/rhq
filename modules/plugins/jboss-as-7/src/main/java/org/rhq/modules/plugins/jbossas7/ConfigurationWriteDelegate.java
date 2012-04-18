@@ -46,6 +46,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
@@ -144,7 +145,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address);
                 }
-            } if (groupName.startsWith("child:")) { // one named child resource
+            }
+            if (groupName.startsWith("child:")) { // one named child resource
                 String subPath = groupName.substring("child:".length());
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
@@ -153,8 +155,37 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 address1.addSegment(subPath);
 
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
-                for (PropertyDefinition def : definitions) {
-                    updateProperty(conf,cop,def, address1);
+                //  if this is a single map (not list of maps), then unwind
+                if (definitions.size() == 1 && definitions.get(0) instanceof PropertyDefinitionMap) {
+
+                    PropertyDefinitionMap definitionMap = (PropertyDefinitionMap) definitions.get(0);
+                    String mapName = definitionMap.getName();
+
+                    if (mapName.endsWith("+")) {
+                        // check if this exists already
+                        Operation testOp = new ReadResource(address1);
+                        Result res = connection.execute(testOp);
+                        if (!res.isSuccess()) {
+                            // and try to add it
+                            Operation add = new Operation("add", address1);
+                            res = connection.execute(add);
+                            if (!res.isSuccess()) {
+                                // Not much we can do here when the add fails
+                                log.error("Adding of node " + address1 + " failed");
+                            }
+                        }
+                    }
+
+                    definitions = definitionMap.getPropertyDefinitions();
+                    PropertyMap map = conf.getMap(mapName);
+                    for (PropertyDefinition def : definitions) {
+                        createWriteAttribute(cop, address1, def, map.get(def.getName()));
+                    }
+
+                } else {
+                    for (PropertyDefinition def : definitions) {
+                        updateProperty(conf, cop, def, address1);
+                    }
                 }
             } // TODO handle attribute: case
         }
@@ -220,26 +251,31 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // Normal cases
             Property prop = conf.get(propDefName);
 
-            if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
-                createWriteAttributePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef,
-                    baseAddress);
-            }
-            else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
-                createWriteAttributePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef,
-                    baseAddress);
-            }
-            else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
-                createWriteAttributePropertyMap(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef, baseAddress);
-            }
-            else {
-                String s = "Property and definition are not matching:\n";
-                s += "Property: " + prop + "\n";
-                s += "PropDef : " + propDef;
-                throw new IllegalArgumentException(s);
-            }
+            createWriteAttribute(cop, baseAddress, propDef, prop);
         }
     }
 
+    private void createWriteAttribute(CompositeOperation cop, Address baseAddress, PropertyDefinition propDef,
+                                      Property prop)
+    {
+        if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
+            createWriteAttributePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef,
+                baseAddress);
+        }
+        else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
+            createWriteAttributePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef,
+                baseAddress);
+        }
+        else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
+            createWriteAttributePropertyMap(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef, baseAddress);
+        }
+        else {
+            String s = "Property and definition are not matching:\n";
+            s += "Property: " + prop + "\n";
+            s += "PropDef : " + propDef;
+            throw new IllegalArgumentException(s);
+        }
+    }
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                                 Address address, List<String> existingPropNames) {
@@ -347,7 +383,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     /**
      * Simple property parsing.
-     * 
+     *
      * @param property raw simple property
      * @param propertyDefinition property definition
      * @return parsed simple property
@@ -390,7 +426,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     /**
      * List property parsing.
-     * 
+     *
      * @param property raw list property
      * @param propertyDefinition property definition
      * @return parsed list
@@ -427,7 +463,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     /**
      * Map property parsing.
-     * 
+     *
      * @param property raw map property
      * @param propertyDefinition property definition
      * @return parsed map
@@ -450,7 +486,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     /**
      * Collapsed map property parsing.
-     * 
+     *
      * @param property raw map property
      * @param propertyDefinition property definition
      * @return parsed map
@@ -487,7 +523,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     /**
      * Simple map property parsing.
-     * 
+     *
      * @param property raw map property
      * @param propertyDefinition property definition
      * @return parsed map
@@ -557,7 +593,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
      * Strip :number from the property name.
      * The post-fixed number was added in the descriptor as unique identifier but it is not
      * needed (and will result in an error) when writing the property back to AS configuration.
-     * 
+     *
      * @param name property name
      * @return
      */

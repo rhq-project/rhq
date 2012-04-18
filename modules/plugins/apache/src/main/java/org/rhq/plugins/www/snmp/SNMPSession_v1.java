@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -51,8 +51,6 @@ import org.snmp4j.util.TreeUtils;
  * @author Ian Springer
  */
 class SNMPSession_v1 implements SNMPSession {
-    static final int DEFAULT_RETRIES = 1;
-    static final int DEFAULT_TIMEOUT = 10000;
 
     protected static Snmp session;
 
@@ -85,10 +83,12 @@ class SNMPSession_v1 implements SNMPSession {
      * @param  host      host name or IP address of SNMP agent
      * @param  port      TCP port of SNMP agent
      * @param  community SNMP community of SNMP agent
+     * @param  timeout   the timeout, in milliseconds, for requests
+     * @param  retries   the number of times to retry requests that have timed out
      *
      * @throws SNMPException on error
      */
-    void init(String host, int port, String community) throws SNMPException {
+    void init(String host, int port, String community, long timeout, int retries) throws SNMPException {
         if (session == null) {
             session = initSession();
         }
@@ -98,8 +98,8 @@ class SNMPSession_v1 implements SNMPSession {
         this.target.setAddress(address);
         this.target.setCommunity(new OctetString(community));
         this.target.setVersion(this.version);
-        this.target.setRetries(DEFAULT_RETRIES);
-        this.target.setTimeout(DEFAULT_TIMEOUT);
+        this.target.setRetries(retries);
+        this.target.setTimeout(timeout);
     }
 
     public void close() {
@@ -184,34 +184,24 @@ class SNMPSession_v1 implements SNMPSession {
             PDU pdu = createPDU(PING_OID, PDU.GETNEXT);
             response = sendRequest(pdu, PING_MIB_NAME);
         } catch (SNMPException e) {
-            log.debug("Error while pinging SNMP " + this.version + " agent at " + this
-                + ". SNMP GETNEXT request for iso(1) failed - " + e);
+            if (e instanceof SNMPTimeoutException) {
+                long timeoutMillis = target.getTimeout() * (target.getRetries() + 1);
+                log.debug("Timed out after " + timeoutMillis + " while pinging " + this.version + " agent at " + this
+                                + ".");
+            } else {
+                log.debug("Error while pinging SNMP " + this.version + " agent at " + this
+                    + ". SNMP GETNEXT request for iso(1) failed: " + e);
+            }
             return false;
         }
 
         boolean errorOccurred = (response.getErrorStatus() != PDU.noError);
         if (errorOccurred) {
             log.error("Error while pinging SNMP " + this.version + " agent at " + this
-                + ". SNMP GETNEXT request for iso(1) failed - " + response.getErrorStatusText());
+                + ". SNMP GETNEXT request for iso(1) failed: " + response.getErrorStatusText());
         }
 
         return !errorOccurred;
-    }
-
-    public long getTimeout() {
-        return GETBULK_MAX_REPETITIONS * this.target.getTimeout();
-    }
-
-    public void setTimeout(long timeout) {
-        this.target.setTimeout(timeout / GETBULK_MAX_REPETITIONS);
-    }
-
-    public int getRetries() {
-        return this.target.getRetries();
-    }
-
-    public void setRetries(int retries) {
-        this.target.setRetries(retries);
     }
 
     @Override
@@ -249,22 +239,24 @@ class SNMPSession_v1 implements SNMPSession {
 
     @NotNull
     private PDU sendRequest(PDU request, String mibName) throws SNMPException {
+        String requestType = PDU.getTypeString(request.getType());
         ResponseEvent responseEvent;
         try {
             responseEvent = session.send(request, this.target);
         } catch (IOException e) {
-            throw new SNMPException("Failed to send request for [" + mibName + "]", e);
+            throw new SNMPException("Failed to send " + requestType + " request for [" + mibName + "]", e);
         }
 
         if (responseEvent == null) {
-            throw new SNMPException("No response to request for [" + mibName + "].");
+            throw new SNMPException("No response to " + requestType + " request for [" + mibName + "].");
         }
 
         PDU response = responseEvent.getResponse();
         if (response == null) {
-            throw new SNMPException("Request for [" + mibName + "] timed out.");
+            throw new SNMPTimeoutException(requestType + " request for [" + mibName + "] timed out.");
         }
 
         return response;
     }
+
 }

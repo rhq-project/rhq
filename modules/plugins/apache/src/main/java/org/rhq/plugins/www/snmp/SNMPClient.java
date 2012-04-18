@@ -61,9 +61,6 @@ public class SNMPClient {
 
     private int sessionCacheExpire = CACHE_EXPIRE_DEFAULT;
 
-    private static final int SESSION_TIMEOUT = 500;
-    private static final int SESSION_RETRIES = 1;
-
     // NOTE: We do *not* use a leading slash, since ClassLoader.getResourceAsStream() does not work if there is a one.
     private static final String OIDS_PROPERTIES_RESOURCE_PATH = "org/rhq/plugins/apache/oids.properties";
 
@@ -206,7 +203,8 @@ public class SNMPClient {
         }
     }
 
-    public SNMPSession getSession(String host, Integer port, String community, SNMPVersion version)
+    public SNMPSession getSession(String host, Integer port, String community, SNMPVersion version, long timeout,
+                                  int retries)
         throws SNMPException {
         SNMPSession session;
 
@@ -251,13 +249,21 @@ public class SNMPClient {
             throw new SNMPException("Invalid Community: '" + community + "': whitespace is not permitted");
         }
 
+        if (timeout <= 0) {
+            throw new SNMPException("Invalid Timeout: '" + timeout + "': must be a positive number");
+        }
+
+        if (retries < 0) {
+            throw new SNMPException("Invalid Retries: '" + timeout + "': must be greater than or equal to 0");
+        }
+
         try {
             session = startSession(version);
 
             switch (version) {
             case V1:
             case V2C: {
-                ((SNMPSession_v1) session).init(host, port, community);
+                ((SNMPSession_v1) session).init(host, port, community, timeout, retries);
                 break;
             }
 
@@ -275,14 +281,9 @@ public class SNMPClient {
             }
             }
 
-            //should be enough for properly functioning SNMP
-            //and not too long for one that is not functioning at all
-            session.setTimeout(SESSION_TIMEOUT);
-            session.setRetries(SESSION_RETRIES);
-            log.info("Initialized SNMP session for agent at " + ip + ":" + port);
+            log.info("Initialized SNMP session for agent at " + ip + ":" + port + ".");
         } catch (SNMPException e) {
-            String msg = "Failed to initialize snmp session";
-            throw new SNMPException(msg, e);
+            throw new SNMPException("Failed to initialize SNMP session for agent at " + ip + ":" + port + ".", e);
         }
 
         session = SNMPSessionCache.newInstance(session, this.sessionCacheExpire);

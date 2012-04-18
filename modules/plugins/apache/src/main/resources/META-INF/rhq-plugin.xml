@@ -274,15 +274,35 @@
                              description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX" default="THIS SHOULD BE AUTO-DISCOVERED"/>
          <c:simple-property name="url" displayName="URL" required="false"
                             description="The http or https URL that will be used to check availability for this Apache
-                                server; if not set, availablity will be determined based on whether plugin can connect
+                                server; if not set, availability will be determined based on whether plugin can connect
                                 to the Apache server's SNMP agent. Note that SSL certificate validation is disabled
                                 during availability checks if this is an HTTPS URL."/>
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
                             description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
+
          <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
-                            description="the UDP port of the Apache SNMP agent (typically '1610')"/>
+                            description="the UDP port of the Apache SNMP agent (typically '1610')">
+           <c:constraint>
+             <c:integer-constraint minimum="1" maximum="65535"/>
+           </c:constraint>
+         </c:simple-property>
+
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
+
+         <c:simple-property name="snmpRequestTimeout" displayName="SNMP Request Timeout" type="long" default="2000" required="false"
+                            description="the timeout, in milliseconds, for requests to the Apache SNMP agent; defaults to 2000">
+           <c:constraint>
+             <c:integer-constraint minimum="100"/>
+           </c:constraint>
+         </c:simple-property>
+
+         <c:simple-property name="snmpRequestRetries" displayName="SNMP Request Retries" type="integer" default="1" required="false"
+                            description="the number of times a request that has timed out should be retried; defaults to 1">
+           <c:constraint>
+             <c:integer-constraint minimum="0"/>
+           </c:constraint>
+         </c:simple-property>
 
          <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
             <c:description>

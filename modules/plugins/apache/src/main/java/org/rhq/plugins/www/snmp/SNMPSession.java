@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * class that implements this interface.
  */
 public interface SNMPSession {
+
     /**
      * Retrieves the variable with the the specified MIB name or OID.
      *
@@ -99,35 +100,8 @@ public interface SNMPSession {
     boolean ping();
 
     /**
-     * Get the timeout value for this session.
-     *
-     * @return the timeout value for this session
-     */
-    long getTimeout();
-
-    /**
-     * Set the timeout value for this session.
-     *
-     * @param timeout the timeout value for this session
-     */
-    void setTimeout(long timeout);
-
-    /**
-     * Get the retries value for this session.
-     *
-     * @return the retries value for this session
-     */
-    int getRetries();
-
-    /**
-     * Set the retries value for this session.
-     *
-     * @param retries the retries value for this session
-     */
-    void setRetries(int retries);
-
-    /**
      * Closes the session and all underlying resources.
      */
     void close();
+
 }

@@ -120,6 +120,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST = "snmpAgentHost";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT = "snmpAgentPort";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_COMMUNITY = "snmpAgentCommunity";
+    public static final String PLUGIN_CONFIG_PROP_SNMP_REQUEST_TIMEOUT = "snmpRequestTimeout";
+    public static final String PLUGIN_CONFIG_PROP_SNMP_REQUEST_RETRIES = "snmpRequestRetries";
 
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH = "errorLogFilePath";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED = "errorLogEventsEnabled";
@@ -137,6 +139,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
     public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
     public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
+
+    private static final long DEFAULT_SNMP_REQUEST_TIMEOUT = 2000L;
+    private static final int DEFAULT_SNMP_REQUEST_RETRIES = 1;
 
     public static final String AUXILIARY_INDEX_PROP = "_index";
 
@@ -169,7 +174,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private ApacheServerOperationsDelegate operationsDelegate;
 
     public void start(ResourceContext<PlatformComponent> resourceContext) throws Exception {
-        log.info("Initializing server component for server [" + resourceContext.getResourceKey() + "]...");
+        log.info("Initializing Resource component for Apache Server [" + resourceContext.getResourceKey() + "]...");
+
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
@@ -261,6 +267,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     }
 
     public void stop() {
+        this.url = null;
         stopEventPollers();
         if (this.snmpClient != null) {
             this.snmpClient.close();
@@ -599,7 +606,11 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             String portString = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT).getStringValue();
             int port = Integer.valueOf(portString);
             String community = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_SNMP_AGENT_COMMUNITY).getStringValue();
-            snmpSession = snmpClient.getSession(host, port, community, SNMPClient.SNMPVersion.V2C);
+            String timeoutString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_SNMP_REQUEST_TIMEOUT, null);
+            long timeout = (timeoutString != null) ? Long.parseLong(timeoutString) : DEFAULT_SNMP_REQUEST_TIMEOUT;
+            String retriesString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_SNMP_REQUEST_RETRIES, null);
+            int retries = (retriesString != null) ? Integer.parseInt(retriesString) : DEFAULT_SNMP_REQUEST_RETRIES;
+            snmpSession = snmpClient.getSession(host, port, community, SNMPClient.SNMPVersion.V2C, timeout, retries);
         } catch (SNMPException e) {
             throw new Exception("Error getting SNMP session: " + e.getMessage(), e);
         }

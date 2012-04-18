@@ -364,4 +364,3 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         }
     }
 }
-

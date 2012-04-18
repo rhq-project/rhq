@@ -57,7 +57,7 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public OperationAgentService operationService;
     public SupportAgentService supportService;
 
-    private Map<Agent, AgentClient> agentClients = new HashMap<Agent, AgentClient>();
+    protected Map<Agent, AgentClient> agentClients = new HashMap<Agent, AgentClient>();
 
     public TestServerCommunicationsService() {
     }

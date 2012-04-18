@@ -26,7 +26,6 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -44,7 +43,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
  * @author Heiko W. Rupp
  */
 @Local
-public interface MeasurementScheduleManagerLocal {
+public interface MeasurementScheduleManagerLocal extends MeasurementScheduleManagerRemote {
     /**
      * Given a resource ID, this will return all schedule collections for all of the resource's measurements, including
      * all measurements for the resource's children. This will also create schedules for resources if they do not
@@ -109,6 +108,8 @@ public interface MeasurementScheduleManagerLocal {
      * @param subject
      * @param measurementDefinitionIds
      * @param updateSchedules TODO
+     * 
+     * @Deprecated portal-war
      */
     void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         boolean updateSchedules);
@@ -121,6 +122,8 @@ public interface MeasurementScheduleManagerLocal {
      * must have global inventory and setting permissions to execute this.</p>
      *
      * @param subject user that must have global inventory and setting rights
+     * 
+     * @deprecated portal-war
      */
     void disableAllDefaultCollections(Subject subject);
 
@@ -133,6 +136,8 @@ public interface MeasurementScheduleManagerLocal {
      * must have global inventory and setting permissions to execute this.</p>
      *
      * @param subject user that must have global inventory and setting rights
+     * 
+     * @deprecated portal-war
      */
     void disableAllSchedules(Subject subject);
 
@@ -150,6 +155,8 @@ public interface MeasurementScheduleManagerLocal {
      *                                 should also be >=30000, since 30s is the minimum allowed interval; if
      *                                 it is not, 30000 will be used instead of the specified interval
      * @param updateExistingSchedules  if true, then existing schedules for this definition will also be updated.
+     * 
+     * @deprecated portal-war
      */
     void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         long collectionInterval, boolean updateExistingSchedules);
@@ -165,9 +172,9 @@ public interface MeasurementScheduleManagerLocal {
      * @param enable whether to enable or disable the measurement definition
      * @param updateExistingSchedules whether to accordingly update the existing schedules
      */
-    void updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
-        long collectionInterval, boolean enable, boolean updateExistingSchedules);
-    
+    void updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(Subject subject,
+        int[] measurementDefinitionIds, long collectionInterval, boolean enable, boolean updateExistingSchedules);
+
     /**
      * Enables all collection schedules attached to the given auto group whose schedules are based off the given
      * definitions. This does not enable the "templates" (aka definitions). If the passed group does not exist an
@@ -209,6 +216,8 @@ public interface MeasurementScheduleManagerLocal {
      * @param measurementDefinitionIds
      * @param parentResourceId
      * @param childResourceType
+     * 
+     * @deprecated portal-war
      */
     void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
@@ -220,6 +229,8 @@ public interface MeasurementScheduleManagerLocal {
      * @param measurementDefinitionIds
      * @param parentResourceId
      * @param childResourceType
+     * 
+     * @deprecated portal-war
      */
     void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
@@ -283,95 +294,6 @@ public interface MeasurementScheduleManagerLocal {
     int enableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds);
 
     int disableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * Disables all collection schedules attached to the given resource whose schedules are based off the given
-     * definitions. This does not disable the "templates" (aka definitions).
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
-
-    /**
-     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
-
-    void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the schedules for the provided definitions and resource
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
-
-    void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
-
-    /**
-     * Reattach a Schedule to a PersitenceContext after a successful check for a valid session
-     *
-     * @param  subject  A session id that must be valid
-     * @param  schedule A MeasurementSchedule to persist.
-     */
-    void updateSchedule(Subject subject, MeasurementSchedule schedule);
-
-    /**
-     * Enables all collection schedules attached to the given resource whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions).
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     * @param collectionInterval
-     */
-    void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
-        long collectionInterval);
-
-    /**
-     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
-     * does not exist an Exception is thrown.
-     *
-     * @param subject                  Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the schedules to update are based
-     * @param groupId                  ID of the group
-     * @param collectionInterval       the new interval
-     */
-    void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
-        long collectionInterval);
-
-    /**
-     * Update default measurement schedules ("metric templates").
-     *
-     * @param subject Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the default schedules to update are based
-     * @param collectionInterval the new interval
-     */
-    void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
-
-    /**
-     * TODO
-     *
-     * @param subject
-     * @param criteria
-     * @return
-     */
-    PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 
     /**
      * Notifies all agents of measurement schedule changes.

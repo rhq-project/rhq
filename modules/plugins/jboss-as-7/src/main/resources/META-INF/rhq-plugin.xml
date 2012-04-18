@@ -3435,7 +3435,7 @@
 
 
   <service name="Datasources Runtime"
-           class="BaseComponent"
+           class="DatasourceComponent"
            discovery="SubsystemDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
            singleton="true">
@@ -3450,7 +3450,7 @@
     </plugin-configuration>
 
     <service name="XA Datasource Runtime"
-           class="BaseComponent"
+           class="DatasourceComponent"
            discovery="SubsystemDiscovery"
            description="A JDBC XA data-source configuration">
 
@@ -3532,7 +3532,15 @@
           <c:simple-property name="stale-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" defaultValue="NOWARN" description="Whether to check for unclosed statements when a connection is returned to the pool, result sets are closed, a statement is closed or return to the prepared statement cache. Valid values are: 'false' - do not track statements, 'true' - track statements and result sets and warn when they are not closed, 'nowarn' - track statements but do not warn about them being unclosed. The default value is 'NOWARN'."/>
-        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set the java.sql.Connection transaction isolation level. Valid values are: TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE and TRANSACTION_NONE"/>
+        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set the java.sql.Connection transaction isolation level. Valid values are: TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE and TRANSACTION_NONE">
+          <c:property-options>
+            <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
+            <c:option value="TRANSACTION_READ_COMMITTED"/>
+            <c:option value="TRANSACTION_REPEATABLE_READ"/>
+            <c:option value="TRANSACTION_SERIALIZABLE"/>
+            <c:option value="TRANSACTION_NONE"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-ccm" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable the use of a cached connection manager. The default value is true."/>
@@ -3561,7 +3569,7 @@
     </service>
 
     <service name="Datasource Runtime"
-             class="BaseComponent"
+             class="DatasourceComponent"
              discovery="SubsystemDiscovery"
              description="A JDBC data-source configuration">
 
@@ -3638,7 +3646,15 @@
             <c:simple-property name="stale-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" defaultValue="NOWARN" description="Whether to check for unclosed statements when a connection is returned to the pool, result sets are closed, a statement is closed or return to the prepared statement cache. Valid values are: &apos;false&apos; - do not track statements, &apos;true&apos; - track statements and result sets and warn when they are not closed, &apos;nowarn&apos; - track statements but do not warn about them being unclosed. The default value is &apos;NOWARN&apos;."/>
-        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set the java.sql.Connection transaction isolation level. Valid values are: TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE and TRANSACTION_NONE"/>
+        <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set the java.sql.Connection transaction isolation level. Valid values are: TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE and TRANSACTION_NONE">
+           <c:property-options>
+            <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
+            <c:option value="TRANSACTION_READ_COMMITTED"/>
+            <c:option value="TRANSACTION_REPEATABLE_READ"/>
+            <c:option value="TRANSACTION_SERIALIZABLE"/>
+            <c:option value="TRANSACTION_NONE"/>
+          </c:property-options>
+        </c:simple-property>
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-ccm" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable the use of a cached connection manager. The default value is true."/>

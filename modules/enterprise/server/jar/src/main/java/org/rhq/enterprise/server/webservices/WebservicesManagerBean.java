@@ -181,7 +181,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -513,8 +513,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
-        int packageTypeId, String version,
-        String displayVersion, Integer architectureId, byte[] packageBytes) {
+        int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
         return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
             displayVersion, architectureId, packageBytes);
     }
@@ -744,6 +743,24 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return measurementScheduleManager.findSchedulesByCriteria(subject, criteria);
+    }
+
+    public void disableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        boolean updateExistingSchedules) {
+        measurementScheduleManager.disableSchedulesForResourceType(subject, measurementDefinitionIds,
+            updateExistingSchedules);
+    }
+
+    public void enableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        boolean updateExistingSchedules) {
+        measurementScheduleManager.enableSchedulesForResourceType(subject, measurementDefinitionIds,
+            updateExistingSchedules);
+    }
+
+    public void updateSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
+        long collectionInterval, boolean updateExistingSchedules) {
+        measurementScheduleManager.updateSchedulesForResourceType(subject, measurementDefinitionIds,
+            collectionInterval, updateExistingSchedules);
     }
 
     //MEASUREMENTSCHEDULEMANAGER: END ----------------------------------
@@ -1234,8 +1251,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
 
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
-        throws ValidationException, ImportException {
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
         return synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
 
@@ -1248,6 +1265,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
-
 
 }

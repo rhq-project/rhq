@@ -295,4 +295,10 @@ public interface MeasurementScheduleManagerLocal extends MeasurementScheduleMana
 
     int disableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds);
 
+    /**
+     * Notifies all agents of measurement schedule changes.
+     * @param entityContext the context.
+     * @param scheduleSubQuery the subquery indicating which schedules changed
+     */
+    void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery);
 }

@@ -727,6 +727,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return isScheduled;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery) {
         List<Integer> agentIds = new ArrayList<Integer>();

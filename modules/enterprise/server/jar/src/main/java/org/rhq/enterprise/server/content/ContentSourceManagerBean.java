@@ -58,6 +58,7 @@ import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.AdvisoryBuglist;
 import org.rhq.core.domain.content.AdvisoryCVE;
@@ -96,6 +97,7 @@ import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -475,6 +477,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             log.warn("Failed to start adapter for [" + contentSource + "]", e);
         }
 
+        obfuscatePasswords(contentSource);
+        
         entityManager.persist(contentSource);
         // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
         contentSource.setSyncResults(null);
@@ -482,12 +486,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         log.debug("User [" + subject + "] created content source [" + contentSource + "]");
         return contentSource; // now has the ID set
     }
-
+    
     @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
         validateContentSource(contentSource);
         contentSource.setSyncResults(new ArrayList<ContentSourceSyncResults>());
+        
+        obfuscatePasswords(contentSource);
+        
         entityManager.persist(contentSource);
         return contentSource;
     }
@@ -520,6 +527,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
         }
 
+        obfuscatePasswords(contentSource);
+        
         // now we can merge the changes to the database
         contentSource = entityManager.merge(contentSource);
         log.debug("User [" + subject + "] updated content source [" + contentSource + "]");
@@ -2478,5 +2487,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
         log.debug("Retrieved and sent [" + numBytes + "] bytes for [" + distFile.getRelativeFilename() + "]");
         return numBytes;
+    }
+
+    private void obfuscatePasswords(ContentSource contentSource) {
+        ConfigurationDefinition configurationDefinition = contentSource.getContentSourceType().getContentSourceConfigurationDefinition();
+        if (configurationDefinition == null) {
+            ContentSourceType attachedContentSourceType = getContentSourceType(contentSource.getContentSourceType().getName());
+            configurationDefinition = attachedContentSourceType.getContentSourceConfigurationDefinition();
+        }
+        
+        PasswordObfuscationUtility.obfuscatePasswords(configurationDefinition, contentSource.getConfiguration());
     }
 }

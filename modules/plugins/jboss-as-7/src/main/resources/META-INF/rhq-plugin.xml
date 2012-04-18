@@ -856,101 +856,6 @@
       &modclusterSharedOpsConfig;
     </service>
 
-
-    <service name="Mail"
-	discovery="SubsystemDiscovery"
-	class="BaseComponent"
-	singleton="true">
-
-	<runs-inside>
-	    <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-	    <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-	</runs-inside>
-
-	<plugin-configuration>
-	    <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
-	</plugin-configuration>
-
-        <service name="Mail Session"
-	  discovery="SubsystemDiscovery"
-	  class="BaseComponent"
-	  singleton="true">
-
-	<runs-inside>
-	    <parent-resource-type name="Mail"  plugin="jboss-as-7"/>
-	</runs-inside>
-
-	<plugin-configuration>
-	    <c:simple-property name="path" readOnly="true" default="mail-session"/>
-	</plugin-configuration>
-
-	<operation name="add" description="Adds a mail session">
-	  <parameters>
-	    <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="JNDI name to where mail session should be bound"/>
-	    <c:simple-property name="debug" required="false" type="boolean" readOnly="false" description="Enables javamail debugging"/>
-	    <c:simple-property name="from" required="false" type="string" readOnly="false" description="From address that is used as default from, if not set when sending"/>
-	  </parameters>
-	  <results>
-	     <c:simple-property name="operationResult" description="Adds a mail session" />
-	  </results>
-	</operation>
-
-	<operation name="remove" description="Adds a mail session">
-	  <results>
-	     <c:simple-property name="operationResult" description="Adds a mail session" />
-	  </results>
-	</operation>
-
-        <resource-configuration>
-	  <c:simple-property name="debug" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables javamail debugging. The default value is false."/>
-	  <c:simple-property name="from" required="false" type="string" readOnly="false" description="From address that is used as default from, if not set when sending"/>
-	  <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="JNDI name to where mail session should be bound"/>
-        </resource-configuration>
-
-        <service name="Mail Server"
-	  discovery="SubsystemDiscovery"
-	  class="BaseComponent"
-	  singleton="true">
-
-		<runs-inside>
-		    <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
-		</runs-inside>
-
-		<plugin-configuration>
-		    <c:simple-property name="path" readOnly="true" default="server"/>
-		</plugin-configuration>
-
-		<operation name="add" description="adds smtp server">
-		  <parameters>
-		    <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
-		    <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" description="Does server requires SSL?"/>
-		    <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
-		    <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
-		  </parameters>
-		  <results>
-		     <c:simple-property name="operationResult" description="adds smtp server" />
-		  </results>
-		</operation>
-
-		<operation name="remove" description="removes server">
-		  <results>
-		     <c:simple-property name="operationResult" description="removes server" />
-		  </results>
-		</operation>
-
-                <resource-configuration>
-			<c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
-			<c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
-			<c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
-			<c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
-                </resource-configuration>
-
-        </service><!-- End of server service definition -->
-
-       </service><!-- End of mail-session service definition -->
-
-    </service><!-- End of Mail service definition -->
-
   </server><!-- End of AS7 standalone server definition -->
 
   <server name="JVM"
@@ -5583,5 +5488,108 @@
     </service>
 
   </service>
+
+
+  <service name="Mail"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
+    </plugin-configuration>
+
+    <service name="Mail Session"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             createDeletePolicy="both">
+
+      <runs-inside>
+        <parent-resource-type name="Mail"  plugin="jboss-as-7"/>
+      </runs-inside>
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="mail-session"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="debug" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables javamail debugging. The default value is false."/>
+        <c:simple-property name="from" required="false" type="string" readOnly="false" description="From address that is used as default from, if not set when sending"/>
+        <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="JNDI name to where mail session should be bound"/>
+      </resource-configuration>
+
+      <service name="SMTP Mail Server"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               singleton="true"
+               createDeletePolicy="both">
+
+          <runs-inside>
+              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+          </runs-inside>
+
+          <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="server=smtp"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+
+        <service name="IMAP Mail Server"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               singleton="true"
+               createDeletePolicy="both">
+
+          <runs-inside>
+              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+          </runs-inside>
+
+          <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="server=imap"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+
+        <service name="POP3 Mail Server"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               singleton="true"
+               createDeletePolicy="both">
+
+          <runs-inside>
+              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+          </runs-inside>
+
+          <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="server=pop3"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+       </service>
+
+    </service>
 
 </plugin>

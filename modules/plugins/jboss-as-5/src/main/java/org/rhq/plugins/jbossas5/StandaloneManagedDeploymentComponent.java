@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.profileservice.spi.ProfileKey;
 
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -91,6 +93,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     private static final String ARCHITECTURE = "noarch";
 
     private final Log log = LogFactory.getLog(this.getClass());
+
+    private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
+    private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
 
     // ------------ MeasurementFacet Implementation ------------
 
@@ -290,6 +295,39 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // Deploy away!
         log.debug("Deploying '" + tempFile + "'...");
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
+
+        // as crazy as it might sound, there is apparently no way for you to ask the profile service
+        // if a deployment was deployed to the farm profile. Thus, we must resort to a poor man's solution:
+        // if the deployment name has the "farm/" directory in it, assume it needs to be deployed to the farm
+        boolean deployFarmed = this.deploymentName.contains("/farm/");
+        if (deployFarmed) {
+            Collection<ProfileKey> profileKeys = deploymentManager.getProfiles();
+            boolean farmSupported = false;
+            for (ProfileKey profileKey : profileKeys) {
+                if (profileKey.getName().equals(FARM_PROFILE_KEY.getName())) {
+                    farmSupported = true;
+                    break;
+                }
+            }
+            if (!farmSupported) {
+                throw new IllegalStateException("This application server instance is not a node in a cluster, "
+                    + "so it does not support farmed deployments. Supported deployment profiles are " + profileKeys
+                    + ".");
+            }
+            if (deployExploded) {
+                throw new IllegalArgumentException(
+                    "Deploying farmed applications in exploded form is not supported by the Profile Service.");
+            }
+            try {
+                deploymentManager.loadProfile(FARM_PROFILE_KEY);
+            } catch (Exception e) {
+                log.info("Failed to switch to farm profile - could not update " + resourceTypeName + " file '"
+                    + this.deploymentFile + "' using [" + packageDetails + "].");
+                String errorMessage = ThrowableUtil.getAllMessages(e);
+                return failApplicationDeployment(errorMessage, packageDetails);
+            }
+        }
+
         try {
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);
         } catch (Exception e) {
@@ -325,6 +363,15 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
                 + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
+        } finally {
+            // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
+            if (deployFarmed) {
+                try {
+                    deploymentManager.loadProfile(APPLICATIONS_PROFILE_KEY);
+                } catch (Exception e) {
+                    log.debug("Failed to switch back to applications profile from farm profile", e);
+                }
+            }
         }
 
         // Store SHA256 in the agent file if deployment was exploded

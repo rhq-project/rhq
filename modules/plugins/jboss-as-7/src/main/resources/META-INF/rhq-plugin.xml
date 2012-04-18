@@ -1525,14 +1525,15 @@
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
         <c:group name="child:ssl=configuration" displayName="SSL Configuration">
-          <c:map-property name="*Configuration" displayName="Configuration" readOnly="false" required="false">
+          <!-- map is currently r/o - see https://bugzilla.redhat.com/show_bug.cgi?id=813750 -->
+          <c:map-property name="*Configuration" displayName="Configuration" readOnly="true" required="false">
             <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
             <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
             <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
-            <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file."/>
+            <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file. If the value is not given, ~/.keystore is the default"/>
             <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
             <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
-            <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+            <c:simple-property name="key-alias" required="true" type="string" readOnly="false" description="The key alias."/>
             <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
             <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
             <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
@@ -1550,12 +1551,14 @@
 
     <service name="VHost"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="VHostComponent"
              createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="virtual-server"/>
       </plugin-configuration>
+
+      <metric property="_aliases" dataType="trait" defaultOn="true" description="Aliases for this virtual host"/>
 
       <resource-configuration>
         <c:list-property name="alias" description="The virtual server aliases" displayName="Virtual server aliases">

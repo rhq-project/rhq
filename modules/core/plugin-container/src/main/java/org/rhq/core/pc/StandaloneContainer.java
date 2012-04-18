@@ -271,10 +271,10 @@ public class StandaloneContainer {
             Thread.sleep(Integer.valueOf(tokens[1]));
             break;
         case P_CONFIG:
-            showPluginConfig();
+            showPluginConfig(tokens);
             break;
         case R_CONFIG:
-            showResourceConfig();
+            showResourceConfig(tokens);
             break;
         case SR_CONFIG:
             setResourcePluginConfig(tokens, false);
@@ -292,11 +292,7 @@ public class StandaloneContainer {
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void printResource(String[] tokens) {
-        int id;
-        if (tokens.length > 1)
-            id = Integer.valueOf(tokens[1]);
-        else
-            id = resourceId;
+        int id = getResourceIdFromTokens(tokens,resourceId);
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
         if (resourceContainer != null) {
             Resource r = resourceContainer.getResource();
@@ -472,17 +468,27 @@ public class StandaloneContainer {
     private void avail(String[] tokens) {
         Set<Resource> resources = getResources();
 
-        int id = 0;
-        if (tokens.length > 1) {
-            id = Integer.valueOf(tokens[1]);
-        }
+        int id = getResourceIdFromTokens(tokens, 0);
 
         for (Resource res : resources) {
-            if (id == 0 || (id != 0 && res.getId() == id)) {
+            if (id == 0 || (res.getId() == id)) {
                 Availability availability = inventoryManager.getCurrentAvailability(res);
                 System.out.println(res.getName() + "( " + res.getId() + " ):" + availability.getAvailabilityType());
             }
         }
+    }
+
+    private int getResourceIdFromTokens(String[] tokens, int defaultId)
+    {
+        int id = defaultId;
+        if (tokens.length > 1) {
+            if (tokens[1].equals(".")) {
+                id = resourceId;
+            } else {
+                id = Integer.valueOf(tokens[1]);
+            }
+        }
+        return id;
     }
 
     /**
@@ -491,11 +497,7 @@ public class StandaloneContainer {
      */
     private void children(String[] tokens) {
 
-        int id;
-        if (tokens.length > 1)
-            id = Integer.valueOf(tokens[1]);
-        else
-            id = resourceId;
+        int id = getResourceIdFromTokens(tokens,resourceId);
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
         if (resourceContainer != null) {
             Resource r = resourceContainer.getResource();
@@ -747,7 +749,7 @@ public class StandaloneContainer {
         return config;
     }
 
-    private void showPluginConfig() {
+    private void showPluginConfig(String[] tokens) {
         if (resourceId == 0) {
             System.err.println("You must first set the resource to work with.");
             return;
@@ -755,21 +757,36 @@ public class StandaloneContainer {
 
         Configuration config = pc.getInventoryManager().getResourceContainer(resourceId).getResource()
             .getPluginConfiguration();
-        showConfig(config);
+        showConfig(config, tokens);
     }
 
-    private void showResourceConfig() throws PluginContainerException {
+    private void showResourceConfig(String[] tokens) throws PluginContainerException {
         if (resourceId == 0) {
             System.err.println("You must first set the resource to work with.");
             return;
         }
 
         Configuration config = pc.getConfigurationManager().loadResourceConfiguration(resourceId);
-        showConfig(config);
+        showConfig(config, tokens);
     }
 
-    private void showConfig(Configuration config) {
-        System.out.println(config.getProperties()); // TODO convert to input format or key=value or json
+    private void showConfig(Configuration config, String[] tokens) {
+        if (tokens==null || tokens.length<2) {
+            for (Property p : config.getProperties()) {
+                System.out.println(p);
+            }
+        }
+        else {
+            String pList = tokens[1];
+            String[] props = pList.split(",");
+            for (String propName : props) {
+                Property p = config.get(propName);
+                if (p==null)
+                    System.err.println("Property " + propName + " not found");
+                else
+                    System.out.println(p);
+            }
+        }
     }
 
 }

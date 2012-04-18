@@ -27,7 +27,7 @@ import java.util.EnumSet;
 public enum Command {
     ASCAN("as", "", 0, "Triggers an availability scan"), //
     AVAIL("a", " ( id )", 0,
-        "Shows an availability report. If id is given, only shows availability for resource with id id"), //
+        "Shows an availability report. If id is given, only shows availability for resource with id id. To name the current id, you can use a single dot"), //
     CHILDREN("chi", "[id]", 0,
         "Shows the direct children of the resource with the passed id, or if no id passed of the current resource"), //
     DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
@@ -58,8 +58,8 @@ public enum Command {
         "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call. 'id' is an alias for 'res'"), //
     STDIN("stdin", "", 0, "Stop reading the batch file and wait for commands on stdin"), //
     WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
-    P_CONFIG("pc", "", 0,
-        "Shows the plugin configuration of the current resource."),
+    P_CONFIG("pc", "( property name(s) )", 0,
+        "Shows the plugin configuration of the current resource. If property names (separated by comma) are given, only show those properties"),
     R_CONFIG("rc", "", 0,
         "Shows the resource configuration of the current resource."),
     SR_CONFIG(

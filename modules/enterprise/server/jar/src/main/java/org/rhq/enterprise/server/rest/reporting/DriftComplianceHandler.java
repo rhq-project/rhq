@@ -33,9 +33,9 @@ import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
 

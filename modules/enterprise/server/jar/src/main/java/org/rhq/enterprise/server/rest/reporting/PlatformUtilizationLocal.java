@@ -31,12 +31,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/platformUtilization")
+@Path("/platformUtilization")
 @Local
 public interface PlatformUtilizationLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput generateReport(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 

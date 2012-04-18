@@ -29,12 +29,11 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/driftCompliance")
+@Path("/driftCompliance")
 @Local
 public interface DriftComplianceLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput generateReport(
         @Context UriInfo uriInfo,

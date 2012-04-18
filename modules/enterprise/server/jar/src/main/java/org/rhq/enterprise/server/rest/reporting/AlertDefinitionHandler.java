@@ -18,11 +18,11 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class AlertDefinitionHandler extends AbstractRestBean implements AlertDefinitionLocal {
 
@@ -56,7 +56,6 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                             new CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria>() {
                                 @Override
                                 public PageList<AlertDefinition> execute(AlertDefinitionCriteria criteria) {
-
                                     return alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
                                 }
                             };

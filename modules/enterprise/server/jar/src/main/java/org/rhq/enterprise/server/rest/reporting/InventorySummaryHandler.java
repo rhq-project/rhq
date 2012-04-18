@@ -42,14 +42,14 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
 import static org.rhq.core.domain.util.PageOrdering.ASC;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class InventorySummaryHandler extends AbstractRestBean implements InventorySummaryLocal {
 

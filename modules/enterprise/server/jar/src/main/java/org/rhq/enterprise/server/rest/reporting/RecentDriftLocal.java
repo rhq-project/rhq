@@ -11,12 +11,11 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/recentDrift")
+@Path("/recentDrift")
 @Local
 public interface RecentDriftLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentDrift(
             @QueryParam("categories") String categories,

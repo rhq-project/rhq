@@ -7,6 +7,26 @@
 
     <display-name>RHQ GUI</display-name>
 
+    <context-param>
+        <param-name>resteasy.jndi.resources</param-name>
+        <param-value>rhq/InventorySummaryHandler/local,rhq/AlertDefinitionHandler/local,rhq/ConfigurationHistoryHandler/local,rhq/RecentAlertHandler/local,rhq/SuspectMetricHandler/local,rhq/DriftComplianceHandler/local,rhq/RecentOperationsHandler/local,rhq/RecentDriftHandler/local,rhq/PlatformUtilizationHandler/local</param-value>
+        <!--<description>List of jndi names of EJBs local interfaces that define REST stuff</description>-->
+    </context-param>
+    <context-param>
+        <param-name>resteasy.providers</param-name>
+        <param-value>org.rhq.enterprise.server.rest.CustomExceptionMapper</param-value>
+        <!--<description>Maps Exceptions to HTTP response codes</description>-->
+    </context-param>
+    <context-param>
+        <param-name>resteasy.servlet.mapping.prefix</param-name>
+        <param-value>/reports</param-value>
+        <!--<description>Prefix of the REST api</description>-->
+    </context-param>
+    <context-param>
+        <param-name>resteasy.media.type.mappings</param-name>
+        <param-value>html : text/html, json : application/json, xml : application/xml, csv : text/csv, txt: text/plain, yaml: application/yaml</param-value>
+    </context-param>
+
     <filter>
        <filter-name>CacheControlFilter</filter-name>
        <filter-class>org.rhq.enterprise.gui.coregui.server.filter.CacheControlFilter</filter-class>
@@ -173,6 +193,27 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ReportExporter</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.reports.ReportExportServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Resteasy</servlet-name>
+        <servlet-class>
+            org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
+        </servlet-class>
+
+        <init-param>
+            <param-name>resteasy.scan</param-name>
+            <param-value>true</param-value>
+        </init-param>
+
+        <!--<init-param>-->
+            <!--<param-name>javax.ws.rs.Application</param-name>-->
+            <!--<param-value>org.rhq.enterprise.gui.coregui.server.reports.ReportsApplication</param-value>-->
+        <!--</init-param>-->
+    </servlet>
 
 
     <servlet-mapping>
@@ -331,6 +372,15 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReportExporter</servlet-name>
+        <url-pattern>/ReportExporter</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>Resteasy</servlet-name>
+        <url-pattern>/reports/*</url-pattern>
     </servlet-mapping>
 
 

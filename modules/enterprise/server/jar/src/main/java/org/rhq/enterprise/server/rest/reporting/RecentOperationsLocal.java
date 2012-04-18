@@ -8,12 +8,11 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/recentOperations")
+@Path("/recentOperations")
 @Local
 public interface RecentOperationsLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput recentOperations(
             @QueryParam("status") @DefaultValue("inprogress,success,failure,canceled") String operationRequestStatus,

@@ -21,13 +21,13 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class SuspectMetricHandler extends AbstractRestBean implements SuspectMetricLocal {
 

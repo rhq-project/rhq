@@ -1,17 +1,10 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.GenericDriftCriteria;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.drift.DriftManagerLocal;
-import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -21,15 +14,24 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.rest.AbstractRestBean;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.parseAncestry;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class RecentDriftHandler extends AbstractRestBean implements RecentDriftLocal {
 

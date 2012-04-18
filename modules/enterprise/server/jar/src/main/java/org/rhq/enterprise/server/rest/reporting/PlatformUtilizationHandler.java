@@ -38,12 +38,12 @@ import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
 
 /**
  * @author jsanda
  */
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class PlatformUtilizationHandler extends AbstractRestBean implements PlatformUtilizationLocal {
 

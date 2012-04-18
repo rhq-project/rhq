@@ -10,12 +10,11 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/configurationHistory")
+@Path("/configurationHistory")
 @Local
 public interface ConfigurationHistoryLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput configurationHistory(
             @Context UriInfo uriInfo,

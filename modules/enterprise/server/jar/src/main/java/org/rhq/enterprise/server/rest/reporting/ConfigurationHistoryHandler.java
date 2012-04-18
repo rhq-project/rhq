@@ -1,14 +1,8 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -18,14 +12,21 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
+
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.rest.AbstractRestBean;
+import org.rhq.enterprise.server.rest.ReportsInterceptor;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import static org.rhq.core.domain.util.PageOrdering.ASC;
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.cleanForCSV;
 import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.formatDateTime;
 
-@Interceptors(SetCallerInterceptor.class)
+@Interceptors(ReportsInterceptor.class)
 @Stateless
 public class ConfigurationHistoryHandler extends AbstractRestBean implements ConfigurationHistoryLocal {
 

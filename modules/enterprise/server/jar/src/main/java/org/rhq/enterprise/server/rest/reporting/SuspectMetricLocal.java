@@ -4,12 +4,11 @@ import javax.ejb.Local;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-@Path("/reports/suspectMetrics")
+@Path("/suspectMetrics")
 @Local
 public interface SuspectMetricLocal {
 
     @GET
-    @Path("/")
     @Produces("text/csv")
     StreamingOutput suspectMetrics(
             @Context UriInfo uriInfo,

@@ -20,14 +20,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import com.google.gwt.core.client.GWT;
+import java.util.Date;
+
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 
-import java.util.Date;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
 import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
@@ -41,7 +41,8 @@ import static com.smartgwt.client.types.RelativeDateRangePosition.START;
  */
 public class ReportExporter {
 
-    private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
+    //private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
+    private static final String BASE_URL = "/reports/";
     private static final String FORMAT = "csv"; //CSV is all we need right now
 
     private String reportUrl;

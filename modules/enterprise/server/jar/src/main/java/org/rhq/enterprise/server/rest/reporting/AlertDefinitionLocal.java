@@ -5,12 +5,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-@Path("/reports/alertDefinitions")
+@Path("/alertDefinitions")
 @Local
 public interface AlertDefinitionLocal {
 
     @GET
-    @Path("/")
     @Produces({"text/csv", "application/xml"})
     StreamingOutput alertDefinitions(
             @Context UriInfo uriInfo,

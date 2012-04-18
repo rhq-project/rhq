@@ -18,10 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -68,7 +68,11 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
 
+    private static final String RHQADMIN = "rhqadmin";
+    private static final String RHQADMIN_ENCRYPTED = "35c160c1f841a889d4cda53f0bfc94b6";
+
     private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new HashSet<String>();
+
     static {
         START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList(
                 "PATH", "LD_LIBRARY_PATH", "RUN_CONF", "JBOSS_HOME", "MAX_FD", "PROFILER", "JAVA_HOME", "JAVA",
@@ -140,16 +144,7 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
 
         setStartScriptPluginConfigProps(discoveryContext.getSystemInformation(), process, commandLine, pluginConfig);
-
-        String user = getManagementUsername(getMode(), baseDir);
-        if (user != null) {
-            pluginConfig.put(new PropertySimple("user", user));
-            // Note, we don't set the "password" prop, since the password is encrypted in mgmt-users.properties, and we
-            // need to return an unencrypted value.
-        } else {
-            pluginConfig.put(new PropertySimple("user", "rhqadmin"));
-            pluginConfig.put(new PropertySimple("password", "rhqadmin"));
-        }
+        setUserAndPasswordPluginConfigProps(pluginConfig, baseDir);
 
         String key = baseDir.getPath();
         HostPort hostPort = getHostPortFromHostXml();
@@ -237,6 +232,38 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
             }
         }
         pluginConfig.put(new PropertySimple("startScriptEnv", startScriptEnv));
+    }
+
+    private void setUserAndPasswordPluginConfigProps(Configuration pluginConfig, File baseDir) {
+        Properties mgmtUsers = getManagementUsers(getMode(), baseDir);
+        String user;
+        String password;
+        if (!mgmtUsers.isEmpty()) {
+            if (mgmtUsers.containsKey(RHQADMIN)) {
+                user = RHQADMIN;
+                String encryptedPassword = mgmtUsers.getProperty(user);
+                if (RHQADMIN_ENCRYPTED.equals(encryptedPassword)) {
+                    // If the password is "rhqadmin" encrypted, set the "password" prop to "rhqadmin".
+                    password = RHQADMIN;
+                } else {
+                    password = null;
+                }
+            } else {
+                // No "rhqadmin" user is defined - just grab an arbitrary user.
+                user = (String) mgmtUsers.keySet().iterator().next();
+                // Note, we don't set the "password" prop, since the password we've read from mgmt-users.properties is
+                // encrypted, and we need to return an unencrypted value.
+                password = null;
+            }
+        } else {
+            // Either no users are defined, or we failed to read the mgmt-users.properties file - default both user and
+            // password to "rhqadmin", so that if the end user runs the "createRhqUser" operation, their conn props will
+            // already be ready to go.
+            user = RHQADMIN;
+            password = RHQADMIN;
+        }
+        pluginConfig.put(new PropertySimple("user", user));
+        pluginConfig.put(new PropertySimple("password", password));
     }
 
     private static ProcessInfo getParentProcess(SystemInfo systemInfo, ProcessInfo process) {
@@ -409,47 +436,48 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         return (String) res.getResult();
     }
 
-    private String getManagementUsername(AS7Mode mode, File baseDir) {
+    // never returns null
+    private Properties getManagementUsers(AS7Mode mode, File baseDir) {
         String realm = getManagementSecurityRealmFromHostXml();
-        String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
+        File mgmUsersPropsFile = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
-        File file = new File(fileName);
-        if (!file.exists() || !file.canRead()) {
+        Properties props = new Properties();
+
+        if (!mgmUsersPropsFile.exists()) {
             if (log.isDebugEnabled()) {
-                log.debug("No management user properties file found at [" + file.getAbsolutePath()
-                    + "], or file is not readable");
+                log.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
             }
-            return null;
+            return props;
         }
 
-        // TODO (ips): Can't we use Properties.load() to read the file?
-        BufferedReader br = null;
-        try {
-            FileReader fileReader = new FileReader(file);
-            br = new BufferedReader(fileReader);
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("#"))
-                    continue;
-                if (line.isEmpty())
-                    continue;
-                if (!line.contains("="))
-                    continue;
-                // found a candidate
-                String user = line.substring(0, line.indexOf("="));
-                return user;
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        } finally {
-            if (br != null)
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    // empty
-                }
+        if (!mgmUsersPropsFile.canRead()) {
+            log.warn("Management user properties at [" + mgmUsersPropsFile + "] is not readable.");
+            return props;
         }
-        return null;
+
+        FileInputStream inputStream;
+        try {
+            inputStream = new FileInputStream(mgmUsersPropsFile);
+        } catch (FileNotFoundException e) {
+            log.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
+            return props;
+        }
+
+        try {
+            props.load(inputStream);
+        } catch (IOException e) {
+            log.error("Failed to parse management users properties file at [" + mgmUsersPropsFile + "]: "
+                    + e.getMessage());
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                log.error("Failed to close management users properties file at [" + mgmUsersPropsFile + "]: "
+                        + e.getMessage());
+            }
+        }
+
+        return props;
     }
 
     private String findHost(File hostXmlFile) {

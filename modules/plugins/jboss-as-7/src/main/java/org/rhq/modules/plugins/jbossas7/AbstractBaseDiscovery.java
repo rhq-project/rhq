@@ -87,7 +87,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
     /**
      * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
      * @return an Object containing host and port
-     * @see #readStandaloneOrHostXmlFromFile(String) for how to obtain the parsed xml
+     * @see #readStandaloneOrHostXmlFromFile(java.io.File) for how to obtain the parsed xml
      * @param commandLine Command line arguments of the process to
      */
     protected HostPort getManagementHostPortFromHostXml(AS7CommandLine commandLine) {
@@ -255,7 +255,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         return realm;
     }
 
-    String getSecurityPropertyFileFromHostXml(File baseDir, AS7Mode mode, String realm) {
+    File getSecurityPropertyFileFromHostXml(File baseDir, AS7Mode mode, String realm) {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
@@ -278,7 +278,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
         File securityPropertyFile = new File(configDir, fileName);
 
-        return securityPropertyFile.getPath();
+        return securityPropertyFile;
     }
 
     protected File getHomeDir(ProcessInfo processInfo, JavaCommandLine javaCommandLine) {

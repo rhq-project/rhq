@@ -358,7 +358,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        String propertiesFilePath = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
+        File propertiesFile = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
         String encryptedPassword;
         try {
@@ -370,11 +370,11 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
         boolean userAlreadyExisted;
         try {
-            PropertiesFileUpdate propsFileUpdate = new PropertiesFileUpdate(propertiesFilePath);
+            PropertiesFileUpdate propsFileUpdate = new PropertiesFileUpdate(propertiesFile.getPath());
             userAlreadyExisted = propsFileUpdate.update(user, encryptedPassword);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update management users properties file [" + propertiesFilePath
-                    + "].", e);
+            throw new RuntimeException("Failed to update management users properties file [" + propertiesFile + "].",
+                    e);
         }
 
         String verb = (userAlreadyExisted) ? "updated" : "added";

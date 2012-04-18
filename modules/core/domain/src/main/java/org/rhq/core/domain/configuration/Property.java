@@ -84,7 +84,7 @@ import org.jetbrains.annotations.Nullable;
 @Table(name = "RHQ_CONFIG_PROPERTY")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-@XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
+@XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class, ObfuscatedPropertySimple.class })
 public class Property implements Serializable, DeepCopyable<Property>, Comparable<Property> {
     private static final long serialVersionUID = 1L;
 

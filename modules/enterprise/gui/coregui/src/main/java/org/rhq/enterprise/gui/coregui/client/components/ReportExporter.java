@@ -42,7 +42,7 @@ import static com.smartgwt.client.types.RelativeDateRangePosition.START;
 public class ReportExporter {
 
     //private static final String BASE_URL = GWT.getHostPageBaseURL().replace("coregui/","")+"rest/1/reports/";
-    private static final String BASE_URL = "/reports/";
+    private static final String BASE_URL = "/coregui/reports/";
     private static final String FORMAT = "csv"; //CSV is all we need right now
 
     private String reportUrl;

@@ -65,8 +65,9 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId,
-                displayType), "MeasurementDataService.findCurrentTraitsForResource");
+            return SerialUtility.prepare(
+                dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId, displayType),
+                "MeasurementDataService.findCurrentTraitsForResource");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -119,8 +120,9 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(definitionManager.findMeasurementDefinitionsByCriteria(getSessionSubject(),
-                criteria), "MeasurementDataService.findMeasurementDefinintionsByCriteria");
+            return SerialUtility.prepare(
+                definitionManager.findMeasurementDefinitionsByCriteria(getSessionSubject(), criteria),
+                "MeasurementDataService.findMeasurementDefinintionsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -139,8 +141,9 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(scheduleManager.getMeasurementScheduleCompositesByContext(getSessionSubject(),
-                context, PageControl.getUnlimitedInstance()),
+            return SerialUtility.prepare(
+                scheduleManager.getMeasurementScheduleCompositesByContext(getSessionSubject(), context,
+                    PageControl.getUnlimitedInstance()),
                 "MeasurementDataService.getMeasurementScheduleCompositesByContext");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -160,8 +163,9 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) throws RuntimeException {
         try {
-            return SerialUtility.prepare(measurementOOBManager.getHighestNOOBsForResource(getSessionSubject(),
-                resourceId, n), "MeasurementDataService.getHighestNOOBsForResource");
+            return SerialUtility.prepare(
+                measurementOOBManager.getHighestNOOBsForResource(getSessionSubject(), resourceId, n),
+                "MeasurementDataService.getHighestNOOBsForResource");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -236,8 +240,8 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
         throws RuntimeException {
         try {
-            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
-                measurementDefinitionIds, 0, updateExistingSchedules);
+            scheduleManager.enableSchedulesForResourceType(getSessionSubject(), measurementDefinitionIds,
+                updateExistingSchedules);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -246,8 +250,8 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
         throws RuntimeException {
         try {
-            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
-                measurementDefinitionIds, -1, updateExistingSchedules);
+            scheduleManager.disableSchedulesForResourceType(getSessionSubject(), measurementDefinitionIds,
+                updateExistingSchedules);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -256,8 +260,8 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public void updateSchedulesForResourceType(int[] measurementDefinitionIds, long collectionInterval,
         boolean updateExistingSchedules) throws RuntimeException {
         try {
-            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
-                measurementDefinitionIds, collectionInterval, updateExistingSchedules);
+            scheduleManager.updateSchedulesForResourceType(getSessionSubject(), measurementDefinitionIds,
+                collectionInterval, updateExistingSchedules);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

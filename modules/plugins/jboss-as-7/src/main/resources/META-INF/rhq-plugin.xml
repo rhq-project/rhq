@@ -1259,7 +1259,7 @@
           </c:list-property>
           <c:simple-property name="selector" required="false" type="string" description="The queue selector."/>
         </resource-configuration>
-      </service>
+      </service><!-- End of JMS Queue service -->
 
       <service name="JMS Topic"
                discovery="SubsystemDiscovery"
@@ -1275,7 +1275,7 @@
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
         </resource-configuration>
-      </service>
+      </service><!-- End of JMS Topic service -->
 
       <service name="Connection-Factory"
                discovery="SubsystemDiscovery"
@@ -1332,10 +1332,83 @@
           <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" description="The transaction batch size."/>
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" description="True to use global pools."/>
         </resource-configuration>
-      </service>
-    </service>
+      </service><!-- End of Connection-Factory service -->
 
-  </service>
+	<service name="Security Setting"
+		 discovery="SubsystemDiscovery"
+		 class="BaseComponent">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="security-setting"/>
+	   </plugin-configuration>
+
+           <!-- Removing. Add/Remove a little to low level
+	   <operation name="add" description="Add new security setting.">
+	     <results>
+		<c:simple-property name="operationResult" description="Add new security setting." />
+	     </results>
+	   </operation>
+
+	   <operation name="remove" description="Remove an existing security setting.">
+	     <results>
+		<c:simple-property name="operationResult" description="Remove an existing security setting." />
+	     </results>
+	   </operation> -->
+
+	     <service name="Role"
+		      discovery="SubsystemDiscovery"
+		      class="BaseComponent">
+
+		<plugin-configuration>
+		  <c:simple-property name="path" readOnly="true" default="role"/>
+		</plugin-configuration>
+
+	       <operation name="add" description="Add new security role.">
+		 <parameters>
+	           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
+		   <c:simple-property name="send" required="true" type="boolean" readOnly="false" description="This permission allows the user to send a message to matching addresses."/>
+		   <c:simple-property name="consume" required="true" type="boolean" readOnly="false" description="his permission allows the user to consume a message from a queue bound to matching addresses."/>
+		   <c:simple-property name="create-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a durable queue."/>
+		   <c:simple-property name="delete-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a durable queue."/>
+		   <c:simple-property name="create-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a temporary queue."/>
+		   <c:simple-property name="delete-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a temporary queue."/>
+		   <c:simple-property name="manage" required="true" type="boolean" readOnly="false" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+		 </parameters>
+		 <results>
+		    <c:simple-property name="operationResult" description="Add new security role." />
+		 </results>
+	       </operation>
+
+	       <operation name="remove" description="Remove an existing security role.">
+		 <parameters>
+	           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
+	         </parameters>
+		 <results>
+		    <c:simple-property name="operationResult" description="Remove an existing security role." />
+		 </results>
+	       </operation>
+
+	       <resource-configuration>
+		 <c:simple-property name="consume" required="false" type="boolean" readOnly="false" defaultValue="false" description="his permission allows the user to consume a message from a queue bound to matching addresses. The default value is false."/>
+		 <c:simple-property name="create-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
+		 description="This permission allows the user to create a durable queue. The default value is false."/>
+		 <c:simple-property name="create-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
+		 description="This permission allows the user to create a temporary queue. The default value is false."/>
+		 <c:simple-property name="delete-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
+		 description="This permission allows the user to delete a durable queue. The default value is false."/>
+		 <c:simple-property name="delete-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
+		 description="This permission allows the user to delete a temporary queue. The default value is false."/>
+		 <c:simple-property name="manage" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to invoke management operations by sending management messages to the management address. The default value is false."/>
+		 <c:simple-property name="send" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to send a message to matching addresses. The default value is false."/>
+	       </resource-configuration>
+
+	     </service><!-- End of role service -->
+
+	</service><!-- End of Security Settings service -->
+
+    </service><!-- End of HornetQ service -->
+
+  </service><!-- End of Messaging-Provider service -->
 
   <service name="JBossWeb"
           discovery="SubsystemDiscovery"

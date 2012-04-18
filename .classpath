@@ -130,7 +130,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-support/1.4.11/powermock-api-support-1.4.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng-common/1.4.11/powermock-module-testng-common-1.4.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng/1.4.11/powermock-module-testng-1.4.11.jar"/>
-	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
@@ -287,11 +286,6 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
-	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
-	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/disk/src/test/java"/>
-	<classpathentry kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsprovide-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -35,6 +35,9 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -52,6 +55,8 @@ import static org.rhq.core.domain.util.PageOrdering.ASC;
 @Interceptors(ReportsInterceptor.class)
 @Stateless
 public class InventorySummaryHandler extends AbstractRestBean implements InventorySummaryLocal {
+
+    private final Log log = LogFactory.getLog(InventorySummaryHandler.class);
 
     @EJB
     protected ResourceManagerLocal resourceMgr;

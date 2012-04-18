@@ -18,11 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import java.util.Date;
+
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
 import com.smartgwt.client.widgets.form.fields.DateItem;
-
-import java.util.Date;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
 import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;
@@ -44,8 +44,8 @@ import static com.smartgwt.client.types.RelativeDateRangePosition.START;
  */
 public class DateFilterItem extends DateItem {
 
-    public final static String START_DATE_FILTER = "startDateFilter";
-    public final static String END_DATE_FILTER = "endDateFilter";
+    public final static String START_DATE_FILTER = "startTime";
+    public final static String END_DATE_FILTER = "endTime";
 
 
     public DateFilterItem() {

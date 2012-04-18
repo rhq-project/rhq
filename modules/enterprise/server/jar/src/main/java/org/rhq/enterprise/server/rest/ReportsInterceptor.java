@@ -26,6 +26,7 @@ import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
+import javax.naming.OperationNotSupportedException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
@@ -53,7 +54,14 @@ public class ReportsInterceptor {
     @AroundInvoke
     public Object setCaller(InvocationContext ctx) throws Exception {
         HttpServletRequest request = getRequest(ctx.getParameters());
-        // TODO handle if request is null
+        if (request == null) {
+            // TODO should we throw a different exception?
+            String msg = "No " + HttpServletRequest.class.getName() + " parameter was found for " +
+                ctx.getTarget().getClass().getName() + "." + ctx.getMethod().getName() + ". An " +
+                HttpServletRequest.class.getName() + " parameter must be specified in order to support authentication";
+            log.error(msg);
+            throw new OperationNotSupportedException(msg);
+        }
 
         Subject subject = getSubject(request);
         if (subject == null) {

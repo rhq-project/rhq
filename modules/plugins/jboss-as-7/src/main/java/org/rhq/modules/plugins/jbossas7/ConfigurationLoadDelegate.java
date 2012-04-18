@@ -133,6 +133,10 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             if (!subPath.contains("="))
                 throw new IllegalArgumentException("subPath of 'child:' expression has no =");
 
+            if (subPath.contains(":")) {
+                subPath = subPath.substring(0,subPath.indexOf(':'));
+            }
+
             Address address1 = new Address(address);
             address1.addSegment(subPath);
             operation = new ReadResource(address1);

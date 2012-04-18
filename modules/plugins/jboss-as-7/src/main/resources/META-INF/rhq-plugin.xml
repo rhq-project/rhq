@@ -1524,20 +1524,27 @@
         <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
-        <c:group name="child:ssl=configuration" displayName="SSL Configuration">
-          <!-- map is currently r/o - see https://bugzilla.redhat.com/show_bug.cgi?id=813750 -->
-          <c:map-property name="*Configuration" displayName="Configuration" readOnly="true" required="false">
+        <c:group name="child:ssl=configuration:enabled=secure=true" displayName="SSL Configuration">
+          <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
             <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
             <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
             <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
             <c:simple-property name="certificate-file" required="false" type="string" readOnly="false" description="Server certificate file. If the value is not given, ~/.keystore is the default"/>
             <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" description="Key file for the certificate."/>
             <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
-            <c:simple-property name="key-alias" required="true" type="string" readOnly="false" description="The key alias."/>
+            <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
             <c:simple-property name="keystore-type" required="false" type="string" readOnly="false" description="Type of the keystore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>
             <c:simple-property name="name" required="false" type="string" readOnly="false" description="The configuration name."/>
             <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password."/>
-            <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled."/>
+            <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The SSL protocols that are enabled." default="ALL" defaultValue="ALL">
+              <c:property-options>
+                <c:option value="SSLv2"/>
+                <c:option value="SSLv3"/>
+                <c:option value="TLSv1"/>
+                <c:option value="SSLv2+SSLv3"/>
+                <c:option value="ALL"/>
+              </c:property-options>
+            </c:simple-property>
             <c:simple-property name="session-cache-size" required="false" type="integer" readOnly="false" description="SSL session cache."/>
             <c:simple-property name="session-timeout" required="false" type="integer" readOnly="false" description="SSL session cache timeout."/>
             <c:simple-property name="truststore-type" required="false" type="string" readOnly="false" description="Type of the truststore, There are various types of keystores available, including &apos;PKCS12&apos; and Sun&apos;s &apos;JKS.&apos;"/>

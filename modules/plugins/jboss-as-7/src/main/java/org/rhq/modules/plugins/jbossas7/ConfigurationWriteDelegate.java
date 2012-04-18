@@ -151,8 +151,31 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
 
+                String condition=null;
+                boolean groupEnabled = true;
+                boolean isEnabledConditionFound = false;
+                if (subPath.contains(":")) {
+                    condition = subPath.substring(subPath.indexOf(':')+1);
+                    subPath = subPath.substring(0,subPath.indexOf(':')); // strip off additional trailing options
+                }
+                if (condition!=null && condition.startsWith("enabled=")) {
+                    isEnabledConditionFound = true;
+                    String tmp = condition.substring("enabled=".length());
+                    if (!tmp.contains("="))
+                        throw new IllegalArgumentException("Condition " + condition + " does not have a = between key and value part (" + tmp + ")");
+                    String key = tmp.substring(0,tmp.indexOf('='));
+                    String targetValue = tmp.substring(tmp.indexOf('=')+1);
+                    PropertySimple conditionProperty = conf.getSimple(key);
+                    if (conditionProperty!=null) {
+                        String realValue = conditionProperty.getStringValue();
+                        if (realValue!=null && !targetValue.equals(realValue))
+                            groupEnabled=false;
+                    }
+                }
+
                 Address address1 = new Address(address);
                 address1.addSegment(subPath);
+
 
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
                 //  if this is a single map (not list of maps), then unwind
@@ -161,25 +184,36 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     PropertyDefinitionMap definitionMap = (PropertyDefinitionMap) definitions.get(0);
                     String mapName = definitionMap.getName();
 
-                    if (mapName.endsWith("+")) {
-                        // check if this exists already
-                        Operation testOp = new ReadResource(address1);
-                        Result res = connection.execute(testOp);
-                        if (!res.isSuccess()) {
-                            // and try to add it
-                            Operation add = new Operation("add", address1);
-                            res = connection.execute(add);
+                    boolean isAddEnabled = mapName.endsWith("+");
+
+                    if (groupEnabled) {
+                        if (isAddEnabled) {
+                            // check if this exists already
+                            Operation testOp = new ReadResource(address1);
+                            Result res = connection.execute(testOp);
                             if (!res.isSuccess()) {
-                                // Not much we can do here when the add fails
-                                log.error("Adding of node " + address1 + " failed");
+                                // and try to add it
+                                Operation add = new Operation("add", address1);
+                                res = connection.execute(add);
+                                if (!res.isSuccess()) {
+                                    // Not much we can do here when the add fails
+                                    log.error("Adding of node " + address1 + " failed");
+                                }
                             }
                         }
-                    }
 
-                    definitions = definitionMap.getPropertyDefinitions();
-                    PropertyMap map = conf.getMap(mapName);
-                    for (PropertyDefinition def : definitions) {
-                        createWriteAttribute(cop, address1, def, map.get(def.getName()));
+                        definitions = definitionMap.getPropertyDefinitions();
+                        PropertyMap map = conf.getMap(mapName);
+                        for (PropertyDefinition def : definitions) {
+                            createWriteAttribute(cop, address1, def, map.get(def.getName()));
+                        }
+                    }
+                    else {
+                        // group is not enabled, but add is, so lets remove the subpath
+                        Remove op = new Remove(address1);
+                        Result res = connection.execute(op);
+
+                        // Not much we can do here with the result
                     }
 
                 } else {
@@ -187,7 +221,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                         updateProperty(conf, cop, def, address1);
                     }
                 }
-            } // TODO handle attribute: case
+            } // child: case    TODO handle attribute: case
         }
 
         return cop;

@@ -52,7 +52,6 @@ public class ASConnection {
 
     public static final String MANAGEMENT = "/management";
     private static final String FAILURE_DESCRIPTION = "\"failure-description\"";
-    private static final String INCLUDE_DEFAULT = "include-defaults";
 
     // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     public static boolean verbose = false;
@@ -259,6 +258,7 @@ public class ASConnection {
                 // through agent logs.
                 // Process response code to generate plugin configuration exception and/or logging
                 int responseCode = conn.getResponseCode();
+                // response code 307 is Temporary Redirect.
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == 307 ) {
                     if (log.isDebugEnabled()) {
                         log.debug("Response to " + operation + " was " + responseCode + " " + conn.getResponseMessage()

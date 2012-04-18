@@ -28,9 +28,9 @@ import java.text.NumberFormat;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -51,7 +51,7 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
     private PlatformUtilizationManagerLocal platformUtilizationMgr;
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers) {
+    public StreamingOutput generateReport(UriInfo uriInfo, HttpServletRequest request, HttpHeaders headers) {
         return new StreamingOutput() {
             private NumberFormat numberFormat;
 

@@ -22,12 +22,12 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 import javax.ejb.Local;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -37,6 +37,9 @@ public interface PlatformUtilizationLocal {
 
     @GET
     @Produces({"text/csv", "application/xml"})
-    StreamingOutput generateReport(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
+    StreamingOutput generateReport(
+        @Context UriInfo uriInfo,
+        @Context HttpServletRequest request,
+        @Context HttpHeaders headers);
 
 }

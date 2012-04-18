@@ -3438,7 +3438,7 @@
     </content>
 
     <resource-configuration>
-      <c:list-property name="content" description="List of pieces of content that comprise the deployment." >
+      <c:list-property name="content" description="List of pieces of content that comprise the deployment." readOnly="true" >
         <c:map-property name="content" readOnly="true">
           <c:simple-property name="input-stream-index" type="integer" readOnly="true" description="The index into the operation's attached input streams of the input stream that contains deployment content that should be uploaded to the domain's or standalone server's deployment content repository."/>
           <c:simple-property name="hash" type="string" readOnly="true" description="The hash of managed deployment content that has been uploaded to the domain's or standalone server's deployment content repository."/>

@@ -1477,7 +1477,7 @@
 
     <service name="Connector"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="WebConnectorComponent"
              createDeletePolicy="both">
 
       <plugin-configuration>
@@ -1491,6 +1491,7 @@
       <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
       <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
+      <metric property="_maxConnections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
       <resource-configuration>
         <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">
@@ -1506,17 +1507,16 @@
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
         <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
         <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-        <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
+        <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
         <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
-<!-- TODO commented out until we know how the user could enter a custom value here.
-          <c:property-options allowCustomValue="true">
+        <!-- TODO let the user could enter a custom value here when the UI supports this. -->
+          <c:property-options >
             <c:option value="HTTP/1.1"/>
             <c:option value="AJP"/>
           </c:property-options>
--->
         </c:simple-property>
         <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
         <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
@@ -1525,7 +1525,7 @@
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
         <c:group name="child:ssl=configuration" displayName="SSL Configuration">
-          <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
+          <c:map-property name="*Configuration" displayName="Configuration" readOnly="false" required="false">
             <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
             <c:simple-property name="ca-certificate-password" required="false" type="string" readOnly="false" description="Certificate password."/>
             <c:simple-property name="ca-revocation-url" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>

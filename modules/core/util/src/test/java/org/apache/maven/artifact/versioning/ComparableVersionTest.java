@@ -22,6 +22,10 @@ import org.testng.annotations.Test;
 
 @Test
 public class ComparableVersionTest {
+    public void testBZ_813967() {
+        compareVersions("4.2.0.JON300.GA", "4.2.0.JON.3.0.1.GA");
+    }
+
     public void testSimpleVersionCompare() {
         compareVersions("1.0", "1.1");
         compareVersions("1.0", "2.0");

@@ -4011,6 +4011,9 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.122">
+              <schema-javaTask className="ContentSourceConfigurationObfuscationUpgradeTask" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

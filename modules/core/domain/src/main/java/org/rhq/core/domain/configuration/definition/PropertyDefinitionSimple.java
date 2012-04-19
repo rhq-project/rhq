@@ -256,6 +256,9 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
         this.optionsSource.add(source);
     }
 
+    public boolean shouldBeObfuscated() {
+        return getType() == PropertySimpleType.PASSWORD;
+    }
 
     @Override
     public String toString() {

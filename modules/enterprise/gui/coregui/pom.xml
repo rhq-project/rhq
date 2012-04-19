@@ -246,6 +246,22 @@
                 <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <!-- 
+                  Do NOT include java files here, because otherwise the java files from
+                  resources would end up in WEB-INF/classes which definitely not something
+                  we want. The java files in resources are used for providing alternate,
+                  gwt-compatible, implementations of domain classes and we do not want
+                  those implementations to "spoil" the server-side classpath.
+                  
+                  Actually, I'm not even sure we need the properties in the generated
+                  sources (but we definitely DO need the gwt.xml in there, because we
+                  need to replace the ${...} place-holders with the build-provided values
+                  in there.
+                -->
+                <includes>
+                  <include>**/*.gwt.xml</include>
+                  <include>**/*.properties</include>
+                </includes>
             </resource>
             <resource>
                 <directory>src/main/java</directory>

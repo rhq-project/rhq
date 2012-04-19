@@ -68,6 +68,7 @@ import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -318,6 +319,32 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             return deployContent(report);
         } else {
             ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
+
+            // Check for the Highlander principle
+            boolean isSingleton = report.getResourceType().isSingleton();
+            if (isSingleton) {
+                // check if there is already a child with th desired type is present
+                Configuration pluginConfig = report.getPluginConfiguration();
+                PropertySimple pathProperty = pluginConfig.getSimple("path");
+                if (path==null || path.isEmpty()) {
+                    report.setErrorMessage("No path property found in plugin configuration");
+                    report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
+                    return report;
+                }
+
+                ReadChildrenNames op = new ReadChildrenNames(address,pathProperty.getStringValue());
+                Result res = connection.execute(op);
+                if (res.isSuccess()) {
+                    List<String> entries = (List<String>) res.getResult();
+                    if (!entries.isEmpty()) {
+                        report.setErrorMessage("Resource is a singleton, but there are already children " + entries + " please remove them and retry");
+                        report.setStatus(CreateResourceStatus.FAILURE);
+                        return report;
+                    }
+                }
+            }
+
+
             CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
             return delegate.createResource(report);
         }

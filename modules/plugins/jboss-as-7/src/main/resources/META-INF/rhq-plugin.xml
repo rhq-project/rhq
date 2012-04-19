@@ -200,6 +200,31 @@
           </c:property-options>
          </c:simple-property>
 '>
+    <!ENTITY jvmDefinitionResourceConfigProperties '
+        <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
+        <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
+        <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
+        <c:list-property name="environment-variables" required="false" description="The JVM environment variables." >
+            <c:simple-property name="environment-variable" type="string"/>
+        </c:list-property>
+        <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
+        <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
+        <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
+        <c:list-property name="jvm-options" required="false" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
+            <c:simple-property name="jvm-option" type="string"/>
+        </c:list-property>
+        <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
+        <c:simple-property name="max-permgen-size" required="false" type="string" readOnly="false" description="The maximum size of the permanent generation."/>
+        <c:simple-property name="permgen-size" required="false" type="string" readOnly="false" description="The initial permanent generation size."/>
+        <c:simple-property name="stack-size" required="false" type="string" readOnly="false" description="The JVM stack size settings."/>
+        <c:simple-property name="type" required="false" type="string" readOnly="true" description="The JVM type can be either SUN or IBM" default="SUN">
+            <c:property-options>
+                <c:option value="SUN"/>
+                <c:option value="IBM"/>
+            </c:property-options>
+        </c:simple-property>
+'>
+
 ]>
 <plugin name="jboss-as-7"
         displayName="JBoss Application Server 7.x"
@@ -1986,13 +2011,12 @@
 
   </service>
 
-  <service name="JVM Definition"
+  <service name="JVM Definition (Host)"
+           description="A JVM Definition on Host level, that can serve as templates for server groups and managed servers"
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            createDeletePolicy="both">
     <runs-inside>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
       <parent-resource-type name="Host" plugin="jboss-as-7"/>
     </runs-inside>
 
@@ -2001,28 +2025,30 @@
     </plugin-configuration>
 
     <resource-configuration>
-      <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
-      <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
-      <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
-      <c:list-property name="environment-variables" required="false" description="The JVM environment variables." >
-          <c:simple-property name="environment-variable" type="string"/>
-      </c:list-property>
-      <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
-      <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
-      <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
-      <c:list-property name="jvm-options" required="false" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
-          <c:simple-property name="jvm-option" type="string"/>
-      </c:list-property>
-      <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
-      <c:simple-property name="max-permgen-size" required="false" type="string" readOnly="false" description="The maximum size of the permanent generation."/>
-      <c:simple-property name="permgen-size" required="false" type="string" readOnly="false" description="The initial permanent generation size."/>
-      <c:simple-property name="stack-size" required="false" type="string" readOnly="false" description="The JVM stack size settings."/>
-      <c:simple-property name="type" required="false" type="string" readOnly="true" description="The JVM type can be either SUN or IBM" default="SUN">
-          <c:property-options>
-              <c:option value="SUN"/>
-              <c:option value="IBM"/>
-          </c:property-options>
+      &jvmDefinitionResourceConfigProperties;
+    </resource-configuration>
+   </service>
+
+  <service name="JVM Definition"
+           description="A JVM definition that can override host and server group level definitions with the same name"
+           discovery="SubsystemDiscovery"
+           class="JVMDefinitionComponent"
+           singleton="true"
+           createDeletePolicy="both">
+    <runs-inside>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" default="jvm" readOnly="true"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="baseDefinition" required="true" readOnly="true" description="The definition from host level to use/override">
+        <c:option-source target="resource" expression="type='JVM Definition (Host)' plugin=jboss-as-7"/>
       </c:simple-property>
+      &jvmDefinitionResourceConfigProperties;
     </resource-configuration>
    </service>
 

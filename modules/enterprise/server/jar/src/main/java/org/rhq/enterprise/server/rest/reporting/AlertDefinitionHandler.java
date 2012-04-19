@@ -8,9 +8,10 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -26,6 +27,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 @Stateless
 public class AlertDefinitionHandler extends AbstractRestBean implements AlertDefinitionLocal {
 
+    private final Log log = LogFactory.getLog(AlertDefinitionHandler.class);
+
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
@@ -33,8 +36,10 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
     ResourceManagerLocal resourceManager;
 
     @Override
-    public StreamingOutput alertDefinitions(UriInfo uriInfo, final HttpServletRequest request, HttpHeaders headers ) {
-
+    public StreamingOutput alertDefinitions(final HttpServletRequest request) {
+            if (log.isDebugEnabled()) {
+                log.debug("Received request to generate report for " + caller);
+            }
             return new StreamingOutput() {
 
                 @Override

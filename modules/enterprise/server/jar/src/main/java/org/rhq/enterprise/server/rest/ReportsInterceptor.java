@@ -79,11 +79,11 @@ public class ReportsInterceptor {
 
         Object result = ctx.proceed();
 
-        if (log.isDebugEnabled() && result instanceof StreamingOutput) {
-            return new TimedStreamingOutput((StreamingOutput) result, getMethodName(ctx));
-        } else {
-            return result;
+        if (result instanceof StreamingOutput) {
+            return new LoggingStreamingOutput((StreamingOutput) result, getMethodName(ctx));
         }
+
+        return result;
     }
 
     private String getMethodName(InvocationContext ctx) {
@@ -131,12 +131,12 @@ public class ReportsInterceptor {
         return null;
     }
 
-    private class TimedStreamingOutput implements StreamingOutput {
+    private class LoggingStreamingOutput implements StreamingOutput {
 
         String methodName;
         StreamingOutput delegate;
 
-        public TimedStreamingOutput(StreamingOutput delegate, String methodName) {
+        public LoggingStreamingOutput(StreamingOutput delegate, String methodName) {
             this.delegate = delegate;
             this.methodName = methodName;
         }
@@ -144,9 +144,19 @@ public class ReportsInterceptor {
         @Override
         public void write(OutputStream output) throws IOException, WebApplicationException {
             long start = System.currentTimeMillis();
-            delegate.write(output);
+            try {
+                delegate.write(output);
+            } catch (IOException e) {
+                log.error("An exception occurred while executing " + methodName, e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.error("An exception occurred while executing " + methodName, e);
+                throw e;
+            }
             long end = System.currentTimeMillis();
-            log.debug(methodName + " finished streaming report in " + (end - start) + " ms");
+            if (log.isDebugEnabled()) {
+                log.debug(methodName + " finished streaming report in " + (end - start) + " ms");
+            }
         }
     }
 }

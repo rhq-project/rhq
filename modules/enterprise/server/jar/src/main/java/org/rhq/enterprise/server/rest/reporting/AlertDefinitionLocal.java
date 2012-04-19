@@ -11,9 +11,6 @@ public interface AlertDefinitionLocal {
 
     @GET
     @Produces({"text/csv", "application/xml"})
-    StreamingOutput alertDefinitions(
-            @Context UriInfo uriInfo,
-            @Context HttpServletRequest request,
-            @Context HttpHeaders headers );
+    StreamingOutput alertDefinitions(@Context HttpServletRequest request);
 
 }

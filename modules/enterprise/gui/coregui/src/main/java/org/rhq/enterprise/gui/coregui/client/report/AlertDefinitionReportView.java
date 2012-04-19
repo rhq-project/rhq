@@ -116,11 +116,10 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 ReportExporter exporter = ReportExporter.createStandardExporter("alertDefinitions");
                 exporter.export();
+                refreshTableInfo();
             }
-
         });
     }
-
 
     @Override
     public ViewName getViewName() {

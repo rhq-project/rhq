@@ -54,7 +54,7 @@ import static org.rhq.core.domain.util.PageOrdering.ASC;
 @Stateless
 public class InventorySummaryHandler extends AbstractRestBean implements InventorySummaryLocal {
 
-    private final Log log = LogFactory.getLog(InventorySummaryHandler.class);
+    private final Log log = LogFactory.getLog(getClass());
 
     @EJB
     protected ResourceManagerLocal resourceMgr;
@@ -62,6 +62,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     @Override
     public StreamingOutput generateReport(final HttpServletRequest request, final String resourceTypeId,
         final String version) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate " + getDebugReportName() + " report for " + caller);
+        }
+
         final List<ResourceInstallCount> results = getSummaryCounts();
 
         if (StringUtil.isEmpty(resourceTypeId)) {
@@ -120,6 +124,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                 }
             };
         }
+    }
+
+    protected String getDebugReportName() {
+        return "inventory summary";
     }
 
     protected List<String> getColumns() {

@@ -96,4 +96,9 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
 
         return propertyConverters;
     }
+
+    @Override
+    protected String getDebugReportName() {
+        return "drift compliance";
+    }
 }

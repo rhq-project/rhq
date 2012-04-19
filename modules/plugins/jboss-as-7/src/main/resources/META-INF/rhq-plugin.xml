@@ -2203,30 +2203,32 @@
 
      <service name="Console Handler"
               discovery="SubsystemDiscovery"
+	      createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="console-handler"/>
         </plugin-configuration>
 
-       <operation name="add" description="Defines a handler which writes to the console.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="target" required="false" type="string" readOnly="false" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Defines a handler which writes to the console." />
-         </results>
-       </operation>
-
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
+            <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+            </c:property-options>
+	   </c:simple-property>
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2245,21 +2247,48 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="update-properties" description="Update the properties of an existing console handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+            <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+            </c:property-options>
+	   </c:simple-property>
+	   <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
+	    <c:property-options>
+	     <c:option value="accept" name="accept"/>
+	     <c:option value="all" name="all"/>
+	     <c:option value="any" name="any"/>
+	     <c:option value="change-level" name="change-level"/>
+	     <c:option value="deny" name="deny"/>
+	     <c:option value="level" name="level"/>
+	     <c:option value="level-range" name="level-range"/>
+	     <c:option value="match" name="match"/>
+	     <c:option value="not" name="not"/>
+	     <c:option value="replace" name="replace"/>
+	    </c:property-options>
+	   </c:simple-property>
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="target" required="false" type="string" readOnly="false" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR."/>
+           <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
+            <c:property-options>
+	      <c:option value="System.err" name="System.err"/>
+	      <c:option value="System.out" name="System.out"/>
+            </c:property-options>
+	   </c:simple-property>
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Update the properties of an existing console handler." />
@@ -2283,12 +2312,31 @@
            <c:option value="replace" name="replace"/>
           </c:property-options>
          </c:simple-property>
-
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
-         <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out."/>
+         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+	   <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+	   </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
+           <c:property-options>
+	      <c:option value="System.err" name="System.err"/>
+	      <c:option value="System.out" name="System.out"/>
+           </c:property-options>
+	 </c:simple-property>
        </resource-configuration>
 
      </service><!-- End of console-handler service -->

@@ -30,9 +30,10 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
 import org.rhq.core.domain.util.PageList;
@@ -47,11 +48,16 @@ import org.rhq.enterprise.server.rest.ReportsInterceptor;
 @Stateless
 public class PlatformUtilizationHandler extends AbstractRestBean implements PlatformUtilizationLocal {
 
+    private final Log log = LogFactory.getLog(PlatformUtilizationHandler.class);
+
     @EJB
     private PlatformUtilizationManagerLocal platformUtilizationMgr;
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, HttpServletRequest request, HttpHeaders headers) {
+    public StreamingOutput generateReport(HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate report for " + caller);
+        }
         return new StreamingOutput() {
             private NumberFormat numberFormat;
 

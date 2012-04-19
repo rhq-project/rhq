@@ -27,19 +27,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Path("/platformUtilization")
 @Local
 public interface PlatformUtilizationLocal {
 
     @GET
-    @Produces({"text/csv", "application/xml"})
-    StreamingOutput generateReport(
-        @Context UriInfo uriInfo,
-        @Context HttpServletRequest request,
-        @Context HttpHeaders headers);
+    @Produces({"text/csv"})
+    StreamingOutput generateReport(@Context HttpServletRequest request);
 
 }

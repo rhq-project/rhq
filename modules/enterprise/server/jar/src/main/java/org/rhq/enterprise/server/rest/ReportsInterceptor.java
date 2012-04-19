@@ -51,10 +51,10 @@ public class ReportsInterceptor {
     private final Log log = LogFactory.getLog(ReportsInterceptor.class);
 
     @Resource
-    EJBContext ejbContext;
+    private EJBContext ejbContext;
 
     @EJB
-    SubjectManagerLocal subjectManager;
+    private SubjectManagerLocal subjectManager;
 
     @AroundInvoke
     public Object setCaller(final InvocationContext ctx) throws Exception {

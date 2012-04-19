@@ -10,7 +10,7 @@ import javax.ws.rs.core.*;
 public interface AlertDefinitionLocal {
 
     @GET
-    @Produces({"text/csv", "application/xml"})
+    @Produces({"text/csv"})
     StreamingOutput alertDefinitions(@Context HttpServletRequest request);
 
 }

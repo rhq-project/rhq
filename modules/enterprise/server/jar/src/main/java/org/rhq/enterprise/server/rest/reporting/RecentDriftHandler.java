@@ -11,9 +11,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,8 +40,10 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
 
     @Override
     public StreamingOutput recentDrift(final String categories, final Integer snapshot, final String path,
-        final String definitionName, final Long startTime, final Long endTime, final UriInfo uriInfo,
-        final HttpServletRequest request, final HttpHeaders headers) {
+        final String definitionName, final Long startTime, final Long endTime, final HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate report for " + caller);
+        }
 
         return new StreamingOutput() {
             @Override

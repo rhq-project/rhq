@@ -8,9 +8,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +35,10 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
     private MeasurementOOBManagerLocal measurementOOBMManager;
 
     @Override
-    public StreamingOutput suspectMetrics(UriInfo uriInfo, HttpServletRequest request, HttpHeaders headers ) {
+    public StreamingOutput suspectMetrics(HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate report for " + caller);
+        }
         return new StreamingOutput() {
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {

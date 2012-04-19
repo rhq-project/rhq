@@ -11,9 +11,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,9 +37,11 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
     private OperationManagerLocal operationManager;
 
     @Override
-    public StreamingOutput recentOperations(final String operationRequestStatus,
-                                            final Long startTime, final Long endTime, final UriInfo uriInfo,
-                                            final HttpServletRequest request, final HttpHeaders headers) {
+    public StreamingOutput recentOperations(final String operationRequestStatus, final Long startTime,
+        final Long endTime, final HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate report for " + caller);
+        }
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {

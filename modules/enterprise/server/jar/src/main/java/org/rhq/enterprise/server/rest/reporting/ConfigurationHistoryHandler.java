@@ -9,9 +9,10 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
@@ -30,12 +31,16 @@ import static org.rhq.enterprise.server.rest.reporting.ReportFormatHelper.format
 @Stateless
 public class ConfigurationHistoryHandler extends AbstractRestBean implements ConfigurationHistoryLocal {
 
+    private final Log log = LogFactory.getLog(ConfigurationHistoryHandler.class);
+
     @EJB
     private ConfigurationManagerLocal configurationManager;
 
     @Override
-    public StreamingOutput configurationHistory(UriInfo uriInfo, final HttpServletRequest request,
-        HttpHeaders headers ) {
+    public StreamingOutput configurationHistory(final HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to generate report for " + caller);
+        }
 
         return new StreamingOutput() {
             @Override

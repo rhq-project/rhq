@@ -115,10 +115,10 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
 
     private Set<Integer> getPlatformMetricDefIds(ResourceType resourceType) {
         Set<Integer> metricDefIds = new TreeSet<Integer>();
-        List<String> metricDefNames = asList(MemoryMetric.Used.getProperty(), MemoryMetric.Free.getProperty(),
-            MemoryMetric.Total.getProperty(), CPUMetric.Idle.getProperty(), CPUMetric.System.getProperty(),
-            CPUMetric.User.getProperty(), SwapMetric.Free.getProperty(), SwapMetric.Used.getProperty(),
-            SwapMetric.Total.getProperty());
+        List<String> metricDefNames = asList(MemoryMetric.Used.getProperty(), MemoryMetric.ActualUsed.getProperty(),
+            MemoryMetric.Free.getProperty(), MemoryMetric.ActualFree.getProperty(), MemoryMetric.Total.getProperty(),
+            CPUMetric.Idle.getProperty(), CPUMetric.System.getProperty(), CPUMetric.User.getProperty(),
+            SwapMetric.Free.getProperty(), SwapMetric.Used.getProperty(), SwapMetric.Total.getProperty());
 
         for (String metricDefName : metricDefNames) {
             Integer metricDefId = findMetricDefId(resourceType.getMetricDefinitions(), metricDefName);
@@ -148,7 +148,9 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         summary.setUserCPU(findMeasurementData(measurementDataSet, CPUMetric.User.getProperty()));
 
         summary.setFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.Free.getProperty()));
+        summary.setActualFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualFree.getProperty()));
         summary.setUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.Used.getProperty()));
+        summary.setActualUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualUsed.getProperty()));
         summary.setTotalMemory(findMeasurementData(measurementDataSet, MemoryMetric.Total.getProperty()));
 
         summary.setFreeSwap(findMeasurementData(measurementDataSet, SwapMetric.Free.getProperty()));

@@ -117,8 +117,7 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
                     return "NA";
                 }
                 Double totalMemory = (Double) summary.getTotalMemory().getValue();
-                Double freeMemory = (Double) summary.getFreeMemory().getValue();
-                Double usedMemory = totalMemory - freeMemory;
+                Double usedMemory = (Double) summary.getActualUsedMemory().getValue();
                 return numberFormat.format((usedMemory / totalMemory));
             }
 

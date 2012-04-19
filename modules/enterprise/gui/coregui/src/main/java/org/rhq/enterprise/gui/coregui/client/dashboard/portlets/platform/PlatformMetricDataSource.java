@@ -102,7 +102,7 @@ public class PlatformMetricDataSource extends RPCDataSource<PlatformMetricsSumma
         if (summary.isMetricsAvailable()) {
             record.setAttribute(CPUMetric.Idle.getProperty(), summary.getIdleCPU().getValue());
             record.setAttribute(MemoryMetric.Total.getProperty(), summary.getTotalMemory().getValue());
-            record.setAttribute(MemoryMetric.Used.getProperty(), summary.getUsedMemory().getValue());
+            record.setAttribute(MemoryMetric.ActualUsed.getProperty(), summary.getActualUsedMemory().getValue());
             record.setAttribute(SwapMetric.Total.getProperty(), summary.getTotalSwap().getValue());
             record.setAttribute(SwapMetric.Used.getProperty(), summary.getUsedSwap().getValue());
         } else {

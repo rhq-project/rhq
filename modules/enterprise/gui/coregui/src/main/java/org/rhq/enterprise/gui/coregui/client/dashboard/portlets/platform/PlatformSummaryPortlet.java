@@ -178,9 +178,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             bar.setWidth100();
 
                             double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.getProperty());
-                            double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.getProperty());
-                            double percent = value / total;
-
+                            double used = listGridRecord.getAttributeAsDouble(MemoryMetric.ActualUsed.getProperty());
+                            double percent = used / total;
                             HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
                                 MeasurementUnits.PERCENTAGE, true));
                             text.setAutoWidth();

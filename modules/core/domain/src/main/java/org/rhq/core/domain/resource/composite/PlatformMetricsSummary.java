@@ -34,7 +34,8 @@ public class PlatformMetricsSummary implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static enum MemoryMetric {
-        Used("Native.MemoryInfo.used"), Free("Native.MemoryInfo.free"), Total("Native.MemoryInfo.total");
+        ActualUsed("Native.MemoryInfo.actualUsed"), Used("Native.MemoryInfo.used"),
+        ActualFree("Native.MemoryInfo.actualFree"), Free("Native.MemoryInfo.free"), Total("Native.MemoryInfo.total");
 
         private final String property;
 
@@ -84,7 +85,11 @@ public class PlatformMetricsSummary implements Serializable {
 
     private MeasurementData freeMemory;
 
+    private MeasurementData actualFreeMemory;
+
     private MeasurementData usedMemory;
+
+    private MeasurementData actualUsedMemory;
 
     private MeasurementData totalMemory;
 
@@ -118,12 +123,28 @@ public class PlatformMetricsSummary implements Serializable {
         this.metricsAvailable = metricsAvailable;
     }
 
+    public MeasurementData getActualFreeMemory() {
+        return actualFreeMemory;
+    }
+
+    public void setActualFreeMemory(MeasurementData actualFreeMemory) {
+        this.actualFreeMemory = actualFreeMemory;
+    }
+
     public MeasurementData getFreeMemory() {
         return freeMemory;
     }
 
     public void setFreeMemory(MeasurementData freeMemory) {
         this.freeMemory = freeMemory;
+    }
+
+    public MeasurementData getActualUsedMemory() {
+        return actualUsedMemory;
+    }
+
+    public void setActualUsedMemory(MeasurementData actualUsedMemory) {
+        this.actualUsedMemory = actualUsedMemory;
     }
 
     public MeasurementData getUsedMemory() {

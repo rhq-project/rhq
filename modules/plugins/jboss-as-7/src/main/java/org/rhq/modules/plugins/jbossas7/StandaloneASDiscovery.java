@@ -25,6 +25,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -89,15 +90,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     @Override
     protected String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType) {
         return String.format("Standalone %s server", productType.FULL_NAME);
-    }
-
-    @Override
-    protected HostPort getManagementHostPortFromHostXml(AS7CommandLine commandLine) {
-        HostPort managementPort = super.getManagementHostPortFromHostXml(commandLine);
-        if (!managementPort.withOffset) {
-            managementPort = checkForSocketBindingOffset(managementPort, commandLine);
-        }
-        return managementPort;
     }
 
     @Override

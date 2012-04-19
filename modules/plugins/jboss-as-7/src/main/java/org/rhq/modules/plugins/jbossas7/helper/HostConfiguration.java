@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.plugins.jbossas7.helper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,66 +34,55 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.core.pluginapi.util.JavaCommandLine;
-import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.AS7CommandLine;
+import org.rhq.modules.plugins.jbossas7.AS7CommandLineOption;
+import org.rhq.modules.plugins.jbossas7.AS7Mode;
 
 /**
- * Abstract base class for some discovery related functionality - especially
- * in the area of processes and host.xml
- * @author Heiko W. Rupp
+ * A host configuration - loaded from either standalone.xml or host.xml.
+ *
+ * @author Heiko Rupp
  */
-public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
+public class HostConfiguration {
 
-    private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
+    public static final int DEFAULT_MGMT_PORT = 9990;
+
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
+    private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
 
     private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption("bmanagement", null);
-    private static final String DJBOSS_SERVER_BASE_DIR = "-Djboss.server.base.dir";
-    private static final String DJBOSS_DOMAIN_BASE_DIR = "-Djboss.domain.base.dir";
-    private static final String DJBOSS_SOCKET_BIND_OFFSET = "-Djboss.socket.binding.port-offset";
 
-    static final int DEFAULT_MGMT_PORT = 9990;
+    private final Log log = LogFactory.getLog(HostConfiguration.class);
 
-    static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
-    private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
-    protected Document hostXml;
-    protected final Log log = LogFactory.getLog(this.getClass());
-    private XPathFactory factory;
+    private Document document;
+    private XPathFactory xpathFactory;
 
-    protected AbstractBaseDiscovery() {
-        synchronized (this) {
-            factory = XPathFactory.newInstance();
-        }
-    }
-
-    protected void readStandaloneOrHostXmlFromFile(File hostXmlFile) {
+    /**
+     *
+     * @param hostXmlFile absolute path to standalone.xml or host.xml file
+     */
+    public HostConfiguration(File hostXmlFile) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        InputStream is = new FileInputStream(hostXmlFile);
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            InputStream is = new FileInputStream(hostXmlFile);
-            try {
-                hostXml = builder.parse(is);
-            } finally {
-                is.close();
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
+            this.document = builder.parse(is);
+        } finally {
+            is.close();
         }
+
+        this.xpathFactory = XPathFactory.newInstance();
     }
 
     /**
      * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
-     * @return an Object containing host and port
-     * @see #readStandaloneOrHostXmlFromFile(java.io.File) for how to obtain the parsed xml
+     *
+     *
      * @param commandLine Command line arguments of the process to
+     *
+     * @return an Object containing host and port
      */
-    protected HostPort getManagementHostPortFromHostXml(AS7CommandLine commandLine) {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
+    public HostPort getManagementHostPort(AS7CommandLine commandLine, AS7Mode mode) {
         String portString;
         String interfaceExpression;
 
@@ -101,7 +90,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
         socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
         String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
-        String portOffset = null;
+        String portOffsetRaw = null;
 
         if (!socketInterface.isEmpty()) {
             interfaceExpression = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
@@ -131,11 +120,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
             // /server/socket-binding-group[@name='standard-sockets']/@port-offset
             String xpathExpression =
                     "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
-            portOffset = obtainXmlPropertyViaXPath(xpathExpression);
+            portOffsetRaw = obtainXmlPropertyViaXPath(xpathExpression);
 
             // TODO the next may also be expressed differently
             interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
-                + "']/inet-address/@value");
+                    + "']/inet-address/@value");
             if (interfaceExpression.isEmpty()) {
                 interfaceExpression = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                                 + "']/loopback-address/@value");
@@ -155,13 +144,107 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
             hp.port = Integer.valueOf(tmp);
         }
 
-        if (portOffset!=null && !portOffset.isEmpty()) {
-            String tmp = replaceDollarExpression(portOffset, commandLine, "0");
-            Integer offset = Integer.valueOf(tmp);
-            hp.port += offset;
-            hp.withOffset=true;
+        if (portOffsetRaw != null && !portOffsetRaw.isEmpty()) {
+            String portOffsetString = replaceDollarExpression(portOffsetRaw, commandLine, "0");
+            Integer portOffset = Integer.valueOf(portOffsetString);
+            hp.port += portOffset;
+            hp.withOffset = true;
         }
+
+        // TODO (ips): We shouldn't need the below code if the above code that reads the port offset from the config
+        //             file is working correctly.
+        if (!hp.withOffset && (mode == AS7Mode.STANDALONE)) {
+            // Only standalone applies the port offset to the management ports.
+            String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
+            if (value != null) {
+                int offset = Integer.valueOf(value);
+                hp.port += offset;
+            }
+        }
+
         return hp;
+    }
+
+    /**
+     * Try to determine the host name - that is the name of a standalone server or a
+     * host in domain mode by looking at the standalone.xml/host.xml files
+     * @return server name
+     */
+    public String getHostName() {
+        String hostName = this.document.getDocumentElement().getAttribute("name");
+        return hostName;
+    }
+
+    /**
+     * Try to obtain the domain controller's location from looking at host.xml
+     * @return host and port of the domain controller
+     */
+    public HostPort getHostPort() {
+        // first check remote, as we can't distinguish between a missing local element or
+        // and empty one which is the default
+        String remoteHost = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@host");
+        String portString = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@port");
+
+        HostPort hp;
+        if (!remoteHost.isEmpty() && !portString.isEmpty()) {
+            hp = new HostPort(false);
+            hp.host = remoteHost;
+            hp.port = Integer.parseInt(portString);
+        } else {
+            hp = new HostPort(true);
+            hp.port = 9999;
+        }
+
+        return hp;
+
+    }
+
+    public String getManagementSecurityRealm() {
+        String realm = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
+        return realm;
+    }
+
+    public File getSecurityPropertyFile(File baseDir, AS7Mode mode, String realm) {
+        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@path");
+        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@relative-to");
+
+        String dmode;
+        if (mode == AS7Mode.STANDALONE)
+            dmode = "server";
+        else
+            dmode = "domain";
+
+        File configDir;
+        if (relDir.equals("jboss." + dmode + ".config.dir")) {
+            configDir = new File(baseDir, "configuration");
+        } else {
+            configDir = new File(relDir);
+        }
+        File securityPropertyFile = new File(configDir, fileName);
+
+        return securityPropertyFile;
+    }
+
+    /**
+     * Run the passed xpathExpression on the prepopulated hostXml document and
+     * return the target element or attribute as a String.
+     * @param xpathExpression XPath Expression to evaluate
+     * @return String value of the Element or Attribute the XPath was pointing to.
+     *     Null in case the xpathExpression could not be evaluated.
+     * @throws IllegalArgumentException if hostXml is null
+     */
+    public String obtainXmlPropertyViaXPath(String xpathExpression) {
+        XPath xpath = this.xpathFactory.newXPath();
+        try {
+            XPathExpression expr = xpath.compile(xpathExpression);
+            Object result = expr.evaluate(this.document, XPathConstants.STRING);
+            return result.toString();
+        } catch (XPathExpressionException e) {
+            log.error("Evaluation of XPath expression failed: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -175,7 +258,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      *                   the expression did not specify a default value
      * @return resolved value
      */
-    private String replaceDollarExpression(String value, AS7CommandLine commandLine, String lastResort) {
+    protected String replaceDollarExpression(String value, AS7CommandLine commandLine, String lastResort) {
         if (!value.contains("${"))
             return value;
 
@@ -204,158 +287,6 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
 
         return resolvedValue;
-    }
-
-    /**
-     * Try to determine the host name - that is the name of a standalone server or a
-     * host in domain mode by looking at the standalone.xml/host.xml files
-     * @return server name
-     */
-    protected String findHostName() {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
-        String hostName = hostXml.getDocumentElement().getAttribute("name");
-        return hostName;
-    }
-
-    /**
-     * Try to obtain the domain controller's location from looking at host.xml
-     * @return host and port of the domain controller
-     */
-    protected HostPort getHostPortFromHostXml() {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
-        // first check remote, as we can't distinguish between a missing local element or
-        // and empty one which is the default
-        String remoteHost = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@host");
-        String portString = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@port");
-
-        HostPort hp;
-        if (!remoteHost.isEmpty() && !portString.isEmpty()) {
-            hp = new HostPort(false);
-            hp.host = remoteHost;
-            hp.port = Integer.parseInt(portString);
-        } else {
-            hp = new HostPort(true);
-            hp.port = 9999;
-        }
-
-        return hp;
-
-    }
-
-    String getManagementSecurityRealmFromHostXml() {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
-        String realm = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
-
-        return realm;
-    }
-
-    File getSecurityPropertyFileFromHostXml(File baseDir, AS7Mode mode, String realm) {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
-        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
-            + "']/authentication/properties/@path");
-        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
-            + "']/authentication/properties/@relative-to");
-
-        String dmode;
-        if (mode == AS7Mode.STANDALONE)
-            dmode = "server";
-        else
-            dmode = "domain";
-
-        File configDir;
-        if (relDir.equals("jboss." + dmode + ".config.dir")) {
-            configDir = new File(baseDir, "configuration");
-        } else {
-            configDir = new File(relDir);
-        }
-        File securityPropertyFile = new File(configDir, fileName);
-
-        return securityPropertyFile;
-    }
-
-    protected File getHomeDir(ProcessInfo processInfo, JavaCommandLine javaCommandLine) {
-        String home = javaCommandLine.getSystemProperties().get(HOME_DIR_SYSPROP);
-        File homeDir = new File(home);
-        if (!homeDir.isAbsolute()) {
-            if (processInfo.getExecutable() == null) {
-                throw new RuntimeException(HOME_DIR_SYSPROP + " for AS7 process " + processInfo
-                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
-            }
-            String cwd = processInfo.getExecutable().getCwd();
-            homeDir = new File(cwd, home);
-        }
-
-        return new File(FileUtils.getCanonicalPath(homeDir.getPath()));
-    }
-
-    /**
-     * Run the passed xpathExpression on the prepopulated hostXml document and
-     * return the target element or attribute as a String.
-     * @param xpathExpression XPath Expression to evaluate
-     * @return String value of the Element or Attribute the XPath was pointing to.
-     *     Null in case the xpathExpression could not be evaluated.
-     * @throws IllegalArgumentException if hostXml is null
-     *
-     */
-    protected String obtainXmlPropertyViaXPath(String xpathExpression) {
-        if (hostXml == null)
-            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
-        XPath xpath = factory.newXPath();
-        try {
-            XPathExpression expr = xpath.compile(xpathExpression);
-
-            Object result = expr.evaluate(hostXml, XPathConstants.STRING);
-
-            return result.toString();
-        } catch (XPathExpressionException e) {
-            log.error("Evaluation XPath expression failed: " + e.getMessage());
-            return null;
-        }
-    }
-
-    protected HostPort checkForSocketBindingOffset(HostPort managementPort, AS7CommandLine commandLine) {
-        String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
-        if (value != null) {
-            int offset = Integer.valueOf(value);
-            managementPort.port += offset;
-        }
-
-        return managementPort;
-    }
-
-    /**
-     * Helper class that holds information about the host,port tuple
-     */
-    protected static class HostPort {
-        String host;
-        int port;
-        boolean isLocal = true;
-        boolean withOffset = false;
-
-        public HostPort() {
-            host = "localhost";
-            port = DEFAULT_MGMT_PORT;
-            isLocal = true;
-        }
-
-        public HostPort(boolean local) {
-            this();
-            isLocal = local;
-        }
-
-        @Override
-        public String toString() {
-            return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isLocal=" + isLocal + '}';
-        }
     }
 
 }

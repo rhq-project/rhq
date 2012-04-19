@@ -48,6 +48,7 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -355,10 +356,15 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
                 throw new IllegalArgumentException("Unsupported mode: " + mode);
         }
         File configFile = new File(configDir, configFileName);
-        processDiscovery.readStandaloneOrHostXmlFromFile(configFile);
+        HostConfiguration hostConfig;
+        try {
+            hostConfig = new HostConfiguration(configFile);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse configuration file [" + configFile + "].", e);
+        }
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        File propertiesFile = processDiscovery.getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
+        File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, mode, realm);
 
         String encryptedPassword;
         try {

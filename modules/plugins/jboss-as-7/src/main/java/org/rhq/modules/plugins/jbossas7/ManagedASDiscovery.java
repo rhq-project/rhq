@@ -25,12 +25,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -45,7 +49,9 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class ManagedASDiscovery extends AbstractBaseDiscovery<HostControllerComponent<?>> {
+public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostControllerComponent<?>> {
+
+    private final Log log = LogFactory.getLog(ManagedASDiscovery.class);
 
     private HostControllerComponent parentComponent;
 

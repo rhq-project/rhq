@@ -54,6 +54,8 @@ import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
+import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -62,11 +64,12 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Abstract base discovery component for the two server types - "JBossAS7 Host Controller" and
  * "JBossAS7 Standalone Server".
  */
-public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
-        implements ResourceDiscoveryComponent, ManualAddFacet {
+public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
 
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
+
+    private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
 
     private static final String RHQADMIN = "rhqadmin";
     private static final String RHQADMIN_ENCRYPTED = "35c160c1f841a889d4cda53f0bfc94b6";
@@ -126,8 +129,8 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         if (!hostXmlFile.exists()) {
             throw new Exception("Server configuration file not found at the expected location (" + hostXmlFile + ").");
         }
-        // This sets this.hostXml, which lots of other methods depend on being set.
-        readStandaloneOrHostXmlFromFile(hostXmlFile);
+        // This method must be called before getHostConfiguration() can be called.
+        HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
 
         String domainHost = findHost(hostXmlFile);
         pluginConfig.put(new PropertySimple("domainHost", domainHost));
@@ -135,19 +138,19 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         File logFile = getLogFile(getLogDir(process, commandLine, baseDir));
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
-        HostPort managementHostPort = getManagementHostPortFromHostXml(commandLine);
+        HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
         pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
         pluginConfig.put(new PropertySimple("port", managementHostPort.port));
-        pluginConfig.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
+        pluginConfig.put(new PropertySimple("realm", hostConfig.getManagementSecurityRealm()));
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
         pluginConfig.put(new PropertySimple("productType", productType.name()));
         pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
 
         setStartScriptPluginConfigProps(discoveryContext.getSystemInformation(), process, commandLine, pluginConfig);
-        setUserAndPasswordPluginConfigProps(pluginConfig, baseDir);
+        setUserAndPasswordPluginConfigProps(pluginConfig, hostConfig, baseDir);
 
         String key = baseDir.getPath();
-        HostPort hostPort = getHostPortFromHostXml();
+        HostPort hostPort = hostConfig.getHostPort();
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String description = buildDefaultResourceDescription(hostPort, productType);
 
@@ -167,6 +170,29 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
+    }
+
+    protected HostConfiguration loadHostConfiguration(File hostXmlFile) throws Exception {
+        try {
+            return new HostConfiguration(hostXmlFile);
+        } catch (Exception e) {
+            throw new Exception("Failed to load host configuration from [" + hostXmlFile + "].", e);
+        }
+    }
+
+    protected File getHomeDir(ProcessInfo processInfo, JavaCommandLine javaCommandLine) {
+        String home = javaCommandLine.getSystemProperties().get(HOME_DIR_SYSPROP);
+        File homeDir = new File(home);
+        if (!homeDir.isAbsolute()) {
+            if (processInfo.getExecutable() == null) {
+                throw new RuntimeException(HOME_DIR_SYSPROP + " for AS7 process " + processInfo
+                        + " is a relative path, and the RHQ Agent process does not have permission to resolve it.");
+            }
+            String cwd = processInfo.getExecutable().getCwd();
+            homeDir = new File(cwd, home);
+        }
+
+        return new File(FileUtils.getCanonicalPath(homeDir.getPath()));
     }
 
     private void setStartScriptPluginConfigProps(SystemInfo systemInfo, ProcessInfo process,
@@ -234,8 +260,9 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
         pluginConfig.put(new PropertySimple("startScriptEnv", startScriptEnv));
     }
 
-    private void setUserAndPasswordPluginConfigProps(Configuration pluginConfig, File baseDir) {
-        Properties mgmtUsers = getManagementUsers(getMode(), baseDir);
+    private void setUserAndPasswordPluginConfigProps(Configuration pluginConfig, HostConfiguration hostConfig,
+                                                     File baseDir) {
+        Properties mgmtUsers = getManagementUsers(hostConfig, getMode(), baseDir);
         String user;
         String password;
         if (!mgmtUsers.isEmpty()) {
@@ -437,9 +464,9 @@ public abstract class BaseProcessDiscovery extends AbstractBaseDiscovery
     }
 
     // never returns null
-    private Properties getManagementUsers(AS7Mode mode, File baseDir) {
-        String realm = getManagementSecurityRealmFromHostXml();
-        File mgmUsersPropsFile = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
+    private Properties getManagementUsers(HostConfiguration hostConfig, AS7Mode mode, File baseDir) {
+        String realm = hostConfig.getManagementSecurityRealm();
+        File mgmUsersPropsFile = hostConfig.getSecurityPropertyFile(baseDir, mode, realm);
 
         Properties props = new Properties();
 

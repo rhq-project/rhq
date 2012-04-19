@@ -23,6 +23,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
 /**
  * Discovery component for "JBossAS7 Host Controller" Resources.

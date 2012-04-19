@@ -3,14 +3,14 @@
 ######### begin config ##########
 
 # the JBoss AS home directory
-JBOSS_HOME="${HOME}/Applications/jboss-as-7.1.1.Final"
+#JBOSS_HOME="${HOME}/Applications/jboss-as-7.1.1.Final"
 
 # the name of the config to be cloned 
 # (e.g. for AS7, "standalone" or "domain"; for other AS versions, "default" or "all")
-JBOSS_CONFIG="standalone"
+#JBOSS_CONFIG="standalone"
 
 # the number of instances to start
-JBOSS_INSTANCES="1"
+#JBOSS_INSTANCES="1"
 
 # the AS7 config file name (optional, default value for standalone: standalone-full.xml, for domain: domain.xml)
 #JBOSS_CONFIG_FILE_NAME="standalone-full.xml"

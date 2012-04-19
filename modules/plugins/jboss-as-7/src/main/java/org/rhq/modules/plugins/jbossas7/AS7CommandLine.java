@@ -1,6 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.modules.plugins.jbossas7;
-
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.pluginapi.util.JavaCommandLine;
 
@@ -12,44 +32,7 @@ import org.rhq.core.pluginapi.util.JavaCommandLine;
 public class AS7CommandLine extends JavaCommandLine {
 
     public AS7CommandLine(String[] args) {
-        super(args, true);
-    }
-
-    @Nullable
-    public String getClassOption(AS7CommandLineOption option) {
-        String shortOptionPrefix;
-        String shortOption;
-        if (option.getShortName() != null) {
-            shortOption = "-" + option.getShortName();
-            shortOptionPrefix = shortOption + "=";
-        } else {
-            shortOption = null;
-            shortOptionPrefix = null;
-        }
-        String longOptionPrefix;
-        if (option.getLongName() != null) {
-            longOptionPrefix = "--" + option.getLongName() + "=";
-        } else {
-            longOptionPrefix = null;
-        }
-
-        for (int i = 0, classArgsLength = getClassArguments().size(); i < classArgsLength; i++) {
-            String classArg = getClassArguments().get(i);
-            if (option.getShortName() != null) {
-                if (classArg.startsWith(shortOptionPrefix)) {
-                    return (shortOptionPrefix.length() < classArg.length()) ? classArg.substring(shortOptionPrefix.length()) : "";
-                } else if (classArg.equals(shortOption)) {
-                    return (i != (classArgsLength - 1)) ? getClassArguments().get(i + 1) : "";
-                }
-            }
-            if (option.getLongName() != null) {
-                if (classArg.startsWith(longOptionPrefix)) {
-                    return (longOptionPrefix.length() < classArg.length()) ? classArg.substring(longOptionPrefix.length()) : "";
-                }
-            }
-        }
-        // If we reached here, the option wasn't on the command line.
-        return null;
+        super(args, true, OptionFormat.SPACE_OR_EQUALS, OptionFormat.POSIX);
     }
 
 }

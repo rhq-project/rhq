@@ -49,6 +49,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaCommandLine {
 
+    /** 
+     * When parsing command line options, determines the valid format.
+     * <p>POSIX for short command line options is equivalent to SPACE_ONLY.</P>
+     * <p>POSIX for long command line options is equivalent to EQUALS_ONLY.</P>     * 
+     * 
+     * @see JavaCommandLine#getClassOption(JavaCommandLineOption)
+     */
+    public enum OptionFormat {
+        POSIX, SPACE_OR_EQUALS
+    };
+
     private List<String> arguments;
     private File javaExecutable;
     private List<String> classPath;
@@ -58,12 +69,32 @@ public class JavaCommandLine {
     private File executableJarFile;
     private List<String> classArguments;
     private boolean includeSystemPropertiesFromClassArguments;
+    private OptionFormat shortClassOptionFormat;
+    private OptionFormat longClassOptionFormat;
 
-    public JavaCommandLine(String ... args) {
-        this(args, false);
+    /**
+     * Same as <code>JavaCommandLine(args, false, OptionFormat.POSIX, OptionFormat.POSIX)</code>
+     */
+    public JavaCommandLine(String... args) {
+        this(args, false, OptionFormat.POSIX, OptionFormat.POSIX);
     }
 
+    /**
+     * Same as <code>JavaCommandLine(args, includeSystemPropertiesFromClassArguments, OptionFormat.POSIX, OptionFormat.POSIX)</code>
+     */
+    public JavaCommandLine(boolean includeSystemPropertiesFromClassArguments, String... args) {
+        this(args, includeSystemPropertiesFromClassArguments, OptionFormat.POSIX, OptionFormat.POSIX);
+    }
+
+    /**
+     * Same as <code>JavaCommandLine(args, includeSystemPropertiesFromClassArguments, OptionFormat.POSIX, OptionFormat.POSIX)</code>
+     */
     public JavaCommandLine(String[] args, boolean includeSystemPropertiesFromClassArguments) {
+        this(args, includeSystemPropertiesFromClassArguments, OptionFormat.POSIX, OptionFormat.POSIX);
+    }
+
+    public JavaCommandLine(String[] args, boolean includeSystemPropertiesFromClassArguments,
+        OptionFormat shortClassOptionFormat, OptionFormat longClassOptionFormat) {
         if (args == null) {
             throw new IllegalArgumentException("'commandLine' parameter is null.");
         }
@@ -73,6 +104,8 @@ public class JavaCommandLine {
         }
 
         this.includeSystemPropertiesFromClassArguments = includeSystemPropertiesFromClassArguments;
+        this.shortClassOptionFormat = (shortClassOptionFormat == null) ? OptionFormat.POSIX : shortClassOptionFormat;
+        this.longClassOptionFormat = (longClassOptionFormat == null) ? OptionFormat.POSIX : longClassOptionFormat;
 
         parseCommandLine(args);
     }
@@ -187,6 +220,81 @@ public class JavaCommandLine {
     @NotNull
     public List<String> getClassArguments() {
         return classArguments;
+    }
+
+    /**
+     * @param option
+     * @return null if the option is not on the command line, "" if it is on the command line and
+     * either has no value or expects no value, otherwise the non-empty value.
+     */
+    @Nullable
+    public String getClassOption(JavaCommandLineOption option) {
+        String shortOption = null;
+        String shortOptionEquals = null;
+        if (option.getShortName() != null) {
+            shortOption = "-" + option.getShortName();
+            shortOptionEquals = shortOption + "=";
+        }
+
+        String longOption = null;
+        String longOptionEquals = null;
+        if (option.getLongName() != null) {
+            longOption = "--" + option.getLongName();
+            longOptionEquals = longOption + "=";
+        }
+
+        for (int i = 0, classArgsLength = getClassArguments().size(); i < classArgsLength; i++) {
+            String classArg = getClassArguments().get(i);
+
+            // If we hit a "stop processing options" option then don't look further, the rest of the
+            // options are actually deferred to a subsequent command.
+            // TODO: This behavior may need to be configurable.
+            if ("--".equals(classArg)) {
+                break;
+            }
+
+            if (option.getShortName() != null && classArg.startsWith(shortOption)) {
+                if (!option.isExpectsValue()) {
+                    return "";
+
+                } else {
+                    switch (shortClassOptionFormat) {
+                    case POSIX:
+                        return (i != (classArgsLength - 1)) ? getClassArguments().get(i + 1) : "";
+
+                    case SPACE_OR_EQUALS:
+                    default:
+                        int len = shortOptionEquals.length();
+                        if (classArg.startsWith(shortOptionEquals)) {
+                            return (len < classArg.length()) ? (classArg.substring(len).trim()) : "";
+                        }
+                        break;
+                    }
+                }
+
+            } else if (option.getLongName() != null && classArg.startsWith(longOption)) {
+                if (!option.isExpectsValue()) {
+                    return "";
+
+                } else {
+                    switch (longClassOptionFormat) {
+                    case POSIX:
+                        int len = longOptionEquals.length();
+                        if (classArg.startsWith(longOptionEquals)) {
+                            return (len < classArg.length()) ? (classArg.substring(len).trim()) : "";
+                        }
+                        break;
+
+                    case SPACE_OR_EQUALS:
+                    default:
+                        return (i != (classArgsLength - 1)) ? getClassArguments().get(i + 1) : "";
+                    }
+                }
+            }
+        }
+
+        // If we reached here, the option wasn't on the command line.
+        return null;
     }
 
     @Override

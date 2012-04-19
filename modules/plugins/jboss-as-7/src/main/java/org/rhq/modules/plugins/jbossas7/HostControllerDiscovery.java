@@ -22,6 +22,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.JavaCommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
@@ -39,8 +40,8 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     private static final String DEFAULT_DOMAIN_CONFIG_FILE_NAME = "domain.xml";
     private static final String DEFAULT_HOST_CONFIG_FILE_NAME = "host.xml";
 
-    private AS7CommandLineOption DOMAIN_CONFIG_OPTION = new AS7CommandLineOption("c", "domain-config");
-    private AS7CommandLineOption HOST_CONFIG_OPTION = new AS7CommandLineOption(null, "host-config");
+    private JavaCommandLineOption DOMAIN_CONFIG_OPTION = new JavaCommandLineOption("c", "domain-config");
+    private JavaCommandLineOption HOST_CONFIG_OPTION = new JavaCommandLineOption(null, "host-config");
 
     @Override
     protected AS7Mode getMode() {
@@ -68,7 +69,7 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected AS7CommandLineOption getHostXmlFileNameOption() {
+    protected JavaCommandLineOption getHostXmlFileNameOption() {
         return HOST_CONFIG_OPTION;
     }
 

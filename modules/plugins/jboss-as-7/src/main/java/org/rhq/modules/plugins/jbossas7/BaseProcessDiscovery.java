@@ -52,6 +52,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
+import org.rhq.core.pluginapi.util.JavaCommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
@@ -373,7 +374,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     // Returns the name of the host config xml file (domain controller) or server config xml file (standalone server),
     // e.g. "standalone.xml" or "host.xml".
     protected String getHostXmlFileName(AS7CommandLine commandLine) {
-        AS7CommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
+        JavaCommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
         String optionValue = commandLine.getClassOption(hostXmlFileNameOption);
         return (optionValue != null) ? optionValue : getDefaultHostXmlFileName();
     }
@@ -405,7 +406,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String getDefaultBaseDirName();
 
-    protected abstract AS7CommandLineOption getHostXmlFileNameOption();
+    protected abstract JavaCommandLineOption getHostXmlFileNameOption();
 
     protected abstract String getDefaultHostXmlFileName();
 

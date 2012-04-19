@@ -24,6 +24,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.JavaCommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
@@ -40,7 +41,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     private static final String DEFAULT_SERVER_CONFIG_FILE_NAME = "standalone.xml";
 
-    private AS7CommandLineOption SERVER_CONFIG_OPTION = new AS7CommandLineOption('c', "server-config");
+    private JavaCommandLineOption SERVER_CONFIG_OPTION = new JavaCommandLineOption('c', "server-config");
 
     @Override
     protected AS7Mode getMode() {
@@ -68,7 +69,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected AS7CommandLineOption getHostXmlFileNameOption() {
+    protected JavaCommandLineOption getHostXmlFileNameOption() {
         return SERVER_CONFIG_OPTION;
     }
 

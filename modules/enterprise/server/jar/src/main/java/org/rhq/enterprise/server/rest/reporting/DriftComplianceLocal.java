@@ -25,9 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Path("/driftCompliance")
 @Local
@@ -36,9 +34,7 @@ public interface DriftComplianceLocal {
     @GET
     @Produces({"text/csv", "application/xml"})
     StreamingOutput generateReport(
-        @Context UriInfo uriInfo,
         @Context HttpServletRequest request,
-        @Context HttpHeaders headers,
         @QueryParam("resourceTypeId") String resourceTypeId,
         @QueryParam("version") String version);
 

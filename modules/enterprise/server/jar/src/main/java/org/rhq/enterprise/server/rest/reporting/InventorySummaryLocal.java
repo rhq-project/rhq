@@ -25,20 +25,27 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Path("/inventorySummary")
 @Local
 public interface InventorySummaryLocal {
 
+    /**
+     * Generates an inventory summary report. The report can be in either a master or
+     * details format.
+     *
+     * @param request
+     * @param resourceTypeId Corresponds to the resourceTypeId query string parameter and
+     * must be specified to generate the details version of the report.
+     * @param version Corresponds to the version query string parameter and should be
+     * specified to generate the details version of the report.
+     * @return An output stream that contains the CSV report.
+     */
     @GET
-    @Produces({"text/csv", "application/xml"})
+    @Produces({"text/csv"})
     StreamingOutput generateReport(
-        @Context UriInfo uriInfo,
         @Context HttpServletRequest request,
-        @Context HttpHeaders headers,
         @QueryParam("resourceTypeId") String resourceTypeId,
         @QueryParam("version") String version);
 

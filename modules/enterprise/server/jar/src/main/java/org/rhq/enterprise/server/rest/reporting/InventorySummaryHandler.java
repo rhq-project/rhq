@@ -31,9 +31,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,8 +60,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     protected ResourceManagerLocal resourceMgr;
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, final HttpServletRequest request, HttpHeaders headers,
-        final String resourceTypeId, final String version) {
+    public StreamingOutput generateReport(final HttpServletRequest request, final String resourceTypeId,
+        final String version) {
         final List<ResourceInstallCount> results = getSummaryCounts();
 
         if (StringUtil.isEmpty(resourceTypeId)) {
@@ -71,6 +69,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Generating inventory summary CSV report for resource types.");
+                    }
                     CsvWriter<ResourceInstallCount> csvWriter = new CsvWriter<ResourceInstallCount>();
                     List<String> columns = getColumns();
                     csvWriter.setColumns(columns.toArray(new String[columns.size()]));
@@ -86,6 +87,10 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Generating detailed inventory summary CSV report for [resourceTypeId: " +
+                            resourceTypeId + ", version: " + version + "]");
+                    }
                     ResourceCriteria criteria = getDetailsQueryCriteria(Integer.parseInt(resourceTypeId), version);
 
                     CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =

@@ -21,6 +21,9 @@
 
 package org.rhq.enterprise.server.rest;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.EJBContext;
@@ -29,6 +32,8 @@ import javax.interceptor.InvocationContext;
 import javax.naming.OperationNotSupportedException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,13 +57,13 @@ public class ReportsInterceptor {
     SubjectManagerLocal subjectManager;
 
     @AroundInvoke
-    public Object setCaller(InvocationContext ctx) throws Exception {
+    public Object setCaller(final InvocationContext ctx) throws Exception {
         HttpServletRequest request = getRequest(ctx.getParameters());
         if (request == null) {
             // TODO should we throw a different exception?
-            String msg = "No " + HttpServletRequest.class.getName() + " parameter was found for " +
-                ctx.getTarget().getClass().getName() + "." + ctx.getMethod().getName() + ". An " +
-                HttpServletRequest.class.getName() + " parameter must be specified in order to support authentication";
+            String msg = "No " + HttpServletRequest.class.getName() + " parameter was found for " + getMethodName(ctx) +
+                ". An " + HttpServletRequest.class.getName() +
+                " parameter must be specified in order to support authentication";
             log.error(msg);
             throw new OperationNotSupportedException(msg);
         }
@@ -72,7 +77,17 @@ public class ReportsInterceptor {
         AbstractRestBean target = (AbstractRestBean) ctx.getTarget();
         target.caller = subject;
 
-        return ctx.proceed();
+        Object result = ctx.proceed();
+
+        if (log.isDebugEnabled() && result instanceof StreamingOutput) {
+            return new TimedStreamingOutput((StreamingOutput) result, getMethodName(ctx));
+        } else {
+            return result;
+        }
+    }
+
+    private String getMethodName(InvocationContext ctx) {
+        return ctx.getTarget().getClass().getName() + "." + ctx.getMethod().getName();
     }
 
     private HttpServletRequest getRequest(Object[] params) {
@@ -114,6 +129,25 @@ public class ReportsInterceptor {
             }
         }
         return null;
+    }
+
+    private class TimedStreamingOutput implements StreamingOutput {
+
+        String methodName;
+        StreamingOutput delegate;
+
+        public TimedStreamingOutput(StreamingOutput delegate, String methodName) {
+            this.delegate = delegate;
+            this.methodName = methodName;
+        }
+
+        @Override
+        public void write(OutputStream output) throws IOException, WebApplicationException {
+            long start = System.currentTimeMillis();
+            delegate.write(output);
+            long end = System.currentTimeMillis();
+            log.debug(methodName + " finished streaming report in " + (end - start) + " ms");
+        }
     }
 }
 

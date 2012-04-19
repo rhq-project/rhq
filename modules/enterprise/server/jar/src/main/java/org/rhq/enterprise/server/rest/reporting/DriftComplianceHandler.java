@@ -24,9 +24,7 @@ import java.util.List;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
@@ -40,9 +38,8 @@ import org.rhq.enterprise.server.rest.ReportsInterceptor;
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, HttpServletRequest request, HttpHeaders headers, String resourceTypeId,
-        String version) {
-        return super.generateReport(uriInfo, request, headers, resourceTypeId, version);
+    public StreamingOutput generateReport(HttpServletRequest request, String resourceTypeId, String version) {
+        return super.generateReport(request, resourceTypeId, version);
     }
 
     @Override

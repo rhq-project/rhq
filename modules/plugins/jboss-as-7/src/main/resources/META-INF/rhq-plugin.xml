@@ -167,19 +167,19 @@
 	<!ENTITY logLevel '
            <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
             <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
+	      <c:option value="ALL"/>
+	      <c:option value="CONFIG"/>
+	      <c:option value="DEBUG"/>
+	      <c:option value="ERROR"/>
+	      <c:option value="FATAL"/>
+	      <c:option value="FINE"/>
+	      <c:option value="FINER"/>
+	      <c:option value="FINEST"/>
+	      <c:option value="INFO"/>
+	      <c:option value="OFF"/>
+	      <c:option value="TRACE"/>
+	      <c:option value="WARN"/>
+	      <c:option value="WARNING"/>
             </c:property-options>
 	   </c:simple-property>
 '>
@@ -187,19 +187,20 @@
 	<!ENTITY logFilter '
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
+           <c:option value="accept"/>
+           <c:option value="all"/>
+           <c:option value="any"/>
+           <c:option value="change-level"/>
+           <c:option value="deny"/>
+           <c:option value="level"/>
+           <c:option value="level-range"/>
+           <c:option value="match"/>
+           <c:option value="not"/>
+           <c:option value="replace"/>
           </c:property-options>
          </c:simple-property>
 '>
+
     <!ENTITY jvmDefinitionResourceConfigProperties '
         <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
         <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
@@ -223,6 +224,26 @@
                 <c:option value="IBM"/>
             </c:property-options>
         </c:simple-property>
+'>
+
+	<!ENTITY logFile '
+          <c:map-property name="file" required="true" readOnly="false" description="The file description consisting of the path and optional relative to path.">
+            <c:simple-property name="path" required="true" readOnly="false" description="The filesystem path."/>
+            <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;
+">       
+	     <c:property-options>
+	      <c:option value="java.home" />
+	      <c:option value="jboss.domain.servers.dir" />
+	      <c:option value="jboss.home" />
+	      <c:option value="jboss.server.base.dir" />
+	      <c:option value="jboss.server.data.dir" />
+	      <c:option value="jboss.server.log.dir" />
+	      <c:option value="jboss.server.tmp.dir" />
+	      <c:option value="user.dir" />
+	      <c:option value="user.home" />
+             </c:property-options>
+            </c:simple-property>
+          </c:map-property>
 '>
 
 ]>
@@ -2317,7 +2338,8 @@
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+          <!-- <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>-->
+          &logFile;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the file for a handler." />
@@ -2353,7 +2375,7 @@
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+           &logFile;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Update the properties of an existing file handler." />
@@ -2364,7 +2386,7 @@
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
+           &logFile;
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
@@ -2434,7 +2456,7 @@
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+          &logFile;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the file for a handler." />
@@ -2470,7 +2492,7 @@
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+           &logFile;
            <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
          </parameters>
          <results>
@@ -2482,10 +2504,8 @@
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
-
-           &logFilter;
-
+         &logFile;
+         &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
@@ -2505,7 +2525,7 @@
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+          &logFile;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the file for a handler." />
@@ -2541,7 +2561,7 @@
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
+           &logFile;
            <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" description="The size at which to rotate the log file."/>
            <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" description="The maximum number of backups to keep."/>
          </parameters>
@@ -2554,8 +2574,7 @@
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
-
+           &logFile;
            &logFilter;
 
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"

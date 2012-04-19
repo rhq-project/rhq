@@ -163,6 +163,43 @@
           </c:group>
         </resource-configuration>
 '>
+
+	<!ENTITY logLevel '
+           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+            <c:property-options>
+	      <c:option value="ALL" name="ALL"/>
+	      <c:option value="CONFIG" name="CONFIG"/>
+	      <c:option value="DEBUG" name="DEBUG"/>
+	      <c:option value="ERROR" name="ERROR"/>
+	      <c:option value="FATAL" name="FATAL"/>
+	      <c:option value="FINE" name="FINE"/>
+	      <c:option value="FINER" name="FINER"/>
+	      <c:option value="FINEST" name="FINEST"/>
+	      <c:option value="INFO" name="INFO"/>
+	      <c:option value="OFF" name="OFF"/>
+	      <c:option value="TRACE" name="TRACE"/>
+	      <c:option value="WARN" name="WARN"/>
+	      <c:option value="WARNING" name="WARNING"/>
+            </c:property-options>
+	   </c:simple-property>
+'>
+
+	<!ENTITY logFilter '
+         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
+          <c:property-options>
+           <c:option value="accept" name="accept"/>
+           <c:option value="all" name="all"/>
+           <c:option value="any" name="any"/>
+           <c:option value="change-level" name="change-level"/>
+           <c:option value="deny" name="deny"/>
+           <c:option value="level" name="level"/>
+           <c:option value="level-range" name="level-range"/>
+           <c:option value="match" name="match"/>
+           <c:option value="not" name="not"/>
+           <c:option value="replace" name="replace"/>
+          </c:property-options>
+         </c:simple-property>
+'>
 ]>
 <plugin name="jboss-as-7"
         displayName="JBoss Application Server 7.x"
@@ -2007,24 +2044,7 @@
 
     <operation name="change-root-log-level" description="Change the root logger level.">
       <parameters>
-        <c:simple-property name="level" required="true" type="string" readOnly="false"
-                           description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
-          <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
-          </c:property-options>
-        </c:simple-property>
+        &logLevel;
       </parameters>
       <results>
         <c:simple-property name="operationResult"/>
@@ -2039,25 +2059,7 @@
 
     <operation name="set-root-logger" description="Set the root logger.">
       <parameters>
-        <c:simple-property name="level" required="true" type="string" readOnly="false"
-                           description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
-          <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
-          </c:property-options>
-        </c:simple-property>
-
+        &logLevel;
         <c:list-property name="handlers" required="true" readOnly="false"
                          description="The Handlers associated with this Logger.">
           <c:simple-property name="handler" type="string"/>
@@ -2070,19 +2072,8 @@
 
     <resource-configuration>
       <c:group name="child:root-logger=ROOT" displayName="Root logger">
-	  <c:simple-property name="filter" required="false" type="string" readOnly="true" description="Defines a simple filter type.">
-	     <c:property-options>
-	      <c:option value="accept" name="accept"/>
-	      <c:option value="change-level" name="change-level"/>
-	      <c:option value="deny" name="deny"/>
-	      <c:option value="level" name="level"/>
-	      <c:option value="level-range" name="level-range"/>
-	      <c:option value="match" name="match"/>
-	      <c:option value="not" name="not"/>
-	      <c:option value="replace" name="replace"/>
-	  </c:property-options>
-	</c:simple-property>
-        <c:simple-property name="level" readOnly="true" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+          &logFilter;
+          &logLevel;
         <c:list-property name="handlers" readOnly="true">
           <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
         </c:list-property>
@@ -2091,26 +2082,12 @@
 
      <service name="Async Handler"
               discovery="SubsystemDiscovery"
+	      createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="async-handler"/>
         </plugin-configuration>
-
-       <operation name="add" description="Add a new ASYNC handler.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
-           <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;"/>
-           <c:simple-property name="subhandlers" required="false" type="string" readOnly="false" description="The Handlers associated with this async handler."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Add a new ASYNC handler." />
-         </results>
-       </operation>
 
        <operation name="assign-subhandler" description="Assign a subhandler to the ASYNC handler.">
          <parameters>
@@ -2142,12 +2119,6 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="unassign-subhandler" description="Unassign a subhandler from the ASYNC handler.">
          <parameters>
            <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
@@ -2159,9 +2130,8 @@
 
        <operation name="update-properties" description="Update the properties of an existing ASYNC handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
            <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;"/>
@@ -2173,25 +2143,10 @@
        </operation>
 
        <resource-configuration>
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
-
+           &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
+           &logLevel;
          <c:simple-property name="overflow-action" required="false" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK."/>
          <c:simple-property name="queue-length" required="false" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
@@ -2212,23 +2167,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded.">
-            <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
-            </c:property-options>
-	   </c:simple-property>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2250,37 +2189,8 @@
        <operation name="update-properties" description="Update the properties of an existing console handler.">
          <parameters>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
-            <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
-            </c:property-options>
-	   </c:simple-property>
-	   <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-	    <c:property-options>
-	     <c:option value="accept" name="accept"/>
-	     <c:option value="all" name="all"/>
-	     <c:option value="any" name="any"/>
-	     <c:option value="change-level" name="change-level"/>
-	     <c:option value="deny" name="deny"/>
-	     <c:option value="level" name="level"/>
-	     <c:option value="level-range" name="level-range"/>
-	     <c:option value="match" name="match"/>
-	     <c:option value="not" name="not"/>
-	     <c:option value="replace" name="replace"/>
-	    </c:property-options>
-	   </c:simple-property>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
@@ -2298,39 +2208,10 @@
        <resource-configuration>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
+           &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
-	   <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
-	   </c:property-options>
-         </c:simple-property>
+           &logLevel;
          <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
            <c:property-options>
 	      <c:option value="System.err" name="System.err"/>
@@ -2343,27 +2224,12 @@
 
      <service name="Custom Handler"
               discovery="SubsystemDiscovery"
+	      createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="custom-handler"/>
         </plugin-configuration>
-
-       <operation name="add" description="Defines a custom logging handler. The custom handler must extend java.util.logging.Handler.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="class" required="true" type="string" readOnly="false" description="The logging handler class to be used."/>
-           <c:simple-property name="module" required="true" type="string" readOnly="false" description="The module that the logging handler depends on."/>
-           <c:simple-property name="properties" required="false" type="string" readOnly="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Defines a custom logging handler. The custom handler must extend java.util.logging.Handler." />
-         </results>
-       </operation>
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
@@ -2386,18 +2252,11 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="update-properties" description="Update the properties of an existing custom logging handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="properties" required="false" type="string" readOnly="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method."/>
          </parameters>
@@ -2409,26 +2268,11 @@
        <resource-configuration>
          <c:simple-property name="class" required="false" type="string" readOnly="true" description="The logging handler class to be used."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
-
+           &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
+           &logLevel;
          <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module that the logging handler depends on."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
          <c:list-property name="properties" required="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method." >
              <c:simple-property name="properties" />
          </c:list-property>
@@ -2438,27 +2282,12 @@
 
      <service name="File Handler"
               discovery="SubsystemDiscovery"
+              createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="file-handler"/>
         </plugin-configuration>
-
-       <operation name="add" description="Defines a handler which writes to a file.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Defines a handler which writes to a file." />
-         </results>
-       </operation>
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
@@ -2490,18 +2319,11 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="update-properties" description="Update the properties of an existing file handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
@@ -2517,51 +2339,22 @@
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
-
-
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
-
+           &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
+           &logLevel;
        </resource-configuration>
 
      </service><!-- End of file-handler service -->
 
      <service name="Logger"
               discovery="SubsystemDiscovery"
+ 	      createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="logger"/>
         </plugin-configuration>
-
-       <operation name="add" description="Add a new logger category.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="handlers" required="false" type="string" readOnly="false" description="The Handlers associated with this Logger."/>
-           <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" description="Specifies whether or not this logger should send its output to it&apos;s parent Logger."/>
-           <c:simple-property name="category" required="true" type="string" readOnly="false" description="Specifies the category for the logger."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Add a new logger category." />
-         </results>
-       </operation>
 
        <operation name="assign-handler" description="Assign a Handler to a Logger.">
          <parameters>
@@ -2581,12 +2374,6 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logger category.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logger category." />
-         </results>
-       </operation>
-
        <operation name="unassign-handler" description="Unassign a Handler from a Logger.">
          <parameters>
            <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
@@ -2598,25 +2385,12 @@
 
        <resource-configuration>
          <c:simple-property name="category" required="false" type="string" readOnly="true" description="Specifies the category for the logger."/>
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
+           &logFilter;
 
          <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
              <c:simple-property name="handlers" />
          </c:list-property>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
+           &logLevel;
          <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true"
          description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
        </resource-configuration>
@@ -2625,28 +2399,12 @@
 
      <service name="Periodic Rotating File Handler"
               discovery="SubsystemDiscovery"
+	      createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
         </plugin-configuration>
-
-       <operation name="add" description="Defines a handler which writes to a file, rotating the log after a time period derived from the given suffix string, which should be in a format understood by java.text.SimpleDateFormat.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-           <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Defines a handler which writes to a file, rotating the log after a time period derived from the given suffix string, which should be in a format understood by java.text.SimpleDateFormat." />
-         </results>
-       </operation>
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
@@ -2678,18 +2436,11 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="update-properties" description="Update the properties of an existing periodic rotating file handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
@@ -2707,26 +2458,11 @@
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
 
-
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
+           &logFilter;
 
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
+           &logLevel;
          <c:simple-property name="suffix" required="false" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
        </resource-configuration>
 
@@ -2734,29 +2470,12 @@
 
      <service name="Size Rotating File Handler"
               discovery="SubsystemDiscovery"
+              createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
         </plugin-configuration>
-
-       <operation name="add" description="Add a new size rotating file handler.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-           <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" description="The size at which to rotate the log file."/>
-           <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" description="The maximum number of backups to keep."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Add a new size rotating file handler." />
-         </results>
-       </operation>
 
        <operation name="change-file" description="Change the file for a handler.">
          <parameters>
@@ -2788,18 +2507,11 @@
          </results>
        </operation>
 
-       <operation name="remove" description="Remove an existing logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove an existing logging handler." />
-         </results>
-       </operation>
-
        <operation name="update-properties" description="Update the properties of an existing size rotating file handler.">
          <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
            <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
-           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="Defines a simple filter type."/>
+           &logLevel;
+           &logFilter;
            <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
            <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
            <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
@@ -2818,27 +2530,12 @@
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
          <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
 
-
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
-          <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
-          </c:property-options>
-         </c:simple-property>
+           &logFilter;
 
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-         <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded."/>
+           &logLevel;
          <c:simple-property name="max-backup-index" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
-         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The handler&apos;s name."/>
          <c:simple-property name="rotate-size" required="false" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
        </resource-configuration>
 

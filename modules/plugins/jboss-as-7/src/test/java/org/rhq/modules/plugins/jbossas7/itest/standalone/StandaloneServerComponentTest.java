@@ -18,11 +18,18 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import java.io.File;
+import java.util.List;
+
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
@@ -68,6 +75,34 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @RunDiscovery
     public void testStandaloneServerDiscovery() throws Exception {
         super.testAutoDiscovery();
+    }
+
+    @Override
+    protected void validatePluginConfiguration(Configuration pluginConfig) {
+        super.validatePluginConfiguration(pluginConfig);
+
+        // "startScript" prop
+        String startScript = pluginConfig.getSimpleValue("startScript", null);
+        String expectedStartScript = (File.separatorChar == '/') ? "bin/standalone.sh" : "bin\\standalone.bat";
+        Assert.assertEquals(startScript, expectedStartScript);
+
+        // "startScriptArgs" prop
+        PropertySimple startScriptArgsProp = pluginConfig.getSimple("startScriptArgs");
+        ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
+        List<String> args = startScriptArgsPropWrapper.getValue();
+
+        Assert.assertEquals(args.size(), 5, args.toString());
+
+        Assert.assertEquals(args.get(0), "--server-config=standalone-full.xml");
+        Assert.assertEquals(args.get(1), "-Djboss.bind.address.management=127.0.0.1");
+        Assert.assertEquals(args.get(2), "-Djboss.bind.address=127.0.0.1");
+        Assert.assertEquals(args.get(3), "-Djboss.bind.address.unsecure=127.0.0.1");
+        Assert.assertEquals(args.get(4), "-Djboss.socket.binding.port-offset=40000");
+    }
+
+    @Test(priority = 2)
+    public void testStandaloneServerPluginConfiguration() throws Exception {
+        return;
     }
 
     // ******************************* METRICS ******************************* //

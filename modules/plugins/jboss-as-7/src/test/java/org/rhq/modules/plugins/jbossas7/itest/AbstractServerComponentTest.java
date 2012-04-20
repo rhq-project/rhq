@@ -18,14 +18,19 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.testng.Assert;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
 
 import static org.testng.Assert.*;
 
@@ -64,23 +69,47 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
         assertNotNull(getServerResource(),
                 getServerResourceType() + " Resource with key [" + getServerResourceKey() + "] was not discovered.");
-        System.out.println("===== Discovered: " + getServerResource());
+        System.out.println("\n===== Discovered: " + getServerResource());
         Configuration pluginConfig = getServerResource().getPluginConfiguration();
         System.out.println("---------- " + pluginConfig.toString(true));
         validatePluginConfiguration(pluginConfig);
     }
 
-    private void validatePluginConfiguration(Configuration pluginConfig) {
+    protected void validatePluginConfiguration(Configuration pluginConfig) {
+        // "hostname" prop
         String hostname = pluginConfig.getSimpleValue("hostname", null);
         String expectedHostname = System.getProperty(getBindAddressSystemPropertyName());
         assertEquals(hostname, expectedHostname, "Plugin config prop [hostname].");
 
+        // "port" prop
         String portString = pluginConfig.getSimpleValue("port", null);
         Integer port = (portString != null) ? Integer.valueOf(portString) : null;
         String portOffsetString = System.getProperty(getPortOffsetSystemPropertyName());
         int portOffset = (portOffsetString != null) ? Integer.valueOf(portOffsetString) : 0;
         Integer expectedPort = portOffset + 9990;        
         assertEquals(port, expectedPort, "Plugin config prop [port].");
+
+        // "startScriptEnv" prop
+        PropertySimple startScriptEnvProp = pluginConfig.getSimple("startScriptEnv");
+        MapPropertySimpleWrapper startScriptEnvPropWrapper = new MapPropertySimpleWrapper(startScriptEnvProp);
+        Map<String,String> env = startScriptEnvPropWrapper.getValue();
+        Assert.assertEquals(env.size(), 3, env.toString());
+
+        String javaHome = env.get("JAVA_HOME");
+        Assert.assertNotNull(javaHome);
+        Assert.assertTrue(new File(javaHome).isDirectory());
+
+        String path = env.get("PATH");
+        Assert.assertNotNull(path);
+        String[] pathElements = path.split(File.pathSeparator);
+        Assert.assertTrue(pathElements.length >= 1);
+        Assert.assertTrue(new File(pathElements[0]).isDirectory());
+
+        String ldLibraryPath = env.get("LD_LIBRARY_PATH");
+        Assert.assertNotNull(ldLibraryPath);
+        String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
+        Assert.assertTrue(ldLibraryPathElements.length >= 1);
+        Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
     }
 
     protected abstract String getBindAddressSystemPropertyName();

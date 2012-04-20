@@ -18,10 +18,17 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import java.io.File;
+import java.util.List;
+
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
@@ -61,6 +68,31 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     @RunDiscovery
     public void testDomainServerDiscovery() throws Exception {
         super.testAutoDiscovery();
+    }
+
+    @Override
+    protected void validatePluginConfiguration(Configuration pluginConfig) {
+        super.validatePluginConfiguration(pluginConfig);
+
+        // "startScript" prop
+        String startScript = pluginConfig.getSimpleValue("startScript", null);
+        String expectedStartScript = (File.separatorChar == '/') ? "bin/domain.sh" : "bin\\domain.bat";
+        Assert.assertEquals(startScript, expectedStartScript);
+
+        // "startScriptArgs" prop
+        PropertySimple startScriptArgsProp = pluginConfig.getSimple("startScriptArgs");
+        ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
+        List<String> args = startScriptArgsPropWrapper.getValue();
+
+        Assert.assertEquals(args.size(), 7, args.toString());
+
+        Assert.assertEquals(args.get(0), "-Djboss.bind.address.management=127.0.0.1");
+        Assert.assertEquals(args.get(1), "-Djboss.bind.address=127.0.0.1");
+        Assert.assertEquals(args.get(2), "-Djboss.bind.address.unsecure=127.0.0.1");
+        Assert.assertEquals(args.get(3), "-Djboss.socket.binding.port-offset=50000");
+        Assert.assertEquals(args.get(4), "-Djboss.management.native.port=59999");
+        Assert.assertEquals(args.get(5), "-Djboss.management.http.port=59990");
+        Assert.assertEquals(args.get(6), "-Djboss.management.https.port=59943");
     }
 
     // ******************************* METRICS ******************************* //

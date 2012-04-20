@@ -2136,27 +2136,13 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing ASYNC handler.">
-         <parameters>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
-           <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;"/>
-           <c:simple-property name="subhandlers" required="false" type="string" readOnly="false" description="The Handlers associated with this async handler."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing ASYNC handler." />
-         </results>
-       </operation>
-
        <resource-configuration>
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="overflow-action" required="false" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK."/>
-         <c:simple-property name="queue-length" required="false" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
+         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK."/>
+         <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
              <c:simple-property name="subhandlers" />
          </c:list-property>
@@ -2191,25 +2177,6 @@
        <operation name="enable" description="Enable a logging handler.">
          <results>
             <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="update-properties" description="Update the properties of an existing console handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
-            <c:property-options>
-	      <c:option value="System.err" name="System.err"/>
-	      <c:option value="System.out" name="System.out"/>
-            </c:property-options>
-	   </c:simple-property>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing console handler." />
          </results>
        </operation>
 
@@ -2260,27 +2227,16 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing custom logging handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="properties" required="false" type="string" readOnly="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing custom logging handler." />
-         </results>
-       </operation>
+       <!-- no need for 'update-properties' since resource-config does the same thing -->
 
        <resource-configuration>
-         <c:simple-property name="class" required="false" type="string" readOnly="true" description="The logging handler class to be used."/>
+         <c:simple-property name="class" required="true" type="string" readOnly="true" description="The logging handler class to be used."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module that the logging handler depends on."/>
+         <c:simple-property name="module" required="true" type="string" readOnly="true" description="The module that the logging handler depends on."/>
          <c:list-property name="properties" required="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method." >
              <c:simple-property name="properties" />
          </c:list-property>
@@ -2327,20 +2283,7 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           &logFile;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by configuration update -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
@@ -2392,9 +2335,8 @@
        </operation>
 
        <resource-configuration>
-         <c:simple-property name="category" required="false" type="string" readOnly="true" description="Specifies the category for the logger."/>
+         <c:simple-property name="category" required="true" type="string" readOnly="true" description="Specifies the category for the logger."/>
            &logFilter;
-
          <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
              <c:simple-property name="handlers" />
          </c:list-property>
@@ -2444,21 +2386,7 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing periodic rotating file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           &logFile;
-           <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing periodic rotating file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by config -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
@@ -2469,7 +2397,7 @@
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="suffix" required="false" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
+         <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
        </resource-configuration>
 
      </service><!-- End of periodic-rotating-file-handler service -->
@@ -2570,22 +2498,7 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing size rotating file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           &logFile;
-           <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" description="The size at which to rotate the log file."/>
-           <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" description="The maximum number of backups to keep."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing size rotating file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by configuration -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
@@ -2597,8 +2510,8 @@
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="max-backup-index" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
-         <c:simple-property name="rotate-size" required="false" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
+         <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
+         <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
        </resource-configuration>
 
      </service><!-- End of size-rotating-file-handler service -->

@@ -72,8 +72,8 @@ public class ServerStartScriptDiscoveryUtility {
         return startScriptFile;
     }
 
-    public static List<String> getStartScriptArgs(ProcessInfo serverProcess, ProcessInfo serverParentProcess,
-                                           List<String> serverArgs, Set<JavaCommandLineOption> optionExcludes) {
+    public static List<String> getStartScriptArgs(ProcessInfo serverParentProcess, List<String> serverArgs,
+                                                  Set<JavaCommandLineOption> optionExcludes) {
         // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
         //      Windows: "standalone.bat --server-config=standalone-full.xml"
         int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;

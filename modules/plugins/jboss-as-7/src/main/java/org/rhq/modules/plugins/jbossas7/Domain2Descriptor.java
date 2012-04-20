@@ -954,6 +954,26 @@ public class Domain2Descriptor {
         return optionList.toString();
     }
 
+    public static String convertAs7JsonToValidJson(String forConversion) {
+        //-String top line off
+        //-replace all ' => ' with ':'
+        forConversion = forConversion.replaceAll(" => ", ":");
+        //-replace all 'STRING' with '"STRING"'
+        forConversion = forConversion.replaceAll("STRING", "\"STRING\"");
+        //-replace all 'LIST' with '"LIST"'
+        forConversion = forConversion.replaceAll("LIST", "\"LIST\"");
+        //-replace all 'OBJECT' with '"OBJECT"'
+        forConversion = forConversion.replaceAll("OBJECT", "\"OBJECT\"");
+        //-replace all 'BOOLEAN' with '"BOOLEAN"'
+        forConversion = forConversion.replaceAll("BOOLEAN", "\"BOOLEAN\"");
+        //-replace all 'INT' with '"INT"'
+        forConversion = forConversion.replaceAll("INT", "\"INT\"");
+        //-replace all 'L,' with ','
+        forConversion = forConversion.replaceAll("L,", ",");
+        //-- case by case as above not regex. L not terminal with ,
+        return forConversion;
+    }
+
     private void doIndent(int indent, StringBuilder sb) {
         for (int i = 0; i < indent; i++) {
             sb.append(' ');

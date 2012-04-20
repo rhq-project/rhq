@@ -193,8 +193,8 @@ public class Domain2Descriptor {
                 }
             }
         } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
-            String legend = "Key: - property, -M metric, + operation, [] child node.";
-            StringBuilder tree = new StringBuilder(path + " ->\t\t\t" + legend + " \n");
+            String legend = "Key: - property, -M metric,* req'd, + operation, [] child node.";
+            StringBuilder tree = new StringBuilder(path + " ->\t" + legend + " \n");
             if (!descriptorSegment) {
                 System.out.print(tree);
                 listPropertiesAndChildren(3, resMap);
@@ -311,7 +311,11 @@ public class Domain2Descriptor {
         return excluded;
     }
 
-    /** Assume parent metadata type passed in with i)description ii)attributes iii)operations iv)children
+    /** Assume parent metadata type passed in with 
+     *  i)description 
+     *  ii)attributes 
+     *  iii)operations 
+     *  iv)children
      * 
      * @param indent
      * @param childMap
@@ -323,7 +327,7 @@ public class Domain2Descriptor {
 
         //retrieve the operations for the node.
         Map<String, Object> cOperationMap = (Map<String, Object>) metaDataNode.get("operations");
-        if (!descriptorSegment) {
+        if (!descriptorSegment) {//if we're attempting to generate a descriptor
             if (cOperationMap != null) {
                 //retrieve keys and sort.
                 String[] ckeys = cOperationMap.keySet().toArray(new String[cOperationMap.size()]);
@@ -332,7 +336,7 @@ public class Domain2Descriptor {
                     if (!isExcludedOperation(ckey)) {
                         StringBuilder sbc = new StringBuilder();
                         doIndent(indent + 2, sbc);
-                        sbc.append("+ " + ckey + "{*}");
+                        sbc.append("+ " + ckey + "{..}");
                         System.out.println(sbc);
                     }
                 }
@@ -359,7 +363,7 @@ public class Domain2Descriptor {
 
         //retrieve the attributes for the node.
         Map<String, Object> cAttributeMap = (Map<String, Object>) metaDataNode.get("attributes");
-        if (!descriptorSegment) {
+        if (!descriptorSegment) {//if we're attempting to generate a descriptor
             if (cAttributeMap != null) {
                 //retrieve keys and sort.
                 String[] ckeys = cAttributeMap.keySet().toArray(new String[cAttributeMap.size()]);
@@ -369,10 +373,19 @@ public class Domain2Descriptor {
                     doIndent(indent + 2, sbc);
                     Object attribute = cAttributeMap.get(ckey);
                     String accessType = (String) ((Map<String, Object>) attribute).get("access-type");
+                    boolean required = isRequired(attribute);
+                    String pre = null;
                     if (accessType.equalsIgnoreCase("metric")) {
-                        sbc.append("-M " + ckey);
+                        pre = "-M ";
+                        if (required)
+                            pre = "-*M";
+                        sbc.append(pre + ckey);
                     } else {
-                        sbc.append("- " + ckey);
+                        pre = "- ";
+                        if (required)
+                            pre = "-* ";
+
+                        sbc.append(pre + ckey);
                     }
                     System.out.println(sbc);
                 }
@@ -424,6 +437,17 @@ public class Domain2Descriptor {
         }
     }
 
+    private boolean isRequired(Object attribute) {
+        if ((attribute == null) && attribute instanceof Map) {
+            throw new IllegalArgumentException("Attribute object passed in cannot be null and must be of type Map.");
+        }
+        Object isRequired = ((Map<String, Object>) attribute).get("required");
+        Object nillable = ((Map<String, Object>) attribute).get("nillable");
+        boolean required = ((isRequired != null) && ("" + isRequired).equals("true"))
+            || ((nillable != null) && ("" + nillable).equals("false"));
+        return required;
+    }
+
     private Map<String, Object> locateMetaDataNodeFromMap(Map<String, Object> child) {
         Map<String, Object> retrieved = null;
         if (child != null) {
@@ -458,8 +482,8 @@ public class Domain2Descriptor {
             Type ptype = getTypeFromProps(props);
             if (ptype == Type.OBJECT && mode != D2DMode.METRICS) {
                 StringBuilder requiredStatus = new StringBuilder();
-                Object required = props.get("required");
-                if (required != null && (Boolean) required) {
+                boolean required = isRequired(props);
+                if (required) {
                     requiredStatus.append(" required=\"true\"");
                 } else {
                     requiredStatus.append(" required=\"false\"");
@@ -528,12 +552,13 @@ public class Domain2Descriptor {
                 sb.append(key);
                 sb.append("\"");
                 //include required status on plugin entry
-                Object required = props.get("required");
-                if (required != null && (Boolean) required) {
+                boolean required = isRequired(props);
+                if (required) {
                     sb.append(" required=\"true\"");
                 } else {
                     sb.append(" required=\"false\"");
                 }
+
 
                 String description = (String) props.get("description");
                 appendDescription(sb, description, null);
@@ -795,8 +820,8 @@ public class Domain2Descriptor {
         }
         sb.append('"');
 
-        Object required = props.get("required");
-        if (required != null && (Boolean) required) {
+        boolean required = isRequired(props);
+        if (required) {
             sb.append(" required=\"true\"");
         } else {
             sb.append(" required=\"false\"");
@@ -846,7 +871,8 @@ public class Domain2Descriptor {
                 mb.append("<c:map-property name=\"");
                 mb.append(entryName);
                 mb.append('"');
-                if (required != null && (Boolean) required) {
+
+                if (required) {
                     mb.append(" required=\"true\"");
                 } else {
                     mb.append(" required=\"false\"");

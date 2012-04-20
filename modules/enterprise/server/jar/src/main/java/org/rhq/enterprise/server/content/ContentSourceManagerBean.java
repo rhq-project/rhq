@@ -507,6 +507,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         ContentSource loaded = entityManager.find(ContentSource.class, contentSource.getId());
 
+        obfuscatePasswords(contentSource);
+                
         if (contentSource.getConfiguration() == null) {
             // this is a one-to-one and hibernate can't auto delete this orphan (HHH-2608), we manually do it here
             if (loaded.getConfiguration() != null) {
@@ -527,8 +529,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
         }
 
-        obfuscatePasswords(contentSource);
-        
         // now we can merge the changes to the database
         contentSource = entityManager.merge(contentSource);
         log.debug("User [" + subject + "] updated content source [" + contentSource + "]");

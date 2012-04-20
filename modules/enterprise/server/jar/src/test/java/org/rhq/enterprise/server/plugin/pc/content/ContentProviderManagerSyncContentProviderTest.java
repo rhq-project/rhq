@@ -97,7 +97,16 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         // Create a sample content source type that will be used in this test
         testSourceType = new ContentSourceType("testType");
         entityManager.persist(testSourceType);
-
+        entityManager.flush();
+        
+        //need to actually commit the tx so that the subsequent code can see the new entry in 
+        //the database
+        tx.commit();
+        
+        tx.begin();
+        //new entity manager associated with the new tx
+        entityManager = getEntityManager();
+        
         // Add a content source to sync in this test
         syncSource = new ContentSource("testSource1", testSourceType);
         contentManager.simpleCreateContentSource(overlord, syncSource);

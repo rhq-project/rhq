@@ -356,13 +356,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return (PropertySimple) getMap().get(name);
     }
 
+    public String getSimpleValue(String name) {
+        return getSimpleValue(name, null);
+    }
+
     public String getSimpleValue(String name, @Nullable String defaultValue) {
         PropertySimple property = (PropertySimple) getMap().get(name);
-        if ((property != null) && (property.getStringValue() != null)) {
-            return property.getStringValue();
-        } else {
-            return defaultValue;
-        }
+        return ((property != null) && (property.getStringValue() != null)) ? property.getStringValue() : defaultValue;
     }
 
     /**

@@ -2088,44 +2088,6 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=logging"/>
     </plugin-configuration>
 
-    <operation name="change-root-log-level" description="Change the root logger level.">
-      <parameters>
-        &logLevel;
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <operation name="remove-root-logger" description="Remove the root logger.">
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <operation name="set-root-logger" description="Set the root logger.">
-      <parameters>
-        &logLevel;
-        <c:list-property name="handlers" required="true" readOnly="false"
-                         description="The Handlers associated with this Logger.">
-          <c:simple-property name="handler" type="string"/>
-        </c:list-property>
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <resource-configuration>
-      <c:group name="child:root-logger=ROOT" displayName="Root logger">
-          &logFilter;
-          &logLevel;
-        <c:list-property name="handlers" readOnly="true">
-          <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
-        </c:list-property>
-      </c:group>
-    </resource-configuration>
-
      <service name="Async Handler"
               discovery="SubsystemDiscovery"
 	      createDeletePolicy="both"
@@ -2511,6 +2473,63 @@
        </resource-configuration>
 
      </service><!-- End of periodic-rotating-file-handler service -->
+
+     <service name="Root Logger"
+		 discovery="SubsystemDiscovery"
+                 createDeletePolicy="both"
+		 class="BaseComponent">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
+	   </plugin-configuration>
+
+	    <operation name="change-root-log-level" description="Change the root logger level.">
+	      <parameters>
+		&logLevel;
+	      </parameters>
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	    <operation name="remove-root-logger" description="Remove the root logger.">
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	    <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
+	     <parameters>
+	       <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+	     </parameters>
+	     <results>
+		<c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
+	     </results>
+	    </operation>
+
+	    <operation name="set-root-logger" description="Set the root logger.">
+	      <parameters>
+		&logLevel;
+		<c:list-property name="handlers" required="true" readOnly="false"
+		                 description="The Handlers associated with this Logger.">
+		  <c:simple-property name="handler" type="string"/>
+		</c:list-property>
+	      </parameters>
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	   <resource-configuration>
+             <c:group name="Root logger" displayName="Root logger">
+	      &logFilter;
+	      <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
+		 <c:simple-property name="handlers" />
+	      </c:list-property>
+	      &logLevel;
+	     </c:group>
+	   </resource-configuration>
+	</service><!-- End of Root Logger service -->
 
      <service name="Size Rotating File Handler"
               discovery="SubsystemDiscovery"

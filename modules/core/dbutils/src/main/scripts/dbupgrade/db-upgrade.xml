@@ -4003,14 +4003,6 @@
                 
             </schemaSpec>
 
-            <schemaSpec version="2.121">
-                <schema-directSQL>
-                    <statement targetDBVendor="oracle">
-                        ALTER TABLE RHQ_ALERT_NOTIFICATION LOGGING
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
-
             <schemaSpec version="2.122">
               <schema-javaTask className="ContentSourceConfigurationObfuscationUpgradeTask" />
             </schemaSpec>

@@ -40,7 +40,7 @@ public class AS7CommandLine extends JavaCommandLine {
     private List<String> appServerArgs;
 
     public AS7CommandLine(String[] args) {
-        super(args, true, OptionFormat.SPACE_OR_EQUALS, OptionFormat.POSIX);
+        super(args, true, OptionFormat.SPACE_OR_EQUALS, OptionFormat.SPACE_OR_EQUALS);
 
         List<String> classArgs = super.getClassArguments();
         // The class arguments are actually the arguments to the jboss-modules.jar main class. We want to get to the

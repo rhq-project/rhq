@@ -2108,7 +2108,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2141,7 +2141,12 @@
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK."/>
+         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
+           <c:property-options>
+	      <c:option value="BLOCK"/>
+	      <c:option value="DISCARD"/>
+           </c:property-options>
+	 </c:simple-property>
          <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
              <c:simple-property name="subhandlers" />
@@ -2208,7 +2213,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2264,7 +2269,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2367,7 +2372,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />
@@ -2479,7 +2484,7 @@
 
        <operation name="change-log-level" description="Change the logging level for a handler.">
          <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+           &logLevel;
          </parameters>
          <results>
             <c:simple-property name="operationResult" description="Change the logging level for a handler." />

@@ -1389,12 +1389,14 @@
         <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
       </c:group>
       <c:group name="child:configuration=container" displayName="Container">
+<!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
         <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false" >
           <c:map-property name="mime-mapping:collapsed" >
-            <c:simple-property name="name" description="A MIME mapping name"/>
-            <c:simple-property name="value" description="A MIME mapping value"/>
+            <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
+            <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
           </c:map-property>
         </c:list-property>
+-->
         <c:list-property name="welcome-file" required="false" description="A welcome file declaration." >
           <c:simple-property name="welcome-file" type="string"/>
         </c:list-property>

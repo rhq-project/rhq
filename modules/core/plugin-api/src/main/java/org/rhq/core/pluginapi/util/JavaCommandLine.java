@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Ian Springer
  */
 public class JavaCommandLine {
-
     /** 
      * When parsing command line options, specifies the valid option value delimiter(s).
      *
@@ -129,6 +128,10 @@ public class JavaCommandLine {
                 EnumSet.of(OptionValueDelimiter.EQUALS_SIGN);
         if (this.longClassOptionValueDelims.isEmpty()) {
             throw new IllegalArgumentException("'longClassOptionValueDelims' parameter is an empty set.");
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Parsing " + toString());
         }
 
         parseCommandLine(args);
@@ -380,11 +383,10 @@ public class JavaCommandLine {
 
     @Override
     public String toString() {
-        StringBuilder buffer = new StringBuilder(this.arguments.get(0));
-        for (int i = 1, argumentsSize = this.arguments.size(); i < argumentsSize; i++) {
-            buffer.append(' ').append(this.arguments.get(i));
-        }
-        return buffer.toString();
+        return "JavaCommandLine [arguments=" + Arrays.asList(arguments) //
+            + ", includeSystemPropertiesFromClassArguments=" + includeSystemPropertiesFromClassArguments //
+            + ", shortClassOptionFormat=" + Arrays.asList(shortClassOptionValueDelims) //
+            + ", longClassOptionFormat=" + Arrays.asList(longClassOptionValueDelims) + "]";
     }
 
 }

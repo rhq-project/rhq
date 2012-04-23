@@ -320,6 +320,10 @@
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
                           tofile="${java.io.tmpdir}/jboss-as-${as7.version}" failonerror="false"
                           overwrite="false"/>
+
+                    <chmod perm="u+rx">
+                      <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
+                    </chmod>
                     <replace dir="${jboss7.home}"
                              includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
                              token="&lt;inet-address " value="&lt;loopback-address "/>

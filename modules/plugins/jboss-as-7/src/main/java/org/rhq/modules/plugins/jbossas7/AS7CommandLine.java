@@ -23,6 +23,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,21 +37,27 @@ import org.rhq.core.pluginapi.util.JavaCommandLine;
  */
 public class AS7CommandLine extends JavaCommandLine {
 
+    private static final String APP_SERVER_MODULE_NAME_PREFIX = "org.jboss.as";
+
     private String appServerModuleName;
     private List<String> appServerArgs;
 
     public AS7CommandLine(String[] args) {
-        super(args, true, OptionFormat.SPACE_OR_EQUALS, OptionFormat.SPACE_OR_EQUALS);
+        // Note, we don't use EnumSet.allOf() just in case some other option delimiter is added to the enum in the future.
+        super(args, true, EnumSet.of(OptionValueDelimiter.WHITESPACE, OptionValueDelimiter.EQUALS_SIGN),
+                EnumSet.of(OptionValueDelimiter.WHITESPACE, OptionValueDelimiter.EQUALS_SIGN));
 
+        // In the case of AS7, the class arguments are actually the arguments to the jboss-modules.jar main class. We
+        // want to split out the arguments to the app server module (i.e. "org.jboss.as.standalone" or
+        // "org.jboss.as.host-controller"). e.g. For the class arguments
+        // "-mp /home/ips/Applications/jboss-as-7.1.1.Final/modules -jaxpmodule javax.xml.jaxp-provider
+        // org.jboss.as.standalone -Djboss.home.dir=/opt/jboss-as-7.1.1.Final --server-config=standalone-full.xml",
+        // this.appServerModuleName would get set to "org.jboss.as.standalone" and this.appServerArgs would get set to
+        // "-Djboss.home.dir=/opt/jboss-as-7.1.1.Final --server-config=standalone-full.xml"
         List<String> classArgs = super.getClassArguments();
-        // The class arguments are actually the arguments to the jboss-modules.jar main class. We want to get to the
-        // arguments to the app server module (i.e. "org.jboss.as.standalone" or "org.jboss.as.host-controller").
-        // e.g. "-mp /home/ips/Applications/jboss-as-7.1.1.Final/modules -jaxpmodule javax.xml.jaxp-provider
-        //       org.jboss.as.standalone -Djboss.home.dir=/opt/jboss-as-7.1.1.Final --server-config=standalone-full.xml"
-        // In
         for (int i = 0, classArgsSize = classArgs.size(); i < classArgsSize; i++) {
             String classArg = classArgs.get(i);
-            if (classArg.startsWith("org.jboss.as")) {
+            if (classArg.startsWith(APP_SERVER_MODULE_NAME_PREFIX)) {
                 this.appServerModuleName = classArg;
                 if ((i + 1) < classArgsSize) {
                     this.appServerArgs = Collections.unmodifiableList(classArgs.subList(i + 1, classArgsSize));
@@ -61,7 +68,8 @@ public class AS7CommandLine extends JavaCommandLine {
             }
         }
         if (this.appServerModuleName == null) {
-            throw new IllegalArgumentException("Class arguments do not contain an argument starting with \"org.jboss.as\".");
+            throw new IllegalArgumentException("Class arguments do not contain an argument starting with \""
+                    + APP_SERVER_MODULE_NAME_PREFIX + "\".");
         }
     }
 

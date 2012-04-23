@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -30,7 +31,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -44,9 +44,10 @@ import static org.testng.Assert.*;
 @Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
 public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
-    public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/standalone");
+    public static final ResourceType RESOURCE_TYPE =
+            new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
+    // The key is the server's base dir.
+    public static final String RESOURCE_KEY = new File(JBOSS_HOME, "standalone").getPath();
 
     private static final String RELOAD_OPERATION_NAME = "reload";
     private static final String RESTART_OPERATION_NAME = "restart";
@@ -82,8 +83,9 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         super.validatePluginConfiguration(pluginConfig);
 
         // "startScript" prop
-        String startScript = pluginConfig.getSimpleValue("startScript", null);
-        String expectedStartScript = (File.separatorChar == '/') ? "bin/standalone.sh" : "bin\\standalone.bat";
+        String startScript = pluginConfig.getSimpleValue("startScript");
+        String expectedStartScriptFileName = (File.separatorChar == '/') ? "standalone.sh" : "standalone.bat";
+        String expectedStartScript = new File("bin", expectedStartScriptFileName).getPath();
         Assert.assertEquals(startScript, expectedStartScript);
 
         // "startScriptArgs" prop
@@ -118,8 +120,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(priority = 5, enabled = false)
+    @Test(priority = 5, enabled = true)
     public void testStandaloneServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
     }
@@ -127,11 +128,25 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     // TODO: Re-enable once fixed.
     @Test(priority = 5, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
+        // First make sure the server is up.
         AvailabilityType avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+
+        // Make sure the server is back up.
+        // TODO (ips): Check that the server is a different process now.
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+    }
+
+    @AfterSuite
+    public void killServerProcesses() {
+        super.killServerProcesses();
+    }
+
+    @Override
+    protected int getPortOffset() {
+        return 40000;
     }
 
 }

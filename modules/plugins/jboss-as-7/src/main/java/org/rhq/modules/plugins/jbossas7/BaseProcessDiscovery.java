@@ -48,9 +48,9 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
-import org.rhq.core.pluginapi.util.JavaCommandLineOption;
 import org.rhq.core.pluginapi.util.ServerStartScriptDiscoveryUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
@@ -86,13 +86,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     //       --pc-port 52624
     //       -default-jvm /usr/java/jdk1.6.0_30/jre/bin/java
     //       -Djboss.home.dir=/opt/jboss-as-7.1.1.Final
-    private static final Set<JavaCommandLineOption> START_SCRIPT_OPTION_EXCLUDES = new HashSet<JavaCommandLineOption>();
+    private static final Set<CommandLineOption> START_SCRIPT_OPTION_EXCLUDES = new HashSet<CommandLineOption>();
     static {
-        START_SCRIPT_OPTION_EXCLUDES.add(new JavaCommandLineOption("mp", null));
-        START_SCRIPT_OPTION_EXCLUDES.add(new JavaCommandLineOption(null, "pc-address"));
-        START_SCRIPT_OPTION_EXCLUDES.add(new JavaCommandLineOption(null, "pc-port"));
-        START_SCRIPT_OPTION_EXCLUDES.add(new JavaCommandLineOption("default-jvm", null));
-        START_SCRIPT_OPTION_EXCLUDES.add(new JavaCommandLineOption("Djboss.home.dir", null, false));
+        START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption("mp", null));
+        START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption(null, "pc-address"));
+        START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption(null, "pc-port"));
+        START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption("default-jvm", null));
+        START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption("Djboss.home.dir", null));
     }
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -216,6 +216,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         File startScript = ServerStartScriptDiscoveryUtility.getStartScript(parentProcess);
         if (startScript == null) {
+            // The parent process is not a script - fallback to the default value (e.g. "bin/standalone.sh").
             startScript = new File(getMode().getStartScript());
         }
         if (!startScript.exists()) {
@@ -342,7 +343,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     // Returns the name of the host config xml file (domain controller) or server config xml file (standalone server),
     // e.g. "standalone.xml" or "host.xml".
     protected String getHostXmlFileName(AS7CommandLine commandLine) {
-        JavaCommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
+        CommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
         String optionValue = commandLine.getClassOption(hostXmlFileNameOption);
         return (optionValue != null) ? optionValue : getDefaultHostXmlFileName();
     }
@@ -374,7 +375,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String getDefaultBaseDirName();
 
-    protected abstract JavaCommandLineOption getHostXmlFileNameOption();
+    protected abstract CommandLineOption getHostXmlFileNameOption();
 
     protected abstract String getDefaultHostXmlFileName();
 

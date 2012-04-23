@@ -73,7 +73,7 @@ public class ServerStartScriptDiscoveryUtility {
     }
 
     public static List<String> getStartScriptArgs(ProcessInfo serverParentProcess, List<String> serverArgs,
-                                                  Set<JavaCommandLineOption> optionExcludes) {
+                                                  Set<CommandLineOption> optionExcludes) {
         // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
         //      Windows: "standalone.bat --server-config=standalone-full.xml"
         int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;
@@ -90,8 +90,8 @@ public class ServerStartScriptDiscoveryUtility {
             for (int i = 0, serverArgsSize = serverArgs.size(); i < serverArgsSize; i++) {
                 String serverArg = serverArgs.get(i);
                 // Skip any options that the start script will take care of specifying.
-                JavaCommandLineOption option = null;
-                for (JavaCommandLineOption optionExclude : optionExcludes) {
+                CommandLineOption option = null;
+                for (CommandLineOption optionExclude : optionExcludes) {
                     if ((optionExclude.getShortName() != null &&
                         (serverArg.equals('-' + optionExclude.getShortName()) ||
                          serverArg.startsWith('-' + optionExclude.getShortName() + "="))) ||
@@ -103,8 +103,10 @@ public class ServerStartScriptDiscoveryUtility {
                     }
                 }
                 if (option != null) {
-                    if (option.isExpectsValue() && ((i + 1) < serverArgsSize)) {
-                        // Skip the option's argument too.
+                    if (option.isExpectsValue() && ((i + 1) < serverArgsSize) &&
+                        (((option.getShortName() != null) && serverArg.equals('-' + option.getShortName())) ||
+                         (option.getLongName() != null) && serverArg.equals("--" + option.getLongName()))) {
+                        // If the option expects a value and the delimiter is a space, skip the next argument too.
                         i++;
                     }
                 } else {

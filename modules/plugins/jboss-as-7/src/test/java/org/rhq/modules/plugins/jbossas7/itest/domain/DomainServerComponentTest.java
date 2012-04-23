@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -29,7 +30,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -41,8 +41,10 @@ import org.rhq.test.arquillian.RunDiscovery;
 @Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
-    public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/domain");
+    public static final ResourceType RESOURCE_TYPE =
+            new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
+    // The key is the server's base dir.
+    public static final String RESOURCE_KEY = new File(JBOSS_HOME, "domain").getPath();
 
     @Override
     protected ResourceType getServerResourceType() {
@@ -75,8 +77,9 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.validatePluginConfiguration(pluginConfig);
 
         // "startScript" prop
-        String startScript = pluginConfig.getSimpleValue("startScript", null);
-        String expectedStartScript = (File.separatorChar == '/') ? "bin/domain.sh" : "bin\\domain.bat";
+        String startScript = pluginConfig.getSimpleValue("startScript");
+        String expectedStartScriptFileName = (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
+        String expectedStartScript = new File("bin", expectedStartScriptFileName).getPath();
         Assert.assertEquals(startScript, expectedStartScript);
 
         // "startScriptArgs" prop
@@ -103,10 +106,19 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     // ******************************* OPERATIONS ******************************* //
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(priority = 1003, enabled = false)
+    @Test(priority = 1003, enabled = true)
     public void testDomainServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
+    }
+
+    @AfterSuite
+    public void killServerProcesses() {
+        super.killServerProcesses();
+    }
+
+    @Override
+    protected int getPortOffset() {
+        return 50000;
     }
 
 }

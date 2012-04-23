@@ -20,6 +20,8 @@ package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.util.Set;
 
+import org.testng.annotations.AfterSuite;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;

@@ -23,11 +23,11 @@
 package org.rhq.core.pluginapi.util;
 
 /**
- * The name(s) associated with a java command line option.
+ * The name(s) and other metadata associated with a command line option.
  *
  * @author Ian Springer
  */
-public class JavaCommandLineOption {
+public class CommandLineOption {
 
     private String shortName;
     private String longName;
@@ -36,22 +36,22 @@ public class JavaCommandLineOption {
     /**
      * Same as <code>JavaCommandLineOption(shortName, longName, true)</code> 
      */
-    public JavaCommandLineOption(char shortName, String longName) {
+    public CommandLineOption(char shortName, String longName) {
         this(new String(new char[] { shortName }), longName, true);
     }
 
-    public JavaCommandLineOption(char shortName, String longName, boolean expectsValue) {
+    public CommandLineOption(char shortName, String longName, boolean expectsValue) {
         this(new String(new char[] { shortName }), longName, expectsValue);
     }
 
     /**
      * Same as <code>JavaCommandLineOption(shortName, longName, true)</code> 
      */
-    public JavaCommandLineOption(String shortName, String longName) {
+    public CommandLineOption(String shortName, String longName) {
         this(shortName, longName, true);
     }
 
-    public JavaCommandLineOption(String shortName, String longName, boolean expectsValue) {
+    public CommandLineOption(String shortName, String longName, boolean expectsValue) {
         if ((shortName == null) && (longName == null)) {
             throw new IllegalArgumentException("ShortName and longName cannot both be null.");
         }
@@ -75,7 +75,23 @@ public class JavaCommandLineOption {
 
     @Override
     public String toString() {
-        return "JavaCommandLineOption [shortName=" + shortName + ", longName=" + longName + ", expectsValue="
-            + expectsValue + "]";
+        StringBuilder buffer = new StringBuilder();
+        if (this.shortName != null) {
+            buffer.append('-').append(this.shortName);
+            if (this.expectsValue) {
+                buffer.append("=VALUE");
+            }
+            if (this.longName != null) {
+                buffer.append('|');
+            }
+        }
+        if (this.longName != null) {
+            buffer.append("--").append(this.longName);
+            if (this.expectsValue) {
+                buffer.append("=VALUE");
+            }
+        }
+        return buffer.toString();
     }
+
 }

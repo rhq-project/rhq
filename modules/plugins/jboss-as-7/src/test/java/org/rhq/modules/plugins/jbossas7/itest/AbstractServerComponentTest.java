@@ -19,9 +19,14 @@
 package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.testng.Assert;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -30,7 +35,14 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
+import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
 
 import static org.testng.Assert.*;
 
@@ -40,6 +52,8 @@ import static org.testng.Assert.*;
  * @author Ian Springer
  */
 public abstract class AbstractServerComponentTest extends AbstractJBossAS7PluginTest {
+
+    public static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss7.home")));
 
     private static final Map<String, String> EAP6_VERSION_TO_AS7_VERSION_MAP = new HashMap<String, String>();
     static {
@@ -135,15 +149,82 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     }
 
     public void testShutdownAndStartOperations() throws Exception {
+        // First make sure the server is up.
         AvailabilityType avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+
+        // Now shut it down using the Shutdown op and make sure it has gone down.
         invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.DOWN);
-        // Restart the server, so the rest of the tests don't fail.
+
+        // Before restarting it, add some stuff to the 'startScriptEnv' and 'startScriptArgs' props so we can verify
+        // they are used correctly by the Start op.
+        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+        StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
+
+        // Add a var to the start script env.
+        Map<String, String> env = startScriptConfig.getStartScriptEnv();
+        env.put("foo", "bar");
+        startScriptConfig.setStartScriptEnv(env);
+
+        // Add an arg to the start script args.
+        List<String> args = startScriptConfig.getStartScriptArgs();
+        args.add("-Dfoo=bar");
+        startScriptConfig.setStartScriptArgs(args);
+
+        // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
+        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+        inventoryManager.deactivateResource(getServerResource());
+        ResourceContainer serverContainer = inventoryManager.getResourceContainer(getServerResource());
+        inventoryManager.activateResource(getServerResource(), serverContainer, true);
+
+        // Finally restart it using the Start op and make sure it has come back up.
         invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+
+        List<ProcessInfo> processes = getServerProcesses();
+        //Assert.assertEquals(processes.size(), 1, getCommandLines(processes).toString());
+        ProcessInfo serverProcess = processes.get(0);
+        Map<String, String> processEnv = serverProcess.getEnvironmentVariables();
+        assertEquals(processEnv.get("foo"), "bar", processEnv.toString());
+
+        List<String> processArgs = Arrays.asList(serverProcess.getCommandLine());
+        assertTrue(processArgs.contains("-Dfoo=bar"), processArgs.toString());
+    }
+
+    public void killServerProcesses() {
+        List<ProcessInfo> processes = getServerProcesses();
+        Sigar sigar = new Sigar();
+        for (ProcessInfo process : processes) {
+            System.out.println("\n=== Killing process with pid [" + process.getPid() + "] and command line ["
+                    + Arrays.toString(process.getCommandLine()) + "]...");
+            try {
+                sigar.kill(process.getPid(), "KILL");
+            } catch (SigarException e) {
+                System.err.println("Failed to kill " + process);
+            }
+        }
+        sigar.close();
+    }
+
+    protected abstract int getPortOffset();
+
+    private List<ProcessInfo> getServerProcesses() {
+        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+        return systemInfo.getProcesses("arg|*|match=org\\.jboss\\.as\\..+,arg|-Djboss.socket.binding.port-offset|match="
+                    + getPortOffset());
+    }
+
+    private static List<List<String>> getCommandLines(List<ProcessInfo> processes) {
+        List<List<String>> commandLines = new ArrayList<List<String>>();
+        for (ProcessInfo process : processes) {
+            commandLines.add(Arrays.asList(process.getCommandLine()));
+        }
+        return commandLines;
     }
 
 }
+
+

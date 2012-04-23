@@ -230,7 +230,7 @@
 	<!ENTITY logFile '
           <c:map-property name="file" required="true" readOnly="false" description="The file description consisting of the path and optional relative to path.">
             <c:simple-property name="path" required="true" readOnly="false" description="The filesystem path."/>
-            <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">       
+            <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">
 	     <c:property-options>
 	      <c:option value="java.home" />
 	      <c:option value="jboss.domain.servers.dir" />
@@ -343,7 +343,8 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+            <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+                               description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
               <c:property-options>
                 <c:option value="true"/>
                 <c:option value="false"/>
@@ -465,7 +466,8 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+              <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
                   <c:option value="false"/>
@@ -497,6 +499,13 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
+              <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                <c:property-options>
+                  <c:option value="true"/>
+                  <c:option value="false"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
           </c:list-property>
         </c:group>
@@ -750,12 +759,6 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
-              <c:property-options>
-                <c:option value="true"/>
-                <c:option value="false"/>
-              </c:property-options>
-            </c:simple-property>
           </c:map-property>
         </c:list-property>
       </c:group>

@@ -19,17 +19,16 @@
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -72,32 +71,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
-    @Override
-    protected void validatePluginConfiguration(Configuration pluginConfig) {
-        super.validatePluginConfiguration(pluginConfig);
-
-        // "startScript" prop
-        String startScript = pluginConfig.getSimpleValue("startScript");
-        String expectedStartScriptFileName = (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
-        String expectedStartScript = new File("bin", expectedStartScriptFileName).getPath();
-        Assert.assertEquals(startScript, expectedStartScript);
-
-        // "startScriptArgs" prop
-        PropertySimple startScriptArgsProp = pluginConfig.getSimple("startScriptArgs");
-        ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
-        List<String> args = startScriptArgsPropWrapper.getValue();
-
-        Assert.assertEquals(args.size(), 7, args.toString());
-
-        Assert.assertEquals(args.get(0), "-Djboss.bind.address.management=127.0.0.1");
-        Assert.assertEquals(args.get(1), "-Djboss.bind.address=127.0.0.1");
-        Assert.assertEquals(args.get(2), "-Djboss.bind.address.unsecure=127.0.0.1");
-        Assert.assertEquals(args.get(3), "-Djboss.socket.binding.port-offset=50000");
-        Assert.assertEquals(args.get(4), "-Djboss.management.native.port=59999");
-        Assert.assertEquals(args.get(5), "-Djboss.management.http.port=59990");
-        Assert.assertEquals(args.get(6), "-Djboss.management.https.port=59943");
-    }
-
     // ******************************* METRICS ******************************* //
     @Override
     @Test(priority = 1002, enabled = true)
@@ -111,6 +84,10 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testShutdownAndStartOperations();
     }
 
+    protected String getExpectedStartScriptFileName() {
+        return (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
+    }
+
     @AfterSuite
     public void killServerProcesses() {
         super.killServerProcesses();
@@ -119,6 +96,31 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     @Override
     protected int getPortOffset() {
         return 50000;
+    }
+
+    @Override
+    protected List<String> getExpectedStartScriptArgs() {
+        String [] args = new String[] {
+            "-Djboss.bind.address.management=127.0.0.1",
+            "-Djboss.bind.address=127.0.0.1",
+            "-Djboss.bind.address.unsecure=127.0.0.1",
+            "-Djboss.socket.binding.port-offset=50000",
+            "-Djboss.management.native.port=59999",
+            "-Djboss.management.http.port=59990",
+            "-Djboss.management.https.port=59943"
+        };
+        return Arrays.asList(args);
+    }
+
+    @Override
+    protected void validateStartScriptEnv(Map<String, String> env) {
+        super.validateStartScriptEnv(env);
+
+        // Only domain sets JBOSS_HOME, when not started via start script.
+        String jbossHome = env.get("JBOSS_HOME");
+        if (jbossHome != null) {
+            Assert.assertTrue(new File(jbossHome).isDirectory());
+        }
     }
 
 }

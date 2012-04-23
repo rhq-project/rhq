@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
@@ -102,10 +103,34 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         Integer expectedPort = portOffset + 9990;        
         assertEquals(port, expectedPort, "Plugin config prop [port].");
 
+        // "startScript" prop
+        String startScript = pluginConfig.getSimpleValue("startScript");
+        Assert.assertNotNull(startScript);
+
+        File startScriptFile = new File(startScript);
+        String expectedStartScriptFileName = getExpectedStartScriptFileName();
+        Assert.assertEquals(startScriptFile.getName(), expectedStartScriptFileName);
+
+        if (!startScriptFile.isAbsolute()) {
+            // If it's relative, e.g. "bin/standalone.sh", it will be resolved relative to the AS home dir.
+            startScriptFile = new File(JBOSS_HOME, startScript);
+        }
+        Assert.assertTrue(startScriptFile.exists(), "Start script [" + startScriptFile + "] does not exist.");
+
         // "startScriptEnv" prop
         PropertySimple startScriptEnvProp = pluginConfig.getSimple("startScriptEnv");
         MapPropertySimpleWrapper startScriptEnvPropWrapper = new MapPropertySimpleWrapper(startScriptEnvProp);
         Map<String,String> env = startScriptEnvPropWrapper.getValue();
+        validateStartScriptEnv(env);
+
+        // "startScriptArgs" prop
+        PropertySimple startScriptArgsProp = pluginConfig.getSimple("startScriptArgs");
+        ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
+        List<String> args = startScriptArgsPropWrapper.getValue();
+        Assert.assertEquals(args, getExpectedStartScriptArgs(), "Plugin config prop [startScriptArgs]");
+    }
+
+    protected void validateStartScriptEnv(Map<String, String> env) {
         Assert.assertTrue(env.size() <= 4, env.toString());
 
         String javaHome = env.get("JAVA_HOME");
@@ -123,12 +148,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
         Assert.assertTrue(ldLibraryPathElements.length >= 1);
         Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
-
-        // Only domain sets JBOSS_HOME. TODO: move this into DomainServerComponentTest subclass
-        String jbossHome = env.get("JBOSS_HOME");
-        if (jbossHome != null) {
-            Assert.assertTrue(new File(jbossHome).isDirectory());
-        }
     }
 
     protected abstract String getBindAddressSystemPropertyName();
@@ -198,6 +217,10 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         List<String> processArgs = Arrays.asList(serverProcess.getCommandLine());
         assertTrue(processArgs.contains("-Dfoo=bar"), processArgs.toString());
     }
+
+    protected abstract String getExpectedStartScriptFileName();
+
+    protected abstract List<String> getExpectedStartScriptArgs();
 
     public void killServerProcesses() {
         List<ProcessInfo> processes = getServerProcesses();

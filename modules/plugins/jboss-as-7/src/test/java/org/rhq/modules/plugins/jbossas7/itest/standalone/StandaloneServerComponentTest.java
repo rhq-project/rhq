@@ -19,22 +19,19 @@
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
-import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Test discovery and facets of the "JBossAS7 Standalone Server" Resource type.
@@ -78,30 +75,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
-    @Override
-    protected void validatePluginConfiguration(Configuration pluginConfig) {
-        super.validatePluginConfiguration(pluginConfig);
-
-        // "startScript" prop
-        String startScript = pluginConfig.getSimpleValue("startScript");
-        String expectedStartScriptFileName = (File.separatorChar == '/') ? "standalone.sh" : "standalone.bat";
-        String expectedStartScript = new File("bin", expectedStartScriptFileName).getPath();
-        Assert.assertEquals(startScript, expectedStartScript);
-
-        // "startScriptArgs" prop
-        PropertySimple startScriptArgsProp = pluginConfig.getSimple("startScriptArgs");
-        ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
-        List<String> args = startScriptArgsPropWrapper.getValue();
-
-        Assert.assertEquals(args.size(), 5, args.toString());
-
-        Assert.assertEquals(args.get(0), "--server-config=standalone-full.xml");
-        Assert.assertEquals(args.get(1), "-Djboss.bind.address.management=127.0.0.1");
-        Assert.assertEquals(args.get(2), "-Djboss.bind.address=127.0.0.1");
-        Assert.assertEquals(args.get(3), "-Djboss.bind.address.unsecure=127.0.0.1");
-        Assert.assertEquals(args.get(4), "-Djboss.socket.binding.port-offset=40000");
-    }
-
     @Test(priority = 2)
     public void testStandaloneServerPluginConfiguration() throws Exception {
         return;
@@ -137,6 +110,20 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+    }
+
+    protected String getExpectedStartScriptFileName() {
+        return (File.separatorChar == '/') ? "standalone.sh" : "standalone.bat";
+    }
+
+    protected List<String> getExpectedStartScriptArgs() {
+        String [] args = new String[] {
+            "--server-config=standalone-full.xml",
+            "-Djboss.bind.address.management=127.0.0.1",
+            "-Djboss.bind.address=127.0.0.1",
+            "-Djboss.bind.address.unsecure=127.0.0.1",
+            "-Djboss.socket.binding.port-offset=40000" };
+        return Arrays.asList(args);
     }
 
     @AfterSuite

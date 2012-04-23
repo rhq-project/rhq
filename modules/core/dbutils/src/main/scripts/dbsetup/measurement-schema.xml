@@ -77,7 +77,7 @@
    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_1H" logging="false" cache="true"
+   <table name="RHQ_MEASUREMENT_DATA_NUM_1H" cache="true"
           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
 
       <column name="TIME_STAMP" required="true" type="LONG"/>
@@ -99,7 +99,7 @@
    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_6H" logging="false" cache="true"
+   <table name="RHQ_MEASUREMENT_DATA_NUM_6H" cache="true"
           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
 
       <column name="TIME_STAMP" required="true" type="LONG"/>
@@ -121,7 +121,7 @@
    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_1D" logging="false" cache="true"
+   <table name="RHQ_MEASUREMENT_DATA_NUM_1D" cache="true"
           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
 
       <column name="TIME_STAMP" required="true" type="LONG"/>
@@ -167,7 +167,7 @@
    </table>
 
 
-   <table name="RHQ_CALLTIME_DATA_VALUE">
+   <table name="RHQ_CALLTIME_DATA_VALUE" logging="false">
       <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="KEY_ID" type="INTEGER" references="RHQ_CALLTIME_DATA_KEY" required="true"/>
       <column name="BEGIN_TIME" type="LONG" required="true"/>
@@ -235,7 +235,7 @@
    </table>
 
 
-   <table name="RHQ_MEAS_DATA_NUM_R00">
+   <table name="RHQ_MEAS_DATA_NUM_R00" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -249,7 +249,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R01">
+   <table name="RHQ_MEAS_DATA_NUM_R01" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -263,7 +263,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R02">
+   <table name="RHQ_MEAS_DATA_NUM_R02" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -277,7 +277,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R03">
+   <table name="RHQ_MEAS_DATA_NUM_R03" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -291,7 +291,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R04">
+   <table name="RHQ_MEAS_DATA_NUM_R04" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -305,7 +305,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R05">
+   <table name="RHQ_MEAS_DATA_NUM_R05" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -319,7 +319,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R06">
+   <table name="RHQ_MEAS_DATA_NUM_R06" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -333,7 +333,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R07">
+   <table name="RHQ_MEAS_DATA_NUM_R07" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -347,7 +347,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R08">
+   <table name="RHQ_MEAS_DATA_NUM_R08" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -361,7 +361,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R09">
+   <table name="RHQ_MEAS_DATA_NUM_R09" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -375,7 +375,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R10">
+   <table name="RHQ_MEAS_DATA_NUM_R10" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -389,7 +389,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R11">
+   <table name="RHQ_MEAS_DATA_NUM_R11" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -403,7 +403,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R12">
+   <table name="RHQ_MEAS_DATA_NUM_R12" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -417,7 +417,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R13">
+   <table name="RHQ_MEAS_DATA_NUM_R13" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
@@ -431,7 +431,7 @@
          </primaryKey>
       </constraint>
    </table>
-   <table name="RHQ_MEAS_DATA_NUM_R14">
+   <table name="RHQ_MEAS_DATA_NUM_R14" logging="false">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>

@@ -40,7 +40,7 @@ class Table {
     private String m_strName;
     private boolean m_indexOrganized = false; // Index Organized Table
     private boolean m_parallel = false; // Parallel processing
-    private boolean m_logging = false;
+    private boolean m_logging = true;
     private boolean m_cache = false;
     private String m_tableSpace;
     private String m_storage;
@@ -290,6 +290,10 @@ class Table {
         return "";
     }
 
+    /**
+     * This is actually the syntax for NO logging. If logging is set to false,
+     * this returns a string to correspond to syntax that turns off logging.
+     */
     protected String getLoggingSyntax() {
         return "";
     }

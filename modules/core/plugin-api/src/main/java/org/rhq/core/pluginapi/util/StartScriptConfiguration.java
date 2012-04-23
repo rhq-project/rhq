@@ -68,8 +68,8 @@ public class StartScriptConfiguration {
     @NotNull
     public Map<String, String> getStartScriptEnv() {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_CONFIG_PROP);
-        Map<String, String> map = (prop != null) ?
-                new MapPropertySimpleWrapper(prop).getValue() : new HashMap<String, String>();
+        Map<String, String> map = (prop != null) ? new MapPropertySimpleWrapper(prop).getValue()
+            : new HashMap<String, String>();
         return map;
     }
 
@@ -84,17 +84,40 @@ public class StartScriptConfiguration {
     @NotNull
     public List<String> getStartScriptArgs() {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_CONFIG_PROP);
-        List<String> list = (prop != null) ?
-                new ListPropertySimpleWrapper(prop).getValue() : new ArrayList<String>();
+        List<String> list = (prop != null) ? new ListPropertySimpleWrapper(prop).getValue() : new ArrayList<String>();
         return list;
     }
 
-    public void setStartScriptArgs(List startScriptArgs) {
+    public void setStartScriptArgs(List<String> startScriptArgs) {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_CONFIG_PROP);
         if (prop == null) {
             prop = new PropertySimple(START_SCRIPT_ARGS_CONFIG_PROP, null);
         }
-        new ListPropertySimpleWrapper(prop).setValue(startScriptArgs);
+        new ArgsPropertySimpleWrapper(prop).setValue(startScriptArgs);
+    }
+
+    private static class ArgsPropertySimpleWrapper extends ListPropertySimpleWrapper {
+
+        public ArgsPropertySimpleWrapper(PropertySimple prop) {
+            super(prop);
+        }
+
+        @Override
+        public void setValue(List list) {
+            String stringValue;
+            if (list != null && !list.isEmpty()) {
+                StringBuilder buffer = new StringBuilder(list.get(0).toString());
+                for (int i = 1; i < list.size(); ++i) {
+                    String arg = list.get(i).toString();
+                    // put options on new line, keep space delimited options on same line  
+                    buffer.append(arg.startsWith("-") ? '\n' : ' ').append(arg);
+                }
+                stringValue = buffer.toString();
+            } else {
+                stringValue = null;
+            }
+            this.prop.setStringValue(stringValue);
+        }
     }
 
 }

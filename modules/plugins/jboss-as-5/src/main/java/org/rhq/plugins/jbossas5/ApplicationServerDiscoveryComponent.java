@@ -61,7 +61,11 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.JavaCommandLine;
+import org.rhq.core.pluginapi.util.ServerStartScriptDiscoveryUtility;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
@@ -117,6 +121,30 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         "%commonLibUrl%/jboss-as-profileservice.jar", //
         "%libUrl%/jboss-profileservice-spi.jar" //
     };
+
+    // The set of env vars that are actually relevant to AS5.  Include only these to reduce the amount
+    // of noise in the property value and to potentially avoid stale values. 
+    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new HashSet<String>();
+
+    // Script options that are set by the script itself and that we don't want. Currently none.
+    private static final Set<CommandLineOption> START_SCRIPT_OPTION_EXCLUDES = new HashSet<CommandLineOption>();
+
+    static {
+        START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList( //
+            "JAVA_OPTS", //
+            "JAVA_HOME", //
+            "JAVA", //
+            "JAVAC_JAR", //
+            "JBOSS_HOME", //
+            "JBOSS_BASE_DIR", //
+            "JBOSS_LOG_DIR", //
+            "JBOSS_CONFIG_DIR", //
+            "RUN_CONF", //
+            "MAX_FD", //
+            "PROFILER", //
+            "PATH", //
+            "LD_LIBRARY_PATH"));
+    }
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -224,22 +252,24 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             if (log.isDebugEnabled())
                 log.debug("Discovered JBoss AS process: " + processInfo);
 
-            JBossInstanceInfo cmdLine;
+
+            JBossInstanceInfo jbossInstanceInfo;
             try {
-                cmdLine = new JBossInstanceInfo(processInfo);
+                jbossInstanceInfo = new JBossInstanceInfo(processInfo);
             } catch (Exception e) {
                 log.error("Failed to process JBoss AS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
                 continue;
             }
 
             // Skip it if it's an AS/EAP/SOA-P version we don't support.
-            JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
+            JBossInstallationInfo installInfo = jbossInstanceInfo.getInstallInfo();
             if (!isSupportedProduct(installInfo)) {
                 continue;
             }
 
-            File installHome = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.HOME_DIR));
-            File configDir = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_HOME_DIR));
+            File installHome = new File(jbossInstanceInfo.getSystemProperties().getProperty(JBossProperties.HOME_DIR));
+            File configDir = new File(jbossInstanceInfo.getSystemProperties().getProperty(
+                JBossProperties.SERVER_HOME_DIR));
 
             // The config dir might be a symlink - call getCanonicalFile() to resolve it if so, before
             // calling isDirectory() (isDirectory() returns false for a symlink, even if it points at
@@ -261,9 +291,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // TODO? Set the connection type - local or remote
 
             // Set the required props...
-            String jnpURL = getJnpURL(cmdLine, installHome, configDir);
-            PropertySimple namingUrlProp = new PropertySimple(ApplicationServerPluginConfigurationProperties.NAMING_URL,
-                jnpURL);
+            String jnpURL = getJnpURL(jbossInstanceInfo, installHome, configDir);
+            PropertySimple namingUrlProp = new PropertySimple(
+                ApplicationServerPluginConfigurationProperties.NAMING_URL, jnpURL);
             if (jnpURL == null) {
                 namingUrlProp.setErrorMessage("RHQ failed to discover the naming provider URL.");
             }
@@ -275,9 +305,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             // Set the optional props...
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_NAME,
-                cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
+                jbossInstanceInfo.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.BIND_ADDRESS,
-                cmdLine.getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
+                jbossInstanceInfo.getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
 
             JBossASDiscoveryUtils.UserInfo userInfo = JBossASDiscoveryUtils.getJmxInvokerUserInfo(configDir);
             if (userInfo != null) {
@@ -317,6 +347,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
         Configuration pluginConfig, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
+
         String serverHomeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR)
             .getStringValue();
         File absoluteConfigPath = resolvePathRelativeToHomeDir(pluginConfig, serverHomeDir);
@@ -359,8 +390,53 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             + formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
                 absoluteConfigPath.getName(), isRhqServer);
 
+        // If we are discovering plugin config via processInfo, then in addition to everything we discover above,
+        // we'll now see if we can determine more robust startup environment information to be used for start/restart
+        // operations if possible. If this information is not discovered, and left unset by the user or a remote client
+        // update, then  the start script will fall back to the minimal information captured above.
+        if (processInfo != null) {
+            setStartScriptPluginConfigProps(processInfo, new JavaCommandLine(processInfo.getCommandLine()),
+                pluginConfig);
+        }
+
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PRODUCT_PREFIX
             + installInfo.getVersion(), description, pluginConfig, processInfo);
+    }
+
+    private void setStartScriptPluginConfigProps(ProcessInfo process, JavaCommandLine commandLine,
+        Configuration pluginConfig) {
+        StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
+        ProcessInfo parentProcess = process.getParentProcess();
+
+        File startScript = ServerStartScriptDiscoveryUtility.getStartScript(parentProcess);
+        // if we don't discover the start script then leave it empty and the operation code
+        // will determine the OS-specific default when needed.
+        if (startScript != null) {
+            boolean exists = startScript.exists();
+
+            if (!exists && !startScript.isAbsolute()) {
+                File homeDir = new File(
+                    pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR));
+                File startScriptAbsolute = new File(homeDir, startScript.getPath());
+                exists = startScriptAbsolute.exists();
+            }
+            if (!exists) {
+                log.warn("Discovered startScriptFile ["
+                    + startScript
+                    + "] but failed to find it on disk. The start script may not be correct. The command line used for discovery is ["
+                    + commandLine + "]");
+
+            }
+            startScriptConfig.setStartScript(startScript);
+        }
+
+        Map<String, String> startScriptEnv = ServerStartScriptDiscoveryUtility.getStartScriptEnv(process,
+            parentProcess, START_SCRIPT_ENV_VAR_NAMES);
+        startScriptConfig.setStartScriptEnv(startScriptEnv);
+
+        List<String> startScriptArgs = ServerStartScriptDiscoveryUtility.getStartScriptArgs(parentProcess,
+            commandLine.getClassArguments(), START_SCRIPT_OPTION_EXCLUDES);
+        startScriptConfig.setStartScriptArgs(startScriptArgs);
     }
 
     public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName,
@@ -445,13 +521,11 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
 
-
-
         String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : null;
         Integer jnpPort = (jnpConfig.getJnpPort() != null) ? jnpConfig.getJnpPort() : null;
 
         if (jnpAddress == null || jnpPort == null) {
-            log.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" +  configDir + "].");
+            log.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" + configDir + "].");
             return null;
         }
 

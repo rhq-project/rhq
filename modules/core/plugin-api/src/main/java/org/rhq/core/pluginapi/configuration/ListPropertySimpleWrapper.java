@@ -28,7 +28,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  */
 public class ListPropertySimpleWrapper {
 
-    private PropertySimple prop;
+    protected PropertySimple prop;
 
     public ListPropertySimpleWrapper(PropertySimple prop) {
         if (prop == null) {

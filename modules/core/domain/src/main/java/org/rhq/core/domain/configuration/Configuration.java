@@ -365,6 +365,21 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return ((property != null) && (property.getStringValue() != null)) ? property.getStringValue() : defaultValue;
     }
 
+    public void setSimpleValue(String name, String value) {
+        PropertySimple property = getSimple(name);
+        if (value == null) {
+            if (property != null) {
+                remove(name);
+            }
+        } else {
+            if (property == null) {
+                put(new PropertySimple(name, value));
+            } else {
+                property.setStringValue(value);
+            }
+        }
+    }
+
     /**
      * Same as {@link #get(String)} except that it returns the object as a {@link PropertyList}.
      *

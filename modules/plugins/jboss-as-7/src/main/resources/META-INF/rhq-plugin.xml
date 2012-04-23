@@ -185,6 +185,7 @@
 '>
 
 	<!ENTITY logFilter '
+         <!--
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
            <c:option value="accept"/>
@@ -198,7 +199,7 @@
            <c:option value="not"/>
            <c:option value="replace"/>
           </c:property-options>
-         </c:simple-property>
+         </c:simple-property>-->
 '>
 
     <!ENTITY jvmDefinitionResourceConfigProperties '

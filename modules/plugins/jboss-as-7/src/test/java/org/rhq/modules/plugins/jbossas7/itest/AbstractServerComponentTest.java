@@ -19,7 +19,6 @@
 package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +106,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         PropertySimple startScriptEnvProp = pluginConfig.getSimple("startScriptEnv");
         MapPropertySimpleWrapper startScriptEnvPropWrapper = new MapPropertySimpleWrapper(startScriptEnvProp);
         Map<String,String> env = startScriptEnvPropWrapper.getValue();
-        Assert.assertEquals(env.size(), 3, env.toString());
+        Assert.assertTrue(env.size() <= 4, env.toString());
 
         String javaHome = env.get("JAVA_HOME");
         Assert.assertNotNull(javaHome);
@@ -124,6 +123,12 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
         Assert.assertTrue(ldLibraryPathElements.length >= 1);
         Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
+
+        // Only domain sets JBOSS_HOME. TODO: move this into DomainServerComponentTest subclass
+        String jbossHome = env.get("JBOSS_HOME");
+        if (jbossHome != null) {
+            Assert.assertTrue(new File(jbossHome).isDirectory());
+        }
     }
 
     protected abstract String getBindAddressSystemPropertyName();
@@ -196,17 +201,21 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
     public void killServerProcesses() {
         List<ProcessInfo> processes = getServerProcesses();
+        System.out.println("\n=== Killing " + processes.size() + " " + getServerResourceType() + " processes...");
         Sigar sigar = new Sigar();
         for (ProcessInfo process : processes) {
-            System.out.println("\n=== Killing process with pid [" + process.getPid() + "] and command line ["
+            System.out.println("====== Killing process with pid [" + process.getPid() + "] and command line ["
                     + Arrays.toString(process.getCommandLine()) + "]...");
             try {
                 sigar.kill(process.getPid(), "KILL");
             } catch (SigarException e) {
-                System.err.println("Failed to kill " + process);
+                System.err.println("Failed to kill " + process + ": " + e);
             }
         }
         sigar.close();
+        processes = getServerProcesses();
+        Assert.assertEquals(processes.size(), 0,
+                "Failed to kill " + processes.size() + " " + getServerResourceType() + " processes: " + processes);
     }
 
     protected abstract int getPortOffset();
@@ -215,14 +224,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
         return systemInfo.getProcesses("arg|*|match=org\\.jboss\\.as\\..+,arg|-Djboss.socket.binding.port-offset|match="
                     + getPortOffset());
-    }
-
-    private static List<List<String>> getCommandLines(List<ProcessInfo> processes) {
-        List<List<String>> commandLines = new ArrayList<List<String>>();
-        for (ProcessInfo process : processes) {
-            commandLines.add(Arrays.asList(process.getCommandLine()));
-        }
-        return commandLines;
     }
 
 }

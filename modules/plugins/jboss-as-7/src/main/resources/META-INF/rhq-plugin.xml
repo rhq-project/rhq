@@ -3039,6 +3039,10 @@
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=web" readOnly="true"/>
     </plugin-configuration>
+
+    <metric property="virtual-host" dataType="trait" description="Virtual Host"/>
+    <metric property="context-root" dataType="trait" description="Context Root"/>
+
   </service>
 
 

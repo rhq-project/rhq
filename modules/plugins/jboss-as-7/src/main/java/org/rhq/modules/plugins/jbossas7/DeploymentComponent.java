@@ -61,15 +61,24 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws InterruptedException, Exception {
 
-        String action;
         if (name.equals("enable")) {
-            action = "deploy";
+            return invokeSimpleOperation("deploy");
         } else if (name.equals("disable")) {
-            action = "undeploy";
+            return invokeSimpleOperation("undeploy");
+        } else if (name.equals("restart")) {
+            OperationResult result = invokeSimpleOperation("undeploy");
+
+            if(result.getErrorMessage() == null){
+                result = invokeSimpleOperation("deploy");
+            }
+
+            return result;
         } else {
             return super.invokeOperation(name, parameters);
         }
+    }
 
+    private OperationResult invokeSimpleOperation(String action) {
         Operation op = new Operation(action,getAddress());
         Result res = getASConnection().execute(op);
         OperationResult result = new OperationResult();

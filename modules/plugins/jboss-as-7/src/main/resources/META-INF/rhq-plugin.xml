@@ -2978,6 +2978,11 @@
         <c:simple-property name="operationResult"/>
       </results>
     </operation>
+    <operation name="restart">
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
 
     <metric property="status" dataType="trait" description="The current runtime status of a deployment. Possible status modes are OK, FAILED, and STOPPED. FAILED indicates a dependency is missing or a service could not start. STOPPED indicates that the deployment was manually stopped."/>
 

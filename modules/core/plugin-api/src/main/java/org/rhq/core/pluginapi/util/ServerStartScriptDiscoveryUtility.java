@@ -43,10 +43,21 @@ public class ServerStartScriptDiscoveryUtility {
 
     public static File getStartScript(ProcessInfo serverParentProcess) {
         // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
-        //      Windows: "standalone.bat --server-config=standalone-full.xml"
-        int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;
+        //      Windows: "cmd.exe [options] standalone.bat --server-config=standalone-full.xml"
+        int startScriptIndex = 1;
         String[] serverParentProcessCommandLine = serverParentProcess.getCommandLine();
-        String startScript = (serverParentProcessCommandLine.length > startScriptIndex) ? serverParentProcessCommandLine[startScriptIndex] : null;
+
+        // advance past cmd.exe options. options start with '/'       
+        if (File.separatorChar == '\\') {
+            for (; (startScriptIndex < serverParentProcessCommandLine.length); ++startScriptIndex) {
+                if (!serverParentProcessCommandLine[startScriptIndex].startsWith("/")) {
+                    break;
+                }
+            }
+        }
+
+        String startScript = (serverParentProcessCommandLine.length > startScriptIndex) ? serverParentProcessCommandLine[startScriptIndex]
+            : null;
 
         File startScriptFile;
 
@@ -73,12 +84,13 @@ public class ServerStartScriptDiscoveryUtility {
     }
 
     public static List<String> getStartScriptArgs(ProcessInfo serverParentProcess, List<String> serverArgs,
-                                                  Set<CommandLineOption> optionExcludes) {
+        Set<CommandLineOption> optionExcludes) {
         // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
         //      Windows: "standalone.bat --server-config=standalone-full.xml"
         int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;
         String[] startScriptCommandLine = serverParentProcess.getCommandLine();
-        String startScript = (startScriptCommandLine.length > startScriptIndex) ? startScriptCommandLine[startScriptIndex] : null;
+        String startScript = (startScriptCommandLine.length > startScriptIndex) ? startScriptCommandLine[startScriptIndex]
+            : null;
 
         List<String> startScriptArgs = new ArrayList<String>();
         if (isScript(startScript)) {
@@ -92,20 +104,20 @@ public class ServerStartScriptDiscoveryUtility {
                 // Skip any options that the start script will take care of specifying.
                 CommandLineOption option = null;
                 for (CommandLineOption optionExclude : optionExcludes) {
-                    if ((optionExclude.getShortName() != null &&
-                        (serverArg.equals('-' + optionExclude.getShortName()) ||
-                         serverArg.startsWith('-' + optionExclude.getShortName() + "="))) ||
-                         ((optionExclude.getLongName() != null) &&
-                          (serverArg.equals("--" + optionExclude.getLongName()) ||
-                           serverArg.startsWith("--" + optionExclude.getLongName() + "=")))) {
+                    if ((optionExclude.getShortName() != null && (serverArg.equals('-' + optionExclude.getShortName()) || serverArg
+                        .startsWith('-' + optionExclude.getShortName() + "=")))
+                        || ((optionExclude.getLongName() != null) && (serverArg.equals("--"
+                            + optionExclude.getLongName()) || serverArg.startsWith("--" + optionExclude.getLongName()
+                            + "=")))) {
                         option = optionExclude;
                         break;
                     }
                 }
                 if (option != null) {
-                    if (option.isExpectsValue() && ((i + 1) < serverArgsSize) &&
-                        (((option.getShortName() != null) && serverArg.equals('-' + option.getShortName())) ||
-                         (option.getLongName() != null) && serverArg.equals("--" + option.getLongName()))) {
+                    if (option.isExpectsValue()
+                        && ((i + 1) < serverArgsSize)
+                        && (((option.getShortName() != null) && serverArg.equals('-' + option.getShortName())) || (option
+                            .getLongName() != null) && serverArg.equals("--" + option.getLongName()))) {
                         // If the option expects a value and the delimiter is a space, skip the next argument too.
                         i++;
                     }
@@ -118,7 +130,7 @@ public class ServerStartScriptDiscoveryUtility {
     }
 
     public static Map<String, String> getStartScriptEnv(ProcessInfo serverProcess, ProcessInfo serverParentProcess,
-                                                        Set<String> envVarNameIncludes) {
+        Set<String> envVarNameIncludes) {
         Map<String, String> startScriptEnv = new LinkedHashMap<String, String>();
         Map<String, String> processEnvVars;
         if (getStartScript(serverParentProcess) != null) {

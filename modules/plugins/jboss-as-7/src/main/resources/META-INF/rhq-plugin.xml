@@ -343,7 +343,7 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+            <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
                                description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
               <c:property-options>
                 <c:option value="true"/>
@@ -466,7 +466,7 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
                                  description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
@@ -499,7 +499,7 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" type="boolean"
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
                                  description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
@@ -784,6 +784,47 @@
             <c:simple-property name="module" displayName="Module name" readOnly="true"/>
           </c:map-property>
         </c:list-property>
+      </c:group>
+
+      <c:group name="child:core-service=server-environment*" displayName="Server environment" hiddenByDefault="true">
+        <c:simple-property name="base-dir" required="true" type="string" readOnly="true"
+                           description="The base directory for JBoss Application Server."/>
+        <c:simple-property name="config-dir" required="true" type="string" readOnly="true"
+                           description="The directory where the configurations are stored."/>
+        <c:simple-property name="config-file" required="true" type="string" readOnly="true"
+                           description="The configuration file used to launch JBoss Application Server."/>
+        <c:simple-property name="content-dir" required="true" type="string" readOnly="true"
+                           description="The directory where user content (e.g. deployments) that is managed by the server is stored."/>
+        <c:simple-property name="data-dir" required="true" type="string" readOnly="true"
+                           description="The data directory."/>
+        <c:simple-property name="deploy-dir" required="true" type="string" readOnly="true"
+                           description="Deprecated variant of &apos;content&#45;dir&apos;."/>
+        <c:simple-property name="ext-dirs" required="true" type="string" readOnly="true"
+                           description="A list of ext directories."/>
+        <c:simple-property name="home-dir" required="true" type="string" readOnly="true"
+                           description="The home directory for JBoss Application Server."/>
+        <c:simple-property name="host-name" required="true" type="string" readOnly="true" description="The host name."/>
+        <c:simple-property name="initial-running-mode" required="true" type="string" readOnly="true"
+                           description="The current running mode of the server. Either LIVE (normal operations) or ADMIN_ONLY.  An ADMIN_ONLY server will start any configured management interfaces and accept management requests, but will not start services used for handling end user requests.">
+          <c:property-options>
+            <c:option value="ADMIN_ONLY" name="ADMIN_ONLY"/>
+            <c:option value="NORMAL" name="NORMAL"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="launch-type" required="true" type="string" readOnly="true"
+                           description="The type of the running server."/>
+        <c:simple-property name="log-dir" required="true" type="string" readOnly="true"
+                           description="The directory where log files are sent."/>
+        <c:simple-property name="modules-dir" required="true" type="string" readOnly="true"
+                           description="The directory where modules are found."/>
+        <c:simple-property name="node-name" required="true" type="string" readOnly="true"
+                           description="The name of the server node."/>
+        <c:simple-property name="qualified-host-name" required="true" type="string" readOnly="true"
+                           description="The qualified host name."/>
+        <c:simple-property name="server-name" required="true" type="string" readOnly="true"
+                           description="The name of the server."/>
+        <c:simple-property name="temp-dir" required="true" type="string" readOnly="true"
+                           description="The temporary directory."/>
       </c:group>
     </resource-configuration>
 

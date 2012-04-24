@@ -137,10 +137,17 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             if (subPath.contains(":")) {
                 subPath = subPath.substring(0,subPath.indexOf(':'));
             }
+            boolean includeRuntime=false;
+            if (subPath.endsWith("*")) {
+                subPath = subPath.substring(0,subPath.length()-1);
+                includeRuntime=true;
+            }
 
             Address address1 = new Address(address);
             address1.addSegment(subPath);
             operation = new ReadResource(address1);
+            if (includeRuntime)
+                ((ReadResource)operation).includeRuntime(true);
         } else {//no special handling of <c:groups> details required.
             //Just assume normal group operations aggregation semantics.
             return;
@@ -383,7 +390,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     }
 
     /**Determine if the property definition is for name=value property mapping.
-     * 
+     *
      * @param propDefs
      * @return
      */

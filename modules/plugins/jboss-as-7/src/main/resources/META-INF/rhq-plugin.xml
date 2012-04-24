@@ -2239,12 +2239,12 @@
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
          <c:simple-property name="module" required="true" type="string" readOnly="true" description="The module that the logging handler depends on."/>
-	 <c:list-property name="properties">
-		    <c:map-property name="properties">
-			<c:simple-property name="name" required="true" description="The name of the configuration property." />
-			<c:simple-property name="value" required="true" description="The value of the configuration property." />
-		    </c:map-property>
-	</c:list-property>
+         <c:list-property name="properties">
+           <c:map-property name="properties:collapsed" displayName="Properties">
+             <c:simple-property name="name:0" displayName="Name" required="true" description="The name of the configuration property."/>
+             <c:simple-property name="value:1" displayName="Value" required="true" description="The value of the configuration property."/>
+           </c:map-property>
+         </c:list-property>
        </resource-configuration>
 
      </service><!-- End of custom-handler service -->

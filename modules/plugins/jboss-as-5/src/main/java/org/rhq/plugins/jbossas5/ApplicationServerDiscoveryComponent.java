@@ -143,7 +143,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "MAX_FD", //
             "PROFILER", //
             "PATH", //
-            "LD_LIBRARY_PATH"));
+            "LD_LIBRARY_PATH", // 
+            "SYSTEMROOT")); // required on Windows or you can get winsock create errors
     }
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -251,7 +252,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
             if (log.isDebugEnabled())
                 log.debug("Discovered JBoss AS process: " + processInfo);
-
 
             JBossInstanceInfo jbossInstanceInfo;
             try {

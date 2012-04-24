@@ -84,7 +84,7 @@ public class StartScriptConfiguration {
     @NotNull
     public List<String> getStartScriptArgs() {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_CONFIG_PROP);
-        List<String> list = (prop != null) ? new ListPropertySimpleWrapper(prop).getValue() : new ArrayList<String>();
+        List<String> list = (prop != null) ? new ArgsPropertySimpleWrapper(prop).getValue() : new ArrayList<String>();
         return list;
     }
 
@@ -96,12 +96,22 @@ public class StartScriptConfiguration {
         new ArgsPropertySimpleWrapper(prop).setValue(startScriptArgs);
     }
 
+    public Configuration getPluginConfig() {
+        return pluginConfig;
+    }
+
     private static class ArgsPropertySimpleWrapper extends ListPropertySimpleWrapper {
 
         public ArgsPropertySimpleWrapper(PropertySimple prop) {
             super(prop);
         }
 
+        // For better readability, put space delimited option values on same line. For example:
+        //   -x some value
+        // as opposed to:
+        //   -x
+        //   some value
+        //
         @Override
         public void setValue(List list) {
             String stringValue;
@@ -117,6 +127,46 @@ public class StartScriptConfiguration {
                 stringValue = null;
             }
             this.prop.setStringValue(stringValue);
+        }
+
+        // Ensure one arg per List entry, split up space delimited options with value on same line. This
+        // protects users that hand enter in this fashion, and also values entered with the above setter.
+        @Override
+        public List<String> getValue() {
+            List<String> list = new ArrayList<String>();
+
+            String stringValue = this.prop.getStringValue();
+            if (stringValue != null) {
+                String[] lines = stringValue.split("\n+");
+                for (String line : lines) {
+                    String element = line.trim();
+                    //element = replacePropertyPatterns(element); // TODO
+                    // separate an option and its value if on one line
+                    if (element.startsWith("-")) {
+                        boolean added = false;
+                        for (int i = 1, len = element.length(); (i < len); ++i) {
+                            char ch = element.charAt(i);
+                            if (ch == ' ' || ch == '\t') {
+                                String option = element.substring(0, i);
+                                String value = element.substring(i).trim();
+                                list.add(option);
+                                if (!value.isEmpty()) {
+                                    list.add(value);
+                                }
+                                added = true;
+                                break;
+                            }
+                        }
+                        if (!added) {
+                            list.add(element);
+                        }
+                    } else {
+                        list.add(element);
+                    }
+                }
+            }
+
+            return list;
         }
     }
 

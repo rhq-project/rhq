@@ -343,7 +343,7 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
+            <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
                                description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
               <c:property-options>
                 <c:option value="true"/>
@@ -466,7 +466,7 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
                                  description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
@@ -499,7 +499,7 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean"
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
                                  description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
@@ -597,7 +597,8 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+              <c:simple-property name="boot-time" defaultValue="true" default="true" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
                   <c:option value="false"/>
@@ -1262,7 +1263,7 @@
           <c:map-property name="connector:collapsed" required="true" readOnly="false" displayName="Connector"
                           description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
             <c:simple-property name="name:0" displayName="Name" description="Connector name" required="true"/>
-            <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name"/>
+            <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name" required="false"/>
           </c:map-property>
           <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
           <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>

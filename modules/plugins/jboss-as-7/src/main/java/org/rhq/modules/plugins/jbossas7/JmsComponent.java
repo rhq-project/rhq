@@ -18,25 +18,10 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
-import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
 /**
  * Component class for the JMS subsystem
@@ -44,61 +29,17 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
  */
 public class JmsComponent extends BaseComponent {
 
-    private final Log log = LogFactory.getLog(JmsComponent.class);
-
     @Override
-    public CreateResourceReport createResource(CreateResourceReport report) {
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-
-        Configuration pConf = report.getPluginConfiguration();
-        Configuration resConf = report.getResourceConfiguration();
-        ConfigurationDefinition resConfDef = report.getResourceType().getResourceConfigurationDefinition();
-
-        String type = pConf.getSimpleValue("path", "");
-
-        Address theAddress = new Address(address);
-        theAddress.add(type, report.getUserSpecifiedResourceName());
-        Operation op = new Operation("add",theAddress);
-
-        // Loop over the properties from the config and add them as properties to the op TODO make generally available ?
-        for (Map.Entry<String, Property> entry:  resConf.getAllProperties().entrySet()) {
-            Property value = entry.getValue();
-            if (value !=null) {
-                String name = entry.getKey();
-
-
-                if (value instanceof PropertySimple) {
-                    PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) resConfDef.get(name);
-                    PropertySimple ps = (PropertySimple) value;
-                    op.addAdditionalProperty(name, getObjectForProperty(ps,propDef));
-                } else if (value instanceof PropertyList) {
-                    PropertyList propertyList = (PropertyList) value;
-                    List<Object> list = new ArrayList<Object>();
-                    PropertyDefinitionList pd = resConfDef.getPropertyDefinitionList(name);
-                    PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) pd.getMemberDefinition();
-                    for (Property p : propertyList.getList()) {
-
-                        Object o = getObjectForProperty((PropertySimple) p, propDef);
-                        list.add(o);
-                    }
-                    op.addAdditionalProperty(name,list);
-                }
-            }
-        }
-        ComplexResult res = (ComplexResult) getASConnection().executeComplex(op);
-
-        // TODO Currently this reports a failure even if it succeeds for jms
-
-        if (res == null || !res.isSuccess()) {
-            report.setStatus(CreateResourceStatus.FAILURE);
-        } else {
-            report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(theAddress.toString());
-            report.setResourceName(report.getUserSpecifiedResourceName());
+        Configuration resourceConfiguration = report.getConfiguration();
+        PropertyList entries = resourceConfiguration.getList("entries");
+        if (entries == null || entries.getList().isEmpty()) {
+            report.setErrorMessage("You need to provide at least one JNDI name");
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return;
         }
 
-        log.info(report);
-        return report;
+        super.updateResourceConfiguration(report);
     }
-
 }

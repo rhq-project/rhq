@@ -66,7 +66,6 @@ public class MapPropertySimpleWrapper {
                 }
                 String key = entry.substring(0, equalsIndex);
                 String value = entry.substring(equalsIndex + 1);
-                //value = replacePropertyPatterns(value); // TODO
                 map.put(key, value);
             }
         }

@@ -59,7 +59,6 @@ public class ListPropertySimpleWrapper {
             String[] lines = stringValue.split("\n+");
             for (String line : lines) {
                 String element = line.trim();
-                //element = replacePropertyPatterns(element); // TODO
                 list.add(element);
             }
         }

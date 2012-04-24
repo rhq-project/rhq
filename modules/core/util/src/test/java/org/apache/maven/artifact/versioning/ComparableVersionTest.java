@@ -18,10 +18,85 @@
  */
 package org.apache.maven.artifact.versioning;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.testng.annotations.Test;
 
 @Test
 public class ComparableVersionTest {
+
+    private static List<String> RHQ_VERSIONS = new ArrayList<String>();
+    static {
+        RHQ_VERSIONS.add("4.0.0.GA");
+        RHQ_VERSIONS.add("4.1.0.GA");
+        RHQ_VERSIONS.add("4.2.0.GA");
+        RHQ_VERSIONS.add("4.2.1.GA");
+        RHQ_VERSIONS.add("4.3.0.GA");
+        RHQ_VERSIONS.add("4.3.1.RC1");
+        RHQ_VERSIONS.add("4.3.1.RC2");
+        RHQ_VERSIONS.add("4.3.1.GA");
+        RHQ_VERSIONS.add("4.4.0.RC1");
+        RHQ_VERSIONS.add("4.4.0.RC2");
+        RHQ_VERSIONS.add("4.4.0.GA");
+        RHQ_VERSIONS.add("4.4.1.GA");
+    }
+
+    private static List<String> JON_VERSIONS = new ArrayList<String>();
+    static {
+        JON_VERSIONS.add("2.4.0.GA");
+        JON_VERSIONS.add("2.4.1.GA");
+        JON_VERSIONS.add("4.2.0.JON300.GA");
+        JON_VERSIONS.add("4.2.0.JON.3.0.1.GA");
+        JON_VERSIONS.add("4.2.0.JON302GA");
+        JON_VERSIONS.add("4.4.0.JON310GA");
+        JON_VERSIONS.add("4.4.1.JON311GA");
+    }
+
+    public void testRHQVersions() {
+        testListOfVersionsStepByStep(RHQ_VERSIONS);
+        testListOfVersionsSkippingVersions(RHQ_VERSIONS);
+    }
+
+    public void testJONVersions() {
+        testListOfVersionsStepByStep(JON_VERSIONS);
+        testListOfVersionsSkippingVersions(JON_VERSIONS);
+    }
+
+    private void testListOfVersionsStepByStep(List<String> versions) {
+        String oldVer = null;
+        String newVer = null;
+        for (String ver : versions) {
+            if (newVer != null) {
+                oldVer = newVer;
+                newVer = ver;
+                compareVersions(oldVer, newVer);
+            } else {
+                newVer = ver;
+            }
+        }
+    }
+
+    private void testListOfVersionsSkippingVersions(List<String> versions) {
+        // Start with the oldest, and test all versions after it making sure they are all newer.
+        // After testing the oldest, go to the next oldest and do it again.
+        // This tests a person skipping one or more versions when upgrading (say, upgrading from 2.0 to 4.0, skipping 3.0)
+        if (versions.size() <= 1) {
+            return;
+        }
+
+        String oldest = versions.get(0);
+        for (int i = 1; i < versions.size(); i++) {
+            compareVersions(oldest, versions.get(i));
+        }
+
+        testListOfVersionsSkippingVersions(versions.subList(1, versions.size()));
+    }
+
+    public void testBZ_813967() {
+        compareVersions("4.2.0.JON300.GA", "4.2.0.JON.3.0.1.GA");
+    }
+
     public void testSimpleVersionCompare() {
         compareVersions("1.0", "1.1");
         compareVersions("1.0", "2.0");
@@ -54,6 +129,8 @@ public class ComparableVersionTest {
     }
 
     private void compareVersions(String ver1String, String ver2String) {
+        //System.out.println("Testing: " + ver1String + "\t" + ver2String);
+
         ComparableVersion ver1 = new ComparableVersion(ver1String);
         ComparableVersion ver2 = new ComparableVersion(ver2String);
 

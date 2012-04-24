@@ -4,9 +4,9 @@
 
     <!ENTITY startScriptPluginConfigGroup '
     <c:group name="startScript">
-        <c:simple-property name="startScript" type="file" default="" description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is relative to the server home directory." required="false" />
-        <c:simple-property name="startScriptEnv" type="longString" default="" description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
-        <c:simple-property name="startScriptArgs" type="longString" default="" description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
+        <c:simple-property name="startScript" type="file" description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is resolved relative to the server home directory." displayName="Start Script Path" required="false" />
+        <c:simple-property name="startScriptEnv" type="longString" description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
+        <c:simple-property name="startScriptArgs" type="longString" description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
     </c:group>
 '>
 
@@ -167,39 +167,41 @@
 	<!ENTITY logLevel '
            <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
             <c:property-options>
-	      <c:option value="ALL" name="ALL"/>
-	      <c:option value="CONFIG" name="CONFIG"/>
-	      <c:option value="DEBUG" name="DEBUG"/>
-	      <c:option value="ERROR" name="ERROR"/>
-	      <c:option value="FATAL" name="FATAL"/>
-	      <c:option value="FINE" name="FINE"/>
-	      <c:option value="FINER" name="FINER"/>
-	      <c:option value="FINEST" name="FINEST"/>
-	      <c:option value="INFO" name="INFO"/>
-	      <c:option value="OFF" name="OFF"/>
-	      <c:option value="TRACE" name="TRACE"/>
-	      <c:option value="WARN" name="WARN"/>
-	      <c:option value="WARNING" name="WARNING"/>
+	      <c:option value="ALL"/>
+	      <c:option value="CONFIG"/>
+	      <c:option value="DEBUG"/>
+	      <c:option value="ERROR"/>
+	      <c:option value="FATAL"/>
+	      <c:option value="FINE"/>
+	      <c:option value="FINER"/>
+	      <c:option value="FINEST"/>
+	      <c:option value="INFO"/>
+	      <c:option value="OFF"/>
+	      <c:option value="TRACE"/>
+	      <c:option value="WARN"/>
+	      <c:option value="WARNING"/>
             </c:property-options>
 	   </c:simple-property>
 '>
 
 	<!ENTITY logFilter '
+         <!--
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
-           <c:option value="accept" name="accept"/>
-           <c:option value="all" name="all"/>
-           <c:option value="any" name="any"/>
-           <c:option value="change-level" name="change-level"/>
-           <c:option value="deny" name="deny"/>
-           <c:option value="level" name="level"/>
-           <c:option value="level-range" name="level-range"/>
-           <c:option value="match" name="match"/>
-           <c:option value="not" name="not"/>
-           <c:option value="replace" name="replace"/>
+           <c:option value="accept"/>
+           <c:option value="all"/>
+           <c:option value="any"/>
+           <c:option value="change-level"/>
+           <c:option value="deny"/>
+           <c:option value="level"/>
+           <c:option value="level-range"/>
+           <c:option value="match"/>
+           <c:option value="not"/>
+           <c:option value="replace"/>
           </c:property-options>
-         </c:simple-property>
+         </c:simple-property>-->
 '>
+
     <!ENTITY jvmDefinitionResourceConfigProperties '
         <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
         <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
@@ -223,6 +225,25 @@
                 <c:option value="IBM"/>
             </c:property-options>
         </c:simple-property>
+'>
+
+	<!ENTITY logFile '
+          <c:map-property name="file" required="true" readOnly="false" description="The file description consisting of the path and optional relative to path.">
+            <c:simple-property name="path" required="true" readOnly="false" description="The filesystem path."/>
+            <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">
+	     <c:property-options>
+	      <c:option value="java.home" />
+	      <c:option value="jboss.domain.servers.dir" />
+	      <c:option value="jboss.home" />
+	      <c:option value="jboss.server.base.dir" />
+	      <c:option value="jboss.server.data.dir" />
+	      <c:option value="jboss.server.log.dir" />
+	      <c:option value="jboss.server.tmp.dir" />
+	      <c:option value="user.dir" />
+	      <c:option value="user.home" />
+             </c:property-options>
+            </c:simple-property>
+          </c:map-property>
 '>
 
 ]>
@@ -322,7 +343,8 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+            <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
+                               description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
               <c:property-options>
                 <c:option value="true"/>
                 <c:option value="false"/>
@@ -444,7 +466,8 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
                   <c:option value="false"/>
@@ -476,6 +499,13 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                <c:property-options>
+                  <c:option value="true"/>
+                  <c:option value="false"/>
+                </c:property-options>
+              </c:simple-property>
             </c:map-property>
           </c:list-property>
         </c:group>
@@ -567,7 +597,8 @@
             <c:map-property name="*:name" displayName="Name" readOnly="true">
               <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
               <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+              <c:simple-property name="boot-time" defaultValue="true" default="true" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
                 <c:property-options>
                   <c:option value="true"/>
                   <c:option value="false"/>
@@ -729,12 +760,6 @@
           <c:map-property name="*:name" displayName="Name" readOnly="true">
             <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
             <c:simple-property name="value" displayName="Value"/>
-            <c:simple-property name="boot-time" defaultValue="true" description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
-              <c:property-options>
-                <c:option value="true"/>
-                <c:option value="false"/>
-              </c:property-options>
-            </c:simple-property>
           </c:map-property>
         </c:list-property>
       </c:group>
@@ -760,6 +785,47 @@
             <c:simple-property name="module" displayName="Module name" readOnly="true"/>
           </c:map-property>
         </c:list-property>
+      </c:group>
+
+      <c:group name="child:core-service=server-environment*" displayName="Server environment" hiddenByDefault="true">
+        <c:simple-property name="base-dir" required="true" type="string" readOnly="true"
+                           description="The base directory for JBoss Application Server."/>
+        <c:simple-property name="config-dir" required="true" type="string" readOnly="true"
+                           description="The directory where the configurations are stored."/>
+        <c:simple-property name="config-file" required="true" type="string" readOnly="true"
+                           description="The configuration file used to launch JBoss Application Server."/>
+        <c:simple-property name="content-dir" required="true" type="string" readOnly="true"
+                           description="The directory where user content (e.g. deployments) that is managed by the server is stored."/>
+        <c:simple-property name="data-dir" required="true" type="string" readOnly="true"
+                           description="The data directory."/>
+        <c:simple-property name="deploy-dir" required="true" type="string" readOnly="true"
+                           description="Deprecated variant of &apos;content&#45;dir&apos;."/>
+        <c:simple-property name="ext-dirs" required="true" type="string" readOnly="true"
+                           description="A list of ext directories."/>
+        <c:simple-property name="home-dir" required="true" type="string" readOnly="true"
+                           description="The home directory for JBoss Application Server."/>
+        <c:simple-property name="host-name" required="true" type="string" readOnly="true" description="The host name."/>
+        <c:simple-property name="initial-running-mode" required="true" type="string" readOnly="true"
+                           description="The current running mode of the server. Either LIVE (normal operations) or ADMIN_ONLY.  An ADMIN_ONLY server will start any configured management interfaces and accept management requests, but will not start services used for handling end user requests.">
+          <c:property-options>
+            <c:option value="ADMIN_ONLY" name="ADMIN_ONLY"/>
+            <c:option value="NORMAL" name="NORMAL"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="launch-type" required="true" type="string" readOnly="true"
+                           description="The type of the running server."/>
+        <c:simple-property name="log-dir" required="true" type="string" readOnly="true"
+                           description="The directory where log files are sent."/>
+        <c:simple-property name="modules-dir" required="true" type="string" readOnly="true"
+                           description="The directory where modules are found."/>
+        <c:simple-property name="node-name" required="true" type="string" readOnly="true"
+                           description="The name of the server node."/>
+        <c:simple-property name="qualified-host-name" required="true" type="string" readOnly="true"
+                           description="The qualified host name."/>
+        <c:simple-property name="server-name" required="true" type="string" readOnly="true"
+                           description="The name of the server."/>
+        <c:simple-property name="temp-dir" required="true" type="string" readOnly="true"
+                           description="The temporary directory."/>
       </c:group>
     </resource-configuration>
 
@@ -1197,7 +1263,7 @@
           <c:map-property name="connector:collapsed" required="true" readOnly="false" displayName="Connector"
                           description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
             <c:simple-property name="name:0" displayName="Name" description="Connector name" required="true"/>
-            <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name"/>
+            <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name" required="false"/>
           </c:map-property>
           <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
           <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>
@@ -1365,12 +1431,14 @@
         <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
       </c:group>
       <c:group name="child:configuration=container" displayName="Container">
+<!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
         <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false" >
           <c:map-property name="mime-mapping:collapsed" >
-            <c:simple-property name="name" description="A MIME mapping name"/>
-            <c:simple-property name="value" description="A MIME mapping value"/>
+            <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
+            <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
           </c:map-property>
         </c:list-property>
+-->
         <c:list-property name="welcome-file" required="false" description="A welcome file declaration." >
           <c:simple-property name="welcome-file" type="string"/>
         </c:list-property>
@@ -2068,41 +2136,15 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=logging"/>
     </plugin-configuration>
 
-    <operation name="change-root-log-level" description="Change the root logger level.">
-      <parameters>
-        &logLevel;
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <operation name="remove-root-logger" description="Remove the root logger.">
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
-    <operation name="set-root-logger" description="Set the root logger.">
-      <parameters>
-        &logLevel;
-        <c:list-property name="handlers" required="true" readOnly="false"
-                         description="The Handlers associated with this Logger.">
-          <c:simple-property name="handler" type="string"/>
-        </c:list-property>
-      </parameters>
-      <results>
-        <c:simple-property name="operationResult"/>
-      </results>
-    </operation>
-
     <resource-configuration>
       <c:group name="child:root-logger=ROOT" displayName="Root logger">
           &logFilter;
           &logLevel;
-        <c:list-property name="handlers" readOnly="true">
-          <c:simple-property name="handler" readOnly="true" description="The Handlers associated with this Logger."/>
-        </c:list-property>
+	&logLevel;
+	<c:list-property name="handlers" required="true" readOnly="false"
+	                 description="The Handlers associated with this Logger.">
+	  <c:simple-property name="handler" type="string" description="The Handlers associated with this Logger."/>
+	</c:list-property>
       </c:group>
     </resource-configuration>
 
@@ -2124,14 +2166,7 @@
          </results>
        </operation>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2154,27 +2189,18 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing ASYNC handler.">
-         <parameters>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
-           <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;"/>
-           <c:simple-property name="subhandlers" required="false" type="string" readOnly="false" description="The Handlers associated with this async handler."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing ASYNC handler." />
-         </results>
-       </operation>
-
        <resource-configuration>
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="overflow-action" required="false" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK."/>
-         <c:simple-property name="queue-length" required="false" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
+         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
+           <c:property-options>
+	      <c:option value="BLOCK"/>
+	      <c:option value="DISCARD"/>
+           </c:property-options>
+	 </c:simple-property>
+         <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
              <c:simple-property name="subhandlers" />
          </c:list-property>
@@ -2191,14 +2217,7 @@
           <c:simple-property name="path" readOnly="true" default="console-handler"/>
         </plugin-configuration>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2209,25 +2228,6 @@
        <operation name="enable" description="Enable a logging handler.">
          <results>
             <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="update-properties" description="Update the properties of an existing console handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
-            <c:property-options>
-	      <c:option value="System.err" name="System.err"/>
-	      <c:option value="System.out" name="System.out"/>
-            </c:property-options>
-	   </c:simple-property>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing console handler." />
          </results>
        </operation>
 
@@ -2257,14 +2257,7 @@
           <c:simple-property name="path" readOnly="true" default="custom-handler"/>
         </plugin-configuration>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2278,29 +2271,21 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing custom logging handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="properties" required="false" type="string" readOnly="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing custom logging handler." />
-         </results>
-       </operation>
+       <!-- no need for 'update-properties' since resource-config does the same thing -->
 
        <resource-configuration>
-         <c:simple-property name="class" required="false" type="string" readOnly="true" description="The logging handler class to be used."/>
+         <c:simple-property name="class" required="true" type="string" readOnly="true" description="The logging handler class to be used."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module that the logging handler depends on."/>
-         <c:list-property name="properties" required="false" description="Defines the properties used for the logging handler. All properties must be accessible via a setter method." >
-             <c:simple-property name="properties" />
+         <c:simple-property name="module" required="true" type="string" readOnly="true" description="The module that the logging handler depends on."/>
+         <c:list-property name="properties">
+           <c:map-property name="properties:collapsed" displayName="Properties">
+             <c:simple-property name="name:0" displayName="Name" required="true" description="The name of the configuration property."/>
+             <c:simple-property name="value:1" displayName="Value" required="true" description="The value of the configuration property."/>
+           </c:map-property>
          </c:list-property>
        </resource-configuration>
 
@@ -2315,23 +2300,9 @@
           <c:simple-property name="path" readOnly="true" default="file-handler"/>
         </plugin-configuration>
 
-       <operation name="change-file" description="Change the file for a handler.">
-         <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the file for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2345,26 +2316,13 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by configuration update -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
+           &logFile;
            &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
@@ -2382,37 +2340,15 @@
           <c:simple-property name="path" readOnly="true" default="logger"/>
         </plugin-configuration>
 
-       <operation name="assign-handler" description="Assign a Handler to a Logger.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Assign a Handler to a Logger." />
-         </results>
-       </operation>
+       <!-- no need for 'assign-handler' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a logger category.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a logger category." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
-       <operation name="unassign-handler" description="Unassign a Handler from a Logger.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Unassign a Handler from a Logger." />
-         </results>
-       </operation>
+       <!-- no need for 'unassign-handler' since resource-config handles this -->
 
        <resource-configuration>
-         <c:simple-property name="category" required="false" type="string" readOnly="true" description="Specifies the category for the logger."/>
+         <!-- category is the same as 'name' for other resources. Don't list as required here -->
            &logFilter;
-
          <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
              <c:simple-property name="handlers" />
          </c:list-property>
@@ -2432,23 +2368,9 @@
           <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
         </plugin-configuration>
 
-       <operation name="change-file" description="Change the file for a handler.">
-         <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the file for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2462,37 +2384,78 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing periodic rotating file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-           <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing periodic rotating file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by config -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
-
-           &logFilter;
-
+         &logFile;
+         &logFilter;
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="suffix" required="false" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
+         <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
        </resource-configuration>
 
      </service><!-- End of periodic-rotating-file-handler service -->
+
+<!--     <service name="Root Logger"
+		 discovery="SubsystemDiscovery"
+                 createDeletePolicy="both"
+		 class="BaseComponent">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
+	   </plugin-configuration>
+
+	    <operation name="change-root-log-level" description="Change the root logger level.">
+	      <parameters>
+		&logLevel;
+	      </parameters>
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	    <operation name="remove-root-logger" description="Remove the root logger.">
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	    <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
+	     <parameters>
+	       <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+	     </parameters>
+	     <results>
+		<c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
+	     </results>
+	    </operation>
+
+	    <operation name="set-root-logger" description="Set the root logger.">
+	      <parameters>
+		&logLevel;
+		<c:list-property name="handlers" required="true" readOnly="false"
+		                 description="The Handlers associated with this Logger.">
+		  <c:simple-property name="handler" type="string"/>
+		</c:list-property>
+	      </parameters>
+	      <results>
+		<c:simple-property name="operationResult"/>
+	      </results>
+	    </operation>
+
+	   <resource-configuration>
+             <c:group name="Root logger" displayName="Root logger">
+	      &logFilter;
+	      <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
+		 <c:simple-property name="handlers" />
+	      </c:list-property>
+	      &logLevel;
+	     </c:group>
+	   </resource-configuration>
+	</service> --><!-- End of Root Logger service -->
 
      <service name="Size Rotating File Handler"
               discovery="SubsystemDiscovery"
@@ -2503,23 +2466,9 @@
           <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
         </plugin-configuration>
 
-       <operation name="change-file" description="Change the file for a handler.">
-         <parameters>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the file for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2533,36 +2482,19 @@
          </results>
        </operation>
 
-       <operation name="update-properties" description="Update the properties of an existing size rotating file handler.">
-         <parameters>
-           <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logLevel;
-           &logFilter;
-           <c:simple-property name="formatter" required="false" type="string" readOnly="false" description="Defines a formatter."/>
-           <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" description="Automatically flush after each write."/>
-           <c:simple-property name="append" required="false" type="boolean" readOnly="false" description="Specify whether to append to the target file."/>
-           <c:simple-property name="file" required="false" type="string" readOnly="false" description="The file description consisting of the path and optional relative to path."/>
-           <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" description="The size at which to rotate the log file."/>
-           <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" description="The maximum number of backups to keep."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Update the properties of an existing size rotating file handler." />
-         </results>
-       </operation>
+       <!-- removing 'update-properties' as handled by configuration -->
 
        <resource-configuration>
          <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
          <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         <c:simple-property name="file" required="false" description="The file description consisting of the path and optional relative to path." />
-
+           &logFile;
            &logFilter;
-
          <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
          description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
            &logLevel;
-         <c:simple-property name="max-backup-index" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
-         <c:simple-property name="rotate-size" required="false" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
+         <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
+         <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
        </resource-configuration>
 
      </service><!-- End of size-rotating-file-handler service -->
@@ -3007,11 +2939,11 @@
                                required="false">
               <c:option-source target="resource" expression="type='Network Interface' plugin=jboss-as-7"/>
             </c:simple-property>
-            <c:simple-property name="port:expr" displayName="Port" description="Number of the port to which the socket should be bound."/>
+            <c:simple-property name="port:expr" displayName="Port" required="false" description="Number of the port to which the socket should be bound. ${} Expresions are allowed. Can be omitted if multicast-port is set."/>
             <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
                                type="boolean" defaultValue="false"/>
             <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
-            <c:simple-property name="multicast-port:expr" displayName="Multicast Port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." required="false"/>
+            <c:simple-property name="multicast-port:expr" displayName="Multicast Port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured. ${} Expresions are allowed." required="false"/>
           </c:map-property>
         </c:list-property>
       </c:group>

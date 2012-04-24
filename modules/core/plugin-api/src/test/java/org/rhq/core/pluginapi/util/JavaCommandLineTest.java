@@ -48,7 +48,9 @@ public class JavaCommandLineTest {
     }
 
     public void testClass() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea", "-cp", "a.jar:b.jar:c.jar", "org.example.Main", "-x", "blah");
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah");
 
         Assert.assertEquals(javaCommandLine.getJavaExecutable(), new File("java"));
         Assert.assertEquals(javaCommandLine.getJavaOptions(), Arrays.asList("-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea"),
@@ -69,7 +71,9 @@ public class JavaCommandLineTest {
     }
 
     public void testJarFile() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea", "-cp", "a.jar:b.jar:c.jar", "-jar", "main.jar", "-x", "blah");
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "-jar", "main.jar", "-x", "blah");
 
         Assert.assertEquals(javaCommandLine.getJavaExecutable(), new File("java"));
         Assert.assertEquals(javaCommandLine.getJavaOptions(), Arrays.asList("-Dshape=circle", "-Xmx100M", "-Dcolor=blue", "-ea"),
@@ -108,6 +112,40 @@ public class JavaCommandLineTest {
         Assert.assertEquals(sysprops.get("prop2"), "");
         Assert.assertEquals(sysprops.get("prop3"), "");
         Assert.assertEquals(sysprops.get("prop4"), "boo");
+    }
+
+    public void testGetPresentClassOption() throws Exception {
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "--long=longval", "-n");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("x", null, false)), "");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("x", null, true)), "blah");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "novaluelong", false)), "");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "novaluelong", true)), "");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "long", false)), "longval");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "long", true)), "longval");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("n", null, false)), "");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("n", null, true)), "");
+    }
+
+    public void testGetAbsentClassOption() throws Exception {
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "--long=longval", "-n");
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", null, false)));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", null, true)));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption(null, "bogus", false)));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption(null, "bogus", true)));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", "bogus", false)));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", "bogus", true)));
+    }
+
+    public void testGetClassOptionStopProcessing() throws Exception {
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "--long=longval", "--", "-n");
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", "bogus")));
+        Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("n", null, false)));
     }
 
 }

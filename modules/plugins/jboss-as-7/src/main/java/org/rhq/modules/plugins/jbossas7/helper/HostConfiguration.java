@@ -34,8 +34,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.AS7CommandLine;
-import org.rhq.modules.plugins.jbossas7.AS7CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.AS7Mode;
 
 /**
@@ -50,7 +50,7 @@ public class HostConfiguration {
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
     private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
 
-    private AS7CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new AS7CommandLineOption("bmanagement", null);
+    private CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new CommandLineOption("bmanagement", null);
 
     private final Log log = LogFactory.getLog(HostConfiguration.class);
 

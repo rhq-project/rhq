@@ -320,6 +320,10 @@
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
                           tofile="${java.io.tmpdir}/jboss-as-${as7.version}" failonerror="false"
                           overwrite="false"/>
+
+                    <chmod perm="u+rx">
+                      <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
+                    </chmod>
                     <replace dir="${jboss7.home}"
                              includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
                              token="&lt;inet-address " value="&lt;loopback-address "/>
@@ -455,6 +459,7 @@
                     <argument>javax.xml.jaxp-provider</argument>
                     <argument>org.jboss.as.standalone</argument>
                     <argument>-Djboss.home.dir=${jboss7.home}</argument>
+                    <argument>--server-config=standalone-full.xml</argument>
                     <argument>-Djboss.bind.address.management=${jboss.standalone.bindAddress}</argument>
                     <argument>-Djboss.bind.address=${jboss.standalone.bindAddress}</argument>
                     <argument>-Djboss.bind.address.unsecure=${jboss.standalone.bindAddress}</argument>
@@ -523,6 +528,13 @@
                     <argument>-Djboss.host.default.config=host.xml</argument>
                     <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
                     <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                    <argument>--</argument>
+
+                    <!-- Host Controller Java options to be inserted *after* the built-in options -->
+                    <!-- (e.g. "-jar /tmp/jboss-as-6.0.0.ER5/jboss-modules.jar -mp /tmp/jboss-as-6.0.0.ER5/modules -jaxpmodule javax.xml.jaxp-provider") -->
+                    <argument>-default-jvm</argument>
+                    <argument>${java.home}/bin/java</argument>
+                    <!-- The remaining props are all our custom options (the ones that would be passed to domain.sh) -->
                     <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
@@ -530,11 +542,6 @@
                     <argument>-Djboss.management.native.port=${jboss.domain.nativeManagementPort}</argument>
                     <argument>-Djboss.management.http.port=${jboss.domain.httpManagementPort}</argument>
                     <argument>-Djboss.management.https.port=${jboss.domain.httpsManagementPort}</argument>
-                    <argument>--</argument>
-
-                    <!-- Host Controller Java options to be inserted *after* the built-in options -->
-                    <argument>-default-jvm</argument>
-                    <argument>${java.home}/bin/java</argument>
                   </arguments>
                 </configuration>
               </execution>

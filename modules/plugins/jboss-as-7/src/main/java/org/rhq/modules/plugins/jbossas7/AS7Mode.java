@@ -19,7 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 /**
- * Various definitions for the operation modes of AS7 (HOST is strictly no mode, but fits here nicely)
+ * Various definitions for the operation modes of AS7 (HOST is strictly not a mode, but fits here nicely)
  * @author Heiko W. Rupp
  */
 public enum AS7Mode {

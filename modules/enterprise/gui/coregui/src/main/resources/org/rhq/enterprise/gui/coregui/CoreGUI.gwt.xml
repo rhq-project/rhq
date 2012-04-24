@@ -6,6 +6,8 @@
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
     <inherits name="com.google.gwt.logging.Logging"/>
+    <inherits name='com.google.gwt.core.EmulateJsStack'/>
+
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
@@ -32,6 +34,14 @@
     <set-property name="gwt.logging.systemHandler" value="ENABLED" />
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
+
+    <!-- the emulated stack allows us to run in OBF compiled script and gives us stack traces
+         for debugging
+         see:  http://code.google.com/p/google-web-toolkit/wiki/WebModeExceptions
+    -->
+    <set-property name="compiler.stackMode" value="emulated" />
+    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
+    <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true" />
 
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">

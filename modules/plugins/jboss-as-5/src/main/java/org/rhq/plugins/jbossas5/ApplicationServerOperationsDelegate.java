@@ -24,6 +24,7 @@ package org.rhq.plugins.jbossas5;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -144,7 +146,9 @@ public class ApplicationServerOperationsDelegate {
     // Private --------------------------------------------
 
     /**
-     * Starts the underlying AS server.
+     * Starts the underlying AS server.  Uses the StartScript connection properties, if set, or defaults to
+     * using the minimal required settings, which may not start or restart the app server in the same way
+     * it was initially started.
      *
      * @return success message if no errors are encountered
      * @throws InterruptedException
@@ -159,7 +163,8 @@ public class ApplicationServerOperationsDelegate {
             return result;
         }
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
-        File startScriptFile = getStartScriptPath();
+        StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
+        File startScriptFile = getStartScriptPath(startScriptConfig);
         validateScriptFile(startScriptFile, ApplicationServerPluginConfigurationProperties.START_SCRIPT_CONFIG_PROP);
 
         // The optional command prefix (e.g. sudo or nohup).
@@ -170,23 +175,16 @@ public class ApplicationServerOperationsDelegate {
             null);
 
         ProcessExecution processExecution;
+
         if (prefix == null || prefix.replaceAll("\\s", "").equals("")) {
             // Prefix is either null or contains ONLY whitespace characters.
-
             processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
 
-            processExecution.getArguments().add("-c");
-            processExecution.getArguments().add(configName);
+            addProcessExecutionArguments(processExecution, startScriptFile, startScriptConfig, false);
 
-            if (bindAddress != null) {
-                processExecution.getArguments().add("-b");
-                processExecution.getArguments().add(bindAddress);
-            }
         } else {
-            // The process execution should be tied to the process represented
-            // as the prefix. If there are any other
-            // tokens in the prefix, consider them arguments to the prefix
-            // process.
+            // The process execution should be tied to the process represented as the prefix. If there are any other
+            // tokens in the prefix, consider them arguments to the prefix process.
             StringTokenizer prefixTokenizer = new StringTokenizer(prefix);
             String processName = prefixTokenizer.nextToken();
             File prefixProcess = new File(processName);
@@ -198,15 +196,23 @@ public class ApplicationServerOperationsDelegate {
                 processExecution.getArguments().add(prefixArgument);
             }
 
-            // Add the AS start script and its options as a single argument to the prefix command.
-            String startScriptArgument = startScriptFile.getAbsolutePath();
-            startScriptArgument += " -c " + configName;
-            if (bindAddress != null) {
-                startScriptArgument += " -b " + bindAddress;
-            }
-            processExecution.getArguments().add(startScriptArgument);
+            addProcessExecutionArguments(processExecution, startScriptFile, startScriptConfig, false);
         }
 
+        // processExecution is initialized to the current process' env.  This isn't really right, it's the
+        // rhq agent env.  Override this if the startScriptEnv propert has been set. 
+        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
+        if (!startScriptEnv.isEmpty()) {
+            for (String envVarName : startScriptEnv.keySet()) {
+                String envVarValue = startScriptEnv.get(envVarName);
+                // TODO: If we migrate the AS7 util to a general util then hook it up            
+                // envVarValue = replacePropertyPatterns(envVarValue);
+                startScriptEnv.put(envVarName, envVarValue);
+            }
+            processExecution.setEnvironmentVariables(startScriptEnv);
+        }
+
+        // perform any init common for start and shutdown scripts
         initProcessExecution(processExecution, startScriptFile);
 
         long start = System.currentTimeMillis();
@@ -220,8 +226,9 @@ public class ApplicationServerOperationsDelegate {
         if (results.getError() == null) {
             avail = waitForServerToStart(start);
         } else {
-            log.error("Error from process execution while starting the AS instance. Exit code ["
-                + results.getExitCode() + "]", results.getError());
+            log.error(
+                "Error from process execution while starting the AS instance. Exit code [" + results.getExitCode()
+                    + "]", results.getError());
             avail = this.serverComponent.getAvailability();
         }
 
@@ -236,6 +243,43 @@ public class ApplicationServerOperationsDelegate {
         return result;
     }
 
+    private void addProcessExecutionArguments(ProcessExecution processExecution, File startScriptFile,
+        StartScriptConfiguration startScriptConfig, boolean asSingleArg) {
+
+        List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
+        // If the scriptArgs property is unset fall back to using just the other props we have
+        if (startScriptArgs.isEmpty()) {
+            startScriptArgs.add("-c");
+            startScriptArgs.add(getConfigurationSet());
+
+            String bindAddress = startScriptConfig.getPluginConfig().getSimpleValue(
+                ApplicationServerPluginConfigurationProperties.BIND_ADDRESS, null);
+            if (bindAddress != null) {
+                startScriptArgs.add("-b");
+                startScriptArgs.add(bindAddress);
+            }
+        }
+
+        if (asSingleArg) {
+            // typically, the sudo case
+            StringBuilder sb = new StringBuilder(startScriptFile.getAbsolutePath());
+            for (String startScriptArg : startScriptArgs) {
+                sb.append(" ");
+                // TODO: If we migrate the AS7 util to a general util then hook it up
+                //startScriptArg = replacePropertyPatterns(startScriptArg);
+                sb.append(startScriptArg);
+            }
+            processExecution.getArguments().add(sb.toString());
+
+        } else {
+            for (String startScriptArg : startScriptArgs) {
+                // TODO: If we migrate the AS7 util to a general util then hook it up                
+                //startScriptArg = replacePropertyPatterns(startScriptArg);
+                processExecution.getArguments().add(startScriptArg);
+            }
+        }
+    }
+
     private String getConfigurationSet() {
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
         configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig,
@@ -244,8 +288,8 @@ public class ApplicationServerOperationsDelegate {
         if (!configPath.exists()) {
             throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
         }
-        return pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.SERVER_NAME, configPath
-            .getName());
+        return pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.SERVER_NAME,
+            configPath.getName());
     }
 
     private void initProcessExecution(ProcessExecution processExecution, File scriptFile) {
@@ -254,7 +298,8 @@ public class ApplicationServerOperationsDelegate {
         // (e.g. ${JBOSS_HOME}/bin) for the script to work.
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
-        // Both scripts require the JAVA_HOME env var to be set.
+        // Both scripts require the JAVA_HOME env var to be set. Set it to the plugin config in case it's
+        // a different version than that of the agent's env.
         File javaHomeDir = getJavaHomePath();
         if (javaHomeDir == null) {
             throw new IllegalStateException(
@@ -508,11 +553,12 @@ public class ApplicationServerOperationsDelegate {
      *         "C:\opt\jboss-5.1.0.GA\bin\run.sh")
      */
     @NotNull
-    public File getStartScriptPath() {
-        Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
-        String startScript = pluginConfig.getSimpleValue(
-            ApplicationServerPluginConfigurationProperties.START_SCRIPT_CONFIG_PROP, DEFAULT_START_SCRIPT);
-        File startScriptFile = resolvePathRelativeToHomeDir(startScript);
+    public File getStartScriptPath(StartScriptConfiguration startScriptConfig) {
+        File startScriptFile = startScriptConfig.getStartScript();
+        if (null == startScriptFile) {
+            startScriptFile = resolvePathRelativeToHomeDir(DEFAULT_START_SCRIPT);
+        }
+
         return startScriptFile;
     }
 
@@ -603,3 +649,4 @@ public class ApplicationServerOperationsDelegate {
         }
     }
 }
+

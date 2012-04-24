@@ -73,6 +73,7 @@ public class ProcessInfo {
     protected ProcCred procCred;
     protected ProcCredName procCredName;
     protected Map<String, String> procEnv;
+    protected transient ProcessInfo parentProcess;
 
     private boolean loggedPermissionsError = false;
     private static final String UNKNOWN = "?";
@@ -403,6 +404,18 @@ public class ProcessInfo {
     public AggregateProcessInfo getAggregateProcessTree() {
         AggregateProcessInfo root = new AggregateProcessInfo(this.pid);
         return root;
+    }
+
+    /**
+     * Returns the parent process of this process.
+     */
+    public ProcessInfo getParentProcess() throws SystemInfoException {
+        if (this.parentProcess == null) {
+            this.parentProcess = new ProcessInfo(getParentPid(), sigar);
+        } else {
+            this.parentProcess.refresh();
+        }
+        return this.parentProcess;
     }
 
     /**

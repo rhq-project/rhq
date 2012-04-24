@@ -23,11 +23,9 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,12 +39,16 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -64,7 +66,17 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
+
     final Log log = LogFactory.getLog(BaseServerComponent.class);
+
+    private StartScriptConfiguration startScriptConfig;
+
+    @Override
+    public void start(ResourceContext<T> tResourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(tResourceContext);
+
+        this.startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+    }
 
     /**
      * Restart the server by first executing a 'shutdown' operation via its API, and then calling
@@ -140,17 +152,19 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             processExecution.setArguments(arguments);
         }
 
-        // 'startScriptArgs' is a longString with the args delimited by newlines.
-        String startScriptArgs = pluginConfiguration.getSimpleValue("startScriptArgs", "");
-        if (!startScriptArgs.isEmpty()) {
-            for (String arg : startScriptArgs.split("\n+")) {
-                arg = arg.trim();
-                replacePropertyPatterns(arg);
-                arguments.add(arg);
-            }
+        List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
+        for (String startScriptArg : startScriptArgs) {
+            startScriptArg = replacePropertyPatterns(startScriptArg);
+            arguments.add(startScriptArg);
         }
 
-        setEnvironmentVariables(processExecution);
+        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
+        for (String envVarName : startScriptEnv.keySet()) {
+            String envVarValue = startScriptEnv.get(envVarName);
+            envVarValue = replacePropertyPatterns(envVarValue);
+            startScriptEnv.put(envVarName, envVarValue);
+        }
+        processExecution.setEnvironmentVariables(startScriptEnv);
 
         String homeDir = getHomeDir();
         processExecution.setWorkingDirectory(homeDir);
@@ -161,7 +175,8 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
-        ProcessExecutionResults results = context.getSystemInformation().executeProcess(processExecution);
+        SystemInfo systemInfo = context.getSystemInformation();
+        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
@@ -179,7 +194,6 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 //        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
-
     }
 
     private void setErrorMessage(OperationResult operationResult, List<String> errors) {
@@ -214,8 +228,8 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             }
         }
 
-        String envVars = pluginConfiguration.getSimpleValue("startScriptEnv", "");
-        if (envVars.isEmpty()) {
+        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
+        if (startScriptEnv.isEmpty()) {
             errors.add("No start script environment variables are set. At a minimum, PATH should be set "
                      + "(on UNIX, it should contain at least /bin and /usr/bin). It is recommended that "
                      + "JAVA_HOME also be set, otherwise the PATH will be used to find java.");
@@ -225,11 +239,13 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
     }
 
     private File getStartScriptFile(AS7Mode mode) {
-        String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
-        File startScriptFile = new File(startScript);
+        File startScriptFile = startScriptConfig.getStartScript();
+        if (startScriptFile == null) {
+            startScriptFile = new File(mode.getStartScript());
+        }
         if (!startScriptFile.isAbsolute()) {
             String homeDir = getHomeDir();
-            startScriptFile = new File(homeDir, startScript);
+            startScriptFile = new File(homeDir, startScriptFile.getPath());
         }
         return startScriptFile;
     }
@@ -242,7 +258,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         boolean up = false;
         int count = 0;
         while (!up) {
-            Operation op = new ReadAttribute(new Address(),"release-version");
+            Operation op = new ReadAttribute(new Address(), "release-version");
             Result res = getASConnection().execute(op);
             if (res.isSuccess()) { // If op succeeds, server is not down
                 up = true;
@@ -466,44 +482,15 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         super.getValues(report, leftovers);
     }
 
-    private void setEnvironmentVariables(ProcessExecution processExecution) {
-        Configuration pluginConfig = context.getPluginConfiguration();
-
-        // 'startScriptEnv' is a longString with "name=value" strings delimited by newlines.
-        String envVars = pluginConfig.getSimpleValue("startScriptEnv", null);
-
-        Map<String, String> processExecutionEnvironmentVariables = createEnvironmentVariableMap(envVars);
-        processExecution.setEnvironmentVariables(processExecutionEnvironmentVariables);
-    }
-
-    private Map<String, String> createEnvironmentVariableMap(String envVarsString) {
-        StringTokenizer tokenizer = new StringTokenizer(envVarsString, "\n");
-        Map<String, String> envVars = new LinkedHashMap<String, String>(tokenizer.countTokens());
-        while (tokenizer.hasMoreTokens()) {
-            String var = tokenizer.nextToken().trim();
-            int equalsIndex = var.indexOf('=');
-            if (equalsIndex == -1) {
-                throw new IllegalStateException("Malformed environment entry: " + var);
-            }
-
-            String varName = var.substring(0, equalsIndex);
-            String varValue = var.substring(equalsIndex + 1);
-            varValue = replacePropertyPatterns(varValue);
-            envVars.put(varName, varValue);
-        }
-
-        return envVars;
-    }
-
     // Replace any "%xxx%" substrings with the values of plugin config props "xxx".
     private String replacePropertyPatterns(String value) {
         Pattern pattern = Pattern.compile("(%([^%]*)%)");
         Matcher matcher = pattern.matcher(value);
-        Configuration parentPluginConfig = context.getPluginConfiguration();
+        Configuration pluginConfig = context.getPluginConfiguration();
         StringBuffer buffer = new StringBuffer();
         while (matcher.find()) {
             String propName = matcher.group(2);
-            PropertySimple prop = parentPluginConfig.getSimple(propName);
+            PropertySimple prop = pluginConfig.getSimple(propName);
             String propValue = ((prop != null) && (prop.getStringValue() != null)) ? prop.getStringValue() : "";
             String propPattern = matcher.group(1);
             String replacement = (prop != null) ? propValue : propPattern;

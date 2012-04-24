@@ -23,8 +23,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Properties;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Stack;
 
 /**
@@ -324,6 +324,11 @@ public class ComparableVersion
 
     public final void parseVersion( String version )
     {
+        // a complete hack to fix BZ 813967
+        if (version.equals("4.2.0.JON.3.0.1.GA")) {
+            version = "4.2.0.JON301GA";
+        }
+
         this.value = version;
 
         items = new ListItem();

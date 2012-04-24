@@ -18,11 +18,17 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -34,8 +40,10 @@ import org.rhq.test.arquillian.RunDiscovery;
 @Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
-    public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home") + "/domain");
+    public static final ResourceType RESOURCE_TYPE =
+            new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
+    // The key is the server's base dir.
+    public static final String RESOURCE_KEY = new File(JBOSS_HOME, "domain").getPath();
 
     @Override
     protected ResourceType getServerResourceType() {
@@ -71,10 +79,48 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     // ******************************* OPERATIONS ******************************* //
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(priority = 1003, enabled = false)
+    @Test(priority = 1003, enabled = true)
     public void testDomainServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
+    }
+
+    protected String getExpectedStartScriptFileName() {
+        return (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
+    }
+
+    @AfterSuite
+    public void killServerProcesses() {
+        super.killServerProcesses();
+    }
+
+    @Override
+    protected int getPortOffset() {
+        return 50000;
+    }
+
+    @Override
+    protected List<String> getExpectedStartScriptArgs() {
+        String [] args = new String[] {
+            "-Djboss.bind.address.management=127.0.0.1",
+            "-Djboss.bind.address=127.0.0.1",
+            "-Djboss.bind.address.unsecure=127.0.0.1",
+            "-Djboss.socket.binding.port-offset=50000",
+            "-Djboss.management.native.port=59999",
+            "-Djboss.management.http.port=59990",
+            "-Djboss.management.https.port=59943"
+        };
+        return Arrays.asList(args);
+    }
+
+    @Override
+    protected void validateStartScriptEnv(Map<String, String> env) {
+        super.validateStartScriptEnv(env);
+
+        // Only domain sets JBOSS_HOME, when not started via start script.
+        String jbossHome = env.get("JBOSS_HOME");
+        if (jbossHome != null) {
+            Assert.assertTrue(new File(jbossHome).isDirectory());
+        }
     }
 
 }

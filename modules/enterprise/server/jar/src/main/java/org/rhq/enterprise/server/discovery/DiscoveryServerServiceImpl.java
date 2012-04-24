@@ -93,7 +93,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
         long elapsed = (System.currentTimeMillis() - start);
         if (elapsed > 30000L) {
-            log.info("Performance: inventory merge (" + elapsed + ")ms");
+            log.warn("Performance: inventory merge (" + elapsed + ")ms");
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Performance: inventory merge (" + elapsed + ")ms");
@@ -114,14 +114,13 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             long start = System.currentTimeMillis();
             AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
             boolean ok = availabilityManager.mergeAvailabilityReport(availabilityReport);
-            long elapsed = (System.currentTimeMillis() - start);
 
-            // log at INFO level if we are going to ask for a full report, its a full report or it took a long time, DEBUG otherwise
-            if (!ok || !availabilityReport.isChangesOnlyReport() || (elapsed > 20000L)) {
-                log.info("Processed " + reportToString + " - need full=[" + !ok + "] in (" + elapsed + ")ms");
+            long elapsed = (System.currentTimeMillis() - start);
+            if (elapsed > 20000L) {
+                log.warn("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Processed " + reportToString + " - need full=[" + !ok + "] in (" + elapsed + ")ms");
+                    log.debug("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
                 }
             }
 

@@ -20,7 +20,8 @@ public class XmlFileReadingTest {
     public void hostPort70() throws Exception {
         URL url = getClass().getClassLoader().getResource("standalone70.xml");
         HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
-        HostPort hp = hostConfig.getManagementHostPort(new AS7CommandLine(new String [] {"java"}), AS7Mode.STANDALONE);
+        HostPort hp = hostConfig.getManagementHostPort(
+                new AS7CommandLine(new String [] {"java", "foo.Main", "org.jboss.as.standalone"}), AS7Mode.STANDALONE);
         System.out.println(hp);
         assert hp.host.equals("127.0.0.70") : "Host is " + hp.host;
         assert hp.port==19990 : "Port is " + hp.port;
@@ -29,7 +30,8 @@ public class XmlFileReadingTest {
     public void hostPort71() throws Exception {
         URL url = getClass().getClassLoader().getResource("standalone71.xml");
         HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
-        HostPort hp = hostConfig.getManagementHostPort(new AS7CommandLine(new String[] {"java"}), AS7Mode.STANDALONE);
+        HostPort hp = hostConfig.getManagementHostPort(
+                new AS7CommandLine(new String[] {"java", "foo.Main", "org.jboss.as.standalone"}), AS7Mode.STANDALONE);
         System.out.println(hp);
         // hp : HostPort{host='localhost', port=9990, isLocal=true}
         assert hp.host.equals("127.0.0.71") : "Host is " + hp.host;

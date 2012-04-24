@@ -21,6 +21,7 @@ package org.rhq.plugins.www.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
@@ -53,10 +54,11 @@ public class WWWUtils {
     }
 
     /**
-     * Sends a HEAD request for the passed URL and returns true if the URL was reachable.
+     * Sends a HEAD request to the passed URL and returns true if the URL was reachable.
      *
      * @param httpURL a http or https URL to check
      * @param timeout timeout, in milliseconds
+     *
      * @return true if connecting to the URL succeeds, or false otherwise
      */
     public static boolean isAvailable(URL httpURL, int timeout) {
@@ -90,7 +92,7 @@ public class WWWUtils {
         }
 
         connection.setConnectTimeout(timeout);
-        // Hold off on setting the read timeout.
+        // Hold off on setting the read timeout until after we connect.
 
         if (connection instanceof HttpsURLConnection) {
             disableCertificateVerification((HttpsURLConnection) connection);
@@ -98,28 +100,31 @@ public class WWWUtils {
 
         // First just connect to the HTTP server.
         long connectStartTime = System.currentTimeMillis();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Connecting to [" + httpURL + "]...");
-        }
+        LOG.debug("Connecting to [" + httpURL + "]...");
         try {
             connection.connect();
         } catch (IOException e) {
-            if (e instanceof SocketTimeoutException) {
+            if (e instanceof ConnectException) {
+                // This most likely just means the server is down.
+                LOG.debug("Failed to connect to [" + httpURL + "].");
+            } else if (e instanceof SocketTimeoutException) {
+                // This probably means the server is up but not properly accepting connection requests.
                 long connectDuration = System.currentTimeMillis() - connectStartTime;
                 LOG.debug("Attempt to connect to [" + httpURL + "] timed out after " + connectDuration
                         + " milliseconds.");
             } else {
-                LOG.error("An error occurred while attempting to connect to [" + httpURL + "].", e);
+                // Log all other IOExceptions as warnings, since they may likely provide useful details to users.
+                logWarnWithStackTraceOnlyIfDebugEnabled("An error occurred while attempting to connect to [" + httpURL
+                        + "].", e);
             }
             return false;
         }
         int connectDuration = (int) (System.currentTimeMillis() - connectStartTime);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Connected to [" + httpURL + "] in " + connectDuration + " milliseconds.");
-        }
+        LOG.debug("Connected to [" + httpURL + "] in " + connectDuration + " milliseconds.");
 
         if ((timeout > 0) && (connectDuration >= timeout)) {
             LOG.debug("Attempt to ping [" + httpURL + "] timed out after " + connectDuration + " milliseconds.");
+            return false;
         }
 
         try {
@@ -132,16 +137,15 @@ public class WWWUtils {
 
             // Now actually send the request and read the response.
             long readStartTime = System.currentTimeMillis();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Sending " + connection.getRequestMethod() + " request to [" + httpURL + "]...");
-            }
+            LOG.debug("Sending " + connection.getRequestMethod() + " request to [" + httpURL + "]...");
             try {
+                // Calling getResponseCode() will cause the request to be sent.
                 int responseCode = connection.getResponseCode();
                 if (responseCode == -1) {
-                    LOG.error("Ping request to [" + httpURL + "] returned an invalid response: "
+                    LOG.warn("Ping request to [" + httpURL + "] returned an invalid response: "
                             + getResponseBody(connection));
                 } else if (responseCode >= 500) {
-                    LOG.error("Ping request to [" + httpURL + "] returned a response with server error " + responseCode
+                    LOG.warn("Ping request to [" + httpURL + "] returned a response with server error " + responseCode
                             + " (" + connection.getResponseMessage() + "): " + getResponseBody(connection));
                 } else if (responseCode >= 400) {
                     LOG.warn("Ping request to [" + httpURL + "] returned a response with client error " + responseCode
@@ -154,19 +158,17 @@ public class WWWUtils {
                             + " request to [" + httpURL + "] timed out after " + readDuration
                             + " milliseconds.");
                 } else {
-                    LOG.error("An error occurred while attempting to read response from " + connection.getRequestMethod()
-                            + " to [" + httpURL + "].", e);
+                    logWarnWithStackTraceOnlyIfDebugEnabled("An error occurred while attempting to read response from "
+                            + connection.getRequestMethod() + " to [" + httpURL + "].", e);
                 }
                 return false;
             }
             long readDuration = System.currentTimeMillis() - readStartTime;
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Read response from " + connection.getRequestMethod() + " request to [" + httpURL
-                        + "] in " + readDuration + " milliseconds.");
-            }
+            LOG.debug("Read response from " + connection.getRequestMethod() + " request to [" + httpURL
+                    + "] in " + readDuration + " milliseconds.");
         } finally {
-            // We don't care about keeping the connection around. We're only going to be pinging the server once every
-            // few minutes.
+            // We don't care about keeping the connection around. We're only going to be pinging each server once every
+            // minute.
             connection.disconnect();
         }
 
@@ -177,6 +179,7 @@ public class WWWUtils {
      * Get the content of the 'Server' header.
      *
      * @param httpURL a http or https URL to get the header from
+     *
      * @return the contents of the header or null if anything went wrong or the field was not present.
      */
     public static String getServerHeader(URL httpURL) {
@@ -189,7 +192,7 @@ public class WWWUtils {
             connection.setReadTimeout(1000);
 
             connection.connect();
-            // get the response code to actually trigger sending the Request.
+            // Get the response code to actually trigger sending the request.
             connection.getResponseCode();
             ret = connection.getHeaderField("Server");
         } catch (IOException e) {
@@ -218,7 +221,7 @@ public class WWWUtils {
     private static HostnameVerifier NO_OP_HOSTNAME_VERIFIER = new HostnameVerifier() {
         @Override
         public boolean verify(String s, SSLSession sslSession) {
-            return true;
+        return true;
         }
     };
 
@@ -230,12 +233,16 @@ public class WWWUtils {
             connection.setSSLSocketFactory(sslContext.getSocketFactory());
             connection.setHostnameVerifier(NO_OP_HOSTNAME_VERIFIER);
         } catch (Exception e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to disable certificate and hostname validation.", e);
-            } else {
-                LOG.warn("Failed to disable certificate and hostname validation (enable DEBUG logging to see stack trace): "
-                        + e);
-            }
+            logWarnWithStackTraceOnlyIfDebugEnabled("Failed to disable certificate and hostname validation on URLConnection for ["
+                    + connection.getURL() + "].", e);
+        }
+    }
+
+    private static void logWarnWithStackTraceOnlyIfDebugEnabled(String message, Exception e) {
+        if (LOG.isDebugEnabled()) {
+            LOG.warn(message, e);
+        } else {
+            LOG.warn(message + " (enable DEBUG logging to see stack trace): " + e);
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,11 +54,12 @@ import org.rhq.helpers.rtfilter.util.ServletUtility;
  * @author Ian Springer
  */
 public class RtFilter implements Filter {
-    private static final String JAVA_IO_TMPDIR_SYSPROP = "java.io.tmpdir";
-    private static final String JBOSSAS_SERVER_HOME_DIR_SYSPROP = "jboss.server.home.dir";
-    private static final String TOMCAT_SERVER_HOME_DIR_SYSPROP = "catalina.home";
 
-    private static final String JBOSSAS_SERVER_LOG_SUBDIR = "log";
+    private static final String JAVA_IO_TMPDIR_SYSPROP = "java.io.tmpdir";
+    private static final String JBOSS_HOME_DIR_SYSPROP = "jboss.home.dir";
+    private static final String JBOSS_SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
+    private static final String JBOSS_DOMAIN_LOG_DIR_SYSPROP = "jboss.domain.log.dir";
+    private static final String CATALINA_HOME_SYSPROP = "catalina.home";
     private static final String TOMCAT_SERVER_LOG_SUBDIR = "logs";
 
     private static final String DEFAULT_LOG_FILE_PREFIX = "";
@@ -187,7 +188,7 @@ public class RtFilter implements Filter {
             found = true;
         }
 
-        // try to see if the user provided a mapping for this server name
+        // see if the user provided a mapping for this server name
         if (!found && vhostMappings.containsKey(serverName)) {
             found = true;
             vhost = vhostMappings.getProperty(serverName);
@@ -199,7 +200,7 @@ public class RtFilter implements Filter {
                 log.debug("Vhost determined from mapping >" + vhost + "<");
         }
 
-        // check server name against hostname and hostname.fqdn an see if they match
+        // check server name against hostname and hostname.fqdn and see if they match
         if (!found && vhostMappings.containsKey(HOST_TOKEN)) {
             vhost = vhostMappings.getProperty(HOST_TOKEN);
             if (myHostName.startsWith(serverName) || myCHostName.startsWith(serverName)) {
@@ -359,26 +360,34 @@ public class RtFilter implements Filter {
              * If, for some reason, neither property is set, fall back to "${java.io.tmpdir}/rhq/rt".
              */
             File serverLogDir = null;
-            String serverHomeDirPath = System.getProperty(JBOSSAS_SERVER_HOME_DIR_SYSPROP);
 
-            if (null != serverHomeDirPath) {
-                serverLogDir = new File(serverHomeDirPath, JBOSSAS_SERVER_LOG_SUBDIR);
+            String jbossHomeDir = System.getProperty(JBOSS_HOME_DIR_SYSPROP);
+            if (jbossHomeDir != null) {
+                // JBoss AS
+                log.debug(JBOSS_HOME_DIR_SYSPROP + " sysprop is set - assuming we are running inside JBoss AS.");
+                String serverLogDirString = System.getProperty(JBOSS_SERVER_LOG_DIR_SYSPROP);
+                if (serverLogDirString == null) {
+                    serverLogDirString = System.getProperty(JBOSS_DOMAIN_LOG_DIR_SYSPROP);
+                }
+                if (serverLogDirString != null) {
+                    serverLogDir = new File(serverLogDirString);
+                }
             } else {
-                serverHomeDirPath = System.getProperty(TOMCAT_SERVER_HOME_DIR_SYSPROP);
-                if (serverHomeDirPath != null) {
-                    serverLogDir = new File(serverHomeDirPath, TOMCAT_SERVER_LOG_SUBDIR);
+                String catalinaHome = System.getProperty(CATALINA_HOME_SYSPROP);
+                if (catalinaHome != null) {
+                    // Tomcat
+                    log.debug(CATALINA_HOME_SYSPROP + " sysprop is set - assuming we are running inside Tomcat.");
+                    serverLogDir = new File(catalinaHome, TOMCAT_SERVER_LOG_SUBDIR);
                 }
             }
 
-            if (null != serverLogDir) {
+            if (serverLogDir != null) {
                 this.logDirectory = new File(serverLogDir, "rt");
             } else {
                 this.logDirectory = new File(System.getProperty(JAVA_IO_TMPDIR_SYSPROP), "rhq/rt");
                 log
                     .warn("The 'logDirectory' filter init param was not set. Also, the standard system properties were not set ("
-                        + JBOSSAS_SERVER_HOME_DIR_SYSPROP
-                        + ", "
-                        + TOMCAT_SERVER_HOME_DIR_SYSPROP
+                        + JBOSS_SERVER_LOG_DIR_SYSPROP + ", " + JBOSS_DOMAIN_LOG_DIR_SYSPROP + ", " + CATALINA_HOME_SYSPROP
                         + "); defaulting RT log directory to '" + this.logDirectory + "'.");
             }
         }
@@ -585,4 +594,5 @@ public class RtFilter implements Filter {
         public static final String MAX_LOG_FILE_SIZE = "maxLogFileSize";
         public static final String VHOST_MAPPING_FILE = "vHostMappingFile";
     }
+
 }

@@ -1,7 +1,5 @@
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.Map;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;

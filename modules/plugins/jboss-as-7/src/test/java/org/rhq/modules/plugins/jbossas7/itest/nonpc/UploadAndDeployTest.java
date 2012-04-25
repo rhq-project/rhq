@@ -38,6 +38,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.BaseComponent;
+import org.rhq.modules.plugins.jbossas7.BaseServerComponent;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -342,7 +343,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         rt.setName("Deployment");
         Resource resource = new Resource("deployment="+TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
         resource.setUuid(UUID.randomUUID().toString());
-        BaseComponent parentComponent = new BaseComponent();
+        BaseServerComponent parentComponent = new BaseServerComponent();
         parentComponent.setConnection(getASConnection());
         ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
@@ -376,7 +377,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         rt.setName("Deployment");
         Resource resource = new Resource("server-group=main-server-group",TEST_WAR_FILE_NAME,rt);
         resource.setUuid(UUID.randomUUID().toString());
-        BaseComponent parentComponent = new BaseComponent();
+        BaseServerComponent parentComponent = new BaseServerComponent();
         parentComponent.setConnection(getASConnection());
         ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);

@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -51,6 +52,7 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -69,13 +71,41 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
     final Log log = LogFactory.getLog(BaseServerComponent.class);
 
+    private ASConnection connection;
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
+    private ServerPluginConfiguration serverPluginConfig;
 
     @Override
-    public void start(ResourceContext<T> tResourceContext) throws InvalidPluginConfigurationException, Exception {
-        super.start(tResourceContext);
+    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(resourceContext);
 
-        this.startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+        serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
+        connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
+                serverPluginConfig.getUser(), serverPluginConfig.getPassword());
+        logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
+        logFileEventDelegate.startLogFileEventPollers();
+        startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+    }
+
+    @Override
+    public void stop() {
+        logFileEventDelegate.stopLogFileEventPollers();
+    }
+
+    public ServerPluginConfiguration getServerPluginConfiguration() {
+        return serverPluginConfig;
+    }
+
+    @Override
+    public ASConnection getASConnection() {
+        return connection;
+    }
+
+    // TODO: Refactor this - we should be able to mock the ResourceContext passed to start() instead.
+    @Override
+    public void setConnection(ASConnection connection) {
+        this.connection = connection;
     }
 
     /**
@@ -349,28 +379,30 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             return result;
         }
 
-        String baseDirString = pluginConfig.getSimpleValue("baseDir", "");
-        if (baseDirString.isEmpty()) {
-            result.setErrorMessage("No baseDir found - cannot continue.");
+        File baseDir = serverPluginConfig.getBaseDir();
+        if (baseDir == null) {
+            result.setErrorMessage("'baseDir' plugin config prop is not set.");
             return result;
         }
-        File baseDir = new File(baseDirString);
+
+        File configDir = serverPluginConfig.getConfigDir();
+        if (configDir == null) {
+            result.setErrorMessage("'configDir' plugin config prop is not set.");
+            return result;
+        }
 
         String configFileName;
-        BaseProcessDiscovery processDiscovery;
-        String configDir = pluginConfig.getSimpleValue("configDir",null);
         switch (mode) {
             case STANDALONE:
                 configFileName = pluginConfig.getSimpleValue("config", null);
-                processDiscovery = new StandaloneASDiscovery();
                 break;
             case HOST:
                 configFileName = pluginConfig.getSimpleValue("hostConfig", null);
-                processDiscovery = new HostControllerDiscovery();
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported mode: " + mode);
         }
+
         File configFile = new File(configDir, configFileName);
         HostConfiguration hostConfig;
         try {

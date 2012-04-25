@@ -53,7 +53,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
@@ -63,6 +62,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -78,37 +78,21 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     private static final String INTERNAL = "_internal:";
     private static final int INTERNAL_SIZE = INTERNAL.length();
-    private static final String LOCALHOST = "localhost";
-    private static final String DEFAULT_HTTP_MANAGEMENT_PORT = "9990";
     public static final String MANAGED_SERVER = "Managed Server";
+
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext<T> context;
     Configuration pluginConfiguration;
     String myServerName;
-    ASConnection connection;
+
     String path;
     Address address;
     String key;
-    String host;
-    int port;
+
     private boolean verbose = ASConnection.verbose;
-    String managementUser;
-    String managementPassword;
-
-    private LogFileEventResourceComponentHelper logFileEventDelegate;
-
-    /**
-     * Return availability of this resource
-     *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
-     */
-    public AvailabilityType getAvailability() {
-
-        ReadResource op = new ReadResource(address);
-        Result res = connection.execute(op);
-
-        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
-    }
+    private BaseServerComponent serverComponent;
+    protected ASConnection testConnection;
 
     /**
      * Start the resource connection
@@ -117,36 +101,38 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
         this.context = context;
         pluginConfiguration = context.getPluginConfiguration();
-
-        if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
-            host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
-            String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
-            port = Integer.parseInt(portString);
-            managementUser = pluginConfiguration.getSimpleValue("user", "-unset-");
-            managementPassword = pluginConfiguration.getSimpleValue("password", "-unset-");
-            connection = new ASConnection(host, port, managementUser, managementPassword);
-            logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
-            logFileEventDelegate.startLogFileEventPollers();
-        } else {
-            connection = ((BaseComponent) context.getParentResourceComponent()).getASConnection();
-        }
-
-        path = pluginConfiguration.getSimpleValue("path", null);
+        serverComponent = findServerComponent();
+        path = pluginConfiguration.getSimpleValue("path");
         address = new Address(path);
         key = context.getResourceKey();
-
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/") + 1);
+    }
 
+    @Override
+    public void stop() {
+        return;
     }
 
     /**
-     * Tear down the resource connection
-     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
+     * Return availability of this resource
+     *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
-    public void stop() {
-        if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
-            logFileEventDelegate.stopLogFileEventPollers();
+    public AvailabilityType getAvailability() {
+        ReadResource op = new ReadResource(address);
+        Result res = getASConnection().execute(op);
+        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+    }
+
+    private BaseServerComponent findServerComponent() {
+        BaseComponent<?> component = this;
+        while ((component != null) && !(component instanceof BaseServerComponent)) {
+            component = (BaseComponent<?>) component.context.getParentResourceComponent();
         }
+        return (BaseServerComponent)component;
+    }
+
+    public BaseServerComponent getServerComponent() {
+        return serverComponent;
     }
 
     /**
@@ -173,7 +159,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     op = new ReadAttribute(address, reqName); // TODO batching
                 }
 
-                Result res = connection.execute(op);
+                Result res = getASConnection().execute(op);
                 if (!res.isSuccess()) {
                     log.warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
                         + res.getFailureDescription());
@@ -258,7 +244,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     public ASConnection getASConnection() {
-        return connection;
+        return (this.testConnection != null) ? this.testConnection : getServerComponent().getASConnection();
     }
 
     public String getPath() {
@@ -268,14 +254,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public Configuration loadResourceConfiguration() throws Exception {
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, connection, address);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address);
         return delegate.loadResourceConfiguration();
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, connection, address);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
         delegate.updateResourceConfiguration(report);
     }
 
@@ -293,7 +279,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             }
         }
         Operation op = new Remove(address);
-        Result res = connection.execute(op);
+        Result res = getASConnection().execute(op);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
@@ -318,6 +304,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (report.getPackageDetails() != null) { // Content deployment
             return deployContent(report);
         } else {
+            ASConnection connection = getASConnection();
             ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
 
             // Check for the Highlander principle
@@ -358,21 +345,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     protected CreateResourceReport deployContent(CreateResourceReport report) {
         ContentContext cctx = context.getContentContext();
         ResourcePackageDetails details = report.getPackageDetails();
-        Configuration deploymentTimeConfiguration = report.getPackageDetails().getDeploymentTimeConfiguration();
-
-        // check if the user has provided a timeout and set it. Otherwise use the default
-        int timeout = 120; // 120s default
-        PropertySimple timeoutProp = deploymentTimeConfiguration.getSimple("userProvidedTimeoutMillis");
-        if (timeoutProp != null && timeoutProp.getStringValue() != null) {
-            int tmp = timeoutProp.getIntegerValue(); // value is in millis, we need seconds
-            timeout = tmp / 1000;
-        }
 
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection(host, port, managementUser, managementPassword);
-        uploadConnection.setTimeout(timeout); // seconds
+        ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
+        ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
+                serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
         OutputStream out = uploadConnection.getOutputStream(details.getFileName());
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
@@ -392,13 +371,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (fileName.startsWith("C:\\fakepath\\")) { // TODO this is a hack as the server adds the fake path somehow
             fileName = fileName.substring("C:\\fakepath\\".length());
         }
-        String runtimeName = fileName;
-        PropertySimple rtNameProp = report.getPackageDetails().getDeploymentTimeConfiguration()
-            .getSimple("runtimeName");
-        if (rtNameProp != null) {
-            String rtn = rtNameProp.getStringValue();
-            if (rtn != null && !rtn.isEmpty())
-                runtimeName = rtn;
+
+        String runtimeName = report.getPackageDetails().getDeploymentTimeConfiguration().getSimpleValue("runtimeName");
+        if (runtimeName == null || runtimeName.isEmpty()) {
+            runtimeName = fileName;
         }
 
         JsonNode resultNode = uploadResult.get("result");
@@ -588,7 +564,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         }
 
         OperationResult operationResult = new OperationResult();
-        Result result = connection.execute(operation);
+        Result result = getASConnection().execute(operation);
 
         if (result == null) {
             operationResult.setErrorMessage("Connection was null - is the server running?");
@@ -709,9 +685,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         }
     }
 
-    ///// Those two are used to 'inject' the connection and the path from tests.
+    ///// These two are used to 'inject' the connection and the path from tests.
+    // TODO: Refactor this - we should be able to mock the ResourceContext passed to start() instead.
     public void setConnection(ASConnection connection) {
-        this.connection = connection;
+        this.testConnection = connection;
     }
 
     public void setPath(String path) {

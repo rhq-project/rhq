@@ -37,7 +37,7 @@ public class ThreadPoolComponent extends BaseComponent<ResourceComponent<?>> {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //type is a fake property, do not attempt to load it from the managed server
         configDef.getPropertyDefinitions().remove("type");
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, connection, address);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address);
         Configuration configuration = delegate.loadResourceConfiguration();
 
         //manually load type based on the resource path
@@ -54,7 +54,7 @@ public class ThreadPoolComponent extends BaseComponent<ResourceComponent<?>> {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //type is a fake property, do not attempt to save it.
         configDef.getPropertyDefinitions().remove("type");
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, connection, address);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
 
         //type is a fake property, do not attempt to save it.
         report.getConfiguration().remove("type");

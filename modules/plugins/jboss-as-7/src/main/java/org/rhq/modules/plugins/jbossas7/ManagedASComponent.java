@@ -30,6 +30,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -39,11 +42,31 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Common stuff for the Domain
+ * A component for a "Managed Server" Resource.
+ *
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
 public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>> {
+
+    private static final String MANAGED_SERVER_TYPE_NAME = "Managed Server";
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
+
+    @Override
+    public void start(ResourceContext<HostControllerComponent<?>> hostControllerComponentResourceContext)
+            throws InvalidPluginConfigurationException, Exception {
+        super.start(hostControllerComponentResourceContext);
+
+        logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
+        logFileEventDelegate.startLogFileEventPollers();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+
+        logFileEventDelegate.stopLogFileEventPollers();
+    }
 
     /**
      * Get the availability of the managed AS server. We can't just check if
@@ -53,15 +76,15 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
      */
     @Override
     public AvailabilityType getAvailability() {
-        if (context.getResourceType().getName().equals("Managed Server")) {
+        if (context.getResourceType().getName().equals(MANAGED_SERVER_TYPE_NAME)) {
             Address theAddress = new Address();
             String host = pluginConfiguration.getSimpleValue("domainHost", "local");
-            theAddress.add("host",host);
+            theAddress.add("host", host);
             theAddress.add("server-config", myServerName);
             Operation getStatus = new ReadAttribute(theAddress, "status");
             Result result;
             try {
-                result = connection.execute(getStatus);
+                result = getASConnection().execute(getStatus);
             } catch (Exception e) {
                 log.warn(e.getMessage());
                 return AvailabilityType.DOWN;
@@ -157,7 +180,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         } catch (RuntimeException e) {
             throw new Exception("Failed to extract hostname from server path [" + serverPath + "].", e);
         }
-        configuration.put(new PropertySimple("hostname",serverPath));
+        configuration.put(new PropertySimple("hostname", serverPath));
 
         Operation op = new ReadResource(getAddress());
         ComplexResult res = getASConnection().executeComplex(op);
@@ -227,4 +250,5 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         return opRes;
 
     }
+
 }

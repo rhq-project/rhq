@@ -276,6 +276,7 @@
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
+      <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this host controller" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
@@ -532,8 +533,6 @@
             createDeletePolicy="both"
         >
       <plugin-configuration>
-        <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
-        <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
         <c:simple-property name="path" readOnly="true"/>
 
         &logSources;
@@ -695,6 +694,7 @@
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
+      <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
@@ -3081,7 +3081,7 @@
 
 
   <service name="Web Runtime"
-           class="BaseComponent"
+           class="WebRuntimeComponent"
            discovery="SubsystemDiscovery"
            description="Runtime resources exposed by web components in the deployment."
            singleton="true">
@@ -3093,10 +3093,22 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=web" readOnly="true"/>
+
+      <c:group name="responseTime">
+         <c:simple-property name="responseTimeLogFile" required="false"
+                            description="the full path to the log file containing response-time stats for this webapp"/>
+         <c:simple-property name="responseTimeUrlExcludes" required="false"
+                            description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+         <c:simple-property name="responseTimeUrlTransforms" required="false"
+                            description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+      </c:group>
     </plugin-configuration>
 
-    <metric property="virtual-host" dataType="trait" description="Virtual Host"/>
-    <metric property="context-root" dataType="trait" description="Context Root"/>
+    <metric property="virtual-host" dataType="trait" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
+    <metric property="context-root" dataType="trait" displayName="Context Root" description="the context root of this webapp"/>
+    <metric property="responseTime"
+            dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+            description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
 
   </service>
 

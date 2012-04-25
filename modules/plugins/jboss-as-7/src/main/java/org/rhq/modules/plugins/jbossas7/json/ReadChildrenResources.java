@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
  * Operation that reads children of a given type from an address
  * @author Heiko W. Rupp

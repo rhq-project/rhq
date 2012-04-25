@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
  * Reads data for one AS 7 resource
  * @author Heiko W. Rupp

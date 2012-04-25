@@ -40,7 +40,7 @@ public class ThreadsComponent extends BaseComponent<ResourceComponent<?>> {
             //2) Update path to the selected thread pool type.
             ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
             configDef.getPropertyDefinitions().remove("type");
-            CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
+            CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, getASConnection(), address);
 
             Configuration configuration = report.getResourceConfiguration();
             PropertySimple threadPoolType = (PropertySimple) configuration.get("type");

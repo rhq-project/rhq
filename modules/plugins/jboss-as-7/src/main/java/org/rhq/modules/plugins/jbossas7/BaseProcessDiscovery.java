@@ -57,6 +57,7 @@ import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -140,15 +141,16 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                                                              ProcessInfo process, AS7CommandLine commandLine)
             throws Exception {
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+        ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(pluginConfig);
 
         File homeDir = getHomeDir(process, commandLine);
-
-        pluginConfig.put(new PropertySimple("homeDir", homeDir));
+        serverPluginConfig.setHomeDir(homeDir);
 
         File baseDir = getBaseDir(process, commandLine, homeDir);
-        pluginConfig.put(new PropertySimple("baseDir", baseDir));
+        serverPluginConfig.setBaseDir(baseDir);
+
         File configDir = getConfigDir(process, commandLine, baseDir);
-        pluginConfig.put(new PropertySimple("configDir", configDir));
+        serverPluginConfig.setConfigDir(configDir);
 
         File hostXmlFile = getHostXmlFile(commandLine, configDir);
         if (!hostXmlFile.exists()) {
@@ -158,21 +160,23 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
 
         String domainHost = findHost(hostXmlFile);
-        pluginConfig.put(new PropertySimple("domainHost", domainHost));
+        pluginConfig.setSimpleValue("domainHost", domainHost);
 
-        File logFile = getLogFile(getLogDir(process, commandLine, baseDir));
+        File logDir = getLogDir(process, commandLine, baseDir);
+
+        File logFile = getLogFile(logDir);
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);
 
         HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
-        pluginConfig.put(new PropertySimple("hostname", managementHostPort.host));
-        pluginConfig.put(new PropertySimple("port", managementHostPort.port));
-        pluginConfig.put(new PropertySimple("realm", hostConfig.getManagementSecurityRealm()));
+        serverPluginConfig.setHostname(managementHostPort.host);
+        serverPluginConfig.setPort(managementHostPort.port);
+        pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
-        pluginConfig.put(new PropertySimple("productType", productType.name()));
-        pluginConfig.put(new PropertySimple("hostXmlFileName", getHostXmlFileName(commandLine)));
+        serverPluginConfig.setProductType(productType);
+        pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
         setStartScriptPluginConfigProps(process, commandLine, pluginConfig);
-        setUserAndPasswordPluginConfigProps(pluginConfig, hostConfig, baseDir);
+        setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig, baseDir);
 
         String key = baseDir.getPath();
         HostPort hostPort = hostConfig.getHostPort();
@@ -184,8 +188,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (productType == JBossProductType.AS) {
             version = versionFromHomeDir;
         } else {
-            ProductInfo productInfo = new ProductInfo(managementHostPort.host, pluginConfig.getSimpleValue("user", null),
-                pluginConfig.getSimpleValue("password", null), managementHostPort.port);
+            ProductInfo productInfo = new ProductInfo(managementHostPort.host, serverPluginConfig.getUser(),
+                serverPluginConfig.getPassword(), managementHostPort.port);
             productInfo = productInfo.getFromRemote();
             String productVersion = (productInfo.fromRemote) ? productInfo.productVersion : versionFromHomeDir;
             // TODO: Grab the product version from the product info properties file, so we aren't relying on connecting
@@ -251,7 +255,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         startScriptConfig.setStartScriptArgs(startScriptArgs);
     }
 
-    private void setUserAndPasswordPluginConfigProps(Configuration pluginConfig, HostConfiguration hostConfig,
+    private void setUserAndPasswordPluginConfigProps(ServerPluginConfiguration serverPluginConfig, HostConfiguration hostConfig,
                                                      File baseDir) {
         Properties mgmtUsers = getManagementUsers(hostConfig, getMode(), baseDir);
         String user;
@@ -280,8 +284,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             user = RHQADMIN;
             password = RHQADMIN;
         }
-        pluginConfig.put(new PropertySimple("user", user));
-        pluginConfig.put(new PropertySimple("password", password));
+        serverPluginConfig.setUser(user);
+        serverPluginConfig.setPassword(password);
     }
 
     protected File getBaseDir(ProcessInfo process, JavaCommandLine javaCommandLine, File homeDir) {

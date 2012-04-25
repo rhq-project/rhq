@@ -161,7 +161,7 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //default address is not right. Update it
         Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, connection,
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(),
             modClusterConfigAddress);
         Configuration config = delegate.loadResourceConfiguration();
 
@@ -174,7 +174,7 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //default address is not right. Update it
         Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, connection,
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(),
             modClusterConfigAddress);
         delegate.updateResourceConfiguration(report);
 

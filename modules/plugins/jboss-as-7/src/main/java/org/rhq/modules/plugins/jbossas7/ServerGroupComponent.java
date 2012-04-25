@@ -44,6 +44,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -97,7 +98,9 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
         for (ResourcePackageDetails details : packages) {
 
-            ASUploadConnection uploadConnection = new ASUploadConnection(host,port, super.managementUser, super.managementPassword);
+            ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
+            ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
+                    serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
             String fileName = details.getFileName();
             OutputStream out = uploadConnection.getOutputStream(fileName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
@@ -162,9 +165,8 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
 
-
         Operation op = new ReadChildrenNames(address,"deployment"); // TODO read full packages not only names
-        Result node = connection.execute(op);
+        Result node = getASConnection().execute(op);
         if (!node.isSuccess())
             return null;
 

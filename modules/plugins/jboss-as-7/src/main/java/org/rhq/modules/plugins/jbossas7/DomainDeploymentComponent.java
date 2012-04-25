@@ -1,7 +1,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -91,7 +90,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
     @SuppressWarnings("unchecked")
     private Collection<String> getServerGroups() {
         Operation op = new ReadChildrenNames(new Address(), "server-group");
-        Result res = connection.execute(op);
+        Result res = getASConnection().execute(op);
 
         return (Collection<String>) res.getResult();
     }

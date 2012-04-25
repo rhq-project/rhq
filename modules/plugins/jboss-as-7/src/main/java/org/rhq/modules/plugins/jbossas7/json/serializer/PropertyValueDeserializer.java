@@ -19,7 +19,6 @@
 package org.rhq.modules.plugins.jbossas7.json.serializer;
 
 import java.io.IOException;
-import java.lang.ref.PhantomReference;
 
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;

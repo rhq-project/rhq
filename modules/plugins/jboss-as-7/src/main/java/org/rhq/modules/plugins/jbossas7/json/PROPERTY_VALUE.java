@@ -20,8 +20,6 @@ package org.rhq.modules.plugins.jbossas7.json;
 
 import java.io.Serializable;
 
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonValue;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 

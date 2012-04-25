@@ -2166,14 +2166,7 @@
          </results>
        </operation>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2224,14 +2217,7 @@
           <c:simple-property name="path" readOnly="true" default="console-handler"/>
         </plugin-configuration>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2271,14 +2257,7 @@
           <c:simple-property name="path" readOnly="true" default="custom-handler"/>
         </plugin-configuration>
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2323,14 +2302,7 @@
 
        <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2405,14 +2377,7 @@
 
        <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>
@@ -2510,14 +2475,7 @@
 
        <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="change-log-level" description="Change the logging level for a handler.">
-         <parameters>
-           &logLevel;
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a handler." />
-         </results>
-       </operation>
+       <!-- no need for 'change-log-level' since resource-config handles this -->
 
        <operation name="disable" description="Disable a logging handler.">
          <results>

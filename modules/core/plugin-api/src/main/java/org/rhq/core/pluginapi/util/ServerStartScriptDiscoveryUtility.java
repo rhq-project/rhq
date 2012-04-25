@@ -45,11 +45,12 @@ public class ServerStartScriptDiscoveryUtility {
 
     // Generic OS-level env vars that should be in every process's environment.
     private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList(
-            "PATH",
-            "LD_LIBRARY_PATH"
+        "PATH",
+        "LD_LIBRARY_PATH"
     ));
     static {
         if (File.pathSeparatorChar == '\\') {
+            CORE_ENV_VAR_NAME_INCLUDES.add("OS"); // many batch files use this to figure out if the OS type is NT or 9x
             CORE_ENV_VAR_NAME_INCLUDES.add("SYSTEMROOT"); // required on Windows to avoid winsock create errors
         }
     }

@@ -76,21 +76,35 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     private static final String RHQADMIN = "rhqadmin";
     private static final String RHQADMIN_ENCRYPTED = "35c160c1f841a889d4cda53f0bfc94b6";
 
+    // The list of environment vars that the AS7 start script will use if they are set.
     private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new LinkedHashSet<String>();
     static {
         START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList( //
             "RUN_CONF", //
+            "STANDALONE_CONF", //
+            "DOMAIN_CONF", //
             "MAX_FD", //
             "PROFILER", //
             "JAVA_HOME", //
             "JAVA", //
             "JAVA_OPTS", //
             "PRESERVE_JAVA_OPTS", //
+            "PROCESS_CONTROLLER_JAVA_OPTS", //
+            "HOST_CONTROLLER_JAVA_OPTS", //
+            "JAVAC_JAR", //
             "JBOSS_HOME", //
+            "JBOSS_MODULES_SYSTEM_PKGS", //
+            "JBOSS_MODULEPATH", //
             "JBOSS_BASE_DIR", //
             "JBOSS_LOG_DIR", //
             "JBOSS_CONFIG_DIR" //
         ));
+
+        // If OS is Windows, add env vars that are only used by the batch files.
+        if (File.pathSeparatorChar == '\\') {
+            START_SCRIPT_ENV_VAR_NAMES.add("ECHO");
+            START_SCRIPT_ENV_VAR_NAMES.add("NOPAUSE");
+        }
     }
 
     // e.g.: -mp /opt/jboss-as-7.1.1.Final/modules

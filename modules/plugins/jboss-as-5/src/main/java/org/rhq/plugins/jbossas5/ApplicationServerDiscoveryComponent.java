@@ -144,6 +144,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "MAX_FD", //
             "PROFILER" //
         ));
+
+        // If OS is Windows, add env vars that are only used by the batch files.
+        if (File.pathSeparatorChar == '\\') {
+            START_SCRIPT_ENV_VAR_NAMES.add("ECHO");
+            START_SCRIPT_ENV_VAR_NAMES.add("NOPAUSE");
+        }
     }
 
     private final Log log = LogFactory.getLog(this.getClass());

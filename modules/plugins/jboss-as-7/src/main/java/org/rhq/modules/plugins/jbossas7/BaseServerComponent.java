@@ -196,8 +196,9 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
         processExecution.setEnvironmentVariables(startScriptEnv);
 
-        String homeDir = getHomeDir();
-        processExecution.setWorkingDirectory(homeDir);
+        // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
+        // standalone.bat.conf and domain.bat.conf respectively.
+        processExecution.setWorkingDirectory(startScriptFile.getParent());
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
@@ -274,14 +275,10 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
             startScriptFile = new File(mode.getStartScript());
         }
         if (!startScriptFile.isAbsolute()) {
-            String homeDir = getHomeDir();
+            File homeDir = serverPluginConfig.getHomeDir();
             startScriptFile = new File(homeDir, startScriptFile.getPath());
         }
         return startScriptFile;
-    }
-
-    private String getHomeDir() {
-        return pluginConfiguration.getSimpleValue("homeDir", null);
     }
 
     private boolean waitForServerToStart() {

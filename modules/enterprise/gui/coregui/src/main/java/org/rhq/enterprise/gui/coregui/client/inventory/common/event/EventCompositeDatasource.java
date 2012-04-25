@@ -100,10 +100,11 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         severityField.setShowHover(true);
         severityField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if (value == null) {
+                String sevEnumName = record.getAttribute("severity");
+                if (sevEnumName == null) {
                     return null;
                 }
-                EventSeverity severity = EventSeverity.valueOf((String) value);
+                EventSeverity severity = EventSeverity.valueOf(sevEnumName);
                 switch (severity) {
                 case DEBUG:
                     return MSG.common_severity_debug();

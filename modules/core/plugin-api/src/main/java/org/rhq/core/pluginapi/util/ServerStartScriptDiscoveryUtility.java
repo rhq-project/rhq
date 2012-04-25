@@ -24,6 +24,8 @@ package org.rhq.core.pluginapi.util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +36,24 @@ import org.hyperic.sigar.ProcExe;
 import org.rhq.core.system.ProcessInfo;
 
 /**
+ * A set of utility methods for initializing the three plugin configuration properties used by a plugin for starting the
+ * managed server - "startScript", "startScriptEnv", and "startScriptArgs". See also {@link StartScriptConfiguration}.
+ *
  * @author Ian Springer
  */
 public class ServerStartScriptDiscoveryUtility {
+
+    // Generic OS-level env vars that should be in every process's environment.
+    private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList(
+            "PATH",
+            "LD_LIBRARY_PATH"
+    ));
+    static {
+        if (File.pathSeparatorChar == '\\') {
+            CORE_ENV_VAR_NAME_INCLUDES.add("SYSTEMROOT"); // required on Windows to avoid winsock create errors
+        }
+    }
+
 
     private ServerStartScriptDiscoveryUtility() {
     }
@@ -131,14 +148,21 @@ public class ServerStartScriptDiscoveryUtility {
 
     public static Map<String, String> getStartScriptEnv(ProcessInfo serverProcess, ProcessInfo serverParentProcess,
         Set<String> envVarNameIncludes) {
-        Map<String, String> startScriptEnv = new LinkedHashMap<String, String>();
         Map<String, String> processEnvVars;
         if (getStartScript(serverParentProcess) != null) {
             processEnvVars = serverParentProcess.getEnvironmentVariables();
         } else {
             processEnvVars = serverProcess.getEnvironmentVariables();
         }
-        for (String envVarName : envVarNameIncludes) {
+
+        List<String> fullEnvVarNameIncludes = new ArrayList<String>(envVarNameIncludes);
+        // Add the core includes at the end of the list, since end users will probably be more interested in the
+        // app-specific env vars.
+        fullEnvVarNameIncludes.addAll(CORE_ENV_VAR_NAME_INCLUDES);
+
+        // Use a linked hashmap to maintain the order of the includes list.
+        Map<String, String> startScriptEnv = new LinkedHashMap<String, String>();
+        for (String envVarName : fullEnvVarNameIncludes) {
             String envVarValue = processEnvVars.get(envVarName);
             if (envVarValue != null) {
                 startScriptEnv.put(envVarName, envVarValue);

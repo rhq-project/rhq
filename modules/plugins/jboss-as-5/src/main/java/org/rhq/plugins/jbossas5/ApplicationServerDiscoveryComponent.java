@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -124,7 +125,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     // The set of env vars that are actually relevant to AS5.  Include only these to reduce the amount
     // of noise in the property value and to potentially avoid stale values. 
-    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new HashSet<String>();
+    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new LinkedHashSet<String>();
 
     // Script options that are set by the script itself and that we don't want. Currently none.
     private static final Set<CommandLineOption> START_SCRIPT_OPTION_EXCLUDES = new HashSet<CommandLineOption>();
@@ -141,10 +142,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "JBOSS_CONFIG_DIR", //
             "RUN_CONF", //
             "MAX_FD", //
-            "PROFILER", //
-            "PATH", //
-            "LD_LIBRARY_PATH", // 
-            "SYSTEMROOT")); // required on Windows or you can get winsock create errors
+            "PROFILER" //
+        ));
     }
 
     private final Log log = LogFactory.getLog(this.getClass());

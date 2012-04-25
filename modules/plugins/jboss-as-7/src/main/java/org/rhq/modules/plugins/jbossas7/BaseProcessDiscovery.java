@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -74,11 +75,21 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     private static final String RHQADMIN = "rhqadmin";
     private static final String RHQADMIN_ENCRYPTED = "35c160c1f841a889d4cda53f0bfc94b6";
 
-    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new HashSet<String>();
+    private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new LinkedHashSet<String>();
     static {
-        START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList(
-                "PATH", "LD_LIBRARY_PATH", "RUN_CONF", "JBOSS_HOME", "MAX_FD", "PROFILER", "JAVA_HOME", "JAVA",
-                "PRESERVE_JAVA_OPTS", "JAVA_OPTS", "JBOSS_BASE_DIR", "JBOSS_LOG_DIR", "JBOSS_CONFIG_DIR"));
+        START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList( //
+            "RUN_CONF", //
+            "MAX_FD", //
+            "PROFILER", //
+            "JAVA_HOME", //
+            "JAVA", //
+            "JAVA_OPTS", //
+            "PRESERVE_JAVA_OPTS", //
+            "JBOSS_HOME", //
+            "JBOSS_BASE_DIR", //
+            "JBOSS_LOG_DIR", //
+            "JBOSS_CONFIG_DIR" //
+        ));
     }
 
     // e.g.: -mp /opt/jboss-as-7.1.1.Final/modules

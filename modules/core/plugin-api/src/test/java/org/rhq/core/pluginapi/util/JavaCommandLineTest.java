@@ -122,10 +122,15 @@ public class JavaCommandLineTest {
         Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("x", null, true)), "blah");
         Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "novaluelong", false)), "");
         Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "novaluelong", true)), "");
-        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "long", false)), "longval");
-        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption(null, "long", true)), "longval");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("l", "long", false)), "longval");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("l", "long", true)), "longval");
         Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("n", null, false)), "");
         Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("n", null, true)), "");
+
+        javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "-l", "longval", "-n");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("l", "long", false)), "");
+        Assert.assertEquals(javaCommandLine.getClassOption(new CommandLineOption("l", "long", true)), "longval");
     }
 
     public void testGetAbsentClassOption() throws Exception {
@@ -146,6 +151,13 @@ public class JavaCommandLineTest {
             "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "--long=longval", "--", "-n");
         Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("b", "bogus")));
         Assert.assertNull(javaCommandLine.getClassOption(new CommandLineOption("n", null, false)));
+    }
+
+    public void testToString() throws Exception {
+        String cp = "a.jar" + File.pathSeparator + "b.jar" + File.pathSeparator + "c.jar";
+        JavaCommandLine javaCommandLine = new JavaCommandLine("java", "-Dshape=circle", "-Xmx100M", "-Dcolor=blue",
+            "-ea", "-cp", cp, "org.example.Main", "-x", "blah", "--novaluelong", "--long=longval", "-n");
+        Assert.assertNotNull(javaCommandLine.toString());
     }
 
 }

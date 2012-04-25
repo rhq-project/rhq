@@ -107,11 +107,11 @@ public class JavaCommandLine {
     public JavaCommandLine(String[] args, boolean includeSystemPropertiesFromClassArguments,
         Set<OptionValueDelimiter> shortClassOptionValueDelims, Set<OptionValueDelimiter> longClassOptionValueDelims) {
         if (args == null) {
-            throw new IllegalArgumentException("'commandLine' parameter is null.");
+            throw new IllegalArgumentException("'args' parameter is null.");
         }
 
         if (args.length == 0) {
-            throw new IllegalArgumentException("'commandLine' parameter is an empty array.");
+            throw new IllegalArgumentException("'args' parameter is an empty array.");
         }
 
         this.includeSystemPropertiesFromClassArguments = includeSystemPropertiesFromClassArguments;
@@ -130,15 +130,17 @@ public class JavaCommandLine {
             throw new IllegalArgumentException("'longClassOptionValueDelims' parameter is an empty set.");
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Parsing " + toString());
-        }
+        // Wrap as list and store as field for use by getArguments() and toString().
+        this.arguments = Arrays.asList(args);
 
         parseCommandLine(args);
     }
 
     private void parseCommandLine(String[] args) {
-        this.arguments = Arrays.asList(args);
+        if (log.isDebugEnabled()) {
+            log.debug("Parsing " + this + "...");
+        }
+
         this.javaExecutable = new File(args[0]);
         this.classPath = new ArrayList<String>();
         this.systemProperties = new LinkedHashMap<String, String>();
@@ -340,10 +342,12 @@ public class JavaCommandLine {
      */
     @Nullable
     public String getClassOption(CommandLineOption option) {
-        String optionValue;
-        if (option.getLongName() != null && this.longClassOptionNameToOptionValueMap.containsKey(option.getLongName())) {
+        String optionValue = null;
+        // Note, we never store null values in either of the option value maps.
+
+        if ((option.getLongName() != null) && this.longClassOptionNameToOptionValueMap.containsKey(option.getLongName())) {
             optionValue = this.longClassOptionNameToOptionValueMap.get(option.getLongName());
-            if (optionValue != null && !option.isExpectsValue()) {
+            if (!optionValue.isEmpty() && !option.isExpectsValue()) {
                 // TODO: Store the delims used for each of the options in another set of maps, so we can handle
                 //       things differently here depending on what delim was used.
                 if (this.longClassOptionValueDelims.equals(EnumSet.of(OptionValueDelimiter.EQUALS_SIGN))) {
@@ -353,9 +357,11 @@ public class JavaCommandLine {
                     optionValue = "";
                 }
             }
-        } else if (option.getShortName() != null && this.shortClassOptionNameToOptionValueMap.containsKey(option.getShortName())) {
+        }
+
+        if ((optionValue == null) && (option.getShortName() != null) && this.shortClassOptionNameToOptionValueMap.containsKey(option.getShortName())) {
             optionValue = this.shortClassOptionNameToOptionValueMap.get(option.getShortName());
-            if (optionValue != null && !option.isExpectsValue()) {
+            if (!optionValue.isEmpty() && !option.isExpectsValue()) {
                 // TODO: Store the delims used for each of the options in another set of maps, so we can handle
                 //       things differently here depending on what delim was used.
                 if (this.shortClassOptionValueDelims.equals(EnumSet.of(OptionValueDelimiter.EQUALS_SIGN))) {
@@ -365,12 +371,11 @@ public class JavaCommandLine {
                     optionValue = "";
                 }
             }
-        } else {
-            optionValue = null;
-            if (option.isExpectsValue()) {
-                log.warn("Class option [" + option + "] expects a value, but no value was specified on command line ["
-                        + this + "].");
-            }
+        }
+
+        if (optionValue != null && optionValue.isEmpty() && option.isExpectsValue()) {
+            log.warn("Class option [" + option + "] expects a value, but no value was specified on command line ["
+                    + this + "].");
         }
 
         return optionValue;
@@ -383,10 +388,10 @@ public class JavaCommandLine {
 
     @Override
     public String toString() {
-        return "JavaCommandLine [arguments=" + Arrays.asList(arguments) //
-            + ", includeSystemPropertiesFromClassArguments=" + includeSystemPropertiesFromClassArguments //
-            + ", shortClassOptionFormat=" + Arrays.asList(shortClassOptionValueDelims) //
-            + ", longClassOptionFormat=" + Arrays.asList(longClassOptionValueDelims) + "]";
+        return "JavaCommandLine[arguments=" + this.arguments //
+            + ", includeSystemPropertiesFromClassArguments=" + this.includeSystemPropertiesFromClassArguments //
+            + ", shortClassOptionFormat=" + this.shortClassOptionValueDelims //
+            + ", longClassOptionFormat=" + this.longClassOptionValueDelims + "]";
     }
 
 }

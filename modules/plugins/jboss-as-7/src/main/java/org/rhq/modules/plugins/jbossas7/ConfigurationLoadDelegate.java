@@ -21,7 +21,6 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -338,76 +337,44 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             return propertyMap;
         }
 
-        if ((valueObject instanceof LinkedHashMap) && (isNameValuePropertyMap(propDefs))) {//handle name,value pair mappings
-            LinkedHashMap<String, String> objects = (LinkedHashMap<String, String>) valueObject;
-            for (String key : objects.keySet()) {
-                Property name = null;
-                name = new PropertySimple("name", key);
-                propertyMap.put(name);
-                Property value = null;
-                value = new PropertySimple("value", objects.get(key));
-                propertyMap.put(value);
+        Map<String, Object> objects = (Map<String, Object>) valueObject;
+        for (PropertyDefinition propDef : propDefs) {
+            String key = propDef.getName();
+            if (key.equals(specialNameProp)) // Skip over specialName prop, as we have processed that already.
+                continue;
+
+            // special case: if the key is "*", we just pick the first element
+            Object o;
+            if (key.equals("*")) {
+                o = objects.entrySet().iterator().next().getValue();
+            } else if (key.endsWith(":expr")) {
+                // TODO we need to check te
+                String tmp = key.substring(0, key.indexOf(":"));
+                o = objects.get(tmp);
+            } else {
+                o = objects.get(key);
             }
-        } else {
-            Map<String, Object> objects = (Map<String, Object>) valueObject;
-            for (PropertyDefinition propDef : propDefs) {
-                String key = propDef.getName();
-                if (key.equals(specialNameProp)) // Skip over specialName prop, as we have processed that already.
-                    continue;
 
-                // special case: if the key is "*", we just pick the first element
-                Object o;
-                if (key.equals("*")) {
-                    o = objects.entrySet().iterator().next().getValue();
-                } else if (key.endsWith(":expr")) {
-                    // TODO we need to check te
-                    String tmp = key.substring(0, key.indexOf(":"));
-                    o = objects.get(tmp);
-                } else {
-                    o = objects.get(key);
-                }
+            Property property;
+            if (propDef instanceof PropertyDefinitionSimple)
+                property = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, o);
+            else if (propDef instanceof PropertyDefinitionList)
+                property = loadHandlePropertyList((PropertyDefinitionList) propDef, o);
+            else if (propDef instanceof PropertyDefinitionMap)
+                property = loadHandlePropertyMap((PropertyDefinitionMap) propDef, o, null);
+            else
+                throw new IllegalArgumentException("Unknown property type in map property [" + propDefName + "]");
 
-                Property property;
-                if (propDef instanceof PropertyDefinitionSimple)
-                    property = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, o);
-                else if (propDef instanceof PropertyDefinitionList)
-                    property = loadHandlePropertyList((PropertyDefinitionList) propDef, o);
-                else if (propDef instanceof PropertyDefinitionMap)
-                    property = loadHandlePropertyMap((PropertyDefinitionMap) propDef, o, null);
-                else
-                    throw new IllegalArgumentException("Unknown property type in map property [" + propDefName + "]");
-
-                if (property != null)
-                    propertyMap.put(property);
-                else {
-                    if (log.isDebugEnabled())
-                        log.debug("Property " + key + " was null");
-                }
+            if (property != null)
+                propertyMap.put(property);
+            else {
+                if (log.isDebugEnabled())
+                    log.debug("Property " + key + " was null");
             }
+
         }
 
         return propertyMap;
-    }
-
-    /**Determine if the property definition is for name=value property mapping.
-     *
-     * @param propDefs
-     * @return
-     */
-    private boolean isNameValuePropertyMap(List<PropertyDefinition> propDefs) {
-        boolean isNameValuePropertyMap = false;
-        if (propDefs != null) {
-            int found = 0;
-            for (PropertyDefinition property : propDefs) {
-                String name = property.getName();
-                if (name.equals("name") || name.equals("value")) {
-                    found++;
-                }
-            }
-            if (found == 2)
-                isNameValuePropertyMap = true;
-        }
-        return isNameValuePropertyMap;
     }
 
     /**

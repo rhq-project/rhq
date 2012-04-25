@@ -18,20 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.ListGridEditEvent;
+import com.smartgwt.client.types.RowEndEditAction;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement
@@ -74,32 +77,47 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> listGridFields = getDataSource().getListGridFields();
         getListGrid().setFields(listGridFields.toArray(new ListGridField[listGridFields.size()]));
-        setupTableInteractions(this.hasWriteAccess);
+        getListGrid().setCanEdit(true);
+        getListGrid().setModalEditing(true);
+        getListGrid().setEditEvent(ListGridEditEvent.CLICK);
+        getListGrid().setAutoSaveEdits(false);
+        getListGrid().setListEndEditAction(RowEndEditAction.DONE);
 
+        setupTableInteractions(this.hasWriteAccess);
         super.configureTable();
-    }
+        }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
 
-        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return ((selection.length >= 1) && hasWriteAccess);
-            }
+        ListGridField enabledField = getListGrid().getField(SchedulesDataSource.ATTR_ENABLED);
+        CheckboxItem enabledCheckboxItem = new CheckboxItem();
+        enabledCheckboxItem.addChangeHandler(new com.smartgwt.client.widgets.form.fields.events.ChangeHandler() {
+            @Override
+            public void onChange(com.smartgwt.client.widgets.form.fields.events.ChangeEvent event) {
+                boolean enabled = Boolean.valueOf(event.getItem().getValue() + "");
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                enableSchedules();
+                if(!enabled){
+                   enableSchedules();
+                }else {
+                   disableSchedules();
+                }
             }
         });
-        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return ((selection.length >= 1) && hasWriteAccess);
-            }
+        enabledField.setEditorType(enabledCheckboxItem);
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                disableSchedules();
+        ListGridField intervalField = getListGrid().getField(SchedulesDataSource.ATTR_INTERVAL);
+
+       final ScheduleTableCollectionWidget collectionIntervalWidget = new ScheduleTableCollectionWidget("collectionInterval", this);
+
+        collectionIntervalWidget.addChangeHandler(new com.smartgwt.client.widgets.form.fields.events.ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event) {
+                Log.debug(" Collection Interval: "+ collectionIntervalWidget.getValue());
+                updateSchedules(collectionIntervalWidget.getInterval());
             }
         });
-        addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this), true);
+       intervalField.setEditorType(collectionIntervalWidget);
+
     }
 
     protected abstract void enableSchedules(int[] measurementDefinitionIds,

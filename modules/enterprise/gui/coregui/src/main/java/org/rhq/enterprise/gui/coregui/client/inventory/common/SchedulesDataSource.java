@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.ArrayList;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -28,7 +26,6 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -40,6 +37,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatt
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+
+import java.util.ArrayList;
+
 
 /**
  * A server-side SmartGWT DataSource for reading and updating {@link MeasurementScheduleComposite}s.
@@ -97,8 +97,11 @@ public class SchedulesDataSource extends RPCDataSource<MeasurementScheduleCompos
         fields.add(intervalField);
 
         displayNameField.setWidth("20%");
+        displayNameField.setCanEdit(false);
         descriptionField.setWidth("40%");
+        descriptionField.setCanEdit(false);
         typeField.setWidth("10%");
+        typeField.setCanEdit(false);
         enabledField.setWidth("10%");
         intervalField.setWidth("*");
 

@@ -21,6 +21,7 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
     @Test(priority = 1)
     @RunDiscovery
     public void testAllResourceComponentsStarted() throws Exception {
+        Thread.sleep(30*1000L);
         assertAllResourceComponentsStarted();
     }
 

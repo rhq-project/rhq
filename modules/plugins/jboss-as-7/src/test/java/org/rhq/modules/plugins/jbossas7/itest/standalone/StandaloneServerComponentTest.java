@@ -25,6 +25,13 @@ import java.util.List;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -110,6 +117,40 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+    }
+
+    @Test(priority = 6, enabled = true)
+    public void testSystemPropertiesSettings() throws Exception {
+
+        Configuration config = loadResourceConfiguration(getServerResource());
+        PropertyList starList = (PropertyList) config.get("*2");
+        PropertyMap newProp = new PropertyMap("*:name");
+        newProp.put(new PropertySimple("name", "Hulla"));
+        newProp.put(new PropertySimple("value", "Hopp"));
+        starList.add(newProp);
+
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1, config, getServerResource().getId());
+        ConfigurationUpdateResponse response = pluginContainer.getConfigurationManager()
+            .executeUpdateResourceConfigurationImmediately(request);
+        assert response != null;
+        assert response.getErrorMessage() == null : "Adding a property resulted in this error: "
+            + response.getErrorMessage();
+
+        config = loadResourceConfiguration(getServerResource());
+        starList = (PropertyList) config.get("*2");
+        List<Property> propertyList = starList.getList();
+        for (Property prop : propertyList) {
+            assert prop instanceof PropertyMap;
+            PropertyMap map = (PropertyMap) prop;
+            PropertySimple key = map.getSimple("name");
+            assert key != null;
+            if ("Hulla".equals(key.getStringValue())) {
+                PropertySimple val = map.getSimple("value");
+                assert val != null;
+                assert "Hopp".equals(val.getStringValue());
+            }
+        }
+
     }
 
     protected String getExpectedStartScriptFileName() {

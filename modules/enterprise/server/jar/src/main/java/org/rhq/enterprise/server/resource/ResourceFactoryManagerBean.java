@@ -46,6 +46,7 @@ import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -581,6 +582,13 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Configuration deploymentTimeConfiguration, PackageVersion packageVersion, Integer timeout) {
 
         Agent agent = parentResource.getAgent();
+
+        // add the timeout to the deploymentTimeConfiguration
+        if (deploymentTimeConfiguration != null) {
+            if (timeout != null) {
+                deploymentTimeConfiguration.put(new PropertySimple("userProvidedTimeoutMillis", timeout));
+            }
+        }
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(subject, parentResource

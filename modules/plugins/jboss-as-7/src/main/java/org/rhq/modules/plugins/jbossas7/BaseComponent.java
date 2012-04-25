@@ -358,11 +358,21 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     protected CreateResourceReport deployContent(CreateResourceReport report) {
         ContentContext cctx = context.getContentContext();
         ResourcePackageDetails details = report.getPackageDetails();
+        Configuration deploymentTimeConfiguration = report.getPackageDetails().getDeploymentTimeConfiguration();
+
+        // check if the user has provided a timeout and set it. Otherwise use the default
+        int timeout = 120; // 120s default
+        PropertySimple timeoutProp = deploymentTimeConfiguration.getSimple("userProvidedTimeoutMillis");
+        if (timeoutProp != null && timeoutProp.getStringValue() != null) {
+            int tmp = timeoutProp.getIntegerValue(); // value is in millis, we need seconds
+            timeout = tmp / 1000;
+        }
 
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
         ASUploadConnection uploadConnection = new ASUploadConnection(host, port, managementUser, managementPassword);
+        uploadConnection.setTimeout(timeout); // seconds
         OutputStream out = uploadConnection.getOutputStream(details.getFileName());
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 

@@ -62,6 +62,8 @@ public class ASUploadConnection {
     private HttpURLConnection connection;
     private String host;
     private int port;
+    private int timeout;
+    private static final int DEFAULT_TIMEOUT = 60; // 60sec
 
     public ASUploadConnection(String dcHost, int port, String user, String password) {
         if (dcHost == null) {
@@ -76,20 +78,23 @@ public class ASUploadConnection {
             passwordAuthenticator = new AS7Authenticator(user,password);
             Authenticator.setDefault(passwordAuthenticator);
         }
+        timeout = DEFAULT_TIMEOUT;
     }
 
     public ASUploadConnection(ASConnection asConnection) {
         this.host=asConnection.getHost();
         this.port=asConnection.getPort();
+        this.timeout = DEFAULT_TIMEOUT;
     }
+
 
     public OutputStream getOutputStream(String fileName) {
         String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
         try {
             // Create the HTTP connection to the upload URL
             connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setConnectTimeout(10 * 1000); // 10s
-            connection.setReadTimeout(60 * 1000);    // 60s
+            connection.setConnectTimeout(30 * 1000); // 30s
+            connection.setReadTimeout(timeout * 1000); // default 60s
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(POST_REQUEST_METHOD);
@@ -225,5 +230,21 @@ public class ASUploadConnection {
             } catch (final IOException ignore) {
             }
         }
+    }
+
+    /**
+     * Get the currently active upload timeout
+     * @return timeout in seconds
+     */
+    public int getTimeout() {
+        return timeout;
+    }
+
+    /**
+     * Set upload timeout in seconds.
+     * @param timeout upload timeout in seconds
+     */
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 }

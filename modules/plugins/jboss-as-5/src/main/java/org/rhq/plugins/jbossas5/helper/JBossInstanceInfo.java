@@ -75,7 +75,6 @@ public class JBossInstanceInfo {
         String[] args = this.processInfo.getCommandLine();
 
         Map<String, String> envVars = this.processInfo.getEnvironmentVariables();
-        printEnvVars(envVars);
 
         for (i = 0; i < args.length; i++) {
             if (args[i].equals(JBOSS_MAIN_CLASS_NAME)) {
@@ -318,20 +317,13 @@ public class JBossInstanceInfo {
         }
     }
 
-    private void printEnvVars(Map<String, String> envVars) {
-        log.info("******** Env Vars=" + envVars);
-    }
-
     private void printSysProps(String[] commandLine) {
-        if (null != commandLine) {
-            log.info("******** commandLine=" + Arrays.toString(commandLine));
-        }
-        //if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled()) {
             printSysProp(JBossProperties.HOME_DIR);
             printSysProp(JBossProperties.SERVER_HOME_DIR);
             printSysProp(JBossProperties.SERVER_NAME);
             printSysProp(JBossProperties.BIND_ADDRESS);
-        //}
+        }
     }
 
     private void printSysProp(String name) {

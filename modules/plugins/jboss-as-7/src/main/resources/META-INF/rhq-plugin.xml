@@ -5004,8 +5004,6 @@
       <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
     </plugin-configuration>
 
-    <metric property="default-cache-container" displayType="summary" dataType="trait" defaultInterval="120000"/>
-
     <service name="Cache Container"
              discovery="SubsystemDiscovery"
              class="IspnCContainerComponent"

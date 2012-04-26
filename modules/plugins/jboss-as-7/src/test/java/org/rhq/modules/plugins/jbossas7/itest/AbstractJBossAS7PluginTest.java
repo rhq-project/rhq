@@ -20,8 +20,6 @@ package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.util.Set;
 
-import org.testng.annotations.AfterSuite;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;
@@ -51,6 +49,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
 
     public static final String MANAGEMENT_USERNAME = "test";
     public static final String MANAGEMENT_PASSWORD = "test";
+
+    private static final int TYPE_HIERARCHY_DEPTH = 6;
 
     private static boolean createdManagementUsers;
 
@@ -116,7 +116,7 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
 
     @Override
     protected int getTypeHierarchyDepth() {
-        return 5;
+        return TYPE_HIERARCHY_DEPTH;
     }
 
     protected static Resource getResourceByTypeAndKey(Resource parent, final ResourceType type, String key) {

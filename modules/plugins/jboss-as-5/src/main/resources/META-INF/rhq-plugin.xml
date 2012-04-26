@@ -962,8 +962,9 @@
                                type="longString" 
                                default="" 
                                description="The arguments that the Start and Restart operations will pass to the server
-                                            start script. Each argument should be on a new line.
-                                            For example: -b 127.0.0.2" />                                            
+                                            start script. Each argument should be on a new line. For example: --host=127.0.0.2 .
+                                            As an exception, a space delimited option can have its value on the same line, or
+                                            on a new line.  For example: -b 127.0.0.2" />                                            
                <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
                                description="The path to the script used by the Shut Down operation
                                             to shut down this JBossAS server

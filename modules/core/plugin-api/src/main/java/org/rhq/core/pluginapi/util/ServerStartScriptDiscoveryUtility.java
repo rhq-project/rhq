@@ -49,7 +49,7 @@ public class ServerStartScriptDiscoveryUtility {
         "LD_LIBRARY_PATH"
     ));
     static {
-        if (File.pathSeparatorChar == '\\') {
+        if (File.separatorChar == '\\') {
             CORE_ENV_VAR_NAME_INCLUDES.add("OS"); // many batch files use this to figure out if the OS type is NT or 9x
             CORE_ENV_VAR_NAME_INCLUDES.add("SYSTEMROOT"); // required on Windows to avoid winsock create errors
         }

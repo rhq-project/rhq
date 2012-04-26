@@ -146,7 +146,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         ));
 
         // If OS is Windows, add env vars that are only used by the batch files.
-        if (File.pathSeparatorChar == '\\') {
+        if (File.separatorChar == '\\') {
             START_SCRIPT_ENV_VAR_NAMES.add("ECHO");
             START_SCRIPT_ENV_VAR_NAMES.add("NOPAUSE");
         }

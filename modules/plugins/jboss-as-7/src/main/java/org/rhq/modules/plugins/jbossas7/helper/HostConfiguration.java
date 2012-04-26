@@ -48,9 +48,11 @@ public class HostConfiguration {
     public static final int DEFAULT_MGMT_PORT = 9990;
 
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
+    private static final String BIND_MASTER_ADDRESS_SYSPROP = "jboss.domain.master.address";
     private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
 
     private CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new CommandLineOption("bmanagement", null);
+    private CommandLineOption BIND_MASTER_ADDRESS_OPTION = new CommandLineOption(null, "master-address");
 
     private final Log log = LogFactory.getLog(HostConfiguration.class);
 
@@ -179,7 +181,7 @@ public class HostConfiguration {
      * Try to obtain the domain controller's location from looking at host.xml
      * @return host and port of the domain controller
      */
-    public HostPort getHostPort() {
+    public HostPort getHostPort(AS7CommandLine commandLine) {
         // first check remote, as we can't distinguish between a missing local element or
         // and empty one which is the default
         String remoteHost = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@host");
@@ -188,7 +190,8 @@ public class HostConfiguration {
         HostPort hp;
         if (!remoteHost.isEmpty() && !portString.isEmpty()) {
             hp = new HostPort(false);
-            hp.host = remoteHost;
+            hp.host = replaceDollarExpression(remoteHost, commandLine, "localhost");
+            portString = replaceDollarExpression(portString, commandLine, "9999");
             hp.port = Integer.parseInt(portString);
         } else {
             hp = new HostPort(true);
@@ -278,7 +281,10 @@ public class HostConfiguration {
         if (expression.equals(BIND_ADDRESS_MANAGEMENT_SYSPROP)) {
             // special case: mgmt address can be specified via either -bmanagement= or -Djboss.bind.address.management=
             resolvedValue = commandLine.getClassOption(BIND_ADDRESS_MANAGEMENT_OPTION);
+        } else if (expression.equals(BIND_MASTER_ADDRESS_SYSPROP)) {
+            resolvedValue = commandLine.getClassOption(BIND_MASTER_ADDRESS_OPTION);
         }
+
         if (resolvedValue == null) {
             resolvedValue = commandLine.getSystemProperties().get(expression);
         }

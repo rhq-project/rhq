@@ -41,16 +41,27 @@ public class XmlFileReadingTest {
     public void domainController1() throws Exception {
         URL url = getClass().getClassLoader().getResource("host1.xml");
         HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
-        HostPort hp = hostConfig.getHostPort();
+        HostPort hp = hostConfig.getHostPort(new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.host-controller" }));
         assert hp.isLocal : "DC is not local as expected: " + hp;
     }
 
     public void domainController2() throws Exception {
         URL url = getClass().getClassLoader().getResource("host2.xml");
         HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
-        HostPort hp = hostConfig.getHostPort();
+        HostPort hp = hostConfig.getHostPort(new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.host-controller" }));
         assert "192.168.100.1".equals(hp.host) : "DC is at " + hp.host;
         assert hp.port == 9559 : "DC port is at " + hp.port;
+    }
+
+    public void domainController3() throws Exception {
+        URL url = getClass().getClassLoader().getResource("host3.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        HostPort hp = hostConfig.getHostPort(new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.host-controller", "--master-address=192.168.123.123" }));
+        assert "192.168.123.123".equals(hp.host) : "DC is at " + hp.host;
+        assert hp.port == 1234 : "DC port is at " + hp.port;
     }
 
 

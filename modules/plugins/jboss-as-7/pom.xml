@@ -229,7 +229,7 @@
       </activation>
 
       <properties>
-        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.Beta1 distribution zipfile.</as7.url>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
       </properties>
     </profile>
@@ -245,7 +245,7 @@
       </activation>
 
       <properties>
-        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.ER4 distribution zipfile.</as7.url>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
       </properties>
     </profile>
@@ -261,7 +261,23 @@
       </activation>
 
       <properties>
-        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.ER5 distribution zipfile.</as7.url>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>eap600ER6.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0.ER6</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
       </properties>
     </profile>

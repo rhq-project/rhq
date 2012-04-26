@@ -114,7 +114,6 @@
     <shrinkwrap.version>1.0.0</shrinkwrap.version>
     <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
-    <animal.sniffer.skip>false</animal.sniffer.skip>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -1044,7 +1043,6 @@
                           <artifactId>java16</artifactId>
                           <version>1.0</version>
                       </signature>
-                      <skip>${animal.sniffer.skip}</skip>
                   </configuration>
                   <phase>process-classes</phase>
                   <goals>

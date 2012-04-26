@@ -240,23 +240,21 @@ public class ResourceContainer implements Serializable {
 
     public MeasurementScheduleRequest getAvailabilitySchedule() {
         // platforms don't have a schedule but other types should. If one has not yet been set (this can
-        // happen in various upgrade scenarios) set one, using a default interval. 
-        if (null == availabilitySchedule) {
-            MeasurementScheduleRequest request = null;
-            switch (this.resource.getResourceType().getCategory()) {
-            case PLATFORM:
-                break;
-            case SERVER:
-                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
-                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, true, DataType.AVAILABILITY);
-                break;
-            case SERVICE:
-                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
-                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, true, DataType.AVAILABILITY);
-                break;
-            }
-            if (null != request) {
-                setAvailabilitySchedule(request);
+        // happen in various upgrade scenarios) set one, using a default interval.
+        synchronized (this) {
+            if (null == availabilitySchedule) {
+                switch (this.resource.getResourceType().getCategory()) {
+                case PLATFORM:
+                    break;
+                case SERVER:
+                    availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
+                        MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, true, DataType.AVAILABILITY);
+                    break;
+                case SERVICE:
+                    availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
+                        MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, true, DataType.AVAILABILITY);
+                    break;
+                }
             }
         }
 
@@ -286,23 +284,22 @@ public class ResourceContainer implements Serializable {
      *
     * @param measurementScheduleUpdate the updates to the current measurementSchedule
      *
-    * @return true if the schedule was updated successfully, false otherwise
+    * @return true if the schedule was updated successfully, false otherwise or if measurementScheduleUpdate is null
     */
     public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
+        if (null == measurementScheduleUpdate) {
+            return false;
+        }
+
         // this should not happen but if it does, protect against it because it will sink the agent
-        if (null != measurementScheduleUpdate) {
-            for (MeasurementScheduleRequest sched : measurementScheduleUpdate) {
-                if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                    String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
-                    String msg = "Invalid collection interval ["
-                        + sched
-                        + "] for Resource ["
-                        + resource
-                        + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
-                        + smallStack;
-                    LogFactory.getLog(ResourceContainer.class).error(msg);
-                    sched.setInterval(20L * 60L * 1000L);
-                }
+        for (MeasurementScheduleRequest sched : measurementScheduleUpdate) {
+            if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
+                String msg = "Invalid collection interval [" + sched + "] for Resource [" + resource
+                    + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
+                    + smallStack;
+                LogFactory.getLog(ResourceContainer.class).error(msg);
+                sched.setInterval(20L * 60L * 1000L);
             }
         }
 

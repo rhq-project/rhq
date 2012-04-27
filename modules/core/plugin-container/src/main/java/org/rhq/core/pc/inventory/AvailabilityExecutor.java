@@ -261,24 +261,25 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         // find out what the avail was the last time we checked it. this may be null
         Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
-        AvailabilityType current = (null == previous) ? null : previous.getAvailabilityType();
+        AvailabilityType current = (null == previous) ? AvailabilityType.UNKNOWN : previous.getAvailabilityType();
 
-        // regardless of whether the avail schedule is met, we still must check avail if isForce is true or if
-        // it's a full report and we don't yet have an avail for the resource.
-        if (!checkAvail && (isForced || (scan.isFull && null == previous))) {
-            checkAvail = true;
-        }
+        // If the resource's parent is DOWN, the rules are that the resource and all of the parent's other
+        // descendants, must also be DOWN. So, there's no need to even ask the resource component
+        // for its current availability - its current avail is set to the parent avail type and that's that.
+        // Otherwise, checkAvail as needed.
+        if (deferToParent || (AvailabilityType.DOWN == parentAvailType)) {
+            current = parentAvailType;
+            ++scan.numDeferToParent;
 
-        if (checkAvail) {
-            if (deferToParent || (AvailabilityType.UP != parentAvailType)) {
-                // If the resource's parent is not up, the rules are that the resource and all of the parent's other
-                // descendants, must also be of the parent avail type, so there's no need to even ask the resource component
-                // for its current availability - its current avail is set to the parent avail type and that's that.
-                current = parentAvailType;
-                ++scan.numDeferToParent;
+        } else {
+            // regardless of whether the avail schedule is met, we still must check avail if isForce is true or if
+            // it's a full report and we don't yet have an avail for the resource.
+            if (!checkAvail && (isForced || (scan.isFull && null == previous))) {
+                checkAvail = true;
+            }
 
-            } else {
-                current = null;
+            if (checkAvail) {
+                current = AvailabilityType.UNKNOWN;
                 try {
                     ++scan.numGetAvailabilityCalls;
 
@@ -288,11 +289,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     // down (this is for the case when a plugin component can't start for whatever reason
                     // or is just slow to start)
                     if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                        current = resourceComponent.getAvailability();
+                        current = safeGetAvailability(resourceComponent);
                     } else {
                         this.inventoryManager.activateResource(resource, resourceContainer, false);
                         if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                            current = resourceComponent.getAvailability();
+                            current = safeGetAvailability(resourceComponent);
                         }
                     }
                 } catch (Throwable t) {
@@ -308,18 +309,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         }
                     }
                 }
-            }
-            if (null == current) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Protecting against null getAvailability(). Setting DOWN to " + resource);
+                // Assume DOWN if for some reason the avail check failed 
+                if (AvailabilityType.UNKNOWN == current) {
+                    current = AvailabilityType.DOWN;
                 }
-                current = AvailabilityType.DOWN;
             }
         }
 
         // Add the availability to the report if it changed from its previous state or if this is a full report.
         // Update the resource container only if the avail has changed.
-        boolean availChanged = (null != current && (null == previous) || (current != previous.getAvailabilityType()));
+        boolean availChanged = (null != current && AvailabilityType.UNKNOWN != current && (null == previous || current != previous
+            .getAvailabilityType()));
 
         if (availChanged || scan.isFull) {
             Availability availability;
@@ -349,6 +349,22 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         }
 
         return;
+    }
+
+    private AvailabilityType safeGetAvailability(AvailabilityFacet component) {
+        AvailabilityType availType = component.getAvailability();
+        switch (availType) {
+        case UP:
+            return AvailabilityType.UP;
+        case DOWN:
+            return AvailabilityType.DOWN;
+        default:
+            if (log.isDebugEnabled()) {
+                log.debug("ResourceComponent " + component + " getAvailability() returned " + availType
+                    + ". This is invalid and is being replaced with DOWN.");
+            }
+            return AvailabilityType.DOWN;
+        }
     }
 
     /**

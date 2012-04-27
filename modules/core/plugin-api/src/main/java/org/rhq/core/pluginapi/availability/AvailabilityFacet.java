@@ -39,7 +39,8 @@ public interface AvailabilityFacet {
      * entity running inside it. Availability for all child resources would automatically be set to
      * {@link AvailabilityType#DOWN down} in this case.
      *
-     * @return {@link AvailabilityType#UP} if the resource can be accessed; otherwise {@link AvailabilityType#DOWN}
+     * @return {@link AvailabilityType#UP} if the resource can be accessed; otherwise {@link AvailabilityType#DOWN}.
+     * Any other return value is invalid.
      */
     AvailabilityType getAvailability();
 }

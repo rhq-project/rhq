@@ -40,6 +40,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -81,6 +82,22 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         public Subject normalSubject; // user with a role that has access to the group
         public Role normalRole; // role with permissions on the group
         public Subject unauthzSubject; // a subject with no authorization to do anything
+
+        public LargeGroupEnvironment() {
+        }
+
+        /**
+         * Stores references to the existing lge's resource types' metadata but nothing else.
+         * @param lge the object whose platformType and serverType are stored in the new lge object
+         */
+        public LargeGroupEnvironment(LargeGroupEnvironment lge) {
+            if (lge != null) {
+                this.platformType = lge.platformType;
+                this.serverType = lge.serverType;
+                this.serverPluginConfiguration = lge.serverPluginConfiguration;
+                this.serverResourceConfiguration = lge.serverResourceConfiguration;
+            }
+        }
     }
 
     /**
@@ -124,10 +141,30 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
      */
     protected LargeGroupEnvironment createLargeGroupWithNormalUserRoleAccess(final int groupSize,
         final Permission... permissions) {
+        return createLargeGroupWithNormalUserRoleAccess(null, groupSize, 0, 0, 0, permissions);
+    }
+
+    /**
+     * Creates a compatible group of the given size. This also creates a normal user and a role
+     * and makes sure that user can access the group that was created.  The role will be assigned the
+     * given permissions and that role be placed on the new group and the new user.
+     *
+     * If lge is not null, that means we already have resource types created. We'll reuse those types.
+     *
+     * @param largeGroupEnv an already-created large group environment object (may be null)
+     * @param groupSize the number of members to create and put into the compatible group that is created.
+     * @param down number of resources that are to be set as DOWN
+     * @param unknown number of resources whose availability status is to be marked as UNKNOWN
+     * @param disabled number of resources that are to be set as DISABLED
+     * @param permissions permissions to grant the new user via the new role.
+     * @return information about the entities that were created
+     */
+    protected LargeGroupEnvironment createLargeGroupWithNormalUserRoleAccess(LargeGroupEnvironment largeGroupEnv,
+        final int groupSize, final int down, final int unknown, final int disabled, final Permission... permissions) {
 
         System.out.println("=====Creating a group with [" + groupSize + "] members");
 
-        final LargeGroupEnvironment lge = new LargeGroupEnvironment();
+        final LargeGroupEnvironment lge = new LargeGroupEnvironment(largeGroupEnv);
         JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
             public Object execute(TransactionManager tm, EntityManager em) throws Exception {
                 // create the agent where all resources will be housed
@@ -135,28 +172,36 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
 
                 // create the platform resource type and server resource type
                 // the server type will have both a plugin configuration definition and resource config def
-                lge.platformType = new ResourceType("LargeGroupTestPlatformType", "testPlugin",
-                    ResourceCategory.PLATFORM, null);
-                em.persist(lge.platformType);
+                if (lge.platformType == null) {
+                    lge.platformType = new ResourceType("LargeGroupTestPlatformType", "testPlugin",
+                        ResourceCategory.PLATFORM, null);
+                    em.persist(lge.platformType);
+                } else {
+                    lge.platformType = em.find(ResourceType.class, lge.platformType.getId());
+                }
 
-                lge.serverType = new ResourceType("LargeGroupTestServerType", "testPlugin", ResourceCategory.SERVER,
-                    lge.platformType);
-                lge.serverPluginConfiguration = new ConfigurationDefinition("LargeGroupTestPCDef", "pc desc");
-                lge.serverPluginConfiguration.put(new PropertyDefinitionSimple(PC_PROP1_NAME, "pc prop1desc", false,
-                    PropertySimpleType.STRING));
-                lge.serverPluginConfiguration.put(new PropertyDefinitionSimple(PC_PROP2_NAME, "pc prop2desc", false,
-                    PropertySimpleType.STRING));
-                lge.serverType.setPluginConfigurationDefinition(lge.serverPluginConfiguration);
+                if (lge.serverType == null) {
+                    lge.serverType = new ResourceType("LargeGroupTestServerType", "testPlugin",
+                        ResourceCategory.SERVER, lge.platformType);
+                    lge.serverPluginConfiguration = new ConfigurationDefinition("LargeGroupTestPCDef", "pc desc");
+                    lge.serverPluginConfiguration.put(new PropertyDefinitionSimple(PC_PROP1_NAME, "pc prop1desc",
+                        false, PropertySimpleType.STRING));
+                    lge.serverPluginConfiguration.put(new PropertyDefinitionSimple(PC_PROP2_NAME, "pc prop2desc",
+                        false, PropertySimpleType.STRING));
+                    lge.serverType.setPluginConfigurationDefinition(lge.serverPluginConfiguration);
 
-                lge.serverResourceConfiguration = new ConfigurationDefinition("LargeGroupTestRCDef", "rc desc");
-                lge.serverResourceConfiguration.put(new PropertyDefinitionSimple(RC_PROP1_NAME, "rc prop1desc", false,
-                    PropertySimpleType.STRING));
-                lge.serverResourceConfiguration.put(new PropertyDefinitionSimple(RC_PROP2_NAME, "rc prop2desc", false,
-                    PropertySimpleType.STRING));
-                lge.serverType.setResourceConfigurationDefinition(lge.serverResourceConfiguration);
+                    lge.serverResourceConfiguration = new ConfigurationDefinition("LargeGroupTestRCDef", "rc desc");
+                    lge.serverResourceConfiguration.put(new PropertyDefinitionSimple(RC_PROP1_NAME, "rc prop1desc",
+                        false, PropertySimpleType.STRING));
+                    lge.serverResourceConfiguration.put(new PropertyDefinitionSimple(RC_PROP2_NAME, "rc prop2desc",
+                        false, PropertySimpleType.STRING));
+                    lge.serverType.setResourceConfigurationDefinition(lge.serverResourceConfiguration);
 
-                em.persist(lge.serverType);
-                em.flush();
+                    em.persist(lge.serverType);
+                    em.flush();
+                } else {
+                    lge.serverType = em.find(ResourceType.class, lge.serverType.getId());
+                }
 
                 // create our platform - all of our server resources will have this as their parent
                 lge.platformResource = SessionTestHelper.createNewResource(em, "LargeGroupTestPlatform",
@@ -164,7 +209,7 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                 lge.platformResource.setAgent(lge.agent);
 
                 // create our subject and role
-                lge.normalSubject = new Subject("LargeGroupTestSubject", true, false);
+                lge.normalSubject = new Subject("LargeGroupTestSubject" + System.currentTimeMillis(), true, false);
                 lge.normalRole = SessionTestHelper.createNewRoleForSubject(em, lge.normalSubject, "LargeGroupTestRole",
                     permissions);
 
@@ -176,10 +221,27 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     "LargeGroupTestCompatGroup", lge.serverType);
 
                 // create our many server resources
+                int downCount = down;
+                int unknownCount = unknown;
+                int disabledCount = disabled;
                 System.out.print("=====> Creating member Resources (this might take some time)...");
                 for (int i = 1; i <= groupSize; i++) {
+                    AvailabilityType avail;
+                    if (downCount > 0) {
+                        avail = AvailabilityType.DOWN;
+                        downCount--;
+                    } else if (unknownCount > 0) {
+                        avail = AvailabilityType.UNKNOWN;
+                        unknownCount--;
+                    } else if (disabledCount > 0) {
+                        avail = AvailabilityType.DISABLED;
+                        disabledCount--;
+                    } else {
+                        avail = AvailabilityType.UP;
+                    }
+
                     Resource res = SessionTestHelper.createNewResourceForGroup(em, lge.compatibleGroup,
-                        "LargeGroupTestServer", lge.serverType, (i % 100) == 0);
+                        "LargeGroupTestServer", lge.serverType, avail, (i % 100) == 0);
                     res.setAgent(lge.agent);
                     lge.platformResource.addChildResource(res);
 
@@ -209,14 +271,20 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         return lge;
     }
 
+    protected void tearDownLargeGroupWithNormalUserRoleAccess(final LargeGroupEnvironment lge) throws Exception {
+        tearDownLargeGroupWithNormalUserRoleAccess(lge, false);
+    }
+
     /**
      * Purges all the entities that were created by the
      * {@link #createLargeGroupWithNormalUserRoleAccess(int, org.rhq.core.domain.authz.Permission...)} method.
      * This includes the user, role, agent and all resources, along with the group itself.
      *
      * @param lge contains information that was created which needs to be deleted
+     * @param keepTypes if true, do not delete the resource types
      */
-    protected void tearDownLargeGroupWithNormalUserRoleAccess(final LargeGroupEnvironment lge) throws Exception {
+    protected void tearDownLargeGroupWithNormalUserRoleAccess(final LargeGroupEnvironment lge, boolean keepTypes)
+        throws Exception {
         System.out.println("=====Cleaning up test data from " + this.getClass().getSimpleName());
 
         // purge the group itself
@@ -252,17 +320,20 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
             }
         });
 
-        // purge the resource types
-        JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
-            public Object execute(TransactionManager tm, EntityManager em) throws Exception {
-                ResourceType pType = em
-                    .getReference(ResourceType.class, lge.platformResource.getResourceType().getId());
-                ResourceType sType = em.getReference(ResourceType.class, lge.compatibleGroup.getResourceType().getId());
-                em.remove(sType);
-                em.remove(pType);
-                return null;
-            }
-        });
+        if (!keepTypes) {
+            // purge the resource types
+            JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
+                public Object execute(TransactionManager tm, EntityManager em) throws Exception {
+                    ResourceType pType = em.getReference(ResourceType.class, lge.platformResource.getResourceType()
+                        .getId());
+                    ResourceType sType = em.getReference(ResourceType.class, lge.compatibleGroup.getResourceType()
+                        .getId());
+                    em.remove(sType);
+                    em.remove(pType);
+                    return null;
+                }
+            });
+        }
 
         System.out.println("=====Cleaned up test data from " + this.getClass().getSimpleName());
     }

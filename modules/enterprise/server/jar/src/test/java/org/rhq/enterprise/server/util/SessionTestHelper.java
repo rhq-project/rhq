@@ -198,6 +198,11 @@ public class SessionTestHelper {
 
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
         ResourceType type, boolean doFlush) {
+        return createNewResourceForGroup(em, group, resourceName, type, AvailabilityType.UP, doFlush);
+    }
+
+    public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
+        ResourceType type, AvailabilityType avail, boolean doFlush) {
 
         if (type == null) {
             type = createNewResourceType(em);
@@ -207,7 +212,7 @@ public class SessionTestHelper {
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
         resource.setInventoryStatus(InventoryStatus.COMMITTED);
-        resource.setCurrentAvailability(new ResourceAvailability(resource, AvailabilityType.UP));
+        resource.setCurrentAvailability(new ResourceAvailability(resource, avail));
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);

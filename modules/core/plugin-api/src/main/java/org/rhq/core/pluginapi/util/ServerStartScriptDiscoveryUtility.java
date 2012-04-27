@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hyperic.sigar.ProcExe;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.system.ProcessInfo;
 
@@ -43,15 +45,19 @@ import org.rhq.core.system.ProcessInfo;
  */
 public class ServerStartScriptDiscoveryUtility {
 
+    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
+    private static final char OPTION_PREFIX = (OS_IS_WINDOWS) ? '/' : '-';
+
     // Generic OS-level PATH setting for LINUX. For Windows the PATH must be generated when we have
     // the system env vars. It will be of the form %SystemRoot%\\system32;%SystemRoot%; 
-    private static final String CORE_ENV_VAR_PATH_LINUX = "/bin:/usr/bin";
+    private static final String CORE_ENV_VAR_PATH_UNIX = "/bin:/usr/bin";
 
     // Generic OS-level env vars that should be in every process's environment.
     private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList("PATH",
         "LD_LIBRARY_PATH"));
+
     static {
-        if (File.separatorChar == '\\') {
+        if (OS_IS_WINDOWS) {
             CORE_ENV_VAR_NAME_INCLUDES.add("OS"); // many batch files use this to figure out if the OS type is NT or 9x
             CORE_ENV_VAR_NAME_INCLUDES.add("SYSTEMROOT"); // required on Windows to avoid winsock create errors
         }
@@ -60,32 +66,32 @@ public class ServerStartScriptDiscoveryUtility {
     private ServerStartScriptDiscoveryUtility() {
     }
 
+    /**
+     * If the specified process is a script, return the path to the script - the returned path will be absolute and
+     * canonical if possible, or, if it is not a script, return <code>null</code>.
+     *
+     * @param serverParentProcess the parent process of a server (e.g. JBoss AS) process
+     *
+     * @return if the specified process is a script (the returned path will be absolute and
+     *         canonical if possible), the path to the script, otherwise <code>null</code>
+     */
+    @Nullable
     public static File getStartScript(ProcessInfo serverParentProcess) {
         // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
         //      Windows: "cmd.exe [options] standalone.bat --server-config=standalone-full.xml"
-        int startScriptIndex = 1;
         String[] serverParentProcessCommandLine = serverParentProcess.getCommandLine();
-
-        // advance past cmd.exe options. options start with '/'       
-        if (File.separatorChar == '\\') {
-            for (; (startScriptIndex < serverParentProcessCommandLine.length); ++startScriptIndex) {
-                if (!serverParentProcessCommandLine[startScriptIndex].startsWith("/")) {
-                    break;
-                }
-            }
-        }
-
-        String startScript = (serverParentProcessCommandLine.length > startScriptIndex) ? serverParentProcessCommandLine[startScriptIndex]
-            : null;
+        Integer startScriptIndex = getStartScriptIndex(serverParentProcessCommandLine);
 
         File startScriptFile;
-
-        if (isScript(startScript)) {
-            // The parent process is a script - excellent!
+        if (startScriptIndex != null) {
+            // The process is a script - excellent!
+            String startScript = (serverParentProcessCommandLine.length > startScriptIndex) ? serverParentProcessCommandLine[startScriptIndex]
+                        : null;
             startScriptFile = new File(startScript);
             if (!startScriptFile.isAbsolute()) {
                 ProcExe parentProcessExe = serverParentProcess.getExecutable();
                 if (parentProcessExe == null) {
+                    // TODO: This isn't really generic
                     startScriptFile = new File("bin", startScriptFile.getName());
                 } else {
                     String cwd = parentProcessExe.getCwd();
@@ -102,52 +108,79 @@ public class ServerStartScriptDiscoveryUtility {
         return startScriptFile;
     }
 
+    /**
+     * Returns the list of arguments that should be passed to the start script for the specified server (e.g. JBoss AS)
+     * process in order to start a functionally equivalent server instance.
+     *
+     * @param serverParentProcess the parent process of a server (e.g. JBoss AS) process
+     * @param serverArgs the subset of arguments from the server (e.g. JBoss AS) process that should be used if the
+     *                   parent process is not a script
+     * @param optionExcludes options that should be excluded from the returned arguments if the parent process is not a
+     *                       script
+     *
+     * @return the list of arguments that should be passed to the start script for the specified server (e.g. JBoss AS)
+     *         process in order to start a functionally equivalent server instance
+     */
+    @NotNull
     public static List<String> getStartScriptArgs(ProcessInfo serverParentProcess, List<String> serverArgs,
         Set<CommandLineOption> optionExcludes) {
-        // e.g. UNIX:    "/bin/sh ./standalone.sh --server-config=standalone-full.xml"
-        //      Windows: "standalone.bat --server-config=standalone-full.xml"
-        int startScriptIndex = (File.separatorChar == '/') ? 1 : 0;
         String[] startScriptCommandLine = serverParentProcess.getCommandLine();
-        String startScript = (startScriptCommandLine.length > startScriptIndex) ? startScriptCommandLine[startScriptIndex]
-            : null;
+        Integer startScriptIndex = getStartScriptIndex(startScriptCommandLine);
 
         List<String> startScriptArgs = new ArrayList<String>();
-        if (isScript(startScript)) {
+        if (startScriptIndex != null) {
             // Skip past the script to get the arguments that were passed to the script.
             for (int i = (startScriptIndex + 1); i < startScriptCommandLine.length; i++) {
                 startScriptArgs.add(startScriptCommandLine[i]);
             }
         } else {
-            for (int i = 0, serverArgsSize = serverArgs.size(); i < serverArgsSize; i++) {
-                String serverArg = serverArgs.get(i);
-                // Skip any options that the start script will take care of specifying.
-                CommandLineOption option = null;
-                for (CommandLineOption optionExclude : optionExcludes) {
-                    if ((optionExclude.getShortName() != null && (serverArg.equals('-' + optionExclude.getShortName()) || serverArg
-                        .startsWith('-' + optionExclude.getShortName() + "=")))
-                        || ((optionExclude.getLongName() != null) && (serverArg.equals("--"
-                            + optionExclude.getLongName()) || serverArg.startsWith("--" + optionExclude.getLongName()
-                            + "=")))) {
-                        option = optionExclude;
-                        break;
+            if ((optionExcludes != null) && !optionExcludes.isEmpty()) {
+                for (int i = 0, serverArgsSize = serverArgs.size(); i < serverArgsSize; i++) {
+                    String serverArg = serverArgs.get(i);
+                    // Skip any options that the start script will take care of specifying.
+                    CommandLineOption option = null;
+                    for (CommandLineOption optionExclude : optionExcludes) {
+                        if ((optionExclude.getShortName() != null && (serverArg.equals('-' + optionExclude.getShortName()) || serverArg
+                            .startsWith('-' + optionExclude.getShortName() + "=")))
+                            || ((optionExclude.getLongName() != null) && (serverArg.equals("--"
+                                + optionExclude.getLongName()) || serverArg.startsWith("--" + optionExclude.getLongName()
+                                + "=")))) {
+                            option = optionExclude;
+                            break;
+                        }
+                    }
+                    if (option != null) {
+                        if (option.isExpectsValue()
+                            && ((i + 1) < serverArgsSize)
+                            && (((option.getShortName() != null) && serverArg.equals('-' + option.getShortName())) || (option
+                                .getLongName() != null) && serverArg.equals("--" + option.getLongName()))) {
+                            // If the option expects a value and the delimiter is a space, skip the next argument too.
+                            i++;
+                        }
+                    } else {
+                        startScriptArgs.add(serverArg);
                     }
                 }
-                if (option != null) {
-                    if (option.isExpectsValue()
-                        && ((i + 1) < serverArgsSize)
-                        && (((option.getShortName() != null) && serverArg.equals('-' + option.getShortName())) || (option
-                            .getLongName() != null) && serverArg.equals("--" + option.getLongName()))) {
-                        // If the option expects a value and the delimiter is a space, skip the next argument too.
-                        i++;
-                    }
-                } else {
-                    startScriptArgs.add(serverArg);
-                }
+            } else {
+                startScriptArgs.addAll(serverArgs);
             }
         }
         return startScriptArgs;
     }
 
+    /**
+     * Returns the set of environment variables that should be passed to the start script for the specified server
+     * (e.g. JBoss AS) process in order to start a functionally equivalent server instance.
+     *
+     * @param serverProcess a server (e.g. JBoss AS) process
+     * @param serverParentProcess the parent process of the server (e.g. JBoss AS) process
+     * @param envVarNameIncludes the names of the variables that should be included in the returned map, in addition to
+     *                           a core set of OS-level variables (PATH, LD_LIBRARY_PATH, etc.)
+     *
+     * @return the set of environment variables that should be passed to the start script for the specified server
+     *         (e.g. JBoss AS) process
+     */
+    @NotNull
     public static Map<String, String> getStartScriptEnv(ProcessInfo serverProcess, ProcessInfo serverParentProcess,
         Set<String> envVarNameIncludes) {
         Map<String, String> processEnvVars;
@@ -157,7 +190,8 @@ public class ServerStartScriptDiscoveryUtility {
             processEnvVars = serverProcess.getEnvironmentVariables();
         }
 
-        List<String> fullEnvVarNameIncludes = new ArrayList<String>(envVarNameIncludes);
+        List<String> fullEnvVarNameIncludes = (envVarNameIncludes != null) ?
+                new ArrayList<String>(envVarNameIncludes) : new ArrayList<String>();
         // Add the core includes at the end of the list, since end users will probably be more interested in the
         // app-specific env vars.
         fullEnvVarNameIncludes.addAll(CORE_ENV_VAR_NAME_INCLUDES);
@@ -178,15 +212,37 @@ public class ServerStartScriptDiscoveryUtility {
             String path = systemRoot + "\\system32;" + systemRoot;
             startScriptEnv.put("PATH", path);
         } else {
-            startScriptEnv.put("PATH", CORE_ENV_VAR_PATH_LINUX);
+            startScriptEnv.put("PATH", CORE_ENV_VAR_PATH_UNIX);
         }
 
         return startScriptEnv;
     }
 
-    private static boolean isScript(String startScript) {
+    @Nullable
+    private static Integer getStartScriptIndex(String[] serverParentProcessCommandLine) {
+        // Assuming the specified process actually is a script, it will look something like this:
+        //   UNIX:    "/bin/sh [options] ./standalone.sh --server-config=standalone-full.xml"
+        //   Windows: "cmd.exe [options]  standalone.bat --server-config=standalone-full.xml"
+
+        if (serverParentProcessCommandLine.length == 1) {
+            // The command line is an executable with no arguments - there's no way it's a script, so return null.
+            return null;
+        }
+
+        int startScriptIndex;
+        // Advance past any shell (e.g. /bin/sh or cmd.exe) options.
+        for (startScriptIndex = 1; (startScriptIndex < serverParentProcessCommandLine.length); ++startScriptIndex) {
+            if (serverParentProcessCommandLine[startScriptIndex].charAt(0) != OPTION_PREFIX) {
+                break;
+            }
+        }
+        String possibleStartScript = serverParentProcessCommandLine[startScriptIndex];
+        return (isScript(possibleStartScript)) ? startScriptIndex : null;
+    }
+
+    private static boolean isScript(String filePath) {
         // TODO: What if CygWin was used to start AS7 on Windows via a shell script?
-        return (startScript != null) && (startScript.endsWith(".sh") || startScript.endsWith(".bat"));
+        return (filePath != null) && (filePath.endsWith(".sh") || filePath.matches(".*\\.((bat)|(cmd))$(?i)"));
     }
 
 }

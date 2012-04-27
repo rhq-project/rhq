@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  *
  * @author Ian Springer
  */
-@Test(enabled = false)
+@Test(enabled = true)
 public class SubsystemXmlParsingTest extends AbstractSubsystemBaseTest {
 
     public SubsystemXmlParsingTest() {
@@ -44,6 +44,7 @@ public class SubsystemXmlParsingTest extends AbstractSubsystemBaseTest {
         super.initializeParser();
     }
 
+    @Override
     public void testSubsystem() throws Exception {
         super.testSubsystem();
     }

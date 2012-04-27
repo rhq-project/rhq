@@ -38,8 +38,8 @@ import org.jboss.staxmapper.XMLExtendedStreamWriter;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +73,7 @@ public class RtFilterExtension implements Extension {
     protected static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(SUBSYSTEM, SUBSYSTEM_NAME);
     private static final String RESOURCE_NAME = RtFilterExtension.class.getPackage().getName() + ".LocalDescriptions";
 
-    public static final Map<String, String> INIT_PARAMS = new HashMap<String, String>();
+    public static final Map<String, String> INIT_PARAMS = new LinkedHashMap<String, String>();
 
     public static StandardResourceDescriptionResolver getResourceDescriptionResolver(final String keyPrefix) {
         String prefix = SUBSYSTEM_NAME + (keyPrefix == null ? "" : "." + keyPrefix);
@@ -199,7 +199,23 @@ public class RtFilterExtension implements Extension {
         @Override
         public void writeContent(XMLExtendedStreamWriter writer, SubsystemMarshallingContext context) throws XMLStreamException {
             context.startSubsystemElement(RtFilterExtension.NAMESPACE, false);
-            writer.writeEndElement();
+
+            for (String paramName : INIT_PARAMS.keySet()) {
+                writer.writeStartElement("init-param");
+
+                writer.writeStartElement("param-name");
+                writer.writeCharacters(paramName);
+                writer.writeEndElement(); // param-name
+
+                writer.writeStartElement("param-value");
+                String paramValue = INIT_PARAMS.get(paramName);
+                writer.writeCharacters(paramValue);
+                writer.writeEndElement(); // param-value
+
+                writer.writeEndElement(); // init-param
+            }
+
+            writer.writeEndElement(); // subsystem
         }
 
     }

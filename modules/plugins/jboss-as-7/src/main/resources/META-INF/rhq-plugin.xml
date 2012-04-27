@@ -2822,6 +2822,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2941,6 +2942,7 @@
     <runs-inside>
       <parent-resource-type name="Host" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4051,7 +4053,9 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
+
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
     </plugin-configuration>
@@ -4115,6 +4119,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4140,6 +4145,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4264,6 +4270,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4287,6 +4294,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4308,6 +4316,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4351,6 +4360,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4375,6 +4385,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4726,6 +4737,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4816,6 +4828,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5012,6 +5025,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5037,6 +5051,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5202,6 +5217,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5314,6 +5330,7 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5341,6 +5358,7 @@
     <runs-inside>
         <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
         <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5432,6 +5450,7 @@
     <runs-inside>
       <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>

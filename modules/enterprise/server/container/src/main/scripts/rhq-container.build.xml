@@ -364,11 +364,11 @@
   	 <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" />
   	
      <!-- deploy all the static downloadable content -->
-     <echo>Deploying static downloadable content</echo>
+     <echo>Deploying static downloadable content...</echo>
      <copy todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" 
            verbose="true"
            failonerror="false">
-     	<fileset dir="${basedir}/src/main/downloadable-resources" />
+        <fileset dir="${basedir}/src/main/downloadable-resources" />
   	 </copy>
   	
      <!-- make sure our downloads directories exist -->
@@ -435,19 +435,23 @@
    </target>
 
    <target name="package-connectors">
-      <echo>Deploying the response-time servlet filter connectors ...</echo>
+      <echo>Deploying the response-time (RT) servlet filter connectors ...</echo>
       <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
       <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
-         <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">
-            <include name="README.txt" />
-         </zipfileset>
-         <zipfileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
+         <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}">
             <include name="rhq-rtfilter-${project.version}.jar" />
          </zipfileset>
          <zipfileset dir="${settings.localRepository}/commons-logging/commons-logging/1.1.1">
             <include name="commons-logging-1.1.1.jar" />
          </zipfileset>
       </zip>
+
+      <!-- rtfilter AS7 modules -->
+      <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
+
+      <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
    </target>
 
    <target name="prepare-bin-dir">
@@ -842,7 +846,7 @@ rhq.autoinstall.public-endpoint-address=
                    undeploy-ds,
                    prepare-web-services-2" description="If this is a release build, make sure it is properly prepared.">
 
-      <echo>Adding license headers files...</echo>
+      <echo>Adding license files...</echo>
       <copy todir="${project.build.outputDirectory}">
          <fileset dir="${basedir}/../../../.." includes="LICENSE*" />
       </copy>

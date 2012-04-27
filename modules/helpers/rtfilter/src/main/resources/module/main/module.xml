@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.0" name="${moduleName}">
+
+  <resources>
+    <resource-root path="${project.build.finalName}.jar"/>
+  </resources>
+
+  <dependencies>
+    <module name="javax.servlet.api"/>
+    <module name="javax.api"/>
+    <module name="org.apache.commons.logging"/>
+  </dependencies>
+
+</module>

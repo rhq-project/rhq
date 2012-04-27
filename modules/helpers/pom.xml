@@ -29,6 +29,7 @@
   <modules>
 
     <module>rtfilter</module>
+    <module>rtfilter-subsystem</module>
 <!--
     <module>pluginGen</module>
     <module>pluginAnnotations</module>

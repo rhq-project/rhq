@@ -24,6 +24,8 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
+import org.rhq.core.util.Base64;
+
 /**
  * Encrypts a string. You can optionally have it base64 encode the MD5 string (which is the default). Set the "base64"
  * attribute to "false" if you do not want the string base64 encoded.

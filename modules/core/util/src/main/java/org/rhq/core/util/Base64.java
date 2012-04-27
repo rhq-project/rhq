@@ -29,7 +29,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.rhq.core.db.ant;
+package org.rhq.core.util;
 
 import java.io.IOException;
 import java.io.OutputStream;

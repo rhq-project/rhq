@@ -111,4 +111,10 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         return resourceDetails;
     }
 
+    @Override
+    protected ProcessInfo getPotentialStartScriptProcess(ProcessInfo process) {
+        // If the server was started via standalone.sh/bat, its parent process will be standalone.sh/bat.
+        return process.getParentProcess();
+    }
+
 }

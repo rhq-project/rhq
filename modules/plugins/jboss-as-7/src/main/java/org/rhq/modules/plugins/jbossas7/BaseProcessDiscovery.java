@@ -240,7 +240,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     private void setStartScriptPluginConfigProps(ProcessInfo process, AS7CommandLine commandLine,
                                                  Configuration pluginConfig) {
         StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
-        ProcessInfo parentProcess = process.getParentProcess();
+        ProcessInfo parentProcess = getPotentialStartScriptProcess(process);
 
         File startScript = ServerStartScriptDiscoveryUtility.getStartScript(parentProcess);
         if (startScript == null) {
@@ -267,6 +267,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 commandLine.getAppServerArguments(), START_SCRIPT_OPTION_EXCLUDES);
         startScriptConfig.setStartScriptArgs(startScriptArgs);
     }
+
+    protected abstract ProcessInfo getPotentialStartScriptProcess(ProcessInfo process);
 
     private void setUserAndPasswordPluginConfigProps(ServerPluginConfiguration serverPluginConfig, HostConfiguration hostConfig,
                                                      File baseDir) {

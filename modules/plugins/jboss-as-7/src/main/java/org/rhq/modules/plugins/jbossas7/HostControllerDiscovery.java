@@ -114,4 +114,11 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         return resourceDetails;
     }
 
+    @Override
+    protected ProcessInfo getPotentialStartScriptProcess(ProcessInfo serverProcess) {
+        // If the server was started via domain.sh/bat, its parent process will be the process controller JVM, and the
+        // process controller JVM's parent process will be domain.sh/bat.
+        return serverProcess.getParentProcess().getParentProcess();
+    }
+
 }

@@ -164,18 +164,18 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         pluginNameField.setWidth("8%");
 
         ListGridField availabilityChildrenField = new ListGridField(AVAIL_CHILDREN.propertyName(),
-            AVAIL_CHILDREN.title(), 170); // 170 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+            AVAIL_CHILDREN.title(), 185); // 185 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityChildrenField.setCanSortClientOnly(true);
         availabilityChildrenField.setCanGroupBy(false);
         availabilityChildrenField.setWrap(false);
-        availabilityChildrenField.setAlign(Alignment.CENTER);
+        availabilityChildrenField.setAlign(Alignment.LEFT);
 
         ListGridField availabilityDescendantsField = new ListGridField(AVAIL_DESCENDANTS.propertyName(),
-            AVAIL_DESCENDANTS.title(), 170); // 110 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+            AVAIL_DESCENDANTS.title(), 185); // 185 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityDescendantsField.setCanSortClientOnly(true);
         availabilityDescendantsField.setCanGroupBy(false);
         availabilityDescendantsField.setWrap(false);
-        availabilityDescendantsField.setAlign(Alignment.CENTER);
+        availabilityDescendantsField.setAlign(Alignment.LEFT);
 
         setListGridFields(idField, categoryField, nameField, descriptionField, typeNameField, pluginNameField,
             availabilityChildrenField, availabilityDescendantsField);

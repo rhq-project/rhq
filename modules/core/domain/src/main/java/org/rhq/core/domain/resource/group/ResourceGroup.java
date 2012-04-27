@@ -257,6 +257,16 @@ public class ResourceGroup extends Group {
         + "                       AND eresAvail.availability_type = 0 "
         + "              ) as explicitDown, "
         + "" //
+        + "              (     SELECT COUNT(eresAvail.ID) " // UNKNOWN explicit members
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                       AND eresAvail.availability_type = 2 "
+        + "              ) as explicitUnknown, "
+        + "" //
         + "              (     SELECT COUNT(eresAvail.ID) " // DISABLED explicit members
         + "                      FROM rhq_resource_avail eresAvail "
         + "                INNER JOIN rhq_resource eres "
@@ -285,6 +295,16 @@ public class ResourceGroup extends Group {
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "                       AND iresAvail.availability_type = 0 "
         + "              ) as implicitDown, "
+        + "" //
+        + "              (     SELECT COUNT(iresAvail.ID) " // UNKNOWN implicit members
+        + "                      FROM rhq_resource_avail iresAvail "
+        + "                INNER JOIN rhq_resource ires "
+        + "                        ON iresAvail.resource_id = ires.id "
+        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
+        + "                        ON ires.id = impMap.resource_id "
+        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                       AND iresAvail.availability_type = 2 "
+        + "              ) as implicitUnknown, "
         + "" //
         + "              (     SELECT COUNT(iresAvail.ID) " // DISABLED implicit members 
         + "                      FROM rhq_resource_avail iresAvail "

@@ -50,9 +50,11 @@ public class ResourceGroupComposite implements Serializable {
     private GroupCategory category;
     private long implicitCount;
     private long implicitDown;
+    private long implicitUnknown;
     private long implicitDisabled;
     private long explicitCount;
     private long explicitDown;
+    private long explicitUnknown;
     private long explicitDisabled;
 
     private ResourceFacets resourceFacets;
@@ -65,44 +67,52 @@ public class ResourceGroupComposite implements Serializable {
     }
 
     // Constructor used in Hibernate Query, see ResourceGroupManagerBean
-    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
-        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup) {
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitUnknown, Long explicitDisabled,
+        Long implicitCount, Long implicitDown, Long implicitUnknown, Long implicitDisabled, ResourceGroup resourceGroup) {
 
-        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
+        this(explicitCount, explicitDown, explicitUnknown, explicitDisabled, implicitCount, implicitDown,
+            implicitUnknown, implicitDisabled,
             resourceGroup, null, new ResourcePermission());
     }
 
     // Constructor used in Hibernate Query, see ResourceGroupManagerBean 
-    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
-        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, Number measure, Number inventory,
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitUnknown, Long explicitDisabled,
+        Long implicitCount, Long implicitDown, Long implicitUnknown, Long implicitDisabled,
+        ResourceGroup resourceGroup, Number measure, Number inventory,
         Number control, Number alert, Number event, Number configureRead, Number configureWrite, Number content,
         Number createChildResources, Number deleteResources, Number drift) {
 
-        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
+        this(explicitCount, explicitDown, explicitUnknown, explicitDisabled, implicitCount, implicitDown,
+            implicitUnknown, implicitDisabled,
             resourceGroup, null, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
                 control.intValue() > 0, alert.intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0,
                 configureWrite.intValue() > 0, content.intValue() > 0, createChildResources.intValue() > 0,
                 deleteResources.intValue() > 0, drift.intValue() > 0));
     }
 
-    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
-        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, ResourceFacets facets) {
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitUnknown, Long explicitDisabled,
+        Long implicitCount, Long implicitDown, Long implicitUnknown, Long implicitDisabled,
+        ResourceGroup resourceGroup, ResourceFacets facets) {
 
-        this(explicitCount, explicitDown, explicitDisabled, implicitCount, implicitDown, implicitDisabled,
+        this(explicitCount, explicitDown, explicitUnknown, explicitDisabled, implicitCount, implicitDown,
+            implicitUnknown, implicitDisabled,
             resourceGroup, facets, new ResourcePermission());
     }
 
     // Private constructor that all public constructors delegate to
-    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitDisabled, Long implicitCount,
-        Long implicitDown, Long implicitDisabled, ResourceGroup resourceGroup, ResourceFacets facets,
+    public ResourceGroupComposite(Long explicitCount, Long explicitDown, Long explicitUnknown, Long explicitDisabled,
+        Long implicitCount, Long implicitDown, Long implicitUnknown, Long implicitDisabled,
+        ResourceGroup resourceGroup, ResourceFacets facets,
         ResourcePermission permissions) {
 
         this.implicitCount = implicitCount;
         this.implicitDown = implicitDown;
+        this.implicitUnknown = implicitUnknown;
         this.implicitDisabled = implicitDisabled;
 
         this.explicitCount = explicitCount;
         this.explicitDown = explicitDown;
+        this.explicitUnknown = explicitUnknown;
         this.explicitDisabled = explicitDisabled;
 
         this.resourceGroup = resourceGroup;
@@ -128,12 +138,16 @@ public class ResourceGroupComposite implements Serializable {
         return implicitDown;
     }
 
+    public long getImplicitUnknown() {
+        return implicitUnknown;
+    }
+
     public long getImplicitDisabled() {
         return implicitDisabled;
     }
 
-    public long getImplicitUpAndUnknown() {
-        return implicitCount - implicitDown - implicitDisabled;
+    public long getImplicitUp() {
+        return implicitCount - implicitDown - implicitDisabled - implicitUnknown;
     }
 
     public long getExplicitCount() {
@@ -144,12 +158,16 @@ public class ResourceGroupComposite implements Serializable {
         return explicitDown;
     }
 
+    public long getExplicitUnknown() {
+        return explicitUnknown;
+    }
+
     public long getExplicitDisabled() {
         return explicitDisabled;
     }
 
-    public long getExplicitUpAndUnknown() {
-        return explicitCount - explicitDown - explicitDisabled;
+    public long getExplicitUp() {
+        return explicitCount - explicitDown - explicitDisabled - explicitUnknown;
     }
 
     public ResourceGroup getResourceGroup() {
@@ -165,9 +183,9 @@ public class ResourceGroupComposite implements Serializable {
      * <pre>
      * empty group  = EMPTY
      * allDown      = DOWN
-     * someDown     = WARN
+     * someDown/someUnknown = WARN
      * someDisabled = DISABLED
-     * otherwise    = UP (all members UP or UNKNOWN)
+     * otherwise    = UP (all members UP)
      * </pre>  
      *   
      * @return the group availability type, null for an empty group
@@ -181,9 +199,9 @@ public class ResourceGroupComposite implements Serializable {
      * <pre>
      * empty group  = EMPTY
      * allDown      = DOWN
-     * someDown     = WARN
+     * someDown/someUnknown = WARN
      * someDisabled = DISABLED
-     * otherwise    = UP (all members UP or UNKNOWN)
+     * otherwise    = UP (all members UP)
      * </pre>  
      *   
      * @return the group availability type, null for an empty group
@@ -196,6 +214,7 @@ public class ResourceGroupComposite implements Serializable {
         long count = isExplicit ? explicitCount : implicitCount;
         long down = isExplicit ? explicitDown : implicitDown;
         long disabled = isExplicit ? explicitDisabled : implicitDisabled;
+        long unknown = isExplicit ? explicitUnknown : implicitUnknown;
 
         if (0 == count) {
             return GroupAvailabilityType.EMPTY;
@@ -205,7 +224,7 @@ public class ResourceGroupComposite implements Serializable {
             return GroupAvailabilityType.DOWN;
         }
 
-        if (down > 0) {
+        if (down > 0 || unknown > 0) {
             return GroupAvailabilityType.WARN;
         }
 
@@ -252,13 +271,15 @@ public class ResourceGroupComposite implements Serializable {
     // remove once the old UI is killed, for now this is still needed
     @Deprecated
     public String getExplicitFormatted() {
-        return getAlignedAvailabilityResults(getExplicitUpAndUnknown() + getExplicitDisabled(), getExplicitDown());
+        return getAlignedAvailabilityResults(getExplicitUp() + getExplicitUnknown() + getExplicitDisabled(),
+            getExplicitDown());
     }
 
     // remove once the old UI is killed, for now this is still needed
     @Deprecated
     public String getImplicitFormatted() {
-        return getAlignedAvailabilityResults(getImplicitUpAndUnknown() + getImplicitDisabled(), getImplicitDown());
+        return getAlignedAvailabilityResults(getImplicitUp() + getImplicitUnknown() + getImplicitDisabled(),
+            getImplicitDown());
     }
 
     // remove once the old UI is killed, for now this is still needed
@@ -317,9 +338,10 @@ public class ResourceGroupComposite implements Serializable {
     public String toString() {
         return "ResourceGroupComposite[name="
             + this.resourceGroup.getName() //
-            + ", implicit[count/down/disabled=," + this.implicitCount + "/" + this.implicitDown + "/"
-            + this.implicitDisabled + "]" + ", explicit[count/down/disabled=," + this.explicitCount + "/"
-            + this.explicitDown + "/" + this.explicitDisabled + "]" + ", facets="
+            + ", implicit[count/down/disabled/unknown=," + this.implicitCount + "/" + this.implicitDown + "/"
+            + this.implicitDisabled + "/" + this.implicitUnknown + "]" + ", explicit[count/down/disabled/unknown=,"
+            + this.explicitCount + "/" + this.explicitDown + "/" + this.explicitDisabled + "/" + this.explicitUnknown
+            + "]" + ", facets="
             + ((this.resourceFacets == null) ? "none" : this.resourceFacets.getFacets()) + "]";
     }
 }

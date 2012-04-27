@@ -165,13 +165,15 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
 
         Long explicitCount = Long.valueOf(from.getAttribute("explicitCount"));
         Long explicitDown = Long.valueOf(from.getAttribute("explicitDown"));
+        Long explicitUnknown = Long.valueOf(from.getAttribute("explicitUnknown"));
         Long explicitDisabled = Long.valueOf(from.getAttribute("explicitDisabled"));
         Long implicitCount = Long.valueOf(from.getAttribute("implicitCount"));
         Long implicitDown = Long.valueOf(from.getAttribute("implicitDown"));
+        Long implicitUnknown = Long.valueOf(from.getAttribute("implicitUnknown"));
         Long implicitDisabled = Long.valueOf(from.getAttribute("implicitDisabled"));
 
-        ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitDisabled,
-            implicitCount, implicitDown, implicitDisabled, rg);
+        ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitUnknown,
+            explicitDisabled, implicitCount, implicitDown, implicitUnknown, implicitDisabled, rg);
 
         return composite;
     }
@@ -205,19 +207,19 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     }
 
     private String getExplicitFormatted(ResourceGroupComposite from) {
-        return getAlignedAvailabilityResults(from.getExplicitCount(), from.getExplicitUpAndUnknown(),
-            from.getExplicitDown(), from.getExplicitDisabled());
+        return getAlignedAvailabilityResults(from.getExplicitCount(), from.getExplicitUp(), from.getExplicitDown(),
+            from.getExplicitUnknown(), from.getExplicitDisabled());
     }
 
     private String getImplicitFormatted(ResourceGroupComposite from) {
-        return getAlignedAvailabilityResults(from.getImplicitCount(), from.getImplicitUpAndUnknown(),
-            from.getImplicitDown(), from.getImplicitDisabled());
+        return getAlignedAvailabilityResults(from.getImplicitCount(), from.getImplicitUp(), from.getImplicitDown(),
+            from.getImplicitUnknown(), from.getImplicitDisabled());
     }
 
-    private String getAlignedAvailabilityResults(long total, long up, long down, long disabled) {
+    private String getAlignedAvailabilityResults(long total, long up, long down, long unknown, long disabled) {
         StringBuilder results = new StringBuilder();
 
-        results.append("<table width=\"180px\"><tr>");
+        results.append("<table><tr>");
         if (0 == total) {
             results.append(getColumn(false,
                 "<img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
@@ -228,28 +230,39 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             if (up > 0) {
                 String imagePath = ImageManager.getFullImagePath(ImageManager
                     .getAvailabilityIconFromAvailType(AvailabilityType.UP));
-                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", up));
+                results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />", up));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
             }
 
             if (down > 0) {
                 String imagePath = ImageManager.getFullImagePath(ImageManager
                     .getAvailabilityIconFromAvailType(AvailabilityType.DOWN));
-                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", down));
+                results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />", down));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
             }
 
             if (disabled > 0) {
                 String imagePath = ImageManager.getFullImagePath(ImageManager
                     .getAvailabilityIconFromAvailType(AvailabilityType.DISABLED));
-                results.append(getColumn(false, " <img src=\"" + imagePath + "\" />", disabled));
+                results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />",
+                    disabled));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
+            }
+
+            if (unknown > 0) {
+                String imagePath = ImageManager.getFullImagePath(ImageManager
+                    .getAvailabilityIconFromAvailType(AvailabilityType.UNKNOWN));
+                results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />",
+                    unknown));
+            } else {
+                results.append(getColumn(false,
+ "&nbsp;<img src=\"/images/blank.png\" width=\"1px\" height=\"1px\" />"));
             }
         }
         results.append("</tr></table>");
@@ -261,7 +274,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         if (isSpacerColumn) {
             results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"10px\" align=\"left\" >");
         } else {
-            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"55px\" align=\"left\" >");
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"45px\" align=\"left\" >");
         }
         if (data == null) {
             results.append("&nbsp;");

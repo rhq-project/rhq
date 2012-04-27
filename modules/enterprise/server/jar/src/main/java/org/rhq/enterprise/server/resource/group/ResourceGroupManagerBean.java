@@ -1191,13 +1191,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 while (rs.next()) {
                     long explicitCount = rs.getLong(1);
                     long explicitDown = rs.getLong(2);
-                    long explicitDisabled = rs.getLong(3);
-                    long implicitCount = rs.getLong(4);
-                    long implicitDown = rs.getLong(5);
-                    long implicitDisabled = rs.getLong(6);
-                    int groupKey = rs.getInt(5);
-                    Object[] next = new Object[] { explicitCount, explicitDown, explicitDisabled, implicitCount,
-                        implicitDown, implicitDisabled, groupKey };
+                    long explicitUnknown = rs.getLong(3);
+                    long explicitDisabled = rs.getLong(4);
+                    long implicitCount = rs.getLong(5);
+                    long implicitDown = rs.getLong(6);
+                    long implicitUnknown = rs.getLong(7);
+                    long implicitDisabled = rs.getLong(8);
+                    int groupKey = rs.getInt(9);
+                    Object[] next = new Object[] { explicitCount, explicitDown, explicitUnknown, explicitDisabled,
+                        implicitCount, implicitDown, implicitUnknown, implicitDisabled, groupKey };
                     rawResults.add(next);
                 }
             } finally {
@@ -1239,10 +1241,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         for (Object[] row : rawResults) {
             long explicitCount = (Long) row[0];
             long explicitDown = (Long) row[1];
-            long explicitDisabled = (Long) row[2];
-            long implicitCount = (Long) row[3];
-            long implicitDown = (Long) row[4];
-            long implicitDisabled = (Long) row[5];
+            long explicitUnknown = (Long) row[2];
+            long explicitDisabled = (Long) row[3];
+            long implicitCount = (Long) row[4];
+            long implicitDown = (Long) row[5];
+            long implicitUnknown = (Long) row[6];
+            long implicitDisabled = (Long) row[7];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
             ResourceType type = group.getResourceType();
             ResourceFacets facets;
@@ -1253,8 +1257,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // compatible group
                 facets = resourceTypeManager.getResourceFacets(type.getId());
             }
-            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown,
-                explicitDisabled, implicitCount, implicitDown, implicitDisabled, group, facets);
+            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitUnknown,
+                explicitDisabled, implicitCount, implicitDown, implicitUnknown, implicitDisabled, group, facets);
             Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
             composite.setResourcePermission(new ResourcePermission(perms));
             results.add(composite);
@@ -1403,6 +1407,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "  (SELECT count(er) " // DOWN explicit
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
             + "        AND er.currentAvailability.availabilityType = 0 ),\n"
+            + "  (SELECT count(er) " // UNKNOWN explicit
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "        AND er.currentAvailability.availabilityType = 2 ),\n"
             + "  (SELECT count(er) " // DISABLED explicit
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
             + "        AND er.currentAvailability.availabilityType = 3 ),\n"
@@ -1411,6 +1418,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "  (SELECT count(ir) " // DOWN implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
             + "        AND ir.currentAvailability.availabilityType = 0 ),\n"
+            + "  (SELECT count(ir) " // UNKNOWN implicit
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "        AND ir.currentAvailability.availabilityType = 2 ),\n"
             + "  (SELECT count(ir) " // DISABLED implicit
             + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
             + "        AND ir.currentAvailability.availabilityType = 3 )\n,"
@@ -1427,7 +1437,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         Object[] data = results.get(0);
 
-        ResourceGroup group = (ResourceGroup) data[6];
+        ResourceGroup group = (ResourceGroup) data[8];
         ResourceType type = group.getResourceType();
         ResourceFacets facets;
         if (type == null) {
@@ -1439,21 +1449,23 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         ResourceGroupComposite composite = null;
-        if (((Number) data[3]).longValue() > 0) {
+        if (((Number) data[4]).longValue() > 0) {
             long explicitCount = ((Number) data[0]).longValue();
             long explicitDown = ((Number) data[1]).longValue();
-            long explicitDisabled = ((Number) data[2]).longValue();
-            long implicitCount = ((Number) data[3]).longValue();
-            long implicitDown = ((Number) data[4]).longValue();
-            long implicitDisabled = ((Number) data[5]).longValue();
+            long explicitUnknown = ((Number) data[2]).longValue();
+            long explicitDisabled = ((Number) data[3]).longValue();
+            long implicitCount = ((Number) data[4]).longValue();
+            long implicitDown = ((Number) data[5]).longValue();
+            long implicitUnknown = ((Number) data[6]).longValue();
+            long implicitDisabled = ((Number) data[7]).longValue();
             // In the past we had only DOWN/0 and UP/1 avails/ordinal and and the avails were just averages.
             // Now we have DISABLED and UNKNOWN. So group avail is done differently, instead of a ratio of
             // of UP vs DOWN it is now handled with counts. This is handled in the composite.
 
-            composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitDisabled,
-                implicitCount, implicitDown, implicitDisabled, group, facets);
+            composite = new ResourceGroupComposite(explicitCount, explicitDown, explicitUnknown, explicitDisabled,
+                implicitCount, implicitDown, implicitUnknown, implicitDisabled, group, facets);
         } else {
-            composite = new ResourceGroupComposite(0L, 0L, 0L, 0L, 0L, 0L, group, facets);
+            composite = new ResourceGroupComposite(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, group, facets);
         }
 
         return composite;
@@ -1543,9 +1555,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias% ) "; // ResourceGroup
             break;
@@ -1555,9 +1569,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias%, " // ResourceGroup
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS

@@ -1618,10 +1618,12 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="HornetQ"
@@ -2209,6 +2211,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="DataSource (Managed)"
@@ -2826,6 +2829,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <!--  REMOVING. These are lifecycle operations for AS container itself.  Don't think we want to allow
@@ -2864,7 +2868,7 @@
       </plugin-configuration>
 
       <resource-configuration>
-	<c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
+        <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
         <c:list-property name="property" required="false" description="A list of generic key/value properties.">
          <c:map-property name="property:collapsed" displayName="Property">
            <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
@@ -3047,7 +3051,6 @@
            description="The transactions subsystem.">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
       <parent-resource-type name="Profile" plugin="jboss-as-7"/>
     </runs-inside>
 
@@ -3083,12 +3086,12 @@
            description="The transactions subsystem.">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
       <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created." measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
@@ -4057,6 +4060,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -4123,6 +4127,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jdr" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <operation name="generate-jdr-report" displayName="Generate JDR Report" description="Request the generation of a JDR report.">
@@ -4149,6 +4154,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jca" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -4274,6 +4280,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jaxr" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -4320,6 +4327,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=cmp" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="HiloKeygenerator"
@@ -4364,6 +4372,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=ee" readOnly="true"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -4389,6 +4398,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=security"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
    <operation name="add" description="Adds the security subsystem.">
@@ -4741,6 +4751,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=threads"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="ThreadFactory"
@@ -4832,6 +4843,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=ejb3"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5029,6 +5041,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=jmx"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5055,6 +5068,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="Resource Adapter"
@@ -5221,6 +5235,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="Cache Container"
@@ -5334,6 +5349,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=remoting"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5362,6 +5378,7 @@
 
     <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=osgi"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <operation name="subsystem:activate" displayName="Activate" description="Activate the OSGi subsystem.">
@@ -5454,6 +5471,7 @@
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="Mail Session"

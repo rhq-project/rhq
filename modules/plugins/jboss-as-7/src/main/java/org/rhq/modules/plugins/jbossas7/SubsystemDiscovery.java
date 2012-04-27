@@ -98,8 +98,10 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
             // path correction for managed servers, where the config is below host=x,server-config=y but
             // the runtime resource is below host=x,server=y
-            path = path.replaceAll(",server-config=", ",server=");
-            parentPath = parentPath.replaceAll(",server-config=", ",server=");
+            if (path.startsWith("host=")) {
+                path = path.replaceAll(",server-config=", ",server=");
+                parentPath = parentPath.replaceAll(",server-config=", ",server=");
+            }
         }
 
         if (Boolean.getBoolean("as7plugin.verbose"))

@@ -87,7 +87,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             "PROFILER", //
             "JAVA_HOME", //
             "JAVA", //
-            "JAVA_OPTS", //
             "PRESERVE_JAVA_OPTS", //
             "PROCESS_CONTROLLER_JAVA_OPTS", //
             "HOST_CONTROLLER_JAVA_OPTS", //

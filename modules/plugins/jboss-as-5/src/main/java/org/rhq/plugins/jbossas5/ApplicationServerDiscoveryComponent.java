@@ -131,8 +131,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final Set<CommandLineOption> START_SCRIPT_OPTION_EXCLUDES = new HashSet<CommandLineOption>();
 
     static {
+        // Note that JAVA_OPTS is not included on purpose.  If present the setting will override that
+        // which is set in run.conf or possibly in a custom script.  We opt to let run.conf provide the setting
+        // as that is quite likely what users will expect.  JAVA_OPTS can be added manually to the
+        // startScriptEnv settings at which time it would provide an override. Not discovering JAVA_OPTS also
+        // avoids issues with duplicate settings, due to manipulations made to it by run.conf. 
         START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList( //
-            "JAVA_OPTS", //
             "JAVA_HOME", //
             "JAVA", //
             "JAVAC_JAR", //

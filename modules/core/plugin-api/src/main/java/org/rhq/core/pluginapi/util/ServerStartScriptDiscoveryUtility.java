@@ -43,18 +43,19 @@ import org.rhq.core.system.ProcessInfo;
  */
 public class ServerStartScriptDiscoveryUtility {
 
+    // Generic OS-level PATH setting for LINUX. For Windows the PATH must be generated when we have
+    // the system env vars. It will be of the form %SystemRoot%\\system32;%SystemRoot%; 
+    private static final String CORE_ENV_VAR_PATH_LINUX = "/bin:/usr/bin";
+
     // Generic OS-level env vars that should be in every process's environment.
-    private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList(
-        "PATH",
-        "LD_LIBRARY_PATH"
-    ));
+    private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList("PATH",
+        "LD_LIBRARY_PATH"));
     static {
         if (File.separatorChar == '\\') {
             CORE_ENV_VAR_NAME_INCLUDES.add("OS"); // many batch files use this to figure out if the OS type is NT or 9x
             CORE_ENV_VAR_NAME_INCLUDES.add("SYSTEMROOT"); // required on Windows to avoid winsock create errors
         }
     }
-
 
     private ServerStartScriptDiscoveryUtility() {
     }
@@ -169,6 +170,17 @@ public class ServerStartScriptDiscoveryUtility {
                 startScriptEnv.put(envVarName, envVarValue);
             }
         }
+
+        // Add the fixed PATH
+        if (File.separatorChar == '\\') {
+            String systemRoot = processEnvVars.get("SYSTEMROOT");
+            systemRoot = (systemRoot == null) ? "C:\\Windows" : systemRoot;
+            String path = systemRoot + "\\system32;" + systemRoot;
+            startScriptEnv.put("PATH", path);
+        } else {
+            startScriptEnv.put("PATH", CORE_ENV_VAR_PATH_LINUX);
+        }
+
         return startScriptEnv;
     }
 

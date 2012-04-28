@@ -38,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.system.ProcessInfo;
 
 /**
- * A set of utility methods for initializing the three plugin configuration properties used by a plugin for starting the
- * managed server - "startScript", "startScriptEnv", and "startScriptArgs". See also {@link StartScriptConfiguration}.
+ * A set of utility methods that server discovery components can use to discover the values required to later restart
+ * the server process via a start script. The values can then be stored in or retrieved from the server's plugin
+ * configuration using the {@link StartScriptConfiguration} plugin configuration wrapper.
  *
  * @author Ian Springer
  */
@@ -55,6 +56,8 @@ public class ServerStartScriptDiscoveryUtility {
     // Generic OS-level env vars that should be in every process's environment.
     private static final Set<String> CORE_ENV_VAR_NAME_INCLUDES = new HashSet<String>(Arrays.asList("PATH",
         "LD_LIBRARY_PATH"));
+    private static final String NOHUP_PATH = "/usr/bin/nohup";
+    private static final String SUDO_PATH = "/usr/bin/sudo";
 
     static {
         if (OS_IS_WINDOWS) {
@@ -106,6 +109,63 @@ public class ServerStartScriptDiscoveryUtility {
         }
 
         return startScriptFile;
+    }
+
+    /**
+     * Return the command line prefix that should be used when restarting the specified server process.
+     *
+     * @param serverProcess a server (e.g. JBoss AS) process
+     * @param thisProcess this java process
+     *
+     * @return the command line prefix that should be used when restarting the specified server process
+     */
+    @Nullable
+    public static String getStartScriptPrefix(ProcessInfo serverProcess, ProcessInfo thisProcess) {
+        String prefix = null;
+        if (!OS_IS_WINDOWS) {
+            StringBuilder buffer = new StringBuilder();
+            File nohup = new File(NOHUP_PATH);
+            if (nohup.canExecute()) {
+                buffer.append(nohup.getPath());
+            }
+            File sudo = new File(SUDO_PATH);
+            if (sudo.canExecute() && (serverProcess.getCredentials() != null) &&
+                    (thisProcess.getCredentials() != null)) {
+                long processUid = serverProcess.getCredentials().getUid();
+                long processGid = serverProcess.getCredentials().getGid();
+                long agentProcessUid = thisProcess.getCredentials().getUid();
+                long agentProcessGid = thisProcess.getCredentials().getGid();
+                boolean sudoNeededForUser = (processUid != agentProcessUid);
+                boolean sudoNeededForGroup = (processGid != agentProcessGid);
+                if (sudoNeededForUser || sudoNeededForGroup) {
+                    if (buffer.length() > 0) {
+                        buffer.append(' ');
+                    }
+                    buffer.append(sudo.getPath());
+                    if (sudoNeededForUser) {
+                        buffer.append(" -u ");
+                        if (serverProcess.getCredentialsName() != null) {
+                            buffer.append(serverProcess.getCredentialsName().getUser());
+                        } else {
+                            buffer.append(serverProcess.getCredentials().getUid());
+                        }
+                    }
+                    if (sudoNeededForUser) {
+                        buffer.append(" -g ");
+                        if (serverProcess.getCredentialsName() != null) {
+                            buffer.append(serverProcess.getCredentialsName().getGroup());
+                        } else {
+                            buffer.append(serverProcess.getCredentials().getGid());
+                        }
+                    }
+                }
+            }
+            if (buffer.length() > 0) {
+                prefix = buffer.toString();
+            }
+        }
+
+        return prefix;
     }
 
     /**

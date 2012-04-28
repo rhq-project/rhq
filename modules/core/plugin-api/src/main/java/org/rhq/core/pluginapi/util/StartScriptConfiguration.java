@@ -41,57 +41,70 @@ import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
  */
 public class StartScriptConfiguration {
 
-    public static final String START_SCRIPT_CONFIG_PROP = "startScript";
-    public static final String START_SCRIPT_ENV_CONFIG_PROP = "startScriptEnv";
-    public static final String START_SCRIPT_ARGS_CONFIG_PROP = "startScriptArgs";
+    public static final String START_SCRIPT_PROP = "startScript";
+    public static final String START_SCRIPT_PREFIX_PROP = "startScriptPrefix";
+    public static final String START_SCRIPT_ENV_PROP = "startScriptEnv";
+    public static final String START_SCRIPT_ARGS_PROP = "startScriptArgs";
 
     private Configuration pluginConfig;
 
     public StartScriptConfiguration(Configuration pluginConfig) {
+        if (pluginConfig == null) {
+            throw new IllegalArgumentException("'pluginConfig' parameter is null.");
+        }
         this.pluginConfig = pluginConfig;
     }
 
     @Nullable
     public File getStartScript() {
-        String startScript = this.pluginConfig.getSimpleValue(START_SCRIPT_CONFIG_PROP);
+        String startScript = this.pluginConfig.getSimpleValue(START_SCRIPT_PROP);
         return (startScript != null) ? new File(startScript) : null;
     }
 
     public void setStartScript(File startScript) {
-        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_CONFIG_PROP);
+        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_PROP);
         if (prop == null) {
-            prop = new PropertySimple(START_SCRIPT_CONFIG_PROP, null);
+            prop = new PropertySimple(START_SCRIPT_PROP, null);
         }
         prop.setValue(startScript);
     }
 
+    @Nullable
+    public String getStartScriptPrefix() {
+        return this.pluginConfig.getSimpleValue(START_SCRIPT_PREFIX_PROP);
+    }
+
+    public void setStartScriptPrefix(String startScriptPrefix) {
+        this.pluginConfig.setSimpleValue(START_SCRIPT_PREFIX_PROP, startScriptPrefix);
+    }
+
     @NotNull
     public Map<String, String> getStartScriptEnv() {
-        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_CONFIG_PROP);
+        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_PROP);
         Map<String, String> map = (prop != null) ? new MapPropertySimpleWrapper(prop).getValue()
             : new HashMap<String, String>();
         return map;
     }
 
     public void setStartScriptEnv(Map<String, String> startScriptEnv) {
-        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_CONFIG_PROP);
+        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_PROP);
         if (prop == null) {
-            prop = new PropertySimple(START_SCRIPT_ENV_CONFIG_PROP, null);
+            prop = new PropertySimple(START_SCRIPT_ENV_PROP, null);
         }
         new MapPropertySimpleWrapper(prop).setValue(startScriptEnv);
     }
 
     @NotNull
     public List<String> getStartScriptArgs() {
-        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_CONFIG_PROP);
+        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_PROP);
         List<String> list = (prop != null) ? new ArgsPropertySimpleWrapper(prop).getValue() : new ArrayList<String>();
         return list;
     }
 
     public void setStartScriptArgs(List<String> startScriptArgs) {
-        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_CONFIG_PROP);
+        PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_PROP);
         if (prop == null) {
-            prop = new PropertySimple(START_SCRIPT_ARGS_CONFIG_PROP, null);
+            prop = new PropertySimple(START_SCRIPT_ARGS_PROP, null);
         }
         new ArgsPropertySimpleWrapper(prop).setValue(startScriptArgs);
     }

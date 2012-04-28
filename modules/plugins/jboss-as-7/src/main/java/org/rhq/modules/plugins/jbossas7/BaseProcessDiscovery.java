@@ -76,6 +76,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     private static final String RHQADMIN = "rhqadmin";
     private static final String RHQADMIN_ENCRYPTED = "35c160c1f841a889d4cda53f0bfc94b6";
 
+    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
+
     // The list of environment vars that the AS7 start script will use if they are set.
     private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new LinkedHashSet<String>();
     static {
@@ -100,7 +102,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         ));
 
         // If OS is Windows, add env vars that are only used by the batch files.
-        if (File.separatorChar == '\\') {
+        if (OS_IS_WINDOWS) {
             START_SCRIPT_ENV_VAR_NAMES.add("ECHO");
             START_SCRIPT_ENV_VAR_NAMES.add("NOPAUSE");
         }
@@ -188,7 +190,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
-        setStartScriptPluginConfigProps(process, commandLine, pluginConfig);
+        ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
+        setStartScriptPluginConfigProps(process, commandLine, pluginConfig, agentProcess);
         setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig, baseDir);
 
         String key = baseDir.getPath();
@@ -238,14 +241,14 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     private void setStartScriptPluginConfigProps(ProcessInfo process, AS7CommandLine commandLine,
-                                                 Configuration pluginConfig) {
+                                                 Configuration pluginConfig, ProcessInfo agentProcess) {
         StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
         ProcessInfo parentProcess = getPotentialStartScriptProcess(process);
 
         File startScript = ServerStartScriptDiscoveryUtility.getStartScript(parentProcess);
         if (startScript == null) {
             // The parent process is not a script - fallback to the default value (e.g. "bin/standalone.sh").
-            startScript = new File(getMode().getStartScript());
+            startScript = new File(getMode().getStartScriptBaseName());
         }
         if (!startScript.exists()) {
             if (!startScript.isAbsolute()) {
@@ -258,6 +261,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             }
         }
         startScriptConfig.setStartScript(startScript);
+
+        String startScriptPrefix = ServerStartScriptDiscoveryUtility.getStartScriptPrefix(process, agentProcess);
+        startScriptConfig.setStartScriptPrefix(startScriptPrefix);
 
         Map<String, String> startScriptEnv = ServerStartScriptDiscoveryUtility.getStartScriptEnv(process, parentProcess,
                 START_SCRIPT_ENV_VAR_NAMES);

@@ -61,15 +61,19 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
     }
 
     @Override
+    protected AS7Mode getMode() {
+        return AS7Mode.STANDALONE;
+    }
+
+    @Override
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws Exception {
-
         if (name.equals("start")) {
-            return startServer(AS7Mode.STANDALONE);
+            return startServer();
         } else if (name.equals("restart")) {
-            return restartServer(parameters, AS7Mode.STANDALONE);
+            return restartServer(parameters);
         } else if (name.equals("installRhqUser")) {
-            return installManagementUser(parameters, pluginConfiguration, AS7Mode.STANDALONE);
+            return installManagementUser(parameters, pluginConfiguration);
         }
 
         // reload, shutdown go to the remote server
@@ -90,8 +94,8 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
     }
 
     private void waitUntilReloaded(OperationResult operationResult) {
-        boolean reloaded=false;
-        int count=0;
+        boolean reloaded = false;
+        int count = 0;
         while (!reloaded) {
             try {
                 Thread.sleep(2000); // Wait 2s
@@ -102,7 +106,7 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
             Operation op = new ReadAttribute(new Address(),"release-version");
             Result res = getASConnection().execute(op);
             if (res.isSuccess() && !res.isReloadRequired()) { //
-                reloaded=true;
+                reloaded = true;
             } else if (count > 20) {
                 operationResult.setErrorMessage("Was not able to reload the server");
                 return;

@@ -20,25 +20,26 @@ package org.rhq.modules.plugins.jbossas7;
 
 /**
  * Various definitions for the operation modes of AS7 (HOST is strictly not a mode, but fits here nicely)
+ *
  * @author Heiko W. Rupp
  */
 public enum AS7Mode {
 
-    STANDALONE("standalone.xml", "standalone", "--server-config", "bin/standalone.sh","config"),
-    DOMAIN("domain.xml", "domain", "--domain-config", "bin/domain.sh","domainConfig"),
-    HOST("host.xml", "domain", "--host-config", "bin/domain.sh","hostConfig");
+    STANDALONE("standalone.xml", "standalone", "--server-config", "standalone", "config"),
+    DOMAIN("domain.xml", "domain", "--domain-config", "domain", "domainConfig"),
+    HOST("host.xml", "domain", "--host-config", "domain", "hostConfig");
 
     private String defaultXmlFile;
     private String defaultBaseDir;
     private String configArg;
-    private String startScript;
+    private String startScriptBaseName;
     private String configPropertyName;
 
-    private AS7Mode(String defaultXmlFile, String defaultBaseDir, String configArg, String startScript, String configPropertyName) {
+    private AS7Mode(String defaultXmlFile, String defaultBaseDir, String configArg, String startScriptBaseName, String configPropertyName) {
         this.defaultXmlFile = defaultXmlFile;
         this.defaultBaseDir = defaultBaseDir;
         this.configArg = configArg;
-        this.startScript = startScript;
+        this.startScriptBaseName = startScriptBaseName;
         this.configPropertyName = configPropertyName;
     }
 
@@ -54,8 +55,8 @@ public enum AS7Mode {
         return configArg;
     }
 
-    public String getStartScript() {
-        return startScript;
+    public String getStartScriptBaseName() {
+        return startScriptBaseName;
     }
 
     public String getConfigPropertyName() {

@@ -32,15 +32,18 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides information on what process to execute and how to execute it.
+ * <p/>
+ * Agent plugin developers should also see the ProcessExecutionUtility class in the plugin-api module, which provides
+ * handy methods for creating <code>ProcessExecution</code>s.
  *
  * @author John Mazzitelli
  * @author Ian Springer
  * @author Jay Shaughnessy
  *
  * @see org.rhq.core.system.JavaSystemInfo#executeProcess(ProcessExecution)
- * @see org.rhq.core.pluginapi.util.ProcessExecutionUtility
  */
 public class ProcessExecution {
+
     private String executable;
     private List<String> arguments;
     private Map<String, String> environmentVariables;
@@ -251,4 +254,5 @@ public class ProcessExecution {
 
         return buf.toString();
     }
+
 }

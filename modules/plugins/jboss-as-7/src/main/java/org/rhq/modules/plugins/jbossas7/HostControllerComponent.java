@@ -70,6 +70,10 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         return AvailabilityType.UP;
     }
 
+    @Override
+    protected AS7Mode getMode() {
+        return AS7Mode.DOMAIN;
+    }
 
     public Configuration getHCConfig() {
         return pluginConfiguration;
@@ -81,9 +85,9 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
         OperationResult operationResult;
         if (name.equals("start")) {
-            operationResult = startServer(AS7Mode.DOMAIN);
+            operationResult = startServer();
         } else if (name.equals("restart")) {
-            operationResult = restartServer(parameters, AS7Mode.DOMAIN);
+            operationResult = restartServer(parameters);
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
             String domainHost = pluginConfiguration.getSimpleValue("domainHost", "");
@@ -99,7 +103,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             waitUntilDown(operationResult);
 
         } else if (name.equals("installRhqUser")) {
-            operationResult = installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
+            operationResult = installManagementUser(parameters, pluginConfiguration);
         } else {
 
             // Defer other stuff to the base component for now

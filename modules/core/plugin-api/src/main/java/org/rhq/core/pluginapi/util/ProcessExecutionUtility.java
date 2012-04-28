@@ -1,6 +1,6 @@
 /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2012 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,12 @@ package org.rhq.core.pluginapi.util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.List;
 
-/**
- * @author Ian Springer
- */
 import org.rhq.core.system.ProcessExecution;
 
 /**
@@ -40,6 +38,8 @@ import org.rhq.core.system.ProcessExecution;
  * @author Ian Springer
  */
 public class ProcessExecutionUtility {
+
+    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
 
     private ProcessExecutionUtility() {
     }
@@ -68,8 +68,10 @@ public class ProcessExecutionUtility {
      * ProcessExecution will have a non-null arguments list, an environment map that is a copy of the current process's
      * environment, and a working directory set to its executable's parent directory.
      *
-     * @param  prefix a command prefix applied prior to <code>file</code> execution. Typically a <code>sudo</code>
-     *                command. Ignored if null.
+     * @param  prefix a prefix command line that should be prepended to the executable's command line
+     *                (e.g. "/usr/bin/nohup /usr/bin/sudo -u jboss -g jboss"). any files on the
+     *                command line should be absolute paths. if null, no prefix command line will be
+     *                prepended
      * @param  file an executable or a batch file
      *
      * @return a process execution
@@ -77,53 +79,47 @@ public class ProcessExecutionUtility {
     public static ProcessExecution createProcessExecution(String prefix, File file) {
         ProcessExecution processExecution;
 
-        if (isWindows() && isBatchFile(file)) {
-            String comSpec = System.getenv("COMSPEC");
-            if (comSpec == null) {
-                throw new RuntimeException("COMSPEC environment variable is not defined.");
-                // TODO: Try to find cmd.exe by checking the various usual locations.
-            }
-
-            if (!new File(comSpec).exists()) {
-                throw new RuntimeException("COMSPEC environment variable specifies a non-existent path: " + comSpec);
-            }
-
-            processExecution = new ProcessExecution(comSpec);
-            if (null == prefix) {
-                processExecution.setArguments(new String[] { "/C", file.getPath(), });
-            } else {
-                processExecution.setArguments(new String[] { "/C", prefix, file.getPath(), });
-            }
+        List<String> prefixArgs;
+        if (prefix != null) {
+            // TODO (ips, 04/27/10): Ideally, the prefix should be a String[], not a String.
+            prefixArgs = Arrays.asList(prefix.split("[ \t]+"));
         } else {
-            if (null == prefix) {
-                processExecution = new ProcessExecution(file.getPath());
-                processExecution.setArguments(new ArrayList<String>());
+            prefixArgs = Collections.emptyList();
+        }
+        String executable;
+        List<String> args = new ArrayList<String>();
+        if (OS_IS_WINDOWS && isBatchFile(file)) {
+            // Windows batch files cannot be executed directly - they must be passed as arguments to cmd.exe, e.g.
+            // "C:\Windows\System32\cmd.exe /c C:\opt\jboss-as\bin\run.bat".
+            executable = getCmdExeFile().getPath();
+            args.add("/c");
+            args.addAll(prefixArgs);
+            args.add(file.getPath());
+        } else {
+            // UNIX
+            if (prefixArgs.isEmpty()) {
+                executable = file.getPath();
             } else {
-                List<String> arguments = new ArrayList<String>();
-
-                StringTokenizer prefixTokenizer = new StringTokenizer(prefix);
-                String processName = prefixTokenizer.nextToken();
-
-                while (prefixTokenizer.hasMoreTokens()) {
-                    String prefixArgument = prefixTokenizer.nextToken();
-                    arguments.add(prefixArgument);
+                executable = prefixArgs.get(0);
+                if (prefixArgs.size() > 1) {
+                    args.addAll(prefixArgs.subList(1, prefixArgs.size()));
                 }
-
-                arguments.add(file.getPath());
-
-                processExecution = new ProcessExecution(processName);
-                processExecution.setArguments(arguments);
+                args.add(file.getPath());
             }
         }
+
+        processExecution = new ProcessExecution(executable);
+        processExecution.setArguments(args);
 
         // Start out with a copy of our own environment, since Windows needs
         // certain system environment variables to find DLLs, etc., and even
         // on UNIX, many scripts will require certain environment variables
         // (PATH, JAVA_HOME, etc.).
+        // TODO (ips, 04/27/12): We probably should not just do this by default.
         Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
         processExecution.setEnvironmentVariables(envVars);
 
-        // Many scripts (e.g. JBossAS scripts) assume their working directory is their parent directory.
+        // Many scripts (e.g. JBossAS scripts) assume their working directory is the directory containing the script.
         processExecution.setWorkingDirectory(file.getParent());
 
         return processExecution;
@@ -133,8 +129,19 @@ public class ProcessExecutionUtility {
         return file.getName().matches(".*\\.((bat)|(cmd))$(?i)");
     }
 
-    private static boolean isWindows() {
-        return File.separatorChar == '\\';
+    private static File getCmdExeFile() {
+        String cmdExe = System.getenv("COMSPEC");
+        if (cmdExe == null) {
+            throw new RuntimeException("COMSPEC environment variable is not defined.");
+            // TODO: Try to find cmd.exe by checking the various usual locations.
+        }
+
+        File cmdExeFile = new File(cmdExe);
+        if (!cmdExeFile.exists()) {
+            throw new RuntimeException("COMSPEC environment variable specifies a non-existent path: " + cmdExe);
+        }
+
+        return cmdExeFile;
     }
 
 }

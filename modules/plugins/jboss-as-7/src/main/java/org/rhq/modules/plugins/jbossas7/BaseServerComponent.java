@@ -65,9 +65,11 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements MeasurementFacet {
+public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
+    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
+    private static final String SCRIPT_EXTENSION = (OS_IS_WINDOWS) ? "bat" : "sh";
 
     final Log log = LogFactory.getLog(BaseServerComponent.class);
 
@@ -108,17 +110,18 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         this.connection = connection;
     }
 
+    protected abstract AS7Mode getMode();
+
     /**
-     * Restart the server by first executing a 'shutdown' operation via its API, and then calling
-     * the {@link #startServer(AS7Mode)} method to start it again.
+     * Restart the server by first executing a 'shutdown' operation via the management API and then calling
+     * the {@link #startServer} method to start it again.
      *
      * @param parameters Parameters to pass to the (recursive) invocation of #invokeOperation
-     * @param mode Mode of the server to start (domain or standalone)
      * @return State of execution
      * @throws Exception If anything goes wrong
      */
-    protected OperationResult restartServer(Configuration parameters, AS7Mode mode) throws Exception {
-        List<String> errors = validateStartScriptPluginConfigProps(mode);
+    protected OperationResult restartServer(Configuration parameters) throws Exception {
+        List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
             OperationResult result  = new OperationResult();
             setErrorMessage(result, errors);
@@ -134,7 +137,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
 
 //        context.getAvailabilityContext().requestAvailabilityCheck();
 
-        return startServer(mode);
+        return startServer();
     }
 
     protected boolean waitUntilDown(OperationResult tmp) throws InterruptedException {
@@ -159,22 +162,23 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
     }
 
     /**
-     * Start the server by calling the start script listed in the plugin configuration. If a different
-     * config is given, this is passed via --server-config
-     * @return State of Execution.
-     * @param mode Mode of the server to start (domain or standalone)
+     * Start the server by calling the start script defined in the plugin configuration.
+     *
+     * @return the result of the operation
      */
-    protected OperationResult startServer(AS7Mode mode) {
+    protected OperationResult startServer() {
         OperationResult operationResult = new OperationResult();
 
-        List<String> errors = validateStartScriptPluginConfigProps(mode);
+        List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
             setErrorMessage(operationResult, errors);
             return operationResult;
         }
 
-        File startScriptFile = getStartScriptFile(mode);
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
+        String startScriptPrefix = startScriptConfig.getStartScriptPrefix();
+        File startScriptFile = getStartScriptFile();
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptPrefix,
+                startScriptFile);
 
         List<String> arguments = processExecution.getArguments();
         if (arguments == null) {
@@ -239,10 +243,10 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         operationResult.setErrorMessage(buffer.toString());
     }
 
-    private List<String> validateStartScriptPluginConfigProps(AS7Mode mode) {
+    private List<String> validateStartScriptPluginConfigProps() {
         List<String> errors = new ArrayList<String>();
 
-        File startScriptFile = getStartScriptFile(mode);
+        File startScriptFile = getStartScriptFile();
 
         if (!startScriptFile.exists()) {
             errors.add("Start script '" + startScriptFile + "' does not exist.");
@@ -269,14 +273,18 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         return errors;
     }
 
-    private File getStartScriptFile(AS7Mode mode) {
+    private File getStartScriptFile() {
         File startScriptFile = startScriptConfig.getStartScript();
-        if (startScriptFile == null) {
-            startScriptFile = new File(mode.getStartScript());
-        }
-        if (!startScriptFile.isAbsolute()) {
-            File homeDir = serverPluginConfig.getHomeDir();
-            startScriptFile = new File(homeDir, startScriptFile.getPath());
+        File homeDir = serverPluginConfig.getHomeDir();
+        if (startScriptFile != null) {
+            if (!startScriptFile.isAbsolute()) {
+                startScriptFile = new File(homeDir, startScriptFile.getPath());
+            }
+        } else {
+            // Use the default start script.
+            String startScriptFileName = getMode().getStartScriptBaseName() + "." + SCRIPT_EXTENSION;
+            File binDir = new File(homeDir, "bin");
+            startScriptFile = new File(binDir, startScriptFileName);
         }
         return startScriptFile;
     }
@@ -359,7 +367,7 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         return operationResult;
     }
 
-    protected OperationResult installManagementUser(Configuration parameters, Configuration pluginConfig, AS7Mode mode) {
+    protected OperationResult installManagementUser(Configuration parameters, Configuration pluginConfig) {
         String user = parameters.getSimpleValue("user", "");
         String password = parameters.getSimpleValue("password", "");
 
@@ -389,15 +397,15 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
 
         String configFileName;
-        switch (mode) {
+        switch (getMode()) {
             case STANDALONE:
-                configFileName = pluginConfig.getSimpleValue("config", null);
+                configFileName = pluginConfig.getSimpleValue("config");
                 break;
-            case HOST:
-                configFileName = pluginConfig.getSimpleValue("hostConfig", null);
+            case DOMAIN:
+                configFileName = pluginConfig.getSimpleValue("hostConfig");
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported mode: " + mode);
+                throw new IllegalArgumentException("Unsupported mode: " + getMode());
         }
 
         File configFile = new File(configDir, configFileName);
@@ -409,7 +417,11 @@ public class BaseServerComponent<T extends ResourceComponent<?>> extends BaseCom
         }
 
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
-        File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, mode, realm);
+        File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, getMode(), realm);
+        if (!propertiesFile.canWrite()) {
+            result.setErrorMessage("Management users properties file [" + propertiesFile + "] is not writable.");
+            return result;
+        }
 
         String encryptedPassword;
         try {

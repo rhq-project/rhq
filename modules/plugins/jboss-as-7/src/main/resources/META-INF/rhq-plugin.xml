@@ -3,15 +3,27 @@
 <!DOCTYPE plugin [
 
     <!ENTITY startScriptPluginConfigGroup '
-    <c:group name="startScript">
-        <c:simple-property name="startScript" type="file" description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is resolved relative to the server home directory." displayName="Start Script Path" required="false" />
-        <c:simple-property name="startScriptEnv" type="longString" description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
-        <c:simple-property name="startScriptArgs" type="longString" description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
+    <c:group name="operations">
+        <c:simple-property name="startScript" type="file"
+                           description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is resolved relative to the server home directory." displayName="Start Script Path" required="false" />
+        <c:simple-property name="startScriptPrefix" type="string" required="false"
+                           description="A prefix command line that should be prepended to the start script command line
+                                        by the Start and Restart operations; the prefix command must be an absolute path
+                                        (e.g. &quot;/usr/bin/sudo&quot;). This property is most commonly used to run the
+                                        AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss -g
+                                        jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group
+                                        &quot;jboss&quot;. It is also possible to chain prefix commands (e.g.
+                                        &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP signals and
+                                        run as user &quot;jboss&quot;)." />
+        <c:simple-property name="startScriptEnv" type="longString"
+                           description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
+        <c:simple-property name="startScriptArgs" type="longString"
+                           description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
     </c:group>
 '>
 
     <!ENTITY logSources '
-    <c:group name="event" displayName="Events">
+    <c:group name="events">
         <c:list-property name="logEventSources">
             <c:map-property name="logEventSource">
                 <c:simple-property name="logFilePath" type="file" summary="true"

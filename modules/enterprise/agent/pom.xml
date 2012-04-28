@@ -62,7 +62,7 @@
            Its scope is provided so we don't actually put it anywhere.
            Our assembly process will place this library in the connector directory.
            I'm not convinced this is actually needed, but it isn't hurting anything. -->
-      <groupId>org.rhq</groupId>
+      <groupId>org.rhq.helpers</groupId>
       <artifactId>rhq-rtfilter</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>

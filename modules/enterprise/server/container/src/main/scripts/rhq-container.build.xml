@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+t?xml version="1.0"?>
 
 <!-- $Id: rhq-container.build.xml 9321 2008-02-11 05:03:45Z jmazzitelli $ -->
 
@@ -351,7 +351,7 @@
              dest="${jboss.deploy.dir}/rhq-agent.sar" />
 
       <echo>Deploying RT filter jar ...</echo>
-      <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
+      <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
             todir="${jboss.home}/server/default/lib" verbose="true" />
 
       <!-- Delete docs dir and README files... -->

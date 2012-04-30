@@ -1112,7 +1112,6 @@ public class AgentConfiguration {
         String plugin_dir_str = m_preferences.get(AgentConfigurationConstants.PLUGINS_DIRECTORY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_DIRECTORY);
         File plugin_dir = new File(plugin_dir_str);
-
         if (!plugin_dir.exists()) {
             plugin_dir.mkdirs();
         }
@@ -1351,7 +1350,7 @@ public class AgentConfiguration {
      */
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer(m_preferences.absolutePath());
+        StringBuilder buf = new StringBuilder(m_preferences.absolutePath());
 
         buf.append('[');
 

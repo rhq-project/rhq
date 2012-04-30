@@ -339,6 +339,77 @@ public class AvailTest extends Arquillian {
     }
 
     @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    // If a parent changes to DOWN, its children should all defer to being DOWN as well.
+    public void testDeferToParentDown() throws Exception {
+        // don't use a ForceAvailabilityExecutor for this test, we want to manipulate what gets checked
+        AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        int numUp = 0;
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            if (datum.getAvailabilityType() == AvailabilityType.UP) {
+                ++numUp;
+            }
+        }
+        Assert.assertEquals(numUp, 1);
+        // only the platform should have been checked, all others should only have been scheduled for a check 
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, false, true, 29, 0, 1, 28, 0, 0);
+
+        // At this point all of the non-platform resources are scheduled but still at NULL avail
+
+        // Manipulate the scheduled time of the "1" servers so they are checked
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        long now = System.currentTimeMillis();
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(now);
+            }
+        }
+
+        // make sure nothing else is scheduled to be checked
+        containerSets.clear();
+        containerSets.add(childContainers1);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers2);
+        long later = now + 10000000L;
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(later);
+            }
+        }
+
+        // make the "1" servers return DOWN and ensure all other children are down, even though their schedules
+        // are not yet met.
+        for (AvailResourceComponent downParent : this.parentComponents1) {
+            downParent.setNextAvailability(AvailabilityType.DOWN);
+        }
+
+        // a changes-only report, even though only 2 checks are scheduled, we should see checks for half
+        // the resources, as the children should defer to the DOWN parent. (they should change from null to DOWN).
+        // The scheduled checks should see their schedules pushed out but the deferred checks should not, their
+        // schedules remain unchanged in this scenario.
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().size(), 14, "should report half the resources");
+        availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.DOWN, "should be DOWN");
+        }
+        scan = executor.getMostRecentScanHistory();
+        // Children should defer to newly down parent.
+        assertScan(scan, false, false, 29, 14, 3, 0, 2, 12);
+    }
+
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     public void testCheckOnlyEligible() throws Exception {
         // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp() 
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
@@ -458,7 +529,7 @@ public class AvailTest extends Arquillian {
             "Unexpected numSched, remember to omit the implied platform");
         Assert.assertEquals(scan.getNumPushedByInterval(), numPushed, "Unexpected numPushed");
         Assert.assertEquals(scan.getNumDeferToParent(), numDeferred,
-            "Unexpected numDeferred, remember to include disabled and implied (when parent goes NOT UP)");
+            "Unexpected numDeferred, remember to include disabled and implied (when parent goes DOWN)");
     }
 
     private void dumpContainers(String title) {

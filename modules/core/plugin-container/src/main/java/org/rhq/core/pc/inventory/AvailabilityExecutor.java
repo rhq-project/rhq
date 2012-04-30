@@ -266,10 +266,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // If the resource's parent is DOWN, the rules are that the resource and all of the parent's other
         // descendants, must also be DOWN. So, there's no need to even ask the resource component
         // for its current availability - its current avail is set to the parent avail type and that's that.
-        // Otherwise, checkAvail as needed.
+        // Otherwise, checkAvail as needed. 
         if (deferToParent || (AvailabilityType.DOWN == parentAvailType)) {
             current = parentAvailType;
             ++scan.numDeferToParent;
+
+            // For the DOWN parent case it's unclear to me whether we should push out the avil check time of
+            // the child.  For now, we'll leave it alone and let the next check happen according to the
+            // schedule already established.
 
         } else {
             // regardless of whether the avail schedule is met, we still must check avail if isForce is true or if

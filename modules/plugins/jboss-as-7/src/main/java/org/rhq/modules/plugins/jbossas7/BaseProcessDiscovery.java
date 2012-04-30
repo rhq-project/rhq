@@ -249,7 +249,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (startScript == null) {
             // The parent process is not a script - fallback to the default value (e.g. "bin/standalone.sh").
             String startScriptFileName = getMode().getStartScriptFileName();
-            startScript = new File(startScriptFileName);
+            startScript = new File("bin", startScriptFileName);
         }
         if (!startScript.exists()) {
             if (!startScript.isAbsolute()) {

@@ -261,6 +261,7 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                 System.out.println(" Done.");
 
                 em.flush();
+                em.clear();
                 return null;
             }
         });

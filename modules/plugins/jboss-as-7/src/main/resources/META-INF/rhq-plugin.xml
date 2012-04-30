@@ -1928,7 +1928,8 @@
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
-        <c:simple-property name="protocol" required="false" type="string" readOnly="false" description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
+        <c:simple-property name="protocol" required="true" type="string" readOnly="false" default="HTTP/1.1" defaultValue="HTTP/1.1"
+                           description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
         <!-- TODO let the user could enter a custom value here when the UI supports this. -->
           <c:property-options >
             <c:option value="HTTP/1.1"/>

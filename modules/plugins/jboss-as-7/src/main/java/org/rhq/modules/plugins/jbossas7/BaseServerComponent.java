@@ -68,8 +68,6 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
-    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
-    private static final String SCRIPT_EXTENSION = (OS_IS_WINDOWS) ? "bat" : "sh";
 
     final Log log = LogFactory.getLog(BaseServerComponent.class);
 
@@ -282,7 +280,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
         } else {
             // Use the default start script.
-            String startScriptFileName = getMode().getStartScriptBaseName() + "." + SCRIPT_EXTENSION;
+            String startScriptFileName = getMode().getStartScriptFileName();
             File binDir = new File(homeDir, "bin");
             startScriptFile = new File(binDir, startScriptFileName);
         }

@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
+
 /**
  * Various definitions for the operation modes of AS7 (HOST is strictly not a mode, but fits here nicely)
  *
@@ -28,6 +30,9 @@ public enum AS7Mode {
     STANDALONE("standalone.xml", "standalone", "--server-config", "standalone", "config"),
     DOMAIN("domain.xml", "domain", "--domain-config", "domain", "domainConfig"),
     HOST("host.xml", "domain", "--host-config", "domain", "hostConfig");
+
+    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
+    private static final String SCRIPT_EXTENSION = (OS_IS_WINDOWS) ? "bat" : "sh";
 
     private String defaultXmlFile;
     private String defaultBaseDir;
@@ -55,12 +60,12 @@ public enum AS7Mode {
         return configArg;
     }
 
-    public String getStartScriptBaseName() {
-        return startScriptBaseName;
-    }
-
     public String getConfigPropertyName() {
         return configPropertyName;
+    }
+
+    public String getStartScriptFileName() {
+        return startScriptBaseName + '.' + SCRIPT_EXTENSION;
     }
 
 }

@@ -926,7 +926,11 @@
                                                then it will be resolved relative to {homeDir}."/>
                <c:simple-property name="serverName" required="false"
                                   description="The name of the server configuration (e.g. minimal, default, or all);
-                                               if not specified, it will default to the last path component of {serverHomeDir}."
+                                               if not specified, it will default to the last path component of {serverHomeDir}.
+                                               If the 'startScriptArgs' property is not set, this property will be used
+                                               by the Start and Restart operations as the value of the -c option that is
+                                               passed to the start script. However, this property is deprecated for that
+                                               purpose and 'startScriptArgs' should be used instead."
                                   default="default"/>
                <c:simple-property name="clientUrl" required="false"
                                   description="The URL of the server's client JAR library directory;
@@ -955,7 +959,8 @@
                                type="longString" 
                                default="" 
                                description="The variables that the Start and Restart operations will add to the environment 
-                                            of the server start script. Each name=value pair should be on a new line.
+                                            of the server start script. Each name=value pair should be on a new line. Values
+                                            should *not* be enclosed in quotes.
                                             For example: JAVA_OPTS=-Xms=128M" /> 
                <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" 
                                required="false" 
@@ -964,7 +969,7 @@
                                description="The arguments that the Start and Restart operations will pass to the server
                                             start script. Each argument should be on a new line. For example: --host=127.0.0.2 .
                                             As an exception, a space delimited option can have its value on the same line, or
-                                            on a new line.  For example: -b 127.0.0.2" />                                            
+                                            on a new line. For example: -b 127.0.0.2" />
                <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
                                description="The path to the script used by the Shut Down operation
                                             to shut down this JBossAS server
@@ -973,7 +978,8 @@
                                             defaults to 'bin/shutdown.sh' on UNIX or 'bin\shutdown.bat' on Windows."/>
                <c:simple-property name="shutdownMethod" displayName="Shutdown Method" type="string" required="false" default="JMX"
                                description="The method used to execute the Shut Down operation;
-                                            defaults to 'JMX MBean'.">
+                                            defaults to 'JMX MBean'. 'JMX MBean' is the preferred shutdown method and
+                                            should be used unless there is a specific use case for using a script.">
                  <c:property-options>
                     <c:option value="JMX"    name="JMX MBean"/>
                     <c:option value="SCRIPT" name="shutdown script"/>
@@ -983,13 +989,15 @@
                                  description="The host or IP address that all application server services should listen on
                                               (e.g. 10.11.14.233 or foo.example.com); specify 0.0.0.0 to tell the
                                               application server to bind to all available network interfaces; defaults to
-                                              '127.0.0.1'."/>
+                                              '127.0.0.1'. This property is deprecated and will be ignored if the
+                                              'startScriptArgs' property is set."/>
                <c:simple-property name="javaHome" required="false"
                                  description="The absolute path to a JRE or JDK installation directory containing
-                                              the JVM that should be used to start and shutdown this JBoss AS server;
-                                              this property must be set in order for the Start operation to work,
-                                              or for the Shutdown operation to work when the shutdown method is set
-                                              to 'shutdown script'."/>
+                                              the JVM that should be used by the operations that start and/or shut down
+                                              this JBoss AS server; for the Shutdown operation to work when the
+                                              shutdown method is set to 'shutdown script', the property must be set.
+                                              For the Start operation, this property is deprecated and will be ignored
+                                              if the 'startScriptEnv' property is set."/>
                <c:simple-property name="startWaitMax" required="false"
                                  description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to start up. The default is 5 minutes.">
                          <c:constraint>

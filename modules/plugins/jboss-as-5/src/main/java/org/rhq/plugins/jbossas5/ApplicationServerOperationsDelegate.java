@@ -25,7 +25,6 @@ package org.rhq.plugins.jbossas5;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -169,38 +168,17 @@ public class ApplicationServerOperationsDelegate {
 
         // The optional command prefix (e.g. sudo or nohup).
         String prefix = pluginConfig
-            .getSimple(ApplicationServerPluginConfigurationProperties.SCRIPT_PREFIX_CONFIG_PROP).getStringValue();
-        String configName = getConfigurationSet();
-        String bindAddress = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.BIND_ADDRESS,
-            null);
-
-        ProcessExecution processExecution;
-
-        if (prefix == null || prefix.replaceAll("\\s", "").equals("")) {
-            // Prefix is either null or contains ONLY whitespace characters.
-            processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
-
-            addProcessExecutionArguments(processExecution, startScriptFile, startScriptConfig, false);
-
-        } else {
-            // The process execution should be tied to the process represented as the prefix. If there are any other
-            // tokens in the prefix, consider them arguments to the prefix process.
-            StringTokenizer prefixTokenizer = new StringTokenizer(prefix);
-            String processName = prefixTokenizer.nextToken();
-            File prefixProcess = new File(processName);
-
-            processExecution = ProcessExecutionUtility.createProcessExecution(prefixProcess);
-
-            while (prefixTokenizer.hasMoreTokens()) {
-                String prefixArgument = prefixTokenizer.nextToken();
-                processExecution.getArguments().add(prefixArgument);
-            }
-
-            addProcessExecutionArguments(processExecution, startScriptFile, startScriptConfig, false);
+            .getSimpleValue(ApplicationServerPluginConfigurationProperties.SCRIPT_PREFIX_CONFIG_PROP, null);
+        if ((prefix != null) && prefix.replaceAll("\\s", "").equals("")) {
+            // all whitespace - normalize to null
+            prefix = null;
         }
 
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(prefix, startScriptFile);
+        addProcessExecutionArguments(processExecution, startScriptFile, startScriptConfig, false);
+
         // processExecution is initialized to the current process' env.  This isn't really right, it's the
-        // rhq agent env.  Override this if the startScriptEnv propert has been set. 
+        // rhq agent env.  Override this if the startScriptEnv property has been set.
         Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
         if (!startScriptEnv.isEmpty()) {
             for (String envVarName : startScriptEnv.keySet()) {
@@ -210,6 +188,9 @@ public class ApplicationServerOperationsDelegate {
                 startScriptEnv.put(envVarName, envVarValue);
             }
             processExecution.setEnvironmentVariables(startScriptEnv);
+        } else {
+            // set JAVA_HOME to the value of the deprecated 'javaHome' plugin config prop.
+            setJavaHomeEnvironmentVariable(processExecution);
         }
 
         // perform any init common for start and shutdown scripts
@@ -298,23 +279,21 @@ public class ApplicationServerOperationsDelegate {
         // (e.g. ${JBOSS_HOME}/bin) for the script to work.
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
-        // Both scripts require the JAVA_HOME env var to be set. Set it to the plugin config in case it's
-        // a different version than that of the agent's env.
-        File javaHomeDir = getJavaHomePath();
-        if (javaHomeDir == null) {
-            throw new IllegalStateException(
-                "The '"
-                    + ApplicationServerPluginConfigurationProperties.JAVA_HOME
-                    + "' connection property must be set in order to start the application server or to stop it via script.");
-        }
-
-        validateJavaHomePathProperty();
-        processExecution.getEnvironmentVariables().put("JAVA_HOME", javaHomeDir.getPath());
-
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(1000L); // 1 second // TODO:
         // Should we wait longer than one second?
         processExecution.setKillOnTimeout(false);
+    }
+
+    private void setJavaHomeEnvironmentVariable(ProcessExecution processExecution) {
+        File javaHomeDir = getJavaHomePath();
+        if (javaHomeDir == null) {
+            throw new RuntimeException("JAVA_HOME environment variable must be specified via the 'javaHome' connection "
+                    + "property in order to shut down the application server via script.");
+        }
+
+        validateJavaHomePathProperty();
+        processExecution.getEnvironmentVariables().put("JAVA_HOME", javaHomeDir.getPath());
     }
 
     /**
@@ -365,6 +344,7 @@ public class ApplicationServerOperationsDelegate {
 
         initProcessExecution(processExecution, shutdownScriptFile);
 
+        setJavaHomeEnvironmentVariable(processExecution);
         String server = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.NAMING_URL)
             .getStringValue();
         if (server != null) {
@@ -625,8 +605,7 @@ public class ApplicationServerOperationsDelegate {
 
     void validateJavaHomePathProperty() {
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
-        String javaHome = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.JAVA_HOME)
-            .getStringValue();
+        String javaHome = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.JAVA_HOME, null);
         if (javaHome != null) {
             File javaHomeDir = new File(javaHome);
             if (!javaHomeDir.isAbsolute()) {

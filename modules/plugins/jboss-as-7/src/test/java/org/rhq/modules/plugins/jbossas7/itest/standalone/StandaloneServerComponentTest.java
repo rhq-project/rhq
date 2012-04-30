@@ -119,7 +119,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         assertEquals(avail, AvailabilityType.UP);
     }
 
-    @Test(priority = 6, enabled = false)
+    @Test(priority = 6, enabled = true)
     public void testSystemPropertiesSettings() throws Exception {
 
         Configuration config = loadResourceConfiguration(getServerResource());

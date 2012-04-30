@@ -53,6 +53,11 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
+    /** A map where this error message has been set must not be written to the AS
+     * @see #updateHandlePropertyMapSpecial
+     */
+    public static final String LOGICAL_REMOVED = "__logicalRemoved";
+
     final Log log = LogFactory.getLog(this.getClass());
 
     protected Address address;
@@ -63,6 +68,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private String type;
     private boolean addNewChildren;
     private boolean addDeleteModifiedChildren;
+    protected boolean createChildRequested = false;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -262,13 +268,18 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 boolean found=false;
                 for (Property prop2 : pl.getList()) {
                     PropertyMap propMap2 = (PropertyMap) prop2;
-                    String itemName = propMap2.getSimple(namePropLocator).getStringValue();
-                    if (itemName==null) {
-                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator + "]");
-                    }
-                    if (itemName.equals(existingName)) {
-                        found=true;
-                        break;
+                    if (LOGICAL_REMOVED.equals(propMap2.getErrorMessage())) {
+                        found = true; // we pretend this still exists on the server, so nothing to update
+                    } else {
+                        String itemName = propMap2.getSimple(namePropLocator).getStringValue();
+                        if (itemName == null) {
+                            throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator
+                                + "]");
+                        }
+                        if (itemName.equals(existingName)) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
 
@@ -313,6 +324,13 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                                 Address address, List<String> existingPropNames) {
+        if (prop==null)
+            return;
+
+        // Don't try to send this map to the server
+        if (LOGICAL_REMOVED.equals(prop.getErrorMessage()))
+            return;
+
         Map<String, Object> results = prepareSimplePropertyMap(prop, propDef);
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
@@ -390,6 +408,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
         // If the property value is null and the property is optional, skip too
         if (property.getStringValue() == null && !propertyDefinition.isRequired())
+            return;
+
+        if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
 
         SimpleEntry<String, Object> entry = this.preparePropertySimple(property, propertyDefinition);

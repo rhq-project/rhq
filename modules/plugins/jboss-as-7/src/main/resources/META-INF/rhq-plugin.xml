@@ -801,12 +801,13 @@
         <c:list-property name="*3" displayName="Path" required="false"
                          description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
           <c:map-property name="*" displayName="Entry">
-            <c:simple-property name="name" required="true" type="string" readOnly="false"
+            <c:simple-property name="name" required="true" type="string" readOnly="true"
                                description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
             <c:simple-property name="path" required="true" type="string" readOnly="false"
                                description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
             <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
                                description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+            <c:simple-property name="read-only" description="Is this property read-only" default="false" readOnly="true" defaultValue="false" type="boolean"/>
           </c:map-property>
         </c:list-property>
       </c:group>
@@ -956,12 +957,13 @@
           <c:list-property name="*3" displayName="Path" required="false"
                            description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
             <c:map-property name="*" displayName="Entry">
-              <c:simple-property name="name" required="true" type="string" readOnly="false"
+              <c:simple-property name="name" required="true" type="string" readOnly="true"
                                  description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
               <c:simple-property name="path" required="true" type="string" readOnly="false"
                                  description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
               <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
                                  description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+              <c:simple-property name="read-only" description="Is this property read-only" default="false" readOnly="true" defaultValue="false" type="boolean"/>
             </c:map-property>
           </c:list-property>
         </c:group>
@@ -1209,13 +1211,14 @@
       <c:group name="children:path:name+" displayName="Path">
         <c:list-property name="*3" displayName="Path" required="false"
                          description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
-          <c:map-property name="*" displayName="Entry">
-            <c:simple-property name="name" required="true" type="string" readOnly="false"
+          <c:map-property name="*:name" displayName="Entry">
+            <c:simple-property name="name" required="true" type="string" readOnly="true"
                                description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
             <c:simple-property name="path" required="true" type="string" readOnly="false"
                                description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
             <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
                                description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+            <c:simple-property name="read-only" description="Is this property read-only" default="false" readOnly="true" defaultValue="false" type="boolean"/>
           </c:map-property>
         </c:list-property>
       </c:group>

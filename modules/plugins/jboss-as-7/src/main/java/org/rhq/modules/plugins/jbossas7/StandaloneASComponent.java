@@ -19,7 +19,11 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -117,4 +121,20 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
         return;
     }
 
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // We need to filter the path properties that are marked with the read-only flag
+        // This is done by setting the logical removed flag on the map to signal
+        // the write delegate to skip the map
+        Configuration config = report.getConfiguration();
+        PropertyList propertyList = config.getList("*3");
+        for (Property property : propertyList.getList()) {
+            PropertyMap map = (PropertyMap) property;
+            String ro = map.getSimpleValue("read-only", "false");
+            if (Boolean.parseBoolean(ro)) {
+                map.setErrorMessage(ConfigurationWriteDelegate.LOGICAL_REMOVED);
+            }
+        }
+        super.updateResourceConfiguration(report);
+    }
 }

@@ -39,6 +39,7 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
 
     public CreateResourceDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
         super(configDef, connection, address);
+        createChildRequested = true;
     }
 
     @Override

@@ -64,7 +64,7 @@
 
         <!-- Change this to "DETAILED" via the mvn command line or your ~/.m2/settings.xml to
              make sure GWT-generated JavaScript code is not obfuscated. -->
-        <gwt.style>OBF</gwt.style>
+        <gwt.style>DETAILED</gwt.style>
 
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under

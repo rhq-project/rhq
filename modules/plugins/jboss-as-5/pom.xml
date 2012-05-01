@@ -634,7 +634,7 @@ we now use the following method. -->
       </activation>
 
       <properties>
-        <jboss5.home>${java.io.tmpdir}jboss-as-${as5.version}</jboss5.home>
+        <jboss5.home>${java.io.tmpdir}${file.separator}jboss-as-${as5.version}</jboss5.home>
         <jboss.bindAddress>127.0.0.1</jboss.bindAddress>
         <jboss.portOffset>30000</jboss.portOffset>
         <!-- IMPORTANT: The management port must be the port offset + 1099. -->
@@ -656,13 +656,14 @@ we now use the following method. -->
                       <configuration>
                           <target>
                             <property name="as5.zipfile"
-                                      location="${java.io.tmpdir}jboss-as-${as5.version}.zip"/>
+                                      location="${java.io.tmpdir}${file.separator}jboss-as-${as5.version}.zip"/>
                             <get src="${as5.url}" dest="${as5.zipfile}"
                                  usetimestamp="true" verbose="true"/>
                             <unzip src="${as5.zipfile}" dest="${java.io.tmpdir}"/>
                             <move file="${java.io.tmpdir}/jboss-${as5.version}"
                                   tofile="${java.io.tmpdir}/jboss-as-${as5.version}" failonerror="false"
                                   overwrite="false"/>
+                            <!-- Use a port offset of 30000, rather than the default of 300. -->
                             <replace dir="${jboss5.home}"
                                      includes="server/default/conf/bindingservice.beans/META-INF/bindings-jboss-beans.xml"
                                      token="&lt;parameter&gt;300&lt;/parameter&gt;" value="&lt;parameter&gt;${jboss.portOffset}&lt;/parameter&gt;"/>
@@ -687,7 +688,7 @@ we now use the following method. -->
                 <configuration>
                     <background>true</background>
                     <backgroundPollingAddress>${jboss.bindAddress}:${jboss.jnpPort}</backgroundPollingAddress>
-                    <executable>"${java.home}/bin/java"</executable>
+                    <executable>${java.home}${file.separator}bin${file.separator}java</executable>
                     <arguments>
                       <argument>-server</argument>
                       <argument>-Xms128M</argument>
@@ -697,11 +698,11 @@ we now use the following method. -->
                       <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
                       <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
                       <argument>-Djava.net.preferIPv4Stack=true</argument>
-                      <argument>-Dlogging.configuration="file:///${jboss5.home}/bin/logging.properties"</argument>
-                      <argument>-Djava.library.path="${jboss5.home}/bin/native/lib64"</argument>
-                      <argument>-Djava.endorsed.dirs="${jboss5.home}/lib/endorsed"</argument>
+                      <argument>-Dlogging.configuration=file:///${jboss5.home}/bin/logging.properties</argument>
+                      <argument>-Djava.library.path=${jboss5.home}/bin/native/lib64</argument>
+                      <argument>-Djava.endorsed.dirs=${jboss5.home}/lib/endorsed</argument>
                       <argument>-classpath</argument>
-                      <argument>"${jboss5.home}/bin/run.jar${path.separator}${java.home}/lib/tools.jar"</argument>
+                      <argument>${jboss5.home}/bin/run.jar${path.separator}${java.home}/lib/tools.jar</argument>
                       <argument>org.jboss.Main</argument>
                       <argument>--configuration=default</argument>
                       <argument>--host=${jboss.bindAddress}</argument>
@@ -717,7 +718,12 @@ we now use the following method. -->
           <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-              <includes><include>org/rhq/plugins/jbossas5/itest/**/*Test.java</include></includes>
+              <skipTests>false</skipTests>
+              <skipITs>false</skipITs>
+              <includes>
+                <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
+                <include>org/rhq/plugins/jbossas5/itest/**/*Test.java</include>
+              </includes>
               <systemPropertyVariables>
                 <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                 <jboss5.home>${jboss5.home}</jboss5.home>

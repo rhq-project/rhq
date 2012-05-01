@@ -18,6 +18,10 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,8 +46,6 @@ import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-
-import static org.testng.Assert.*;
 
 /**
  * The base class for the integration tests for the two AS7 server types.

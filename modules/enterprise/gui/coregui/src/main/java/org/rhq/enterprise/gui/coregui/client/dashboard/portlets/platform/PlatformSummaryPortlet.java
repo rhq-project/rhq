@@ -33,8 +33,8 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -112,10 +112,10 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
+                return enableIfRecordsExist(getListGrid());
             }
 
             @Override

@@ -25,7 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
     public SubsystemResourceDriftView(String locatorId, boolean hasWriteAccess) {
@@ -39,10 +39,10 @@ public class SubsystemResourceDriftView extends DriftHistoryView {
     }
 
     private void addExportAction() {
-        addTableAction("Export", MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
+                return enableIfRecordsExist(getListGrid());
             }
 
             @Override

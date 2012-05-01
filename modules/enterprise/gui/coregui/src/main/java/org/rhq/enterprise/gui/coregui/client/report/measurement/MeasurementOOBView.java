@@ -27,8 +27,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
@@ -62,10 +62,10 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
+                return enableIfRecordsExist(getListGrid());
             }
 
             @Override

@@ -22,7 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.report.operation;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 
 /**
@@ -44,10 +44,10 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
+                return enableIfRecordsExist(getListGrid());
             }
 
             @Override

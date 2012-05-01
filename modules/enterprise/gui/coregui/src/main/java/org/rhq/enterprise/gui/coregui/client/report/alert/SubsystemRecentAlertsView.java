@@ -3,7 +3,7 @@ package org.rhq.enterprise.gui.coregui.client.report.alert;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
@@ -18,10 +18,10 @@ public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
+                return enableIfRecordsExist(getListGrid());
             }
 
             @Override

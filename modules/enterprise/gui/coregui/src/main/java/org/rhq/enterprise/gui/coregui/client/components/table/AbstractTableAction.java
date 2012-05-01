@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
@@ -58,6 +59,10 @@ public abstract class AbstractTableAction implements TableAction {
             throw new IllegalStateException("Unsupported SelectionEnablement: " + enablement.name());
         }
         return enabled;
+    }
+
+    public boolean enableIfRecordsExist(ListGrid listGrid) {
+        return listGrid != null && listGrid.getTotalRows() != 0;
     }
 
     public abstract void executeAction(ListGridRecord[] selection, Object actionValue);

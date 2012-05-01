@@ -746,7 +746,7 @@ public class PluginContainer {
             executorService.shutdown();
         }
 
-        if (configuration.isWaitForShutdownServiceTermination()) {
+        if ((configuration != null) && configuration.isWaitForShutdownServiceTermination()) {
             long elapsedShutdownTimeMillis = System.currentTimeMillis() - shutdownStartTime;
             long shutdownServiceTerminationTimeoutMillis = configuration.getShutdownServiceTerminationTimeout() * 1000;
             long remainingShutdownTimeoutMillis = shutdownServiceTerminationTimeoutMillis - elapsedShutdownTimeMillis;

@@ -104,6 +104,9 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
         String groupUsePosix = options.getProperty(SystemSetting.LDAP_GROUP_USE_POSIX.getInternalName(), "false");
+        if (groupUsePosix == null) {
+            groupUsePosix = Boolean.toString(false);//default to false
+        }
         boolean usePosixGroups = Boolean.valueOf(groupUsePosix);
         String userAttribute = getUserAttribute(options, userName, usePosixGroups);
         Set<String> ldapSet = new HashSet<String>();

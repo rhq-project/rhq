@@ -485,14 +485,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupFilter_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupFilter_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
-                pd.setDefaultValue("rhqadmin");
+                pd.setDefaultValue("objectclass=groupOfNames");
                 break;
 
             case LDAP_GROUP_MEMBER:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupMember_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
-                pd.setDefaultValue("");
+                pd.setDefaultValue("member");
                 break;
 
             case LDAP_GROUP_USE_POSIX:

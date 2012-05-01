@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -25,6 +31,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
@@ -32,7 +39,11 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.*;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -46,8 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.*;
 
 /**
  * A simple form to view and edit the server system settings.
@@ -484,6 +493,13 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
+                break;
+
+            case LDAP_GROUP_USE_POSIX:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupUsePosixGroup_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupUsePosixGroup_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
                 break;
 
             case LDAP_BASE_DN:

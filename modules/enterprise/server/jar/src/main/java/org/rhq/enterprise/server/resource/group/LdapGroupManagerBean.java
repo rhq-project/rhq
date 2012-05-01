@@ -103,15 +103,18 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
-        String userDN = getUserDN(options, userName);
+        String groupUsePosix = options.getProperty(SystemSetting.LDAP_GROUP_USE_POSIX.getInternalName(), "false");
+        boolean usePosixGroups = Boolean.valueOf(groupUsePosix);
+        String userAttribute = getUserAttribute(options, userName, usePosixGroups);
         Set<String> ldapSet = new HashSet<String>();
 
-        if (userDN != null && userDN.trim().length() > 0) {
+        if (userAttribute != null && userAttribute.trim().length() > 0) {
             //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
             String filter = "";
             //form assumes examples where groupFilter is like 'objectclass=groupOfNames' and groupMember is 'member'
             // to produce ldap filter like (&(objectclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
-            filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, LDAPStringUtil.encodeForFilter(userDN));
+            // or like (&(objectclass=groupOfNames)(memberUid=Administrator)) for posixGroups.
+            filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, LDAPStringUtil.encodeForFilter(userAttribute));
 
             Set<Map<String, String>> matched = buildGroup(options, filter);
             log.trace("Located '" + matched.size() + "' LDAP groups for user '" + userName
@@ -253,13 +256,19 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      * 
      * @param options
      * @param userName
+     * @param usePosixGroups boolean indicating whether we search for groups with posixGroup format 
      * @return
      */
-    private String getUserDN(Properties options, String userName) {
+    private String getUserAttribute(Properties options, String userName, boolean usePosixGroups) {
         Map<String, String> details = findLdapUserDetails(userName);
-        String userDN = details.get("dn");
+        String userAttribute = null;
+        if (usePosixGroups) {//return just the username as posixGroup member search uses (&(%s)(memberUid=username))
+            userAttribute = userName;
+        } else {//this is the default where group search uses (&(%s)(uniqueMember={userDn}))
+            userAttribute = details.get("dn");
+        }
 
-        return userDN;
+        return userAttribute;
     }
 
     public Map<String, String> findLdapUserDetails(String userName) {

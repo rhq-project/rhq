@@ -730,17 +730,16 @@ public class PluginContainer {
     }
 
     /**
-     * Initiated shutdown the specified executor service.
+     * Initiate shutdown of the specified executor service. If the "waitForShutdownServiceTermination" plugin
+     * container configuration property is "true" and the "shutdownServiceTerminationTimeout" has not already expired,
+     * then wait for the service to terminate before returning. With the exception of test code, this method should only
+     * be called during plugin container shutdown
      *
      * @param executorService the executor service to be shut down
      *
      * @return true if the executor service terminated, or false if it is still shutting down
      */
     public boolean shutdownExecutorService(ExecutorService executorService, boolean now) {
-        if (!this.shuttingDown) {
-            throw new IllegalStateException("This method should only be called during PC shutdown.");
-        }
-
         if (now) {
             executorService.shutdownNow();
         } else {

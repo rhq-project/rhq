@@ -13,7 +13,7 @@ import org.rhq.core.system.SystemInfoFactory;
  * @author Lukas Krejci
  */
 public class RhqAgentPluginContainerConfiguration extends PluginContainerConfiguration implements
-		ContainerConfiguration  {
+        ContainerConfiguration  {
 
     private String serverServicesImplementationClassName;
     private boolean nativeSystemInfoEnabled;
@@ -36,7 +36,9 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setServerDiscoveryInitialDelay(HUNDRED_YEARS);
         setServerDiscoveryPeriod(HUNDRED_YEARS);
         setServiceDiscoveryInitialDelay(HUNDRED_YEARS);
-        setServiceDiscoveryPeriod(HUNDRED_YEARS);        
+        setServiceDiscoveryPeriod(HUNDRED_YEARS);
+
+        setWaitForShutdownServiceTermination(true);
     }
     
     /**
@@ -66,7 +68,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         RhqAgentPluginContainer.init();
         
         if (isNativeSystemInfoEnabled() && !SystemInfoFactory.isNativeSystemInfoAvailable()) {
-            throw new ConfigurationException("SIGAR is not available. Cannot use native systen info.");
+            throw new ConfigurationException("SIGAR is not available - cannot use native SystemInfo.");
         }
         
         try {
@@ -75,7 +77,9 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
                 Class.forName(serverServices);
             }
         } catch (Exception e) {
-            throw new ConfigurationException("Failed to look up the ServerServices implementation class [" + getServerServicesImplementationClassName() + "].", e);
+            throw new ConfigurationException("Failed to look up the ServerServices implementation class ["
+                    + getServerServicesImplementationClassName() + "].", e);
         }
     }
+
 }

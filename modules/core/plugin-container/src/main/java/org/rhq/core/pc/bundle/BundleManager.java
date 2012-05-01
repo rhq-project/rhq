@@ -121,7 +121,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
     private void shutdownDeployerThreadPool() {
         if (this.deployerThreadPool != null) {
-            this.deployerThreadPool.shutdown(); // let it finish what it was doing, so we don't abort in the middle of a deployment
+            PluginContainer pluginContainer = PluginContainer.getInstance();
+            // pass false, so we don't interrupt a plugin in the middle of a bundle deployment
+            pluginContainer.shutdownExecutorService(this.deployerThreadPool, false);
             this.deployerThreadPool = null;
         }
         return;

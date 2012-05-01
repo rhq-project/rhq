@@ -41,11 +41,11 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.transfer.EventReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.system.SigarAccess;
-import org.rhq.core.system.SystemInfoException;
 
 /**
  * Manager for the Plugin Container's Event subsystem.
@@ -89,11 +89,14 @@ public class EventManager implements ContainerService {
     }
 
     public void shutdown() {
+        PluginContainer pluginContainer = PluginContainer.getInstance();
         if (this.senderThreadPool != null) {
-            this.senderThreadPool.shutdownNow();
+            log.debug("Shutting down event sender thread pool...");
+            pluginContainer.shutdownExecutorService(this.senderThreadPool, true);
         }
         if (this.pollerThreadPool != null) {
-            this.pollerThreadPool.shutdownNow();
+            log.debug("Shutting down event poller thread pool...");
+            pluginContainer.shutdownExecutorService(this.pollerThreadPool, true);
         }
     }
 

@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 
@@ -64,10 +65,12 @@ public class AvailabilityCollectorThreadPool implements Executor {
     }
 
     public void shutdown() {
+
         synchronized (this) {
             if (threadPool != null) {
-                log.debug("Shutting down AvailabilityCollector thread pool");
-                threadPool.shutdownNow();
+                log.debug("Shutting down AvailabilityCollector thread pool...");
+                PluginContainer pluginContainer = PluginContainer.getInstance();
+                pluginContainer.shutdownExecutorService(threadPool, true);
                 threadPool = null;
             }
         }

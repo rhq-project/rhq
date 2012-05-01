@@ -274,8 +274,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @see ContainerService#shutdown()
      */
     public void shutdown() {
-        this.inventoryThreadPoolExecutor.shutdownNow();
-        this.availabilityThreadPoolExecutor.shutdownNow();
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        pluginContainer.shutdownExecutorService(this.inventoryThreadPoolExecutor, true);
+        pluginContainer.shutdownExecutorService(this.availabilityThreadPoolExecutor, true);
         if (this.configuration.isInsideAgent()) {
             this.persistToDisk();
         }

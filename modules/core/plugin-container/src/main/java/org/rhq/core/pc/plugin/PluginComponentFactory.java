@@ -289,6 +289,7 @@ public class PluginComponentFactory implements ContainerService {
      * @see ContainerService#initialize()
      */
     public void initialize() {
+        return;
     }
 
     /**

@@ -50,6 +50,10 @@ public class PluginContainerConfiguration {
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
     private static final String START_MANAGEMENT_BEAN_PROP = PROP_PREFIX + "start-management-bean";
+    private static final String WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION = PROP_PREFIX + "wait-for-shutdown-service-termination";
+    public static final boolean WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT = false;
+    private static final String SHUTDOWN_SERVICE_TERMINATION_TIMEOUT = PROP_PREFIX + "shutdown-service-termination-timeout";
+    public static final long SHUTDOWN_SERVICE_TERMINATION_TIMEOUT_DEFAULT = 5 * 60L; // in seconds
     
     // The following configuration settings have hardcoded default values. These defaults are publicly
     // accessible so the entity that embeds the plugin container can know what its default values are.
@@ -316,7 +320,50 @@ public class PluginContainerConfiguration {
     public void setStartManagementBean(boolean value) {
         configuration.put(START_MANAGEMENT_BEAN_PROP, Boolean.valueOf(value));
     }
-    
+
+    /**
+     * @return True if the {@link org.rhq.core.pc.PluginContainer#shutdown()} should wait for all of the plugin
+     *              container's background threads to terminate before returning, or false otherwise
+     */
+    public boolean isWaitForShutdownServiceTermination() {
+        Boolean wait = (Boolean) configuration.get(WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION);
+        return (wait == null) ? WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT : wait;
+    }
+
+    /**
+     * Sets the flag to indicate whether {@link org.rhq.core.pc.PluginContainer#shutdown()} should wait for all of
+     * the plugin container's background threads to terminate before returning. If true, the shutdown method will wait
+     * a maximum of {@link #getShutdownServiceTerminationTimeout()} seconds before timing out.
+     *
+     * @param wait true to wait for shutdown services to terminate, or false to not wait
+     */
+    public void setWaitForShutdownServiceTermination(boolean wait) {
+        configuration.put(WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION, wait);
+    }
+
+    /**
+     * Returns the length of time, in seconds, before {@link org.rhq.core.pc.PluginContainer#shutdown()} should timeout
+     * while waiting for shutdown background threads to terminate. This property is only used if
+     * {@link #isWaitForShutdownServiceTermination()} is true.
+     *
+     * @return the number of seconds before timing out while waiting for termination of shutdown background threads
+     */
+    public long getShutdownServiceTerminationTimeout() {
+        Long timeout = (Long) configuration.get(SHUTDOWN_SERVICE_TERMINATION_TIMEOUT);
+        return (timeout == null) ? SHUTDOWN_SERVICE_TERMINATION_TIMEOUT_DEFAULT : timeout;
+    }
+
+    /**
+     * Sets the length of time, in seconds, before {@link org.rhq.core.pc.PluginContainer#shutdown()} should timeout
+     * while waiting for shutdown background threads to terminate. This property is only used if
+     * {@link #isWaitForShutdownServiceTermination()} is true.
+     *
+     * @param timeout the number of seconds before timing out while waiting for termination of shutdown background threads
+     */
+    public void setShutdownServiceTerminationTimeout(long timeout) {
+        configuration.put(SHUTDOWN_SERVICE_TERMINATION_TIMEOUT, timeout);
+    }
+
     /**
      * Returns the length of time, in seconds, before resource availability scans are started.
      *
@@ -840,7 +887,7 @@ public class PluginContainerConfiguration {
     /**
      * Returns whether or not the plugin container is running inside an agent, which means it is running external to any
      * managed product.
-     * Note: Use {@link #getPluginContainerDeployment()} instead, this method might get deprecated later.
+     * Note: Use {@link #getPluginContainerDeployment()} instead, as this method might get deprecated later.
      *
      * @return <code>true</code> if the container is deployed inside an external agent process; <code>false</code> if
      *         the plugin container is embedded directly in a managed product
@@ -870,7 +917,7 @@ public class PluginContainerConfiguration {
     }
 
     /**
-     * Sets the flag to indicate if the plugin container is inside an external agent or if its embedded in a managed
+     * Sets the flag to indicate if the plugin container is inside an external agent or if it's embedded in a managed
      * product.
      *
      * @param flag

@@ -33,6 +33,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.operation.OperationInvocation.Status;
 
 /**
@@ -129,7 +131,9 @@ public class OperationThreadPoolGateway {
 
             threadPoolQueueDrain = null; // help GC
 
-            threadPool.shutdownNow();
+            log.debug("Shutting down operation invocation thread pool...");
+            PluginContainer pluginContainer = PluginContainer.getInstance();
+            pluginContainer.shutdownExecutorService(threadPool, true);
         }
 
         for (OperationInvocation operationToCancel : doomedOperations) {
@@ -137,7 +141,7 @@ public class OperationThreadPoolGateway {
             operationToCancel.run();
         }
 
-        // Let's be kind and at least give some amount of time for all threads to cancel
+        // Let's be kind and at least give some amount of time for all threads to cancel.
         // In most cases, this will return almost immediately.
         try {
             threadPool.awaitTermination(30, TimeUnit.SECONDS);

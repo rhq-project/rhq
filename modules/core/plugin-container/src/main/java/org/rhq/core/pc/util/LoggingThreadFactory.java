@@ -89,4 +89,13 @@ public class LoggingThreadFactory implements ThreadFactory, Thread.UncaughtExcep
     public void uncaughtException(Thread t, Throwable e) {
         log.error("Uncaught exception on scheduled thread [" + t.getName() + "]", e);
     }
+
+    public String getPoolName() {
+        return poolName;
+    }
+
+    @Override
+    public String toString() {
+        return "LoggingThreadFactory[poolName=" + poolName + "]";
+    }
 }

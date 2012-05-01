@@ -232,8 +232,6 @@ public class PluginManager implements ContainerService {
 
         this.metadataManager = null;
         this.classLoaderManager = null;
-
-        return;
     }
 
     /**

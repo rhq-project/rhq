@@ -49,12 +49,15 @@ public class SupportManager extends AgentService implements SupportAgentService,
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {
+        return;
     }
 
     public void initialize() {
+        return;
     }
 
     public void shutdown() {
+        return;
     }
 
     public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {

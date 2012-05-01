@@ -28,6 +28,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -64,6 +68,7 @@ import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.support.SupportManager;
+import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
@@ -78,7 +83,8 @@ import org.rhq.core.pluginapi.util.FileUtils;
  * @author John Mazzitelli
  * @author Greg Hinkle
  */
-public class PluginContainer implements ContainerService {
+public class PluginContainer {
+
     private static final PluginContainer INSTANCE = new PluginContainer();
 
     private final Log log = LogFactory.getLog(PluginContainer.class);
@@ -144,6 +150,9 @@ public class PluginContainer implements ContainerService {
     private Map<String, ShutdownListener> shutdownListeners = new HashMap<String, ShutdownListener>();
     private Object initListenersLock = new Object();
     private Object shutdownListenersLock = new Object();
+    private boolean shuttingDown;
+    private long shutdownStartTime;
+    private boolean shutdownGracefully;
 
     /**
      * Returns the singleton instance.
@@ -259,55 +268,57 @@ public class PluginContainer implements ContainerService {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
+        if (started) {
+            log.info("Plugin container is already initialized.");
+        }
+
         Lock lock = obtainWriteLock();
         try {
-            if (!started) {
-                version = PluginContainer.class.getPackage().getImplementationVersion();
-                log.info("Initializing Plugin Container" + ((version != null) ? (" v" + version) : "") + "...");
+            version = PluginContainer.class.getPackage().getImplementationVersion();
+            log.info("Initializing Plugin Container" + ((version != null) ? (" v" + version) : "") + "...");
 
-                if (configuration == null) {
-                    configuration = new PluginContainerConfiguration();
-                }
-
-                purgeTmpDirectoryContents();
-
-                if (configuration.isStartManagementBean()) {
-                    mbean = new PluginContainerMBeanImpl(this);
-                    mbean.register();
-                }
-                
-                ResourceContainer.initialize();
-
-                pluginManager = new PluginManager();
-                pluginComponentFactory = new PluginComponentFactory();
-                inventoryManager = new InventoryManager();
-                measurementManager = new MeasurementManager();
-                configurationManager = new ConfigurationManager();
-                operationManager = new OperationManager();
-                resourceFactoryManager = new ResourceFactoryManager();
-                contentManager = new ContentManager();
-                eventManager = new EventManager();
-                supportManager = new SupportManager();
-                bundleManager = new BundleManager();
-                driftManager = new DriftManager();
-
-                startContainerService(pluginManager);
-                startContainerService(pluginComponentFactory);
-                startContainerService(inventoryManager);
-                startContainerService(measurementManager);
-                startContainerService(configurationManager);
-                startContainerService(operationManager);
-                startContainerService(resourceFactoryManager);
-                startContainerService(contentManager);
-                startContainerService(eventManager);
-                startContainerService(supportManager);
-                startContainerService(bundleManager);
-                startContainerService(driftManager);
-
-                started = true;
-
-                log.info("Plugin Container initialized.");
+            if (configuration == null) {
+                configuration = new PluginContainerConfiguration();
             }
+
+            purgeTmpDirectoryContents();
+
+            if (configuration.isStartManagementBean()) {
+                mbean = new PluginContainerMBeanImpl(this);
+                mbean.register();
+            }
+
+            ResourceContainer.initialize();
+
+            pluginManager = new PluginManager();
+            pluginComponentFactory = new PluginComponentFactory();
+            inventoryManager = new InventoryManager();
+            measurementManager = new MeasurementManager();
+            configurationManager = new ConfigurationManager();
+            operationManager = new OperationManager();
+            resourceFactoryManager = new ResourceFactoryManager();
+            contentManager = new ContentManager();
+            eventManager = new EventManager();
+            supportManager = new SupportManager();
+            bundleManager = new BundleManager();
+            driftManager = new DriftManager();
+
+            startContainerService(pluginManager);
+            startContainerService(pluginComponentFactory);
+            startContainerService(inventoryManager);
+            startContainerService(measurementManager);
+            startContainerService(configurationManager);
+            startContainerService(operationManager);
+            startContainerService(resourceFactoryManager);
+            startContainerService(contentManager);
+            startContainerService(eventManager);
+            startContainerService(supportManager);
+            startContainerService(bundleManager);
+            startContainerService(driftManager);
+
+            started = true;
+
+            log.info("Plugin Container initialized.");
         } finally {
             releaseLock(lock);
         }
@@ -327,65 +338,90 @@ public class PluginContainer implements ContainerService {
      * Shuts down the plugin container and all its internal services. If the plugin container has already been shutdown,
      * this method does nothing and returns.
      */
-    public void shutdown() {
-        Lock lock = obtainWriteLock();
+    public boolean shutdown() {
+        if (!started) {
+            log.info("Plugin container is already shut down.");
+        }
+
+        // Don't use a write lock if we're going to wait for executors that are shutdown to terminate, otherwise we'll
+        // end up deadlocked.
+        Lock lock = (configuration.isWaitForShutdownServiceTermination()) ? obtainReadLock() : obtainWriteLock();
         try {
-            if (started) {
+            shuttingDown = true;
+            shutdownGracefully = true;
+            shutdownStartTime = System.currentTimeMillis();
 
-                log.info("Plugin container is being shutdown...");
+            log.info("Plugin container is being shutdown...");
 
-                if (mbean != null) {
-                    mbean.unregister();
-                    mbean = null;
+            if (mbean != null) {
+                mbean.unregister();
+                mbean = null;
+            }
+
+            if (configuration.isWaitForShutdownServiceTermination()) {
+                log.info("Plugin container shutdown will wait up to "
+                        + configuration.getShutdownServiceTerminationTimeout()
+                        + " seconds for shut down background threads to terminate.");
+            }
+
+            driftManager.shutdown();
+            bundleManager.shutdown();
+            supportManager.shutdown();
+            eventManager.shutdown();
+            contentManager.shutdown();
+            resourceFactoryManager.shutdown();
+            operationManager.shutdown();
+            configurationManager.shutdown();
+            measurementManager.shutdown();
+            inventoryManager.shutdown();
+            pluginComponentFactory.shutdown();
+            pluginManager.shutdown();
+
+            agentServiceListeners.clear();
+            agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
+            agentServiceStreamRemoter = null;
+            agentRegistrar = null;
+
+            purgeTmpDirectoryContents();
+
+            ResourceContainer.shutdown();
+
+            if (configuration.isWaitForShutdownServiceTermination()) {
+                if (shutdownGracefully) {
+                    long elapsedMillis = System.currentTimeMillis() - this.shutdownStartTime;
+                    String elapsedTimeString = (elapsedMillis >= 1000) ?
+                            (elapsedMillis / 1000) + " seconds" : "less than 1 second";
+                    log.info("All shut down background threads have terminated (" + elapsedTimeString + " elapsed).");
+                } else {
+                    log.warn("Timed out after " + configuration.getShutdownServiceTerminationTimeout()
+                            + " seconds while waiting for shut down background threads to terminate.");
                 }
+            }
 
-                boolean isInsideAgent = configuration.isInsideAgent();
+            driftManager = null;
+            bundleManager = null;
+            supportManager = null;
+            eventManager = null;
+            contentManager = null;
+            resourceFactoryManager = null;
+            operationManager = null;
+            configurationManager = null;
+            measurementManager = null;
+            inventoryManager = null;
+            pluginComponentFactory = null;
+            pluginManager = null;
 
-                driftManager.shutdown();
-                bundleManager.shutdown();
-                supportManager.shutdown();
-                eventManager.shutdown();
-                contentManager.shutdown();
-                resourceFactoryManager.shutdown();
-                operationManager.shutdown();
-                configurationManager.shutdown();
-                measurementManager.shutdown();
-                inventoryManager.shutdown();
-                pluginComponentFactory.shutdown();
-                pluginManager.shutdown();
+            boolean isInsideAgent = configuration.isInsideAgent();
+            configuration = null;
 
-                agentServiceListeners.clear();
-                agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
-                agentServiceStreamRemoter = null;
-                agentRegistrar = null;
+            started = false;
+            shuttingDown = false;
 
-                purgeTmpDirectoryContents();
+            log.info("Plugin container is now shutdown.");
 
-                ResourceContainer.shutdown();
-
-                driftManager = null;
-                bundleManager = null;
-                supportManager = null;
-                eventManager = null;
-                contentManager = null;
-                resourceFactoryManager = null;
-                operationManager = null;
-                configurationManager = null;
-                measurementManager = null;
-                inventoryManager = null;
-                pluginComponentFactory = null;
-                pluginManager = null;
-
-                configuration = null;
-
-                started = false;
-
-                log.info("Plugin container is now shutdown.");
-
-                // we typically do not want to do this if embedded somewhere other than the agent VM
-                if (isInsideAgent) {
-                    cleanMemory();
-                }
+            // we typically do not want to do this if embedded somewhere other than the Agent VM
+            if (isInsideAgent) {
+                cleanMemory();
             }
         } finally {
             releaseLock(lock);
@@ -399,7 +435,7 @@ public class PluginContainer implements ContainerService {
             }
         }
 
-        return;
+        return shutdownGracefully;
     }
 
     /**
@@ -685,12 +721,107 @@ public class PluginContainer implements ContainerService {
      * 
      * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
-     * will be replaced with the newly supplied listner. 
+     * will be replaced with the newly supplied listener.
      */
     public void addShutdownListener(String name, ShutdownListener listener) {
         synchronized (shutdownListenersLock) {
             shutdownListeners.put(name, listener);
         }
+    }
+
+    /**
+     * Initiated shutdown the specified executor service.
+     *
+     * @param executorService the executor service to be shut down
+     *
+     * @return true if the executor service terminated, or false if it is still shutting down
+     */
+    public boolean shutdownExecutorService(ExecutorService executorService, boolean now) {
+        if (!this.shuttingDown) {
+            throw new IllegalStateException("This method should only be called during PC shutdown.");
+        }
+
+        if (now) {
+            executorService.shutdownNow();
+        } else {
+            executorService.shutdown();
+        }
+
+        if (configuration.isWaitForShutdownServiceTermination()) {
+            long elapsedShutdownTimeMillis = System.currentTimeMillis() - shutdownStartTime;
+            long shutdownServiceTerminationTimeoutMillis = configuration.getShutdownServiceTerminationTimeout() * 1000;
+            long remainingShutdownTimeoutMillis = shutdownServiceTerminationTimeoutMillis - elapsedShutdownTimeMillis;
+            if ((remainingShutdownTimeoutMillis > 0) && !executorService.isTerminated()) {
+                try {
+                    logWaitingForExecutorServiceTerminationDebugMessage(executorService, remainingShutdownTimeoutMillis);
+                    boolean executorTerminated = executorService.awaitTermination(remainingShutdownTimeoutMillis,
+                            TimeUnit.MILLISECONDS);
+                    if (!executorTerminated) {
+                        String poolName = getPoolName(executorService);
+                        if (poolName != null) {
+                            int activeThreadsInPool = getActiveThreadCount(poolName);
+                            log.warn("Timed out after [" + (remainingShutdownTimeoutMillis / 1000)
+                                    + "] seconds while waiting for all threads in pool [" + poolName + "] to terminate - ["
+                                    + activeThreadsInPool + "] threads in the pool are still active.");
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    log.warn("Plugin container was interrupted while waiting for an executor service to terminate.");
+                }
+            } else {
+                logNotWaitingForExecutorServiceTerminationDebugMessage(executorService);
+            }
+        }
+
+        boolean executorTerminated = executorService.isTerminated();
+        shutdownGracefully = (shutdownGracefully && executorTerminated);
+
+        return executorTerminated;
+    }
+
+    private void logWaitingForExecutorServiceTerminationDebugMessage(ExecutorService executorService,
+                                                                     long remainingShutdownTimeoutMillis) {
+        if (log.isDebugEnabled()) {
+            String poolName = getPoolName(executorService);
+            if (poolName != null) {
+                int activeThreadsInPool = getActiveThreadCount(poolName);
+                log.debug("Waiting up to [" + (remainingShutdownTimeoutMillis / 1000) + "] seconds for ["
+                        + activeThreadsInPool + "] threads in pool [" + poolName + "] to terminate...");
+            }
+        }
+    }
+
+    private void logNotWaitingForExecutorServiceTerminationDebugMessage(ExecutorService executorService) {
+        String poolName = getPoolName(executorService);
+        if (poolName != null) {
+            int activeThreadsInPool = getActiveThreadCount(poolName);
+            if (activeThreadsInPool > 0) {
+                log.debug("Not waiting for all threads in pool [" + poolName
+                        + "] to terminate, since the configured plugin container shutdown timeout has already elapsed - ["
+                        + activeThreadsInPool + "] threads in the pool are still active.");
+            }
+        }
+    }
+
+    private static String getPoolName(ExecutorService executorService) {
+        if (executorService instanceof ThreadPoolExecutor) {
+            ThreadFactory threadFactory = ((ThreadPoolExecutor) executorService).getThreadFactory();
+            if (threadFactory instanceof LoggingThreadFactory) {
+                return ((LoggingThreadFactory)threadFactory).getPoolName();
+            }
+        }
+        return null;
+    }
+
+    private static int getActiveThreadCount(String poolName) {
+        Set<Thread> allThreads = Thread.getAllStackTraces().keySet();
+        int activeThreadsInPool = 0;
+        for (Thread thread : allThreads) {
+            if (thread.getName().startsWith(poolName + '-') && thread.isAlive()) {
+                activeThreadsInPool++;
+            }
+        }
+        return activeThreadsInPool;
     }
 
 }

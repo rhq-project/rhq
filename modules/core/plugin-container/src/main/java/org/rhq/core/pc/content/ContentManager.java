@@ -159,9 +159,11 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
     public void shutdown() {
         log.info("Shutting down Content Manager...");
-        discoveryThreadPoolExecutor.shutdown();
-        crudExecutor.shutdown();
-        PluginContainer.getInstance().getInventoryManager().removeInventoryEventListener(inventoryEventListener);
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        pluginContainer.shutdownExecutorService(discoveryThreadPoolExecutor, true);
+        // pass false, so we don't interrupt a plugin in the middle of a content update
+        pluginContainer.shutdownExecutorService(crudExecutor, false);
+        pluginContainer.getInventoryManager().removeInventoryEventListener(inventoryEventListener);
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {

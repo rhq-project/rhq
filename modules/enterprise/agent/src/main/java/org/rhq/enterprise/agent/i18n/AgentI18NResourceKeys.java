@@ -1514,6 +1514,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The plugin container has been stopped.")
     String PLUGIN_CONTAINER_STOP_DONE = "PromptCommand.plugin-container.stop.done";
 
+    @I18NMessage("The plugin container has been stopped gracefully (i.e. all threads have willingly terminated).")
+    String PLUGIN_CONTAINER_STOP_DONE_GRACEFULLY = "PromptCommand.plugin-container.stop.done-gracefully";
+
     @I18NMessage("The plugin container is currently started.")
     String PLUGIN_CONTAINER_STATUS_STARTED = "PromptCommand.plugin-container.started";
 

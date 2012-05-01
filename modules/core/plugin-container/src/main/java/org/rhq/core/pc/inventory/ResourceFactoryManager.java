@@ -125,7 +125,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
     // ContainerService Implementation  --------------------------------------------
 
     public void initialize() {
-        log.info("Initializing");
+        log.debug("Initializing...");
 
         // Retrieve handle to metadata manager
         metadataManager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
@@ -140,7 +140,9 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
     }
 
     public void shutdown() {
-        executor.shutdown();
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        // TODO (ips, 04/30/12): Is it safe to pass true here to interrupt executing threads?
+        pluginContainer.shutdownExecutorService(executor, false);
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {

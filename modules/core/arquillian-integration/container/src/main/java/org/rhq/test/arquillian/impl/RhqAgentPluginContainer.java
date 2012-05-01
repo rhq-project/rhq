@@ -371,7 +371,12 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         LOG.debug("Stopping PluginContainer on demand...");
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
-            pc.shutdown();
+            boolean shutdownGracefully = pc.shutdown();
+            if (shutdownGracefully) {
+                LOG.debug("Stopped PluginContainer gracefully.");
+            } else {
+                LOG.debug("Stopped PluginContainer.");
+            }
             return true;
         }
 

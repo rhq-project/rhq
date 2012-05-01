@@ -277,7 +277,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void shutdown() {
         if (driftThreadPool != null) {
-            driftThreadPool.shutdown();
+            PluginContainer pluginContainer = PluginContainer.getInstance();
+            // TODO (ips, 04/30/12): Is it safe to pass true here to interrupt executing threads?
+            pluginContainer.shutdownExecutorService(driftThreadPool, false);
             driftThreadPool = null;
         }
 

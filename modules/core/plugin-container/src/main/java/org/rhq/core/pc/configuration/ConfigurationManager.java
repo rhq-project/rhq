@@ -96,7 +96,9 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     }
 
     public void shutdown() {
-        threadPool.shutdown();
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        // pass false, so we don't interrupt a plugin in the middle of a config update
+        pluginContainer.shutdownExecutorService(threadPool, false);
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {
@@ -244,7 +246,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
 
         ConfigManagement loadConfig = configMgmtFactory.getStrategy(resourceId);
-        Configuration configuration = null;
+        Configuration configuration;
 
         try {
             configuration = loadConfig.executeLoad(resourceId);

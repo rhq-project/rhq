@@ -160,7 +160,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     class MeasurementCollectionRequester implements Runnable {
         public void run() {
             try {
-                while (true) {
+                while (!collectorThreadPool.isShutdown()) {
                     long next = getNextExpectedCollectionTime();
                     if (next == Long.MIN_VALUE) {
                         Thread.sleep(10000);
@@ -170,7 +170,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                             //                  collectorThreadPool.execute(measurementCollectorRunner);
                             measurementCollectorRunner.call();
                         } else {
-                            Thread.sleep(delay);
+                            if (!collectorThreadPool.isShutdown()) {
+                                Thread.sleep(delay);
+                            }
                         }
                     }
                 }
@@ -273,12 +275,16 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     public void shutdown() {
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+
         if (this.collectorThreadPool != null) {
-            this.collectorThreadPool.shutdownNow();
+            LOG.debug("Shutting down measurement collector thread pool...");
+            pluginContainer.shutdownExecutorService(this.collectorThreadPool, true);
         }
 
         if (this.senderThreadPool != null) {
-            this.senderThreadPool.shutdownNow();
+            LOG.debug("Shutting down measurement sender thread pool...");
+            pluginContainer.shutdownExecutorService(this.senderThreadPool, true);
         }
 
         if (configuration.isStartManagementBean()) {

@@ -38,7 +38,7 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
 
     // ****************************** LIFECYCLE ****************************** //
-    // TODO: Re-enable this once the PC shutdown issue has been fixed.
+    // TODO: Re-enable this once the issue with Resources not getting auto-imported has been fixed.
     @Test(priority = 1, enabled = false)
     @RunDiscovery
     public void testAllResourceComponentsStarted() throws Exception {

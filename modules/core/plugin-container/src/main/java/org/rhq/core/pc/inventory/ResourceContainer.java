@@ -122,6 +122,7 @@ public class ResourceContainer implements Serializable {
      * Shuts down ResourceContainer's internals, such as its thread pools.
      */
     public static void shutdown() {
+        // TODO (ips, 04/30/12): Should we funnel these through PluginContainer.shutdownExecutorService()?
         DAEMON_THREAD_POOL.shutdown();
         NON_DAEMON_THREAD_POOL.shutdown();
     }

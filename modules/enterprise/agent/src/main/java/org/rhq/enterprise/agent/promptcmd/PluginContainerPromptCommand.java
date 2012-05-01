@@ -20,13 +20,14 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.PrintWriter;
 import mazz.i18n.Msg;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
 /**
- * Allows you to manually start and stop the plugin container.
+ * Allows you to manually start, stop, and check the status of the plugin container.
  *
  * @author John Mazzitelli
  */
@@ -69,8 +70,12 @@ public class PluginContainerPromptCommand implements AgentPromptCommand {
             }
         } else if (args[1].equals(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_ARG_STOP))) {
             try {
-                agent.shutdownPluginContainer();
-                out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_STOP_DONE));
+                boolean shutdownGracefully = agent.shutdownPluginContainer();
+                if (shutdownGracefully) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_STOP_DONE_GRACEFULLY));
+                } else {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_STOP_DONE));
+                }
             } catch (Exception e) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_STOP_ERROR, ThrowableUtil
                     .getAllMessages(e)));

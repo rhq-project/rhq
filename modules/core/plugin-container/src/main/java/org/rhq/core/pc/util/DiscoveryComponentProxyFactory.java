@@ -134,7 +134,8 @@ public class DiscoveryComponentProxyFactory {
 
     public void shutdown() {
         if (daemonThreadPool != null) {
-            daemonThreadPool.shutdownNow();
+            PluginContainer pluginContainer = PluginContainer.getInstance();
+            pluginContainer.shutdownExecutorService(daemonThreadPool, true);
         }
         daemonThreadPool = null;
     }

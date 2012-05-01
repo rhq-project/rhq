@@ -2416,10 +2416,13 @@ public class AgentMain {
     /**
      * Shuts down the plugin container and all its child services and plugins. If the plugin container has already been
      * shutdown, this method does nothing and returns.
+     *
+     * @return true if the plugin container shutdown gracefully (i.e. all threads terminated), or false otherwise
      */
-    public void shutdownPluginContainer() {
-        PluginContainer.getInstance().shutdown();
+    public boolean shutdownPluginContainer() {
+        boolean shutdownGracefully = PluginContainer.getInstance().shutdown();
         LOG.debug(AgentI18NResourceKeys.PLUGIN_CONTAINER_SHUTDOWN);
+        return shutdownGracefully;
     }
 
     /**

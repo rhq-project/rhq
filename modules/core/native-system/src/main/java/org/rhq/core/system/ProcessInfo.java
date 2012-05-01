@@ -38,6 +38,7 @@ import org.hyperic.sigar.ProcMem;
 import org.hyperic.sigar.ProcState;
 import org.hyperic.sigar.ProcTime;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.SigarNotImplementedException;
 import org.hyperic.sigar.SigarPermissionDeniedException;
 import org.hyperic.sigar.SigarProxy;
@@ -74,6 +75,7 @@ public class ProcessInfo {
     protected ProcCredName procCredName;
     protected Map<String, String> procEnv;
     protected transient ProcessInfo parentProcess;
+    protected transient boolean processDied;
 
     private boolean loggedPermissionsError = false;
     private static final String UNKNOWN = "?";
@@ -99,6 +101,8 @@ public class ProcessInfo {
     private void update(long pid) throws SystemInfoException {
         long startTime = System.currentTimeMillis();
         try {
+            this.processDied = false;
+
             ProcState procState = null;
             try {
                 procState = sigar.getProcState(pid);
@@ -187,6 +191,8 @@ public class ProcessInfo {
             long elapsedTime = System.currentTimeMillis() - startTime;
             log.trace("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
         }
+
+        this.processDied = false;
     }
 
     public void destroy() throws SystemInfoException {
@@ -200,11 +206,19 @@ public class ProcessInfo {
     }
 
     private void handleSigarCallException(Exception e, String methodName) {
-        if (isWindows() && (this.pid == 0 || this.pid == 4))
+        if (this.processDied) {
+            // We already figured out the process died on a previous call to this method, so just return rather than
+            // flooding the log with debug messages.
+            return;
+        }
+
+        if (isWindows() && (this.pid == 0 || this.pid == 4)) {
             // On Windows, Pid 0 and Pid 4 are special Kernel processes (Pid 0 is the "System Idle Process" and Pid 4 is
             // the "System" process). For these processes, it's normal for many of the Sigar.getProc calls to fail, so
             // there's no need to log anything.
             return;
+        }
+
         String procName = (this.baseName != null) ? this.baseName : "<unknown>";
         if (e instanceof SigarPermissionDeniedException) {
             if (!this.loggedPermissionsError) {
@@ -226,9 +240,35 @@ public class ProcessInfo {
             log.trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid + "] - call to "
                 + methodName + "failed. Cause: " + e);
         } else {
+            if (!exists()) {
+                log.debug("Attempt to refresh info for process with pid [" + this.pid
+                        + "] failed, because the process is no longer running.");
+                this.processDied = true;
+            }
+
             log.debug("Unexpected error occurred while looking up info for [" + procName + "] process with pid ["
                 + this.pid + "] - call to " + methodName + " failed. Did the process die? Cause: " + e);
         }
+    }
+
+    private boolean exists() {
+        long[] pids;
+        try {
+            pids = sigar.getProcList();
+        } catch (SigarException e1) {
+            // TODO (ips, 04/30/12): It probably makes more sense to let this exception bubble up.
+            log.error("Failed to obtain process list.", e1);
+            return true;
+        }
+
+        boolean foundProcess = false;
+        for (long pid : pids) {
+            if (pid == this.pid) {
+                foundProcess = true;
+                break;
+            }
+        }
+        return foundProcess;
     }
 
     private static boolean isWindows() {

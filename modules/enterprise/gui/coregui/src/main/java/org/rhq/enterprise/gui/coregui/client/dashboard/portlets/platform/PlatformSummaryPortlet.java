@@ -23,6 +23,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -153,9 +154,10 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.getProperty());
                             value = 1 - value;
 
-                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE,
-                                true));
-                            text.setAutoWidth();
+                            Label text = new Label();
+                            text.setWrap(false);
+                            text.setAutoFit(true);
+                            text.setContents(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE, true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");
@@ -180,9 +182,11 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.getProperty());
                             double used = listGridRecord.getAttributeAsDouble(MemoryMetric.ActualUsed.getProperty());
                             double percent = used / total;
-                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
-                                MeasurementUnits.PERCENTAGE, true));
-                            text.setAutoWidth();
+                            Label text = new Label();
+                            text.setWrap(false);
+                            text.setAutoFit(true);
+                            text.setContents(MeasurementConverterClient.format(percent,
+                                    MeasurementUnits.PERCENTAGE, true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");
@@ -207,9 +211,11 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.getProperty());
                             double percent = value / total;
 
-                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
-                                MeasurementUnits.PERCENTAGE, true));
-                            text.setAutoWidth();
+                            Label text = new Label();
+                            text.setWrap(false);
+                            text.setAutoFit(true);
+                            text.setContents(MeasurementConverterClient.format(percent,
+                                    MeasurementUnits.PERCENTAGE, true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");

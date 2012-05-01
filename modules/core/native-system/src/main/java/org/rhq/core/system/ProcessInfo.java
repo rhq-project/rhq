@@ -25,10 +25,13 @@ package org.rhq.core.system;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.ProcCred;
 import org.hyperic.sigar.ProcCredName;
@@ -448,6 +451,8 @@ public class ProcessInfo {
 
     /**
      * Returns the parent process of this process.
+     *
+     * @since 4.4
      */
     public ProcessInfo getParentProcess() throws SystemInfoException {
         if (this.parentProcess == null) {
@@ -456,6 +461,27 @@ public class ProcessInfo {
             this.parentProcess.refresh();
         }
         return this.parentProcess;
+    }
+
+    /**
+     * Send the signal with the specified name to this process.
+     *
+     * @param signalName the name of the signal to send
+     *
+     * @throws IllegalArgumentException if the signal name is not valid
+     * @throws SigarException if the native kill() call fails
+     *
+     * @since 4.4
+     */
+    public void kill(String signalName) throws SigarException {
+        int signalNumber = getSignalNumber(signalName);
+        // TODO: Should we check if the process is even running and throw a special exception if it's not?
+        Sigar fullSigar = new Sigar();
+        try {
+            fullSigar.kill(pid, signalNumber);
+        } finally {
+            fullSigar.close();
+        }
     }
 
     /**
@@ -505,4 +531,36 @@ public class ProcessInfo {
 
         return s.toString();
     }
+
+    private static final Set<String> TERMINATE_SIGNAL_NAMES = new HashSet<String>();
+    static {
+        TERMINATE_SIGNAL_NAMES.add("INT");
+        TERMINATE_SIGNAL_NAMES.add("KILL");
+        TERMINATE_SIGNAL_NAMES.add("QUIT");
+        TERMINATE_SIGNAL_NAMES.add("TERM");
+    }
+
+    private static int getSignalNumber(String signalName) {
+        if (signalName == null) {
+            throw new IllegalArgumentException("Signal name is null.");
+        }
+
+        int signalNumber;
+        if (OperatingSystem.IS_WIN32) {
+            if (TERMINATE_SIGNAL_NAMES.contains(signalName)) {
+                signalNumber = 1;
+            } else {
+                throw new IllegalArgumentException("Unsupported signal name: " + signalName
+                        + " - on Windows, the only supported signal names are " + TERMINATE_SIGNAL_NAMES
+                        + ", all of which return 1.");
+            }
+        } else {
+            signalNumber = Sigar.getSigNum(signalName);
+            if (signalNumber == -1) {
+                throw new IllegalArgumentException("Unknown signal name: " + signalName);
+            }
+        }
+        return signalNumber;
+    }
+
 }

@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.testng.Assert;
 
@@ -226,17 +225,15 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     public void killServerProcesses() {
         List<ProcessInfo> processes = getServerProcesses();
         System.out.println("\n=== Killing " + processes.size() + " " + getServerResourceType() + " processes...");
-        Sigar sigar = new Sigar();
         for (ProcessInfo process : processes) {
             System.out.println("====== Killing process with pid [" + process.getPid() + "] and command line ["
                     + Arrays.toString(process.getCommandLine()) + "]...");
             try {
-                sigar.kill(process.getPid(), "KILL");
+                process.kill("KILL");
             } catch (SigarException e) {
                 System.err.println("Failed to kill " + process + ": " + e);
             }
         }
-        sigar.close();
         processes = getServerProcesses();
         Assert.assertEquals(processes.size(), 0,
                 "Failed to kill " + processes.size() + " " + getServerResourceType() + " processes: " + processes);

@@ -1225,12 +1225,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
             deactivateResource(resource);
 
-            // TODO REMOVE THIS IF STATEMENT - IT IS JUST FOR TESTING
-            if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
-                Exception e = new Exception("BAD CHILD SET - IF YOU SEE THIS, LOG IT IN BZ 801432:"
-                    + resource.getChildResources().getClass().getName() + ":" + resource.getId() + ":"
-                    + resource.getName());
-                log.fatal("[BZ 801432]", e);
+            // see BZ 801432
+            if (log.isDebugEnabled()) {
+                if (!resource.getChildResources().getClass().getName().contains("Collections$SetFromMap")) {
+                    Exception e = new Exception(
+                        "Unexpected child set - if you see this, please notify support or log it in bugzilla"
+                            + resource.getChildResources().getClass().getName() + ":" + resource.getId() + ":"
+                            + resource.getName());
+                    log.debug("[BZ 801432]", e);
+                }
             }
 
             for (Resource child : resource.getChildResources()) {

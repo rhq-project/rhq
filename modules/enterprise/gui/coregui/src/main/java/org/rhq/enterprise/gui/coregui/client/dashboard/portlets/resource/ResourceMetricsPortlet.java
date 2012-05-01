@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
@@ -37,7 +30,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -63,6 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+
+import java.util.*;
 
 /**This portlet allows the end user to customize the metric display
  *
@@ -245,6 +239,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         LocatableDynamicForm row = new LocatableDynamicForm(
                                                             recentMeasurementsContent.extendLocatorId(md.getName()));
                                                         row.setNumCols(3);
+                                                        row.setWidth100();
                                                         HTMLFlow graph = new HTMLFlow();
                                                         //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
                                                         //                            + commaDelimitedList + "</span>";
@@ -293,8 +288,10 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);
+                                                        value.setVAlign(VerticalAlignment.TOP);
 
                                                         row.setItems(graphContainer, link, value);
+
                                                         //if graph content returned
                                                         if ((md.getName().trim().indexOf("Trait.") == -1)
                                                             && (lastValue != -1)) {

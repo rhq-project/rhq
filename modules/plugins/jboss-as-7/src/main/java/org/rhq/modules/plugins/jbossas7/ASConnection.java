@@ -55,6 +55,7 @@ public class ASConnection {
 
     // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     public static boolean verbose = false;
+    private static final int HTTP_TEMPORARY_REDIRECT = 307;
 
     private final Log log = LogFactory.getLog(ASConnection.class);
 
@@ -170,7 +171,7 @@ public class ASConnection {
         try {
             String json_to_send = mapper.writeValueAsString(operation);
 
-            // Check for spaces in the path which the AS7 server will reject. Log verbose error and
+            // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
             // generate failure indicator.
             if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
                 if (containsSpaces(operation.getAddress().getPath())) {
@@ -188,7 +189,7 @@ public class ASConnection {
             }
 
             if (verbose) {
-                log.info("Json to send: " + json_to_send);
+                log.info("JSON to send: " + json_to_send);
             }
 
             mapper.writeValue(out, operation);
@@ -215,10 +216,15 @@ public class ASConnection {
                         log.info(tmp);
                     }
                 } else {
-                    outcome = "- no response from server -";
+                    int responseCode = conn.getResponseCode();
+                    if (isAuthorizationFailureResponse(responseCode)) {
+                        handleAuthorizationFailureResponse(operation, conn);
+                    }
                     Result noResult = new Result();
-                    noResult.setFailureDescription(outcome);
                     noResult.setOutcome("failure");
+
+                    String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
+                    noResult.setFailureDescription("- empty response body with HTTP status code " + responseCodeString + " -");
                     operationResult = mapper.valueToTree(noResult);
                 }
 
@@ -237,6 +243,9 @@ public class ASConnection {
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
         } catch (IOException e) {
+            // This typically indicates a 5xx HTTP response code (i.e. a server error). Unfortunately, AS7 returns 500
+            // responses for client errors (e.g. invalid resource path, attribute name, etc.).
+
             // On error conditions, it's still necessary to slurp the response stream so the JDK knows it can reuse the
             // persistent HTTP connection behind the scenes.
             String responseBody;
@@ -250,44 +259,27 @@ public class ASConnection {
 
             String responseCodeString;
             try {
-                responseCodeString = conn.getResponseCode() + " (" + conn.getResponseMessage() + ")";
-
-                //spinder 3/31/12 NOTE: This means that when the Mgmt user has not been configured you will
-                // NOT get the usual json details with failure-descriptions.  Most of the time this is ok as it will
-                // likely be a customer who does not have the right configuration and needs to know why without digging
-                // through agent logs.
-                // Process response code to generate plugin configuration exception and/or logging
                 int responseCode = conn.getResponseCode();
-                // response code 307 is Temporary Redirect.
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == 307 ) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Response to " + operation + " was " + responseCode + " " + conn.getResponseMessage()
-                            + " - throwing InvalidPluginConfigurationException...");
-                    }
-                    // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
-                    // warning message in the GUI.
-                    String message;
-                    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED)
-                        message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
-                    else
-                        message = "Authorization with AS7 failed - Did you install a management user?";
-                    throw new InvalidPluginConfigurationException(
-                            message);
+                responseCodeString = responseCode + " (" + getResponseMessage(conn) + ")";
+
+                if (isAuthorizationFailureResponse(responseCode)) {
+                    handleAuthorizationFailureResponse(operation, conn);
                 } else {
-                    if (responseBody==null || responseBody.isEmpty()) {
-                        log.warn("Response body for " + operation + " was empty and response code was " + responseCode
-                        + " (" + conn.getResponseMessage() + ").");
+                    if (responseBody == null || responseBody.isEmpty()) {
+                        log.warn("Response body for " + operation + " was empty and response code was "
+                                + responseCodeString + ".");
                     } else {
-                        if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) { // management resource not found or not readable or no known child-type
-                            if (log.isDebugEnabled())
-                                log.debug("Requested management resource not found " + operation.getAddress());
+                        if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) {
+                            // management resource not found or not readable or no known child-type
+                            if (log.isDebugEnabled()) {
+                                log.debug("Requested management resource not found: " + operation.getAddress().getPath());
+                            }
                         }
                         else {
                             log.warn("We got a " + responseCode + " with the following response body back: " + responseBody);
                         }
                     }
                 }
-
             } catch (IOException ioe) {
                 responseCodeString = "unknown response code";
             }
@@ -323,6 +315,38 @@ public class ASConnection {
         }
 
         return null;
+    }
+
+    // When no management users have been configured, a 307 (Temporary Redirect) response will be returned, and
+    // when authorization has failed due to an invalid username or password, a 401 (Unauthorized) response will be
+    // returned.
+    private boolean isAuthorizationFailureResponse(int responseCode) {
+        return responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == HTTP_TEMPORARY_REDIRECT;
+    }
+
+    private void handleAuthorizationFailureResponse(Operation operation, HttpURLConnection conn) throws IOException {
+        if (log.isDebugEnabled()) {
+            String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
+            log.debug("Response to " + operation + " was " + responseCodeString
+                + " - throwing InvalidPluginConfigurationException...");
+        }
+        // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
+        // warning message in the GUI.
+        String message;
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
+        } else {
+            message = "Authorization to AS7 failed - did you install a management user?";
+        }
+        throw new InvalidPluginConfigurationException(message);
+    }
+
+    private String getResponseMessage(HttpURLConnection conn) throws IOException {
+        String responseMessage = conn.getResponseMessage();
+        if ((responseMessage == null) && (conn.getResponseCode() == HTTP_TEMPORARY_REDIRECT)) {
+            responseMessage = "Temporary Redirect";
+        }
+        return responseMessage;
     }
 
     /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.

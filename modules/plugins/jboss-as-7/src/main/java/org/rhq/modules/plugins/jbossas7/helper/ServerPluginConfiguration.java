@@ -39,7 +39,7 @@ public class ServerPluginConfiguration {
 
     public Integer getPort() {
         String stringValue = this.pluginConfig.getSimpleValue(Property.PORT);
-        return Integer.valueOf(stringValue);
+        return (stringValue != null) ? Integer.valueOf(stringValue) : null;
     }
 
     public void setPort(int port) {

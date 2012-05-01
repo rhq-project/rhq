@@ -700,6 +700,16 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return address;
     }
 
+    protected String readAttribute(String name) throws Exception {
+        Operation op = new ReadAttribute(getAddress(), name);
+        Result res = getASConnection().execute(op);
+        if (!res.isSuccess()) {
+            throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
+                    + "] - response: " + res);
+        }
+        return (String) res.getResult();
+    }
+
     private static class ComplexRequest {
         private String prop;
         private String sub;

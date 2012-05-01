@@ -424,38 +424,35 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     // Manually add a (remote) AS7 instance.
     @Override
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
         ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+        ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(pluginConfig);
 
-        String hostname = pluginConfiguration.getSimpleValue("hostname", null);
-        String portString = pluginConfiguration.getSimpleValue("port", null);
-        String user = pluginConfiguration.getSimpleValue("user", null);
-        String pass = pluginConfiguration.getSimpleValue("password", null);
+        String hostname = serverPluginConfig.getHostname();
+        Integer port = serverPluginConfig.getPort();
+        String user = serverPluginConfig.getUser();
+        String pass = serverPluginConfig.getPassword();
 
-        if (hostname == null || portString == null) {
-            throw new InvalidPluginConfigurationException("Host and port must not be null");
+        if (hostname == null || port == null) {
+            throw new InvalidPluginConfigurationException("Hostname and port must both be set.");
         }
-        int port = Integer.valueOf(portString);
 
         ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
-        String productName = productInfo.getProductName();
-        String productVersion = productInfo.getProductVersion();
+        JBossProductType productType = productInfo.getProductType();
 
-        String resourceKey = hostname + ":" + port + ":" + productName;
+        HostPort hostPort = new HostPort(false);
+        HostPort managementHostPort = new HostPort(false);
+        managementHostPort.host = hostname;
+        managementHostPort.port = port;
+        String key = hostname + ":" + port;
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String version = productInfo.getProductVersion();
+        String description = buildDefaultResourceDescription(hostPort, productType);
 
-        String description;
-        if (productName.contains("EAP")) {
-            description = "Standalone" + JBossProductType.EAP.FULL_NAME + " server";
-        } else if (productName.contains("JDG")) {
-            description = "Standalone" + JBossProductType.JDG.FULL_NAME + " server";
-        } else {
-            description = context.getResourceType().getDescription();
-        }
+        pluginConfig.put(new PropertySimple("manuallyAdded", true));
 
-        pluginConfiguration.put(new PropertySimple("manuallyAdded", true));
-
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-            productName + " @ " + hostname + ":" + port, productVersion, description, pluginConfiguration, null);
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name,
+            version, description, pluginConfig, null);
 
         return detail;
     }
@@ -534,28 +531,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return hostName;
     }
 
-    /**
-     * Obtain the running configuration from the command line if it was passed via --(server,domain,host)-config
-     * @param commandLine Command line to look at
-     * @param mode mode and thus command line switch to look for
-     * @return the config or the default for the mode if no config was passed on the command line.
-     */
-    protected String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
-        String configArg = mode.getConfigArg();
-
-        for (int index = 0; index < commandLine.length; index++) {
-            if (commandLine[index].startsWith(configArg)) {
-                if (index + 1 < commandLine.length) {
-                    return commandLine[index + 1];
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return mode.getDefaultXmlFile();
-    }
-
     private void initLogEventSourcesConfigProp(String fileName, Configuration pluginConfiguration) {
         PropertyList logEventSources = pluginConfiguration
             .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
@@ -596,7 +571,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         private String pass;
         private int port;
         private String productVersion;
-        private String productName;
+        private JBossProductType productType;
         private String releaseVersion;
         private String releaseCodeName;
         private boolean fromRemote = false;
@@ -613,23 +588,23 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             return productVersion;
         }
 
-        public String getProductName() {
-            return productName;
+        public JBossProductType getProductType() {
+            return productType;
         }
 
         public ProductInfo getFromRemote() {
             ASConnection connection = new ASConnection(hostname, port, user, pass);
             try {
-                productVersion = getServerAttribute(connection, "product-version");
-                productName = getServerAttribute(connection, "product-name");
+                String productName = getServerAttribute(connection, "product-name");
+                productType = ((productName != null) && !productName.isEmpty()) ?
+                        JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
                 releaseVersion = getServerAttribute(connection, "release-version");
                 releaseCodeName = getServerAttribute(connection, "release-codename");
                 serverName = getServerAttribute(connection, "name");
-                if (productVersion == null)
+                productVersion = getServerAttribute(connection, "product-version");
+                if (productVersion == null) {
                     productVersion = releaseVersion;
-                if (productName == null)
-                    productName = "AS7";
-
+                }
                 fromRemote = true;
             } catch (InvalidPluginConfigurationException e) {
                 log.debug("Could not get the product info from [" + hostname + ":" + port
@@ -641,7 +616,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         @Override
         public String toString() {
             return "ProductInfo{" + "hostname='" + hostname + '\'' + ", port=" + port + ", productVersion='"
-                + productVersion + '\'' + ", productName='" + productName + '\'' + ", releaseVersion='"
+                + productVersion + '\'' + ", productType='" + productType + '\'' + ", releaseVersion='"
                 + releaseVersion + '\'' + ", releaseCodeName='" + releaseCodeName + '\'' + ", fromRemote=" + fromRemote
                 + '}';
         }

@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
@@ -13,8 +31,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
-import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * The ResourceComponent for a "Web Runtime" Resource.
@@ -79,25 +95,21 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
         File logDir = serverPluginConfig.getLogDir();
         if (logDir != null && logDir.isDirectory()) {
-            String virtualHost = readAttribute("virtual-host");
-            if (virtualHost != null) {
-                String contextRoot = readAttribute("context-root");
-                if (contextRoot != null) {
-                    // e.g. "192.168.1.100_foo_rt.log" for foo.war deployed to 192.168.1.100 vhost
-                    String logFileName = String.format("%s_%s_rt.log", virtualHost, contextRoot);
-                    logFile = new File(logDir, logFileName);
+            try {
+                String virtualHost = readAttribute("virtual-host");
+                if (virtualHost != null) {
+                    String contextRoot = readAttribute("context-root");
+                    if (contextRoot != null) {
+                        // e.g. "192.168.1.100_foo_rt.log" for foo.war deployed to 192.168.1.100 vhost
+                        String logFileName = String.format("%s_%s_rt.log", virtualHost, contextRoot);
+                        logFile = new File(logDir, logFileName);
+                    }
                 }
+            } catch (Exception e) {
+                // ignore
             }
         }
         return logFile;
-    }
-
-    // TODO: Make this more robust and move it up to BaseComponent.
-    private String readAttribute(String attributeName) {
-        ASConnection connection = getASConnection();
-        ReadAttribute op = new ReadAttribute(address, attributeName);
-        Result result = connection.execute(op);
-        return result.toString();
     }
 
 }

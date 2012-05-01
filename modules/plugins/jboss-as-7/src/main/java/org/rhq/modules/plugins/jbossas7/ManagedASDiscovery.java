@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         parentComponent = discoveryContext.getParentResourceComponent();
-        Configuration hcConfig = parentComponent.getHCConfig();
+        Configuration hcConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
         String hostName = hcConfig.getSimpleValue("domainHost", "master"); // TODO good default?
         String productTypeString = hcConfig.getSimpleValue("productType", null);
         JBossProductType productType = JBossProductType.valueOf(productTypeString);

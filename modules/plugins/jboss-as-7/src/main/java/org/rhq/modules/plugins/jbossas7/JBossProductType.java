@@ -24,27 +24,30 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * A product based on JBoss 7.x.
+ * Metadata describing a product based on JBoss AS 7.x.
  *
  * @author Ian Springer
  */
 public enum JBossProductType {
 
-    AS("AS", "JBoss AS 7", "JBoss Application Server 7"),
-    EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6"),
-    JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6"),
-    EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6"),
-//    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6"),
-    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)");
+    AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
+    EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
+    JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
+    EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "EPP"),
+//    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
+    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP");
 
     public final String SHORT_NAME;
     public final String NAME;
     public final String FULL_NAME;
+    /** The value the server returns for the "product-name" attribute of the root resource. */
+    public final String PRODUCT_NAME;
 
-    JBossProductType(String shortName, String name, String fullName) {
+    JBossProductType(String shortName, String name, String fullName, String productName) {
         this.SHORT_NAME = shortName;
         this.NAME = name;
         this.FULL_NAME = fullName;
+        this.PRODUCT_NAME = productName;
     }
 
     /**
@@ -61,6 +64,15 @@ public enum JBossProductType {
             // TODO: Log an error.
             return determineJBossProductTypeViaHomeDirName(homeDir);
         }
+    }
+
+    public static JBossProductType getValueByProductName(String productName) {
+        for (JBossProductType productType : JBossProductType.values()) {
+             if (productType.PRODUCT_NAME.equals(productName)) {
+                 return productType;
+             }
+        }
+        throw new IllegalArgumentException("No product type with product-name '" + productName + "' is known.");
     }
 
     private static JBossProductType determineJBossProductTypeViaProductConfFile(File homeDir) throws Exception {

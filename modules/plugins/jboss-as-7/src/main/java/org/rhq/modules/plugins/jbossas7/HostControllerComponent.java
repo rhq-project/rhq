@@ -23,20 +23,18 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Component class for host- and domain controller
+ * Component class for AS7 host and domain controllers.
+ *
  * @author Heiko W. Rupp
  */
 public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
@@ -45,38 +43,8 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     private final Log log = LogFactory.getLog(HostControllerComponent.class);
 
     @Override
-    public AvailabilityType getAvailability() {
-        Operation op = new ReadAttribute(new Address(),"launch-type");
-        Result res = getASConnection().execute(op);
-        if (!res.isSuccess()) {
-            return AvailabilityType.DOWN;
-        }
-        String mode = (String) res.getResult();
-        if(!"DOMAIN".equals(mode)) {
-            throw new InvalidPluginConfigurationException("Discovered Server is in domain mode, but runtime says " + mode);
-        }
-        // Now check product type
-        op = new ReadAttribute(new Address(),"product-name");
-        res = getASConnection().execute(op);
-        String discoveredType = context.getPluginConfiguration().getSimpleValue("productType","AS");
-        String runtimeType = (String) res.getResult();
-        if (runtimeType==null || runtimeType.isEmpty()) {
-            runtimeType = "AS";
-        }
-        if (!discoveredType.equals(runtimeType)) {
-            throw new InvalidPluginConfigurationException("Discovered Servers is of " + discoveredType + " type, but runtime says " + runtimeType);
-        }
-
-        return AvailabilityType.UP;
-    }
-
-    @Override
     protected AS7Mode getMode() {
         return AS7Mode.DOMAIN;
-    }
-
-    public Configuration getHCConfig() {
-        return pluginConfiguration;
     }
 
     @Override

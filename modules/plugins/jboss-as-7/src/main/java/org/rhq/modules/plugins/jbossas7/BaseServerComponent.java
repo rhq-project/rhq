@@ -36,6 +36,7 @@ import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -91,6 +92,43 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @Override
     public void stop() {
         logFileEventDelegate.stopLogFileEventPollers();
+    }
+
+    @Override
+    public AvailabilityType getAvailability() {
+        // Validate the mode (e.g. STANDALONE or DOMAIN).
+        String runtimeMode;
+        try {
+            runtimeMode = readAttribute("launch-type");
+        } catch (Exception e) {
+            return AvailabilityType.DOWN;
+        }
+        if(!getMode().name().equals(runtimeMode)) {
+            throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was " +
+                    getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
+        }
+
+        // Now validate the product type (e.g. AS or EAP).
+        String discoveredTypeString = context.getPluginConfiguration().getSimpleValue("productType",
+                JBossProductType.AS.name());
+        JBossProductType discoveredType = JBossProductType.valueOf(discoveredTypeString);
+
+        String productName;
+        try {
+            productName  = readAttribute("product-name");
+        } catch (Exception e) {
+            return AvailabilityType.DOWN;
+        }
+        JBossProductType runtimeType = (productName != null && !productName.isEmpty()) ?
+                JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
+
+        if (discoveredType != runtimeType) {
+            throw new InvalidPluginConfigurationException("The original product type discovered for this AS7 server was "
+                    + discoveredType
+                    + ", but the server is now reporting its product type is [" + runtimeType + "].");
+        }
+
+        return AvailabilityType.UP;
     }
 
     public ServerPluginConfiguration getServerPluginConfiguration() {

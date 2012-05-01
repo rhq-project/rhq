@@ -356,6 +356,15 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return (PropertySimple) getMap().get(name);
     }
 
+    /**
+     * Gets the value of the simple property with the specified name. If the property is not defined, null will be
+     * returned.
+     *
+     * @param name the name of the simple property
+     * @return the value of the simple property with the specified name, or null if the property is not defined
+     *
+     * @since 4.4
+     */
     public String getSimpleValue(String name) {
         return getSimpleValue(name, null);
     }
@@ -365,6 +374,14 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return ((property != null) && (property.getStringValue() != null)) ? property.getStringValue() : defaultValue;
     }
 
+    /**
+     * Set the value of a simple property to the specified value. If the property is not yet defined, it will be added.
+     *
+     * @param name the name of the simple property to be set
+     * @param value the new value for the property
+     *
+     * @since 4.4
+     */
     public void setSimpleValue(String name, String value) {
         PropertySimple property = getSimple(name);
         if (value == null) {

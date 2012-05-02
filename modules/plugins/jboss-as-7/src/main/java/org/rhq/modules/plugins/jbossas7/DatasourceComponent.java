@@ -70,6 +70,13 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         Result res = connection.execute(op);
         if (res.isSuccess()) {
             result.setSimpleResult("Success");
+
+            if ("enable".equals(operationName)) {
+                context.getAvailabilityContext().enable();
+            } else if ("disable".equals(operationName)) {
+                context.getAvailabilityContext().disable();
+            }
+
         } else {
             result.setErrorMessage(res.getFailureDescription());
         }

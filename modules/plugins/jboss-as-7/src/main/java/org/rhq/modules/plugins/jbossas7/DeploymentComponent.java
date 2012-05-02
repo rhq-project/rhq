@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,11 +40,9 @@ import org.rhq.core.util.ByteUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -56,13 +53,13 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
     private boolean verbose = ASConnection.verbose;
     private File deploymentFile;
-    
+
     @Override
     public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException, Exception {
         super.start(context);
         deploymentFile = determineDeploymentFile();
     }
-    
+
     @Override
     public AvailabilityType getAvailability() {
         Operation op = new ReadAttribute(getAddress(),"enabled");
@@ -101,10 +98,17 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         Operation op = new Operation(action,getAddress());
         Result res = getASConnection().execute(op);
         OperationResult result = new OperationResult();
-        if (res.isSuccess())
+        if (res.isSuccess()) {
             result.setSimpleResult("Success");
-        else
+            if ("enable".equals(action)) {
+                context.getAvailabilityContext().enable();
+            }
+            if ("disable".equals(action)) {
+                context.getAvailabilityContext().disable();
+            }
+        } else {
             result.setErrorMessage(res.getFailureDescription());
+        }
 
         return result;
     }
@@ -190,7 +194,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     @Override
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
         RemovePackagesResponse response = new RemovePackagesResponse(ContentResponseResult.NOT_PERFORMED);
-        response.setOverallRequestErrorMessage("Removal of packages backing the deployments is not supported.");        
+        response.setOverallRequestErrorMessage("Removal of packages backing the deployments is not supported.");
         return response;
     }
 
@@ -199,14 +203,14 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         if (deploymentFile == null) {
             return Collections.emptySet();
         }
-        
+
         String name = getDeploymentName();
         String sha256 = getSHA256(deploymentFile);
         String version = getVersion(sha256);
-        
+
         PackageDetailsKey key = new PackageDetailsKey(name, version, type.getName(), "noarch");
         ResourcePackageDetails details = new ResourcePackageDetails(key);
-        
+
         details.setDisplayVersion(getDisplayVersion(deploymentFile));
         details.setFileCreatedDate(null); //TODO figure this out from Sigar somehow?
         details.setFileName(name);
@@ -214,40 +218,40 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         details.setInstallationTimestamp(deploymentFile.lastModified());
         details.setLocation(deploymentFile.getAbsolutePath());
         details.setSHA256(sha256);
-        
+
         return Collections.singleton(details);
     }
 
     @Override
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        try {            
+        try {
             return deploymentFile == null ? new ByteArrayInputStream(new byte[0]) : new FileInputStream(deploymentFile);
         } catch (FileNotFoundException e) {
             throw new IllegalStateException("Deployment file seems to have disappeared");
         }
     }
-    
+
     private File determineDeploymentFile() {
         Operation op = new ReadAttribute(getAddress(), "content");
         Result result = getASConnection().execute(op);
-        
+
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> content = (List<Map<String, Object>>) result.getResult();
         if (content.isEmpty()) {
             log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment" + getAddress() + ".");
             return null;
         }
-        
+
         Boolean archive = (Boolean) content.get(0).get("archive");
         if (archive != null && !archive) {
             log.debug("Exploded deployments not supported for retrieving the content.");
             return null;
         }
-        
+
         File deploymentFile = null;
         if (content.get(0).containsKey("path")) {
             String path = (String) content.get(0).get("path");
-            String relativeTo = (String) content.get(0).get("relative-to");            
+            String relativeTo = (String) content.get(0).get("relative-to");
             deploymentFile = getDeploymentFileFromPath(relativeTo, path);
         } else if (content.get(0).containsKey("hash")) {
             @SuppressWarnings("unchecked")
@@ -256,16 +260,16 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             Address contentPathAddress = new Address("core-service", "server-environment");
             op = new ReadAttribute(contentPathAddress, "content-dir");
             result = getASConnection().execute(op);
-            
+
             String contentPath = (String) result.getResult();
             deploymentFile = getDeploymentFileFromHash(hash, contentPath);
         } else {
             log.warn("Failed to determine the deployment file of " + getAddress() + " deployment. Neither path nor hash attributes were available.");
-        }    
-        
+        }
+
         return deploymentFile;
     }
-    
+
     private File getDeploymentFileFromPath(String relativeTo, String path) {
         if (relativeTo == null || relativeTo.trim().isEmpty()) {
             return new File(path);
@@ -274,11 +278,11 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             if (relativeTo.startsWith("jboss.server")) {
                 relativeTo = relativeTo.substring("jboss.server.".length());
                 relativeTo = relativeTo.replace('.', '-');
-                
+
                 //now look for the transformed relativeTo in the server environment
                 Operation op = new ReadAttribute(new Address("core-service", "server-environment"), relativeTo);
                 Result res = getASConnection().execute(op);
-                
+
                 relativeTo = (String) res.getResult();
 
                 return new File(relativeTo, path);
@@ -288,23 +292,23 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             }
         }
     }
-    
+
     private File getDeploymentFileFromHash(byte[] hash, String contentPath) {
         String hashStr = ByteUtil.toHexString(hash);
-        
+
         String head = hashStr.substring(0, 2);
         String tail = hashStr.substring(2);
-        
+
         File hashPath = new File(new File(head, tail), "content");
-        
+
         return new File(contentPath, hashPath.getPath());
     }
-    
+
     /**
      * Retrieve SHA256 for a deployed app.
      *
      * Shamelessly copied from the AS5 plugin.
-     * 
+     *
      * @param file application file
      * @return SHA256 of the content
      */
@@ -325,21 +329,21 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
     /**
      * Shamelessly copied from the AS5 plugin.
-     * 
+     *
      * @param sha256
      * @return
      */
     private static String getVersion(String sha256) {
         return "[sha256=" + sha256 + "]";
-    }   
-    
+    }
+
     /**
      * Retrieve the display version for the component. The display version should be stored
      * in the manifest of the application (implementation and/or specification version).
      * It will attempt to retrieve the version for both archived or exploded deployments.
      *
      * Shamelessly copied from the AS5 plugin
-     * 
+     *
      * @param file component file
      * @return
      */
@@ -347,12 +351,12 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         //JarContentFileInfo extracts the version from archived and exploded deployments
         ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
         return contentFileInfo.getVersion(null);
-    } 
-    
+    }
+
     private String getDeploymentName() {
         Operation op = new ReadAttribute(getAddress(), "name");
         Result res = getASConnection().execute(op);
-        
+
         return (String) res.getResult();
     }
 }

@@ -288,7 +288,7 @@
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
-      <operation name="disable" description="Disables the XA data-source">
+      <operation name="disable" description="Disables the data-source">
         <results>
           <c:simple-property name="operationResult"/>
         </results>

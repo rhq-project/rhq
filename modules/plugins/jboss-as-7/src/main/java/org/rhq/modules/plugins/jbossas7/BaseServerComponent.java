@@ -171,7 +171,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return tmp;
         }
 
-//        context.getAvailabilityContext().requestAvailabilityCheck();
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return startServer();
     }
@@ -262,7 +262,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 operationResult.setErrorMessage("Was not able to start the server");
             }
         }
-//        context.getAvailabilityContext().requestAvailabilityCheck();
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
     }
@@ -481,7 +481,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         log.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
                 + " server with key [" + context.getResourceKey() + "].");
 
-//        context.getAvailabilityContext().requestAvailabilityCheck();
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return result;
     }

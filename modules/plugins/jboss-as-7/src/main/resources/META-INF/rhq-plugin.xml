@@ -134,33 +134,36 @@
 
         <resource-configuration>
 
-          <c:group name="proxy" displayName="Proxy Options">
+<!--          <c:group name="proxy" displayName="Proxy Options">-->
             <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
             <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
-          </c:group>
+<!--          </c:group>-->
 
-          <c:group name="advertise" displayName="Advertise Options">
+<!--          <c:group name="advertise" displayName="Advertise Options">-->
             <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
                                description="Name of Socket binding to use for the Advertise socket."/>
             <c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>
             <c:simple-property name="advertise-security-key" required="false" type="string" readOnly="false" description="String containing the security key for the Advertise logic."/>
             <c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
+            <c:simple-property name="connector" required="true" type="string" readOnly="false" defaultValue="ajp" description="Name of the web connector used to communicate with the load balancer.">
+              <c:option-source target="resource" expression="type=Connector plugin=jboss-as-7"/>
+            </c:simple-property>
             <c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
-          </c:group>
+<!--          </c:group>-->
 
-          <c:group name="context" displayName="Web Context Options">
+<!--          <c:group name="context" displayName="Web Context Options">-->
             <c:simple-property name="excluded-contexts" required="false" type="string" readOnly="false" defaultValue="ROOT,admin-console,invoker,jbossws,jmx-console,juddi,web-console"
                                description="List of contexts mod_cluster should ignore, Format String separated with comas."/>
             <c:simple-property name="auto-enable-contexts" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable contexts even if disabled in mod_cluster_manger (httpd)."/>
-          </c:group>
+<!--          </c:group>-->
 
-          <c:group name="session" displayName="Session Options">
+<!--          <c:group name="session" displayName="Session Options">-->
             <c:simple-property name="sticky-session" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use sticky sessions for requests."/>
             <c:simple-property name="sticky-session-remove" required="false" type="boolean" readOnly="false" defaultValue="false" description="Remove session information on failover."/>
             <c:simple-property name="sticky-session-force" required="false" type="boolean" readOnly="false" defaultValue="false" description="Don&apos;t failover a request with session information."/>
-          </c:group>
+<!--          </c:group>-->
 
-          <c:group name="network" displayName="Network Options">
+<!--          <c:group name="network" displayName="Network Options">-->
             <c:simple-property name="worker-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="Timeout to wait in httpd for an available worker to process the requests."/>
             <c:simple-property name="max-attempts" required="false" type="integer" readOnly="false" defaultValue="1" description="Max attempts to process an idempotent request."/>
             <c:simple-property name="flush-packets" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enables/disables packet flushing in httpd."/>
@@ -172,7 +175,7 @@
             <c:simple-property name="stop-context-timeout" required="false" type="integer" readOnly="false" defaultValue="10" description="Max time to wait for context to process pending requests."/>
             <c:simple-property name="socket-timeout" required="false" type="integer" readOnly="false" defaultValue="20" description="Timeout to wait for httpd to answer a MCMP message."/>
 
-          </c:group>
+<!--          </c:group>-->
         </resource-configuration>
 '>
 

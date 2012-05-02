@@ -111,8 +111,6 @@
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.0.Final</arquillian.version>
-    <shrinkwrap.version>1.0.0</shrinkwrap.version>
-    <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
@@ -169,7 +167,7 @@
       When this property is set to true will compare its endpoint address
       that is stored in the database against the actual host name/IP address
       returned by the host system. If they differ, the address stored in the
-      datbase will be updated to the value found on the host machine. While
+      database will be updated to the value found on the host machine. While
       host name changes are/should be uncommon in a typical deployment, they
       are more common in a cloud deployment such as EC2. And in a cloud
       deployment like EC2, we want to turn this behavior on to ensure that
@@ -455,17 +453,25 @@
          <scope>provided</scope>
       </dependency>
 
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs-all</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jettison-provider</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
+      <dependency>
+         <groupId>org.jboss.resteasy</groupId>
+         <artifactId>resteasy-jaxrs-all</artifactId>
+         <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.resteasy</groupId>
+         <artifactId>resteasy-jettison-provider</artifactId>
+         <version>${resteasy.version}</version>
+      </dependency>
 
+      <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->
+      <dependency>
+         <groupId>org.jboss.arquillian</groupId>
+         <artifactId>arquillian-bom</artifactId>
+         <version>${arquillian.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
 
     </dependencies>
 

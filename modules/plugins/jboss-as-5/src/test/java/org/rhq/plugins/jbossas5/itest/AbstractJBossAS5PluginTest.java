@@ -32,6 +32,7 @@ import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 public abstract class AbstractJBossAS5PluginTest extends AbstractAgentPluginTest {
 
     protected static final String PLUGIN_NAME = "JBossAS5";
+    private static final int TYPE_HIERARCHY_DEPTH = 4;
 
     @Override
     protected String getPluginName() {
@@ -40,7 +41,7 @@ public abstract class AbstractJBossAS5PluginTest extends AbstractAgentPluginTest
 
     @Override
     protected int getTypeHierarchyDepth() {
-        return 4;
+        return TYPE_HIERARCHY_DEPTH;
     }
 
 }

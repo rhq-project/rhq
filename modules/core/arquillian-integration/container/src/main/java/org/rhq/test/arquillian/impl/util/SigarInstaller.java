@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.test.arquillian.impl.util;
 
 import java.io.File;
@@ -45,6 +44,9 @@ public class SigarInstaller {
 
     private static final Log LOG = LogFactory.getLog(SigarInstaller.class);
 
+    private static final String USER_HOME = System.getProperty("user.home");
+    private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
+
     private File rootDir;
     private Archive<?> sigarDistArtifact;
 
@@ -56,18 +58,19 @@ public class SigarInstaller {
     private void init() {
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
 
-        Collection<JavaArchive> sigars =
-            mavenDependencyResolver.loadEffectivePom("pom.xml").artifact("org.hyperic:sigar-dist:zip:?")
+        // artifact specifier format is "<groupId>:<artifactId>[:<extension>[:<classifier>]][:<version >]"
+        Collection<JavaArchive> sigars = mavenDependencyResolver
+                .loadMetadataFromPom("pom.xml")
+                .goOffline()
+                // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
+                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132")
                 .resolveAs(JavaArchive.class);
 
         if (sigars.size() > 1) {
-            throw new IllegalStateException(
-                "More than 1 org.hyperic:sigar-dist artifacts found in the current POM. Please use only a single version.");
+            LOG.warn("More than 1 org.hyperic:sigar-dist artifact found in the current POM: " + sigars);
         }
 
-        if (!sigars.isEmpty()) {
-            sigarDistArtifact = sigars.iterator().next();
-        }
+        sigarDistArtifact = sigars.iterator().next();
     }
 
     public boolean isSigarAvailable() {
@@ -77,9 +80,12 @@ public class SigarInstaller {
     public void installSigarNativeLibraries() {
         LOG.debug("Installing SIGAR native libraries to [" + rootDir + "]...");
 
-        File tempDir = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
-        tempDir.mkdirs();
+        File tempDir = new File(TMP_DIR, UUID.randomUUID().toString());
+        if (!tempDir.exists()) {
+            tempDir.mkdirs();
+        }
         String explodedDirName = "sigar-dist";
+        LOG.debug("Unzipping " + sigarDistArtifact + " to " + tempDir + "...");
         sigarDistArtifact.as(ExplodedExporter.class).exportExploded(tempDir, explodedDirName);
         File sigarLibDir = null;
         try {

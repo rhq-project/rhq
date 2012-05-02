@@ -44,7 +44,6 @@ import org.jboss.shrinkwrap.api.asset.NamedAsset;
 import org.jboss.shrinkwrap.api.exporter.StreamExporter;
 import org.jboss.shrinkwrap.api.formatter.Formatter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.impl.base.path.BasicPath;
 
 /**
  * An EJB JAR.
@@ -96,7 +95,7 @@ public class EjbArchive implements JavaArchive {
         Asset ejbJarXml = new ByteArrayAsset(byteArrayOutputStream.toByteArray());                
 
         // add deployment descriptor
-        addAsManifestResource(ejbJarXml, new BasicPath("ejb-jar.xml"));
+        addAsManifestResource(ejbJarXml, "ejb-jar.xml");
 
         // add entity bean classes
         addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/EntityEJBHome.class"), TEST_EJB_RESOURCE_PATH + "/EntityEJBHome.class");

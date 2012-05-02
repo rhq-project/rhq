@@ -43,9 +43,9 @@ public class RhqAgentPluginContainerTest extends Arquillian {
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
             .setPluginDescriptor("test-dependent-rhq-plugin.xml")
             .withRequiredPluginsFrom(
-                DependencyResolvers.use(MavenDependencyResolver.class).loadEffectivePom("pom.xml").importAllDependencies()
-                    .resolveAs(JavaArchive.class, new ScopeFilter("test")));
-
+                DependencyResolvers.use(MavenDependencyResolver.class)
+                        .includeDependenciesFromPom("pom.xml")
+                        .resolveAs(JavaArchive.class, new ScopeFilter("test")));
     }
 
     @Deployment(name = "manuallyDeployed", managed = false)

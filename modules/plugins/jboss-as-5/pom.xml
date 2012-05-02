@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 
-<!-- $Id$ -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -28,6 +27,16 @@
 
   <dependencyManagement>
     <dependencies>
+
+      <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->
+      <dependency>
+         <groupId>org.jboss.arquillian</groupId>
+         <artifactId>arquillian-bom</artifactId>
+         <version>${arquillian.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
+
       <dependency>
         <groupId>org.jboss.jbossas</groupId>
         <artifactId>jboss-as-parent</artifactId>
@@ -35,6 +44,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
       <dependency>
         <groupId>org.jboss.jbossas</groupId>
         <artifactId>jboss-as-component-matrix</artifactId>
@@ -42,6 +52,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -81,6 +92,7 @@
     <dependency>
       <groupId>org.jboss.integration</groupId>
       <artifactId>jboss-profileservice-spi</artifactId>
+      <version>6.0.0.Alpha9</version>
       <scope>provided</scope>
     </dependency>
 
@@ -114,255 +126,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!--  To prevent the classloading issues with the maven's isolated classloader
-and the plugin classloader in our integration tests, we just include all
-the deps for the AS5 plugin in the test scope. -->
-
-    <!-- NOTE: To shorten the list of required dependencies (as commented out below),
-we now use the following method. -->
-    <dependency>
-      <groupId>org.jboss.jbossas</groupId>
-      <artifactId>jboss-as-client</artifactId>
-      <version>${jbossas.version}</version>
-      <type>pom</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.microcontainer</groupId>
-      <artifactId>jboss-dependency</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.aspects</groupId>
-      <artifactId>jboss-security-aspects</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <!--
-            <dependency>
-                <groupId>org.jboss.microcontainer</groupId>
-                <artifactId>jboss-kernel</artifactId>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.naming</groupId>
-              <artifactId>jnp-client</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.jbossas</groupId>
-              <artifactId>jboss-as-aspects</artifactId>
-              <version>5.1.0.CR1</version>
-              <classifier>jboss-aspect-jdk50-client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>trove</groupId>
-              <artifactId>trove</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>javassist</groupId>
-              <artifactId>javassist</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.security</groupId>
-              <artifactId>jboss-security-spi</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.javaee</groupId>
-              <artifactId>jboss-javaee</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>oswego-concurrent</groupId>
-              <artifactId>concurrent</artifactId>
-              <version>1.3.4-jboss</version>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.jbossas</groupId>
-                <artifactId>jboss-as-server</artifactId>
-                <classifier>client</classifier>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss</groupId>
-              <artifactId>jboss-mdr</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.logging</groupId>
-              <artifactId>jboss-logging-spi</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.logging</groupId>
-              <artifactId>jboss-logging-log4j</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.jbossas</groupId>
-              <artifactId>jboss-as-security</artifactId>
-              <version>5.1.0.CR1</version>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.integration</groupId>
-              <artifactId>jboss-transaction-spi</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-common</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-core</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-ext-api</artifactId>
-              <version>1.0.0</version>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-proxy-spi</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-proxy-impl</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.ejb3</groupId>
-              <artifactId>jboss-ejb3-security</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.microcontainer</groupId>
-              <artifactId>jboss-dependency</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.security</groupId>
-              <artifactId>jbosssx-client</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.aspects</groupId>
-              <artifactId>jboss-security-aspects</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss.aop</groupId>
-              <artifactId>jboss-aop</artifactId>
-              <classifier>client</classifier>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-              <groupId>org.jboss</groupId>
-              <artifactId>jboss-common-core</artifactId>
-              <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss</groupId>
-                <artifactId>jboss-reflect</artifactId>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>jboss</groupId>
-                <artifactId>jboss-serialization</artifactId>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.deployers</groupId>
-                <artifactId>jboss-deployers-core-spi</artifactId>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.deployers</groupId>
-                <artifactId>jboss-deployers-client-spi</artifactId>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.jbossas</groupId>
-                <artifactId>jboss-as-profileservice</artifactId>
-                <classifier>client</classifier>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.jbossas</groupId>
-                <artifactId>jboss-as-server</artifactId>
-                <classifier>jmx-invoker-adaptor-client</classifier>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>jboss.messaging</groupId>
-                <artifactId>jboss-messaging-client</artifactId>
-                <scope>test</scope>
-            </dependency>
-    -->
-    <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
-         and jboss-system sources jars for debugging purposes.
-    -->
-    <!--
-            <dependency>
-                <groupId>org.jboss.jbossas</groupId>
-                <artifactId>jboss-as-profileservice</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.jbossas</groupId>
-                <artifactId>jboss-as-system</artifactId>
-                <scope>provided</scope>
-            </dependency>
-    -->
+    <!-- Test Deps -->
 
     <dependency>
        <groupId>${rhq.groupId}</groupId>
@@ -377,6 +141,13 @@ we now use the following method. -->
        <artifactId>rhq-core-plugin-test-util</artifactId>
        <version>${project.version}</version>
        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.spec.javax.jms</groupId>
+      <artifactId>jboss-jms-api_1.1_spec</artifactId>
+      <version>1.0.0.Final</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
@@ -456,6 +227,34 @@ we now use the following method. -->
          </property>
       </activation>
       -->
+
+      <dependencies>
+
+        <!--  To prevent the classloading issues with maven's isolated classloader
+              and the plugin classloader in our integration tests, we just include all
+              the deps for the AS5 plugin in the test scope. -->
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-client</artifactId>
+          <version>${jbossas.version}</version>
+          <type>pom</type>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-dependency</artifactId>
+          <version>2.2.0.M2</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+      </dependencies>
 
       <build>
         <plugins>
@@ -636,10 +435,15 @@ we now use the following method. -->
       <properties>
         <jboss5.home>${java.io.tmpdir}${file.separator}jboss-as-${as5.version}</jboss5.home>
         <jboss.bindAddress>127.0.0.1</jboss.bindAddress>
+        <jboss.serviceBindingSet>ports-03</jboss.serviceBindingSet>
         <jboss.portOffset>30000</jboss.portOffset>
-        <!-- IMPORTANT: The management port must be the port offset + 1099. -->
+        <!-- IMPORTANT: The JNP port must be the port offset + 1099. -->
         <jboss.jnpPort>31099</jboss.jnpPort>
       </properties>
+
+      <dependencies>
+
+      </dependencies>
 
       <build>
         <plugins>
@@ -663,6 +467,10 @@ we now use the following method. -->
                             <move file="${java.io.tmpdir}/jboss-${as5.version}"
                                   tofile="${java.io.tmpdir}/jboss-as-${as5.version}" failonerror="false"
                                   overwrite="false"/>
+
+                            <chmod perm="u+rx">
+                              <fileset dir="${jboss5.home}/bin" includes="*.sh"/>
+                            </chmod>
                             <!-- Use a port offset of 30000, rather than the default of 300. -->
                             <replace dir="${jboss5.home}"
                                      includes="server/default/conf/bindingservice.beans/META-INF/bindings-jboss-beans.xml"
@@ -706,7 +514,7 @@ we now use the following method. -->
                       <argument>org.jboss.Main</argument>
                       <argument>--configuration=default</argument>
                       <argument>--host=${jboss.bindAddress}</argument>
-                      <argument>-Djboss.service.binding.set=ports-03</argument>
+                      <argument>-Djboss.service.binding.set=${jboss.serviceBindingSet}</argument>
                     </arguments>
                 </configuration>
               </execution>
@@ -728,6 +536,8 @@ we now use the following method. -->
                 <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                 <jboss5.home>${jboss5.home}</jboss5.home>
                 <as5.version>${as5.version}</as5.version>
+                <jboss.serviceBindingSet>${jboss.serviceBindingSet}</jboss.serviceBindingSet>
+                <jboss.portOffset>${jboss.portOffset}</jboss.portOffset>
               </systemPropertyVariables>
             </configuration>
             <executions>

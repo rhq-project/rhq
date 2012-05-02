@@ -105,8 +105,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getRhqVersion();
-        Collection<RhqAgentPluginArchive> plugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
-            .artifact(platformPluginArtifact).resolveAs(RhqAgentPluginArchive.class);
+        Collection<RhqAgentPluginArchive> plugins = mavenDependencyResolver
+                .loadMetadataFromPom("pom.xml")
+                .goOffline()
+                .artifact(platformPluginArtifact)
+                .resolveAs(RhqAgentPluginArchive.class);
         return plugins.iterator().next();
     }
 
@@ -119,8 +122,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         System.out.println("Using plugin jar [" + pluginJarFile + "]...");
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         // Pull in any required plugins from our pom's dependencies.
-        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
-            .importAllDependencies().resolveAs(RhqAgentPluginArchive.class);
+        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver
+                .loadMetadataFromPom("pom.xml")
+                //.goOffline()
+                .includeDependenciesFromPom("pom.xml")
+                .scope("provided")
+                .resolveAs(RhqAgentPluginArchive.class);
         return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName()).importFrom(pluginJarFile)
             .as(RhqAgentPluginArchive.class).withRequiredPluginsFrom(requiredPlugins);
     }

@@ -31,12 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -67,6 +67,9 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
 
     protected static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss5.home")));
+    protected static final String BIND_ADDRESS = System.getProperty("jboss.bind.address");
+    protected static final String SERVICE_BINDING_SET = System.getProperty("jboss.serviceBindingSet");
+    protected static final int PORT_OFFSET = Integer.valueOf(System.getProperty("jboss.portOffset"));
 
     protected static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS Server", PLUGIN_NAME,
         ResourceCategory.SERVER, null);
@@ -82,6 +85,8 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
     public void testAutoDiscovery() throws Exception {
         System.out.println("\n****** Running " + getClass().getSimpleName() + ".testAutoDiscovery...");
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        System.out.println("~~~~~ Platform: " + platform);
+
         Assert.assertNotNull(platform);
         Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
@@ -94,10 +99,35 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         System.out.println("---------- Finished " + getClass().getSimpleName() + ".testAutoDiscovery...");
     }
 
+    @Test(dependsOnMethods = { "testAutoDiscovery" })
+    public void testConnection() throws Exception {
+        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testConnection...");
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        Assert.assertNotNull(platform);
+        Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+
+        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+
+        // We need to set the principal and credentials to admin:admin in order to connect to the managed server.
+        pluginConfig.setSimpleValue("principal", "admin");
+        pluginConfig.setSimpleValue("credentials", "admin");
+
+        // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
+        System.out.println("===== Updating Server Resource's plugin configuration: " + pluginConfig.toString(true));
+        restartServerResourceComponent();
+
+        // If the ResourceComponent connected to the managed server successfully, the Resource should now be UP.
+        Thread.sleep(1000);
+        AvailabilityType avail = getAvailability(getServerResource());
+        assertEquals(avail, AvailabilityType.UP);
+
+        System.out.println("---------- Finished " + getClass().getSimpleName() + ".testConnection...");
+    }
+
     protected void validatePluginConfiguration(Configuration pluginConfig) {
         // "hostname" prop
         String hostname = pluginConfig.getSimpleValue("hostname", null);
-        String expectedHostname = System.getProperty(getBindAddressSystemPropertyName());
+        String expectedHostname = BIND_ADDRESS;
         assertEquals(hostname, expectedHostname, "Plugin config prop [hostname].");
 
         // "serverName" prop
@@ -152,11 +182,7 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         Assert.assertNull(javaOpts);
     }
 
-    protected String getBindAddressSystemPropertyName() {
-        return "jboss.bind.address";
-    }
-
-    @Test(dependsOnMethods = { "testAutoDiscovery" })
+    @Test(dependsOnMethods = { "testConnection" })
     public void testShutdownAndStartOperations() throws Exception {
         System.out.println("\n****** Running " + getClass().getSimpleName() + ".testShutdownAndStartOperations...");
 
@@ -164,14 +190,12 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         AvailabilityType avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
 
-        System.out.println("===== Shutting Down: " + getServerResource());
+        System.out.println("===== Shutting Down Managed Server: " + getServerResource());
 
         // Now shut it down using the Shutdown op and make sure it has gone down.
         invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.DOWN);
-
-        System.out.println("===== Modifying: " + getServerResource());
 
         // Before restarting it, add some stuff to the 'startScriptEnv' and 'startScriptArgs' props so we can verify
         // they are used correctly by the Start op.
@@ -188,14 +212,11 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         args.add("-Dfoo=bar");
         startScriptConfig.setStartScriptArgs(args);
 
-        System.out.println("===== Starting Resource Component: " + getServerResource());
-
         // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        inventoryManager.deactivateResource(getServerResource());
-        ResourceContainer serverContainer = inventoryManager.getResourceContainer(getServerResource());
-        inventoryManager.activateResource(getServerResource(), serverContainer, true);
-        System.out.println("===== Starting Server...: " + getServerResource());
+        System.out.println("===== Updating Server Resource's plugin configuration: " + pluginConfig.toString(true));
+        restartServerResourceComponent();
+
+        System.out.println("===== Restarting Managed Server: " + getServerResource());
 
         // Finally restart it using the Start op and make sure it has come back up.
         invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
@@ -203,7 +224,7 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
 
-        System.out.println("===== Validating Server...: " + getServerResource());
+        System.out.println("===== Validating Server Process: " + getServerResource());
 
         List<ProcessInfo> processes = getServerProcesses();
         Assert.assertEquals(processes.size(), 1, "Can't find AS Process.");
@@ -215,6 +236,13 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         assertTrue(processArgs.contains("-Dfoo=bar"), processArgs.toString());
 
         System.out.println("---------- Finished " + getClass().getSimpleName() + ". testShutdownAndStartOperations...");
+    }
+
+    private void restartServerResourceComponent() throws PluginContainerException {
+        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+        inventoryManager.deactivateResource(getServerResource());
+        ResourceContainer serverContainer = inventoryManager.getResourceContainer(getServerResource());
+        inventoryManager.activateResource(getServerResource(), serverContainer, true);
     }
 
     protected String getExpectedStartScriptFileName() {
@@ -231,23 +259,17 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
     public void killServerProcesses() {
         List<ProcessInfo> processes = getServerProcesses();
         System.out.println("\n=== Killing " + processes.size() + " AS5 processes...");
-        Sigar sigar = new Sigar();
         for (ProcessInfo process : processes) {
             System.out.println("====== Killing process with pid [" + process.getPid() + "] and command line ["
                 + Arrays.toString(process.getCommandLine()) + "]...");
             try {
-                sigar.kill(process.getPid(), Sigar.getSigNum("KILL"));
+                process.kill("KILL");
             } catch (SigarException e) {
                 System.err.println("Failed to kill " + process + ": " + e);
             }
         }
-        sigar.close();
         processes = getServerProcesses();
         Assert.assertEquals(processes.size(), 0, "Failed to kill " + processes.size() + " AS5 processes: " + processes);
-    }
-
-    protected String getBindingSet() {
-        return "ports-03";
     }
 
     private Resource getServerResource() {
@@ -264,7 +286,7 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
     private List<ProcessInfo> getServerProcesses() {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
         return systemInfo.getProcesses("arg|*|match=org\\.jboss\\.Main|-Djboss.service.binding.set|match="
-            + getBindingSet());
+            + SERVICE_BINDING_SET);
     }
 
 }

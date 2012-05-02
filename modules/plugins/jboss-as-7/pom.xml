@@ -382,53 +382,7 @@
               </execution>
             </executions>
           </plugin>
-<!--
-          <plugin>
-            <!- - use the arquillian plugin to start/stop the standalone server - ->
-            <groupId>org.jboss.arquillian.maven</groupId>
-            <artifactId>arquillian-maven-plugin</artifactId>
-            <version>1.0.0.Alpha2</version>
 
-            <configuration>
-              <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml</arquillianXml>
-              <classloading>plugin</classloading>
-            </configuration>
-
-            <executions>
-              <execution>
-                <id>start-jboss7</id>
-                <phase>pre-integration-test</phase>
-                <goals>
-                  <goal>start</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>stop-jboss7</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>stop</goal>
-                </goals>
-              </execution>
-            </executions>
-
-            <dependencies>
-
-              <dependency>
-                <groupId>org.jboss.as</groupId>
-                <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                <version>${jboss-as-arquillian-container-managed.version}</version>
-              </dependency>
-
-              <dependency>
-                <groupId>org.jboss.arquillian.junit</groupId>
-                <artifactId>arquillian-junit-container</artifactId>
-                <version>${arquillian.version}</version>
-              </dependency>
-
-            </dependencies>
-
-          </plugin>
--->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>

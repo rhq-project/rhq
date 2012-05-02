@@ -240,7 +240,8 @@ public class JavaCommandLine {
                             optionName = optionString.substring(0, equalsIndex);
                             optionValue = (equalsIndex == (optionString.length() - 1)) ?
                                     "" : optionString.substring(equalsIndex + 1);
-                        } else {
+                        } else if (optionString.charAt(0) != 'D') {
+                            // We don't log this warning for sysprops.
                             log.warn("Option [" + classArg
                                     + "] contains an equals sign, which is not a valid class option value delimiter for this command line.");
                         }

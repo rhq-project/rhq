@@ -38,6 +38,12 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setServiceDiscoveryInitialDelay(HUNDRED_YEARS);
         setServiceDiscoveryPeriod(HUNDRED_YEARS);
 
+        String defaultClassLoaderFilter = getDefaultClassLoaderFilter();
+        defaultClassLoaderFilter += "|(org\\.jboss\\..*)";
+        defaultClassLoaderFilter += "|(org\\.rhq\\.plugins\\..*)";
+        defaultClassLoaderFilter += "|(org\\.rhq\\.modules\\..plugins\\..*)";
+        setRootPluginClassLoaderRegex(defaultClassLoaderFilter);
+
         setWaitForShutdownServiceTermination(true);
     }
     
@@ -81,5 +87,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
                     + getServerServicesImplementationClassName() + "].", e);
         }
     }
+
+
 
 }

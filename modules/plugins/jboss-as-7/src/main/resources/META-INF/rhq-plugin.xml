@@ -5445,7 +5445,7 @@
         <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
         <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
         <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors" required="true" description="The list of interceptor classes used by this server." >
+        <c:list-property name="remoting-interceptors" required="false" description="The list of interceptor classes used by this server." >
             <c:simple-property name="remoting-interceptors" />
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>

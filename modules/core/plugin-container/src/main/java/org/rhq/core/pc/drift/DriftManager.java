@@ -19,8 +19,30 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
@@ -40,18 +62,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
-
-import java.io.*;
-import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import static org.rhq.common.drift.FileEntry.*;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -86,11 +96,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void initialize() {
         long initStartTime = System.currentTimeMillis();
-        boolean success = changeSetsDir.mkdir();
-        if (!success) {
-            log.warn("Could not create change sets directory " + changeSetsDir);
-            initialized = false;
-            return;
+        if (!changeSetsDir.isDirectory()) {
+            boolean success = changeSetsDir.mkdir();
+            if (!success) {
+                log.warn("Could not create change sets directory " + changeSetsDir);
+                initialized = false;
+                return;
+            }
         }
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 

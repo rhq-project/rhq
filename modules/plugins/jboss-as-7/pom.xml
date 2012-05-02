@@ -465,12 +465,12 @@
                     <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
                     <argument>-Djava.awt.headless=true</argument>
                     <argument>-Djboss.server.default.config=standalone.xml</argument>
-                    <argument>-Dorg.jboss.boot.log.file="{jboss7.home}/standalone/log/boot.log"</argument>
-                    <argument>-Dlogging.configuration=file:"${jboss7.home}/standalone/configuration/logging.properties"</argument>
+                    <argument>-Dorg.jboss.boot.log.file={jboss7.home}/standalone/log/boot.log</argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/standalone/configuration/logging.properties</argument>
                     <argument>-jar</argument>
-                    <argument>"${jboss7.home}/jboss-modules.jar"</argument>
+                    <argument>${jboss7.home}/jboss-modules.jar</argument>
                     <argument>-mp</argument>
-                    <argument>"${jboss7.home}/modules"</argument>
+                    <argument>${jboss7.home}/modules</argument>
                     <argument>-jaxpmodule</argument>
                     <argument>javax.xml.jaxp-provider</argument>
                     <argument>org.jboss.as.standalone</argument>

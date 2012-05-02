@@ -24,6 +24,7 @@ package org.rhq.core.pc.util;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -240,14 +242,14 @@ public class InventoryPrinter {
                     .getInventoryStatus());
                 exportWriter.printf("%s   <type>%s</type>\n", indent, (resource.getResourceType() != null) ? resource
                     .getResourceType().getName() : "null");
-                exportWriter.printf("%s   <availabilityType>%s</availabilityType>\n", indent, availString);
+                exportWriter.printf("%s   <availability-type>%s</availability-type>\n", indent, availString);
                 exportWriter.printf("%s   <category>%s</category>\n", indent,
                     (resource.getResourceType() != null) ? resource.getResourceType().getCategory() : "null");
                 exportWriter.printf("%s   <container>\n", indent);
                 exportWriter.printf("%s      <availability>%s</availability>\n", indent, avail);
                 exportWriter.printf("%s      <state>%s</state>\n", indent, resourceContainer
                     .getResourceComponentState());
-                exportWriter.printf("%s      <installedPackageCount>%d</installedPackageCount>\n", indent,
+                exportWriter.printf("%s      <installed-package-count>%d</installed-package-count>\n", indent,
                     installedPackageCount);
                 exportWriter.printf("%s      <schedules>\n", indent);
 
@@ -265,6 +267,33 @@ public class InventoryPrinter {
                 }
 
                 exportWriter.printf("%s      </schedules>\n", indent);
+
+                exportWriter.printf("%s      <drift-definitions>\n", indent);
+                Collection<DriftDefinition> driftDefs = resourceContainer.getDriftDefinitions();
+                if (driftDefs != null) {
+                    for (DriftDefinition driftDef : driftDefs) {
+                        exportWriter.printf("%s         <drift-definition>\n", indent);
+                        exportWriter.printf("%s            <id>%s</id>\n", indent, driftDef.getId());
+                        exportWriter.printf("%s            <name>%s</name>\n", indent, driftDef.getName());
+                        exportWriter.printf("%s            <interval>%d</interval>\n", indent, driftDef.getInterval());
+                        exportWriter
+                            .printf("%s            <is-enabled>%s</is-enabled>\n", indent, driftDef.isEnabled());
+                        exportWriter.printf("%s            <is-attached>%s</is-attached>\n", indent,
+                            driftDef.isAttached());
+                        exportWriter.printf("%s            <is-pinned>%s</is-pinned>\n", indent, driftDef.isPinned());
+                        exportWriter.printf("%s            <drift-handling-mode>%s</drift-handling-mode>\n", indent,
+                            driftDef.getDriftHandlingMode());
+                        exportWriter.printf("%s            <compliance-status>%s</compliance-status>\n", indent,
+                            driftDef.getComplianceStatus());
+                        exportWriter.printf("%s            <base-dir>%s</base-dir>\n", indent,
+                            stringifyBaseDir(driftDef));
+                        exportWriter.printf("%s            <includes>%s</includes>\n", indent, driftDef.getIncludes());
+                        exportWriter.printf("%s            <excludes>%s</excludes>\n", indent, driftDef.getExcludes());
+                        exportWriter.printf("%s         </drift-definition>\n", indent);
+                    }
+                }
+                exportWriter.printf("%s      </drift-definitions>\n", indent);
+
                 exportWriter.printf("%s   </container>\n", indent);
                 if (recurseChildren) {
                     exportWriter.printf("%s   <children>\n", indent);
@@ -331,6 +360,15 @@ public class InventoryPrinter {
         }
 
         return;
+    }
+
+    private static String stringifyBaseDir(DriftDefinition driftDef) {
+        try {
+            return driftDef.getBasedir().toString();
+        } catch (Exception e) {
+            // there are several reasons why getBaseDir would throw an exception - reason is in the exception message
+            return "BAD BASEDIR: " + e.toString();
+        }
     }
 
     /**

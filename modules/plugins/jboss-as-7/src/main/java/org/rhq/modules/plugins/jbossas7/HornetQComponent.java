@@ -22,7 +22,6 @@ package org.rhq.modules.plugins.jbossas7;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -46,14 +45,24 @@ public class HornetQComponent extends BaseComponent {
 
         ResourceType resourceType = report.getResourceType();
         if (resourceType.getName().equals("Connection-Factory")) {
-            // we need to check that a connector is given
+            // we need to check that a connector XOR a discovery-group-name is given
+            int found = 0;
             PropertyMap connector = resourceConfiguration.getMap("connector:collapsed");
-            if (connector == null) {
-                throw new IllegalStateException("No connector entry found");
+
+            if (connector != null) {
+
+                String name = connector.getSimpleValue("name:0", "");
+                if (!name.isEmpty())
+                    found++;
             }
-            PropertySimple name = connector.getSimple("name:0");
-            if (name == null || name.getStringValue() == null || name.getStringValue().isEmpty()) {
-                report.setErrorMessage("You need to provide a connector name");
+            String discoveryGroup = resourceConfiguration.getSimpleValue("discovery-group-name", "");
+            if (!discoveryGroup.isEmpty())
+                found++;
+
+            if (found == 0 || found == 2) {
+                String errorMessage = "You need to provide either a connector name OR a discovery-group-name. You provided ";
+                errorMessage += (found == 0) ? "none" : "both";
+                report.setErrorMessage(errorMessage);
                 report.setStatus(CreateResourceStatus.FAILURE);
                 return report;
             }

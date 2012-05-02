@@ -1707,11 +1707,12 @@
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
 
-          <c:map-property name="connector:collapsed" required="true" readOnly="false" displayName="Connector"
-                          description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name" required="true"/>
-            <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name" required="false"/>
+          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector"
+                          description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
+            <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
           </c:map-property>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name. This is mutually exclusive with Connector"/>
+
           <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
           <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>
           <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on durable send."/>
@@ -1725,7 +1726,6 @@
           <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" description="The connection ttl."/>
           <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" description="The consumer max rate."/>
           <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" description="The consumer window size."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
           <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" description="The dups ok batch size."/>
           <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" description="True to fail over on initial connection."/>

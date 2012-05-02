@@ -319,8 +319,8 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         if (propDefName.endsWith(":collapsed")) {
             // The result is a map of {" a" : " b" }, while the propdef is in the form
             // map { prop {name=a } , prop {name=b) }
-            if (propDefs.size() != 2)
-                throw new IllegalArgumentException("Collapsed map [" + propDefName + "] needs 2 entries and not "
+            if (propDefs.size()<1 || propDefs.size() > 2)
+                throw new IllegalArgumentException("Collapsed map [" + propDefName + "] needs 1 or 2 entries and not "
                     + propDefs.size());
 
             Iterator<PropertyDefinition> iterator = propDefs.iterator();
@@ -329,10 +329,12 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             String val = objects.keySet().iterator().next();
             PropertySimple ps = new PropertySimple(name, val);
             propertyMap.put(ps);
-            name = iterator.next().getName();
-            val = objects.values().iterator().next();
-            ps = new PropertySimple(name, val);
-            propertyMap.put(ps);
+            if (iterator.hasNext()) {
+                name = iterator.next().getName();
+                val = objects.values().iterator().next();
+                ps = new PropertySimple(name, val);
+                propertyMap.put(ps);
+            }
 
             return propertyMap;
         }

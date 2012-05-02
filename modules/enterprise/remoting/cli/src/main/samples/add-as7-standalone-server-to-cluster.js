@@ -28,23 +28,20 @@
  * @param copyDeployments whether or not to copy the deployments from the existing
  *        member to the new member
  */
-function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource, copyDeployments) {
+function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource, doCopyDeployments) {
     println("Reading config of the existing cluster member");
     var clusterConfig = _getClusterSignificantConfig(existingClusterMemberResource);
 
     println("Reading config of the new member");
     var memberConfig = _getClusterSignificantConfig(newAs7Resource);
 
-    var memberResourceConfiguration = newAs7Resource.resourceConfiguration;
+    var memberResourceConfiguration = newAs7Resource.resourceConfiguration.deepCopy(false);
 
     if (memberConfig['config'] != clusterConfig['config']) {
         println("The configurations of the servers differ.\n" +
             "The new cluster member's configuration will be changed to match the configuration of the existing member.");
 
-        //switch to the same configuration
-        var pluginConfig = newAs7Resource.pluginConfiguration;
-        pluginConfig.getSimple('config').setValue(clusterConfig['config']);
-        newAs7Resource.updatePluginConfiguration(pluginConfig);
+        newAs7Resource.updatePluginConfiguration(_changeConfig(newAs7Resource.pluginConfiguration, clusterConfig['config']));
 
         //we need to restart straight away so that we see the changes to the
         //rest of the configuration caused by the change of current config.
@@ -64,7 +61,9 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
     if (memberConfig['node-name'] != newNodeName) {
         println("Updating the node name of the new cluster member from '" + memberConfig['node-name'] + "' to '" + newNodeName + "'");
         _updateNodeName(memberResourceConfiguration, newNodeName);
+
         newAs7Resource.updateResourceConfiguration(memberResourceConfiguration);
+        memberResourceConfiguration = newAs7Resource.resourceConfiguration.deepCopy(false);
     }
 
     //now apply the socket binding changes for jgroups and other cluster
@@ -93,7 +92,7 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
     println("Restarting the new member for the new socket bindings to take effect.");
     newAs7Resource.restart();
 
-    if (copyDeployments) {
+    if (doCopyDeployments) {
         println("Copying the deployments to the new cluster member...");
         copyDeployments(existingClusterMemberResource, newAs7Resource);
 
@@ -179,6 +178,83 @@ function copyDeployments(sourceAS7, targetAS7) {
     }
 }
 
+function _getConfigName(as7PluginConfig) {
+    var argsValue = as7PluginConfig.getSimpleValue('startScriptArgs', '');
+
+    var args = argsValue.split('\n');
+
+    var shortParam = '-c ';
+    var longParam = '--config=';
+
+    var ret = null;
+    for (i in args) {
+        var arg = args[i];
+
+        var cPos = arg.indexOf(shortParam);
+        var ccPos = arg.indexOf(longParam);
+
+        if (cPos >= 0) {
+            ret = arg.substring(cPos + shortParam.length).trim();
+        } else if (ccPos >= 0) {
+            ret = arg.substring(ccPos + longParam.length).trim();
+        }
+    }
+
+    if (ret != null && ret.startsWith('%') && ret.endsWith('%')) {
+        var pluginConfRef = ret.substring(1, ret.length - 1);
+        ret = as7PluginConfig.getSimpleValue(pluginConfigRef, null);
+    }
+
+    return ret;
+}
+
+function _changeConfig(pluginConfig, configName) {
+    var argsValue = javascriptString(pluginConfig.getSimpleValue('startScriptArgs', ''));
+
+    var args = argsValue.split('\n');
+
+    var shortParam = '-c ';
+    var longParam = '--config=';
+
+    var updated = false;
+
+    for (i in args) {
+        var arg = args[i];
+
+        var cPos = arg.indexOf(shortParam);
+        var ccPos = arg.indexOf(longParam);
+
+        if (cPos >= 0) {
+            args[i] = "-c " + configName;
+            updated = true;
+        } else if (ccPos >= 0) {
+            args[i] = "--config=" + configName;
+            updated = true;
+        }
+
+        if (updated) {
+            break;
+        }
+    }
+
+    if (!updated) {
+        args.push("-c " + configName);
+    }
+
+    //join the config back together
+    for(i in args) {
+        if (i == 0) {
+            argsValue = args[i];
+        } else {
+            argsValue += "\n" + args[i];
+        }
+    }
+
+    pluginConfig.put(new PropertySimple('startScriptArgs', argsValue));
+
+    return pluginConfig;
+}
+
 /**
  * The config properties of AS7 can have a form of ${propertyName:defaultvalue}.
  * Because we can't figure out the value of the property if it is defined,
@@ -231,7 +307,7 @@ function _updateNodeName(serverResourceConfiguration, newNodeName) {
     var updated = false;
     while (it.hasNext()) {
         var systemProp = it.next();
-        var systemPropName = systemProp.getSimpleValue('name', null);
+        var systemPropName = javascriptString(systemProp.getSimpleValue('name', null));
         if (systemPropName == 'jboss.node.name') {
             var systemPropValue = systemProp.getSimple('value');
             if (systemPropValue == null) {
@@ -313,7 +389,7 @@ function _updateSocketBindings(socketBindingsConfig, portOffset, clusterMemberPo
             continue;
         }
 
-        var port = new PropertyMap;
+        var port = new PropertyMap('binding');
         ports.add(port);
 
         port.put(new PropertySimple('name', name));
@@ -330,7 +406,7 @@ function _updateSocketBindings(socketBindingsConfig, portOffset, clusterMemberPo
             multicastPortExprToUse.value = portOffsetDiff + parseInt(multicastPortExprToUse.value) + '';
         }
 
-        port.put(new PropertySimple('port:expr'), _composeValueExpr(portExprToUse));
+        port.put(new PropertySimple('port:expr', _composeValueExpr(portExprToUse)));
         port.put(new PropertySimple('multicast-port:expr', _composeValueExpr(multicastPortExprToUse)));
     }
 }
@@ -351,7 +427,7 @@ function _updateSocketBindings(socketBindingsConfig, portOffset, clusterMemberPo
 function _getClusterSignificantConfig(as7Resource) {
     var ret = {};
 
-    ret['config'] = javascriptString(as7Resource.pluginConfiguration.getSimpleValue('config', null));
+    ret['config'] = javascriptString(_getConfigName(as7Resource.pluginConfiguration));
 
     ret['node-name'] = javascriptString(as7Resource.resourceConfiguration.getSimpleValue('node-name', null));
 

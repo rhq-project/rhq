@@ -896,7 +896,7 @@
 
       <resource-configuration>
         <c:simple-property name="profile" description="The profile name" required="true">
-          <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type=^Profile$ plugin=jboss-as-7"/>
         </c:simple-property>
         <c:simple-property name="socket-binding-group" readOnly="false" required="true">
           <c:option-source target="resource" expression="type=SocketBindingGroup"/>

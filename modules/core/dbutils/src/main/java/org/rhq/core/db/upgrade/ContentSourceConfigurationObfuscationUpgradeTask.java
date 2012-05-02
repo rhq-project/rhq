@@ -41,10 +41,10 @@ public class ContentSourceConfigurationObfuscationUpgradeTask extends AbstractCo
         List<Object[]> results = databaseType.executeSelectSql(connection, sql);
 
         for (Object[] row : results) {
-            Integer configId = (Integer) row[0];
-            Integer configDefId = (Integer) row[1];
+            Number configId = (Number) row[0];
+            Number configDefId = (Number) row[1];
 
-            ret.put(configId, configDefId);
+            ret.put(configId.intValue(), configDefId.intValue());
         }
 
         return ret;

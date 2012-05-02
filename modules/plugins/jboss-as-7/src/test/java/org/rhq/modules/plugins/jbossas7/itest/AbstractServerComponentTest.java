@@ -83,8 +83,8 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        assertNotNull(getServerResource(),
-                getServerResourceType() + " Resource with key [" + getServerResourceKey() + "] was not discovered.");
+        assertNotNull(getServerResource(), getServerResourceType() + " Resource with key [" + getServerResourceKey()
+            + "] was not discovered.");
         System.out.println("\n===== Discovered: " + getServerResource());
         Configuration pluginConfig = getServerResource().getPluginConfiguration();
         System.out.println("---------- " + pluginConfig.toString(true));
@@ -102,7 +102,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         Integer port = (portString != null) ? Integer.valueOf(portString) : null;
         String portOffsetString = System.getProperty(getPortOffsetSystemPropertyName());
         int portOffset = (portOffsetString != null) ? Integer.valueOf(portOffsetString) : 0;
-        Integer expectedPort = portOffset + 9990;        
+        Integer expectedPort = portOffset + 9990;
         assertEquals(port, expectedPort, "Plugin config prop [port].");
 
         // "startScript" prop
@@ -122,7 +122,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         // "startScriptEnv" prop
         PropertySimple startScriptEnvProp = pluginConfig.getSimple("startScriptEnv");
         MapPropertySimpleWrapper startScriptEnvPropWrapper = new MapPropertySimpleWrapper(startScriptEnvProp);
-        Map<String,String> env = startScriptEnvPropWrapper.getValue();
+        Map<String, String> env = startScriptEnvPropWrapper.getValue();
         validateStartScriptEnv(env);
 
         // "startScriptArgs" prop
@@ -145,20 +145,22 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         Assert.assertTrue(pathElements.length >= 1);
         Assert.assertTrue(new File(pathElements[0]).isDirectory());
 
-        String ldLibraryPath = env.get("LD_LIBRARY_PATH");
-        Assert.assertNotNull(ldLibraryPath);
-        String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
-        Assert.assertTrue(ldLibraryPathElements.length >= 1);
-        Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
+        if (File.separatorChar == '/') {
+            String ldLibraryPath = env.get("LD_LIBRARY_PATH");
+            Assert.assertNotNull(ldLibraryPath);
+            String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
+            Assert.assertTrue(ldLibraryPathElements.length >= 1);
+            Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
+        }
     }
 
     protected abstract String getBindAddressSystemPropertyName();
-    
+
     protected abstract String getPortOffsetSystemPropertyName();
 
     public void testReleaseVersionTrait() throws Exception {
         String releaseVersion = collectTrait(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        String as7Version = System.getProperty( "as7.version" );
+        String as7Version = System.getProperty("as7.version");
         String expectedReleaseVersion;
         if (as7Version.startsWith("6.")) {
             // EAP6
@@ -170,8 +172,8 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
             // AS7
             expectedReleaseVersion = as7Version;
         }
-        assertEquals(releaseVersion, expectedReleaseVersion,
-                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
+        assertEquals(releaseVersion, expectedReleaseVersion, "Unexpected value for trait ["
+            + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
     public void testShutdownAndStartOperations() throws Exception {
@@ -191,7 +193,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
         // Add a var to the start script env.
         Map<String, String> env = startScriptConfig.getStartScriptEnv();
-        env.put("foo", "bar");
+        env.put("FOO", "bar"); // uppercase env var name or Windows will do it for you
         startScriptConfig.setStartScriptEnv(env);
 
         // Add an arg to the start script args.
@@ -214,7 +216,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         //Assert.assertEquals(processes.size(), 1, getCommandLines(processes).toString());
         ProcessInfo serverProcess = processes.get(0);
         Map<String, String> processEnv = serverProcess.getEnvironmentVariables();
-        assertEquals(processEnv.get("foo"), "bar", processEnv.toString());
+        assertEquals(processEnv.get("FOO"), "bar", processEnv.toString());
 
         List<String> processArgs = Arrays.asList(serverProcess.getCommandLine());
         assertTrue(processArgs.contains("-Dfoo=bar"), processArgs.toString());
@@ -229,7 +231,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         System.out.println("\n=== Killing " + processes.size() + " " + getServerResourceType() + " processes...");
         for (ProcessInfo process : processes) {
             System.out.println("====== Killing process with pid [" + process.getPid() + "] and command line ["
-                    + Arrays.toString(process.getCommandLine()) + "]...");
+                + Arrays.toString(process.getCommandLine()) + "]...");
             try {
                 process.kill("KILL");
             } catch (SigarException e) {
@@ -237,18 +239,17 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
             }
         }
         processes = getServerProcesses();
-        Assert.assertEquals(processes.size(), 0,
-                "Failed to kill " + processes.size() + " " + getServerResourceType() + " processes: " + processes);
+        Assert.assertEquals(processes.size(), 0, "Failed to kill " + processes.size() + " " + getServerResourceType()
+            + " processes: " + processes);
     }
 
     protected abstract int getPortOffset();
 
     private List<ProcessInfo> getServerProcesses() {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-        return systemInfo.getProcesses("arg|*|match=org\\.jboss\\.as\\..+,arg|-Djboss.socket.binding.port-offset|match="
-                    + getPortOffset());
+        return systemInfo
+            .getProcesses("arg|*|match=org\\.jboss\\.as\\..+,arg|-Djboss.socket.binding.port-offset|match="
+                + getPortOffset());
     }
 
 }
-
-

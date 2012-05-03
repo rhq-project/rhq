@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/cli-tests/src/main/java"/>
+	<classpathentry kind="src" path="modules/helpers/jeeGen/src/main/java"/>
+	<classpathentry kind="src" path="modules/helpers/bundleGen/src/main/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/jndi-access/jndi-access-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/test/java"/>
@@ -146,10 +150,10 @@
 	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
-	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>
+    <classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>  
 	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-test-util/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
@@ -301,7 +305,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-impl-base/1.0.0/shrinkwrap-impl-base-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-api/1.0.0/shrinkwrap-api-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-spi/1.0.0/shrinkwrap-spi-1.0.0.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/descriptors/shrinkwrap-descriptors-api-base/2.0.0-alpha-2/shrinkwrap-descriptors-api-base-2.0.0-alpha-2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/descriptors/shrinkwrap-descriptors-api-base/2.0.0-alpha-2/shrinkwrap-descriptors-api-base-2.0.0-alpha-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/1.0.0-beta-6/shrinkwrap-resolver-api-1.0.0-beta-6.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/1.0.0-beta-6/shrinkwrap-resolver-api-maven-1.0.0-beta-6.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.0.Final/arquillian-test-spi-1.0.0.Final.jar"/>

@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
  * Basic implementation of the configuration factory that fills in a valid value for each defined property.
@@ -39,7 +40,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  * @author Ian Springer
  */
 public class SimpleConfigurationFactory implements ConfigurationFactory {
-    // ConfigurationFactory Implementation  --------------------------------------------
 
     public Configuration generateConfiguration(ConfigurationDefinition definition) {
         Collection<PropertyDefinition> allDefinitions = definition.getPropertyDefinitions().values();
@@ -76,42 +76,46 @@ public class SimpleConfigurationFactory implements ConfigurationFactory {
     }
 
     private static PropertySimple generatePropertySimple(PropertyDefinitionSimple propertyDefinitionSimple) {
-        String value = null;
+        String value;
         if (propertyDefinitionSimple.getEnumeratedValues() != null
             && !propertyDefinitionSimple.getEnumeratedValues().isEmpty()) {
-            value = propertyDefinitionSimple.getEnumeratedValues().get(0).getValue(); // pick the first one
+            // pick the first one
+            value = propertyDefinitionSimple.getEnumeratedValues().get(0).getValue();
         } else {
-            switch (propertyDefinitionSimple.getType()) {
-            case STRING:
-                value = "blah";
-                break;
-            case LONG_STRING:
-                value = "line 1\nline 2\nline 3\n";
-                break;
-            case PASSWORD:
-                value = "secret";
-                break;
-            case BOOLEAN:
-                value = "true";
-                break;
-            case INTEGER:
-                value = "42";
-                break;
-            case LONG:
-                value = "55555555555555555555555";
-                break;
-            case FLOAT:
-                value = "3.14";
-                break;
-            case DOUBLE:
-                value = "333333333333333333333333.0";
-                break;
-            case FILE:
-                value = "C:/autoexec.bat";
-                break;
-            case DIRECTORY:
-                value = "/usr/bin";
-                break;
+            PropertySimpleType propType = propertyDefinitionSimple.getType();
+            switch (propType) {
+                case STRING:
+                    value = "blah";
+                    break;
+                case LONG_STRING:
+                    value = "line 1\nline 2\nline 3\n";
+                    break;
+                case PASSWORD:
+                    value = "secret";
+                    break;
+                case BOOLEAN:
+                    value = "true";
+                    break;
+                case INTEGER:
+                    value = "42";
+                    break;
+                case LONG:
+                    value = "55555555555555555555555";
+                    break;
+                case FLOAT:
+                    value = "3.14";
+                    break;
+                case DOUBLE:
+                    value = "333333333333333333333333.0";
+                    break;
+                case FILE:
+                    value = "C:/autoexec.bat";
+                    break;
+                case DIRECTORY:
+                    value = "/usr/bin";
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported simple property type: " + propType);
             }
         }
         return new PropertySimple(propertyDefinitionSimple.getName(), value);
@@ -122,12 +126,15 @@ public class SimpleConfigurationFactory implements ConfigurationFactory {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         if (childPropertyDefinitions.isEmpty()) {
             // open map
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++) {
                 propertyMap.put(new PropertySimple("openMapMember" + i, "value" + i));
+            }
         } else {
-            for (PropertyDefinition childPropertyDefinition : propertyDefinitionMap.getPropertyDefinitions())
+            for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
                 generateProperty(childPropertyDefinition, propertyMap);
+            }
         }
         return propertyMap;
     }
+
 }

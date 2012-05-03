@@ -1737,7 +1737,7 @@
         <!-- TODO let the user could enter a custom value here when the UI supports this. -->
           <c:property-options >
             <c:option value="HTTP/1.1"/>
-            <c:option value="AJP"/>
+            <c:option value="AJP/1.3"/>
           </c:property-options>
         </c:simple-property>
         <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>

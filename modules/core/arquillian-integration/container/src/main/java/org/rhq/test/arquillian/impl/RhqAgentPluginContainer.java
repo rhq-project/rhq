@@ -358,6 +358,10 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         //each time (and doesn't remember the plugins from previous PC runs)
         configuration.setPluginFinder(new FileSystemPluginFinder(configuration.getPluginDirectory()));
 
+        if (LOG.isDebugEnabled() && (configuration.getAdditionalPackagesForRootPluginClassLoaderToExclude() != null)) {
+            LOG.debug("Using root plugin classloader regex [" + configuration.getRootPluginClassLoaderRegex() + "]...");
+        }
+
         pc.setConfiguration(configuration);
         pc.initialize();
         return true;

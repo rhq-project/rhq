@@ -11,6 +11,7 @@
       <property name="insideAgent">true</property>
       <property name="startManagementBean">false</property>
       <property name="nativeSystemInfoEnabled">true</property>
+      <property name="additionalPackagesForRootPluginClassLoaderToExclude">org.rhq.plugins.jbossas5|org.jboss</property>
     </configuration>
   </container>
 

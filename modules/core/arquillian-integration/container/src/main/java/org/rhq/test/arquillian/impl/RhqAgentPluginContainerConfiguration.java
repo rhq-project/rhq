@@ -17,6 +17,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
 
     private String serverServicesImplementationClassName;
     private boolean nativeSystemInfoEnabled;
+    private String additionalPackagesForRootPluginClassLoaderToExclude;
     
     private static final long HUNDRED_YEARS = 100L * 365 * 24 * 60 * 60;
     
@@ -38,11 +39,8 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setServiceDiscoveryInitialDelay(HUNDRED_YEARS);
         setServiceDiscoveryPeriod(HUNDRED_YEARS);
 
-        String defaultClassLoaderFilter = getDefaultClassLoaderFilter();
-        defaultClassLoaderFilter += "|(org\\.jboss\\..*)";
-        defaultClassLoaderFilter += "|(org\\.rhq\\.plugins\\..*)";
-        defaultClassLoaderFilter += "|(org\\.rhq\\.modules\\..plugins\\..*)";
-        setRootPluginClassLoaderRegex(defaultClassLoaderFilter);
+        // Use the same default exclusions the Agent does.
+        setRootPluginClassLoaderRegex(getDefaultClassLoaderFilter());
 
         setWaitForShutdownServiceTermination(true);
     }
@@ -69,6 +67,34 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         this.nativeSystemInfoEnabled = nativeSystemInfoEnabled;
     }
 
+    public String getAdditionalPackagesForRootPluginClassLoaderToExclude() {
+        return additionalPackagesForRootPluginClassLoaderToExclude;
+    }
+
+    // e.g. "org.rhq.plugins.jbossas5|org.jboss"
+    public void setAdditionalPackagesForRootPluginClassLoaderToExclude(String additionalPackagesForRootPluginClassLoaderToExclude) {
+        this.additionalPackagesForRootPluginClassLoaderToExclude = additionalPackagesForRootPluginClassLoaderToExclude;
+
+        if ((this.additionalPackagesForRootPluginClassLoaderToExclude == null) || this.additionalPackagesForRootPluginClassLoaderToExclude.isEmpty()) {
+            return;
+        }
+
+        String regex = getRootPluginClassLoaderRegex();
+        StringBuilder newRegex = new StringBuilder();
+        if (regex != null && !regex.isEmpty()) {
+            newRegex.append(regex);
+        }
+        String[] packagesToExclude = this.additionalPackagesForRootPluginClassLoaderToExclude.split("\\|");
+        for (String packageToExclude : packagesToExclude) {
+            if (newRegex.length() > 0) {
+                newRegex.append('|');
+            }
+            // e.g. "(org\\.rhq\\.plugins\\..*)"
+            newRegex.append('(').append(packageToExclude.replaceAll("\\.", "\\\\.")).append("\\..*)");
+        }
+        setRootPluginClassLoaderRegex(newRegex.toString());
+    }
+
     @Override
     public void validate() throws ConfigurationException {
         RhqAgentPluginContainer.init();
@@ -87,7 +113,5 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
                     + getServerServicesImplementationClassName() + "].", e);
         }
     }
-
-
 
 }

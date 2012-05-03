@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.inventory.getnativeprocess.testplugin.TestComponent;
 import org.rhq.core.pc.inventory.getnativeprocess.testplugin.TestDiscoveryComponent;
 import org.rhq.core.pc.inventory.getnativeprocess.testprocess.Main;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.test.arquillian.ResourceComponentInstances;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
@@ -50,14 +51,16 @@ public class NativeProcessRetrievalTest extends Arquillian {
     private Process testProcess;
 
     @ResourceComponentInstances(plugin = "getnativeprocess-plugin", resourceType = "Test Server")
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private Set<TestComponent> components;
     
     @Deployment
     @TargetsContainer("native-enabled-pc")
     public static RhqAgentPluginArchive getTestPlugin() {
-        return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar")
-            .addClasses(TestComponent.class, TestDiscoveryComponent.class)
-            .setPluginDescriptor("getnativeprocess-rhq-plugin.xml");
+        RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar");
+        return pluginJar
+            .setPluginDescriptor("getnativeprocess-rhq-plugin.xml")
+            .addClasses(TestDiscoveryComponent.class, TestComponent.class);
     }
 
     @BeforeClass
@@ -85,7 +88,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
     public void testProcessInfoAccurateAfterProcessRestart() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
-        TestComponent component = components.iterator().next();
+        ConfigurationFacet component = components.iterator().next();
         
         Configuration config = component.loadResourceConfiguration();
         
@@ -108,7 +111,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
     public void testProcessInfoAccurateWhenProcessStopped() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
-        TestComponent component = components.iterator().next();
+        ConfigurationFacet component = components.iterator().next();
         
         Configuration config = component.loadResourceConfiguration();
         
@@ -132,7 +135,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
     public void testProcessInfoAccurateAfterProcessStarted() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
-        TestComponent component = components.iterator().next();
+        ConfigurationFacet component = components.iterator().next();
         
         Configuration config = component.loadResourceConfiguration();
         

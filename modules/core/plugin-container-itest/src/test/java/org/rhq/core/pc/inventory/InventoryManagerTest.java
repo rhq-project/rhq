@@ -25,13 +25,14 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.plugins.test.TestResourceComponent;
-import org.rhq.plugins.test.TestResourceDiscoveryComponent;
+import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
+import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -53,9 +54,10 @@ public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")
     public static RhqAgentPluginArchive getTestPlugin() {
-        return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar")
-            .addClasses(TestResourceDiscoveryComponent.class, TestResourceComponent.class)
-            .setPluginDescriptor("test-rhq-plugin.xml");
+        RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar");
+        return pluginJar
+                .setPluginDescriptor("test-rhq-plugin.xml")
+                .addClasses(TestResourceDiscoveryComponent.class, TestResourceComponent.class);
     }
 
     @ArquillianResource

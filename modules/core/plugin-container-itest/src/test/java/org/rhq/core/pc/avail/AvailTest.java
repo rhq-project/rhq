@@ -24,11 +24,13 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.plugins.test.AvailResourceComponent;
+import org.rhq.plugins.test.avail.AvailDiscoveryComponent;
+import org.rhq.plugins.test.avail.AvailResourceComponent;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
 import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -44,8 +46,10 @@ public class AvailTest extends Arquillian {
     @Deployment(name = "availPlugin")
     @TargetsContainer("connected-pc")
     public static RhqAgentPluginArchive getTestPlugin() {
-        return ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar").setPluginDescriptor(
-            "avail-rhq-plugin.xml");
+        RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar");
+        return pluginJar
+                .setPluginDescriptor("avail-rhq-plugin.xml")
+                .addClasses(AvailDiscoveryComponent.class, AvailResourceComponent.class);
     }
 
     @ArquillianResource
@@ -113,12 +117,12 @@ public class AvailTest extends Arquillian {
     }
 
     @BeforeMethod
-    public void beforeMethod() {
+    public void beforeMethod() throws Exception {
         System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! BEFORE METHOD (" + Thread.currentThread().getName() + ")");
         scrub();
     }
 
-    private void scrub() {
+    private void scrub() throws Exception {
         if (null == parentContainers1)
             return;
 
@@ -130,30 +134,18 @@ public class AvailTest extends Arquillian {
         containerSets.add(grandchildContainers1);
         containerSets.add(grandchildContainers2);
 
-        // scrub res containers of avail state and ensure scheds are blanked
+        // scrub res containers of avail state and ensure schedules are blanked
         for (Set<ResourceContainer> cs : containerSets) {
             for (ResourceContainer c : cs) {
                 c.setAvailabilityScheduleTime(null);
                 c.updateAvailability(null);
                 c.setAvailabilitySchedule(null);
+                // reset state of res component
+                ResourceComponent resourceComponent = c.getResourceComponent();
+                resourceComponent.stop();
+                resourceComponent.start(c.getResourceContext());
             }
         }
-
-        List<Set<AvailResourceComponent>> componentSets = new ArrayList<Set<AvailResourceComponent>>();
-        componentSets.add(parentComponents1);
-        componentSets.add(parentComponents2);
-        componentSets.add(childComponents1);
-        componentSets.add(childComponents2);
-        componentSets.add(grandchildComponents1);
-        componentSets.add(grandchildComponents2);
-
-        // scrub res containers of avail state
-        for (Set<AvailResourceComponent> cs : componentSets) {
-            for (AvailResourceComponent c : cs) {
-                c.setNextAvailability(AvailabilityType.UP);
-            }
-        }
-
     }
 
     @Test(groups = "pc.itest.avail")

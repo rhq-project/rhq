@@ -3,7 +3,7 @@
 <plugin name="availPlugin"
         displayName="Plugin For Availability Test"
         description="This will help test the availability collection functionality in the PC"
-        package="org.rhq.core.pc.avail.testplugin"
+        package="org.rhq.plugins.test.avail"
         version="1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

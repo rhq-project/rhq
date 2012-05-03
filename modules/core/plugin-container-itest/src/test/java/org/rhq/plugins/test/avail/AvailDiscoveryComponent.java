@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.test;
+package org.rhq.plugins.test.avail;
 
 import java.util.HashSet;
 import java.util.Set;

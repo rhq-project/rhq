@@ -360,7 +360,7 @@
       ]]>
       </help>
 
-      <service name="Embedded Tomcat Server"
+      <server name="Embedded Tomcat Server"
               description="Tomcat Web Application Container embedded in a JBossAS Server"
               subCategory="Resources"
               discovery="JBossASTomcatDiscoveryComponent"
@@ -440,9 +440,9 @@
                     dataType="trait" />
          </service>
 
-      </service>
+      </server>
 
-      <service name="JBoss AS JVM"
+      <server name="JBoss AS JVM"
               description="JVM of the JBossAS"
               sourcePlugin="JMX"
               sourceType="JMX Server"

@@ -1207,7 +1207,7 @@
              </destination-base-dir>
           </bundle-target>
 
-          <service name="JBoss AS JVM"
+          <server name="JBoss AS JVM"
                   description="JVM of the JBossAS"
                   sourcePlugin="JMX"
                   sourceType="JMX Server"

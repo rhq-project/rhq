@@ -591,8 +591,8 @@
          </c:group>
       </resource-configuration>
 
-      <service name="RHQ Agent JVM"
-              description="JVM of the Management Agent"
+      <server name="RHQ Agent JVM"
+              description="JVM of the RHQ Agent"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"

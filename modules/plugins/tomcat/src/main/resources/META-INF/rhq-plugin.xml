@@ -213,7 +213,7 @@
          displayType="summary"
          description="Tomcat server release identifier" />
 
-      <service
+      <server
          name="Tomcat Server JVM"
          description="JVM of the Tomcat Server"
          sourcePlugin="JMX"

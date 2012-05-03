@@ -10,7 +10,7 @@
    <depends plugin="JMX" />
    <depends plugin="JBossAS" useClasses="true"/>
 
-   <service name="JBossCacheSubsystem"
+   <server name="JBossCacheSubsystem"
            class="JBossCacheSubsystemComponent"
            discovery="JBossCacheSubsystemDiscovery"
            description="The JBoss Cache instances on this server"
@@ -168,6 +168,6 @@
          </service>
        </service>
 
-    </service>
+    </server>
 
 </plugin>

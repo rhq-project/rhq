@@ -194,7 +194,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                public endpoints configured for all RHQ Servers.
                -->
                <!--
-               <entry key="rhq.agent.test-failover-list-at-startup" value="true" />
+               <entry key="rhq.agent.test-failover-list-at-startup" value="false" />
                -->
 
                <!--

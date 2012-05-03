@@ -167,7 +167,7 @@ Embedded RHQ Agent Configuration
                public endpoints configured for all RHQ Servers.
                -->
                <!--
-               <entry key="rhq.agent.test-failover-list-at-startup" value="true" />
+               <entry key="rhq.agent.test-failover-list-at-startup" value="false" />
                -->
 
                <!--

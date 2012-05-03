@@ -230,7 +230,7 @@ public interface AgentConfigurationConstants {
     /**
      * If the test failover list at startup property is not specified, this is the default.
      */
-    boolean DEFAULT_TEST_FAILOVER_LIST_AT_STARTUP = true;
+    boolean DEFAULT_TEST_FAILOVER_LIST_AT_STARTUP = false;
 
     /**
      * The file path to the location of the agent's data directory (where the agent will persist its internal data).

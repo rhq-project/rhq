@@ -124,10 +124,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                 }
 
                 if (!found) {
-                    // Its new, create it
-                    if (log.isDebugEnabled()) {
-                        log.debug("Adding metric definition: " + newDefinition);
-                    }
+                    // It's new - create it
+                    log.info("Metadata update: Adding new " + newDefinition.getDataType().name().toLowerCase() + " definition ["
+                            + newDefinition.getDisplayName() + "] to type " + existingType + "...");
                     existingType.addMetricDefinition(newDefinition);
                     entityMgr.persist(newDefinition);
 
@@ -148,11 +147,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             // ... and remove them
             existingDefinitions.removeAll(definitionsToDelete);
             for (MeasurementDefinition definitionToDelete : definitionsToDelete) {
+                log.info("Metadata update: Removing " + definitionToDelete.getDataType().name().toLowerCase() + " definition ["
+                        + definitionToDelete.getDisplayName() + "] from type " + existingType + "...");
                 measurementDefinitionMgr.removeMeasurementDefinition(definitionToDelete);
-            }
-            if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
-                log.debug("Metadata update: Measurement definitions deleted from resource type ["
-                    + existingType.getName() + "]:" + definitionsToDelete);
             }
 
             entityMgr.flush();
@@ -191,11 +188,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         // Add the built in metric if it is not defined. Otherwise, override only allowed fields
         if (!result.contains(rhqAvailability)) {
             result.add(rhqAvailability);
-
         } else {
             MeasurementDefinition override = null;
-            for (Iterator<MeasurementDefinition> i = result.iterator(); i.hasNext();) {
-                override = i.next();
+            for (MeasurementDefinition aResult : result) {
+                override = aResult;
                 if (override.equals(rhqAvailability)) {
                     break;
                 }

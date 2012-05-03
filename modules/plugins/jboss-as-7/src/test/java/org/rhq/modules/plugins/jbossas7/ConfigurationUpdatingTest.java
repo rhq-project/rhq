@@ -426,6 +426,59 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
     }
 
+    // Like test10, but we mark one map as "to be ignored"
+    public void test10a() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test10");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("system-props.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+
+        // We have properties 'bar' and 'hello' on the server
+        // add 'hulla' and remove 'hello'
+        // we mark bar as immutable , so we should not write that back
+
+        PropertyList propertyList = new PropertyList("*2");
+        PropertyMap propertyMap = new PropertyMap("*");
+        propertyMap.put(new PropertySimple("name", "hulla"));
+        propertyMap.put(new PropertySimple("value", "hopp"));
+        propertyList.add(propertyMap);
+        propertyMap = new PropertyMap("*");
+        propertyMap.put(new PropertySimple("name", "bar"));
+        propertyMap.put(new PropertySimple("value", "42!"));
+        propertyMap.setErrorMessage(ConfigurationWriteDelegate.LOGICAL_REMOVED);
+        propertyList.add(propertyMap);
+        conf.put(propertyList);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 2 : "#Steps should be 2 but were " + cop.numberOfSteps();
+
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+
+        assert step1.getAddress().size() == 1;
+        assert step2.getAddress().size() == 1;
+        assert step1.getAddress().get(0).equals("system-property=hulla");
+        assert step2.getAddress().get(0).equals("system-property=hello");
+        assert step1.getOperation().equals("add");
+        assert step2.getOperation().equals("remove");
+
+        assert step1.getAdditionalProperties().get("value").equals("hopp");
+        assert step2.getAdditionalProperties().isEmpty();
+
+    }
+
     public void test11() throws Exception {
 
         ConfigurationDefinition definition = loadDescriptor("test11");
@@ -573,6 +626,48 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         Map<String, Object> map = (Map<String, Object>) value;
         assert map.containsKey("in-vm");
         assert map.containsValue("hulla-hoo");
+    }
+
+    // Like test13, but have a "degenerated" map of simple with only one entry
+    public void test13a() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test13a");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("collapsedMapTest.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+
+        PropertyMap pm = new PropertyMap("connector:collapsed");
+        PropertySimple ps = new PropertySimple("name:0", "in-vm");
+        pm.put(ps);
+        conf.put(pm);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop != null;
+        assert cop.numberOfSteps() == 1;
+        Operation step = cop.step(0);
+        assert step != null;
+        assert step.getOperation().equals("write-attribute") : "Step name was " + step.getOperation();
+        Map<String, Object> additionalProperties = step.getAdditionalProperties();
+        assert additionalProperties != null;
+        assert additionalProperties.size() == 2;
+        assert additionalProperties.get("name").equals("connector");
+        Object value = additionalProperties.get("value");
+        assert value instanceof Map;
+        Map<String, Object> map = (Map<String, Object>) value;
+        assert map.containsKey("in-vm");
+        Object obj = map.get("in-vm");
+        assert obj == null : "There was some value for map key in-vm";
     }
 
     public void testListOfPlainMaps() throws Exception {

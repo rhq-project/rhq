@@ -268,21 +268,31 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 boolean found=false;
                 for (Property prop2 : pl.getList()) {
                     PropertyMap propMap2 = (PropertyMap) prop2;
-                    if (LOGICAL_REMOVED.equals(propMap2.getErrorMessage())) {
-                        found = true; // we pretend this still exists on the server, so nothing to update
-                    } else {
+                    String itemName = propMap2.getSimple(namePropLocator).getStringValue();
+                    if (itemName == null) {
+                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator
+                            + "]");
+                    }
+                    if (itemName.equals(existingName)) {
+                        found = true;
+                        break;
+                    }
+                }
+                // We may still have an entry in the map, that does not
+                // match an existing name, but is marked as immutable
+                if (!found) {
+                    for (Property prop2 : pl.getList()) {
+                        PropertyMap propMap2 = (PropertyMap) prop2;
                         String itemName = propMap2.getSimple(namePropLocator).getStringValue();
-                        if (itemName == null) {
-                            throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator
-                                + "]");
-                        }
-                        if (itemName.equals(existingName)) {
-                            found = true;
-                            break;
+                        String errorMessage = propMap2.getErrorMessage();
+                        boolean contains = existingPropnames.contains(itemName);
+                        if (!contains && LOGICAL_REMOVED.equals(errorMessage)) {
+                            found = true; // we pretend this still exists on the server, so nothing to update
                         }
                     }
                 }
 
+                // In properties on server and not in map or immutable, lets remove it
                 if (!found) {
                     Address tmpAddr = new Address(baseAddress);
                     tmpAddr.add(type, existingName);

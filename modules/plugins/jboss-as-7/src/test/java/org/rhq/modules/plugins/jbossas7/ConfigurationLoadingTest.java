@@ -489,6 +489,36 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         Assert.assertNull(ps.getStringValue(), "Unexpected value for " + ps);
     }
 
+    // Like test13, but using a degenerated map with only a key entry
+    public void test13a() throws Exception {
+        String resultString = loadJsonFromFile("collapsedMapTest2.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test13a");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        assert properties.size() == 1;
+        Iterator<Property> iterator = properties.iterator();
+        Property p = iterator.next();
+        assert p instanceof PropertyMap;
+        PropertyMap pm = (PropertyMap) p;
+        assert pm.getMap().size() == 1;
+        PropertySimple ps = pm.getSimple("name:0");
+        assert ps != null : "No property with name 'name:0' was found";
+        Assert.assertEquals(ps.getStringValue(), "in-vm", "Unexpected value for " + ps);
+        ps = pm.getSimple("backup:1");
+        assert ps == null : "A property with name 'backup:1' was found, but should not";
+    }
+
     public void testListOfPlainMaps() throws Exception {
         String resultString = loadJsonFromFile("listofplainmaps.json");
 

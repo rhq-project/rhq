@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
@@ -86,10 +87,15 @@ public class GetRevertInfoStep extends AbstractWizardStep {
                         String prevDesc = wizard.getPreviousDeployment().getDescription();
                         prevDesc = (null == prevDesc) ? wizard.getPreviousDeployment().getName() : prevDesc;
                         String escapedPrevDesc = StringUtility.escapeHtml(prevDesc);
-                        wizard.setDeploymentDescription("[REVERT From]\n" + escapedLiveDesc + "\n\n[REVERT To]\n" + escapedPrevDesc);
                         wizard.setDeploymentDescription(MSG.view_bundle_revertWizard_getInfoStep_revertDeployDescFull(
                             escapedLiveDesc, escapedPrevDesc));
                         descriptionTextAreaItem.setValue(StringUtility.escapeHtml(wizard.getDeploymentDescription()));
+                        descriptionTextAreaItem.setValidateOnChange(true);
+                        descriptionTextAreaItem.setValidateOnExit(true);
+                        LengthRangeValidator validator = new LengthRangeValidator();
+                        validator.setMin(0);
+                        validator.setMax(500); // database column limit
+                        descriptionTextAreaItem.setValidators(validator);
                         descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
                                 Object value = event.getValue();

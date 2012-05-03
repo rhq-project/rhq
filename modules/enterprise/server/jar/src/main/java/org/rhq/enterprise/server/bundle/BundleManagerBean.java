@@ -374,7 +374,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
         BundleDeployment liveDeployment = (liveDeployments.isEmpty()) ? null : liveDeployments.get(0);
 
-        String deploymentName = null;
+        String deploymentName;
 
         if (null != bundleVersion) {
             boolean isInitialDeployment = (null == liveDeployment);
@@ -411,6 +411,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             deploymentName = "Deployment [" + deploy + "] Revert To: " + prevDeployment.getName();
         }
 
+        // BZ 790224 database column limit is 200 - we could be appending to old names, this string could get long
+        if (deploymentName.length() > 200) {
+            deploymentName = deploymentName.substring(0, 197) + "...";
+        }
         return deploymentName;
     }
 

@@ -465,8 +465,16 @@
                                  usetimestamp="true" verbose="true"/>
                             <unzip src="${as5.zipfile}" dest="${java.io.tmpdir}"/>
                             <move file="${java.io.tmpdir}/jboss-${as5.version}"
-                                  tofile="${java.io.tmpdir}/jboss-as-${as5.version}" failonerror="false"
+                                  tofile="${jboss5.home}" failonerror="false"
                                   overwrite="false"/>
+                            <move file="${java.io.tmpdir}/jboss-eap-5.0/jboss-as"
+                                  tofile="${jboss5.home}" failonerror="false"
+                                  overwrite="false"/>
+                            <delete dir="${java.io.tmpdir}/jboss-eap-5.0" failonerror="false"/>
+                            <move file="${java.io.tmpdir}/jboss-eap-5.1/jboss-as"
+                                  tofile="${jboss5.home}" failonerror="false"
+                                  overwrite="false"/>
+                            <delete dir="${java.io.tmpdir}/jboss-eap-5.1" failonerror="false"/>
 
                             <chmod perm="u+rx">
                               <fileset dir="${jboss5.home}/bin" includes="*.sh"/>

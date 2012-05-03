@@ -31,6 +31,7 @@ import java.util.Map;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
+
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchiveFormat;
 import org.jboss.shrinkwrap.api.ArchivePath;
@@ -404,6 +405,11 @@ public class EjbArchive implements JavaArchive {
     @Override
     public JavaArchive addAsServiceProvider(Class<?> serviceInterface, Class<?>... serviceImpls) throws IllegalArgumentException {
         return delegate.addAsServiceProvider(serviceInterface, serviceImpls);
+    }
+
+    @Override
+    public JavaArchive addAsServiceProvider(String arg0, String... arg1) {
+        return delegate.addAsServiceProvider(arg0, arg1);
     }
 
     @Override

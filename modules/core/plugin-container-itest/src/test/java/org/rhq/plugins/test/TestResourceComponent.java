@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,39 +16,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
-package org.rhq.core.pc.avail.testplugin;
+package org.rhq.plugins.test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
-public class AvailResourceComponent implements ResourceComponent<ResourceComponent<?>> {
+/**
+ * @author Ian Springer
+ */
+public class TestResourceComponent implements ResourceComponent<ResourceComponent<?>> {
 
-    private AvailabilityType avail = AvailabilityType.UP;
-    private ResourceContext<ResourceComponent<?>> context;
-
-    public void setNextAvailability(AvailabilityType avail) {
-        this.avail = avail;
-    }
-
-    public ResourceContext<ResourceComponent<?>> getResourceContext() {
-        return this.context;
-    }
+    private ResourceContext<ResourceComponent<?>> resourceContext;
 
     @Override
     public AvailabilityType getAvailability() {
-        return this.avail;
+        return AvailabilityType.UP;
     }
 
     @Override
-    public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException,
+    public void start(ResourceContext<ResourceComponent<?>> resourceContext) throws InvalidPluginConfigurationException,
         Exception {
-        this.context = context;
+        this.resourceContext = resourceContext;
     }
 
     @Override
     public void stop() {
+        return;
     }
+
 }

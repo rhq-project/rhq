@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.core.pc.inventory.testplugin;
+package org.rhq.plugins.test;
 
 import java.util.Collections;
 import java.util.Set;

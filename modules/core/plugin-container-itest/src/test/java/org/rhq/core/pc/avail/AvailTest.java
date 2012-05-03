@@ -24,7 +24,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.avail.testplugin.AvailResourceComponent;
+import org.rhq.plugins.test.AvailResourceComponent;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
 import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;

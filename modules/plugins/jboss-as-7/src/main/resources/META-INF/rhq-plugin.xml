@@ -838,142 +838,6 @@
        </includes>
     </drift-definition>
 
-
-    <server name="Profile"
-            description="One profile in a domain. Profiles are assigned to server groups."
-            discovery="SubsystemDiscovery"
-            class="BaseComponent">
-
-      <plugin-configuration>
-        <c:simple-property name="path" default="profile" readOnly="true"/>
-      </plugin-configuration>
-
-      <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
-      list is different. Update similar Standalone service if changes are necessary. -->
-      <service name="ModCluster Domain Service"
-               class="ModClusterComponent"
-               discovery="ModClusterDiscoveryComponent"
-               description="Mod_cluster support"
-               singleton="true"
-          >
-
-        <runs-inside>
-          <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-          <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
-        </plugin-configuration>
-
-        &modclusterSharedOpsConfig;
-      </service>
-
-    </server>
-
-    <server name="ServerGroup"
-            description="Server groups on this domain"
-            discovery="SubsystemDiscovery"
-            class="ServerGroupComponent"
-            createDeletePolicy="both"
-        >
-
-      <plugin-configuration>
-        <c:simple-property name="path" default="server-group" readOnly="true"/>
-      </plugin-configuration>
-
-      <operation name="start-servers" description="Starts all configured servers belonging to the server group in the domain that are not currently running.">
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain.">
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-      <operation name="stop-servers" description="Stops all servers belonging to the server group currently running in the domain.">
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-
-      <resource-configuration>
-        <c:simple-property name="profile" description="The profile name" required="true">
-          <c:option-source target="resource" expression="type=^Profile$ plugin=jboss-as-7"/>
-        </c:simple-property>
-        <c:simple-property name="socket-binding-group" readOnly="false" required="true">
-          <c:option-source target="resource" expression="type=SocketBindingGroup"/>
-        </c:simple-property>
-        <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
-                           description="The default offset to be added to the port values given by the socket binding group."/>
-
-
-        <c:group name="children:system-property:name+" displayName="System-properties">
-          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
-            <c:map-property name="*:name" displayName="Name" readOnly="true">
-              <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
-              <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
-                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
-                <c:property-options>
-                  <c:option value="true"/>
-                  <c:option value="false"/>
-                </c:property-options>
-              </c:simple-property>
-            </c:map-property>
-          </c:list-property>
-        </c:group>
-      </resource-configuration>
-    </server>
-
-    <server name="Host"
-            description="Host involved in this domain"
-            discovery="SubsystemDiscovery"
-            class="HostComponent"
-        >
-      <plugin-configuration>
-        <c:simple-property name="path" default="host" readOnly="true"/>
-      </plugin-configuration>
-
-      <metric property="host-state" dataType="trait" displayName="Host state" description="Detailed host state"
-              displayType="summary"/>
-      <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
-
-
-      <resource-configuration>
-        <c:group name="children:system-property:name+" displayName="System-properties">
-          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
-            <c:map-property name="*:name" displayName="Name" readOnly="true">
-              <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
-              <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
-                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
-                <c:property-options>
-                  <c:option value="true"/>
-                  <c:option value="false"/>
-                </c:property-options>
-              </c:simple-property>
-            </c:map-property>
-          </c:list-property>
-        </c:group>
-        <c:group name="children:path:name+" displayName="Path">
-          <c:list-property name="*3" displayName="Path" required="false"
-                           description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
-            <c:map-property name="*" displayName="Entry">
-              <c:simple-property name="name" required="true" type="string" readOnly="true"
-                                 description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
-              <c:simple-property name="path" required="true" type="string" readOnly="false"
-                                 description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
-              <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
-                                 description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
-              <c:simple-property name="read-only" description="Is this property read-only" default="false" readOnly="true" defaultValue="false" type="boolean"/>
-            </c:map-property>
-          </c:list-property>
-        </c:group>
-
-      </resource-configuration>
-    </server>
-
     <server name="Managed Server"
             discovery="ManagedASDiscovery"
             class="ManagedASComponent"
@@ -1079,6 +943,141 @@
 
     </server> <!-- managed server -->
 
+    <service name="Profile"
+             description="A profile in a domain. Profiles are assigned to server groups."
+             discovery="SubsystemDiscovery"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="profile" readOnly="true"/>
+      </plugin-configuration>
+
+      <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
+      list is different. Update similar Standalone service if changes are necessary. -->
+      <service name="ModCluster Domain Service"
+               class="ModClusterComponent"
+               discovery="ModClusterDiscoveryComponent"
+               description="Mod_cluster support"
+               singleton="true"
+          >
+
+        <runs-inside>
+          <parent-resource-type name="Profile" plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
+        </plugin-configuration>
+
+        &modclusterSharedOpsConfig;
+      </service>
+
+    </service>
+
+    <service name="ServerGroup"
+             description="A server group on this domain"
+             discovery="SubsystemDiscovery"
+             class="ServerGroupComponent"
+             createDeletePolicy="both"
+        >
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="server-group" readOnly="true"/>
+      </plugin-configuration>
+
+      <operation name="start-servers" description="Starts all configured servers belonging to the server group in the domain that are not currently running.">
+        <results>
+          <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
+      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain.">
+        <results>
+          <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
+      <operation name="stop-servers" description="Stops all servers belonging to the server group currently running in the domain.">
+        <results>
+          <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="profile" description="The profile name" required="true">
+          <c:option-source target="resource" expression="type=^Profile$ plugin=jboss-as-7"/>
+        </c:simple-property>
+        <c:simple-property name="socket-binding-group" readOnly="false" required="true">
+          <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+        </c:simple-property>
+        <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
+                           description="The default offset to be added to the port values given by the socket binding group."/>
+
+
+        <c:group name="children:system-property:name+" displayName="System-properties">
+          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+            <c:map-property name="*:name" displayName="Name" readOnly="true">
+              <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+              <c:simple-property name="value" displayName="Value"/>
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                <c:property-options>
+                  <c:option value="true"/>
+                  <c:option value="false"/>
+                </c:property-options>
+              </c:simple-property>
+            </c:map-property>
+          </c:list-property>
+        </c:group>
+      </resource-configuration>
+    </service> <!-- server group -->
+
+    <service name="Host"
+             description="A host involved in this domain"
+             discovery="SubsystemDiscovery"
+             class="HostComponent"
+        >
+      <plugin-configuration>
+        <c:simple-property name="path" default="host" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="host-state" dataType="trait" displayName="Host state" description="Detailed host state"
+              displayType="summary"/>
+      <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
+
+
+      <resource-configuration>
+        <c:group name="children:system-property:name+" displayName="System-properties">
+          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+            <c:map-property name="*:name" displayName="Name" readOnly="true">
+              <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+              <c:simple-property name="value" displayName="Value"/>
+              <c:simple-property name="boot-time" defaultValue="true" default="true" type="boolean" required="false"
+                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+                <c:property-options>
+                  <c:option value="true"/>
+                  <c:option value="false"/>
+                </c:property-options>
+              </c:simple-property>
+            </c:map-property>
+          </c:list-property>
+        </c:group>
+        <c:group name="children:path:name+" displayName="Path">
+          <c:list-property name="*3" displayName="Path" required="false"
+                           description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
+            <c:map-property name="*" displayName="Entry">
+              <c:simple-property name="name" required="true" type="string" readOnly="true"
+                                 description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
+              <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                 description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+              <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                 description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+              <c:simple-property name="read-only" description="Is this property read-only" default="false" readOnly="true" defaultValue="false" type="boolean"/>
+            </c:map-property>
+          </c:list-property>
+        </c:group>
+
+      </resource-configuration>
+    </service> <!-- host -->
+
     <service name="DomainDeployment"
              class="DomainDeploymentComponent"
              discovery="SubsystemDiscovery"
@@ -1113,7 +1112,6 @@
         </configuration>
       </content>
 
-
       <resource-configuration>
         <c:simple-property name="name" readOnly="true"/>
         <c:simple-property name="runtime-name" readOnly="true"/>
@@ -1121,8 +1119,7 @@
       </resource-configuration>
     </service>
 
-
-  </server>
+  </server> <!-- host controller -->
 
 
   <server name="JBossAS7 Standalone Server"
@@ -1432,13 +1429,13 @@
       &modclusterSharedOpsConfig;
     </service>
 
-  </server><!-- End of AS7 standalone server definition -->
+  </server> <!-- standalone server -->
 
-  <server name="JVM"
-          discovery="JVMDiscoveryComponent"
-          class="BaseComponent"
-          description="Information about the underlying JVM"
-          singleton="true">
+  <service name="JVM"
+           discovery="JVMDiscoveryComponent"
+           class="BaseComponent"
+           description="Information about the underlying JVM"
+           singleton="true">
     <runs-inside>
       <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
       <parent-resource-type name="Host" plugin="jboss-as-7"/>
@@ -1625,7 +1622,7 @@
       </resource-configuration>
     </service>
 
-  </server>
+  </service>
 
 
 

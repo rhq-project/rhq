@@ -107,7 +107,7 @@ public abstract class AbstractConfigurationObfuscationUpgradeTask implements Dat
             List<PropertyDefinition> ret = new ArrayList<PropertyDefinition>();
             for (Object[] row : results) {
                 PropertyDefinition pd = new PropertyDefinition();
-                pd.id = (Integer) row[0];
+                pd.id = ((Number) row[0]).intValue();
                 pd.name = (String) row[1];
                 pd.type = PropertyType.fromName((String) row[2]);
                 pd.simpleType = row[3] != null ? PropertySimpleType.fromName((String) row[3]) : null;
@@ -151,7 +151,7 @@ public abstract class AbstractConfigurationObfuscationUpgradeTask implements Dat
             List<Property> ret = new ArrayList<Property>();
             for (Object[] row : results) {
                 Property p = new Property();
-                p.id = (Integer) row[0];
+                p.id = ((Number) row[0]).intValue();
                 p.name = (String) row[1];
                 p.type = PropertyType.fromName((String) row[2]);
                 p.value = (String) row[3];
@@ -250,7 +250,7 @@ public abstract class AbstractConfigurationObfuscationUpgradeTask implements Dat
         List<PropertyDefinition> ret = new ArrayList<PropertyDefinition>();
         for (Object[] row : results) {
             PropertyDefinition pd = new PropertyDefinition();
-            pd.id = (Integer) row[0];
+            pd.id = ((Number) row[0]).intValue();
             pd.name = (String) row[1];
             pd.type = PropertyType.fromName((String) row[2]);
             pd.simpleType = row[3] != null ? PropertySimpleType.fromName((String) row[3]) : null;
@@ -270,7 +270,7 @@ public abstract class AbstractConfigurationObfuscationUpgradeTask implements Dat
         List<Property> ret = new ArrayList<Property>();
         for (Object[] row : results) {
             Property p = new Property();
-            p.id = (Integer) row[0];
+            p.id = ((Number) row[0]).intValue();
             p.name = (String) row[1];
             p.type = PropertyType.fromName((String) row[2]);
             p.value = (String) row[3];

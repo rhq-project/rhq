@@ -67,7 +67,7 @@ public class ConfirmationStep extends AbstractWizardStep {
             } else {
                 layout = new LocatableVLayout("BundleRevertConfirmation");
             }
-            layout.setMembersMargin(10);
+            layout.setMembersMargin(15);
 
             // Get the Live Deployment
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();
@@ -156,14 +156,10 @@ public class ConfirmationStep extends AbstractWizardStep {
         final BundleDeployment live = this.wizard.getLiveDeployment();
         final BundleDeployment prev = this.wizard.getPreviousDeployment();
 
-        Label liveHeader = new Label();
-        liveHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + ":<b>");
-        liveHeader.setHeight(10);
-        liveHeader.setWidth100();
-        layout.addMember(liveHeader);
-
         DynamicForm liveForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("liveForm"));
         liveForm.setNumCols(2);
+        liveForm.setIsGroup(true);
+        liveForm.setGroupTitle("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + "<b>");
 
         StaticTextItem liveNameItem = new StaticTextItem("liveName", MSG.common_title_name());
         liveNameItem.setTitleAlign(Alignment.LEFT);
@@ -176,7 +172,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         StaticTextItem liveDescItem = new StaticTextItem("liveDesc", MSG.common_title_description());
         liveDescItem.setTitleAlign(Alignment.LEFT);
         liveDescItem.setAlign(Alignment.LEFT);
-        liveDescItem.setWrap(false);
+        liveDescItem.setWrap(true);
         liveDescItem.setWrapTitle(false);
         liveDescItem.setTitleVAlign(VerticalAlignment.TOP);
         liveDescItem.setValue((null != live.getDescription()) ? live.getDescription() : MSG.common_val_none());
@@ -188,18 +184,14 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveVersionItem.setWrapTitle(false);
         liveVersionItem.setValue(live.getBundleVersion().getVersion());
 
-        liveForm.setItems(liveNameItem, liveDescItem, liveVersionItem);
+        liveForm.setItems(liveNameItem, liveVersionItem, liveDescItem);
         layout.addMember(liveForm);
-
-        Label prevHeader = new Label();
-        prevHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_prevDeployment() + ":<b>");
-        prevHeader.setHeight(20);
-        prevHeader.setWidth100();
-        layout.addMember(prevHeader);
 
         if (prev != null) {
             final DynamicForm prevForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("previousForm"));
             prevForm.setNumCols(2);
+            prevForm.setIsGroup(true);
+            prevForm.setGroupTitle("<b>" + MSG.view_bundle_revertWizard_confirmStep_prevDeployment() + "<b>");
 
             StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
             prevNameItem.setTitleAlign(Alignment.LEFT);
@@ -211,7 +203,7 @@ public class ConfirmationStep extends AbstractWizardStep {
             StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
             prevDescItem.setTitleAlign(Alignment.LEFT);
             prevDescItem.setAlign(Alignment.LEFT);
-            prevDescItem.setWrap(false);
+            prevDescItem.setWrap(true);
             prevDescItem.setWrapTitle(false);
             prevDescItem.setTitleVAlign(VerticalAlignment.TOP);
             prevDescItem.setValue((null != prev.getDescription()) ? prev.getDescription() : MSG.common_val_none());
@@ -244,7 +236,7 @@ public class ConfirmationStep extends AbstractWizardStep {
                 prevVersionItem.setValue(prev.getBundleVersion().getVersion());
             }
 
-            prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
+            prevForm.setItems(prevNameItem, prevVersionItem, prevDescItem);
             layout.addMember(prevForm);
         }
 

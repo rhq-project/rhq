@@ -989,8 +989,10 @@
                                  description="The host or IP address that all application server services should listen on
                                               (e.g. 10.11.14.233 or foo.example.com); specify 0.0.0.0 to tell the
                                               application server to bind to all available network interfaces; defaults to
-                                              '127.0.0.1'. This property is deprecated and will be ignored if the
-                                              'startScriptArgs' property is set."/>
+                                              '127.0.0.1'. If the 'startScriptArgs' property is not set, this property will be used
+                                               by the Start and Restart operations as the value of the -b option that is
+                                               passed to the start script. However, this property is deprecated for that
+                                               purpose and 'startScriptArgs' should be used instead."/>
                <c:simple-property name="javaHome" required="false"
                                  description="The absolute path to a JRE or JDK installation directory containing
                                               the JVM that should be used by the operations that start and/or shut down

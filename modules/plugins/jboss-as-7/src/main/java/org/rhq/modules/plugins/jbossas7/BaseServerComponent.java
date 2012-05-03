@@ -46,10 +46,12 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
@@ -487,77 +489,102 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
-        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
-
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
-        for (MeasurementScheduleRequest req: requests) {
-            if (req.getName().startsWith("_skm:"))
-                skmRequests.add(req);
-        }
-
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
         for (MeasurementScheduleRequest request: requests) {
             String requestName = request.getName();
             if (requestName.equals("startTime")) {
-                String path = getPath();
-                if (context.getResourceType().getName().contains("Host Controller")) {
-                    if (path!=null)
-                        path = "host=master," + path ;  // TODO is the local controller always on host=master?? AS7-3678
-                    else
-                        path = "host=master";
-                }
-                Address address = new Address(path);
-                address.add("core-service","platform-mbean");
-                address.add("type","runtime");
-                Operation op = new ReadAttribute(address,"start-time");
-                Result res = getASConnection().execute(op);
-
-                if (res.isSuccess()) {
-                    Long startTime = (Long) res.getResult();
-                    MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
-                    report.addData(data);
-                }
-            }
-            else if (!requestName.startsWith("_skm:")) { // handled below
-                leftovers.add(request);
+                collectStartTimeTrait(report, request);
+            } else if (requestName.startsWith("_skm:")) { // handled below
+                skmRequests.add(request);
+            } else if (requestName.equals(getHostConfigTraitName())) {
+                collectHostConfigTrait(report, request);
+            } else {
+                leftovers.add(request); // handled below
             }
         }
 
-        // Now handle the skm
-        if (skmRequests.size()>0) {
-            Address address = new Address();
-            ReadResource op = new ReadResource(address);
-            op.includeRuntime(true);
-            ComplexResult res = getASConnection().executeComplex(op);
-            if (res.isSuccess()) {
-                Map<String,Object> props = res.getResult();
-
-                for (MeasurementScheduleRequest request: skmRequests) {
-                    String requestName = request.getName();
-                    String realName = requestName.substring(requestName.indexOf(':') + 1);
-                    String val=null;
-                    if (props.containsKey(realName)) {
-                        val = getStringValue( props.get(realName) );
-                    }
-
-                    if ("null".equals(val)) {
-                        if (realName.equals("product-name"))
-                            val = "JBoss AS";
-                        else if (realName.equals("product-version"))
-                            val = getStringValue(props.get("release-version"));
-                        else
-                            log.debug("Value for " + realName + " was 'null' and no replacement found");
-                    }
-                    MeasurementDataTrait data = new MeasurementDataTrait(request,val);
-                    report.addData(data);
-                }
-            }
-            else {
-                log.debug("getSKMRequests failed: " + res.getFailureDescription());
-            }
+        // Now handle the server kind traits.
+        if (skmRequests.size() > 0) {
+            collectServerKindTraits(report, skmRequests);
         }
 
+        // Finally let our superclass handle the leftovers.
         super.getValues(report, leftovers);
     }
+
+    private void collectStartTimeTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        String startTimePath = getStartTimePath();
+        Address address = new Address(startTimePath);
+        address.add("core-service", "platform-mbean");
+        address.add("type", "runtime");
+        Operation op = new ReadAttribute(address, "start-time");
+        Result res = getASConnection().execute(op);
+
+        if (res.isSuccess()) {
+            long startTime = (Long) res.getResult();
+            MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
+            report.addData(data);
+        }
+    }
+
+    protected abstract String getStartTimePath();
+
+    private void collectHostConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        AS7Mode mode = getMode();
+        String hostConfigFileName = getCommandLineOptionValue(mode.getHostConfigFileNameOption(),
+                mode.getDefaultHostConfigFileName());
+        if (hostConfigFileName != null) {
+            MeasurementDataTrait data = new MeasurementDataTrait(request, hostConfigFileName);
+            report.addData(data);
+        }
+    }
+
+    protected String getCommandLineOptionValue(CommandLineOption option, String defaultValue) {
+        ProcessInfo serverProcess = context.getNativeProcess();
+        if (serverProcess == null) {
+            // the server process is not currently running
+            return null;
+        }
+
+        String[] args = serverProcess.getCommandLine();
+        AS7CommandLine commandLine = new AS7CommandLine(args);
+        return commandLine.getClassOption(option, defaultValue);
+    }
+
+    private void collectServerKindTraits(MeasurementReport report, Set<MeasurementScheduleRequest> skmRequests) {
+        Address address = new Address();
+        ReadResource op = new ReadResource(address);
+        op.includeRuntime(true);
+        ComplexResult res = getASConnection().executeComplex(op);
+        if (res.isSuccess()) {
+            Map<String,Object> props = res.getResult();
+
+            for (MeasurementScheduleRequest request: skmRequests) {
+                String requestName = request.getName();
+                String realName = requestName.substring(requestName.indexOf(':') + 1);
+                String val=null;
+                if (props.containsKey(realName)) {
+                    val = getStringValue( props.get(realName) );
+                }
+
+                if ("null".equals(val)) {
+                    if (realName.equals("product-name"))
+                        val = "JBoss AS";
+                    else if (realName.equals("product-version"))
+                        val = getStringValue(props.get("release-version"));
+                    else
+                        log.debug("Value for " + realName + " was 'null' and no replacement found");
+                }
+                MeasurementDataTrait data = new MeasurementDataTrait(request,val);
+                report.addData(data);
+            }
+        } else {
+            log.debug("getSKMRequests failed: " + res.getFailureDescription());
+        }
+    }
+
+    protected abstract String getHostConfigTraitName();
 
     // Replace any "%xxx%" substrings with the values of plugin config props "xxx".
     private String replacePropertyPatterns(String value) {

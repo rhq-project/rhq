@@ -380,9 +380,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     // Returns the name of the host config xml file (domain controller) or server config xml file (standalone server),
     // e.g. "standalone.xml" or "host.xml".
     protected String getHostXmlFileName(AS7CommandLine commandLine) {
-        CommandLineOption hostXmlFileNameOption = getHostXmlFileNameOption();
+        AS7Mode mode = getMode();
+        CommandLineOption hostXmlFileNameOption = mode.getHostConfigFileNameOption();
         String optionValue = commandLine.getClassOption(hostXmlFileNameOption);
-        return (optionValue != null) ? optionValue : getDefaultHostXmlFileName();
+        return (optionValue != null) ? optionValue : mode.getDefaultHostConfigFileName();
     }
 
     // Returns the host config xml file (domain controller) or server config xml file (standalone server).
@@ -411,10 +412,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     protected abstract String getLogDirSystemPropertyName();
 
     protected abstract String getDefaultBaseDirName();
-
-    protected abstract CommandLineOption getHostXmlFileNameOption();
-
-    protected abstract String getDefaultHostXmlFileName();
 
     protected abstract String getLogFileName();
 

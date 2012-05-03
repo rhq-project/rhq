@@ -37,6 +37,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class StandaloneASComponent extends BaseServerComponent implements OperationFacet {
 
+    private static final String HOST_CONFIG_TRAIT = "serverConfig";
+
     @Override
     protected AS7Mode getMode() {
         return AS7Mode.STANDALONE;
@@ -109,6 +111,16 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
             }
         }
         super.updateResourceConfiguration(report);
+    }
+
+    @Override
+    protected String getStartTimePath() {
+        return getPath();
+    }
+
+    @Override
+    protected String getHostConfigTraitName() {
+        return HOST_CONFIG_TRAIT;
     }
 
 }

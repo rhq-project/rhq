@@ -716,8 +716,6 @@
       <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
       <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-      <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Domain Configuration"/>
-      <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Host Configuration"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -770,6 +768,11 @@
 
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
+
+    <metric property="domainConfig" dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the domain configuration file this host controller is using"/>
+    <metric property="hostConfig" dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the host configuration file this host controller is using"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1134,7 +1137,6 @@
       <c:simple-property name="port" default="9990" type="integer" required="true"/>
       <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-      <c:simple-property name="config" type="string" default="standalone.xml" description="Running configuration" displayName="Configuration"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -1194,6 +1196,9 @@
             displayType="summary"/>
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Server Start Time" defaultOn="true"/>
+
+    <metric property="serverConfig" displayType="summary" defaultInterval="3600000"
+            description="The name of the server configuration file this server is using"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 

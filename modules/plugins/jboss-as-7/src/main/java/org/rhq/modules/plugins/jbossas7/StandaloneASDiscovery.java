@@ -24,7 +24,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
@@ -38,10 +37,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     private static final String SERVER_BASE_DIR_SYSPROP = "jboss.server.base.dir";
     private static final String SERVER_CONFIG_DIR_SYSPROP = "jboss.server.config.dir";
     private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
-
-    private static final String DEFAULT_SERVER_CONFIG_FILE_NAME = "standalone.xml";
-
-    private CommandLineOption SERVER_CONFIG_OPTION = new CommandLineOption('c', "server-config");
 
     @Override
     protected AS7Mode getMode() {
@@ -69,16 +64,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected CommandLineOption getHostXmlFileNameOption() {
-        return SERVER_CONFIG_OPTION;
-    }
-
-    @Override
-    protected String getDefaultHostXmlFileName() {
-        return DEFAULT_SERVER_CONFIG_FILE_NAME;
-    }
-
-    @Override
     protected String getLogFileName() {
         return "server.log";
     }
@@ -94,18 +79,16 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, ProcessInfo process, AS7CommandLine commandLine) throws Exception {
-        DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);//To change body of overridden methods use File | Settings | File Templates.
-
+    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
+                                                             ProcessInfo process, AS7CommandLine commandLine) throws Exception {
+        DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);
         Configuration pluginConfig = resourceDetails.getPluginConfiguration();
 
-        pluginConfig.put(new PropertySimple("config", pluginConfig.getSimpleValue("hostXmlFileName", null)));
-
         // Set deployment directory, which only exists for standalone servers
-        String baseDir = pluginConfig.getSimpleValue("baseDir", null);
+        String baseDir = pluginConfig.getSimpleValue("baseDir");
         if (baseDir != null) {
-            String tmp = baseDir + File.separator + "deployment";
-            pluginConfig.put(new PropertySimple("deployDir",tmp));
+            File deployDir = new File(baseDir, "deployment");
+            pluginConfig.put(new PropertySimple("deployDir", deployDir.getPath()));
         }
 
         return resourceDetails;

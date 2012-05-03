@@ -18,10 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
@@ -37,10 +33,8 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     private static final String DOMAIN_CONFIG_DIR_SYSPROP = "jboss.domain.config.dir";
     private static final String DOMAIN_LOG_DIR_SYSPROP = "jboss.domain.log.dir";
 
-    private static final String DEFAULT_DOMAIN_CONFIG_FILE_NAME = "domain.xml";
     private static final String DEFAULT_HOST_CONFIG_FILE_NAME = "host.xml";
 
-    private CommandLineOption DOMAIN_CONFIG_OPTION = new CommandLineOption("c", "domain-config");
     private CommandLineOption HOST_CONFIG_OPTION = new CommandLineOption(null, "host-config");
 
     @Override
@@ -69,16 +63,6 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected CommandLineOption getHostXmlFileNameOption() {
-        return HOST_CONFIG_OPTION;
-    }
-
-    @Override
-    protected String getDefaultHostXmlFileName() {
-        return DEFAULT_HOST_CONFIG_FILE_NAME;
-    }
-
-    @Override
     protected String getLogFileName() {
         return "host-controller.log";
     }
@@ -97,21 +81,6 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
         String prefix = (isDomainController) ? "Domain controller" : "Host controller";
         String suffix = (isDomainController) ? "domain" : "host";
         return String.format("%s for a %s %s", prefix, productType.FULL_NAME, suffix);
-    }
-
-    @Override
-    protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext, ProcessInfo process, AS7CommandLine commandLine) throws Exception {
-        DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);
-
-        Configuration pluginConfig = resourceDetails.getPluginConfiguration();
-        String domainConfig = commandLine.getClassOption(DOMAIN_CONFIG_OPTION);
-        if (domainConfig == null) {
-            domainConfig = DEFAULT_DOMAIN_CONFIG_FILE_NAME;
-        }
-        pluginConfig.put(new PropertySimple("domainConfig", domainConfig));
-        pluginConfig.put(new PropertySimple("hostConfig", pluginConfig.getSimpleValue("hostXmlFileName", null)));
-
-        return resourceDetails;
     }
 
     @Override

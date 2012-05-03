@@ -18,16 +18,20 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -40,11 +44,38 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
         implements OperationFacet {
 
-    private final Log log = LogFactory.getLog(HostControllerComponent.class);
+    private static final String DOMAIN_CONFIG_TRAIT = "domainConfig";
+    private static final String HOST_CONFIG_TRAIT = "hostConfig";
+
+    private CommandLineOption DOMAIN_CONFIG_OPTION = new CommandLineOption("c", "domain-config");
+    private static final String DEFAULT_DOMAIN_CONFIG_FILE_NAME = "domain.xml";
 
     @Override
     protected AS7Mode getMode() {
         return AS7Mode.DOMAIN;
+    }
+
+    @Override
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for (MeasurementScheduleRequest request: requests) {
+            String requestName = request.getName();
+            if (requestName.equals(DOMAIN_CONFIG_TRAIT)) {
+                collectDomainConfigTrait(report, request);
+            } else {
+                leftovers.add(request); // handled below
+            }
+        }
+
+        super.getValues(report, leftovers);
+    }
+
+    private void collectDomainConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        String domainConfigFileName = getCommandLineOptionValue(DOMAIN_CONFIG_OPTION, DEFAULT_DOMAIN_CONFIG_FILE_NAME);
+        if (domainConfigFileName != null) {
+            MeasurementDataTrait data = new MeasurementDataTrait(request, domainConfigFileName);
+            report.addData(data);
+        }
     }
 
     @Override
@@ -181,4 +212,21 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         }
         return report;
     }
+
+    @Override
+    protected String getStartTimePath() {
+        StringBuilder path = new StringBuilder("host=master");
+        String ourPath = getPath();
+        if (ourPath != null) {
+            // TODO is the local controller always on host=master?? AS7-3678
+            path.append(',').append(ourPath);
+        }
+        return path.toString();
+    }
+
+    @Override
+    protected String getHostConfigTraitName() {
+        return HOST_CONFIG_TRAIT;
+    }
+
 }

@@ -343,6 +343,18 @@ public class JavaCommandLine {
      */
     @Nullable
     public String getClassOption(CommandLineOption option) {
+        return getClassOption(option, null);
+    }
+
+    /**
+     * @param option the class option to look for
+     * @param defaultValue the value to return if the specified class option is not on the command line
+     *
+     * @return null if the class option is not on the command line, "" if it is on the command line and
+     *         either has no value or expects no value, and otherwise the non-empty value.
+     */
+    @Nullable
+    public String getClassOption(CommandLineOption option, String defaultValue) {
         String optionValue = null;
         // Note, we never store null values in either of the option value maps.
 
@@ -379,7 +391,7 @@ public class JavaCommandLine {
                     + this + "].");
         }
 
-        return optionValue;
+        return (optionValue != null) ? optionValue : defaultValue;
     }
 
     public boolean isClassOptionPresent(CommandLineOption option) {

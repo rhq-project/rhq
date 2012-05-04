@@ -93,22 +93,9 @@
     <!ENTITY modclusterSharedOpsConfig '
         <operation name="add-custom-metric" description="Add new custom metric to the load balancer provider.">
           <parameters>
+            <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
             <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
             <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
-            <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-            <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness">
-              <c:property-options>
-                <c:option value="cpu" name="cpu"/>
-                <c:option value="mem" name="mem"/>
-                <c:option value="heap" name="heap"/>
-                <c:option value="sessions" name="sessions"/>
-                <c:option value="requests" name="requests"/>
-                <c:option value="send-traffic" name="send-traffic"/>
-                <c:option value="receive-traffic" name="receive-traffic"/>
-                <c:option value="busyness" name="busyness"/>
-                <c:option value="connection-pool" name="connection-pool"/>
-              </c:property-options>
-            </c:simple-property>
           </parameters>
           <results>
             <c:simple-property name="operationResult" description="Add new custom metric to the load balancer provider."/>
@@ -117,22 +104,20 @@
 
         <operation name="add-metric" description="Add new metric to the load balancer provider.">
           <parameters>
-            <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
-            <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
             <c:simple-property name="capacity" required="false" type="integer" readOnly="false" description="Capacity of the metric."/>
-            <c:simple-property name="property" required="false" type="string" readOnly="false" description="Properties for the metric." defaultValue="busyness">
+            <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
               <c:property-options>
-                <c:option value="cpu" name="cpu"/>
-                <c:option value="mem" name="mem"/>
-                <c:option value="heap" name="heap"/>
-                <c:option value="sessions" name="sessions"/>
-                <c:option value="requests" name="requests"/>
-                <c:option value="send-traffic" name="send-traffic"/>
-                <c:option value="receive-traffic" name="receive-traffic"/>
-                <c:option value="busyness" name="busyness"/>
-                <c:option value="connection-pool" name="connection-pool"/>
+                <c:option value="busyness"/>
+                <c:option value="cpu" />
+                <c:option value="heap"/>
+                <c:option value="mem"/>
+                <c:option value="requests"/>
+                <c:option value="receive-traffic"/>
+                <c:option value="send-traffic"/>
+                <c:option value="sessions"/>
               </c:property-options>
             </c:simple-property>
+            <c:simple-property name="weight" required="false" type="integer" readOnly="false" description="Weight of the metric."/>
           </parameters>
           <results>
             <c:simple-property name="operationResult" description="Add new metric to the load balancer provider."/>
@@ -150,7 +135,18 @@
 
         <operation name="remove-metric" description="Add new metric to the load balancer provider.">
           <parameters>
-            <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of the metric"/>
+            <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
+              <c:property-options>
+                <c:option value="busyness"/>
+                <c:option value="cpu" />
+                <c:option value="heap"/>
+                <c:option value="mem"/>
+                <c:option value="requests"/>
+                <c:option value="receive-traffic"/>
+                <c:option value="send-traffic"/>
+                <c:option value="sessions"/>
+              </c:property-options>
+            </c:simple-property>
           </parameters>
           <results>
             <c:simple-property name="operationResult" description="Add new metric to the load balancer provider."/>
@@ -1000,7 +996,109 @@
           <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
         </plugin-configuration>
 
-        &modclusterSharedOpsConfig;
+        <service name="Domain Service Configuration"
+		 discovery="SubsystemDiscovery"
+		 class="ModClusterComponent">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="mod-cluster-config=configuration"/>
+	   </plugin-configuration>
+
+           &modclusterSharedOpsConfig;
+
+		<service name="Domain Dynamic Load Provider"
+			 discovery="SubsystemDiscovery"
+			 createDeletePolicy="delete-only"
+			 class="BaseComponent">
+
+		   <runs-inside>
+			<parent-resource-type name="Service Configuration" plugin="&pluginName;"/>
+			<parent-resource-type name="ModCluster Service Configuration" plugin="&pluginName;"/>
+		   </runs-inside>
+
+		   <plugin-configuration>
+		     <c:simple-property name="path" readOnly="true" default="dynamic-load-provider=configuration"/>
+		   </plugin-configuration>
+
+		   <resource-configuration>
+		     <c:simple-property name="decay" required="false" type="integer" readOnly="false" defaultValue="2" description="Decay. The default value is 2."/>
+		     <c:simple-property name="history" required="false" type="integer" readOnly="false" defaultValue="9" description="History. The default value is 9."/>
+		   </resource-configuration>
+
+		     <service name="Domain Custom Load Metric"
+			      discovery="SubsystemDiscovery"
+			      createDeletePolicy="delete-only"
+			      class="BaseComponent">
+
+			<plugin-configuration>
+			  <c:simple-property name="path" readOnly="true" default="custom-load-metric"/>
+			</plugin-configuration>
+
+		       <resource-configuration>
+			 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1"/>
+			 <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
+			 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+		       </resource-configuration>
+
+		     </service><!-- End of custom-load-metric service -->
+
+		     <service name="Domain Load Metric"
+			      discovery="SubsystemDiscovery"
+			      createDeletePolicy="delete-only"
+			      class="BaseComponent">
+
+			<plugin-configuration>
+			  <c:simple-property name="path" readOnly="true" default="load-metric"/>
+			</plugin-configuration>
+
+		       <resource-configuration>
+			 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1."/>
+		         <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
+		          <c:property-options>
+		           <c:option value="busyness"/>
+		           <c:option value="cpu" />
+		           <c:option value="heap"/>
+		           <c:option value="mem"/>
+		           <c:option value="requests"/>
+		           <c:option value="receive-traffic"/>
+		           <c:option value="send-traffic"/>
+		           <c:option value="sessions"/>
+		          </c:property-options>
+		         </c:simple-property>
+			 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+		       </resource-configuration>
+
+		     </service><!-- End of load-metric service -->
+
+		</service><!-- End of dynamic-load-provider service -->
+
+		<service name="Domain Ssl"
+			 discovery="SubsystemDiscovery"
+			 createDeletePolicy="both"
+			 class="BaseComponent">
+
+		   <runs-inside>
+			<parent-resource-type name="ModCluster Standalone Service" plugin="&pluginName;"/>
+			<parent-resource-type name="ModCluster Domain Service" plugin="&pluginName;"/>
+		   </runs-inside>
+
+			<plugin-configuration>
+			  <c:simple-property name="path" readOnly="true" default="ssl=configuration"/>
+			</plugin-configuration>
+
+			<resource-configuration>
+			   <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
+			   <c:simple-property name="ca-revocation-ur" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
+			   <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" defaultValue="${user.home}/.keystore" description="Key file for the certificate."/>
+			   <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
+			   <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+			   <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="changeit" description="Password."/>
+			   <c:simple-property name="protocol" required="false" type="string" readOnly="false" defaultValue="TLS" description="The SSL protocols that are enabled."/>
+			</resource-configuration>
+
+		</service><!-- End of ssl service -->
+
+        </service><!-- End of Domain Modcluster Service Configuration -->
       </service>
 
     </service>
@@ -1364,38 +1462,6 @@
         </results>
       </operation>
 
-      <operation name="disable" description="Tell Apache httpd that all contexts of the node can't process new requests.">
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-
-      <operation name="disable-context" description="Tell Apache httpd that the context can't process new requests.">
-        <parameters>
-          <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
-          <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process new requests."/>
-        </results>
-      </operation>
-
-      <operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
-        <results>
-          <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node are ready receive requests."/>
-        </results>
-      </operation>
-
-      <operation name="enable-context" description="Tell Apache httpd that the context is ready receive requests.">
-        <parameters>
-          <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
-          <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult" description="Tell Apache httpd that the context is ready receive requests."/>
-        </results>
-      </operation>
-
       <operation name="list-proxies" description="Read the list of httpd connected to the node.">
         <results>
           <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->
@@ -1439,6 +1505,149 @@
         </results>
       </operation>
 
+      <service name="Service Configuration"
+		 discovery="SubsystemDiscovery"
+		 class="ModClusterComponent">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="mod-cluster-config=configuration"/>
+	   </plugin-configuration>
+
+        &modclusterSharedOpsConfig;
+
+	<service name="Dynamic Load Provider"
+		 discovery="SubsystemDiscovery"
+		 createDeletePolicy="delete-only"
+		 class="BaseComponent">
+
+	   <runs-inside>
+		<parent-resource-type name="Service Configuration" plugin="&pluginName;"/>
+		<parent-resource-type name="ModCluster Service Configuration" plugin="&pluginName;"/>
+	   </runs-inside>
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="dynamic-load-provider=configuration"/>
+	   </plugin-configuration>
+
+	   <resource-configuration>
+	     <c:simple-property name="decay" required="false" type="integer" readOnly="false" defaultValue="2" description="Decay. The default value is 2."/>
+	     <c:simple-property name="history" required="false" type="integer" readOnly="false" defaultValue="9" description="History. The default value is 9."/>
+	   </resource-configuration>
+
+	     <service name="Custom Load Metric"
+		      discovery="SubsystemDiscovery"
+		      createDeletePolicy="both"
+		      class="BaseComponent">
+
+		<plugin-configuration>
+		  <c:simple-property name="path" readOnly="true" default="custom-load-metric"/>
+		</plugin-configuration>
+
+	       <resource-configuration>
+		 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1"/>
+		 <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
+		 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+	       </resource-configuration>
+
+	     </service><!-- End of custom-load-metric service -->
+
+	     <service name="Load Metric"
+		      discovery="SubsystemDiscovery"
+		      createDeletePolicy="both"
+		      class="BaseComponent">
+
+		<plugin-configuration>
+		  <c:simple-property name="path" readOnly="true" default="load-metric"/>
+		</plugin-configuration>
+
+	       <resource-configuration>
+		 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1."/>
+                 <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
+                  <c:property-options>
+                   <c:option value="busyness"/>
+                   <c:option value="cpu" />
+                   <c:option value="heap"/>
+                   <c:option value="mem"/>
+                   <c:option value="requests"/>
+                   <c:option value="receive-traffic"/>
+                   <c:option value="send-traffic"/>
+                   <c:option value="sessions"/>
+                  </c:property-options>
+                 </c:simple-property>
+		 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+	       </resource-configuration>
+
+	     </service><!-- End of load-metric service -->
+
+	</service><!-- End of dynamic-load-provider service -->
+
+	<service name="Ssl"
+		 discovery="SubsystemDiscovery"
+		 createDeletePolicy="both"
+		 class="BaseComponent">
+
+	   <runs-inside>
+		<parent-resource-type name="ModCluster Standalone Service" plugin="&pluginName;"/>
+		<parent-resource-type name="ModCluster Domain Service" plugin="&pluginName;"/>
+	   </runs-inside>
+
+		<plugin-configuration>
+		  <c:simple-property name="path" readOnly="true" default="ssl=configuration"/>
+		</plugin-configuration>
+
+		<resource-configuration>
+		   <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
+		   <c:simple-property name="ca-revocation-ur" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
+		   <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" defaultValue="${user.home}/.keystore" description="Key file for the certificate."/>
+		   <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
+		   <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+		   <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="changeit" description="Password."/>
+		   <c:simple-property name="protocol" required="false" type="string" readOnly="false" defaultValue="TLS" description="The SSL protocols that are enabled."/>
+		</resource-configuration>
+
+	</service><!-- End of ssl service -->
+
+      <!-- This service locates the ModCluster node identifier aka jvmRoute details, parses getProxyInformation
+           from a valid modcluster configuration and only exposes webapplications hosted by the AS7 instance co-located
+           with the RHQ agent.  Of these exposed resources the supported enable*/disable*/stop* -context operations
+           are supported. In a homogeneous cluster environment where RHQ monitors all cluster members as well the entire 
+           webapp application context suite should be controllable via RHQ groups or from individual modcluster instances. 
+      -->
+      <!-- [BZ 823624] this is disabled until this bug is addressed. Will need to uncomment and populate jvmRoute in
+              ModClusterContextDiscoveryComponent -->
+      <!--<service name="Webapp Context" 
+		class="ModClusterContextComponent"
+		discovery="ModClusterContextDiscoveryComponent"  
+		description="Webapp Context">
+
+	   <plugin-configuration>
+	     <c:simple-property name="path" readOnly="true" default="mod-cluster-web-contexts"/>
+	   </plugin-configuration>
+
+      <operation name="disable" description="Tell Apache httpd that all contexts of the node can't process new requests.">
+        <results>
+          <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
+
+      <operation name="disable-context" description="Tell Apache httpd that the context can't process new requests.">
+        <results>
+          <c:simple-property name="operationResult" description="Tell Apache httpd that the context can't process new requests."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
+        <results>
+          <c:simple-property name="operationResult" description="Tell Apache httpd that all contexts of the node are ready receive requests."/>
+        </results>
+      </operation>
+
+      <operation name="enable-context" description="Tell Apache httpd that the context is ready receive requests.">
+        <results>
+          <c:simple-property name="operationResult" description="Tell Apache httpd that the context is ready receive requests."/>
+        </results>
+      </operation>
+
       <operation name="stop" description="Tell Apache httpd that all contexts of the node can't process requests.">
         <parameters>
           <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
@@ -1450,8 +1659,6 @@
 
       <operation name="stop-context" description="Tell Apache httpd that the context can't process requests.">
         <parameters>
-          <c:simple-property name="virtualhost" required="true" type="string" readOnly="false" description="Name of the virtual-host containing the context."/>
-          <c:simple-property name="context" required="true" type="string" readOnly="false" description="Context (like /myapp for example)."/>
           <c:simple-property name="waittime" required="false" type="integer" readOnly="false" description="Max amount of time modcluster will for the STOP operation. In seconds. Default 10s"/>
         </parameters>
         <results>
@@ -1459,10 +1666,14 @@
         </results>
       </operation>
 
-      &modclusterSharedOpsConfig;
-    </service>
+         <resource-configuration>
+            <c:simple-property name="waittime" type="integer" required="false" defaultValue="50" description="The number of seconds to wait for the context to be stopped." />
+         </resource-configuration>
+      </service>--><!-- End of WebAppContext service -->
+     </service><!-- End of Standalone Modcluster Service Configuration -->
+    </service><!-- End of ModCluster Standalone Service -->
 
-  </server> <!-- standalone server -->
+  </server> <!-- JBossAS7 Standalone Server -->
 
   <service name="JVM"
            discovery="JVMDiscoveryComponent"

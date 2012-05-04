@@ -151,8 +151,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address);
                 }
-            }
-            if (groupName.startsWith("child:")) { // one named child resource
+            } else if (groupName.startsWith("child:")) { // one named child resource
                 String subPath = groupName.substring("child:".length());
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
@@ -227,7 +226,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                         updateProperty(conf, cop, def, address1);
                     }
                 }
-            } // child: case    TODO handle attribute: case
+
+            }// child: case    TODO handle attribute: case
+            else {//handle the base case with no special case handling
+                  //get the properties from within the group and update as usual.
+                for (PropertyDefinition propDef : configurationDefinition.getPropertiesInGroup(groupName)) {
+                    updateProperty(conf, cop, propDef, address);
+                }
+            }
         }
 
         return cop;

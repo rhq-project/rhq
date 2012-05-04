@@ -123,7 +123,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @throws Exception If anything goes wrong
      */
     private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception {
-        Operation operation;
+        Operation operation = null;
         String groupName = groupDefinition.getName();
         if (groupName.startsWith("attribute:")) {
             String attr = groupName.substring("attribute:".length());
@@ -164,7 +164,10 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             if (includeRuntime)
                 ((ReadResource)operation).includeRuntime(true);
         } else {//no special handling of <c:groups> details required.
-            //Just assume normal group operations aggregation semantics.
+            //Just assume normal group operations aggregation semantics, so retrieve entries and load.
+            Operation op = new ReadResource(address);
+            List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
+            loadHandleProperties(config, listedDefs, op);
             return;
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);

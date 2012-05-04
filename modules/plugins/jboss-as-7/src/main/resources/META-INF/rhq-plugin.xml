@@ -2,6 +2,8 @@
 
 <!DOCTYPE plugin [
 
+    <!ENTITY pluginName 'JBossAS7'>
+
     <!ENTITY startScriptPluginConfigGroup '
     <c:group name="operations">
         <c:simple-property name="startScript" type="file"
@@ -146,7 +148,7 @@
             <c:simple-property name="advertise-security-key" required="false" type="string" readOnly="false" description="String containing the security key for the Advertise logic."/>
             <c:simple-property name="balancer" required="false" type="string" readOnly="false" defaultValue="mycluster" description="The balancer name."/>
             <c:simple-property name="connector" required="true" type="string" readOnly="false" defaultValue="ajp" description="Name of the web connector used to communicate with the load balancer.">
-              <c:option-source target="resource" expression="type=Connector plugin=jboss-as-7"/>
+              <c:option-source target="resource" expression="type=Connector plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
 <!--          </c:group>-->
@@ -692,9 +694,9 @@
 '>
 
 ]>
-<plugin name="jboss-as-7"
+<plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
-        description="Management of JBossAS 7"
+        description="provides monitoring and management of JBossAS 7.x"
         package="org.rhq.modules.plugins.jbossas7"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration"
@@ -887,7 +889,7 @@
       <resource-configuration>
         <!-- IF you add properties here, you also need to update org.rhq.modules.plugins.jbossas7.ManagedASComponent.loadResourceConfiguration -->
         <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
-          <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type=^Host$ plugin=&pluginName;"/>
         </c:simple-property>
         <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to.">
           <c:option-source target="resource" expression="type=ServerGroup"/>
@@ -901,7 +903,7 @@
 
 <!--
         <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
-          <c:option-source target="resource" expression="type='JVM Definition' plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type='JVM Definition' plugin=&pluginName;"/>
         </c:simple-property>
 -->
 
@@ -965,7 +967,7 @@
           >
 
         <runs-inside>
-          <parent-resource-type name="Profile" plugin="jboss-as-7"/>
+          <parent-resource-type name="Profile" plugin="&pluginName;"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1006,7 +1008,7 @@
 
       <resource-configuration>
         <c:simple-property name="profile" description="The profile name" required="true">
-          <c:option-source target="resource" expression="type=^Profile$ plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type=^Profile$ plugin=&pluginName;"/>
         </c:simple-property>
         <c:simple-property name="socket-binding-group" readOnly="false" required="true">
           <c:option-source target="resource" expression="type=SocketBindingGroup"/>
@@ -1318,7 +1320,7 @@
         >
 
       <runs-inside>
-        <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+        <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
         <!-- FAKE as "runs inside Profile" only does not work -->
       </runs-inside>
 
@@ -1442,9 +1444,9 @@
            description="Information about the underlying JVM"
            singleton="true">
     <runs-inside>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Host" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Host" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -1637,8 +1639,8 @@
           singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -1647,7 +1649,7 @@
 
     <resource-configuration>
       <c:simple-property name="default-virtual-server" required="true" type="string" readOnly="false" defaultValue="default-host" description="The web container's default virtual server. The default value is default-host.">
-        <c:option-source target="resource" expression="type=VHost plugin=jboss-as-7"/>
+        <c:option-source target="resource" expression="type=VHost plugin=&pluginName;"/>
       </c:simple-property>
       <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
       <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true" description="Add the native initialization listener to the web container. The default value is true."/>
@@ -1803,7 +1805,7 @@
           <c:map-property name="*Configuration+" displayName="Configuration" readOnly="false" required="false">
             <c:simple-property name="cache-container" required="false" type="string" readOnly="false"
                                description="Enables clustered SSO using the specified clustered cache container.">
-              <c:option-source target="resource" expression="type='Cache Container' plugin=jboss-as-7"/>
+              <c:option-source target="resource" expression="type='Cache Container' plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="cache-name" required="false" type="string" readOnly="false" description="Name of the cache to use in the cache container."/>
             <c:simple-property name="domain" required="false" type="string" readOnly="false" description="The cookie domain that will be used."/>
@@ -1876,7 +1878,7 @@
           description="General settings of the JCA engine. Not necessarily for end-users">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -1904,7 +1906,7 @@
           description="Datasources subsystem for Standalone servers.">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -1972,7 +1974,7 @@
           description="Datasources subsystem for profile.">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2019,7 +2021,7 @@
           description="Datasources subsystem for Managed servers.">
 
     <runs-inside>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2104,7 +2106,7 @@
            class="BaseComponent"
            createDeletePolicy="both">
     <runs-inside>
-      <parent-resource-type name="Host" plugin="jboss-as-7"/>
+      <parent-resource-type name="Host" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2123,8 +2125,8 @@
            singleton="true"
            createDeletePolicy="both">
     <runs-inside>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
+      <parent-resource-type name="ServerGroup" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2133,7 +2135,7 @@
 
     <resource-configuration>
       <c:simple-property name="baseDefinition" required="true" readOnly="true" description="The definition from host level to use/override">
-        <c:option-source target="resource" expression="type='JVM Definition (Host)' plugin=jboss-as-7"/>
+        <c:option-source target="resource" expression="type='JVM Definition (Host)' plugin=&pluginName;"/>
       </c:simple-property>
       &jvmDefinitionResourceConfigProperties;
     </resource-configuration>
@@ -2147,8 +2149,8 @@
       >
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2536,8 +2538,8 @@
       >
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2635,9 +2637,9 @@
           singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2704,8 +2706,8 @@
 		    >
 
 			<runs-inside>
-			    <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
-			    <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
+			    <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
+			    <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
 			</runs-inside>
 
 		     <plugin-configuration>
@@ -2734,8 +2736,8 @@
 		    >
 
 			<runs-inside>
-			    <parent-resource-type name="Pre Handler Chain"  plugin="jboss-as-7"/>
-			    <parent-resource-type name="Post Handler Chain"  plugin="jboss-as-7"/>
+			    <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
+			    <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
 			</runs-inside>
 
 		     <plugin-configuration>
@@ -2756,9 +2758,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Host" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Host" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2820,7 +2822,7 @@
            description="The transactions subsystem.">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2865,7 +2867,7 @@
            description="The transactions subsystem.">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2900,7 +2902,7 @@
            description="The transactions subsystem.">
 
     <runs-inside>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2927,9 +2929,9 @@
            description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
-      <parent-resource-type name="Host" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
+      <parent-resource-type name="Host" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2943,8 +2945,8 @@
            class="SocketBindingGroupComponent">
 
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Host Controller" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -2955,7 +2957,7 @@
       <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
                          description="Default Interface for these bindings. See Network Interfaces for its definition"
                          required="true">
-        <c:option-source target="resource" expression="type='Network Interface' plugin=jboss-as-7"/>
+        <c:option-source target="resource" expression="type='Network Interface' plugin=&pluginName;"/>
       </c:simple-property>
       <!-- note: at domain level there is no port-offset -->
       <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
@@ -2967,7 +2969,7 @@
             <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
             <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
                                required="false">
-              <c:option-source target="resource" expression="type='Network Interface' plugin=jboss-as-7"/>
+              <c:option-source target="resource" expression="type='Network Interface' plugin=&pluginName;"/>
             </c:simple-property>
             <c:simple-property name="port:expr" displayName="Port" required="false" description="Number of the port to which the socket should be bound. ${} Expresions are allowed. Can be omitted if multicast-port is set."/>
             <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
@@ -2989,9 +2991,9 @@
            creationDataType="content">
 
     <runs-inside>
-      <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
+      <parent-resource-type name="ServerGroup" plugin="&pluginName;"/>
       <!-- TODO -->
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3051,7 +3053,7 @@
            description="Runtime resources associated with a child deployment packaged inside another deployment; for example a war packaged inside an ear.">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
     </runs-inside>
     <plugin-configuration>
       <c:simple-property name="path" default="subdeployment" readOnly="true"/>
@@ -3067,8 +3069,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3100,8 +3102,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3233,7 +3235,7 @@
              description="A JDBC data-source configuration">
 
       <runs-inside>
-        <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
+        <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -3346,8 +3348,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3441,8 +3443,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3632,8 +3634,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3675,8 +3677,8 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Deployment" plugin="jboss-as-7"/>
-      <parent-resource-type name="Subdeployment" plugin="jboss-as-7"/>
+      <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3825,7 +3827,7 @@
            singleton="true"
       >
     <runs-inside>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3867,9 +3869,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3934,9 +3936,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -3961,9 +3963,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4000,7 +4002,7 @@
       <resource-configuration>
         <c:simple-property name="name" required="false" type="string" readOnly="false" description="The name of the BootstrapContext"/>
         <c:simple-property name="workmanager" required="false" type="string" readOnly="false" description="The WorkManager instance for the BootstrapContext">
-          <c:option-source target="resource" expression="type=Workmanager plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type=Workmanager plugin=&pluginName;"/>
         </c:simple-property>
       </resource-configuration>
     </service>
@@ -4087,9 +4089,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4112,9 +4114,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4135,9 +4137,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4160,7 +4162,7 @@
         <c:simple-property name="create-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create create the tables"/>
         <c:simple-property name="create-table-ddl" required="false" type="string" readOnly="true" description="The DDL used to create the table"/>
         <c:simple-property name="data-source" required="true" type="string" readOnly="true" description="The datasource used for sequence generation">
-          <c:option-source target="resource" expression="type=DataSource plugin=jboss-as-7"/>
+          <c:option-source target="resource" expression="type=DataSource plugin=&pluginName;"/>
         </c:simple-property>
         <c:simple-property name="drop-table" required="false" type="boolean" readOnly="true" description="Boolean to determine whether to create drop the tables"/>
         <c:simple-property name="id-column" required="false" type="string" readOnly="true" description="The ID column name"/>
@@ -4180,9 +4182,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4206,9 +4208,9 @@
          class="BaseComponent">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4559,9 +4561,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4651,9 +4653,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4849,9 +4851,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -4876,9 +4878,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5043,9 +5045,9 @@
           singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5137,8 +5139,8 @@
           singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5157,9 +5159,9 @@
           singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5186,9 +5188,9 @@
            singleton="true">
 
     <runs-inside>
-        <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-        <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-        <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+        <parent-resource-type name="Profile"  plugin="&pluginName;"/>
+        <parent-resource-type name="JBossAS7 Standalone Server"  plugin="&pluginName;"/>
+        <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5279,9 +5281,9 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile"  plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server"  plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -5295,7 +5297,7 @@
              createDeletePolicy="both">
 
       <runs-inside>
-        <parent-resource-type name="Mail"  plugin="jboss-as-7"/>
+        <parent-resource-type name="Mail"  plugin="&pluginName;"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -5315,7 +5317,7 @@
                createDeletePolicy="both">
 
           <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
           </runs-inside>
 
           <plugin-configuration>
@@ -5337,7 +5339,7 @@
                createDeletePolicy="both">
 
           <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
           </runs-inside>
 
           <plugin-configuration>
@@ -5359,7 +5361,7 @@
                createDeletePolicy="both">
 
           <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="jboss-as-7"/>
+              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
           </runs-inside>
 
           <plugin-configuration>
@@ -5385,9 +5387,9 @@
              singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="jboss-as-7"/>
-      <parent-resource-type name="JBossAS7 Standalone Server" plugin="jboss-as-7"/>
-      <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>

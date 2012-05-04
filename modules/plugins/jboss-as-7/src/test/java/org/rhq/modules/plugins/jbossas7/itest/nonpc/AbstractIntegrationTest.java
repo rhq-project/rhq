@@ -61,7 +61,9 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  */
 @Test(groups = {"integration", "nonpc"}, dependsOnGroups = "discovery")
 public abstract class AbstractIntegrationTest {
-    
+
+    protected static final String PLUGIN_NAME = "JBossAS7";
+
     protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
     protected static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
     protected static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;

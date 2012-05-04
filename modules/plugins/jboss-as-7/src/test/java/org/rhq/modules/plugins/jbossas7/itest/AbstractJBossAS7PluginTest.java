@@ -39,13 +39,13 @@ import org.rhq.test.arquillian.AfterDiscovery;
 import static org.testng.Assert.assertNotNull;
 
 /**
- * The base class for all jboss-as-7 plugin integration tests.
+ * The base class for all as7 plugin integration tests.
  *
  * @author Ian Springer
  */
 public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest {
 
-    protected static final String PLUGIN_NAME = "jboss-as-7";
+    protected static final String PLUGIN_NAME = "JBossAS7";
 
     public static final String MANAGEMENT_USERNAME = "test";
     public static final String MANAGEMENT_PASSWORD = "test";

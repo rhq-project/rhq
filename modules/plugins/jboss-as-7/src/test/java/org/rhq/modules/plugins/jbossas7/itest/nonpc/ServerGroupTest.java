@@ -43,8 +43,7 @@ public class ServerGroupTest extends AbstractIntegrationTest {
         Configuration rc = new Configuration();
         rc.put(new PropertySimple("profile","default"));
         rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
-        ResourceType rt = new ResourceType("ServerGroup", "jboss-as-7",
-                ResourceCategory.SERVICE, null);
+        ResourceType rt = new ResourceType("ServerGroup", PLUGIN_NAME, ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";
         try {
@@ -67,7 +66,7 @@ public class ServerGroupTest extends AbstractIntegrationTest {
         Configuration rc = new Configuration();
         rc.put(new PropertySimple("profile","luzibumpf")); // Does not exist op should fail
         rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
-        ResourceType rt = new ResourceType("ServerGroup", "jboss-as-7",
+        ResourceType rt = new ResourceType("ServerGroup", PLUGIN_NAME,
                 ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";

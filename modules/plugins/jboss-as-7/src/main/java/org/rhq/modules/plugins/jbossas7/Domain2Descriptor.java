@@ -38,6 +38,8 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 @SuppressWarnings("unchecked")
 public class Domain2Descriptor {
 
+    private static final String PLUGIN_NAME = "JBossAS7";
+
     //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384 
     private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
         "busyness", "connection-pool" };
@@ -270,9 +272,9 @@ public class Domain2Descriptor {
             doIndent(childIndent, element);
             element.append("<runs-inside>\n");
             doIndent(childIndent + 2, element);
-            element.append("<parent-resource-type name=\"Profile\" plugin=\"jboss-as-7\"/>\n");
+            element.append("<parent-resource-type name=\"Profile\" plugin=\"" + PLUGIN_NAME + "\"/>\n");
             doIndent(childIndent + 2, element);
-            element.append("<parent-resource-type name=\"JBossAS7 Standalone Server\" plugin=\"jboss-as-7\"/>\n");
+            element.append("<parent-resource-type name=\"JBossAS7 Standalone Server\" plugin=\"" + PLUGIN_NAME + "\"/>\n");
             doIndent(childIndent, element);
             element.append("</runs-inside>\n");
         }

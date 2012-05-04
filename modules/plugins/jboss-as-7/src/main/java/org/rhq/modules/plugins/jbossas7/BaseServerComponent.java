@@ -78,6 +78,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
     private ServerPluginConfiguration serverPluginConfig;
+    private String hostConfigFileName;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -89,6 +90,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+        hostConfigFileName = getHostConfigFileName();
     }
 
     @Override
@@ -434,19 +436,16 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return result;
         }
 
-        String configFileName;
-        switch (getMode()) {
-            case STANDALONE:
-                configFileName = pluginConfig.getSimpleValue("config");
-                break;
-            case DOMAIN:
-                configFileName = pluginConfig.getSimpleValue("hostConfig");
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported mode: " + getMode());
+        String hostConfigFileName = getHostConfigFileName();
+        if (this.hostConfigFileName == null) {
+            this.hostConfigFileName = hostConfigFileName;
+        }
+        if (this.hostConfigFileName == null) {
+            result.setErrorMessage("Could not determine the server configuration file name, because the managed server is not currently running. Please start the managed server and then try again.");
+            return result;
         }
 
-        File configFile = new File(configDir, configFileName);
+        File configFile = new File(configDir, this.hostConfigFileName);
         HostConfiguration hostConfig;
         try {
             hostConfig = new HostConfiguration(configFile);
@@ -531,13 +530,21 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     protected abstract String getStartTimePath();
 
     private void collectHostConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
-        AS7Mode mode = getMode();
-        String hostConfigFileName = getCommandLineOptionValue(mode.getHostConfigFileNameOption(),
-                mode.getDefaultHostConfigFileName());
+        String hostConfigFileName = getHostConfigFileName();
         if (hostConfigFileName != null) {
             MeasurementDataTrait data = new MeasurementDataTrait(request, hostConfigFileName);
             report.addData(data);
+
+            if (this.hostConfigFileName == null) {
+                this.hostConfigFileName = hostConfigFileName;
+            }
         }
+    }
+
+    private String getHostConfigFileName() {
+        AS7Mode mode = getMode();
+        return getCommandLineOptionValue(mode.getHostConfigFileNameOption(),
+                mode.getDefaultHostConfigFileName());
     }
 
     protected String getCommandLineOptionValue(CommandLineOption option, String defaultValue) {

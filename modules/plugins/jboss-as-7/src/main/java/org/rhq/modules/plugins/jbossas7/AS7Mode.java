@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,9 +29,9 @@ import org.rhq.core.pluginapi.util.CommandLineOption;
  */
 public enum AS7Mode {
 
-    STANDALONE("standalone.xml", "standalone.xml", "standalone", "--server-config", "standalone", "config", new CommandLineOption('c', "server-config")),
-    DOMAIN("domain.xml", "host.xml", "domain", "--domain-config", "domain", "domainConfig", new CommandLineOption(null, "host-config")),
-    HOST("host.xml", null, "domain", "--host-config", "domain", "hostConfig", null);
+    STANDALONE("standalone.xml", "standalone.xml", "standalone", "--server-config", "standalone", new CommandLineOption('c', "server-config")),
+    DOMAIN("domain.xml", "host.xml", "domain", "--domain-config", "domain", new CommandLineOption(null, "host-config")),
+    HOST("host.xml", null, "domain", "--host-config", "domain", null);
 
     private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
     private static final String SCRIPT_EXTENSION = (OS_IS_WINDOWS) ? "bat" : "sh";
@@ -41,17 +41,15 @@ public enum AS7Mode {
     private String defaultBaseDir;
     private String configArg;
     private String startScriptBaseName;
-    private String configPropertyName;
     private CommandLineOption hostConfigFileNameOption;
 
     private AS7Mode(String defaultXmlFile, String defaultHostConfigFileName, String defaultBaseDir, String configArg,
-                    String startScriptBaseName, String configPropertyName, CommandLineOption hostConfigFileNameOption) {
+                    String startScriptBaseName, CommandLineOption hostConfigFileNameOption) {
         this.defaultXmlFile = defaultXmlFile;
         this.defaultHostConfigFileName = defaultHostConfigFileName;
         this.defaultBaseDir = defaultBaseDir;
         this.configArg = configArg;
         this.startScriptBaseName = startScriptBaseName;
-        this.configPropertyName = configPropertyName;
         this.hostConfigFileNameOption = hostConfigFileNameOption;
     }
 
@@ -69,10 +67,6 @@ public enum AS7Mode {
 
     public String getConfigArg() {
         return configArg;
-    }
-
-    public String getConfigPropertyName() {
-        return configPropertyName;
     }
 
     public String getStartScriptFileName() {

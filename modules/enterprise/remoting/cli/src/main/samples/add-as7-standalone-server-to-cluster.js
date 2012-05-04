@@ -72,7 +72,7 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
     for(i in newAs7Resource.children) {
         var child = newAs7Resource.children[i];
         if (child.resourceType.name == 'SocketBindingGroup' &&
-                child.resourceType.plugin == 'jboss-as-7') {
+                child.resourceType.plugin == 'JBossAS7') {
 
             println("Updating socket bindings of jgroups, messaging and modcluster subsystems");
 
@@ -117,7 +117,7 @@ function copyDeployments(sourceAS7, targetAS7) {
         targetAS7 = targetAS7.id;
     }
 
-    var deploymentResourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin('Deployment', 'jboss-as-7');
+    var deploymentResourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin('Deployment', 'JBossAS7');
 
     var deploymentsCrit = new ResourceCriteria;
     deploymentsCrit.addFilterParentResourceId(sourceAS7);
@@ -434,7 +434,7 @@ function _getClusterSignificantConfig(as7Resource) {
     //the standalone server has a single socket binding group
     for(var i in as7Resource.children) {
         var child = as7Resource.children[i];
-        if (child.resourceType.plugin != 'jboss-as-7') {
+        if (child.resourceType.plugin != 'JBossAS7') {
             continue;
         }
         if (child.resourceType.name == 'SocketBindingGroup') {

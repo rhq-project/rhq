@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -17,6 +19,7 @@
     <properties>
         <db.schema.version>2.121</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
+        <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
         <rhq.ds.user-name>${rhq.test.ds.user-name}</rhq.ds.user-name>
@@ -192,7 +195,7 @@
                             <execution>
                                 <phase>process-classes</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <!-- generate the I18N resource bundles -->
                                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
                                         <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
@@ -201,7 +204,7 @@
                                                 <include name="**/*I18NResourceKeys.class" />
                                             </classfileset>
                                         </i18n>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -211,7 +214,7 @@
                                 <id>dbsetup-worker</id>
                                 <phase>test</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
@@ -232,7 +235,7 @@
                                             <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
                                             <property name="dbsetup-export" value="${dbsetup-export}" />
                                         </ant>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -242,7 +245,7 @@
                                 <id>generate-dbsetup-dbupgrade-xml-files</id>
                                 <phase>process-classes</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
@@ -259,7 +262,7 @@
                                             <property name="project.version" value="${project.version}" />
                                             <property name="db.schema.version" value="${db.schema.version}" />
                                         </ant>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -271,9 +274,18 @@
                                 <id>test-db-schema-version</id>
                                 <phase>test</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <echo>settings.localRepository=${settings.localRepository}</echo>
+                                        <!-- -Ddbreset implies -Ddbsetup-do-not-check-schema=true -->
+                                        <condition property="dbsetup-do-not-check-schema" value="true">
+                                          <and>
+                                            <not>
+                                              <isset property="dbsetup-do-not-check-schema"/>
+                                            </not>
+                                            <isset property="dbreset"/>
+                                          </and>
+                                        </condition>
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
                                             <property name="ojdbc6.version" value="${ojdbc6.version}" />
@@ -291,7 +303,7 @@
                                             <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
                                             <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
                                         </ant>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -319,7 +331,7 @@
                                 <id>generate-schema</id>
                                 <phase>test</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
@@ -337,7 +349,7 @@
                                             <property name="db.schema.version" value="${db.schema.version}" />
                                             <property name="jon.release" value="${jon.release}" />
                                         </ant>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -366,12 +378,12 @@
                                 <id>deploy</id>
                                 <phase>compile</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <mkdir dir="${rhq.deploymentDir}" />
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating ${deployment.file}...</echo>
                                         <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -381,11 +393,11 @@
                                 <id>undeploy</id>
                                 <phase>clean</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Deleting ${deployment.file}...</echo>
                                         <delete file="${deployment.file}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -418,7 +430,7 @@
                                 <id>cobertura-instrument</id>
                                 <phase>process-test-classes</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <!-- prepare directory structure for cobertura -->
                                         <mkdir dir="target/cobertura" />
                                         <mkdir dir="target/cobertura/backup" />
@@ -438,7 +450,7 @@
                                                 <include name="**/*.class" />
                                             </fileset>
                                         </cobertura-instrument>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -448,7 +460,7 @@
                                 <id>cobertura-report</id>
                                 <phase>prepare-package</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                                         <!-- prepare directory structure for cobertura -->
                                         <mkdir dir="target/cobertura" />
@@ -469,7 +481,7 @@
                                         </cobertura-report>
                                         <!-- delete cobertura.properties file -->
                                         <delete file="target/classes/cobertura.properties" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -521,4 +533,3 @@
     </pluginRepositories>
 
 </project>
-

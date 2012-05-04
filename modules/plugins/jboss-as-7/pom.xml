@@ -64,6 +64,14 @@
       <artifactId>jboss-sasl</artifactId>
       <version>${jboss.sasl.version}</version>
     </dependency>
+    
+    <!-- Earlier AS4/5 modcluster components -->
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>modcluster-plugin</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- === Test Deps === -->
 
@@ -118,6 +126,12 @@
                 <artifactItem>
                   <groupId>org.jboss.sasl</groupId>
                   <artifactId>jboss-sasl</artifactId>
+                </artifactItem>
+                
+                <artifactItem>
+                  <groupId>${rhq.groupId}</groupId>
+                  <artifactId>modcluster-plugin</artifactId>
+                  <version>${project.version}</version>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

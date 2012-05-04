@@ -172,6 +172,7 @@
             
             <properties>
                 <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
+                <rhq.ds.server-name>${rhq.dev.ds.server-name}</rhq.ds.server-name>
                 <rhq.ds.db-name>${rhq.dev.ds.db-name}</rhq.ds.db-name>
                 <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
                 <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
@@ -372,7 +373,6 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.1</version>
                         <executions>
                             <execution>
                                 <id>deploy</id>

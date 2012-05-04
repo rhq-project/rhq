@@ -236,8 +236,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             String paramsString = (params != null) ? params.toString(true) : String.valueOf(params);
             System.out.println("====== Error occurred during invocation of operation [" + operationName
                                 + "] with parameters [" + paramsString + "] on " + resource + ": " + e);
+            e.printStackTrace(System.out);
             throw new RuntimeException("Error occurred during invocation of operation [" + operationName
-                    + "] with parameters [" + paramsString + "] on " + resource + ": " + e);
+                    + "] with parameters [" + paramsString + "] on " + resource + ".", e);
         }
         return operationResult;
     }

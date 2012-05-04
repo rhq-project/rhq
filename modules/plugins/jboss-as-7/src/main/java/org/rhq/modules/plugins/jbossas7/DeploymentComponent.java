@@ -237,7 +237,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> content = (List<Map<String, Object>>) result.getResult();
-        if (content.isEmpty()) {
+        if (content == null || content.isEmpty()) {
             log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment" + getAddress() + ".");
             return null;
         }

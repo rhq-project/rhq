@@ -16,8 +16,8 @@
   <artifactId>jopr-jboss-as-5-plugin</artifactId>
   <packaging>jar</packaging>
 
-  <name>RHQ JBossAS 5.x Plugin</name>
-  <description>A plugin for managing JBoss Application Server 5.x</description>
+  <name>RHQ JBossAS 5.x/6.x Plugin</name>
+  <description>an RHQ Agent plugin for monitoring and managing JBoss AS 6.x and JBoss EAP/EWP/SOA-P 5.x</description>
 
   <properties>
     <jbossas.version>6.0.0.M1</jbossas.version>

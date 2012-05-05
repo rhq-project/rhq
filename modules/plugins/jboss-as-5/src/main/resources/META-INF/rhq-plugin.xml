@@ -884,9 +884,9 @@
 
 
 
-<plugin name="JBossAS5" displayName="JBoss Application Server 5.x" package="org.rhq.plugins.jbossas5"
+<plugin name="JBossAS5" displayName="JBoss Application Server 5.x/6.x" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        description="Supports management and monitoring of JBoss AS from version EAP 5"
+        description="provides management and monitoring of JBoss AS 6.x and JBoss EAP/EWP/SOA-P 5.x"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 

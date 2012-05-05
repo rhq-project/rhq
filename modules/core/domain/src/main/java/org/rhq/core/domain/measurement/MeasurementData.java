@@ -110,7 +110,8 @@ public abstract class MeasurementData implements Serializable {
 
     @Override
     public String toString() {
-        return "MeasurementData [" + id + "]";
+        return "MeasurementData[name=" + this.name + ", scheduleId=" + this.id.scheduleId + ", timestamp="
+                + this.id.timestamp + "]";
     }
 
     @Override
@@ -143,4 +144,5 @@ public abstract class MeasurementData implements Serializable {
         result = (31 * result) + ((name != null) ? name.hashCode() : 0);
         return result;
     }
+
 }

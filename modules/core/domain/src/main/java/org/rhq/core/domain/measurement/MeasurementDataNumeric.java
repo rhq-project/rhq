@@ -90,7 +90,8 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
 
     @Override
     public String toString() {
-        return "MeasurementDataNumeric[" + "value=[" + value + "], "
-            + super.toString() + "]";
+        return "MeasurementDataNumeric[name=" + getName() + ", value=" + this.value + ", scheduleId=" + this.id.scheduleId
+                 + ", timestamp=" + this.id.timestamp + "]";
     }
+
 }

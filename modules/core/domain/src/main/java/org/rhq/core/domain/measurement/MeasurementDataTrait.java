@@ -55,6 +55,7 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementDataTrait t WHERE t.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
 @Table(name = "RHQ_MEASUREMENT_DATA_TRAIT")
 public class MeasurementDataTrait extends MeasurementData {
+
     /**
      * Find current traits for a Resource in :resourceId that have a certain displayType in :displayType
      */
@@ -151,6 +152,8 @@ public class MeasurementDataTrait extends MeasurementData {
 
     @Override
     public String toString() {
-        return "MeasurementDataTrait[" + "value=[" + value + "], " + super.toString() + "]";
+        return "MeasurementDataTrait[name=" + getName() + ", value=\"" + this.value + "\", scheduleId="
+                + this.id.scheduleId + ", timestamp=" + this.id.timestamp + "]";
     }
+
 }

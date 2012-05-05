@@ -429,7 +429,7 @@
                     <argument>javax.xml.jaxp-provider</argument>
                     <argument>org.jboss.as.standalone</argument>
                     <argument>-Djboss.home.dir=${jboss7.home}</argument>
-                    <argument>--server-config=standalone-full.xml</argument>
+                    <argument>--server-config=standalone-full-ha.xml</argument>
                     <argument>-Djboss.bind.address.management=${jboss.standalone.bindAddress}</argument>
                     <argument>-Djboss.bind.address=${jboss.standalone.bindAddress}</argument>
                     <argument>-Djboss.bind.address.unsecure=${jboss.standalone.bindAddress}</argument>

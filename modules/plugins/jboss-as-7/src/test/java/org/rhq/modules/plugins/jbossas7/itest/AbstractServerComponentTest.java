@@ -86,12 +86,16 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         assertNotNull(getServerResource(), getServerResourceType() + " Resource with key [" + getServerResourceKey()
             + "] was not discovered.");
         System.out.println("\n===== Discovered: " + getServerResource());
-        Configuration pluginConfig = getServerResource().getPluginConfiguration();
-        System.out.println("---------- " + pluginConfig.toString(true));
-        validatePluginConfiguration(pluginConfig);
+
+        validatePluginConfiguration(getServerResource().getPluginConfiguration());
+
+        AvailabilityType avail = getAvailability(getServerResource());
+        assertEquals(avail, AvailabilityType.UP);
     }
 
     protected void validatePluginConfiguration(Configuration pluginConfig) {
+        System.out.println("---------- " + pluginConfig.toString(true));
+
         // "hostname" prop
         String hostname = pluginConfig.getSimpleValue("hostname", null);
         String expectedHostname = System.getProperty(getBindAddressSystemPropertyName());

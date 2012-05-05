@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
@@ -46,12 +47,10 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
@@ -68,7 +67,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements MeasurementFacet {
+public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T>
+        implements MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
 
@@ -78,7 +78,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
     private ServerPluginConfiguration serverPluginConfig;
-    private String hostConfigFileName;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -90,7 +89,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
-        hostConfigFileName = getHostConfigFileName();
     }
 
     @Override
@@ -150,6 +148,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         this.connection = connection;
     }
 
+    @NotNull
     protected abstract AS7Mode getMode();
 
     /**
@@ -426,26 +425,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         File baseDir = serverPluginConfig.getBaseDir();
         if (baseDir == null) {
-            result.setErrorMessage("'baseDir' plugin config prop is not set.");
+            result.setErrorMessage("'" + ServerPluginConfiguration.Property.BASE_DIR + "' plugin config prop is not set.");
             return result;
         }
 
-        File configDir = serverPluginConfig.getConfigDir();
-        if (configDir == null) {
-            result.setErrorMessage("'configDir' plugin config prop is not set.");
-            return result;
-        }
-
-        String hostConfigFileName = getHostConfigFileName();
-        if (this.hostConfigFileName == null) {
-            this.hostConfigFileName = hostConfigFileName;
-        }
-        if (this.hostConfigFileName == null) {
-            result.setErrorMessage("Could not determine the server configuration file name, because the managed server is not currently running. Please start the managed server and then try again.");
-            return result;
-        }
-
-        File configFile = new File(configDir, this.hostConfigFileName);
+        File configFile = getHostConfigFile();
         HostConfiguration hostConfig;
         try {
             hostConfig = new HostConfiguration(configFile);
@@ -487,6 +471,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return result;
     }
 
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
@@ -496,8 +481,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 collectStartTimeTrait(report, request);
             } else if (requestName.startsWith("_skm:")) { // handled below
                 skmRequests.add(request);
-            } else if (requestName.equals(getHostConfigTraitName())) {
-                collectHostConfigTrait(report, request);
             } else {
                 leftovers.add(request); // handled below
             }
@@ -513,50 +496,61 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     private void collectStartTimeTrait(MeasurementReport report, MeasurementScheduleRequest request) {
-        String startTimePath = getStartTimePath();
-        Address address = new Address(startTimePath);
+        Address address = new Address(getHostAddress());
         address.add("core-service", "platform-mbean");
         address.add("type", "runtime");
-        Operation op = new ReadAttribute(address, "start-time");
-        Result res = getASConnection().execute(op);
+        Long startTime;
+        try {
+            startTime = readAttribute(address, "start-time", Long.class);
+        } catch (Exception e) {
+            startTime = null;
+        }
 
-        if (res.isSuccess()) {
-            long startTime = (Long) res.getResult();
+        if (startTime != null) {
             MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
             report.addData(data);
         }
     }
 
-    protected abstract String getStartTimePath();
+    @NotNull
+    protected abstract Address getEnvironmentAddress();
 
-    private void collectHostConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
-        String hostConfigFileName = getHostConfigFileName();
-        if (hostConfigFileName != null) {
-            MeasurementDataTrait data = new MeasurementDataTrait(request, hostConfigFileName);
+    @NotNull
+    protected abstract Address getHostAddress();
+
+    protected void collectConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        String config;
+        try {
+            config = readAttribute(getEnvironmentAddress(), request.getName(), String.class);
+        } catch (Exception e) {
+            log.error("Failed to read attribute [" + request.getName() + "]: " + e, e);
+            config = null;
+        }
+
+        if (config != null) {
+            MeasurementDataTrait data = new MeasurementDataTrait(request, new File(config).getName());
             report.addData(data);
+        }
+    }
 
-            if (this.hostConfigFileName == null) {
-                this.hostConfigFileName = hostConfigFileName;
+    private File getHostConfigFile() {
+        File configFile;
+        try {
+            String config = readAttribute(getEnvironmentAddress(), getMode().getHostConfigAttributeName());
+            configFile = new File(config);
+        } catch (Exception e) {
+            // This probably means the server is not running and/or authentication is not set up. Fallback to the
+            // host config file set in the plugin config during discovery.
+            // TODO (ips, 05/05/12): This is not ideal, because the user could have restarted the server with a
+            //                       different config file, since the time it was imported into inventory. The better
+            //                       thing to do here is to find the current server process and parse its command line
+            //                       to find the current config file name.
+            configFile = serverPluginConfig.getHostConfigFile();
+            if (configFile == null) {
+                throw new RuntimeException("Failed to determine config file path.", e);
             }
         }
-    }
-
-    private String getHostConfigFileName() {
-        AS7Mode mode = getMode();
-        return getCommandLineOptionValue(mode.getHostConfigFileNameOption(),
-                mode.getDefaultHostConfigFileName());
-    }
-
-    protected String getCommandLineOptionValue(CommandLineOption option, String defaultValue) {
-        ProcessInfo serverProcess = context.getNativeProcess();
-        if (serverProcess == null) {
-            // the server process is not currently running
-            return null;
-        }
-
-        String[] args = serverProcess.getCommandLine();
-        AS7CommandLine commandLine = new AS7CommandLine(args);
-        return commandLine.getClassOption(option, defaultValue);
+        return configFile;
     }
 
     private void collectServerKindTraits(MeasurementReport report, Set<MeasurementScheduleRequest> skmRequests) {
@@ -590,8 +584,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             log.debug("getSKMRequests failed: " + res.getFailureDescription());
         }
     }
-
-    protected abstract String getHostConfigTraitName();
 
     // Replace any "%xxx%" substrings with the values of plugin config props "xxx".
     private String replacePropertyPatterns(String value) {

@@ -171,6 +171,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (!hostXmlFile.exists()) {
             throw new Exception("Server configuration file not found at the expected location (" + hostXmlFile + ").");
         }
+
+        // This is a "hidden" plugin config prop, i.e. it is intentionally not defined in the plugin descriptor.
+        serverPluginConfig.setHostConfigFile(hostXmlFile);
+
         // This method must be called before getHostConfiguration() can be called.
         HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
 
@@ -381,8 +385,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     // e.g. "standalone.xml" or "host.xml".
     protected String getHostXmlFileName(AS7CommandLine commandLine) {
         AS7Mode mode = getMode();
-        CommandLineOption hostXmlFileNameOption = mode.getHostConfigFileNameOption();
-        String optionValue = commandLine.getClassOption(hostXmlFileNameOption);
+        String optionValue = commandLine.getClassOption(mode.getHostConfigFileNameOption());
+        if (optionValue == null) {
+            optionValue = commandLine.getSystemProperties().get(mode.getDefaultHostConfigSystemPropertyName());
+        }
         return (optionValue != null) ? optionValue : mode.getDefaultHostConfigFileName();
     }
 

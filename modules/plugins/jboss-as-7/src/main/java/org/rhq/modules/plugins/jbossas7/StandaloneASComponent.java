@@ -18,11 +18,18 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -35,13 +42,31 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class StandaloneASComponent extends BaseServerComponent implements OperationFacet {
+public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
+        implements MeasurementFacet, OperationFacet {
 
-    private static final String HOST_CONFIG_TRAIT = "serverConfig";
+    private static final String SERVER_CONFIG_TRAIT = "config-file";
+
+    private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
 
     @Override
     protected AS7Mode getMode() {
         return AS7Mode.STANDALONE;
+    }
+
+    @Override
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for (MeasurementScheduleRequest request: requests) {
+            String requestName = request.getName();
+            if (requestName.equals(SERVER_CONFIG_TRAIT)) {
+                collectConfigTrait(report, request);
+            } else {
+                leftovers.add(request); // handled below
+            }
+        }
+
+        super.getValues(report, leftovers);
     }
 
     @Override
@@ -82,7 +107,7 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
                 // Ignore
             }
 
-            Operation op = new ReadAttribute(new Address(),"release-version");
+            Operation op = new ReadAttribute(new Address(), "release-version");
             Result res = getASConnection().execute(op);
             if (res.isSuccess() && !res.isReloadRequired()) {
                 reloaded = true;
@@ -114,13 +139,14 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
     }
 
     @Override
-    protected String getStartTimePath() {
-        return getPath();
+    protected Address getEnvironmentAddress() {
+        return ENVIRONMENT_ADDRESS;
     }
 
     @Override
-    protected String getHostConfigTraitName() {
-        return HOST_CONFIG_TRAIT;
+    protected Address getHostAddress() {
+        // In standalone mode, the root address is the host address.
+        return getAddress();
     }
 
 }

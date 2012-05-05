@@ -23,15 +23,14 @@ import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -42,13 +41,13 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
-        implements OperationFacet {
+        implements MeasurementFacet, OperationFacet {
 
-    private static final String DOMAIN_CONFIG_TRAIT = "domainConfig";
-    private static final String HOST_CONFIG_TRAIT = "hostConfig";
+    private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
+    private static final String HOST_CONFIG_TRAIT = "host-config-file";
 
-    private CommandLineOption DOMAIN_CONFIG_OPTION = new CommandLineOption("c", "domain-config");
-    private static final String DEFAULT_DOMAIN_CONFIG_FILE_NAME = "domain.xml";
+    private static final Address ENVIRONMENT_ADDRESS = new Address("host=master,core-service=host-environment");
+    private static final Address HOST_ADDRESS = new Address("host=master");
 
     @Override
     protected AS7Mode getMode() {
@@ -60,22 +59,14 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
         for (MeasurementScheduleRequest request: requests) {
             String requestName = request.getName();
-            if (requestName.equals(DOMAIN_CONFIG_TRAIT)) {
-                collectDomainConfigTrait(report, request);
+            if (requestName.equals(DOMAIN_CONFIG_TRAIT) || requestName.equals(HOST_CONFIG_TRAIT)) {
+                collectConfigTrait(report, request);
             } else {
                 leftovers.add(request); // handled below
             }
         }
 
         super.getValues(report, leftovers);
-    }
-
-    private void collectDomainConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
-        String domainConfigFileName = getCommandLineOptionValue(DOMAIN_CONFIG_OPTION, DEFAULT_DOMAIN_CONFIG_FILE_NAME);
-        if (domainConfigFileName != null) {
-            MeasurementDataTrait data = new MeasurementDataTrait(request, domainConfigFileName);
-            report.addData(data);
-        }
     }
 
     @Override
@@ -214,19 +205,14 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     }
 
     @Override
-    protected String getStartTimePath() {
-        StringBuilder path = new StringBuilder("host=master");
-        String ourPath = getPath();
-        if (ourPath != null) {
-            // TODO is the local controller always on host=master?? AS7-3678
-            path.append(',').append(ourPath);
-        }
-        return path.toString();
+    protected Address getEnvironmentAddress() {
+        return ENVIRONMENT_ADDRESS;
     }
 
     @Override
-    protected String getHostConfigTraitName() {
-        return HOST_CONFIG_TRAIT;
+    protected Address getHostAddress() {
+        // TODO is the local controller always on host=master?? AS7-3678
+        return HOST_ADDRESS;
     }
 
 }

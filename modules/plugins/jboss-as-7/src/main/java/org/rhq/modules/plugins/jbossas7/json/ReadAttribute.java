@@ -25,7 +25,12 @@ package org.rhq.modules.plugins.jbossas7.json;
 public class ReadAttribute extends Operation {
 
     public ReadAttribute(Address address, String name) {
-        super("read-attribute",address);
-        addAdditionalProperty("name",name);
+        super("read-attribute", address);
+        addAdditionalProperty("name", name);
     }
+
+    public void includeDefaults(boolean arg) {
+        addAdditionalProperty("include-defaults", arg);
+    }
+
 }

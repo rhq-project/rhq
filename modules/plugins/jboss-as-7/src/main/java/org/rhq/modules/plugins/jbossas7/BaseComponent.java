@@ -73,6 +73,11 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
+/**
+ * The base class for all AS7 resource components.
+ *
+ * @param <T> the type of the component's parent resource component
+ */
 public class BaseComponent<T extends ResourceComponent<?>> implements AS7Component<T>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet  {
 
@@ -653,10 +658,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * @return The value object
      */
     Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
-
         PropertySimpleType type = propDef.getType();
         return getObjectForProperty(prop, type);
-
     }
 
     /**
@@ -665,8 +668,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * @param type Type to convert into
      * @return Converted object -- if no valid type is found, a String-value is returned.
      */
-    private Object getObjectForProperty(PropertySimple prop, PropertySimpleType type)
-    {
+    private Object getObjectForProperty(PropertySimple prop, PropertySimpleType type) {
         switch (type) {
         case STRING:
             return prop.getStringValue();
@@ -701,13 +703,21 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     protected String readAttribute(String name) throws Exception {
-        Operation op = new ReadAttribute(getAddress(), name);
+        return readAttribute(getAddress(), name);
+    }
+
+    protected String readAttribute(Address address, String name) throws Exception {
+        return readAttribute(address, name, String.class);
+    }
+
+    protected <T> T readAttribute(Address address, String name, Class<T> resultType) throws Exception {
+        Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                     + "] - response: " + res);
         }
-        return (String) res.getResult();
+        return (T) res.getResult();
     }
 
     private static class ComplexRequest {

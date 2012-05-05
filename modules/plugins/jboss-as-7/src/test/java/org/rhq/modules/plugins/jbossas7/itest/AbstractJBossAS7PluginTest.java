@@ -23,7 +23,6 @@ import java.util.Set;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.ResourceFilter;
@@ -85,8 +84,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         // Invoke the "installRhqUser" operation on the ResourceComponent - this will update the mgmt-users.properties
         // file in the AS7 server's configuration directory.
         Configuration params = new Configuration();
-        params.put(new PropertySimple("user", MANAGEMENT_USERNAME));
-        params.put(new PropertySimple("password", MANAGEMENT_PASSWORD));
+        params.setSimpleValue("user", MANAGEMENT_USERNAME);
+        params.setSimpleValue("password", MANAGEMENT_PASSWORD);
 
         String operationName = "installRhqUser";
         OperationResult result = invokeOperation(resource, operationName, params);
@@ -97,8 +96,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         // plugin config via the GUI.
         Resource resourceFromServer = getServerInventory().getResourceStore().get(resource.getUuid());
         Configuration pluginConfig = resourceFromServer.getPluginConfiguration();
-        pluginConfig.getSimple("user").setStringValue(MANAGEMENT_USERNAME);
-        pluginConfig.getSimple("password").setStringValue(MANAGEMENT_PASSWORD);
+        pluginConfig.setSimpleValue("user", MANAGEMENT_USERNAME);
+        pluginConfig.setSimpleValue("password", MANAGEMENT_PASSWORD);
         
         // Restart the ResourceComponent, so it will start using the new plugin config.
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();

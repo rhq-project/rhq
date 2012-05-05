@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.modules.plugins.jbossas7.helper;
 
 import java.io.File;
@@ -8,6 +26,8 @@ import org.rhq.modules.plugins.jbossas7.JBossProductType;
 /**
  * A wrapper for the plugin configuration of an AS7 Server Resource, which provides strongly typed accessors for each of
  * the configuration properties.
+ *
+ * @author Ian Springer
  */
 public class ServerPluginConfiguration {
 
@@ -21,6 +41,7 @@ public class ServerPluginConfiguration {
         public static final String CONFIG_DIR = "configDir";
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
+        public static final String HOST_CONFIG_FILE = "hostConfigFile";
     }
 
     private Configuration pluginConfig;
@@ -105,6 +126,16 @@ public class ServerPluginConfiguration {
 
     public void setProductType(JBossProductType productType) {
         this.pluginConfig.setSimpleValue(Property.PRODUCT_TYPE, (productType != null) ? productType.name() : null);
+    }
+
+    public File getHostConfigFile() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.HOST_CONFIG_FILE);
+        return (stringValue != null && !stringValue.isEmpty()) ? new File(stringValue) : null;
+    }
+
+    public void setHostConfigFile(File hostConfigFile) {
+        this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE, (hostConfigFile != null) ?
+                hostConfigFile.toString() : null);
     }
 
 }

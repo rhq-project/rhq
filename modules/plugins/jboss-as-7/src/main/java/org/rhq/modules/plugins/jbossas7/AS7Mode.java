@@ -29,9 +29,9 @@ import org.rhq.core.pluginapi.util.CommandLineOption;
  */
 public enum AS7Mode {
 
-    STANDALONE("standalone.xml", "standalone.xml", "standalone", "--server-config", "standalone", new CommandLineOption('c', "server-config")),
-    DOMAIN("domain.xml", "host.xml", "domain", "--domain-config", "domain", new CommandLineOption(null, "host-config")),
-    HOST("host.xml", null, "domain", "--host-config", "domain", null);
+    STANDALONE("standalone.xml", "standalone.xml", "standalone", "--server-config", "standalone", new CommandLineOption('c', "server-config"), "config-file", "jboss.server.default.config"),
+    DOMAIN("domain.xml", "host.xml", "domain", "--domain-config", "domain", new CommandLineOption(null, "host-config"), "host-config-file", "jboss.host.default.config"),
+    HOST("host.xml", null, "domain", "--host-config", "domain", null, null, null);
 
     private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
     private static final String SCRIPT_EXTENSION = (OS_IS_WINDOWS) ? "bat" : "sh";
@@ -42,15 +42,20 @@ public enum AS7Mode {
     private String configArg;
     private String startScriptBaseName;
     private CommandLineOption hostConfigFileNameOption;
+    private String hostConfigAttributeName;
+    private String defaultHostConfigSystemPropertyName;
 
     private AS7Mode(String defaultXmlFile, String defaultHostConfigFileName, String defaultBaseDir, String configArg,
-                    String startScriptBaseName, CommandLineOption hostConfigFileNameOption) {
+                    String startScriptBaseName, CommandLineOption hostConfigFileNameOption,
+                    String hostConfigAttributeName, String defaultHostConfigSystemPropertyName) {
         this.defaultXmlFile = defaultXmlFile;
         this.defaultHostConfigFileName = defaultHostConfigFileName;
         this.defaultBaseDir = defaultBaseDir;
         this.configArg = configArg;
         this.startScriptBaseName = startScriptBaseName;
         this.hostConfigFileNameOption = hostConfigFileNameOption;
+        this.hostConfigAttributeName = hostConfigAttributeName;
+        this.defaultHostConfigSystemPropertyName = defaultHostConfigSystemPropertyName;
     }
 
     public String getDefaultXmlFile() {
@@ -75,6 +80,14 @@ public enum AS7Mode {
 
     public CommandLineOption getHostConfigFileNameOption() {
         return hostConfigFileNameOption;
+    }
+
+    public String getHostConfigAttributeName() {
+        return hostConfigAttributeName;
+    }
+
+    public String getDefaultHostConfigSystemPropertyName() {
+        return defaultHostConfigSystemPropertyName;
     }
 
 }

@@ -159,7 +159,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     protected List<String> getExpectedStartScriptArgs() {
         String [] args = new String[] {
-            "--server-config=standalone-full.xml",
+            "--server-config=standalone-full-ha.xml",
             "-Djboss.bind.address.management=127.0.0.1",
             "-Djboss.bind.address=127.0.0.1",
             "-Djboss.bind.address.unsecure=127.0.0.1",

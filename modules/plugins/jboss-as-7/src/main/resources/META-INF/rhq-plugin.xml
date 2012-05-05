@@ -737,17 +737,20 @@
         <c:simple-property name="operationResult" description="Outcome of the start operation"/>
       </results>
     </operation>
-    <operation name="shutdown" description="Stop this Host/Domain Controller with all its managed servers" displayName="Shut down this host controller">
+    <operation name="shutdown" description="Stop this Host/Domain Controller with all its managed servers"
+               displayName="Shut down this host controller">
       <results>
         <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
       </results>
     </operation>
-    <operation name="restart" description="Restart this Host/Domain Controller with all its running managed servers" displayName="Restart this host controller">
+    <operation name="restart" description="Restart this Host/Domain Controller with all its running managed servers"
+               displayName="Restart this host controller">
       <results>
         <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
       </results>
     </operation>
-    <operation name="installRhqUser" description="Installs a user in the server for management" displayName="Install RHQ user">
+    <operation name="installRhqUser" description="Installs a user in the server for management"
+               displayName="Install a management user" timeout="60">
       <parameters>
         <c:simple-property name="user" displayName="Username" description="Name of the management user" default="rhqadmin"/>
         <c:simple-property name="password" displayName="Password" description="Password of this management user" default="rhqadmin" type="password"/>
@@ -771,9 +774,9 @@
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
-    <metric property="domainConfig" dataType="trait" displayType="summary" defaultInterval="3600000"
+    <metric property="domain-config-file" displayName="Domain Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the domain configuration file this host controller is using"/>
-    <metric property="hostConfig" dataType="trait" displayType="summary" defaultInterval="3600000"
+    <metric property="host-config-file" displayName="Host Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host configuration file this host controller is using"/>
 
     <event name="logEntry" description="an entry in a log file"/>
@@ -1199,7 +1202,7 @@
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Server Start Time" defaultOn="true"/>
 
-    <metric property="serverConfig" displayType="summary" defaultInterval="3600000"
+    <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
 
     <event name="logEntry" description="an entry in a log file"/>

@@ -564,7 +564,8 @@ public class ResourceContainer implements Serializable {
                 }
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
-                String msg = invokedMethodString(method, args, "timed out. Invocation thread will be interrupted");
+                String msg = invokedMethodString(method, args, "timed out after " + timeout
+                        + " milliseconds - invocation thread will be interrupted.");
                 LOG.debug(msg);
                 future.cancel(true);
                 if (LOG.isDebugEnabled()) {

@@ -79,7 +79,10 @@ import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * The base class for an Agent plugin integration test class.
@@ -447,16 +450,32 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected Double collectNumericMetric(Resource resource, String metricName) throws Exception {
         System.out.println("=== Collecting numeric metric [" + metricName + "] for " + resource + "...");
         MeasurementReport report = collectMetric(resource, metricName);
+
+        Double value;
         if (report.getNumericData().isEmpty()) {
-            return null;
+            assertEquals(report.getTraitData().size(), 0,
+                    "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
+                        + " is defined as a numeric metric, but the plugin returned one or more traits!: "
+                        + report.getTraitData());
+            assertEquals(report.getCallTimeData().size(), 0,
+                    "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
+                        + " is defined as a numeric metric, but the plugin returned one or more call-time metrics!: "
+                        + report.getCallTimeData());
+            value = null;
+        } else {
+            assertEquals(report.getNumericData().size(), 1,
+                    "Requested a single metric, but plugin returned more than one datum: " + report.getNumericData());
+            MeasurementDataNumeric datum = report.getNumericData().iterator().next();
+            assertEquals(datum.getName(), metricName,
+                    "Numeric metric [" + metricName + "] for Resource type " + resource.getResourceType()
+                        + " was requested, but the plugin returned a numeric metric with name ["
+                        + datum.getName() + "] and value [" + datum.getValue() + "]!");
+            // Normalize NaN or infinite to null, as the PC does.
+            value = (datum.getValue().isNaN() || datum.getValue().isInfinite()) ? null : datum.getValue();
         }
-        assertEquals(report.getNumericData().size(), 1,
-                "Requested a single metric but plugin returned more than one datum: " + report.getNumericData());
-        MeasurementDataNumeric datum = report.getNumericData().iterator().next();
-        // Normalize NaN or infinite to null, as the PC does.
-        Double value = (datum.getValue().isNaN() || datum.getValue().isInfinite()) ? null : datum.getValue();
         System.out.println("====== Collected numeric metric [" + metricName + "] with value of [" + value + "] for "
                 + resource + ".");
+
         return value;
     }
 
@@ -464,15 +483,31 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected String collectTrait(Resource resource, String traitName) throws Exception {
         System.out.println("=== Collecting trait [" + traitName + "] for " + resource + "...");
         MeasurementReport report = collectMetric(resource, traitName);
+
+        String value;
         if (report.getTraitData().isEmpty()) {
-            return null;
+            assertEquals(report.getNumericData().size(), 0,
+                    "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                        + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
+                        + report.getNumericData());
+            assertEquals(report.getCallTimeData().size(), 0,
+                    "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                        + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
+                        + report.getCallTimeData());
+            value = null;
+        } else {
+            assertEquals(report.getTraitData().size(), 1,
+                    "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
+            MeasurementDataTrait datum = report.getTraitData().iterator().next();
+            assertEquals(datum.getName(), traitName,
+                    "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
+                        + " was requested, but the plugin returned a trait with name ["
+                        + datum.getName() + "] and value [" + datum.getValue() + "]!");
+            value = datum.getValue();
         }
-        assertEquals(report.getTraitData().size(), 1,
-                "Requested a single trait but plugin returned more than one datum: " + report.getTraitData());
-        MeasurementDataTrait datum = report.getTraitData().iterator().next();
-        String value = datum.getValue();
         System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for "
                 + resource + ".");
+
         return value;
     }
 
@@ -525,8 +560,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     private long getDefaultTimeout(ResourceType resourceType, String operationName) {
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
                 operationName);
-        return (long) ((operationDefinition.getTimeout() != null) ? operationDefinition.getTimeout() : 
-                        this.pluginContainerConfiguration.getOperationInvocationTimeout());
+        // Note: The PC's default timeout is 10 minutes.
+        return (operationDefinition.getTimeout() != null) ? operationDefinition.getTimeout() :
+                        this.pluginContainerConfiguration.getOperationInvocationTimeout();
     }
 
     private static String getRhqVersion() {

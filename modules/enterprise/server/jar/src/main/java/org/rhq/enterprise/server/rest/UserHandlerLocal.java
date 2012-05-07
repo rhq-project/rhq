@@ -31,6 +31,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -40,17 +44,25 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 @Produces({"application/json","application/xml","text/plain"})
 @Path("/user")
 @Local
+@Api(value="Api that deals with user related stuff")
 public interface UserHandlerLocal {
 
     @GET
     @Path("favorites/resource")
+    @ApiOperation(value = "Return a list of favorite resources", multiValueResponse = true)
     public List<ResourceWithType> getFavorites(@Context UriInfo uriInfo);
 
     @PUT
     @Path("favorites/resource/{id}")
-    public void addFavoriteResource(@PathParam("id") int id);
+    @ApiOperation(value = "Add a resource as favorite")
+    public void addFavoriteResource(
+            @ApiParam(name = "id", value = "Id of the resource")
+            @PathParam("id") int id);
 
     @DELETE
     @Path("favorites/resource/{id}")
-    public void removeResourceFromFavorites(@PathParam("id") int id);
+    @ApiOperation(value="Remove a resource from favorites")
+    public void removeResourceFromFavorites(
+            @ApiParam(name="id", value = "Id of the resource")
+            @PathParam("id") int id);
 }

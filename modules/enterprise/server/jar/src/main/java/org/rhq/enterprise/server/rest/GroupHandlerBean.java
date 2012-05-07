@@ -8,14 +8,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -98,9 +90,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("{id}")
-    public Response getGroup(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response getGroup(int id, @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo) {
 
         ResourceGroup group = fetchGroup(id);
@@ -122,8 +112,6 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @POST
-    @Path("/")
     public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup newGroup = new ResourceGroup(group.getName());
@@ -156,9 +144,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @PUT
-    @Path("{id}")
-    public Response updateGroup(@PathParam("id") int id, GroupRest in, @Context Request request,
+    public Response updateGroup(int id, GroupRest in, @Context Request request,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
@@ -178,9 +164,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @DELETE
-    @Path("{id}")
-    public Response deleteGroup(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response deleteGroup(int id, @Context Request request, @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
         try {
@@ -194,9 +178,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("{id}/resources")  // TODO introduce paging through the list
-    public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response getResources(int id, @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -222,9 +204,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @PUT
-    @Path("{id}/resource/{resourceId}")
-    public Response addResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    public Response addResource(int id, int resourceId,
                                 @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -235,7 +215,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         // A resource type is set for the group, so only allow to add resources with the same type.
         if (resourceGroup.getResourceType()!=null) {
             if (!res.getResourceType().equals(resourceGroup.getResourceType()))
-                return Response.status(Response.Status.NOT_ACCEPTABLE).build();
+                return Response.status(Response.Status.CONFLICT).build();
         }
 
         // TODO if comp group and no resourceTypeId set, shall we allow to have it change to a mixed group?
@@ -246,9 +226,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @DELETE
-    @Path("{id}/resource/{resourceId}")
-    public Response removeResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    public Response removeResource(int id, int resourceId,
                                    @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -299,8 +277,6 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("/definitions")
     public Response getDefinitions(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         PageList<GroupDefinition> gdlist =  definitionManager.getGroupDefinitions(caller,new PageControl());
@@ -334,9 +310,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("/definition/{id}")
-    public Response getDefinition(@PathParam("id") int definitionId, @Context Request request,
+    public Response getDefinition(int definitionId, @Context Request request,
                                   @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
@@ -365,9 +339,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @DELETE
-    @Path("/definition/{id}")
-    public Response deleteDefinition(@PathParam("id") int definitionId, @Context Request request,
+    public Response deleteDefinition(int definitionId, @Context Request request,
                                      @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
@@ -383,10 +355,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @POST
-    @Path("/definitions")
-    public Response createDefinition(
-                        GroupDefinitionRest definition,
+    public Response createDefinition(GroupDefinitionRest definition,
                                      @Context Request request, @Context HttpHeaders headers,
                                      @Context UriInfo uriInfo) {
 
@@ -429,9 +398,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @PUT
-    @Path("/definition/{id}")
-    public Response updateDefinition(@PathParam("id") int definitionId,
+    public Response updateDefinition(int definitionId,
                                      boolean recalculate, GroupDefinitionRest definition,
                                      @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 

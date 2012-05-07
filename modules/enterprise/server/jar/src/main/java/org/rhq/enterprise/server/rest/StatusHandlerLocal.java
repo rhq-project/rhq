@@ -26,15 +26,20 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+
 /**
  * Return some status information about the system
  * @author Heiko W. Rupp
  */
+@Api(value = "Provide system status information")
 @Path("/status")
 @Local
 @Produces({"application/json","application/xml","text/html"})
 public interface StatusHandlerLocal {
 
+    @ApiOperation("Retrieve the current configured state of the server along with some runtime information")
     @GET
     @Path("/")
     Response getStatus(@Context HttpHeaders httpHeaders);

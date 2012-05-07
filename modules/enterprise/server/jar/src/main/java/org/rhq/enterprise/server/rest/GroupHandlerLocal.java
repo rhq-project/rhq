@@ -18,6 +18,12 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.enterprise.server.rest.domain.GroupDefinitionRest;
@@ -29,76 +35,110 @@ import org.rhq.enterprise.server.rest.domain.GroupRest;
  */
 @Local
 @Path("/group/")
+@Api(value="Deal with groups and DynaGroups", description = "Api that deals with resource groups and group definitions")
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML, "application/yaml"})
 public interface GroupHandlerLocal {
 
     @GET
     @Path("/")
+    @ApiOperation(value = "List all groups", multiValueResponse = true)
     public Response getGroups(@Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @Cache(isPrivate = true,maxAge = 60)
     @GET
     @Path("{id}")
-    public Response getGroup(@PathParam("id") int id,@Context Request request, @Context HttpHeaders headers,
+    @ApiOperation(value = "Get the group with the passed id")
+    public Response getGroup(
+            @ApiParam(value = "Id of the group") @PathParam("id") int id,
+            @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
 
     @POST
     @Path("/")
-    public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers,
+    @ApiOperation(value = "Create a new group")
+    public Response createGroup(
+            @ApiParam(value = "A GroupRest object containing at least a name for the group") GroupRest group,
+            @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @PUT
     @Path("{id}")
-    public Response updateGroup(@PathParam("id") int id, GroupRest in, @Context Request request,
+    @ApiOperation(value = "Update the passed group")
+    public Response updateGroup(
+            @ApiParam(value = "Id of the group to update") @PathParam("id") int id,
+            @ApiParam(value="New version of the group") GroupRest in,
+            @Context Request request,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo);
 
     @DELETE
     @Path("{id}")
-    public Response deleteGroup(@PathParam("id") int id,@Context Request request, @Context HttpHeaders headers,
+    @ApiOperation(value="Delete the group with the passed id")
+    public Response deleteGroup(
+            @ApiParam("Id of the group to delete") @PathParam("id") int id,
+            @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
 
     @GET
     @Path("{id}/resources")
     @Cache(isPrivate = true,maxAge = 60)
-    public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    @ApiOperation(value="Get the resources of the group", multiValueResponse = true)
+    public Response getResources(
+            @ApiParam("Id of the group to retrieve the resources for") @PathParam("id") int id,
+            @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo);
 
 
     @PUT
     @Path("{id}/resource/{resourceId}")
-    public Response addResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    @ApiOperation(value="Add a resource to an existing group")
+    @ApiErrors({
+            @ApiError(code = 404,reason = "If there is no resource or group with the passed id "),
+            @ApiError(code = 409,reason =" Resource type does not match the group one")
+    })
+    public Response addResource(
+            @ApiParam("Id of the existing group") @PathParam("id") int id,
+            @ApiParam("Id of the resource to add") @PathParam("resourceId") int resourceId,
                                 @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @DELETE
     @Path("{id}/resource/{resourceId}")
-    public Response removeResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    @ApiOperation("Remove the resource with the passed id from the group")
+    public Response removeResource(
+            @ApiParam("Id of the existing group") @PathParam("id") int id,
+            @ApiParam("Id of the resource to remove") @PathParam("resourceId") int resourceId,
                                    @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @GET
     @Path("/definitions")
+    @ApiOperation(value="List all existing GroupDefinitions",multiValueResponse = true)
     public Response getDefinitions(@Context Request request,@Context HttpHeaders headers,
                                    @Context UriInfo uriInfo);
 
     @GET
     @Path("/definition/{id}")
-    public Response getDefinition(@PathParam("id") int definitionId,
+    @ApiOperation(value = "Retrieve a single GroupDefinition by id")
+    public Response getDefinition(
+            @ApiParam("The id of the definition to retrieve") @PathParam("id") int definitionId,
                                   @Context Request request, @Context HttpHeaders headers,
                                   @Context UriInfo uriInfo);
     @DELETE
     @Path("/definition/{id}")
-    public Response deleteDefinition(@PathParam("id") int definitionId,
+    @ApiOperation("Delete the group definition with the passed id")
+    public Response deleteDefinition(
+            @ApiParam("The id of the definition to delete") @PathParam("id") int definitionId,
                                   @Context Request request, @Context HttpHeaders headers,
                                   @Context UriInfo uriInfo);
 
     @POST
     @Path("/definitions")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation("Create a new group definition. Returns the location of the new definition in the header.")
     public Response createDefinition(
                                      GroupDefinitionRest definition,
                                      @Context Request request, @Context HttpHeaders headers,
@@ -107,8 +147,10 @@ public interface GroupHandlerLocal {
     @PUT
     @Path("/definition/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public Response updateDefinition(@PathParam("id") int definitionId,
-                                     @QueryParam("recalculate") @DefaultValue("false") boolean recalculate,
+    @ApiOperation("Update an existing group definition")
+    public Response updateDefinition(
+            @ApiParam("ID fo the definition to update") @PathParam("id") int definitionId,
+            @ApiParam("If true, trigger a re-calculation") @QueryParam("recalculate") @DefaultValue("false") boolean recalculate,
                                      GroupDefinitionRest definition,
                                      @Context Request request, @Context HttpHeaders headers,
                                      @Context UriInfo uriInfo);

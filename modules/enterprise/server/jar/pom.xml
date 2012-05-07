@@ -84,7 +84,7 @@
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
-      
+
        <dependency>
            <groupId>com.googlecode.java-diff-utils</groupId>
            <artifactId>diffutils</artifactId>
@@ -511,6 +511,19 @@
                </exclusion>
            </exclusions>
        </dependency>
+     <dependency>
+       <groupId>com.wordnik</groupId>
+       <artifactId>swagger-annotations_2.9.1</artifactId>
+       <version>1.1-SNAPSHOT</version>
+     </dependency>
+<!-- TODO comment in when it is clear where the APT will live - see also the build phase below
+     <dependency>
+       <groupId>com.wordnik</groupId>
+       <artifactId>swagger-java-jaxrs-apt_2.9.1</artifactId>
+       <version>1.1-SNAPSHOT</version>
+       <scope>compile</scope>
+     </dependency>
+-->
 
        <dependency>
            <groupId>org.yaml</groupId>
@@ -766,8 +779,111 @@ Build-OS-Version=${os.version}
                 </execution>
             </executions>
          </plugin>
+<!-- TODO comment in when it is clear where the AptFactory is hosted.
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>apt-maven-plugin</artifactId>
+          <version>1.0-alpha-4</version>
+          <configuration>
+            <factory>com.wordnik.swagger.jaxrs.apt.SwaggerAptFactory</factory>
+          </configuration>
+          <executions>
+            <execution>
+              <id>create-rest-api-reports</id>
+              <phase>process-classes</phase>
+              <goals>
+                &lt;!&ndash; We want to process the classes in test/ &ndash;&gt;
+                <goal>process</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>xml-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>transform</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <transformationSets>
+              <transformationSet>
+                &lt;!&ndash; apt plugin wrote to generated-test-resources, as we ran the test-process goal &ndash;&gt;
+                <dir>target/generated-resources/apt</dir>
+                <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.html</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+              <transformationSet>
+                &lt;!&ndash; apt plugin wrote to generated-test-resources, as we ran the test-process goal &ndash;&gt;
+                <dir>target/generated-resources/apt</dir>
+                <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.dbx.xml</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+            </transformationSets>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.agilejava.docbkx</groupId>
+          <artifactId>docbkx-maven-plugin</artifactId>
+          <version>2.0.9</version>
+          <executions>
+              <execution>
+                <phase>process-classes</phase>
+                <goals>
+                  <goal>generate-pdf</goal>
+                  <goal>generate-html</goal>
+                </goals>
+              </execution>
+          </executions>
+          <configuration>
+            <sourceDirectory>target</sourceDirectory>
+            <includes>rest-api-out.dbx.xml</includes>
+            <hyphenate>false</hyphenate>
+            <generateToc>true</generateToc>
+          </configuration>
+        </plugin>
+-->
+
       </plugins>
+
    </build>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <!-- TODO temporary for the swagger annotations -->
+       <id>sonatype-oss-snapshot</id>
+       <name>Sonatype OSS Snapshot repository</name>
+       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </pluginRepository>
+
+  </pluginRepositories>
 
    <profiles>
 

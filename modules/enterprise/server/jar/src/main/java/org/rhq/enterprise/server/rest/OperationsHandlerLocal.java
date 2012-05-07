@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import java.util.List;
-
 import javax.ejb.Local;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -37,9 +35,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.jboss.resteasy.annotations.cache.Cache;
 
-import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 
 /**
@@ -55,40 +55,56 @@ public interface OperationsHandlerLocal {
     @GET
     @Path("definition/{id}")
     @Cache(maxAge = 1200)
-    public Response getOperationDefinition(@PathParam("id") int definitionId,
-                                           @QueryParam("resourceId") Integer resourceId,
-                                           @Context UriInfo uriInfo,
-                                           @Context Request request,
-                                           @Context HttpHeaders httpHeaders);
+    @ApiOperation("Retrieve a single operation definition by its id")
+    public Response getOperationDefinition(
+            @ApiParam("Id of the definition to retrieve") @PathParam("id") int definitionId,
+            @ApiParam("Id of a resource that supports this operation") @QueryParam("resourceId") Integer resourceId,
+               @Context UriInfo uriInfo,
+               @Context Request request,
+               @Context HttpHeaders httpHeaders);
 
     @GET
     @Path("definitions")
     @Cache(maxAge = 1200)
-    public Response getOperationDefinitions(@QueryParam("resourceId") Integer resourceId,
+    @ApiOperation("List all operation definitions for a resource")
+    public Response getOperationDefinitions(
+            @ApiParam(value = "Id of the resource",required = true) @QueryParam("resourceId") Integer resourceId,
                                             @Context UriInfo uriInfo,
                                             @Context Request request
     );
 
     @POST
     @Path("definition/{id}")
-    public Response createOperation(@PathParam("id") int definitionId,
-                                    @QueryParam("resourceId") Integer resourceId,
+    @ApiOperation("Create a new (draft) operation from the passed definition id for the passed resource")
+    public Response createOperation(
+            @ApiParam("Id of the definition") @PathParam("id") int definitionId,
+            @ApiParam(value = "Id of the resource", required = true) @QueryParam("resourceId") Integer resourceId,
                                     @Context UriInfo uriInfo);
 
     @GET
     @Path("{id}")
-    public Response getOperation(@PathParam("id") int operationId);
+    @ApiOperation("Return a (draft) operation")
+    public Response getOperation(
+            @ApiParam("Id of the operation to retrieve") @PathParam("id") int operationId);
 
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public Response updateOperation(@PathParam("id") int operationId, OperationRest operation, @Context UriInfo uriInfo);
+    @ApiOperation("Update a (draft) operation. If the state is set to 'ready', the operation will be scheduled")
+    public Response updateOperation(
+            @ApiParam("Id of the operation to update") @PathParam("id") int operationId,
+            OperationRest operation, @Context UriInfo uriInfo);
 
     @DELETE
     @Path("{id}")
-    public Response cancelOperation(@PathParam("id") int operationId);
+    @ApiOperation("Delete a (draft) operation")
+    public Response cancelOperation(
+            @ApiParam("Id of the operation to remove") @PathParam("id") int operationId);
 
     @GET
     @Path("history/{id}")
-    public Response outcome(@PathParam("id") String jobName, @Context UriInfo uriInfo);
+    @ApiOperation("Return the outcome of the scheduled operation")
+    public Response outcome(
+            @ApiParam("Name of the submitted job.") @PathParam("id") String jobName,
+            @Context UriInfo uriInfo);
 }

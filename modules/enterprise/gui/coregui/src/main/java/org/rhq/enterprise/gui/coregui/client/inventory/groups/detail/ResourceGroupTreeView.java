@@ -368,12 +368,16 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             });
     }
 
-    private void selectClusterGroup(ClusterKey key) {
+    private void selectClusterGroup(final ClusterKey key) {
         GWTServiceLookup.getClusterService().createAutoClusterBackingGroup(key, true,
             new AsyncCallback<ResourceGroup>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_createFailed_autoCluster(), caught);
+                    if (caught.getMessage().contains("IllegalStateException")) {
+                        CoreGUI.goToView(LinkManager.getResourceGroupLink(key.getClusterGroupId()));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_createFailed_autoCluster(), caught);
+                    }
                 }
 
                 public void onSuccess(ResourceGroup result) {

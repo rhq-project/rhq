@@ -39,6 +39,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ClusterKey;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
@@ -82,6 +83,12 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         if (!authorizationManager.canViewGroup(subject, clusterKey.getClusterGroupId())) {
             throw new PermissionException("You do not have permission to view child cluster groups of the group ["
                 + resourceGroup.getName() + "]");
+        }
+
+        // [BZ 817604] In unusual circumstances this clusterKey may be stale. Ensure the cluster group
+        // is still a compat group before creating a backing group. 
+        if (GroupCategory.COMPATIBLE != resourceGroup.getGroupCategory()) {
+            throw new IllegalStateException("The root group has changed. Please refresh your group before continuing.");
         }
 
         List<Resource> resources = null;

@@ -46,6 +46,7 @@ public interface ClusterManagerRemote {
      * @param addResources If true, the new group will be assigned the current resources defined by the clusterKey.
      * Otherwise no resources will be assigned to the new group.
      * @throws IllegalArgumentException if a backing group exists for this clusterKey
+     * @throws IllegalStateException if the cluster group is not a compatible group
      */
     ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources);
 

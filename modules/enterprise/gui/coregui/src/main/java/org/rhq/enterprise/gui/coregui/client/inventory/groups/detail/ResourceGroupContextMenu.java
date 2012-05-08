@@ -52,6 +52,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
@@ -122,9 +123,17 @@ public class ResourceGroupContextMenu extends LocatableMenu {
     public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
         group = groupComposite.getResourceGroup();
+
+        // [BZ 817604] If the group type has changed to mixed we can't show a context menu.
+        if (GroupCategory.MIXED == group.getGroupCategory()) {
+            CoreGUI.goToView(LinkManager.getResourceGroupLink(group.getId()));
+            return;
+        }
+
         groupMemberType = group.getResourceType();
         isAutoCluster = (null != group.getClusterResourceGroup());
         isAutoGroup = (null != group.getSubject());
+
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             groupMemberType.getId(),

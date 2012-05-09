@@ -6058,118 +6058,85 @@
                            description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-
           <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector"
                           description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
             <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
           </c:map-property>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name. This is mutually exclusive with Connector"/>
-
-          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
-          <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>
-          <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on durable send."/>
-          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on non durable send."/>
-          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" description="True to cache large messages."/>
-          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" description="The call time out."/>
-          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" description="The client failure check period."/>
+          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
+          <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
+          <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
+          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
+          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
+          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
           <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
-          <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" description="Whether large messages should be compressed."/>
-          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" description="The confirmation window size."/>
-          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" description="The connection ttl."/>
-          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" description="The consumer max rate."/>
-          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" description="The consumer window size."/>
+          <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
+          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" description="The dups ok batch size."/>
-          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" description="True to fail over on initial connection."/>
+          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+          <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
+            <c:property-options>
+              <c:option value="GENERIC" name="GENERIC"/>
+              <c:option value="QUEUE" name="QUEUE"/>
+              <c:option value="TOPIC" name="TOPIC"/>
+              <c:option value="XA_GENERIC" name="XA_GENERIC"/>
+              <c:option value="XA_QUEUE" name="XA_QUEUE"/>
+              <c:option value="XA_TOPIC" name="XA_TOPIC"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
-          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" description="Whether the connection factory supports High Availability."/>
-          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false"
-                             description="Name of a class implementing a client-side load balancing policy that a client can use to load balance sessions across different nodes in a cluster."/>
-          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" description="The max retry interval."/>
-          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" description="The min large message size."/>
-          <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" description="True to pre-acknowledge."/>
-          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" description="The producer max rate."/>
-          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" description="The producer window size."/>
-          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" description="The reconnect attempts."/>
-          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" description="The retry interval."/>
-          <c:simple-property name="retry-interval-multiplier" required="false" type="float" readOnly="false" description="The retry interval multiplier."/>
-          <c:simple-property name="scheduled-thread-pool-max-size" required="false" type="integer" readOnly="false" description="The scheduled thread pool max size."/>
-          <c:simple-property name="thread-pool-max-size" required="false" type="integer" readOnly="false" description="The thread pool max size."/>
-          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" description="The transaction batch size."/>
-          <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" description="True to use global pools."/>
+          <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+          <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
+          <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
+          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="long" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+          <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
         </resource-configuration>
-      </service><!-- End of Connection-Factory service -->
+      </service>
 
-  <service name="Security Setting"
-     discovery="SubsystemDiscovery"
-     class="BaseComponent">
+      <service name="Security Setting"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-     <plugin-configuration>
-       <c:simple-property name="path" readOnly="true" default="security-setting"/>
-     </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="security-setting"/>
+        </plugin-configuration>
 
-           <!-- Removing. Add/Remove a little to low level
-     <operation name="add" description="Add new security setting.">
-       <results>
-    <c:simple-property name="operationResult" description="Add new security setting." />
-       </results>
-     </operation>
+        <service name="Role"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
-     <operation name="remove" description="Remove an existing security setting.">
-       <results>
-    <c:simple-property name="operationResult" description="Remove an existing security setting." />
-       </results>
-     </operation> -->
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="role"/>
+          </plugin-configuration>
 
-       <service name="Role"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent">
-
-    <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="role"/>
-    </plugin-configuration>
-
-         <operation name="add" description="Add new security role.">
-     <parameters>
-             <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
-       <c:simple-property name="send" required="true" type="boolean" readOnly="false" description="This permission allows the user to send a message to matching addresses."/>
-       <c:simple-property name="consume" required="true" type="boolean" readOnly="false" description="his permission allows the user to consume a message from a queue bound to matching addresses."/>
-       <c:simple-property name="create-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a durable queue."/>
-       <c:simple-property name="delete-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a durable queue."/>
-       <c:simple-property name="create-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a temporary queue."/>
-       <c:simple-property name="delete-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a temporary queue."/>
-       <c:simple-property name="manage" required="true" type="boolean" readOnly="false" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
-     </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Add new security role." />
-     </results>
-         </operation>
-
-         <operation name="remove" description="Remove an existing security role.">
-     <parameters>
-             <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
-           </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Remove an existing security role." />
-     </results>
-         </operation>
-
-         <resource-configuration>
-     <c:simple-property name="consume" required="false" type="boolean" readOnly="false" defaultValue="false" description="his permission allows the user to consume a message from a queue bound to matching addresses. The default value is false."/>
-     <c:simple-property name="create-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to create a durable queue. The default value is false."/>
-     <c:simple-property name="create-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to create a temporary queue. The default value is false."/>
-     <c:simple-property name="delete-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to delete a durable queue. The default value is false."/>
-     <c:simple-property name="delete-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to delete a temporary queue. The default value is false."/>
-     <c:simple-property name="manage" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to invoke management operations by sending management messages to the management address. The default value is false."/>
-     <c:simple-property name="send" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to send a message to matching addresses. The default value is false."/>
+          <resource-configuration>
+            <c:simple-property name="consume" required="true" type="boolean" readOnly="false" defaultValue="false" description="his permission allows the user to consume a message from a queue bound to matching addresses. The default value is false."/>
+            <c:simple-property name="create-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to create a durable queue. The default value is false."/>
+            <c:simple-property name="create-non-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to create a temporary queue. The default value is false."/>
+            <c:simple-property name="delete-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to delete a durable queue. The default value is false."/>
+            <c:simple-property name="delete-non-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to delete a temporary queue. The default value is false."/>
+            <c:simple-property name="manage" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to invoke management operations by sending management messages to the management address. The default value is false."/>
+            <c:simple-property name="send" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to send a message to matching addresses. The default value is false."/>
          </resource-configuration>
-
-       </service><!-- End of role service -->
+       </service>
 
   </service><!-- End of Security Settings service -->
 

@@ -6,7 +6,6 @@
         description="Supports management of JMX MBean Servers via various remoting systems."
         pluginLifecycleListener="JMXPluginLifecycleListener"
         ampsVersion="2.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -100,11 +99,12 @@
          </ul>
          
          <p>Note that "jmxremote.password" must be read-only. On Windows, you must use "cacls" command to do this:
-         <tt>cacls /some/directory/jmxremote.password /P username:R<tt></p>
+         <code>cacls /some/directory/jmxremote.password /P username:R</code></p>
          
          <p>A password file template is located at $JRE_HOME/lib/management/jmxremote.password.template. There is also 
          an auth file that you can use to define other roles. For more information on setting this up and setting up 
-         SSL, see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management Using JMX</a>.</p>
+         SSL, see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management
+         Using JMX</a>.</p>
 
          <p>If you wish to expose your JBossAS 4 application server's MBeans over this remote JMX mechanism, you must 
          pass in these extra properties, in addition to the properties specified above:</p>

@@ -5737,17 +5737,192 @@
           <c:simple-property name="path" readOnly="true" default="jms-queue"/>
         </plugin-configuration>
 
+        <operation name="subsystem:change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:change-messages-priority" displayName="Change Messages Priority" description="Change the priority of the messages corresponding to the given filter. Returns the number of removed messages.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:count-messages" displayName="Count Messages" description="Returns the number of the messages in the queue matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-messages" displayName="Expire Messages"  description="Expire the messages matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="A string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-html" displayName="List Message Counter as HTML" description="List the message counter as a string in HTML format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-json" displayName="List Message Counter as JSON" description="List the message counter as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-html" displayName="List Message Counter History as HTML" description="List the message counter history.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-json" displayName="List Message Counter History as JSON" description="List the message counter history as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages" displayName="List Messages" description="List all messages in the queue that match the filter">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-as-json" displayName="List Messages as JSON" description="List all messages in the queue that match the filter and return them as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-message" displayName="Move Message" description="Move the message corresponding to the given message&#45;id to another queue">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-messages" displayName="Move Messages" description="Move the messages corresponding to the given filter to another queue.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Pause the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message&#45;id.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
+          <results>
+             <c:simple-property name="operationResult" description="Reset the message counters." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Resume the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-message-to-dead-letter-address" displayName="Send Message to Dead Letter Address" description="Send the message corresponding to the given message&#45;id to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-messages-to-dead-letter-address" displayName="Send Messages to Dead Letter Address" description="Send the messages corresponding to the given filter to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="consumer-count" description="The number of consumers consuming messages from this queue."/>
+        <metric property="dead-letter-address" dataType="trait" description="The address to send dead messages to."/>
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>  
+        <metric property="expiry-address" dataType="trait" description="The address to send expired messages to."/>
+        <metric property="message-count" description="The number of messages currently in this queue."/>
+        <metric property="messages-added" description="The number of messages added to this queue since it was created."/>
+        <metric property="paused" dataType="trait" description="Whether the queue is paused."/>
+        <metric property="scheduled-count" description="The number of scheduled messages in this queue."/>
+        <metric property="temporary" dataType="trait" description="Whether the queue is temporary."/>
+        <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages."/>
+
         <resource-configuration>
-          <c:simple-property name="dead-letter-address" required="false" type="string" readOnly="true" description="The address to send dead messages to."/>
           <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
           <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
               <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-          <c:simple-property name="expiry-address" required="false" type="string" readOnly="true" description="The address to send expired messages to."/>
-          <c:simple-property name="paused" required="true" type="boolean" readOnly="true" description="Whether the queue is paused."/>
-          <c:simple-property name="queue-address" required="true" type="string" readOnly="true" description="The queue address defines what address is used for routing messages."/>
           <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
-          <c:simple-property name="temporary" required="true" type="boolean" readOnly="true" description="Whether the queue is temporary."/>
         </resource-configuration>
       </service>
 
@@ -5759,6 +5934,107 @@
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="jms-topic"/>
         </plugin-configuration>
+
+        <operation name="subsystem:count-messages-for-subscription" displayName="Count Messages for Subscription" description="Count the number of messages matching the filter for the given subscription.">
+          <parameters>
+            <c:simple-property name="client-id" required="true" type="string" readOnly="false" description="The client ID."/>
+            <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:drop-all-subscriptions" displayName="Drop All Subscriptions" description="Drop all subscriptions from this topic.">
+          <results>
+             <c:simple-property name="operationResult" description="Drop all subscriptions from this topic." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:drop-durable-subscription" displayName="Drop Durable Subscription" description="Drop a durable subscription">
+          <parameters>
+            <c:simple-property name="client-id" required="true" type="string" readOnly="false" description="The client ID."/>
+            <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
+          </parameters>
+          <results>
+             <c:simple-property name="operationResult" description="Drop a durable subscription" />
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-all-subscriptions" displayName="List All Subscriptions" description="List all subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-all-subscriptions-as-json" displayName="List All Subscriptions as JSON" description="List all subscriptions as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-durable-subscriptions" displayName="List Durable Subscriptions" description="List only the durable subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-durable-subscriptions-as-json" displayName="List Durable Subscriptions as JSON" description="List only the durable subscriptions, as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-for-subscription" displayName="List Messages for Subscription" description="List all the messages for the given subscription.">
+          <parameters>
+            <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The name of the queue representing a subscription"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-for-subscription-as-json" displayName="List Messages for Subscription as JSON" description="List all the messages for the given subscription as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The name of the queue representing a subscription"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-non-durable-subscriptions" displayName="List Non-Durable Subscriptions" description="List only the non&#45;durable subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-non-durable-subscriptions-as-json" displayName="List Non-Durable Subscriptions as JSON" description="List only the non&#45;durable subscriptions, as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>
+        <metric property="durable-message-count" description="The number of messages for all durable subscribers for this topic."/>
+        <metric property="durable-subscription-count" description="The number of durable subscribers for this topic."/>
+        <metric property="message-count" description="The number of messages currently in this queue."/>
+        <metric property="messages-added" description="The number of messages added to this queue since it was created."/>
+        <metric property="non-durable-message-count" description="The number of messages for all non&#45;durable subscribers for this topic."/>
+        <metric property="non-durable-subscription-count" description="The number of non&#45;durable subscribers for this topic."/>
+        <metric property="subscription-count" description="The number of (durable and non&#45;durable) subscribers for this topic."/>
+        <metric property="temporary" dataType="trait" description="Whether the topic is temporary."/>
+        <metric property="topic-address" dataType="trait" description="The address the topic points to."/>
 
         <resource-configuration>
           <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"

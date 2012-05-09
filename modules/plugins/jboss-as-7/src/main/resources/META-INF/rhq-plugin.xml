@@ -6485,6 +6485,41 @@
           <c:simple-property name="queue-address" required="true" type="string" readOnly="false" description="The queue address defines what address is used for routing messages."/>
         </resource-configuration>
       </service>
+
+      <service name="Core Address"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="A runtime-only resource representing a HornetQ address. Zero or more queues can be bound to a single address. When a message is routed, it is routed to the set of queues bound to the message's address."
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="core-address"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:list-property name="binding-names" required="true" readOnly="true" description="The names of all bindings (both queues and diverts) bound to this address." >
+            <c:simple-property name="binding-names" />
+          </c:list-property>
+          <c:simple-property name="number-of-bytes-per-page" required="true" type="long" readOnly="true" description="The number of bytes used by each page for this address."/>
+          <c:simple-property name="number-of-pages" required="true" type="integer" readOnly="true" description="The number of pages used by this address."/>
+          <c:list-property name="queue-names" required="true" readOnly="true" description="The names of the queues associated with the address." >
+              <c:simple-property name="queue-names" />
+          </c:list-property>
+          <c:list-property name="roles" required="true" readOnly="true" description="A list of the security roles (name and permissions) associated with the address." >
+            <c:map-property name="role">
+              <c:simple-property name="name" type="string" description="The name of a security role."/>
+              <c:simple-property name="send" type="boolean" description="This permission allows the user to send a message to matching addresses."/>
+              <c:simple-property name="consume" type="boolean" description="This permission allows the user to consume a message from a queue bound to matching addresses."/>
+              <c:simple-property name="create-durable-queue" type="boolean" description="This permission allows the user to create a durable queue."/>
+              <c:simple-property name="delete-durable-queue" type="boolean" description="This permission allows the user to delete a durable queue."/>
+              <c:simple-property name="create-durable-queue" type="boolean" description="This permission allows the user to create a temporary queue."/>
+              <c:simple-property name="delete-durable-queue" type="boolean" description="This permission allows the user to delete a temporary queue."/>
+              <c:simple-property name="manage" type="boolean" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+            </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+      </service>
     </service>
 
   </service><!-- End of Messaging-Provider service -->

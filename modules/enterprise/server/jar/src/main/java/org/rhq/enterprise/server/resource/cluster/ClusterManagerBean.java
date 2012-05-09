@@ -191,9 +191,9 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         "SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, " //
             + "         (SELECT count(r2)" //
             + "            FROM Resource r2 JOIN r2.explicitGroups g2 " //
-            + "           WHERE g2.id = :groupId and r2.id = r.id) " //
+            + "           WHERE g2.id = :groupId and r2.id = r.id and r2.inventoryStatus = 'COMMITTED') " //
             + "    FROM Resource r join r.implicitGroups g " //
-            + "   WHERE g.id = :groupId ";
+            + "   WHERE g.id = :groupId and r.inventoryStatus = 'COMMITTED' ";
         Query query = entityManager.createQuery(queryString);
 
         query.setParameter("groupId", groupId);

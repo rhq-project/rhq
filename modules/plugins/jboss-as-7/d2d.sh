@@ -2,7 +2,7 @@
 
 RHQ_DEV_HOME=${HOME}/im/rhq
 M2_REPO=${HOME}/.m2/repository
-RHQ_VERSION='4.4.0-SNAPSHOT'
+RHQ_VERSION='4.5.0-SNAPSHOT'
 OPTS=""
 #OPTS="-agentlib:jdwp=transport=dt_socket,address=8790,server=y,suspend=y"
 

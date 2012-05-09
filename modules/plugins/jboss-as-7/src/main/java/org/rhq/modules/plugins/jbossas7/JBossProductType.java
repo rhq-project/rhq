@@ -95,7 +95,7 @@ public enum JBossProductType {
             }
             if (slot.equals("eap")) {
                 productType = JBossProductType.EAP;
-            } else if (slot.equals("edg")) {
+            } else if (slot.equals("jdg")) {
                 productType = JBossProductType.JDG;
             } else if (slot.equals("epp")) {
                 productType = JBossProductType.EPP;
@@ -118,7 +118,7 @@ public enum JBossProductType {
             productType = JBossProductType.AS;
         } else if (homeDirName.contains("-eap-")) {
             productType = JBossProductType.EAP;
-        } else if (homeDirName.contains("-jdg-")) {
+        } else if (homeDirName.contains("-jdg-")||(homeDirName.contains("datagrid-server"))) {
             productType = JBossProductType.JDG;
         } else if (homeDirName.contains("-epp-")) {
              productType = JBossProductType.EPP;

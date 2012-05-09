@@ -244,7 +244,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
         + "              ) as explicitCount, "
         + "" //
         + "              (     SELECT COUNT(eresAvail.ID) " // DOWN explicit members
@@ -253,7 +253,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 0 "
         + "              ) as explicitDown, "
         + "" //
@@ -263,7 +263,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 2 "
         + "              ) as explicitUnknown, "
         + "" //
@@ -273,7 +273,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 3 "
         + "              ) as explicitDisabled, "
         + "" //
@@ -283,7 +283,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
         + "              ) as implicitCount, "
         + "" //
         + "              (     SELECT COUNT(iresAvail.ID) " // DOWN implicit members 
@@ -292,7 +292,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 0 "
         + "              ) as implicitDown, "
         + "" //
@@ -302,7 +302,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 2 "
         + "              ) as implicitUnknown, "
         + "" //
@@ -312,7 +312,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 3 "
         + "              ) as implicitDisabled, "
         + "" //

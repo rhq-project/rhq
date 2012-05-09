@@ -414,6 +414,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     private transient String helpText;
 
     @Transient
+    private transient String helpTextContentType;
+
+    @Transient
     private transient ClassLoaderType classLoaderType;
 
     /* no-arg constructor required by EJB spec and Externalizable (Externalizable also requires it to be public) */
@@ -808,6 +811,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setHelpText(String helpText) {
         this.helpText = helpText;
+    }
+
+    public String getHelpTextContentType() {
+        return helpTextContentType;
+    }
+
+    public void setHelpTextContentType(String helpTextContentType) {
+        this.helpTextContentType = helpTextContentType;
     }
 
     public ClassLoaderType getClassLoaderType() {

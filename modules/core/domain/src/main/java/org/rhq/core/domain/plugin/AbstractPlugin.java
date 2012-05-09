@@ -38,6 +38,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 /**
  * Base plugin implementation that agent and server plugin implementations extend.
@@ -81,6 +82,9 @@ public class AbstractPlugin implements Serializable {
 
     @Column(name = "HELP", nullable = true)
     private String help;
+
+    @Transient
+    private String helpContentType;
 
     @Column(name = "VERSION", nullable = true)
     private String version;
@@ -278,6 +282,14 @@ public class AbstractPlugin implements Serializable {
 
     public void setHelp(String help) {
         this.help = help;
+    }
+
+    public String getHelpContentType() {
+        return helpContentType;
+    }
+
+    public void setHelpContentType(String helpContentType) {
+        this.helpContentType = helpContentType;
     }
 
     public String getVersion() {

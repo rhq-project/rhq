@@ -6,21 +6,42 @@
 
     <!ENTITY startScriptPluginConfigGroup '
     <c:group name="operations">
-        <c:simple-property name="startScript" type="file"
-                           description="Path to the script that the Start and Restart operations should use to start the server. If the path is not absolute, it is resolved relative to the server home directory." displayName="Start Script Path" required="false" />
-        <c:simple-property name="startScriptPrefix" type="string" required="false"
-                           description="A prefix command line that should be prepended to the start script command line
-                                        by the Start and Restart operations; the prefix command must be an absolute path
-                                        (e.g. &quot;/usr/bin/sudo&quot;). This property is most commonly used to run the
-                                        AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss -g
-                                        jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group
-                                        &quot;jboss&quot;. It is also possible to chain prefix commands (e.g.
-                                        &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP signals and
-                                        run as user &quot;jboss&quot;)." />
-        <c:simple-property name="startScriptEnv" type="longString"
-                           description="The variables that the Start and Restart operations will add to the environment of the server start script. Each name=value pair should be on a new line." displayName="Start Script Environment Variables" required="false" />
-        <c:simple-property name="startScriptArgs" type="longString"
-                           description="The arguments that the Start and Restart operations will pass to the server start script. Each argument should be on a new line." displayName="Start Script Arguments" required="false" />
+        <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
+          <c:description>
+            The path to the script that the Start and Restart operations should use to start the server. If the path is
+            not absolute, it is resolved relative to the server home directory
+            (e.g. &quot;bin/standalone.sh&quot;, &quot;bin/domain.sh&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptPrefix" type="string" required="false">
+          <c:description>
+            A prefix command line that should be prepended to the start script command line by the Start and Restart
+            operations; the prefix command must be an absolute path (e.g. &quot;/usr/bin/sudo&quot;). This property is
+            most commonly used to run the AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss
+            -g jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group &quot;jboss&quot;. It is also
+            possible to chain prefix commands (e.g. &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP
+            signals and to run as user &quot;jboss&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables" type="longString" required="false">
+          <c:description>
+            The variables that the Start and Restart operations will add to the environment of the server start script.
+            Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
+            &quot;JAVA_HOME=/usr/java/jdk1.6.0_30&quot;). On UNIX systems, the typical minimum set of environment variables is:
+            PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
+            OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
+            path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
+          <c:description>
+            The arguments that the Start and Restart operations will pass to the server
+            start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
+            As an exception, the value of a space-delimited option can optionally be on the same line as the option -
+            for example: -c standalone-ha-full.xml.
+          </c:description>
+        </c:simple-property>
     </c:group>
 '>
 
@@ -696,7 +717,7 @@
 ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
-        description="provides monitoring and management of JBossAS 7.x"
+        description="provides monitoring and management of JBossAS 7.x and JBoss EAP/JDG 6.x"
         package="org.rhq.modules.plugins.jbossas7"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration"
@@ -845,6 +866,27 @@
           <include path="welcome-content"/>
        </includes>
     </drift-definition>
+
+    <help>
+    <![CDATA[
+      The server can be started, restarted, or stopped via the Start, Restart, and Shutdown operations. The Start and
+      Restart operations start the server by executing the server start script, typically domain.sh on UNIX or
+      domain.bat on Windows. The following connection settings can be used to configure the start script execution:
+      <ul>
+<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-as-7.1.1.Final/bin/domain.sh")</li>
+<li>Start Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")</li>
+<li>Start Script Arguments - arguments to be passed to the start script (e.g. "--host-config=host-master.xml")</li>
+<li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
+      </ul>
+      These settings are automatically initialized by the JBossAS7 plugin discovery code to match the currently running
+      server process' command line and environment.
+      <p/>
+      The settings are not used by the Stop operation, since it stops the server via the management interface, not via
+      a script.
+      <p/>
+      For more detailed descriptions of the settings, see the Connection Settings section below.
+    ]]>
+    </help>
 
     <server name="Managed Server"
             discovery="ManagedASDiscovery"
@@ -1312,6 +1354,27 @@
         <value-name>deployDir</value-name>
       </destination-base-dir>
     </bundle-target>
+
+    <help>
+    <![CDATA[
+      The server can be started, restarted, or stopped via the Start, Restart, and Shutdown operations. The Start and
+      Restart operations start the server by executing the server start script, typically standalone.sh on UNIX or
+      standalone.bat on Windows. The following connection settings can be used to configure the start script execution:
+      <ul>
+<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-as-7.1.1.Final/bin/standalone.sh")</li>
+<li>Start Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")</li>
+<li>Start Script Arguments - arguments to be passed to the start script (e.g. "--server-config=standalone-full-ha.xml")</li>
+<li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
+      </ul>
+      These settings are automatically initialized by the JBossAS7 plugin discovery code to match the currently running
+      server process' command line and environment.
+      <p/>
+      The settings are not used by the Stop operation, since it stops the server via the management interface, not via
+      a script.
+      <p/>
+      For more detailed descriptions of the settings, see the Connection Settings section below.
+    ]]>
+    </help>
 
     <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
       list is different. Update similar Domain service if changes are necessary. -->

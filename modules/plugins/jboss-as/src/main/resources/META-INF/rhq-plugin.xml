@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <plugin name="JBossAS"
-        displayName="JBoss Application Server"
+        displayName="JBoss Application Server 3.x/4.x"
         package="org.rhq.plugins.jbossas"
-        description="Supports management and monitoring of JBoss AS from version 3.2.3 to 4.2.x and EAP 4.x"
+        description="Supports management and monitoring of JBoss AS 3.x (3.2.3 and later) and 4.x, and of EAP/SOA-P 4.x"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

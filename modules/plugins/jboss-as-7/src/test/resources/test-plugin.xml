@@ -147,6 +147,14 @@
         </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="test13a">
+        <resource-configuration>
+            <c:map-property name="connector:collapsed" >
+                <c:simple-property name="name:0" />
+            </c:map-property>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>
@@ -255,7 +263,7 @@
         <resource-configuration>
             <c:group name="child:first-group=first-group" displayName="First group">
                <c:simple-property name="firstprop:1"  type="string"/>
-               <c:list-property name="secondprop:2" displayName="Properties" required="false" readOnly="false">               
+               <c:list-property name="secondprop:2" displayName="Properties" required="false" readOnly="false">
                     <c:simple-property name="name" displayName="Property-Name"/>
                </c:list-property>
                <c:map-property name="thirdprop:3" displayName="Keepalive Time" description="Sample map property." >
@@ -264,7 +272,7 @@
             </c:group>
             <c:group name="child:second-group=second-group" displayName="First group">
                <c:simple-property name="firstprop:4" type="string"/>
-               <c:list-property name="secondprop:5" displayName="Properties" required="false" readOnly="false">               
+               <c:list-property name="secondprop:5" displayName="Properties" required="false" readOnly="false">
                     <c:simple-property name="name" displayName="Property-Name"/>
                </c:list-property>
                <c:map-property name="thirdprop:6" displayName="Keepalive Time" description="Sample map property." >

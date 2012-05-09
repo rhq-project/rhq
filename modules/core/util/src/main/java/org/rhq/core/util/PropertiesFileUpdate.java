@@ -72,7 +72,7 @@ public class PropertiesFileUpdate {
      *
      * @throws IOException if an error occurs reading or writing the properties file
      */
-    public boolean  update(String key, String value) throws IOException {
+    public boolean update(String key, String value) throws IOException {
         if (value == null) {
             value = "";
         }
@@ -82,12 +82,13 @@ public class PropertiesFileUpdate {
         // if the given property is new (doesn't exist in the file yet) just append it and return
         // if the property exists, update the value in place (ignore if the value isn't really changing)
         if (!existingProps.containsKey(key)) {
-            boolean fileIsLineSeparatorTerminated = isFileLineSeparatorTerminated();
+            boolean appendNewlineBeforeAppendingProperty = (file.exists() && (file.length() != 0) &&
+                    !isFileLineSeparatorTerminated());
             FileOutputStream fos = new FileOutputStream(file, true);
             try {
                 PrintStream ps = new PrintStream(fos, true, CHAR_ENCODING_8859_1);
                 try {
-                    if (!fileIsLineSeparatorTerminated) {
+                    if (appendNewlineBeforeAppendingProperty) {
                         ps.println();
                     }
                     ps.println(key + "=" + value);
@@ -112,7 +113,7 @@ public class PropertiesFileUpdate {
      * <code>newProps</code> that does not yet exist in the properties file will be added. Currently existing properties
      * in the properties file that are not found in <code>newProps</code> will remain as-is.
      *
-     * @param  newProps properties that are added or updated in the file
+     * @param  newProps properties that are to be added or updated in the file
      *
      * @throws IOException
      */
@@ -188,7 +189,7 @@ public class PropertiesFileUpdate {
     public Properties loadExistingProperties() throws IOException {
         Properties props = new Properties();
 
-        if (file.exists()) {
+        if (file.exists() && (file.length() != 0)) {
             FileInputStream is = new FileInputStream(file);
             try {
                 props.load(is);
@@ -219,7 +220,10 @@ public class PropertiesFileUpdate {
         return ((start > 0) || (end < str.length())) ? str.substring(start, end) : str;
     }
 
-    private boolean isFileLineSeparatorTerminated() throws IOException {
+    private boolean isFileLineSeparatorTerminated() throws IOException {        
+        if (!file.exists() || (file.length() == 0)) {
+            return false;
+        }
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
         int lastByteOfFile;
         try {

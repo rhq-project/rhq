@@ -112,7 +112,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
                     }
                 }
 
-                // For AutoClusters the group name is the unique cluster key
+                // Note, group names do not need to be unique for non-visible groups, like autocluster backing groups 
                 autoClusterBackingGroup = new ResourceGroup(name, resourceType);
                 autoClusterBackingGroup.setClusterKey(clusterKey.toString());
                 autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);

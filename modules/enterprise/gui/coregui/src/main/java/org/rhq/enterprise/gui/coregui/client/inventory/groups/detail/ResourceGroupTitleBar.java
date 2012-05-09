@@ -138,8 +138,13 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                     ResourceGroupComposite resultComposite = result.get(0);
                     setGroupIcons(resultComposite);
 
+                    // Localize the default group name for an AutoCluster with disparate members (see setGroup()).
+                    if (isAutoCluster) {
+                        resultComposite.getResourceGroup().setName(group.getName());
+                    }
+
                     generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite,
-                        ResourceGroupTitleBar.this, isAutoGroup);
+                        ResourceGroupTitleBar.this, (!(isAutoGroup || isAutoCluster)));
                     generalProperties.setVisible(false);
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -237,6 +242,22 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
     public void setGroup(ResourceGroupComposite groupComposite, boolean isRefresh) {
         this.group = groupComposite.getResourceGroup();
+
+        // Localize the default group name for an AutoCluster with disparate members.  This is safe for AutoCluster
+        // backing groups because they can't be edited, can't be set as a favorite, and the name is not used
+        // for subsequent querying. If an autoCluster contains disparate resource names the server names the group
+        // "Group of <ResourceTypeName>" because it can't name the group after a common resource name.  This typically
+        // happens if the cluster group (i.e. root group) members are themselves disparate. In general this is not the
+        // case, because recursive compat groups are typically used specifically for groups of logically equivalent
+        // resources, like cloned AS instances.  The problem is that it is not localized. Change it on the fly.
+        if (isAutoCluster) {
+            String typeName = group.getResourceType().getName();
+            String cannedName = "Group of " + typeName;
+            if (cannedName.equals(group.getName())) {
+                group.setName(MSG.group_tree_groupOfResourceType(typeName));
+            }
+        }
+
         update();
 
         displayGroupName(group.getName());

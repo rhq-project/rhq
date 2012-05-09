@@ -785,7 +785,15 @@ public class Domain2Descriptor {
                 Map<String, Object> entryValue = (Map<String, Object>) o;
                 String entryKey = entry.getKey();
 
-                Type type = getTypeFromProps(entryValue);
+                Type type = Type.STRING;
+                if (entryValue != null) {
+                    try {
+                        type = getTypeFromProps(entryValue);
+                    } catch (Exception e) {
+                        builder.append("<!-- Type ").append(entryValue).append(" NOT FOUND!!!-->\n");
+                    }
+                }
+
                 builder.append(generateProperty(indent, entryValue, type, entryKey, null));
                 builder.append('\n');
             } else {//do we list this as a comment because it's an as7 invalid type?

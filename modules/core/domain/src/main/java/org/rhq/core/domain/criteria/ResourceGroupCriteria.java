@@ -84,37 +84,37 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "id IN ( SELECT implicitGroup.id " //
             + "          FROM Resource res " //
             + "          JOIN res.implicitGroups implicitGroup " //
-            + "         WHERE res.currentAvailability.availabilityType = 0 " //
+            + "         WHERE res.currentAvailability.availabilityType = 0 AND res.inventoryStatus = 'COMMITTED' " //
             + "      GROUP BY implicitGroup.id " // 
             + "         HAVING COUNT(res) >= ? )");
         filterOverrides.put("explicitResourceIds", "" //
             + "id IN ( SELECT explicitGroup.id " //
             + "          FROM Resource res " //
             + "          JOIN res.explicitGroups explicitGroup " //
-            + "         WHERE res.id IN ( ? ) )");
+            + "         WHERE res.id IN ( ? ) AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("implicitResourceIds", "" //
             + "id IN ( SELECT implicitGroup.id " //
             + "          FROM Resource res " //
             + "          JOIN res.implicitGroups implicitGroup " //
-            + "         WHERE res.id IN ( ? ) )");
+            + "         WHERE res.id IN ( ? ) AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("explicitResourceCategory", "" //
             + "NOT EXISTS " //
             + "(  SELECT res " //
             + "   FROM Resource res " //
             + "   JOIN res.explicitGroups explicitGroup " //
-            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.category = ? )");
+                    + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.category = ? AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("explicitResourceTypeId", "" //
             + "NOT EXISTS " //
             + "(  SELECT res " //
             + "   FROM Resource res " //
             + "   JOIN res.explicitGroups explicitGroup " //
-            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.id = ? )");
+                    + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.id = ? AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("explicitResourceTypeName", "" //
             + "NOT EXISTS " //
             + "(  SELECT res " //
             + "   FROM Resource res " //
             + "   JOIN res.explicitGroups explicitGroup " //
-            + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
+                    + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
         filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("bundleTargetableOnly", "resourceType.bundleConfiguration IS NOT NULL");

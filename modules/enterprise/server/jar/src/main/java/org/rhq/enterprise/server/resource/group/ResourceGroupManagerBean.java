@@ -1553,28 +1553,28 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         case SUBJECT_OWNED:
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias% ) "; // ResourceGroup
             break;
         case ROLE_OWNED:
         case AUTO_CLUSTER:
             compositeProjection = ""
                 + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS implicitDisabled," // implicit member count with DISABLED avail
                 + "    %alias%, " // ResourceGroup
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE

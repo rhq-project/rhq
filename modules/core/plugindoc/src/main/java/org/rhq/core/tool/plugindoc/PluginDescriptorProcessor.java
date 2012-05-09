@@ -18,8 +18,10 @@
  */
 package org.rhq.core.tool.plugindoc;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -32,6 +34,7 @@ import org.rhq.core.clientapi.agent.metadata.MetricsMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.OperationsMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.Help;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
@@ -46,6 +49,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -56,29 +60,76 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Ian Springer
  */
 public class PluginDescriptorProcessor {
+
     private final Log log = LogFactory.getLog(PluginDescriptorProcessor.class);
 
     private PluginDescriptor pluginDescriptor;
+    private Plugin plugin;
+    private Map<ResourceType, ResourceType> allTypes = new LinkedHashMap<ResourceType, ResourceType>();
     private Set<ResourceType> resourceTypes = new LinkedHashSet<ResourceType>();
 
     public PluginDescriptorProcessor(PluginDescriptor pluginDescriptor) {
         this.pluginDescriptor = pluginDescriptor;
+        this.plugin = createPlugin();
     }
 
     public Set<ResourceType> processPluginDescriptor() throws InvalidPluginDescriptorException {
         for (PlatformDescriptor serverDescriptor : pluginDescriptor.getPlatforms()) {
-            parsePlatformDescriptor(serverDescriptor);
+            resourceTypes.add(parsePlatformDescriptor(serverDescriptor));
         }
 
         for (ServerDescriptor serverDescriptor : pluginDescriptor.getServers()) {
-            parseServerDescriptor(serverDescriptor, null);
+            ResourceType serverType = parseServerDescriptor(serverDescriptor, null);
+            if (isRootType(serverType)) {
+                resourceTypes.add(serverType);
+            }
         }
 
         for (ServiceDescriptor serviceDescriptor : pluginDescriptor.getServices()) {
-            parseServiceDescriptor(serviceDescriptor, null);
+            ResourceType serviceType = parseServiceDescriptor(serviceDescriptor, null);
+            if (isRootType(serviceType)) {
+                resourceTypes.add(serviceType);
+            }
         }
 
         return this.resourceTypes;
+    }
+
+    private static boolean isRootType(ResourceType type) {
+        boolean result;
+        if ((type.getParentResourceTypes() == null) || (type.getParentResourceTypes().size() <= 1)) {
+            result = true;
+        } else {
+            result = false;
+            for (ResourceType parentType : type.getParentResourceTypes()) {
+                if (!parentType.getPlugin().equals(type.getPlugin())) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    public PluginDescriptor getPluginDescriptor() {
+        return this.pluginDescriptor;
+    }
+
+    public Plugin getPlugin() {
+        return this.plugin;
+    }
+
+    private Plugin createPlugin() {
+        Plugin plugin = new Plugin(this.pluginDescriptor.getName(), null);
+        plugin.setDisplayName(this.pluginDescriptor.getDisplayName());
+        plugin.setDescription(this.pluginDescriptor.getDescription());
+        plugin.setVersion(this.pluginDescriptor.getVersion());
+        Help help = this.pluginDescriptor.getHelp();
+        if ((help != null) && !help.getContent().isEmpty()) {
+            plugin.setHelpContentType(help.getContentType());
+            plugin.setHelp(String.valueOf(help.getContent().get(0)));
+        }
+        return plugin;
     }
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)
@@ -99,7 +150,7 @@ public class PluginDescriptorProcessor {
         return platformResourceType;
     }
 
-    private ResourceType parseServerDescriptor(ServerDescriptor serverDescriptor, ResourceType parentServerType)
+    private ResourceType parseServerDescriptor(ServerDescriptor serverDescriptor, ResourceType parentType)
         throws InvalidPluginDescriptorException {
         ResourceType serverResourceType;
         String sourcePlugin = serverDescriptor.getSourcePlugin();
@@ -111,7 +162,7 @@ public class PluginDescriptorProcessor {
         if ((sourcePlugin.length() == 0) && (sourceServer.length() == 0)) {
             // not using Embedded extension model
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
-                ResourceCategory.SERVER, parentServerType);
+                ResourceCategory.SERVER, parentType);
             serverResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
                 serverResourceType, serverDescriptor.getSubCategory()));
             serverResourceType.setDescription(serverDescriptor.getDescription());
@@ -127,7 +178,7 @@ public class PluginDescriptorProcessor {
             // TODO
 
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
-                ResourceCategory.SERVER, parentServerType);
+                ResourceCategory.SERVER, parentType);
 
             // let the plugin writer override these, if not, pick up the source type's values
             serverResourceType.setDescription(serverDescriptor.getDescription());
@@ -150,16 +201,8 @@ public class PluginDescriptorProcessor {
 
         // now see if we are using the Injection extension model
         // if so, we need to inject the new resource type as a child to the parent plugin's types
-        RunsInsideType runsInside = serverDescriptor.getRunsInside();
-        if (runsInside != null) {
-            List<ParentResourceType> parentTypesDescriptor = runsInside.getParentResourceType();
-            for (ParentResourceType parentTypeDescriptor : parentTypesDescriptor) {
-                ResourceCategory parentResourceCategory = parentTypeDescriptor.getPlugin().equals("Platforms") ? ResourceCategory.PLATFORM
-                    : ResourceCategory.SERVER;
-                ResourceType parentResourceType = new ResourceType(parentTypeDescriptor.getName(), parentTypeDescriptor
-                    .getPlugin(), parentResourceCategory, ResourceType.ANY_PLATFORM_TYPE);
-                serverResourceType.addParentResourceType(parentResourceType);
-            }
+        if (parentType == null) {
+            addRunsInsideParentTypes(serverDescriptor, serverResourceType);
         }
 
         // Look for child server types
@@ -232,18 +275,28 @@ public class PluginDescriptorProcessor {
         // if so, we need to inject the new resource type as a child to the parent plugin's types
         // note that the Injection model only allows for root-level services to be injected
         if (parentType == null) {
-            RunsInsideType runsInside = serviceDescriptor.getRunsInside();
-            if (runsInside != null) {
-                List<ParentResourceType> parentTypesDescriptor = runsInside.getParentResourceType();
-                for (ParentResourceType parentTypeDescriptor : parentTypesDescriptor) {
-                    ResourceType parentResourceType = new ResourceType(parentTypeDescriptor.getName(),
-                        parentTypeDescriptor.getPlugin(), ResourceCategory.PLATFORM, ResourceType.ANY_PLATFORM_TYPE);
-                    serviceResourceType.addParentResourceType(parentResourceType);
-                }
-            }
+            addRunsInsideParentTypes(serviceDescriptor, serviceResourceType);
         }
 
         return serviceResourceType;
+    }
+
+    private void addRunsInsideParentTypes(ResourceDescriptor resourceDescriptor, ResourceType resourceType) {
+        RunsInsideType runsInside = resourceDescriptor.getRunsInside();
+        if (runsInside != null) {
+            List<ParentResourceType> parentTypesDescriptor = runsInside.getParentResourceType();
+            for (ParentResourceType parentTypeDescriptor : parentTypesDescriptor) {
+                ResourceCategory parentResourceCategory = parentTypeDescriptor.getPlugin().equals("Platforms") ? ResourceCategory.PLATFORM
+                    : ResourceCategory.SERVER;
+                ResourceType parentResourceType = new ResourceType(parentTypeDescriptor.getName(),
+                    parentTypeDescriptor.getPlugin(), parentResourceCategory, ResourceType.ANY_PLATFORM_TYPE);
+                ResourceType fullParentType = allTypes.get(parentResourceType);
+                if (fullParentType != null) {
+                    parentResourceType = fullParentType;
+                }
+                resourceType.addParentResourceType(parentResourceType);
+            }
+        }
     }
 
     /**
@@ -326,13 +379,17 @@ public class PluginDescriptorProcessor {
                 }
             }
 
-            if (resourceDescriptor.getHelp() != null && !resourceDescriptor.getHelp().getContent().isEmpty()) {
-                resourceType.setHelpText(String.valueOf(resourceDescriptor.getHelp().getContent().get(0)));
+            Help help = resourceDescriptor.getHelp();
+            if ((help != null) && !help.getContent().isEmpty()) {
+                resourceType.setHelpTextContentType(help.getContentType());
+                resourceType.setHelpText(String.valueOf(help.getContent().get(0)));
             }
         } catch (InvalidPluginDescriptorException e) {
             // TODO: Should we be storing these for viewing in server? Breaking deployment? What?
             throw e;
         }
+
+        allTypes.put(resourceType, resourceType);
 
         // The type is built, register it
         //registerResourceTypeAndComponentClasses(resourceType, discoveryClass, componentClass);
@@ -363,8 +420,6 @@ public class PluginDescriptorProcessor {
                 parseServiceDescriptor(serviceDescriptor, resourceType);
             }
         }
-
-        this.resourceTypes.add(resourceType);
     }
 
     private String getFullyQualifiedComponentClassName(String packageName, String baseClassName) {
@@ -430,4 +485,5 @@ public class PluginDescriptorProcessor {
 
         return null;
     }
+
 }

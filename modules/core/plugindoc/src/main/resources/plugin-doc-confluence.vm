@@ -1,0 +1,18 @@
+h1. ${plugin.displayName} Plugin
+
+| *Internal Name:* | ${plugin.name} |
+| *Description:* | $!{plugin.description} |
+| *Version:* | ${rhqVersion} |
+
+#if ( ${plugin.help} )
+h2. Overview
+${plugin.help}
+#end
+
+#if ( !${resourceType.childResourceTypes.empty} )
+h2. Resource Types
+{children:all=true|style=h3}
+#else
+This plugin does not define any Resource types. It it probably an "abstract plugin", that is, one that provides Resource
+components and/or discovery components that can be used by other plugins.
+#end

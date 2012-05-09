@@ -22,6 +22,7 @@ package org.rhq.core.tool.plugindoc;
  * @author Joseph Marques
  */
 public class DocConverter {
+
     public static String htmlToDocBook(String htmlContent) {
         if (htmlContent == null) {
             return null;
@@ -99,7 +100,7 @@ public class DocConverter {
             int endTagIndex = htmlLink.indexOf(">", endQuoteIndex + 1);
 
             String url = htmlLink.substring(startQuoteIndex + 1, endQuoteIndex);
-            String label = htmlLink.substring(endTagIndex + 1);
+            String label = htmlLink.substring(endTagIndex + 1).replaceAll("\n", " ");
 
             String replacement = "[" + label + "|" + url + "]";
             result = firstPart + replacement + lastPart;
@@ -110,8 +111,13 @@ public class DocConverter {
             new String[] { "</code>", "{code}" }, //
             new String[] { "<tt>", "{{" }, //
             new String[] { "</tt>", "}}" }, //
-            new String[] { "<p>", "" }, //
+            new String[] { "<p>", "\n\n" }, //
             new String[] { "</p>", "" }, //
+            new String[] { "<p/>", "\n\n" }, //
+            new String[] { "<p />", "\n\n" }, //
+            new String[] { "<br>", "\n" }, //
+            new String[] { "<br/>", "\n" }, //
+            new String[] { "<br />", "\n" }, //
             new String[] { "<pre>", "" }, //
             new String[] { "</pre>", "" }, //
             new String[] { "<div class=\"note\">", "{note}" }, //
@@ -128,6 +134,10 @@ public class DocConverter {
             new String[] { "</h5>", "" }, //
             new String[] { "<h6>", "h6. " }, //
             new String[] { "</h6>", "" }, //
+            new String[] { "<ul>", "" }, //
+            new String[] { "</ul>", "\n\n" }, //
+            new String[] { "<li>", "* " }, //
+            new String[] { "</li>", "" } //
         };
 
         result = convert(result, tagConversions);

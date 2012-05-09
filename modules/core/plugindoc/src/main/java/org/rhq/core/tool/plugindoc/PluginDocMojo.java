@@ -18,6 +18,8 @@
  */
 package org.rhq.core.tool.plugindoc;
 
+import java.util.Properties;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -46,21 +48,21 @@ public class PluginDocMojo extends AbstractMojo {
     private MavenProject project;
 
     /**
-     * The main Confluence URL (e.g. "http://support.rhq-project.org/").
+     * The main Confluence URL (e.g. "http://rhq-project.org/").
      *
      * @parameter expression="${confluenceUrl}"
      */
     private String confluenceUrl;
 
     /**
-     * The Confluence space (e.g. "RHQ").
+     * The Confluence space (e.g. "JOPR2").
      *
      * @parameter expression="${confluenceSpace}"
      */
     private String confluenceSpace;
 
     /**
-     * The Confluence parent page name (e.g. "Managed Resources").
+     * The Confluence parent page name (e.g. "Management Plugins").
      *
      * @parameter expression="${confluenceParentPageTitle}"
      */
@@ -77,13 +79,28 @@ public class PluginDocMojo extends AbstractMojo {
     private String confluencePassword;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        Properties props = new Properties();
+
+        setProperty(props, "confluenceUrl", this.confluenceUrl);
+        setProperty(props, "confluenceSpace", this.confluenceSpace);
+        setProperty(props, "confluenceParentPageTitle", this.confluenceParentPageTitle);
+        setProperty(props, "confluenceUserName", this.confluenceUserName);
+        setProperty(props, "confluencePassword", this.confluencePassword);
+
         PluginDocGenerator generator = new PluginDocGenerator();
-        generator.setConfluenceProperties(confluenceUrl, confluenceSpace, confluenceParentPageTitle,
-            confluenceUserName, confluencePassword);
+        generator.loadProperties(props);
         try {
             generator.execute(this.project.getBasedir().getAbsolutePath());
         } catch (PluginDocGeneratorException pdge) {
             throw new MojoExecutionException(pdge.getMessage(), pdge.getCause());
+        }
+    }
+
+    private static void setProperty(Properties props, String name, String value) {
+        if (value == null) {
+            props.remove(name);
+        } else {
+            props.setProperty(name, value);
         }
     }
 

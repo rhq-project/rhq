@@ -67,6 +67,31 @@ public class PropertiesFileUpdateTest {
         }
     }
 
+    public void testNonExistentFile() throws Exception {
+        if (existingPropertiesFile != null) {
+            existingPropertiesFile.delete();
+        }
+        PropertiesFileUpdate update = new PropertiesFileUpdate(existingPropertiesFile.getAbsolutePath());
+        update.update("color", "blue");
+
+        Properties props = update.loadExistingProperties();
+        assert props.getProperty("color").equals("blue");
+        assert props.size() == 1;
+    }
+
+    public void testEmptyFile() throws Exception {
+        if (existingPropertiesFile != null) {
+            existingPropertiesFile.delete();
+        }
+        existingPropertiesFile = File.createTempFile("properties-file-update-test", ".properties");
+        PropertiesFileUpdate update = new PropertiesFileUpdate(existingPropertiesFile.getAbsolutePath());
+        update.update("color", "blue");
+
+        Properties props = update.loadExistingProperties();
+        assert props.getProperty("color").equals("blue");
+        assert props.size() == 1;
+    }
+
     public void testSpacesAroundEquals() throws Exception {
         Properties props = loadPropertiesFile();
 

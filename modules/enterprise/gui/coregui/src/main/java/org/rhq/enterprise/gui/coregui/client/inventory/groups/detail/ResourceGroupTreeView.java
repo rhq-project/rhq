@@ -544,7 +544,16 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         // This node represents one type of resource that has 1 or more individual resources as members in the group.
         // It will be associated with both a resource type and a cluster key.
-        ResourceGroupEnhancedTreeNode node = new ResourceGroupEnhancedTreeNode(child.getName());
+
+        // If an autoCluster contains disparate resource names the server returns only "..." because it doesn't
+        // know what to name the node.  This typically happens if the cluster group (i.e. root group) members are
+        // themselves disparate. In general this is not the case, because recursive compat groups are typically
+        // used specifically for groups of logically equivalent resources, like cloned AS instances. 
+        String childName = child.getName();
+        if ("...".equals(childName)) {
+            childName = MSG.group_tree_groupOfResourceType(type.getName());
+        }
+        ResourceGroupEnhancedTreeNode node = new ResourceGroupEnhancedTreeNode(childName);
 
         ClusterKeyFlyweight keyFlyweight = child.getClusterKey();
         ClusterKey key = new ClusterKey(parentKey, keyFlyweight.getResourceTypeId(), keyFlyweight.getResourceKey());
@@ -564,13 +573,13 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // label the tree node so the user knows this cluster node is not representative of the entire group membership
             double percentage = (double) memberCount / (double) clusterSize;
             String percentageStr = NumberFormat.getFormat("0%").format(percentage);
-            String title = child.getName() + " <span style=\"color: red; font-style: italic\">(" + percentageStr
+            String title = childName + " <span style=\"color: red; font-style: italic\">(" + percentageStr
                 + ")</span>";
             node.setTitle(title);
 
             // "1 out of 2 group members have "foo" child resources"
             node.setTooltip(MSG.group_tree_partialClusterTooltip(String.valueOf(memberCount),
-                String.valueOf(clusterSize), child.getName()));
+                String.valueOf(clusterSize), childName));
         }
 
         return node;

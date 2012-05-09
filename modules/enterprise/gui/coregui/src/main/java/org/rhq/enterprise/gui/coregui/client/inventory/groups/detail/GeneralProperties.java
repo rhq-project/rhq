@@ -56,14 +56,14 @@ public class GeneralProperties extends LocatableVLayout {
     private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
     private final ResourceGroupTitleBar titleBar;
-    private boolean isAutoGroup;
+    private boolean isEditable;
 
     public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar,
-        boolean isAutoGroup) {
+        boolean isEditable) {
         super(locatorId);
         this.groupComposite = groupComposite;
         this.titleBar = titleBar;
-        this.isAutoGroup = isAutoGroup;
+        this.isEditable = isEditable;
     }
 
     @Override
@@ -82,13 +82,13 @@ public class GeneralProperties extends LocatableVLayout {
 
         boolean isDynaGroup = (group.getGroupDefinition() != null);
         boolean hasInventoryPermission = (this.groupComposite.getResourcePermission().isInventory());
-        boolean isEditable = (!isDynaGroup && !isAutoGroup && hasInventoryPermission);
+        boolean canEdit = (!isDynaGroup && isEditable && hasInventoryPermission);
 
         StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
         StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
 
         final FormItem nameItem;
-        if (isEditable) {
+        if (canEdit) {
             final EditableFormItem togglableNameItem = new EditableFormItem();
             togglableNameItem.setValidators(notEmptyOrNullValidator);
             togglableNameItem.setValueEditedHandler(new ValueEditedHandler() {
@@ -154,7 +154,7 @@ public class GeneralProperties extends LocatableVLayout {
 
         final FormItem descriptionItem;
         String value;
-        if (isEditable) {
+        if (canEdit) {
             final EditableFormItem togglableDescriptionItem = new EditableFormItem();
             togglableDescriptionItem.setValidators(notNullValidator);
             togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
@@ -201,7 +201,7 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(dynamicItem);
 
         FormItem recursiveItem;
-        if (isEditable) {
+        if (canEdit) {
             CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive",
                 MSG.view_group_summary_recursive());
             editableRecursiveItem.setValueEditedHandler(new ValueEditedHandler() {

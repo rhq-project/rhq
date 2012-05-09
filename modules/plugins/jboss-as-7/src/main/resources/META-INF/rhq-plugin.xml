@@ -6201,48 +6201,6 @@
         </service>
       </service>
 
-      <service name="In VM Acceptor"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               createDeletePolicy="both">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="in-vm-acceptor"/>
-        </plugin-configuration>
-
-        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
-          <results>
-             <c:simple-property name="operationResult" description="Starts the acceptor." />
-          </results>
-        </operation>
-
-        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
-          <results>
-             <c:simple-property name="operationResult" description="Stops the acceptor." />
-          </results>
-        </operation>
-
-        <metric property="started" dataType="trait" description="Whether it's stopped or started."/>
-
-        <resource-configuration>
-          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
-        </resource-configuration>
-      </service>
-
-      <service name="In VM Connector"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               createDeletePolicy="both">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="in-vm-connector"/>
-        </plugin-configuration>
-
-        <resource-configuration>
-          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
-        </resource-configuration>
-      </service>
-
       <service name="Address Setting"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
@@ -6324,6 +6282,90 @@
 
         <resource-configuration>
           <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference."/>
+        </resource-configuration>
+      </service>
+
+      <service name="In VM Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="in-vm-acceptor"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the acceptor." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the acceptor." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether it's stopped or started."/>
+
+        <resource-configuration>
+          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
+        </resource-configuration>
+      </service>
+
+      <service name="In VM Connector"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="in-vm-connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Remote Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="remote-acceptor"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the acceptor." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the acceptor." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether this acceptor is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Remote Connector"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="remote-connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
           <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference."/>          
         </resource-configuration>
       </service>
@@ -6596,6 +6638,8 @@
       <parent-resource-type name="Connector (HornetQ)" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Acceptor" plugin="&pluginName;"/>
       <parent-resource-type name="In VM Connector" plugin="&pluginName;"/>
+      <parent-resource-type name="Remote Acceptor" plugin="&pluginName;"/>
+      <parent-resource-type name="Remote Connector" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>

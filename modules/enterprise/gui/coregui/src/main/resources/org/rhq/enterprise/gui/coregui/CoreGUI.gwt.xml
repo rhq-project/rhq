@@ -6,10 +6,6 @@
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
     <inherits name="com.google.gwt.logging.Logging"/>
-    <!--
-    <inherits name='com.google.gwt.core.EmulateJsStack'/>
-    -->
-
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />

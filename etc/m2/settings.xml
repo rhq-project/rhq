@@ -258,7 +258,7 @@
         <!-- Enable faster, but less-optimized, gwt compilations. -->
         <gwt.draftCompile>true</gwt.draftCompile>
         <!-- Make sure GWT-generated JavaScript code is not obfuscated. -->
-        <gwt.style>DETAILED</gwt.style>
+        <gwt.style>PRETTY</gwt.style>
         <!-- Only compile the default locale. -->
         <gwt.locale>default</gwt.locale>
         <!-- If user specifies an unsupported locale, fallback to the default locale. -->

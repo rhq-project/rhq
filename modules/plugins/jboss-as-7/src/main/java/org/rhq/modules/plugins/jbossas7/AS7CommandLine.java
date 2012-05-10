@@ -22,13 +22,26 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
+import org.rhq.core.system.ProcessInfo;
 
 /**
  * Parses a JBoss AS7 command line and provides easy access to its parts.
@@ -37,15 +50,31 @@ import org.rhq.core.pluginapi.util.JavaCommandLine;
  */
 public class AS7CommandLine extends JavaCommandLine {
 
+    public static final String HOME_DIR_SYSPROP = "jboss.home.dir";
+
     private static final String APP_SERVER_MODULE_NAME_PREFIX = "org.jboss.as";
+    private static final CommandLineOption PROPERTIES_OPTION = new CommandLineOption("P", "properties", true);
+    private static final String[] PROPERTIES_OPTION_PREFIXES = new String[]{
+            "-" + PROPERTIES_OPTION.getShortName(),
+            "--" + PROPERTIES_OPTION.getLongName()
+    };
+
+    private final Log log = LogFactory.getLog(AS7CommandLine.class);
 
     private String appServerModuleName;
     private List<String> appServerArgs;
+    private ProcessInfo process;
 
     public AS7CommandLine(String[] args) {
         // Note, we don't use EnumSet.allOf() just in case some other option delimiter is added to the enum in the future.
         super(args, true, EnumSet.of(OptionValueDelimiter.WHITESPACE, OptionValueDelimiter.EQUALS_SIGN),
                 EnumSet.of(OptionValueDelimiter.WHITESPACE, OptionValueDelimiter.EQUALS_SIGN));
+    }
+
+    public AS7CommandLine(ProcessInfo process) {
+        this(process.getCommandLine());
+
+        this.process = process;
 
         // In the case of AS7, the class arguments are actually the arguments to the jboss-modules.jar main class. We
         // want to split out the arguments to the app server module (i.e. "org.jboss.as.standalone" or
@@ -81,6 +110,118 @@ public class AS7CommandLine extends JavaCommandLine {
     @NotNull
     public List<String> getAppServerArguments() {
         return this.appServerArgs;
+    }
+
+    @Override
+    protected void processClassArgument(String classArg, String nextArg) {
+        super.processClassArgument(classArg, nextArg);
+
+        String propertiesOptionValue = null;
+        for (String propertiesOption : PROPERTIES_OPTION_PREFIXES) {
+            if (classArg.startsWith(propertiesOption)) {
+                if ((propertiesOption.length() < classArg.length()) &&
+                        (classArg.charAt(propertiesOption.length()) == '=')) {
+                    // single-arg option, e.g. "--properties=jboss-as.properties"
+                    propertiesOptionValue = classArg.substring(propertiesOption.length() + 1);
+                } else {
+                    // double-arg option, e.g. "--properties jboss-as.properties"
+                    propertiesOptionValue = nextArg;
+                }
+            }
+        }
+        if (propertiesOptionValue != null) {
+            URL propertiesURL = toURL(propertiesOptionValue);
+            if (propertiesURL != null) {
+                Properties props = loadProperties(propertiesURL);
+                if (props != null) {
+                    for (Map.Entry entry : props.entrySet()) {
+                        Map<String, String> sysProps = getSystemProperties();
+                        sysProps.put((String) entry.getKey(), (String) entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+
+    private URL toURL(String value) {
+        URL propertiesURL;
+        try {
+            propertiesURL = URI.create(value).toURL();
+            if (propertiesURL.getProtocol().equals("file")) {
+                String path = propertiesURL.getPath();
+                File file = new File(path);
+                if (!file.isAbsolute()) {
+                    // it's a file URL with a relative path, e.g. "file:jboss-as.properties"
+                    File absoluteFile = getAbsoluteFile(file);
+                    propertiesURL = absoluteFile.toURI().toURL();
+                }
+            }
+        } catch (MalformedURLException e) {
+            // it's probably just a path, e.g. "/opt/jboss-as-7.1.1.Final/bin/jboss-as.properties" or "jboss-as.properties"
+            File file = new File(value);
+            File absoluteFile = getAbsoluteFile(file);
+            try {
+                propertiesURL = absoluteFile.toURI().toURL();
+            } catch (MalformedURLException e1) {
+                propertiesURL = null;
+                log.error("Value of class option " + PROPERTIES_OPTION + " (" + value + ") is not a valid URL.");
+            }
+        }
+
+        return propertiesURL;
+    }
+
+    private File getAbsoluteFile(File file) {
+        File absoluteFile;
+        if (!file.isAbsolute()) {
+            if ((this.process != null) && (this.process.getExecutable() != null)) {
+                String cwd = this.process.getExecutable().getCwd();
+                absoluteFile = new File(cwd, file.getPath());
+            } else {
+                String homeDir = getSystemProperties().get(HOME_DIR_SYSPROP);
+                if (homeDir != null) {
+                    File binDir = new File(homeDir, "bin");
+                    absoluteFile = new File(binDir, file.getPath());
+                } else {
+                    log.error("Failed to resolve relative properties file path [" + file + "].");
+                    return null;
+                }
+            }
+        } else {
+            absoluteFile = file;
+        }
+
+        return absoluteFile;
+    }
+
+    private Properties loadProperties(URL propertiesURL) {
+        URLConnection urlConnection;
+        try {
+            urlConnection = propertiesURL.openConnection();
+        } catch (IOException e) {
+            log.error("Failed to connect to URL [" + propertiesURL + "].", e);
+            return null;
+        }
+        InputStream inputStream;
+        try {
+            inputStream = urlConnection.getInputStream();
+            if (inputStream == null) {
+                log.error("Failed to read from URL [" + propertiesURL + "].");
+                return null;
+            }
+        } catch (IOException e) {
+            log.error("Failed to read from URL [" + propertiesURL + "].", e);
+            return null;
+        }
+
+        Properties props = new Properties();
+        try {
+            props.load(inputStream);
+        } catch (IOException e) {
+            log.error("Failed to parse properties from URL [" + propertiesURL + "].", e);
+            return null;
+        }
+        return props;
     }
 
 }

@@ -173,7 +173,7 @@ public class JavaCommandLine {
                 }
                 nextArgIsJarFile = true;
             } else {
-                if (arg.matches("-D.+")) {
+                if (isSystemPropertyArgument(arg)) {
                     parseSystemPropertyArgument(arg);
                 }
                 this.javaOptions.add(arg);
@@ -191,10 +191,14 @@ public class JavaCommandLine {
     private void parseClassArguments(String[] args, int beginIndex) {
         for (int i = beginIndex; i < args.length; i++) {
             String classArg = args[i];
-            if (this.includeSystemPropertiesFromClassArguments && classArg.matches("-D.+")) {
-                parseSystemPropertyArgument(classArg);
-            }
+            processClassArgument(classArg, ((i + 1) != args.length) ? args[i + 1] : null);
             this.classArguments.add(classArg);
+        }
+    }
+
+    protected void processClassArgument(String classArg, String nextArg) {
+        if (this.includeSystemPropertiesFromClassArguments && isSystemPropertyArgument(classArg)) {
+            parseSystemPropertyArgument(classArg);
         }
     }
 
@@ -278,6 +282,10 @@ public class JavaCommandLine {
                 }
             }
         }
+    }
+
+    private boolean isSystemPropertyArgument(String arg) {
+        return arg.matches("-D.+");
     }
 
     private void parseSystemPropertyArgument(String arg) {

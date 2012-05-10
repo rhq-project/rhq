@@ -132,8 +132,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         for (ProcessScanResult processScanResult : processScanResults) {
             try {
                 ProcessInfo process = processScanResult.getProcessInfo();
-                String[] processArgs = process.getCommandLine();
-                AS7CommandLine commandLine = new AS7CommandLine(processArgs);
+                AS7CommandLine commandLine = new AS7CommandLine(process);
                 DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, process, commandLine);
                 discoveredResources.add(details);
                 log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["

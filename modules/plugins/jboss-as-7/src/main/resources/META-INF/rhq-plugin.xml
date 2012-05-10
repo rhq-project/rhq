@@ -202,27 +202,27 @@
         </resource-configuration>
 '>
 
-	<!ENTITY logLevel '
+  <!ENTITY logLevel '
            <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
             <c:property-options>
-	      <c:option value="ALL"/>
-	      <c:option value="CONFIG"/>
-	      <c:option value="DEBUG"/>
-	      <c:option value="ERROR"/>
-	      <c:option value="FATAL"/>
-	      <c:option value="FINE"/>
-	      <c:option value="FINER"/>
-	      <c:option value="FINEST"/>
-	      <c:option value="INFO"/>
-	      <c:option value="OFF"/>
-	      <c:option value="TRACE"/>
-	      <c:option value="WARN"/>
-	      <c:option value="WARNING"/>
+        <c:option value="ALL"/>
+        <c:option value="CONFIG"/>
+        <c:option value="DEBUG"/>
+        <c:option value="ERROR"/>
+        <c:option value="FATAL"/>
+        <c:option value="FINE"/>
+        <c:option value="FINER"/>
+        <c:option value="FINEST"/>
+        <c:option value="INFO"/>
+        <c:option value="OFF"/>
+        <c:option value="TRACE"/>
+        <c:option value="WARN"/>
+        <c:option value="WARNING"/>
             </c:property-options>
-	   </c:simple-property>
+     </c:simple-property>
 '>
 
-	<!ENTITY logFilter '
+  <!ENTITY logFilter '
          <!--
          <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
           <c:property-options>
@@ -265,20 +265,20 @@
         </c:simple-property>
 '>
 
-	<!ENTITY logFile '
+  <!ENTITY logFile '
           <c:map-property name="file" required="true" readOnly="false" description="The file description consisting of the path and optional relative to path.">
             <c:simple-property name="path" required="true" readOnly="false" description="The filesystem path."/>
             <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">
-	     <c:property-options>
-	      <c:option value="java.home" />
-	      <c:option value="jboss.domain.servers.dir" />
-	      <c:option value="jboss.home" />
-	      <c:option value="jboss.server.base.dir" />
-	      <c:option value="jboss.server.data.dir" />
-	      <c:option value="jboss.server.log.dir" />
-	      <c:option value="jboss.server.tmp.dir" />
-	      <c:option value="user.dir" />
-	      <c:option value="user.home" />
+       <c:property-options>
+        <c:option value="java.home" />
+        <c:option value="jboss.domain.servers.dir" />
+        <c:option value="jboss.home" />
+        <c:option value="jboss.server.base.dir" />
+        <c:option value="jboss.server.data.dir" />
+        <c:option value="jboss.server.log.dir" />
+        <c:option value="jboss.server.tmp.dir" />
+        <c:option value="user.dir" />
+        <c:option value="user.home" />
              </c:property-options>
             </c:simple-property>
           </c:map-property>
@@ -2227,17 +2227,17 @@
       <c:group name="child:root-logger=ROOT" displayName="Root logger">
           &logFilter;
           &logLevel;
-	&logLevel;
-	<c:list-property name="handlers" required="true" readOnly="false"
-	                 description="The Handlers associated with this Logger.">
-	  <c:simple-property name="handler" type="string" description="The Handlers associated with this Logger."/>
-	</c:list-property>
+  &logLevel;
+  <c:list-property name="handlers" required="true" readOnly="false"
+                   description="The Handlers associated with this Logger.">
+    <c:simple-property name="handler" type="string" description="The Handlers associated with this Logger."/>
+  </c:list-property>
       </c:group>
     </resource-configuration>
 
      <service name="Async Handler"
               discovery="SubsystemDiscovery"
-	      createDeletePolicy="both"
+        createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
@@ -2283,10 +2283,10 @@
            &logLevel;
          <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
            <c:property-options>
-	      <c:option value="BLOCK"/>
-	      <c:option value="DISCARD"/>
+        <c:option value="BLOCK"/>
+        <c:option value="DISCARD"/>
            </c:property-options>
-	 </c:simple-property>
+   </c:simple-property>
          <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
              <c:simple-property name="subhandlers" />
@@ -2297,7 +2297,7 @@
 
      <service name="Console Handler"
               discovery="SubsystemDiscovery"
-	      createDeletePolicy="both"
+        createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
@@ -2327,17 +2327,17 @@
            &logLevel;
          <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
            <c:property-options>
-	      <c:option value="System.err" name="System.err"/>
-	      <c:option value="System.out" name="System.out"/>
+        <c:option value="System.err" name="System.err"/>
+        <c:option value="System.out" name="System.out"/>
            </c:property-options>
-	 </c:simple-property>
+   </c:simple-property>
        </resource-configuration>
 
      </service><!-- End of console-handler service -->
 
      <service name="Custom Handler"
               discovery="SubsystemDiscovery"
-	      createDeletePolicy="both"
+        createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
@@ -2420,7 +2420,7 @@
 
      <service name="Logger"
               discovery="SubsystemDiscovery"
- 	      createDeletePolicy="both"
+        createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
@@ -2455,7 +2455,7 @@
 
      <service name="Periodic Rotating File Handler"
               discovery="SubsystemDiscovery"
-	      createDeletePolicy="both"
+        createDeletePolicy="both"
               class="BaseComponent">
 
         <plugin-configuration>
@@ -2495,61 +2495,61 @@
      </service><!-- End of periodic-rotating-file-handler service -->
 
 <!--     <service name="Root Logger"
-		 discovery="SubsystemDiscovery"
+     discovery="SubsystemDiscovery"
                  createDeletePolicy="both"
-		 class="BaseComponent">
+     class="BaseComponent">
 
-	   <plugin-configuration>
-	     <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
-	   </plugin-configuration>
+     <plugin-configuration>
+       <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
+     </plugin-configuration>
 
-	    <operation name="change-root-log-level" description="Change the root logger level.">
-	      <parameters>
-		&logLevel;
-	      </parameters>
-	      <results>
-		<c:simple-property name="operationResult"/>
-	      </results>
-	    </operation>
+      <operation name="change-root-log-level" description="Change the root logger level.">
+        <parameters>
+    &logLevel;
+        </parameters>
+        <results>
+    <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
 
-	    <operation name="remove-root-logger" description="Remove the root logger.">
-	      <results>
-		<c:simple-property name="operationResult"/>
-	      </results>
-	    </operation>
+      <operation name="remove-root-logger" description="Remove the root logger.">
+        <results>
+    <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
 
-	    <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
-	     <parameters>
-	       <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-	     </parameters>
-	     <results>
-		<c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
-	     </results>
-	    </operation>
+      <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
+       <parameters>
+         <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+       </parameters>
+       <results>
+    <c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
+       </results>
+      </operation>
 
-	    <operation name="set-root-logger" description="Set the root logger.">
-	      <parameters>
-		&logLevel;
-		<c:list-property name="handlers" required="true" readOnly="false"
-		                 description="The Handlers associated with this Logger.">
-		  <c:simple-property name="handler" type="string"/>
-		</c:list-property>
-	      </parameters>
-	      <results>
-		<c:simple-property name="operationResult"/>
-	      </results>
-	    </operation>
+      <operation name="set-root-logger" description="Set the root logger.">
+        <parameters>
+    &logLevel;
+    <c:list-property name="handlers" required="true" readOnly="false"
+                     description="The Handlers associated with this Logger.">
+      <c:simple-property name="handler" type="string"/>
+    </c:list-property>
+        </parameters>
+        <results>
+    <c:simple-property name="operationResult"/>
+        </results>
+      </operation>
 
-	   <resource-configuration>
+     <resource-configuration>
              <c:group name="Root logger" displayName="Root logger">
-	      &logFilter;
-	      <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
-		 <c:simple-property name="handlers" />
-	      </c:list-property>
-	      &logLevel;
-	     </c:group>
-	   </resource-configuration>
-	</service> --><!-- End of Root Logger service -->
+        &logFilter;
+        <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
+     <c:simple-property name="handlers" />
+        </c:list-property>
+        &logLevel;
+       </c:group>
+     </resource-configuration>
+  </service> --><!-- End of Root Logger service -->
 
      <service name="Size Rotating File Handler"
               discovery="SubsystemDiscovery"
@@ -2766,23 +2766,23 @@
           <c:simple-property name="path" readOnly="true" default="post-handler-chain"/>
         </plugin-configuration>
 
-		<service name="Post Handler"
-			 discovery="SubsystemDiscovery"
-			 class="BaseComponent"
-		    >
+    <service name="Post Handler"
+       discovery="SubsystemDiscovery"
+       class="BaseComponent"
+        >
 
-			<runs-inside>
-			    <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
-			    <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
-			</runs-inside>
+      <runs-inside>
+          <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
+          <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
+      </runs-inside>
 
-		     <plugin-configuration>
-			<c:simple-property name="path" readOnly="true" default="handler"/>
-		     </plugin-configuration>
-		     <resource-configuration>
-			<c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
-		     </resource-configuration>
-		   </service>
+         <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="handler"/>
+         </plugin-configuration>
+         <resource-configuration>
+      <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+         </resource-configuration>
+       </service>
       </service><!-- End of post handler chain service -->
 
       <service name="Pre Handler Chain"
@@ -2796,23 +2796,23 @@
           <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
         </resource-configuration>
 
-		<service name="Pre Handler"
-			 discovery="SubsystemDiscovery"
-			 class="BaseComponent"
-		    >
+    <service name="Pre Handler"
+       discovery="SubsystemDiscovery"
+       class="BaseComponent"
+        >
 
-			<runs-inside>
-			    <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
-			    <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
-			</runs-inside>
+      <runs-inside>
+          <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
+          <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
+      </runs-inside>
 
-		     <plugin-configuration>
-			<c:simple-property name="path" readOnly="true" default="handler"/>
-		     </plugin-configuration>
-		     <resource-configuration>
-			<c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
-		     </resource-configuration>
-		   </service><!-- End of Pre Handler service definition -->
+         <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="handler"/>
+         </plugin-configuration>
+         <resource-configuration>
+      <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+         </resource-configuration>
+       </service><!-- End of Pre Handler service definition -->
       </service> <!-- End of Pre Handler Chain service definition -->
     </service> <!-- End of Endpoint service definition -->
 
@@ -4504,16 +4504,16 @@
            <operation name="add" description="Adds a JSSE configuration">
              <parameters>
                <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
-	    <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
-	    <c:simple-property name="truststore" required="false" type="string" readOnly="false" description="Configures a JSSE trust store"/>
-	    <c:simple-property name="trust-manager" required="false" type="string" readOnly="false" description="JSEE Trust Manager factory"/>
-	    <c:simple-property name="key-manager" required="false" type="string" readOnly="false" description="JSEE Key Manager factory"/>
-	    <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
-	    <c:simple-property name="keystore" required="false" type="string" readOnly="false" description="Configures a JSSE key store"/>
-	    <c:simple-property name="additional-properties" required="false" type="string" readOnly="false" description="Additional properties that may be necessary to configure JSSE."/>
-	    <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
-	    <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
-	    <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
+      <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
+      <c:simple-property name="truststore" required="false" type="string" readOnly="false" description="Configures a JSSE trust store"/>
+      <c:simple-property name="trust-manager" required="false" type="string" readOnly="false" description="JSEE Trust Manager factory"/>
+      <c:simple-property name="key-manager" required="false" type="string" readOnly="false" description="JSEE Key Manager factory"/>
+      <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
+      <c:simple-property name="keystore" required="false" type="string" readOnly="false" description="Configures a JSSE key store"/>
+      <c:simple-property name="additional-properties" required="false" type="string" readOnly="false" description="Additional properties that may be necessary to configure JSSE."/>
+      <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
+      <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
+      <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
              </parameters>
              <results>
                 <c:simple-property name="operationResult" description="Adds a JSSE configuration" />

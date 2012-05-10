@@ -628,7 +628,7 @@
 <!ENTITY webApplicationContextMetrics '
     <metric property="clustered" dataType="trait" displayType="summary"
             description="True if this web application context is clustered" />
-            
+
     <metric property="virtualHost"
             dataType="trait" displayType="summary"
             description="the virtual host with which this context is associated"/>
@@ -854,8 +854,8 @@
 '>
 
 <!ENTITY ejb2EntityBeanMetrics '
-	<metric property="CacheSize"
-	        displayName="Cache Size"/>
+  <metric property="CacheSize"
+          displayName="Cache Size"/>
 '>
 
 <!ENTITY subscriptionsResultProperty '
@@ -1524,7 +1524,7 @@
                 </c:group>
             </plugin-configuration>
 
- 			&datasourceAndConnectionFactoryOperations;
+      &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
             &datasourceAndConnectionFactoryMetrics;
@@ -1806,7 +1806,7 @@
                         description="The timestamp of the last message add"/>
 
                 <metric property="clustered" dataType="trait" description="True if this queue is clustered, false otherwise" />
-                
+
                 <resource-configuration>
 
                     <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
@@ -1975,7 +1975,7 @@
 
             </service>
 
-            
+
             <service name="Topic"
                      class="JmsDestinationComponent"
                      createDeletePolicy="both"
@@ -2360,7 +2360,7 @@
                     description="whether this EAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
-            	&deploymentContentConfigProps;
+              &deploymentContentConfigProps;
             </content>
 
             <drift-definition 
@@ -2567,7 +2567,7 @@
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
-            	&deploymentContentConfigProps;
+              &deploymentContentConfigProps;
             </content>
 
             <service name="EJB2 Stateless Session Bean"
@@ -2734,7 +2734,7 @@
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
-            	&deploymentContentConfigProps;
+              &deploymentContentConfigProps;
             </content>
 
             <service name="EJB3 Stateless Session Bean"
@@ -2871,7 +2871,7 @@
                     description="whether this RAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="RAR File" category="deployable" isCreationType="true">
-            	&deploymentContentConfigProps;
+              &deploymentContentConfigProps;
             </content>
 
         </service>
@@ -2952,7 +2952,7 @@
                 </c:simple-property>                 
             </configuration>
          </content>
-         
+
       </service>
 
         <service name="Service Binding Manager"
@@ -2969,7 +2969,7 @@
 
             <metric property="activeBindingSetName" dataType="trait" displayName="Active Binding Set"
                     displayType="summary" description="The active binding set used to obtain port bindings from." />
-            
+
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
                                    activationPolicy="restart">
@@ -2987,21 +2987,21 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                     ]]></c:description>
                 </c:simple-property>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
-	                <c:map-property name="binding">
+                  <c:map-property name="binding">
                         <c:simple-property name="serviceName" description="The name of the service to which this binding applies."/>
-	                    <c:simple-property name="bindingName" required="false" description="A qualifier identifying which particular binding within the service this is."/>
-	                    <c:simple-property name="port" type="integer" description="The port to use for the binding.">
+                      <c:simple-property name="bindingName" required="false" description="A qualifier identifying which particular binding within the service this is."/>
+                      <c:simple-property name="port" type="integer" description="The port to use for the binding.">
                             <c:constraint>
                                 <c:integer-constraint minimum="0"/>
                                 <c:integer-constraint maximum="65535"/>
                             </c:constraint>
                         </c:simple-property>
-	                    <c:simple-property name="hostName" required="false" description="The host name or string notation IP address to use for the binding."/>
-	                    <c:simple-property name="description" required="false" description="Description of the binding."/>
-	                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
-	                    <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets."/>
-	                    <c:simple-property name="fixedPort" type="boolean" description="Whether the port should remain fixed in all binding sets."/>
-	                </c:map-property>
+                      <c:simple-property name="hostName" required="false" description="The host name or string notation IP address to use for the binding."/>
+                      <c:simple-property name="description" required="false" description="Description of the binding."/>
+                      <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
+                      <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets."/>
+                      <c:simple-property name="fixedPort" type="boolean" description="Whether the port should remain fixed in all binding sets."/>
+                  </c:map-property>
                 </c:list-property>
             </resource-configuration>
 
@@ -3029,7 +3029,7 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                 <metric property="name" displayName="Name" dataType="trait" displayType="summary" description="The name of this binding set."/>
                 <metric property="defaultHostName" dataType="trait" displayName="Default Host Name" displayType="summary" description="The default host name of this binding set." />
                 <metric property="portOffset" dataType="trait" displayName="Port Offset" displayType="summary" description="The port offset of this binding set."/>
-                
+
                 <resource-configuration>
                     <c:simple-property name="name" readOnly="true" description="The name of this binding set."/>
                     <c:simple-property name="defaultHostName" description='The host name that should be used for all bindings whose configuration does not specify "fixed host name".'/>
@@ -3044,22 +3044,22 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                         bindings. These can either redefine a standard binding or define a brand new binding. The standard bindings and the override bindings then define the
                         full set of the bindings that are defined by the binding set.'>
                             <c:map-property name="binding">
-						        <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
-						        <c:simple-property name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is."/>
-						        <c:simple-property name="port" type="integer" displayName="Port" description="The port to use for the binding.">
+                    <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
+                    <c:simple-property name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is."/>
+                    <c:simple-property name="port" type="integer" displayName="Port" description="The port to use for the binding.">
                                     <c:constraint>
                                         <c:integer-constraint minimum="0"/>
                                         <c:integer-constraint maximum="65535"/>
                                     </c:constraint>
                                 </c:simple-property>
-						        <c:simple-property name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
-						        <c:simple-property name="description" required="false" displayName="Description" description="Description of the binding"/>
-						        <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
-						    </c:map-property>
+                    <c:simple-property name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
+                    <c:simple-property name="description" required="false" displayName="Description" description="Description of the binding"/>
+                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
+                </c:map-property>
                     </c:list-property>
                 </resource-configuration>                
             </service>
-		</service>
+    </service>
 
     </server>
 

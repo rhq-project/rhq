@@ -6624,6 +6624,192 @@
           </c:list-property>
         </resource-configuration>
       </service>
+
+      <service name="Cluster Connection"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="cluster-connection"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:get-nodes" displayName="Get Nodes" description="Returns a map of the nodes connected to this cluster connection, where keys are node IDs and values are the addresses used to connect to the nodes.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the cluster connection.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the cluster connection." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the cluster connection.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the cluster connection." />
+          </results>
+        </operation>
+
+        <metric property="node-id" dataType="trait" description="The node ID used by this cluster connection."/>
+        <metric property="started" dataType="trait" description="Whether the cluster connection is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="allow-direct-connections-only" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether, if a node learns of the existence of a node that is more than 1 hop away, we do not create a bridge for direct cluster connection. Only relevant if &apos;static&#45;connectors&apos; is defined. The default value is false."/>
+          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The timeout (in ms) for remote calls made by the cluster connection. The default value is 30000."/>
+          <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
+          <c:simple-property name="cluster-connection-address" required="true" type="string" readOnly="false" description="Each cluster connection only applies to messages sent to an address that starts with this value."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node. The default value is 1048576."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the cluster connections are considered alive (in the absence of heartbeat). The default value is 60000."/>
+          <c:simple-property name="connector-ref" required="true" type="string" readOnly="false" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="forward-when-no-consumers" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether messages will be distributed round robin between other nodes of the cluster irrespective of whether there are matching or indeed any consumers on other nodes. If this is set to false (the default) then HornetQ will only forward messages to other nodes of the cluster if the address to which they are being forwarded has queues which have consumers, and if those consumers have message filters (selectors) at least one of those selectors must match the message. The default value is false."/>
+          <c:simple-property name="max-hops" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of times a message can be forwarded. HornetQ can be configured to also load balance messages to nodes which might be connected to it only indirectly with other HornetQ servers as intermediates in a chain. The default value is 1."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The minimum size (in bytes) for a message before it is considered as a large message. The default value is 102400."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="long" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
+          <c:list-property name="static-connectors" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+              <c:simple-property name="static-connectors" />
+          </c:list-property>
+          <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Broadcast Group"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description=""
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="broadcast-group"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:get-connector-pairs-as-json" displayName="Get Connector Pairs as JSON" description="Returns the pairs of live&#45;backup connectors that are broadcasted by this broadcast group using JSON serialization.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the broadcast group.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the broadcast group." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the broadcast group.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the broadcast group." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether the broadcast group is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="broadcast-period" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between consecutive broadcasts. The default value is 2000."/>
+          <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
+            <c:simple-property name="connectors" />
+          </c:list-property>
+          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Path"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both"
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="path=journal-directory"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="path" required="true" type="string" readOnly="false" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
+          <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+        </resource-configuration>
+      </service>
+
+      <service name="Bridge"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="bridge"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the bridge.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the bridge." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the bridge.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the bridge." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether the bridge is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to the target node. The default value is 1048576."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the bridges are considered alive (in the absence of heartbeat). The default value is 60000."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="Whether the bridge will attempt to failover onto a backup server (if specified) when the target server is cleanly shutdown rather than crashed."/>
+          <c:simple-property name="filter" required="false" type="string" readOnly="false" description="An optional filter string. If specified then only messages which match the filter expression specified will be forwarded. The filter string follows the HornetQ filter expression syntax described in the HornetQ documentation."/>
+          <c:simple-property name="forwarding-address" required="false" type="string" readOnly="false" description="The address on the target server that the message will be forwarded to. If a forwarding address is not specified then the original destination of the message will be retained."/>
+          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not this bridge should support high availability. True means it will connect to any available server in a cluster and support failover. The default value is false."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The minimum size (in bytes) for a message before it is considered as a large message. The default value is 102400."/>
+          <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="CHANGE ME!!" description="The password to use when creating the bridge connection to the remote server. If it is not specified the default cluster password specified by the cluster&#45;password attribute in the root messaging subsystem resource will be used. The default value is CHANGE ME!!."/>
+          <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The unique name of the local queue that the bridge consumes from."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
+          <c:list-property name="static-connectors" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:simple-property name="static-connectors" />
+          </c:list-property>
+          <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
+          <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
+          <c:simple-property name="user" required="false" type="string" readOnly="false" defaultValue="HORNETQ.CLUSTER.ADMIN.USER" description="The user name to use when creating the bridge connection to the remote server. If it is not specified the default cluster user specified by the cluster&#45;user attribute in the root messaging subsystem resource will be used. The default value is HORNETQ.CLUSTER.ADMIN.USER."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Discovery Group"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="discovery-group"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
+          <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
+          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Connector Service"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="connector-service"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="Class name of the factory class that can instantiate the connector service."/>
+        </resource-configuration>
+      </service>
     </service>
 
   </service><!-- End of Messaging-Provider service -->
@@ -6640,6 +6826,7 @@
       <parent-resource-type name="In VM Connector" plugin="&pluginName;"/>
       <parent-resource-type name="Remote Acceptor" plugin="&pluginName;"/>
       <parent-resource-type name="Remote Connector" plugin="&pluginName;"/>
+      <parent-resource-type name="Connector Service" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>

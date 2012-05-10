@@ -37,7 +37,7 @@ public class HornetQComponent extends BaseComponent {
 
         Configuration resourceConfiguration = report.getResourceConfiguration();
         PropertyList entries = resourceConfiguration.getList("entries");
-        if (entries == null || entries.getList().isEmpty()) {
+        if (entries != null && entries.getList().isEmpty()) {
             report.setErrorMessage("You need to provide at least one JNDI name");
             report.setStatus(CreateResourceStatus.FAILURE);
             return report;

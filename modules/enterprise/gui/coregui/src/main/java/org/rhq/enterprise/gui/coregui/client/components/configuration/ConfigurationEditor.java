@@ -373,11 +373,6 @@ public class ConfigurationEditor extends LocatableVLayout {
             this.originalConfiguration = configuration.deepCopy();
         }
 
-        if (this.configuration.getNotes()!=null) {
-            Message msg = new Message(this.configuration.getNotes(),Message.Severity.Warning,EnumSet.of(Message.Option.Transient));
-            CoreGUI.getMessageCenter().notify(msg);
-        }
-
         for (Canvas childCanvas : getChildren()) {
             childCanvas.destroy();
         }
@@ -1466,7 +1461,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             unsetItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changeEvent) {
-                    // treat the ChangedEvent as a possible focus change, since this is a checkbox
+                    // treat the ChangedEvent as a possible focus change, since this is a checkbox 
                     handleFocusChange(valueItem, unsetItem);
 
                     Boolean isUnset = (Boolean) changeEvent.getValue();
@@ -1497,10 +1492,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
-            // (Smartgwt 3.0) Certain FormItems, like SelectItem, generate a Blur event when we don't want them to.
-            // For example, expanding the SelectItem drop down (via click) generates a Blur event (which makes no
+            // (Smartgwt 3.0) Certain FormItems, like SelectItem, generate a Blur event when we don't want them to. 
+            // For example, expanding the SelectItem drop down (via click) generates a Blur event (which makes no 
             // sense to me since the user is obviously not leaving the widget, it should still be in focus imo). Anyway,
-            // to get around this behavior and to be able to unset config properties that a user has left as null values
+            // to get around this behavior and to be able to unset config properties that a user has left as null values 
             // when changing focus, we avoid BlurHandler and instead use FocusHandlers and a DIY blur handling
             // approach.
 

@@ -211,7 +211,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         /**
          * Given a record, returns either the CreateResourceHistory or the DeleteResourceHistory entity object
          * that the record represents.
-         *
+         * 
          * @param from a record that represents either a create or delete resource history item
          * @return the create/delete resource history item
          */
@@ -223,7 +223,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         /**
          * Given either a CreateResourceHistory or a DeleteResourceHistory entity object,
          * returns its record representation.
-         *
+         * 
          * @param from a create or delete resource history item
          * @return the record that represents the given history item
          */

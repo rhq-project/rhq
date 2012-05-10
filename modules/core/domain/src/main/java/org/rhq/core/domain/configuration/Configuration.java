@@ -83,7 +83,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Jason Dobies
  * @author Greg Hinkle
- *
+ * 
  * @see    Property
  * @see    PropertySimple
  * @see    PropertyList
@@ -150,7 +150,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     // use the prop name as the map key
     @MapKey(name = "name")
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
     @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
@@ -457,7 +457,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * <p>
      * When adding a property to the collection returned from this method, its
      * {@link Property#getConfiguration() configuration property} is set to this instance.
-     *
+     * 
      * @return all child properties of this Configuration
      */
     @NotNull
@@ -656,9 +656,8 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
 
         Configuration that = (Configuration) obj;
-        boolean notesMatch = (this.notes==null && that.notes==null) || (this.notes!=null && this.notes.equals(that.notes));
 
-        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations) && notesMatch);
+        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
     }
 
     @Override
@@ -719,9 +718,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
 
-    /** Getter for the properties reference.
-     *
-     * @return Map<String, Property>
+    /** Getter for the properties reference. 
+     * 
+     * @return Map<String, Property> 
      */
     public Map<String, Property> getAllProperties() {
         return this.properties;

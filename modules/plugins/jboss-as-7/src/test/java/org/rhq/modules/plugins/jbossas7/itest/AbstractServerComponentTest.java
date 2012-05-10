@@ -62,6 +62,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.ER4", "7.1.1.Final-redhat-1");
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.ER5", "7.1.1.Final-redhat-1");
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.ER6", "7.1.1.Final-redhat-1");
+        EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.ER7", "7.1.1.Final-redhat-1");
     }
 
     private static final String RELEASE_VERSION_TRAIT_NAME = "_skm:release-version";

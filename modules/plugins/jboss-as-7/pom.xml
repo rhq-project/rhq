@@ -267,12 +267,12 @@
     </profile>
 
     <profile>
-      <id>eap600ER6.itest.setup</id>
+      <id>eap600ER7.itest.setup</id>
 
       <activation>
         <property>
           <name>as7.version</name>
-          <value>6.0.0.ER6</value>
+          <value>6.0.0.ER7</value>
         </property>
       </activation>
 

@@ -37,13 +37,6 @@
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
 
-    <!-- the emulated stack allows us to run in OBF compiled script and gives us stack traces
-         for debugging (we will investigate this more in the near future).
-         see:  http://code.google.com/p/google-web-toolkit/wiki/WebModeExceptions
-    <set-property name="compiler.stackMode" value="emulated" />
-    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
-    <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true" />
-    -->
 
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
@@ -76,7 +69,7 @@
            opera: Opera
 
          *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
-                 will emulate IE8
+                 will emulate IE8 (although the gwt IE9 js libs will still get loaded).
 
          Multiple agents can be specified as a comma-delimited list.
 

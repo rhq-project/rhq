@@ -49,12 +49,8 @@ public class LegacyConfigManagement extends ConfigManagementSupport {
         if (configuration == null) {
             return null;
         }
-        
-        ResourceType resourceType = componentService.getResourceType(resourceId);
 
-        if (configuration.getNotes() == null) {
-            configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-        }
+        ResourceType resourceType = componentService.getResourceType(resourceId);
 
         ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 

@@ -554,14 +554,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         askForFullReport = true;
                     }
                 } catch (NoResultException nre) {
-                    // This condition should never happen. An initial, unknown, Availability/ResourceAvailability
-                    // are created at resource persist time. But, just in case, handle it...
-                    log.warn("Resource [" + reported.getResource() + "] has no availability without an endtime ["
-                        + nre.getMessage() + "] - will attempt to create one\n" + report.toString(false));
-
-                    entityManager.persist(reported);
-                    updateResourceAvailability(reported);
-                    numInserted++;
+                    // This should not happen unless the Resource in the report is stale, which can happen in certain
+                    // sync scenarios. A Resource is given its initial Availability/ResourceAvailability when it is
+                    // persisted so it is guaranteed to have Availability, so, the Resource must not exist.
+                    log.info("Skipping mergeAvailabilityReport() for stale resource [" + reported.getResource()
+                        + "]. These messages should go away after the next agent synchronization with the server.");
 
                 } catch (NonUniqueResultException nure) {
                     // This condition should never happen.  In my world of la-la land, I've done everything
@@ -624,13 +621,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // update the last known availability data for this resource
         ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
             .getResource().getId());
+
         if (currentAvailability != null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
             // but only update the record if necessary (if the AvailabilityType changed)
             currentAvailability.setAvailabilityType(reported.getAvailabilityType());
             entityManager.merge(currentAvailability);
+
         } else if (currentAvailability == null) {
-            currentAvailability = new ResourceAvailability(reported.getResource(), reported.getAvailabilityType());
-            entityManager.persist(currentAvailability);
+            // This should not happen unless the Resource in the report is stale, which can happen in certain
+            // sync scenarios. A Resource is given its initial ResourceAvailability when it is persisted so it
+            // is guaranteed to have currentAvailability, so, the Resource must not exist.
+            log.info("Skipping updateResourceAvailability() for stale resource [" + reported.getResource()
+                + "]. These messages should go away after the next agent synchronization with the server.");
         }
     }
 

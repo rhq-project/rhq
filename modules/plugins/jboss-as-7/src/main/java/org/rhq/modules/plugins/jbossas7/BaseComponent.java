@@ -260,15 +260,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address);
-        Configuration configuration = delegate.loadResourceConfiguration();
-
-        // Read server state
-        ReadAttribute op = new ReadAttribute(getAddress(), "name");
-        Result res = getASConnection().execute(op);
-        if (res.isReloadRequired()) {
-            configuration.setNotes("The server needs a reload for the latest changes to come effective.");
-        }
-        return configuration;
+        return delegate.loadResourceConfiguration();
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {

@@ -430,6 +430,20 @@ public class ResourceTreeView extends LocatableVLayout {
         // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
 
+        // child resources
+        MenuItem childResources = new MenuItem(MSG.view_tabs_common_child_resources());
+        boolean childResourcesEnabled = resourceType.getChildResourceTypes() != null
+                && !resourceType.getChildResourceTypes().isEmpty();
+        childResources.setEnabled(childResourcesEnabled);
+        if (childResourcesEnabled) {
+            childResources.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "Children"));
+                }
+            });
+        }
+        resourceContextMenu.addItem(childResources);
+
         // plugin config
         MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         boolean pluginConfigEnabled = resourceType.getPluginConfigurationDefinition() != null;

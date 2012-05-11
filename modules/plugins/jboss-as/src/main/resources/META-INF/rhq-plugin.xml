@@ -443,12 +443,19 @@
       </server>
 
       <server name="JBoss AS JVM"
-              description="JVM of the JBossAS"
+              description="JVM of the JBoss AS"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
-              class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true"/>
+              class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
+              singleton="true">
+
+        <plugin-configuration>
+           <c:simple-property name="type" type="string" default="PARENT" readOnly="true"
+                              description="The EMS connection type for this JVM (cannot be modified)"/>
+        </plugin-configuration>
+
+      </server>
 
       <service name="Datasource" class="DatasourceComponent"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

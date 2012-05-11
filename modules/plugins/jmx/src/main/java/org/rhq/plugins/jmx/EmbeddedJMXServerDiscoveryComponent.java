@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,95 +22,82 @@
  */
 package org.rhq.plugins.jmx;
 
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
-import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
-import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.util.ParentDefinedJMXServerNamingUtility;
 
 /**
- * This discovery component can be used to include JVM information under a parent Process oriented server that supports
- * JMX (e.g. JBoss AS or Tomcat). The parent resource type's component must implement JMXComponent.
- * <p>
- * The discovered resource is called the same name as its type or according to the "embeddedJvmName" property
- * from the parent server's plugin configuration.
- * 
+ * This discovery component can be used to include a singleton JVM Resource under a parent server Resource that supports
+ * JMX (e.g. JBoss AS or Tomcat). The parent resource type's component must implement JMXComponent and should discover
+ * and manage the {@link EmsConnection}, since this discovery class and the resulting JMXComponent wll both delegate
+ * all JMX calls to the parent component's <tt>EmsConnection</tt>. The JVM Resource and its child Resources expose
+ * various JVM metrics and operations made available by the platform MXBeans.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent<?>> {
+
+    private static final String RESOURCE_KEY = "JVM";
+    private static final String JAVA_VERSION_SYSPROP = "java.version";
+
+    private final Log log = LogFactory.getLog(EmbeddedJMXServerDiscoveryComponent.class);
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context)
         throws Exception {
-        Set<DiscoveredResourceDetails> discoveredServers = new HashSet<DiscoveredResourceDetails>();
+        // Only inventory a JVM that has the platform MXBeans exposed.
+        EmsBean runtimeMBean = getRuntimeMXBean(context);
+        if (runtimeMBean == null) {
+            return Collections.emptySet();
+        }
 
-        Configuration configuration = context.getDefaultPluginConfiguration();
+        String name = ParentDefinedJMXServerNamingUtility.getJVMName(context);
+        String version = getSystemProperty(runtimeMBean, JAVA_VERSION_SYSPROP);
+
+        Configuration pluginConfig = context.getDefaultPluginConfiguration();
+        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, JMXDiscoveryComponent.PARENT_TYPE));
+
+        DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(context.getResourceType(),
+                RESOURCE_KEY, name, version, context.getResourceType().getDescription(), pluginConfig, null);
+
+        return Collections.singleton(resourceDetails);
+    }
+
+    private EmsBean getRuntimeMXBean(ResourceDiscoveryContext<JMXComponent<?>> context) {
         EmsConnection emsConnection = context.getParentResourceComponent().getEmsConnection();
-
-        if (emsConnection.getConnectionProvider().getConnectionSettings().getConnectionType() instanceof InternalVMTypeDescriptor) {
-            // If our parent is internal, it may have chosen a specific local mbean server (as in the jboss server)
-            // so we will look our own up
-            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
-                "Local Connection"));
-            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, InternalVMTypeDescriptor.class
-                .getName()));
+        EmsBean runtimeMBean;
+        if (emsConnection != null) {
+            log.debug("Parent EMS connection is null for [" + context.getParentResourceContext().getResourceKey() + "] "
+                    + context.getParentResourceContext().getResourceType() + " JVM.");
+            runtimeMBean = emsConnection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
         } else {
-
-            boolean isJmxRemote = false;
-            String jmxRemotePort = "3001";
-            ProcessInfo nativeProcess = context.getParentResourceContext().getNativeProcess();
-            if (nativeProcess != null) {
-                String[] commandLine = nativeProcess.getCommandLine();
-                for (String item : commandLine) {
-                    if (item.contains("jmxremote.port")) {
-                        isJmxRemote = true;
-                        jmxRemotePort = item.substring(item.indexOf('=') + 1);
-                    }
-                    // TODO get user / password 
-                }
-            }
-
-            // With an external parent, we still need to check, if jmxremote (for jconsole) is enabled or not.
-            if (isJmxRemote) {
-                configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-                    J2SE5ConnectionTypeDescriptor.class.getName()));
-
-                J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
-                String url = desc.getDefaultServerUrl();
-                url = url.replace("8999", jmxRemotePort);
-                configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, url));
-            } else {
-                configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-                    JMXDiscoveryComponent.PARENT_TYPE));
-            }
+            runtimeMBean = null;
+            log.debug("MBean [" + ManagementFactory.RUNTIME_MXBEAN_NAME + "] not found for ["
+                    + context.getParentResourceContext().getResourceKey() + "] "
+                    + context.getParentResourceContext().getResourceType() + " JVM.");
         }
-
-        EmsBean runtimeMBean = emsConnection.getBean("java.lang:type=Runtime");
-        // Only inventory a VM that has the platform MXBeans exposed.
-        if (runtimeMBean != null) {
-            String version = getSystemProperty(runtimeMBean, "java.version");
-            DiscoveredResourceDetails server = new DiscoveredResourceDetails(context.getResourceType(), "JVM",
-                ParentDefinedJMXServerNamingUtility.getJVMName(context), version, context.getResourceType()
-                    .getDescription(), configuration, null);
-            discoveredServers.add(server);
-        }
-
-        return discoveredServers;
+        return runtimeMBean;
     }
 
     private static String getSystemProperty(EmsBean runtimeMBean, String propertyName) throws Exception {
         // We must use reflection for the Open MBean classes (TabularData and CompositeData) to avoid
         // ClassCastExceptions due to EMS having used a different classloader than us to load them.
-        Object tabularDataObj = runtimeMBean.getAttribute("systemProperties").refresh();
+        EmsAttribute systemPropertiesAttribute = runtimeMBean.getAttribute("systemProperties");
+        Object tabularDataObj = systemPropertiesAttribute.refresh();
         Method getMethod = tabularDataObj.getClass().getMethod("get",
             new Class[] { Class.forName("[Ljava.lang.Object;") });
         // varargs don't work out when the arg itself is an array, so specify the parameters explicitly using arrays.
@@ -119,4 +106,5 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         String version = (String) getMethod.invoke(compositeDataObj, "value");
         return version;
     }
+
 }

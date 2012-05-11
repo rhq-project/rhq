@@ -99,12 +99,12 @@ import org.jetbrains.annotations.Nullable;
         + "SELECT r.id, r.resourceConfiguration " //
         + "  FROM ResourceGroup rg " //
         + "  JOIN rg.explicitResources r " //
-        + " WHERE rg.id = :resourceGroupId"),
+        + " WHERE rg.id = :resourceGroupId AND r.inventoryStatus = 'COMMITTED'"),
     @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID, query = "" //
         + "SELECT r.id, r.pluginConfiguration " //
         + "  FROM ResourceGroup rg " //
         + "  JOIN rg.explicitResources r " //
-        + " WHERE rg.id = :resourceGroupId"),
+        + " WHERE rg.id = :resourceGroupId AND r.inventoryStatus = 'COMMITTED'"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID, query = "" //
         + "SELECT res.id, cu.configuration " //
         + "  FROM ResourceConfigurationUpdate cu " //

@@ -357,7 +357,8 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
 
         // this is an authorization-related query, so use implicitResource (not explicitResources)
         if (1 == size) {
-            query.append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
+            query
+                .append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rgir.inventoryStatus = 'COMMITTED' AND rg = "
                 + clusterKey.getClusterGroupId());
         } else {
             buildQuery(query, params, clusterKey, nodes.subList(0, size - 1));

@@ -78,32 +78,33 @@ import org.rhq.core.domain.tagging.Tag;
         + "LEFT JOIN g.resourceType type " //
         + "LEFT JOIN g.implicitResources res " // used for inventory>summary "member in groups" section, authz-related
         + "WHERE s = :subject " //
-        + " AND g.visible = true "
-        + " AND ( res.id = :resourceId OR :resourceId is null ) "
-        + " AND ( g.id = :groupId OR :groupId is null ) "
+        + " AND g.visible = true " //
+        + " AND res.inventoryStatus = 'COMMITTED' " //
+        + " AND ( res.id = :resourceId OR :resourceId is null ) " //
+        + " AND ( g.id = :groupId OR :groupId is null ) " //
         + " AND ( g.groupCategory = :groupCategory OR :groupCategory is null ) " //
         + " AND (UPPER(g.name) LIKE :search " //
         + " OR UPPER(g.description) LIKE :search " //
         + "OR :search is null) " //
         + "AND ( type is null " //
-        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) "
-        + "           AND (type.plugin = :pluginName OR :pluginName is null) "
+        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) " //
+        + "           AND (type.plugin = :pluginName OR :pluginName is null) " //
         + "           AND (type.category = :category OR :category is null) ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
         + "LEFT JOIN g.implicitResources res " // used for inventory>summary "member in groups" section, authz-related
-        + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
-        + " AND g.visible = true "
-        + " AND ( res.id = :resourceId OR :resourceId is null ) "
-        + " AND ( g.id = :groupId OR :groupId is null ) "
-        + " AND (UPPER(g.name) LIKE :search "
-        + " OR UPPER(g.description) LIKE :search "
-        + " OR :search is null) "
+        + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) " //
+        + " AND g.visible = true " //
+        + " AND ( res.id = :resourceId OR :resourceId is null ) " //
+        + " AND res.inventoryStatus = 'COMMITTED' " //
+        + " AND ( g.id = :groupId OR :groupId is null ) " //
+        + " AND (UPPER(g.name) LIKE :search " //
+        + " OR UPPER(g.description) LIKE :search " //
+        + " OR :search is null) " //
         + "AND ( type is null " //
-        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) "
-        + "           AND (type.plugin = :pluginName OR :pluginName is null) "
+        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) " //
+        + "           AND (type.plugin = :pluginName OR :pluginName is null) " //
         + "           AND (type.category = :category OR :category is null) ) ) "),
-
     @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_GROUP_SUMMARY, query = "" //
         + "SELECT rg.groupCategory, COUNT(DISTINCT rg) " //
         + "     FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " //
@@ -181,8 +182,11 @@ import org.rhq.core.domain.tagging.Tag;
         + "FROM Resource res JOIN res.currentAvailability a "
         + "WHERE res.id = :resourceId "
         + "GROUP BY res.resourceType "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) "
-        + "  FROM ResourceGroup g " + "  JOIN g.explicitResources res " + " WHERE g.id = :groupId "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = ""
+        + "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) " //
+        + "  FROM ResourceGroup g " //
+        + "  JOIN g.explicitResources res " //
+        + " WHERE g.id = :groupId AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
         + "  FROM ResourceGroup g " + " WHERE (g.groupByClause = :groupByClause OR :groupByClause IS NULL) "
         + "   AND g.groupDefinition.id = :groupDefinitionId "),
@@ -193,7 +197,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "    AND res.id NOT IN ( SELECT explicitRes.id " //
         + "                          FROM ResourceGroup rg " //
         + "                          JOIN rg.explicitResources explicitRes " //
-        + "                         WHERE rg.id = :groupId ) ") })
+        + "                         WHERE rg.id = :groupId AND explicitRes.inventoryStatus = 'COMMITTED') ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -244,7 +248,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventory_status = 'COMMITTED' "
         + "              ) as explicitCount, "
         + "" //
         + "              (     SELECT COUNT(eresAvail.ID) " // DOWN explicit members
@@ -253,7 +257,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventory_status = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 0 "
         + "              ) as explicitDown, "
         + "" //
@@ -263,7 +267,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventory_status = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 2 "
         + "              ) as explicitUnknown, "
         + "" //
@@ -273,7 +277,7 @@ public class ResourceGroup extends Group {
         + "                        ON eresAvail.resource_id = eres.id "
         + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
         + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE expMap.resource_group_id = rg.id AND eres.inventory_status = 'COMMITTED' "
         + "                       AND eresAvail.availability_type = 3 "
         + "              ) as explicitDisabled, "
         + "" //
@@ -283,7 +287,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventory_status = 'COMMITTED' "
         + "              ) as implicitCount, "
         + "" //
         + "              (     SELECT COUNT(iresAvail.ID) " // DOWN implicit members 
@@ -292,7 +296,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventory_status = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 0 "
         + "              ) as implicitDown, "
         + "" //
@@ -302,7 +306,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventory_status = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 2 "
         + "              ) as implicitUnknown, "
         + "" //
@@ -312,7 +316,7 @@ public class ResourceGroup extends Group {
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventoryStatus = 'COMMITTED' "
+        + "                     WHERE impMap.resource_group_id = rg.id AND ires.inventory_status = 'COMMITTED' "
         + "                       AND iresAvail.availability_type = 3 "
         + "              ) as implicitDisabled, "
         + "" //

@@ -185,7 +185,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
      */
     @NamedQuery(name = Subject.QUERY_GET_RESOURCES_BY_PERMISSION, query = "SELECT distinct res.id "
         + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.resourceGroups) g, IN (g.implicitResources) res "
-        + "WHERE s = :subject AND p = :permission"),
+        + "WHERE s = :subject AND p = :permission AND res.inventoryStatus = 'COMMITTED'"),
 
     @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES, query = "" //
         + "SELECT DISTINCT s " + "  FROM Subject AS s LEFT JOIN s.roles AS r " //

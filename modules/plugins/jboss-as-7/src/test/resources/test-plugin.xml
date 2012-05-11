@@ -281,6 +281,42 @@
             </c:group>
         </resource-configuration>
     </server>
+    
+    <!-- Simple c:group entries from descriptor with no special handling. -->
+    <service name="simpleGroupNoSpecial"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="simple grouped properties. No special handling"    
+             singleton="true">
+        <resource-configuration>
+          <c:group name="proxy" displayName="Proxy Options">
+            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+            <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+          </c:group>
 
+          <c:group name="advertise" displayName="Advertise Options">
+            <c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>
+            <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
+                               description="Name of Socket binding to use for the Advertise socket."/>
+            <c:simple-property name="connector" required="true" type="string" readOnly="false" defaultValue="ajp" description="Name of the web connector used to communicate with the load balancer.">
+              <!--<c:option-source target="resource" expression="type=Connector plugin=&pluginName;"/>-->
+            </c:simple-property>
+          </c:group>
+       </resource-configuration>   
+    </service>  
+
+    <!-- Same as previous but for update. -->
+    <service name="simpleGroupNoSpecialUpdate"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="simple grouped properties. No special handling"    
+             singleton="true">
+        <resource-configuration>
+          <c:group name="proxy" displayName="Proxy Options">
+            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+            <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+          </c:group>
+       </resource-configuration>   
+    </service>
 
 </plugin>

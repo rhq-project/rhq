@@ -84,6 +84,7 @@ public abstract class ServerPluginDescriptorUtil {
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_BUNDLE, XmlSchemas.PKG_SERVERPLUGIN_BUNDLE);
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_PACKAGETYPE, XmlSchemas.PKG_SERVERPLUGIN_PACKAGETYPE);
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_DRIFT, XmlSchemas.PKG_SERVERPLUGIN_DRIFT);
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_METRICS, XmlSchemas.PKG_SERVERPLUGIN_METRICS);
 
         // so we only have to do this once, build a ':' separated context path containing all schema package names
         StringBuilder packages = new StringBuilder();

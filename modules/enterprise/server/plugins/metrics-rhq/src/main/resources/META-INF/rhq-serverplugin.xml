@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<metrics-plugin
+        version="1.0"
+        apiVersion="1.0"
+        description="RHQ database backed metrics server plugin"
+        displayName="Metrics: RHQ DB Metrics server plugin"
+        name="metrics-rhq"
+        package="org.rhq.enterprise.server.plugins.metrics"
+        xmlns="urn:xmlns:rhq-serverplugin.metrics"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:plugin-component class="RhqDbMetricsPluginComponent"/>
+
+</metrics-plugin>

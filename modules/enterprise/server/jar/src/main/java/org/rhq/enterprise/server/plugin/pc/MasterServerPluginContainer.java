@@ -44,6 +44,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContai
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
 import org.rhq.enterprise.server.scheduler.EnhancedSchedulerImpl;
@@ -482,6 +483,7 @@ public class MasterServerPluginContainer {
         pcs.add(new BundleServerPluginContainer(this));
         pcs.add(new PackageTypeServerPluginContainer(this));
         pcs.add(new DriftServerPluginContainer(this));
+        pcs.add(new MetricsServerPluginContainer(this));
         return pcs;
     }
 

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:metrics="urn:xmlns:rhq-serverplugin.metrics"
+           targetNamespace="urn:xmlns:rhq-serverplugin.metrics"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for metrics server-side plugins.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.metrics" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element
+            name="metrics-plugin"
+            type="metrics:MetricsPluginDescriptorType"
+            substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a metrics plugin.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="MetricsPluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:complexType name="MetricsPluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>

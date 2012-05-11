@@ -39,8 +39,8 @@ public class MeasurementServerServiceImpl implements MeasurementServerService {
 
     public void mergeMeasurementReport(MeasurementReport report) {
         long start = System.currentTimeMillis();
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-        dataManager.mergeMeasurementReport(report);
+        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
+        metricsManager.mergeMeasurementReport(report);
         long time = (System.currentTimeMillis() - start);
 
         if (time >= 10000L) {

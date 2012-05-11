@@ -80,6 +80,7 @@
     <module>validate-all-serverplugins</module>
     <module>groovy-script</module>
     <module>packagetype-cli</module>
+    <module>metrics-rhq</module>
   </modules>
 
 </project>

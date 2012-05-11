@@ -87,4 +87,8 @@ public interface XmlSchemas {
     //the schema that describes a configuration instance - a combination of configuration definition and concrete values
     public static final String XSD_CONFIGURATION_INSTANCE = "rhq-configuration-instance.xsd";
     public static final String PKG_CONFIGURATION_INSTANCE = "org.rhq.enterprise.server.xmlschema.generated.configuration.instance";
+
+    // the schema that defines a drift server plugin instance
+    public static final String XSD_SERVERPLUGIN_METRICS = "rhq-serverplugin-metrics.xsd";
+    public static final String PKG_SERVERPLUGIN_METRICS = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.metrics";
 }

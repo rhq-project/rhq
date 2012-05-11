@@ -155,12 +155,16 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM ResourceGroup rg " //
         + "  JOIN rg.resourceType rt" //
         + " WHERE rt.deleted = false AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
-    @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
-        + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
-    @NamedQuery(name = ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
-        + "FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
+    @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "" //
+        + "SELECT type.id, type.name, COUNT(type.id) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type " //
+        + " WHERE rg.id = :groupId AND res.resourceType.deleted = false AND res.inventoryStatus = 'COMMITTED' " //
+        + " GROUP BY type.id, type.name "),
+    @NamedQuery(name = ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "" //
+        + "SELECT type.id, type.name, COUNT(type.id) " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type " //
+        + " WHERE rg.id = :groupId AND res.resourceType.deleted = false AND res.inventoryStatus = 'COMMITTED' " //
+        + " GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
         + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "

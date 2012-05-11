@@ -1232,7 +1232,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         List<Integer> groupIds = new ArrayList<Integer>();
         for (Object[] row : rawResults) {
-            groupIds.add(((Number) row[4]).intValue());
+            groupIds.add(((Number) row[8]).intValue());
         }
         Map<Integer, ResourceGroup> groupMap = getIdGroupMap(groupIds);
 
@@ -1403,26 +1403,26 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         // all the subselects.
         String queryString = "SELECT \n" //
             + "  (SELECT count(er) " // Total explicit
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where er.inventoryStatus = 'COMMITTED' and g.id = :groupId),\n"
             + "  (SELECT count(er) " // DOWN explicit
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where er.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND er.currentAvailability.availabilityType = 0 ),\n"
             + "  (SELECT count(er) " // UNKNOWN explicit
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where er.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND er.currentAvailability.availabilityType = 2 ),\n"
             + "  (SELECT count(er) " // DISABLED explicit
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where er.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND er.currentAvailability.availabilityType = 3 ),\n"
             + "  (SELECT count(ir) " // Total implicit
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where ir.inventoryStatus = 'COMMITTED' and g.id = :groupId),\n"
             + "  (SELECT count(ir) " // DOWN implicit
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where ir.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND ir.currentAvailability.availabilityType = 0 ),\n"
             + "  (SELECT count(ir) " // UNKNOWN implicit
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where ir.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND ir.currentAvailability.availabilityType = 2 ),\n"
             + "  (SELECT count(ir) " // DISABLED implicit
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId"
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where ir.inventoryStatus = 'COMMITTED' and g.id = :groupId"
             + "        AND ir.currentAvailability.availabilityType = 3 )\n,"
             + "    g "
             + "FROM ResourceGroup g where g.id = :groupId";

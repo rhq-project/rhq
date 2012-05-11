@@ -42,6 +42,7 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -144,6 +145,12 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         return createLargeGroupWithNormalUserRoleAccess(null, groupSize, 0, 0, 0, permissions);
     }
 
+    protected LargeGroupEnvironment createLargeGroupWithNormalUserRoleAccess(LargeGroupEnvironment largeGroupEnv,
+        final int groupSize, final int down, final int unknown, final int disabled, final Permission... permissions) {
+        return createLargeGroupWithNormalUserRoleAccessWithInventoryStatus(largeGroupEnv, groupSize, down, unknown,
+            disabled, 0, permissions);
+    }
+
     /**
      * Creates a compatible group of the given size. This also creates a normal user and a role
      * and makes sure that user can access the group that was created.  The role will be assigned the
@@ -156,11 +163,13 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
      * @param down number of resources that are to be set as DOWN
      * @param unknown number of resources whose availability status is to be marked as UNKNOWN
      * @param disabled number of resources that are to be set as DISABLED
+     * @param uncommitted number of resources whose inventory status is not COMMITTED (will be NEW instead)
      * @param permissions permissions to grant the new user via the new role.
      * @return information about the entities that were created
      */
-    protected LargeGroupEnvironment createLargeGroupWithNormalUserRoleAccess(LargeGroupEnvironment largeGroupEnv,
-        final int groupSize, final int down, final int unknown, final int disabled, final Permission... permissions) {
+    protected LargeGroupEnvironment createLargeGroupWithNormalUserRoleAccessWithInventoryStatus(
+        LargeGroupEnvironment largeGroupEnv, final int groupSize, final int down, final int unknown,
+        final int disabled, final int uncommitted, final Permission... permissions) {
 
         System.out.println("=====Creating a group with [" + groupSize + "] members");
 
@@ -224,9 +233,11 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                 int downCount = down;
                 int unknownCount = unknown;
                 int disabledCount = disabled;
+                int uncommittedCount = uncommitted;
                 System.out.print("=====> Creating member Resources (this might take some time)...");
                 for (int i = 1; i <= groupSize; i++) {
                     AvailabilityType avail;
+                    InventoryStatus inventoryStatus = InventoryStatus.COMMITTED;
                     if (downCount > 0) {
                         avail = AvailabilityType.DOWN;
                         downCount--;
@@ -236,6 +247,10 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     } else if (disabledCount > 0) {
                         avail = AvailabilityType.DISABLED;
                         disabledCount--;
+                    } else if (uncommittedCount > 0) {
+                        avail = AvailabilityType.UNKNOWN;
+                        inventoryStatus = InventoryStatus.NEW;
+                        uncommittedCount--;
                     } else {
                         avail = AvailabilityType.UP;
                     }
@@ -243,6 +258,7 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     Resource res = SessionTestHelper.createNewResourceForGroup(em, lge.compatibleGroup,
                         "LargeGroupTestServer", lge.serverType, avail, (i % 100) == 0);
                     res.setAgent(lge.agent);
+                    res.setInventoryStatus(inventoryStatus);
                     lge.platformResource.addChildResource(res);
 
                     // give it an initial plugin configuration

@@ -34,6 +34,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
@@ -212,7 +213,10 @@ public class SessionTestHelper {
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
         resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        resource.initCurrentAvailability(); // the only way I can see to intialize the avail list
         resource.setCurrentAvailability(new ResourceAvailability(resource, avail));
+        resource.getAvailability().clear();
+        resource.getAvailability().add(new Availability(resource, 0L, avail));
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);

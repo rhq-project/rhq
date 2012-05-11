@@ -379,11 +379,11 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
-        + " WHERE rg.id = :groupId"),
+        + " WHERE rg.id = :groupId AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //
-        + " WHERE rg.id = :groupId "),
+        + " WHERE rg.id = :groupId AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
@@ -392,20 +392,21 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "" //
         + "SELECT DISTINCT res " //
         + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.explicitResources res " //
-        + " WHERE rg = :group " //
+        + " WHERE rg = :group AND res.inventoryStatus = 'COMMITTED' " //
         + "   AND s = :subject"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res " //
-        + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " + " WHERE rg = :group "),
+        + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
+        + " WHERE rg = :group AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP, query = "" //
         + "SELECT DISTINCT res " //
         + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.implicitResources res " //
-        + " WHERE rg = :group " //
+        + " WHERE rg = :group AND res.inventoryStatus = 'COMMITTED'" //
         + "   AND s = :subject"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //
-        + " WHERE rg = :group "),
+        + " WHERE rg = :group AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
         + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //

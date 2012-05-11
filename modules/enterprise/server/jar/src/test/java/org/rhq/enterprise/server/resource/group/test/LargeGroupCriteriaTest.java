@@ -90,7 +90,7 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
     }
 
     @Test(enabled = TEST_ENABLED)
-    public void deleteMe() throws Exception {
+    public void testUncommitted() throws Exception {
         ArrayList<GroupAvailCounts> gacs = new ArrayList<LargeGroupCriteriaTest.GroupAvailCounts>();
         gacs.add(new GroupAvailCounts(1, 1, 1, 1, 1));
         testGroupQueries(gacs);

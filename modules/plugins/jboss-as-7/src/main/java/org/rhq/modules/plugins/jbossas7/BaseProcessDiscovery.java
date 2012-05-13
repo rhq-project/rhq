@@ -198,7 +198,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig, baseDir);
 
         String key = baseDir.getPath();
-        HostPort hostPort = hostConfig.getHostPort(commandLine);
+        HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String description = buildDefaultResourceDescription(hostPort, productType);
 

@@ -48,11 +48,13 @@ public class HostConfiguration {
     public static final int DEFAULT_MGMT_PORT = 9990;
 
     private static final String BIND_ADDRESS_MANAGEMENT_SYSPROP = "jboss.bind.address.management";
-    private static final String BIND_MASTER_ADDRESS_SYSPROP = "jboss.domain.master.address";
+    private static final String DOMAIN_MASTER_ADDRESS_SYSPROP = "jboss.domain.master.address";
+    private static final String DOMAIN_MASTER_PORT_SYSPROP = "jboss.domain.master.port";
     private static final String SOCKET_BINDING_PORT_OFFSET_SYSPROP = "jboss.socket.binding.port-offset";
 
-    private CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new CommandLineOption("bmanagement", null);
-    private CommandLineOption BIND_MASTER_ADDRESS_OPTION = new CommandLineOption(null, "master-address");
+    private static final CommandLineOption BIND_ADDRESS_MANAGEMENT_OPTION = new CommandLineOption("bmanagement", null);
+    private static final CommandLineOption MASTER_ADDRESS_OPTION = new CommandLineOption(null, "master-address");
+    private static final CommandLineOption MASTER_PORT_OPTION = new CommandLineOption(null, "master-port");
 
     private final Log log = LogFactory.getLog(HostConfiguration.class);
 
@@ -181,25 +183,26 @@ public class HostConfiguration {
      * Try to obtain the domain controller's location from looking at host.xml
      * @return host and port of the domain controller
      */
-    public HostPort getHostPort(AS7CommandLine commandLine) {
+    public HostPort getDomainControllerHostPort(AS7CommandLine commandLine) {
         // first check remote, as we can't distinguish between a missing local element or
-        // and empty one which is the default
+        // an empty one, which is the default
         String remoteHost = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@host");
         String portString = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@port");
 
         HostPort hp;
         if (!remoteHost.isEmpty() && !portString.isEmpty()) {
+            // remote domain controller
             hp = new HostPort(false);
             hp.host = replaceDollarExpression(remoteHost, commandLine, "localhost");
             portString = replaceDollarExpression(portString, commandLine, "9999");
             hp.port = Integer.parseInt(portString);
         } else {
+            // local domain controller
             hp = new HostPort(true);
             hp.port = 9999;
         }
 
         return hp;
-
     }
 
     public String getManagementSecurityRealm() {
@@ -262,8 +265,9 @@ public class HostConfiguration {
      * @return resolved value
      */
     protected String replaceDollarExpression(String value, AS7CommandLine commandLine, String lastResort) {
-        if (!value.contains("${"))
+        if (!value.contains("${")) {
             return value;
+        }
 
         // remove ${ }
         value = value.substring(2, value.length() - 1);
@@ -281,8 +285,12 @@ public class HostConfiguration {
         if (expression.equals(BIND_ADDRESS_MANAGEMENT_SYSPROP)) {
             // special case: mgmt address can be specified via either -bmanagement= or -Djboss.bind.address.management=
             resolvedValue = commandLine.getClassOption(BIND_ADDRESS_MANAGEMENT_OPTION);
-        } else if (expression.equals(BIND_MASTER_ADDRESS_SYSPROP)) {
-            resolvedValue = commandLine.getClassOption(BIND_MASTER_ADDRESS_OPTION);
+        } else if (expression.equals(DOMAIN_MASTER_ADDRESS_SYSPROP)) {
+            // special case: DC address can be specified via either --master-address= or -Djboss.domain.master.address=
+            resolvedValue = commandLine.getClassOption(MASTER_ADDRESS_OPTION);
+        } else if (expression.equals(DOMAIN_MASTER_PORT_SYSPROP)) {
+            // special case: DC port can be specified via either --master-port= or -Djboss.domain.master.port=
+            resolvedValue = commandLine.getClassOption(MASTER_PORT_OPTION);
         }
 
         if (resolvedValue == null) {

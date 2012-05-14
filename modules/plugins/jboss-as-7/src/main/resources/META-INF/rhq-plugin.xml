@@ -2881,10 +2881,87 @@
       <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled. The default value is false."/>
     </resource-configuration>
 
+    <service name="Log Store (Standalone)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true"
+             description="Representation of the transaction logging storage mechanism.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="log-store=log-store"/>
+      </plugin-configuration>
+
+      <operation name="subsystem:probe" displayName="Probe" description="Scan for new transaction logs. This operation will creates a child for each pending transaction.">
+        <results>
+           <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction." />
+        </results>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="type" required="false" type="string" readOnly="true" description="Specifies the implementation type of the logging store."/>
+      </resource-configuration>
+
+      <service name="Transactions (Standalone)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="The persistent information that the transaction manager stores for the purpose of recovering a transaction in the event of failure. The probe operation will add and remove transactions from the model as the corresponding real transactions start and finish the prepare and commit phases. A stuck transaction will remain in the model until either it is completed or explicitly removed by the delete operation.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="transactions"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:delete" displayName="Delete" description="Remove this transaction log. WARNING after this operation the transaction manager will have no knowledge of the transaction and will therefore never be able to recover it. If you are sure that the transaction is complete then the operation is safe. The representation of the transaction log is removed from the model too.">
+          <results>
+            <c:simple-property name="operationResult" description="Remove this transaction log. WARNING after this operation the transaction manager will have no knowledge of the transaction and will therefore never be able to recover it. If you are sure that the transaction is complete then the operation is safe. The representation of the transaction log is removed from the model too." />
+          </results>
+        </operation>
+
+        <resource-configuration>
+          <c:simple-property name="age-in-seconds" required="false" type="long" readOnly="true" description="The time since this transaction was prepared or when the recovery system last tried to recover it."/>
+          <c:simple-property name="id" required="false" type="string" readOnly="true" description="The id of this transaction."/>
+          <c:simple-property name="jmx-name" required="false" type="string" readOnly="true" description="The JMX name of this transaction."/>
+          <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type name under which this record is stored."/>
+        </resource-configuration>
+
+        <service name="Participants (Standalone)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="The resources that did work in a transaction.">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="participants"/>
+            <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+          </plugin-configuration>
+
+          <operation name="subsystem:recover" displayName="Recover" description="If this record is in a heuristic state then attempt to replay the commit phase of the 2PC transaction.">
+            <results>
+              <c:simple-property name="operationResult" description="If this record is in a heuristic state then attempt to replay the commit phase of the 2PC transaction." />
+            </results>
+          </operation>
+
+          <operation name="subsystem:refresh" displayName="Refresh" description="Refresh the management view of the attributes of this participant record by querying the transaction log. (Note that the read&#45;resource operaton only reads the model, hence the need for this refresh operation).">
+            <results>
+              <c:simple-property name="operationResult" description="Refresh the management view of the attributes of this participant record by querying the transaction log. (Note that the read-resource operaton only reads the model, hence the need for this refresh operation)." />
+            </results>
+          </operation>
+
+          <resource-configuration>
+            <c:simple-property name="eis-product-name" required="false" type="string" readOnly="true" description="The JCA enterprise information system&apos;s product name."/>
+            <c:simple-property name="eis-product-version" required="false" type="string" readOnly="true" description="The JCA enterprise information system&apos;s product version"/>
+            <c:simple-property name="jmx-name" required="false" type="string" readOnly="true" description="The JMX name of this participant."/>
+            <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="JNDI name of this participant."/>
+            <c:simple-property name="status" required="false" type="string" readOnly="true" description="Reports the commitment status of this participant (can be one of Pending, Prepared, Failed, Heuristic or Readonly)."/>
+            <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type name under which this record is stored."/>
+          </resource-configuration>
+        </service>
+      </service>
+    </service>
+
   </service>
 
 
-  <service name="Transactions Subsystem (Domain)"
+  <service name="Transactions Subsystem (Profile)"
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            singleton="true"
@@ -2916,6 +2993,27 @@
       <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled. The default value is false."/>
     </resource-configuration>
 
+    <service name="Log Store (Profile)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true"
+             description="Representation of the transaction logging storage mechanism.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="log-store=log-store"/>
+      </plugin-configuration>
+
+      <operation name="subsystem:probe" displayName="Probe" description="Scan for new transaction logs. This operation will creates a child for each pending transaction.">
+        <results>
+           <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction." />
+        </results>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="type" required="false" type="string" readOnly="true" description="Specifies the implementation type of the logging store."/>
+      </resource-configuration>
+    </service>
+
   </service>
 
 
@@ -2943,6 +3041,60 @@
     <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated." measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
     <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration." measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
     <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure." measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+
+    <service name="Log Store (Managed)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true"
+             description="Representation of the transaction logging storage mechanism.">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="log-store=log-store"/>
+        <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="type" required="false" type="string" readOnly="true" description="Specifies the implementation type of the logging store."/>
+      </resource-configuration>
+
+      <service name="Transactions (Managed)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="The persistent information that the transaction manager stores for the purpose of recovering a transaction in the event of failure. The probe operation will add and remove transactions from the model as the corresponding real transactions start and finish the prepare and commit phases. A stuck transaction will remain in the model until either it is completed or explicitly removed by the delete operation.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="transactions"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="age-in-seconds" required="false" type="long" readOnly="true" description="The time since this transaction was prepared or when the recovery system last tried to recover it."/>
+          <c:simple-property name="id" required="false" type="string" readOnly="true" description="The id of this transaction."/>
+          <c:simple-property name="jmx-name" required="false" type="string" readOnly="true" description="The JMX name of this transaction."/>
+          <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type name under which this record is stored."/>
+        </resource-configuration>
+
+        <service name="Participants (Managed)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 description="The resources that did work in a transaction.">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="participants"/>
+            <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="eis-product-name" required="false" type="string" readOnly="true" description="The JCA enterprise information system&apos;s product name."/>
+            <c:simple-property name="eis-product-version" required="false" type="string" readOnly="true" description="The JCA enterprise information system&apos;s product version"/>
+            <c:simple-property name="jmx-name" required="false" type="string" readOnly="true" description="The JMX name of this participant."/>
+            <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="JNDI name of this participant."/>
+            <c:simple-property name="status" required="false" type="string" readOnly="true" description="Reports the commitment status of this participant (can be one of Pending, Prepared, Failed, Heuristic or Readonly)."/>
+            <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type name under which this record is stored."/>
+          </resource-configuration>
+        </service>
+      </service>
+    </service>
 
   </service>
 

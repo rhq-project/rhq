@@ -5773,6 +5773,7 @@
         </c:simple-property>
         <c:simple-property name="listener-executor" required="false" type="string" readOnly="false" description="The executor used for the replication queue"/>
         <c:simple-property name="eviction-executor" required="false" type="string" readOnly="false" description="The scheduled executor used for eviction"/>
+        <c:simple-property name="module" required="false" type="string" readOnly="false" defaultValue="org.jboss.as.clustering.infinispan" description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
         <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="false" description="The executor used for asynchronous cache operations"/>
       </resource-configuration>
 
@@ -5819,7 +5820,34 @@
           <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
           <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
           <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+
+          <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="false" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
+          <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="false" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
+          <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
+          <c:simple-property name="owners" required="false" type="integer" readOnly="false" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
+          <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="false" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
         </resource-configuration>
+      </service>
+
+      <service name="Transport"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               singleton="true"
+               description="The description of the transport used by this cache container">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="cluster" required="false" type="string" readOnly="false" description="The name of the group communication cluster"/>
+            <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The executor to use for the transport"/>
+            <c:simple-property name="lock-timeout" required="false" type="long" readOnly="false" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
+            <c:simple-property name="machine" required="false" type="string" readOnly="false" description="A machine identifier for the transport"/>
+            <c:simple-property name="rack" required="false" type="string" readOnly="false" description="A rack identifier for the transport"/>
+            <c:simple-property name="site" required="false" type="string" readOnly="false" description="A site identifier for the transport"/>
+            <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>         
+          </resource-configuration>
       </service>
     </service>
 

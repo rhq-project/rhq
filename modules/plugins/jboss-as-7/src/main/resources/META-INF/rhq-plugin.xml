@@ -27,7 +27,7 @@
           <c:description>
             The variables that the Start and Restart operations will add to the environment of the server start script.
             Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
-            &quot;JAVA_HOME=/usr/java/jdk1.6.0_30&quot;). On UNIX systems, the typical minimum set of environment variables is:
+            JAVA_OPTS=-Xms512M -Xmx1024M). On UNIX systems, the typical minimum set of environment variables is:
             PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
             OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
             path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if

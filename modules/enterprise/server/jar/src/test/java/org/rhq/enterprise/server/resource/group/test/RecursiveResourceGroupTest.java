@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -105,6 +106,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             // test update implicit resources
             Resource newChildOfNodeA = new Resource("new nodeOne child", "new nodeOne child", nodeA.getResourceType());
             newChildOfNodeA.setUuid("" + new Random().nextInt());
+            newChildOfNodeA.setInventoryStatus(InventoryStatus.COMMITTED);
 
             resourceManager.createResource(subject, newChildOfNodeA, nodeA.getId()); // sets up implicit relationships
 
@@ -151,6 +153,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             // test update implicit resources
             Resource gen5 = new Resource("g5", "g5", gen4.getResourceType());
             gen5.setUuid("" + new Random().nextInt());
+            gen5.setInventoryStatus(InventoryStatus.COMMITTED);
             resourceManager.createResource(subject, gen5, gen4.getId()); // sets up implicit relationships
 
             // confirm results

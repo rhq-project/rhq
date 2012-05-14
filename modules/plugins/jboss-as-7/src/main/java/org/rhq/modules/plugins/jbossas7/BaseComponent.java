@@ -185,22 +185,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     continue;
 
                 if (req.getDataType() == DataType.MEASUREMENT) {
-                    if (!val.equals("no metrics available")) { // AS 7 returns this
-                        try {
-                            if (request != null) {
-                                HashMap<String, Number> myValues = (HashMap<String, Number>) val;
-                                for (String key : myValues.keySet()) {
-                                    String sub = request.getSub();
-                                    if (key.equals(sub)) {
-                                        addMetric2Report(report, req, myValues.get(key));
-                                    }
+                    if (val instanceof String && ((String) val).startsWith("JBAS018003")) // AS7 way of saying "no value available"
+                        continue;
+                    try {
+                        if (request != null) {
+                            HashMap<String, Number> myValues = (HashMap<String, Number>) val;
+                            for (String key : myValues.keySet()) {
+                                String sub = request.getSub();
+                                if (key.equals(sub)) {
+                                    addMetric2Report(report, req, myValues.get(key));
                                 }
-                            } else {
-                                addMetric2Report(report, req, val);
                             }
-                        } catch (NumberFormatException e) {
-                            log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                        } else {
+                            addMetric2Report(report, req, val);
                         }
+                    } catch (NumberFormatException e) {
+                        log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
                     }
                 } else if (req.getDataType() == DataType.TRAIT) {
 

@@ -4821,10 +4821,24 @@
     </plugin-configuration>
 
     <resource-configuration>
-      <c:simple-property name="connection-factory" required="false" type="string" readOnly="false" description="The JNDI name for the ConnectionFactory"/>
-      <c:simple-property name="publish-url" required="false" type="string" readOnly="false" description="The jUDDI server publish URL"/>
-      <c:simple-property name="query-url" required="false" type="string" readOnly="false" description="The jUDDI server query URL"/>
+      <c:simple-property name="class" required="false" type="string" readOnly="false" description="The JAXR ConnectionFactory implementation class"/>
+      <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The JNDI name under which the JAXR ConnectionFactory is bound"/>
     </resource-configuration>
+
+    <service name="Property (JAXR)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="A JAXR property. The identity of the resource defines the property name."
+             createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="property"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="value" required="true" type="string" readOnly="false" description="The JAXR property value."/>
+      </resource-configuration>
+    </service>
 
   </service>
 

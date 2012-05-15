@@ -19,10 +19,12 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -36,9 +38,9 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
+import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -47,6 +49,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Provide management connections to an AS7 instance and reading/writing data from/to it.
  *
  * @author Heiko W. Rupp
+ * @author Ian Springer
  */
 public class ASConnection {
 
@@ -56,6 +59,14 @@ public class ASConnection {
     // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     public static boolean verbose = false;
     private static final int HTTP_TEMPORARY_REDIRECT = 307;
+
+    private static final String POST_HTTP_METHOD = "POST";
+
+    private static final String CONTENT_LENGTH_HTTP_HEADER = "Content-Length";
+    private static final String ACCEPT_HTTP_HEADER = "Accept";
+    private static final String CONTENT_TYPE_HTTP_HEADER = "Content-Type";
+
+    private static final String JSON_MIME_TYPE = "application/json";
 
     private final Log log = LogFactory.getLog(ASConnection.class);
 
@@ -141,9 +152,9 @@ public class ASConnection {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
-            conn.addRequestProperty("Content-Type", "application/json");
-            conn.addRequestProperty("Accept", "application/json");
+            conn.setRequestMethod(POST_HTTP_METHOD);
+            conn.addRequestProperty(CONTENT_TYPE_HTTP_HEADER, JSON_MIME_TYPE);
+            conn.addRequestProperty(ACCEPT_HTTP_HEADER, JSON_MIME_TYPE);
             conn.setInstanceFollowRedirects(false);
             int timeoutMillis = timeoutSec * 1000;
             conn.setConnectTimeout(timeoutMillis);
@@ -197,39 +208,30 @@ public class ASConnection {
             out.flush();
             out.close();
 
-            InputStream inputStream = (conn.getInputStream() != null) ? conn.getInputStream() : conn.getErrorStream();
-
-            if (inputStream != null) {
-                BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream));
-                // Note: slurp() will close the stream once it's done slurping it.
-                String responseBody = StreamUtil.slurp(inputReader);
-
-                String outcome;
-                JsonNode operationResult;
-                if (!responseBody.isEmpty()) {
-                    outcome = responseBody;
-                    operationResult = mapper.readTree(outcome);
-                    if (verbose) {
-                        ObjectMapper om2 = new ObjectMapper();
-                        om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
-                        String tmp = om2.writeValueAsString(operationResult);
-                        log.info(tmp);
-                    }
-                } else {
-                    int responseCode = conn.getResponseCode();
-                    if (isAuthorizationFailureResponse(responseCode)) {
-                        handleAuthorizationFailureResponse(operation, conn);
-                    }
-                    Result noResult = new Result();
-                    noResult.setOutcome("failure");
-
-                    String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
-                    noResult.setFailureDescription("- empty response body with HTTP status code " + responseCodeString + " -");
-                    operationResult = mapper.valueToTree(noResult);
+            String responseBody = getResponseBody(conn);
+            JsonNode operationResult;
+            if (!responseBody.isEmpty()) {
+                operationResult = mapper.readTree(responseBody);
+                if (verbose) {
+                    ObjectMapper om2 = new ObjectMapper();
+                    om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+                    String tmp = om2.writeValueAsString(operationResult);
+                    log.info(tmp);
                 }
+            } else {
+                int responseCode = conn.getResponseCode();
+                if (isAuthorizationFailureResponse(responseCode)) {
+                    handleAuthorizationFailureResponse(operation, conn);
+                }
+                Result noResult = new Result();
+                noResult.setOutcome("failure");
 
-                return operationResult;
+                String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
+                noResult.setFailureDescription("- empty response body with HTTP status code " + responseCodeString + " -");
+                operationResult = mapper.valueToTree(noResult);
             }
+
+            return operationResult;
         } catch (IllegalArgumentException iae) {
             log.error("Illegal argument for input " + operation + ": " + iae.getMessage());
         } catch (SocketTimeoutException ste) {
@@ -248,14 +250,7 @@ public class ASConnection {
 
             // On error conditions, it's still necessary to slurp the response stream so the JDK knows it can reuse the
             // persistent HTTP connection behind the scenes.
-            String responseBody;
-            if (conn.getErrorStream() != null) {
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                // Note: slurp() will close the stream once it's done slurping it.
-                responseBody = StreamUtil.slurp(errorReader);
-            } else {
-                responseBody = "";
-            }
+            String responseBody = getResponseBody(conn);
 
             String responseCodeString;
             try {
@@ -265,7 +260,7 @@ public class ASConnection {
                 if (isAuthorizationFailureResponse(responseCode)) {
                     handleAuthorizationFailureResponse(operation, conn);
                 } else {
-                    if (responseBody == null || responseBody.isEmpty()) {
+                    if (responseBody.isEmpty()) {
                         log.warn("Response body for " + operation + " was empty and response code was "
                                 + responseCodeString + ".");
                     } else {
@@ -476,6 +471,65 @@ public class ASConnection {
 
     public int getPort() {
         return port;
+    }
+
+    @NotNull
+    private String getResponseBody(HttpURLConnection connection) {
+        InputStream inputStream;
+        try {
+            inputStream = (connection.getInputStream() != null) ? connection.getInputStream() :
+                    connection.getErrorStream();
+        } catch (IOException e) {
+            log.debug("Error occurred while reading response.", e);
+            inputStream = null;
+        }
+        if (inputStream == null) {
+            return "";
+        }
+
+        int available;
+        try {
+            available = inputStream.available();
+        } catch (IOException e) {
+            // The stream has most likely already been read and closed by a previous call to this method.
+            available = 0;
+            log.error("Possible attempt to read a response that has already been read.", e);
+        }
+        if (available == 0) {
+            return "";
+        }
+
+        int contentLength = connection.getHeaderFieldInt(CONTENT_LENGTH_HTTP_HEADER, -1);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringWriter stringWriter = (contentLength != -1) ? new StringWriter(contentLength) : new StringWriter();
+        BufferedWriter writer = new BufferedWriter(stringWriter);
+        try {
+            long numCharsCopied = 0;
+            char[] buffer = new char[10240];
+
+            int cnt;
+            while (((contentLength == -1) || (numCharsCopied < contentLength)) && ((cnt = reader.read(buffer)) != -1)) {
+                numCharsCopied += cnt;
+                writer.write(buffer, 0, cnt);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read response.", e);
+        } finally {
+            try {
+                writer.close();
+            } catch (IOException ioe) {
+                log.debug("Failed to close writer.", ioe);
+            }
+
+            try {
+                reader.close();
+            } catch (IOException ioe) {
+                log.debug("Failed to close reader.", ioe);
+            }
+        }
+
+        return stringWriter.getBuffer().toString();
     }
 
 }

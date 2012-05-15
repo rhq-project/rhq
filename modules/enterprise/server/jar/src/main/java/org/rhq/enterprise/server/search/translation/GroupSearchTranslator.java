@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.search.translation;
 import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.server.search.SearchExpressionException;
@@ -49,26 +50,34 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
                 return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, "true");
             }
 
-            String numericAvailabilityFragment = null;
+            String comparator = null;
             if (op == RHQLComparisonOperator.EQUALS || op == RHQLComparisonOperator.EQUALS_STRICT) {
-                numericAvailabilityFragment = " = ";
+                comparator = " = ";
             } else {
-                numericAvailabilityFragment = " != ";
+                comparator = " != ";
             }
 
+            String numericAvailType = null;
             if (filter.equalsIgnoreCase("up")) {
-                numericAvailabilityFragment += "1";
-            } else {
-                numericAvailabilityFragment += "0";
+                numericAvailType = String.valueOf(AvailabilityType.UP.ordinal());
+            } else if (filter.equalsIgnoreCase("down")) {
+                numericAvailType = String.valueOf(AvailabilityType.DOWN.ordinal());
+            } else if (filter.equalsIgnoreCase("disabled")) {
+                numericAvailType = String.valueOf(AvailabilityType.DISABLED.ordinal());
+            } else { // unknown
+                numericAvailType = String.valueOf(AvailabilityType.UNKNOWN.ordinal());
             }
 
             return new SearchFragment( //
                 SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT rg.id" //
                     + "  FROM ResourceGroup rg " //
-                    + " WHERE ( SELECT AVG( iavail.availabilityType ) " //
-                    + "           FROM rg.explicitResources ires " //
-                    + "           JOIN ires.currentAvailability iavail ) " + numericAvailabilityFragment);
-
+                    + " WHERE " //
+                    + "       ( SELECT COUNT(eavail.availabilityType) " //
+                    + "           FROM rg.explicitResources eres " //
+                    + "           JOIN eres.currentAvailability eavail " //
+                    + "          WHERE eavail.availabilityType = '" + numericAvailType + "' ) " //
+                    + comparator //
+                    + "       ( SELECT COUNT(eres) FROM rg.explicitResources eres ) ");
         } else if (path.equals("category")) {
             return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForEnum(alias + ".resourceType.category", op, filter, ResourceCategory.class, false));

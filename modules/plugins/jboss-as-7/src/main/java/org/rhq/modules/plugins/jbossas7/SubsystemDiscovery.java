@@ -104,8 +104,9 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             }
         }
 
-        if (Boolean.getBoolean("as7plugin.verbose"))
+        if (Boolean.getBoolean("as7plugin.verbose")) {
             log.info("total path: [" + path + "]");
+        }
 
         if (lookForChildren) {
             // Looking for multiple resource of type 'childType'

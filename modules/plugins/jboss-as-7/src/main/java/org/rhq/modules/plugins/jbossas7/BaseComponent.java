@@ -291,21 +291,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void deleteResource() throws Exception {
+        log.info("Removing AS7 resource [" + path + "]...");
 
-        log.info("delete resource: " + path + " ...");
         if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
             // We need to do two steps because of AS7-4032
             Operation stop = new Operation("stop", getAddress());
             Result res = getASConnection().execute(stop);
             if (!res.isSuccess()) {
-                throw new IllegalStateException("Managed server @ " + path
-                    + " is still running and can't be stopped. Can't remove it");
+                throw new IllegalStateException("Managed server [" + path
+                    + "] is still running and can't be stopped, so it cannot be removed.");
             }
         }
         Operation op = new Remove(address);
         Result res = getASConnection().execute(op);
-        if (!res.isSuccess())
+        if (!res.isSuccess()) {
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
+        }
         if (path.contains("server-group")) {
             // This was a server group level deployment - TODO do we also need to remove the entry in /deployments ?
             /*
@@ -319,8 +320,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                         }
             */
         }
-        log.info("   ... done");
-
     }
 
     @Override
@@ -380,8 +379,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
         JsonNode uploadResult = uploadConnection.finishUpload();
-        if (verbose)
+        if (verbose) {
             log.info(uploadResult);
+        }
 
         if (ASUploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
@@ -419,7 +419,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         String deploymentName, String hash) {
 
         boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        log.info("Deploying [" + runtimeName + "] to domain only= " + !toServerGroup + " ...");
+        log.info("Deploying [" + runtimeName + "] (toDomainOnly=" + !toServerGroup + ")...");
 
         ASConnection connection = getASConnection();
 
@@ -468,8 +468,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
             resourceKey = serverGroupAddress.getPath();
 
-            if (verbose)
+            if (verbose) {
                 log.info("Deploy operation: " + cop);
+            }
 
             result = connection.execute(cop);
         }
@@ -478,14 +479,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             String failureDescription = result.getFailureDescription();
             report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
-            log.warn(" ... done with failure: " + failureDescription);
+            log.warn("Deploy of [" + runtimeName + "] failed: " + failureDescription);
         } else {
             report.setStatus(CreateResourceStatus.SUCCESS);
             report.setResourceName(runtimeName);
             report.setResourceKey(resourceKey);
             report.getPackageDetails().setSHA256(hash);
             report.getPackageDetails().setInstallationTimestamp(System.currentTimeMillis());
-            log.info(" ... with success and key [" + resourceKey + "]");
+            log.info("Deploy of [" + runtimeName + "] succeeded - Resource key is [" + resourceKey + "].");
         }
 
         return report;

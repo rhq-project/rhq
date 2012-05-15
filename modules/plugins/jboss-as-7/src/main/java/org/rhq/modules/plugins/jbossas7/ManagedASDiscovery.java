@@ -119,7 +119,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
                 // Add to return values
                 discoveredResources.add(detail);
 
-                log.info("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
+                log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
                         + detail.getResourceKey() + "].");
             }
         } catch (Exception e) {

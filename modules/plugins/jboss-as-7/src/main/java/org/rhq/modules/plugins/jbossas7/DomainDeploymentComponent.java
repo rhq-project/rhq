@@ -49,7 +49,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
             String resourceKey = context.getResourceKey();
             resourceKey = resourceKey.substring(resourceKey.indexOf("=") + 1);
 
-            log.info("Promoting [" + resourceKey + "] to server group(s) [" + serverGroups + "]");
+            log.info("Promoting [" + resourceKey + "] to server group(s) [" + serverGroups + "]...");
 
             PropertySimple simple = parameters.getSimple("enabled");
             Boolean enabled = false;

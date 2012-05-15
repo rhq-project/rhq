@@ -122,8 +122,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     @Override
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
                                                  ContentServices contentServices) {
-
-        log.info("Starting deployment..");
+        log.debug("Starting deployment..");
         DeployPackagesResponse response = new DeployPackagesResponse();
 
         if (packages.size()!=1) {
@@ -138,14 +137,15 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         OutputStream out = uploadConnection.getOutputStream(detail.getFileName());
         ResourceType resourceType = context.getResourceType();
 
-        log.info("trying deployment of" + resourceType.getName() + ", key=" + detail.getKey() );
+        log.info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() +"]...");
 
         contentServices.downloadPackageBits(context.getContentContext(),
                 detail.getKey(), out, true);
 
         JsonNode uploadResult = uploadConnection.finishUpload();
-        if (verbose)
+        if (verbose) {
             log.info(uploadResult);
+        }
 
         if (ASUploadConnection.isErrorReply(uploadResult)) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
@@ -172,7 +172,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
 
-        log.info(".. result is " + response);
+        log.info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey()
+                + "]: " + response);
 
         return response;
     }

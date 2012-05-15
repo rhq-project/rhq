@@ -1740,7 +1740,7 @@
       <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
       <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
-      <metric property="_maxConnections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
+      <metric property="_maxConnections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
       <resource-configuration>
         <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">

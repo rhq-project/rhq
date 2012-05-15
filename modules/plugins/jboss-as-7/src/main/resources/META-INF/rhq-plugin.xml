@@ -5424,11 +5424,205 @@
     <service name="HornetQ"
              discovery="SubsystemDiscovery"
              class="HornetQComponent"
-             description="The HornetQ based messaging subsystem">
+             description="The HornetQ based messaging subsystem"
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="hornetq-server"/>
       </plugin-configuration>
+
+      <operation name="subsystem:close-connections-for-address" displayName="Close Connections for Address" description="Closes all the connections of clients connected to this server whose remote address contains the specified IP address. Returns true if any connections were closed, false otherwise.">
+        <parameters>
+          <c:simple-property name="ip-address" required="true" type="string" readOnly="false" description="An IP address in string format."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:commit-prepared-transaction" displayName="Commit Prepared Transaction" description="Heuristically commits a prepared transaction.">
+        <parameters>
+          <c:simple-property name="transaction-as-base-64" required="false" type="string" readOnly="false" description="The Base64 representation of a transaction XID. Returns true if the transaction was successfully committed, false otherwise."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:force-failover" displayName="Force Failover" description="Force the messaging server to stop and notify clients to failover.">
+        <results>
+           <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover." />
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-address-settings-as-json" displayName="Get Address Settings as JSON" description="Returns the address settings as a JSON string for an address match. The returned String is a JSON string containing an array of address settings details.">
+        <parameters>
+          <c:simple-property name="address-match" required="true" type="string" readOnly="false" description="An address match."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-connectors-as-json" displayName="Get Connectors as JSON" description="Returns the connectors configured for this server using JSON serialization.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-last-sent-message-id" displayName="Get Last Sent Message ID" description="Returns the ID of the last message sent from the given session to the given address.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
+          <c:simple-property name="address-name" required="true" type="string" readOnly="false"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:get-session-creation-time" displayName="Get Session Creation Time" description="Gets the session&apos;s creation time. Returns the creation time, represented as a string showing the number of milliseconds since the epoch.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-all-consumers-as-json" displayName="List All Consumers as JSON" description="Lists all the consumers.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-connection-ids" displayName="List Connection IDs" description="Lists the IDs of all the connections connected to this server.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-connections-as-json" displayName="List Connections as JSON" description="List all JMS connections.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="Lists all the consumers which belongs to the JMS Connection specified by the connection&#45;id.">
+        <parameters>
+          <c:simple-property name="connection-id" required="true" type="string" readOnly="false" description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-heuristic-committed-transactions" displayName="List Heuristic Committed Transactions" description="Lists transactions which have been heuristically committed. Returns a list of strings. The Strings are Base-64 representation of the transaction XID.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-heuristic-rolled-back-transactions" displayName="List Heuristic Rolled Back Transactions" description="Lists transactions which have been heuristically rolled back. Returns a list of strings. The Strings are Base-64 representation of the transaction XID.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-details-as-html" displayName="List Prepared Transaction Details as HTML" description="List all the prepared transaction, sorted by date, oldest first, with details, in HTML format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-details-as-json" displayName="List Prepared Transaction Details as JSON" description="List all the prepared transaction, sorted by date, oldest first, with details, in JSON format.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-jms-details-as-html" displayName="List Prepared Transaction JMS Details as HTML" description="List all the prepared transactions, sorted by date, oldest first, with details in JMS, in HTML format">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transaction-jms-details-as-json" displayName="List Prepared Transaction JMS details as JSON" description="List all the prepared transactions, sorted by date, oldest first, with details in JMS format, in JSON format">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-prepared-transactions" displayName="List Prepared Transactions" description="List all the prepared transaction, sorted by date, oldest first. Returns a list of strings. The Strings are Base-64 representation of the transaction XID and can be used to heuristically commit or rollback the transactions.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-producers-info-as-json" displayName="List Producers Info as JSON" description="For all sessions, lists information about message producers using JSON serialization.">
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-remote-addresses" displayName="List Remote Addresses" description="Lists the addresses of all the clients connected to the given address. If an ip&#45;address argument is supplied, only those clients whose remote address string includes the given ip&#45;address string will be returned.">
+        <parameters>
+          <c:simple-property name="ip-address" required="false" type="string" readOnly="false" description="An IP address in string format."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-sessions" displayName="List Sessions" description="Lists all the sessions IDs for the specified connection ID.">
+        <parameters>
+          <c:simple-property name="connection-id" required="false" type="string" readOnly="false" description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-sessions-as-json" displayName="List Sessions as JSON" description="Lists all the sessions IDs for the specified connection ID. The returned String is a JSON string containing an array of session ids.">
+        <parameters>
+          <c:simple-property name="connection-id" required="true" type="string" readOnly="false" description="The connection id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:list-target-destinations" displayName="List Target Destinations" description="Lists all addresses to which the designated session has sent messages. The returned String is a JSON string containing an array of address names.">
+        <parameters>
+          <c:simple-property name="session-id" required="true" type="string" readOnly="false" description="The session id."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <operation name="subsystem:reset-all-message-counter-histories" displayName="Reset All Message Counter Histories" description="Reset all message counters history.">
+        <results>
+           <c:simple-property name="operationResult" description="Reset all message counters history." />
+        </results>
+      </operation>
+
+      <operation name="subsystem:reset-all-message-counters" displayName="Reset All Message Counters" description="Reset all message counters.">
+        <results>
+           <c:simple-property name="operationResult" description="Reset all message counters." />
+        </results>
+      </operation>
+
+      <operation name="subsystem:rollback-prepared-transaction" displayName="Rollback Prepared Transaction" description="Heuristically rolls back a prepared transaction. Returns true if the transaction was successfully rolled back, false otherwise.">
+        <parameters>
+          <c:simple-property name="transaction-as-base-64" required="false" type="string" readOnly="false" description="The Base64 representation of a transaction XID."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+        </results>
+      </operation>
+
+      <metric property="started" displayName="Started" dataType="trait" defaultInterval="3600000" description="Whether this server is started."/>
+      <metric property="version" displayName="Version" dataType="trait" defaultInterval="3600000" description="The server&apos;s version."/>
 
       <resource-configuration>
         <c:simple-property name="allow-failback" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server will automatically shutdown if the original live server comes back up. The default value is true."/>
@@ -5486,11 +5680,9 @@
         <c:simple-property name="security-invalidation-interval" required="false" type="long" readOnly="false" defaultValue="10000" description="How long (in ms) to wait before invalidating the security cache. The default value is 10000."/>
         <c:simple-property name="server-dump-interval" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="How often to dump basic runtime information to the server log. A value less than 1 disables this feature. The default value is &#45;1."/>
         <c:simple-property name="shared-store" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server is using a shared store for failover. The default value is true."/>
-        <c:simple-property name="started" required="false" type="boolean" readOnly="true" description="Whether this server is started."/>
         <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
         <c:simple-property name="transaction-timeout" required="false" type="long" readOnly="false" defaultValue="300000" description="How long (in ms) before a transaction can be removed from the resource manager after create time. The default value is 300000."/>
         <c:simple-property name="transaction-timeout-scan-period" required="false" type="long" readOnly="false" defaultValue="1000" description="How often (in ms) to scan for timeout transactions. The default value is 1000."/>
-        <c:simple-property name="version" required="false" type="string" readOnly="true" description="The server&apos;s version."/>
         <c:simple-property name="wild-card-routing-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server supports wild card routing. The default value is true."/>
       </resource-configuration>
 
@@ -5503,17 +5695,192 @@
           <c:simple-property name="path" readOnly="true" default="jms-queue"/>
         </plugin-configuration>
 
+        <operation name="subsystem:change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:change-messages-priority" displayName="Change Messages Priority" description="Change the priority of the messages corresponding to the given filter. Returns the number of removed messages.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:count-messages" displayName="Count Messages" description="Returns the number of the messages in the queue matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-messages" displayName="Expire Messages"  description="Expire the messages matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="A string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-html" displayName="List Message Counter as HTML" description="List the message counter as a string in HTML format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-json" displayName="List Message Counter as JSON" description="List the message counter as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-html" displayName="List Message Counter History as HTML" description="List the message counter history.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-json" displayName="List Message Counter History as JSON" description="List the message counter history as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="list-messages" displayName="List Messages" description="List all messages in the queue that match the filter">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-as-json" displayName="List Messages as JSON" description="List all messages in the queue that match the filter and return them as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-message" displayName="Move Message" description="Move the message corresponding to the given message&#45;id to another queue">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-messages" displayName="Move Messages" description="Move the messages corresponding to the given filter to another queue.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Pause the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message&#45;id.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
+          <results>
+             <c:simple-property name="operationResult" description="Reset the message counters." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Resume the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-message-to-dead-letter-address" displayName="Send Message to Dead Letter Address" description="Send the message corresponding to the given message&#45;id to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="string" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-messages-to-dead-letter-address" displayName="Send Messages to Dead Letter Address" description="Send the messages corresponding to the given filter to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="consumer-count" description="The number of consumers consuming messages from this queue."/>
+        <metric property="dead-letter-address" dataType="trait" description="The address to send dead messages to."/>
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>  
+        <metric property="expiry-address" dataType="trait" description="The address to send expired messages to."/>
+        <metric property="message-count" description="The number of messages currently in this queue."/>
+        <metric property="messages-added" description="The number of messages added to this queue since it was created."/>
+        <metric property="paused" dataType="trait" description="Whether the queue is paused."/>
+        <metric property="scheduled-count" description="The number of scheduled messages in this queue."/>
+        <metric property="temporary" dataType="trait" description="Whether the queue is temporary."/>
+        <metric property="queue-address" dataType="trait" description="The queue address defines what address is used for routing messages."/>
+
         <resource-configuration>
-          <c:simple-property name="dead-letter-address" required="false" type="string" readOnly="true" description="The address to send dead messages to."/>
           <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
           <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
               <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
-          <c:simple-property name="expiry-address" required="false" type="string" readOnly="true" description="The address to send expired messages to."/>
-          <c:simple-property name="paused" required="true" type="boolean" readOnly="true" description="Whether the queue is paused."/>
-          <c:simple-property name="queue-address" required="true" type="string" readOnly="true" description="The queue address defines what address is used for routing messages."/>
           <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
-          <c:simple-property name="temporary" required="true" type="boolean" readOnly="true" description="Whether the queue is temporary."/>
         </resource-configuration>
       </service>
 
@@ -5526,6 +5893,107 @@
           <c:simple-property name="path" readOnly="true" default="jms-topic"/>
         </plugin-configuration>
 
+        <operation name="subsystem:count-messages-for-subscription" displayName="Count Messages for Subscription" description="Count the number of messages matching the filter for the given subscription.">
+          <parameters>
+            <c:simple-property name="client-id" required="true" type="string" readOnly="false" description="The client ID."/>
+            <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A JMS message filter."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:drop-all-subscriptions" displayName="Drop All Subscriptions" description="Drop all subscriptions from this topic.">
+          <results>
+             <c:simple-property name="operationResult" description="Drop all subscriptions from this topic." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:drop-durable-subscription" displayName="Drop Durable Subscription" description="Drop a durable subscription">
+          <parameters>
+            <c:simple-property name="client-id" required="true" type="string" readOnly="false" description="The client ID."/>
+            <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
+          </parameters>
+          <results>
+             <c:simple-property name="operationResult" description="Drop a durable subscription" />
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-all-subscriptions" displayName="List All Subscriptions" description="List all subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-all-subscriptions-as-json" displayName="List All Subscriptions as JSON" description="List all subscriptions as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-durable-subscriptions" displayName="List Durable Subscriptions" description="List only the durable subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-durable-subscriptions-as-json" displayName="List Durable Subscriptions as JSON" description="List only the durable subscriptions, as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-for-subscription" displayName="List Messages for Subscription" description="List all the messages for the given subscription.">
+          <parameters>
+            <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The name of the queue representing a subscription"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-for-subscription-as-json" displayName="List Messages for Subscription as JSON" description="List all the messages for the given subscription as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The name of the queue representing a subscription"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-non-durable-subscriptions" displayName="List Non-Durable Subscriptions" description="List only the non&#45;durable subscriptions.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-non-durable-subscriptions-as-json" displayName="List Non-Durable Subscriptions as JSON" description="List only the non&#45;durable subscriptions, as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>
+        <metric property="durable-message-count" description="The number of messages for all durable subscribers for this topic."/>
+        <metric property="durable-subscription-count" description="The number of durable subscribers for this topic."/>
+        <metric property="message-count" description="The number of messages currently in this queue."/>
+        <metric property="messages-added" description="The number of messages added to this queue since it was created."/>
+        <metric property="non-durable-message-count" description="The number of messages for all non&#45;durable subscribers for this topic."/>
+        <metric property="non-durable-subscription-count" description="The number of non&#45;durable subscribers for this topic."/>
+        <metric property="subscription-count" description="The number of (durable and non&#45;durable) subscribers for this topic."/>
+        <metric property="temporary" dataType="trait" description="Whether the topic is temporary."/>
+        <metric property="topic-address" dataType="trait" description="The address the topic points to."/>
+
         <resource-configuration>
           <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"
                            description="The jndi names the queue will be bound to.">
@@ -5534,137 +6002,809 @@
         </resource-configuration>
       </service>
 
-      <service name="Connection-Factory"
+      <service name="Connection Factory"
                discovery="SubsystemDiscovery"
                class="JmsComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="connection-factory"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"
-                           description="The jndi names the queue will be bound to.">
+          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
+            <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
+          </c:map-property>
+          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
 
-          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector"
-                          description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
-          </c:map-property>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name. This is mutually exclusive with Connector"/>
-
-          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
-          <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>
-          <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on durable send."/>
-          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on non durable send."/>
-          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" description="True to cache large messages."/>
-          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" description="The call time out."/>
-          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" description="The client failure check period."/>
+          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not message grouping is automatically used. The default value is false."/>
+          <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
+          <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
+          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
+          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
+          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
           <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
-          <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" description="Whether large messages should be compressed."/>
-          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" description="The confirmation window size."/>
-          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" description="The connection ttl."/>
-          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" description="The consumer max rate."/>
-          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" description="The consumer window size."/>
+          <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether large messages should be compressed. The default value is false."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
+          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
+          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" description="The dups ok batch size."/>
-          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" description="True to fail over on initial connection."/>
+          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
+          <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
+            <c:property-options>
+              <c:option value="GENERIC" name="GENERIC"/>
+              <c:option value="QUEUE" name="QUEUE"/>
+              <c:option value="TOPIC" name="TOPIC"/>
+              <c:option value="XA_GENERIC" name="XA_GENERIC"/>
+              <c:option value="XA_QUEUE" name="XA_QUEUE"/>
+              <c:option value="XA_TOPIC" name="XA_TOPIC"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
-          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" description="Whether the connection factory supports High Availability."/>
-          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false"
-                             description="Name of a class implementing a client-side load balancing policy that a client can use to load balance sessions across different nodes in a cluster."/>
-          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" description="The max retry interval."/>
-          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" description="The min large message size."/>
-          <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" description="True to pre-acknowledge."/>
-          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" description="The producer max rate."/>
-          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" description="The producer window size."/>
-          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" description="The reconnect attempts."/>
-          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" description="The retry interval."/>
-          <c:simple-property name="retry-interval-multiplier" required="false" type="float" readOnly="false" description="The retry interval multiplier."/>
-          <c:simple-property name="scheduled-thread-pool-max-size" required="false" type="integer" readOnly="false" description="The scheduled thread pool max size."/>
-          <c:simple-property name="thread-pool-max-size" required="false" type="integer" readOnly="false" description="The thread pool max size."/>
-          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" description="The transaction batch size."/>
-          <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" description="True to use global pools."/>
+          <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+          <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
+          <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
+          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+          <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
         </resource-configuration>
-      </service><!-- End of Connection-Factory service -->
+      </service>
 
-  <service name="Security Setting"
-     discovery="SubsystemDiscovery"
-     class="BaseComponent">
+      <service name="Pooled Connection Factory"
+               discovery="SubsystemDiscovery"
+               class="JmsComponent"
+               createDeletePolicy="both">
 
-     <plugin-configuration>
-       <c:simple-property name="path" readOnly="true" default="security-setting"/>
-     </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="pooled-connection-factory"/>
+        </plugin-configuration>
 
-           <!-- Removing. Add/Remove a little to low level
-     <operation name="add" description="Add new security setting.">
-       <results>
-    <c:simple-property name="operationResult" description="Add new security setting." />
-       </results>
-     </operation>
+        <resource-configuration>
+          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
+            <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
+          </c:map-property>
+          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
+            <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
+          </c:list-property>
 
-     <operation name="remove" description="Remove an existing security setting.">
-       <results>
-    <c:simple-property name="operationResult" description="Remove an existing security setting." />
-       </results>
-     </operation> -->
+          <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" defaultValue="false" description="The autogroup. The default value is false."/>
+          <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on acknowledge. The default value is false."/>
+          <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to set block on durable send. The default value is true."/>
+          <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to set block on non durable send. The default value is false."/>
+          <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to cache large messages. The default value is false."/>
+          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The call time out. The default value is 30000."/>
+          <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" defaultValue="30000" description="The client failure check period. The default value is 30000."/>
+          <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
+          <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>          
+          <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
+          <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+          <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
+          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>          
+          <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
+          <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+          <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
+          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
+          <c:simple-property name="jndi-params" required="false" type="string" readOnly="false" description="The JNDI params to use for locating the destination for incoming connections."/>
+          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
+          <c:simple-property name="min-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
+          <c:simple-property name="password" required="false" type="string" readOnly="false" description="The default password to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
+          <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
+          <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
+          <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" defaultValue="65536" description="The producer window size. The default value is 65536."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="setup-attempts" required="false" type="integer" readOnly="false" description="The number of times to set up an MDB endpoint"/>
+          <c:simple-property name="setup-interval" required="false" type="long" readOnly="false" description="The interval between attempts at setting up an MDB endpoint."/>
+          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="transaction" required="false" type="string" readOnly="false" defaultValue="transaction" description="TODO. The default value is transaction."/>
+          <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
+          <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
+          <c:simple-property name="use-jndi" required="false" type="boolean" readOnly="false" description="Use JNDI to locate the destination for incoming connections"/>
+          <c:simple-property name="use-local-tx" required="false" type="boolean" readOnly="false" description="Use a local transaction for incoming sessions"/>
+          <c:simple-property name="user" required="false" type="string" readOnly="false" description="The default username to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
+        </resource-configuration>
+      </service>
 
-       <service name="Role"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent">
+      <service name="Security Setting"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-    <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="role"/>
-    </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="security-setting"/>
+        </plugin-configuration>
 
-         <operation name="add" description="Add new security role.">
-     <parameters>
-             <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
-       <c:simple-property name="send" required="true" type="boolean" readOnly="false" description="This permission allows the user to send a message to matching addresses."/>
-       <c:simple-property name="consume" required="true" type="boolean" readOnly="false" description="his permission allows the user to consume a message from a queue bound to matching addresses."/>
-       <c:simple-property name="create-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a durable queue."/>
-       <c:simple-property name="delete-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a durable queue."/>
-       <c:simple-property name="create-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to create a temporary queue."/>
-       <c:simple-property name="delete-non-durable-queue" required="true" type="boolean" readOnly="false" description="This permission allows the user to delete a temporary queue."/>
-       <c:simple-property name="manage" required="true" type="boolean" readOnly="false" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
-     </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Add new security role." />
-     </results>
-         </operation>
+        <service name="Role"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
-         <operation name="remove" description="Remove an existing security role.">
-     <parameters>
-             <c:simple-property name="name" required="true" type="string" readOnly="false" description="The role&apos;s name."/>
-           </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Remove an existing security role." />
-     </results>
-         </operation>
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="role"/>
+          </plugin-configuration>
 
-         <resource-configuration>
-     <c:simple-property name="consume" required="false" type="boolean" readOnly="false" defaultValue="false" description="his permission allows the user to consume a message from a queue bound to matching addresses. The default value is false."/>
-     <c:simple-property name="create-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to create a durable queue. The default value is false."/>
-     <c:simple-property name="create-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to create a temporary queue. The default value is false."/>
-     <c:simple-property name="delete-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to delete a durable queue. The default value is false."/>
-     <c:simple-property name="delete-non-durable-queue" required="false" type="boolean" readOnly="false" defaultValue="false"
-     description="This permission allows the user to delete a temporary queue. The default value is false."/>
-     <c:simple-property name="manage" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to invoke management operations by sending management messages to the management address. The default value is false."/>
-     <c:simple-property name="send" required="false" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to send a message to matching addresses. The default value is false."/>
-         </resource-configuration>
+          <resource-configuration>
+            <c:simple-property name="consume" required="true" type="boolean" readOnly="false" defaultValue="false" description="his permission allows the user to consume a message from a queue bound to matching addresses. The default value is false."/>
+            <c:simple-property name="create-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to create a durable queue. The default value is false."/>
+            <c:simple-property name="create-non-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to create a temporary queue. The default value is false."/>
+            <c:simple-property name="delete-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to delete a durable queue. The default value is false."/>
+            <c:simple-property name="delete-non-durable-queue" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to delete a temporary queue. The default value is false."/>
+            <c:simple-property name="manage" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to invoke management operations by sending management messages to the management address. The default value is false."/>
+            <c:simple-property name="send" required="true" type="boolean" readOnly="false" defaultValue="false" description="This permission allows the user to send a message to matching addresses. The default value is false."/>
+          </resource-configuration>
+        </service>
+      </service>
 
-       </service><!-- End of role service -->
+      <service name="Address Setting"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-  </service><!-- End of Security Settings service -->
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="address-setting"/>
+        </plugin-configuration>
 
-    </service><!-- End of HornetQ service -->
+        <resource-configuration>
+          <c:simple-property name="address-full-policy" required="false" type="string" readOnly="false" defaultValue="PAGE" description="Determines what happens when an address where max&#45;size&#45;bytes is specified becomes full. (PAGE, DROP or BLOCK). The default value is PAGE."/>
+          <c:simple-property name="dead-letter-address" required="false" type="string" readOnly="false" description="The dead letter address"/>
+          <c:simple-property name="expiry-address" required="false" type="string" readOnly="false" description="Defines where to send a message that has expired."/>
+          <c:simple-property name="last-value-queue" required="false" type="boolean" readOnly="false" defaultValue="false" description="Defines whether a queue only uses last values or not. The default value is false."/>
+          <c:simple-property name="max-delivery-attempts" required="false" type="integer" readOnly="false" defaultValue="10" description="Defines how many time a cancelled message can be redelivered before sending to the dead&#45;letter&#45;address. The default value is 10."/>
+          <c:simple-property name="max-size-bytes" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="The max bytes size. The default value is &#45;1."/>
+          <c:simple-property name="message-counter-history-day-limit" required="false" type="integer" readOnly="false" defaultValue="0" description="Day limit for the message counter history. The default value is 0."/>
+          <c:simple-property name="page-max-cache-size" required="false" type="integer" readOnly="false" defaultValue="5" description="The number of page files to keep in memory to optimize IO during paging navigation. The default value is 5."/>
+          <c:simple-property name="page-size-bytes" required="false" type="long" readOnly="false" defaultValue="10485760" description="The paging size. The default value is 10485760."/>
+          <c:simple-property name="redelivery-delay" required="false" type="long" readOnly="false" defaultValue="0" description="Defines how long to wait before attempting redelivery of a cancelled message. The default value is 0."/>
+          <c:simple-property name="redistribution-delay" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="Defines how long to wait when the last consumer is closed on a queue before redistributing any messages. The default value is &#45;1."/>
+          <c:simple-property name="send-to-dla-on-no-route" required="false" type="boolean" readOnly="false" defaultValue="false" description="If this parameter is set to true for that address, if the message is not routed to any queues it will instead be sent to the dead letter address (DLA) for that address, if it exists. The default value is false."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Grouping Handler"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="grouping-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="grouping-handler-address" required="true" type="string" readOnly="false" description="A reference to a cluster connection and the address it uses."/>
+          <c:simple-property name="timeout" required="false" type="integer" readOnly="false" defaultValue="5000" description="How long to wait for a handling decision to be made; an exception will be thrown during the send if this timeout is reached, ensuring that strict ordering is kept. The default value is 5000."/>
+          <c:simple-property name="type" required="false" type="string" readOnly="false" description="Whether the handler is the single &apos;Local&apos; handler for the cluster, which makes handling decisions, or a &apos;Remote&apos; handler which converses with the local handler."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="acceptor"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the acceptor." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the acceptor." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether this acceptor is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Connector (HornetQ)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="The factory class."/>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="In VM Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="in-vm-acceptor"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the acceptor." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the acceptor." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether it's stopped or started."/>
+
+        <resource-configuration>
+          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
+        </resource-configuration>
+      </service>
+
+      <service name="In VM Connector"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="in-vm-connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="server-id" required="true" type="integer" readOnly="false" description="The server id."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Remote Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="remote-acceptor"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the acceptor." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the acceptor." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether this acceptor is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Remote Connector"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="remote-connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The socket binding reference.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Divert"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="divert"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="divert-address" required="true" type="string" readOnly="false" description="Address to divert from"/>
+          <c:simple-property name="exclusive" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the divert is exclusive, meaning that the message is diverted to the new address, and does not go to the old address at all. The default value is false."/>
+          <c:simple-property name="filter" required="false" type="string" readOnly="false" description="An optional filter string. If specified then only messages which match the filter expression specified will be diverted. The filter string follows the HornetQ filter expression syntax described in the HornetQ documentation."/>
+          <c:simple-property name="forwarding-address" required="true" type="string" readOnly="false" description="Address to divert to"/>
+          <c:simple-property name="routing-name" required="false" type="string" readOnly="false" description="Routing name of the divert"/>
+          <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a class used to transform the message&apos;s body or properties before it is diverted."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Queue"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="queue"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:change-message-priority" displayName="Change Message Priority" description="Change the priority of the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:change-messages-priority" displayName="Change Messages Priority" description="Change the priority of the messages corresponding to the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="new-priority" required="true" type="integer" readOnly="false" description="The new priority (between 0 and 9)."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:count-messages" displayName="Count Messages" description="Returns the number of the messages in the queue matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-message" displayName="Expire Message" description="Expire the message corresponding to the given message&#45;id. Returns true if the message was expired, false otherwise.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:expire-messages" displayName="Expire Messages" description="Expire the messages matching the given filter.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-consumers-as-json" displayName="List Consumers as JSON" description="A string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-html" displayName="List Message Counter as HTML" description="List the message counter as a string in HTML format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-as-json" displayName="List Message Counter as JSON" description="List the message counter as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-html" displayName="List Message Counter History as HTML" description="List the message counter history.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-message-counter-history-as-json" displayName="List Message Counter History as JSON" description="List the message counter history as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages" displayName="List Messages" description="List all messages in the queue that match the filter">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-messages-as-json" displayName="List Messages as JSON" description="List all messages in the queue that match the filter and return them as a string in JSON format.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-scheduled-messages" displayName="List Scheduled Messages" description="List the messages scheduled for delivery.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:list-scheduled-messages-as-json" displayName="List Scheduled Messages as JSON" description="List the messages scheduled for delivery as a string in JSON format.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-message" displayName="Move Message" description="Move the message corresponding to the given message&#45;id to another queue">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:move-messages" displayName="Move Messages" description="Move the messages corresponding to the given filter to another queue.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+            <c:simple-property name="other-queue-name" required="true" type="string" readOnly="false" description="The name of the queue to move the message to."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Pause the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-message" displayName="Remove Message" description="Remove the message corresponding to the given message&#45;id.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:remove-messages" displayName="Remove Messages" description="Remove messages matching the given filter from the destination.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
+          <results>
+             <c:simple-property name="operationResult" description="Reset the message counters." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
+          <results>
+             <c:simple-property name="operationResult" description="Resume the queue." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-message-to-dead-letter-address" displayName="Send Message to Dead Letter Address" description="Send the message corresponding to the given message&#45;id to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="message-id" required="false" type="long" readOnly="false" description="A message id."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:send-messages-to-dead-letter-address" displayName="Send Messages to Dead Letter Address" description="Send the messages corresponding to the given filter to this queue&apos;s Dead Letter Address.">
+          <parameters>
+            <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <metric property="id" dataType="trait" description="The id of the queue."/>
+        <metric property="paused" dataType="trait" description="Whether the queue is paused."/>
+        <metric property="temporary" dataType="trait" description="Whether the queue is temporary."/>
+
+        <resource-configuration>
+          <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the queue is durable. The default value is true."/>
+          <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
+          <c:simple-property name="queue-address" required="true" type="string" readOnly="false" description="The queue address defines what address is used for routing messages."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Core Address"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="A runtime-only resource representing a HornetQ address. Zero or more queues can be bound to a single address. When a message is routed, it is routed to the set of queues bound to the message's address."
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="core-address"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:list-property name="binding-names" required="true" readOnly="true" description="The names of all bindings (both queues and diverts) bound to this address." >
+            <c:simple-property name="binding-names" />
+          </c:list-property>
+          <c:simple-property name="number-of-bytes-per-page" required="true" type="long" readOnly="true" description="The number of bytes used by each page for this address."/>
+          <c:simple-property name="number-of-pages" required="true" type="integer" readOnly="true" description="The number of pages used by this address."/>
+          <c:list-property name="queue-names" required="true" readOnly="true" description="The names of the queues associated with the address." >
+              <c:simple-property name="queue-names" />
+          </c:list-property>
+          <c:list-property name="roles" required="true" readOnly="true" description="A list of the security roles (name and permissions) associated with the address." >
+            <c:map-property name="role">
+              <c:simple-property name="name" type="string" readOnly="true" description="The name of a security role."/>
+              <c:simple-property name="send" type="boolean" readOnly="true" description="This permission allows the user to send a message to matching addresses."/>
+              <c:simple-property name="consume" type="boolean" readOnly="true" description="This permission allows the user to consume a message from a queue bound to matching addresses."/>
+              <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a durable queue."/>
+              <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a durable queue."/>
+              <c:simple-property name="create-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to create a temporary queue."/>
+              <c:simple-property name="delete-durable-queue" type="boolean" readOnly="true" description="This permission allows the user to delete a temporary queue."/>
+              <c:simple-property name="manage" type="boolean" readOnly="true" description="This permission allows the user to invoke management operations by sending management messages to the management address."/>
+            </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Cluster Connection"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="cluster-connection"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:get-nodes" displayName="Get Nodes" description="Returns a map of the nodes connected to this cluster connection, where keys are node IDs and values are the addresses used to connect to the nodes.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the cluster connection.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the cluster connection." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the cluster connection.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the cluster connection." />
+          </results>
+        </operation>
+
+        <metric property="node-id" dataType="trait" description="The node ID used by this cluster connection."/>
+        <metric property="started" dataType="trait" description="Whether the cluster connection is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="allow-direct-connections-only" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether, if a node learns of the existence of a node that is more than 1 hop away, we do not create a bridge for direct cluster connection. Only relevant if &apos;static&#45;connectors&apos; is defined. The default value is false."/>
+          <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The timeout (in ms) for remote calls made by the cluster connection. The default value is 30000."/>
+          <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
+          <c:simple-property name="cluster-connection-address" required="true" type="string" readOnly="false" description="Each cluster connection only applies to messages sent to an address that starts with this value."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node. The default value is 1048576."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the cluster connections are considered alive (in the absence of heartbeat). The default value is 60000."/>
+          <c:simple-property name="connector-ref" required="true" type="string" readOnly="false" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="forward-when-no-consumers" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether messages will be distributed round robin between other nodes of the cluster irrespective of whether there are matching or indeed any consumers on other nodes. If this is set to false (the default) then HornetQ will only forward messages to other nodes of the cluster if the address to which they are being forwarded has queues which have consumers, and if those consumers have message filters (selectors) at least one of those selectors must match the message. The default value is false."/>
+          <c:simple-property name="max-hops" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of times a message can be forwarded. HornetQ can be configured to also load balance messages to nodes which might be connected to it only indirectly with other HornetQ servers as intermediates in a chain. The default value is 1."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The minimum size (in bytes) for a message before it is considered as a large message. The default value is 102400."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="long" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
+          <c:list-property name="static-connectors" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+              <c:simple-property name="static-connectors" />
+          </c:list-property>
+          <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Broadcast Group"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description=""
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="broadcast-group"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:get-connector-pairs-as-json" displayName="Get Connector Pairs as JSON" description="Returns the pairs of live&#45;backup connectors that are broadcasted by this broadcast group using JSON serialization.">
+          <results>
+            <c:simple-property name="operationResult" required="false" type="string" readOnly="false"/>
+          </results>
+        </operation>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the broadcast group.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the broadcast group." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the broadcast group.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the broadcast group." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether the broadcast group is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="broadcast-period" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between consecutive broadcasts. The default value is 2000."/>
+          <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
+            <c:simple-property name="connectors" />
+          </c:list-property>
+          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Path"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both"
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="path=journal-directory"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="path" required="true" type="string" readOnly="false" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
+          <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+        </resource-configuration>
+      </service>
+
+      <service name="Bridge"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="bridge"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:start" displayName="Start" description="Starts the bridge.">
+          <results>
+             <c:simple-property name="operationResult" description="Starts the bridge." />
+          </results>
+        </operation>
+
+        <operation name="subsystem:stop" displayName="Stop" description="Stops the bridge.">
+          <results>
+             <c:simple-property name="operationResult" description="Stops the bridge." />
+          </results>
+        </operation>
+
+        <metric property="started" dataType="trait" description="Whether the bridge is started."/>
+
+        <resource-configuration>
+          <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
+          <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to the target node. The default value is 1048576."/>
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the bridges are considered alive (in the absence of heartbeat). The default value is 60000."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="Whether the bridge will attempt to failover onto a backup server (if specified) when the target server is cleanly shutdown rather than crashed."/>
+          <c:simple-property name="filter" required="false" type="string" readOnly="false" description="An optional filter string. If specified then only messages which match the filter expression specified will be forwarded. The filter string follows the HornetQ filter expression syntax described in the HornetQ documentation."/>
+          <c:simple-property name="forwarding-address" required="false" type="string" readOnly="false" description="The address on the target server that the message will be forwarded to. If a forwarding address is not specified then the original destination of the message will be retained."/>
+          <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether or not this bridge should support high availability. True means it will connect to any available server in a cluster and support failover. The default value is false."/>
+          <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
+          <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The minimum size (in bytes) for a message before it is considered as a large message. The default value is 102400."/>
+          <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="CHANGE ME!!" description="The password to use when creating the bridge connection to the remote server. If it is not specified the default cluster password specified by the cluster&#45;password attribute in the root messaging subsystem resource will be used. The default value is CHANGE ME!!."/>
+          <c:simple-property name="queue-name" required="true" type="string" readOnly="false" description="The unique name of the local queue that the bridge consumes from."/>
+          <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
+          <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
+          <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
+          <c:list-property name="static-connectors" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:simple-property name="static-connectors" />
+          </c:list-property>
+          <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
+          <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
+          <c:simple-property name="user" required="false" type="string" readOnly="false" defaultValue="HORNETQ.CLUSTER.ADMIN.USER" description="The user name to use when creating the bridge connection to the remote server. If it is not specified the default cluster user specified by the cluster&#45;user attribute in the root messaging subsystem resource will be used. The default value is HORNETQ.CLUSTER.ADMIN.USER."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Discovery Group"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="discovery-group"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
+          <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
+          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding.">
+            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Connector Service"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="connector-service"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="factory-class" required="true" type="string" readOnly="false" description="Class name of the factory class that can instantiate the connector service."/>
+        </resource-configuration>
+      </service>
+    </service>
 
   </service><!-- End of Messaging-Provider service -->
 
+  <service name="Param"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
+
+    <runs-inside>
+      <parent-resource-type name="Acceptor" plugin="&pluginName;"/>
+      <parent-resource-type name="Connector (HornetQ)" plugin="&pluginName;"/>
+      <parent-resource-type name="In VM Acceptor" plugin="&pluginName;"/>
+      <parent-resource-type name="In VM Connector" plugin="&pluginName;"/>
+      <parent-resource-type name="Remote Acceptor" plugin="&pluginName;"/>
+      <parent-resource-type name="Remote Connector" plugin="&pluginName;"/>
+      <parent-resource-type name="Connector Service" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="param"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="value" required="true" type="string" readOnly="false" description="The parameter value"/>
+    </resource-configuration>
+  </service>
 </plugin>

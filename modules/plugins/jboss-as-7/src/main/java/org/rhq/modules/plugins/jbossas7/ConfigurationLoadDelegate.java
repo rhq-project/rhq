@@ -54,7 +54,8 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
-    String nameFromPathProperty;
+    private String nameFromPathProperty;
+    private boolean includeRuntime;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -63,9 +64,21 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param address address of the resource.
      */
     public ConfigurationLoadDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
+        this(configDef, connection, address, false);
+    }
+
+    /**
+     * Create a new configuration delegate, that reads the attributes for the resource at address.
+     * @param configDef Configuration definition for the configuration
+     * @param connection asConnection to use
+     * @param address address of the resource.
+     */
+    public ConfigurationLoadDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address,
+        boolean includeRuntime) {
         this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
+        this.includeRuntime = includeRuntime;
     }
 
     /**
@@ -90,6 +103,9 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
          */
         List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
         Operation op = new ReadResource(address);
+        if (includeRuntime) {
+            op.addAdditionalProperty("include-runtime", "true"); // Include runtime values for attributes
+        }
         //        op.addAdditionalProperty("recursive", "true"); // Also get sub-resources
         loadHandleProperties(config, nonGroupdedDefs, op);
 

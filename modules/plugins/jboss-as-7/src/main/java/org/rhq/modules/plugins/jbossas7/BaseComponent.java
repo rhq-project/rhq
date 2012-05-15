@@ -94,6 +94,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     String path;
     Address address;
     String key;
+    boolean includeRuntime;
 
     private boolean verbose = ASConnection.verbose;
     private BaseServerComponent serverComponent;
@@ -111,6 +112,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         address = new Address(path);
         key = context.getResourceKey();
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/") + 1);
+
+        PropertySimple includeRuntimeProperty = pluginConfiguration.getSimple("includeRuntime");
+        if (includeRuntimeProperty != null && includeRuntimeProperty.getBooleanValue() != null
+            && includeRuntimeProperty.getBooleanValue()) {
+            includeRuntime = true;
+        } else {
+            includeRuntime = false;
+        }
     }
 
     @Override
@@ -259,7 +268,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public Configuration loadResourceConfiguration() throws Exception {
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address, includeRuntime);
         Configuration configuration = delegate.loadResourceConfiguration();
 
         // Read server state

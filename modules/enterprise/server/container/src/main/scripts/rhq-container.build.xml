@@ -431,6 +431,11 @@
          </fileset>
       </move>
 
+      <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->
+      <echo>Overlaying a more secure xercesImpl.jar</echo>
+      <copy file="${settings.localRepository}/xerces/xercesImpl/${xercesImpl.version}/xercesImpl-${xercesImpl.version}.jar"
+            tofile="${jboss.home}/lib/endorsed/xercesImpl.jar"
+            verbose="true" />
 
    </target>
 

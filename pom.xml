@@ -112,6 +112,7 @@
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.0.Final</arquillian.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
+    <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -293,6 +294,13 @@
         <groupId>org.jboss.transaction</groupId>
         <artifactId>jboss-jta</artifactId>
         <version>${jboss-jta.version}</version>
+      </dependency>
+
+      <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->
+      <dependency>
+        <groupId>xerces</groupId>
+        <artifactId>xercesImpl</artifactId>
+        <version>${xercesImpl.version}</version>
       </dependency>
 
       <!-- End: JBoss AS Dependencies -->

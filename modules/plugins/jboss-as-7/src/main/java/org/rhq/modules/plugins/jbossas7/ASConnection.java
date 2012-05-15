@@ -180,7 +180,7 @@ public class ASConnection {
         }
 
         try {
-            String json_to_send = mapper.writeValueAsString(operation);
+            String jsonToSend = mapper.writeValueAsString(operation);
 
             // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
             // generate failure indicator.
@@ -200,7 +200,7 @@ public class ASConnection {
             }
 
             if (verbose) {
-                log.info("JSON to send: " + json_to_send);
+                log.info("JSON to send: " + jsonToSend);
             }
 
             mapper.writeValue(out, operation);
@@ -208,26 +208,59 @@ public class ASConnection {
             out.flush();
             out.close();
 
+            ResponseStatus responseStatus = new ResponseStatus(conn);
+            if (isAuthorizationFailureResponse(responseStatus.getResponseCode())) {
+                handleAuthorizationFailureResponse(operation, responseStatus);
+            }
+
             String responseBody = getResponseBody(conn);
+            if (responseStatus.getResponseCode() >= 400) {
+                if (verbose) {
+                    log.debug(operation + " failed with " + responseStatus + " - response body was [" + responseBody
+                            + "].");
+                }
+
+                if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) {
+                    // management resource not found or not readable or no known child-type
+                    if (log.isDebugEnabled()) {
+                        log.debug("Requested management resource not found: " + operation.getAddress().getPath());
+                    }
+                } else {
+                    log.warn("Received " + responseStatus + " response to " + operation + " - response body was [" +
+                            responseBody + "].");
+                }
+            }
+
             JsonNode operationResult;
             if (!responseBody.isEmpty()) {
-                operationResult = mapper.readTree(responseBody);
+                try {
+                    operationResult = mapper.readTree(responseBody);
+                } catch (IOException ioe) {
+                    log.error("Failed to deserialize response to " + operation + " to JsonNode - response status was "
+                            + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
+                    Result result = new Result();
+                    result.setOutcome("failure");
+                    result.setFailureDescription("Failed to deserialize response to " + operation + " to JsonNode - response status was "
+                                                + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
+                    result.setRolledBack(responseBody.contains("rolled-back=true"));
+                    result.setRhqThrowable(ioe);
+                    operationResult = mapper.valueToTree(result);
+                }
+
                 if (verbose) {
                     ObjectMapper om2 = new ObjectMapper();
                     om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
-                    String tmp = om2.writeValueAsString(operationResult);
-                    log.info(tmp);
+                    try {
+                        String resultString = om2.writeValueAsString(operationResult);
+                        log.info(resultString);
+                    } catch (IOException ioe) {
+                        log.error("Failed to convert result of " + operation + " to string.", ioe);
+                    }
                 }
             } else {
-                int responseCode = conn.getResponseCode();
-                if (isAuthorizationFailureResponse(responseCode)) {
-                    handleAuthorizationFailureResponse(operation, conn);
-                }
                 Result noResult = new Result();
                 noResult.setOutcome("failure");
-
-                String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
-                noResult.setFailureDescription("- empty response body with HTTP status code " + responseCodeString + " -");
+                noResult.setFailureDescription("- empty response body with HTTP status code " + responseStatus + " -");
                 operationResult = mapper.valueToTree(noResult);
             }
 
@@ -241,67 +274,16 @@ public class ASConnection {
             failure.setFailureDescription(ste.getMessage());
             failure.setOutcome("failure");
             failure.setRhqThrowable(ste);
-
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
-        } catch (IOException e) {
-            // This typically indicates a 5xx HTTP response code (i.e. a server error). Unfortunately, AS7 returns 500
-            // responses for client errors (e.g. invalid resource path, attribute name, etc.).
-
-            // On error conditions, it's still necessary to slurp the response stream so the JDK knows it can reuse the
-            // persistent HTTP connection behind the scenes.
-            String responseBody = getResponseBody(conn);
-
-            String responseCodeString;
-            try {
-                int responseCode = conn.getResponseCode();
-                responseCodeString = responseCode + " (" + getResponseMessage(conn) + ")";
-
-                if (isAuthorizationFailureResponse(responseCode)) {
-                    handleAuthorizationFailureResponse(operation, conn);
-                } else {
-                    if (responseBody.isEmpty()) {
-                        log.warn("Response body for " + operation + " was empty and response code was "
-                                + responseCodeString + ".");
-                    } else {
-                        if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) {
-                            // management resource not found or not readable or no known child-type
-                            if (log.isDebugEnabled()) {
-                                log.debug("Requested management resource not found: " + operation.getAddress().getPath());
-                            }
-                        }
-                        else {
-                            log.warn("We got a " + responseCode + " with the following response body back: " + responseBody);
-                        }
-                    }
-                }
-            } catch (IOException ioe) {
-                responseCodeString = "unknown response code";
-            }
-            String failureDescription = operation + " failed with " + responseCodeString + " - response body was ["
-                + responseBody + "].";
-            if (verbose)
-                log.debug(failureDescription);
-
-            JsonNode operationResult = null;
-            if (!responseBody.isEmpty()) {
-                try {
-                    operationResult = mapper.readTree(responseBody);
-                } catch (IOException ioe) {
-                    log.error("Failed to deserialize response body [" + responseBody + "] to JsonNode: " + ioe);
-                }
-            }
-
-            if (operationResult == null) {
-                Result result = new Result();
-                result.setOutcome("failure");
-                result.setFailureDescription(failureDescription);
-                result.setRolledBack(responseBody.contains("rolled-back=true"));
-                result.setRhqThrowable(e);
-                operationResult = mapper.valueToTree(result);
-            }
-
-            return operationResult;
+        } catch (IOException ioe) {
+            conn.disconnect();
+            Result failure = new Result();
+            failure.setFailureDescription(ioe.getMessage());
+            failure.setOutcome("failure");
+            failure.setRhqThrowable(ioe);
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
         } finally {
             long requestEndTime = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();
@@ -319,16 +301,15 @@ public class ASConnection {
         return responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == HTTP_TEMPORARY_REDIRECT;
     }
 
-    private void handleAuthorizationFailureResponse(Operation operation, HttpURLConnection conn) throws IOException {
+    private void handleAuthorizationFailureResponse(Operation operation, ResponseStatus responseCode) {
         if (log.isDebugEnabled()) {
-            String responseCodeString = conn.getResponseCode() + " (" + getResponseMessage(conn) + ")";
-            log.debug("Response to " + operation + " was " + responseCodeString
-                + " - throwing InvalidPluginConfigurationException...");
+            log.debug("Response to " + operation + " was " + responseCode
+                    + " - throwing InvalidPluginConfigurationException...");
         }
         // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
         // warning message in the GUI.
         String message;
-        if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        if (responseCode.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
         } else {
             message = "Authorization to AS7 failed - did you install a management user?";
@@ -428,9 +409,9 @@ public class ASConnection {
         JsonNode node = executeRaw(op, timeoutSec);
 
         if (node == null) {
-            log.warn("Operation [" + op + "] returned null");
+            log.warn("Operation [" + op + "] returned null.");
             Result failure = new Result();
-            failure.setFailureDescription("Operation [" + op + "] returned null");
+            failure.setFailureDescription("Operation [" + op + "] returned null.");
             return failure;
         }
         Result res;
@@ -477,25 +458,18 @@ public class ASConnection {
     private String getResponseBody(HttpURLConnection connection) {
         InputStream inputStream;
         try {
-            inputStream = (connection.getInputStream() != null) ? connection.getInputStream() :
-                    connection.getErrorStream();
+            inputStream = connection.getInputStream();
         } catch (IOException e) {
-            log.debug("Error occurred while reading response.", e);
+            // This means the server returned a 4xx (client error) or 5xx (server error) response, e.g.:
+            // "java.io.IOException: Server returned HTTP response code: 500 for URL: http://127.0.0.1:9990/management"
+            // Unfortunately, AS7 incorrectly returns 500 responses for client errors (e.g. invalid resource path,
+            // attribute name, etc.).
             inputStream = null;
         }
         if (inputStream == null) {
-            return "";
+            inputStream = connection.getErrorStream();
         }
-
-        int available;
-        try {
-            available = inputStream.available();
-        } catch (IOException e) {
-            // The stream has most likely already been read and closed by a previous call to this method.
-            available = 0;
-            log.error("Possible attempt to read a response that has already been read.", e);
-        }
-        if (available == 0) {
+        if (inputStream == null) {
             return "";
         }
 
@@ -530,6 +504,60 @@ public class ASConnection {
         }
 
         return stringWriter.getBuffer().toString();
+    }
+
+    private class ResponseStatus {
+
+        private HttpURLConnection connection;
+        private Integer responseCode;
+        private String responseMessage;
+
+        ResponseStatus(HttpURLConnection connection) {
+           this.connection = connection;
+        }
+
+        public int getResponseCode() {
+            if (responseCode == null) {
+                try {
+                    responseCode = connection.getResponseCode();
+                } catch (IOException e) {
+                    try {
+                        // try again
+                        responseCode = connection.getResponseCode();
+                    } catch (IOException e1) {
+                        log.error("Failed to read response code.", e);
+                        responseCode = -1;
+                    }
+                }
+            }
+            return responseCode;
+        }
+
+        public String getResponseMessage() {
+            if (responseMessage == null) {
+                try {
+                    responseMessage = connection.getResponseMessage();
+                } catch (IOException e) {
+                    try {
+                        // try again
+                        responseMessage = connection.getResponseMessage();
+                    } catch (IOException e1) {
+                        log.error("Failed to read response message.", e);
+                    }
+                }
+
+                if (responseMessage == null) {
+                    responseMessage = (getResponseCode() == HTTP_TEMPORARY_REDIRECT) ? "Temporary Redirect" : "";
+                }
+            }
+            return responseMessage;
+        }
+
+        @Override
+        public String toString() {
+            return getResponseCode() + " (" + getResponseMessage() + ")";
+        }
+
     }
 
 }

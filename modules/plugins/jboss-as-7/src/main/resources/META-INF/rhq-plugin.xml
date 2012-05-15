@@ -31,7 +31,8 @@
             PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
             OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
             path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
-            JAVA_HOME is not specified, the start script will attempt to find java in the PATH.
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH. There is currently
+            a 2000 character limit for this value.
           </c:description>
         </c:simple-property>
         <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
@@ -39,7 +40,7 @@
             The arguments that the Start and Restart operations will pass to the server
             start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
             As an exception, the value of a space-delimited option can optionally be on the same line as the option -
-            for example: -c standalone-ha-full.xml.
+            for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
           </c:description>
         </c:simple-property>
     </c:group>

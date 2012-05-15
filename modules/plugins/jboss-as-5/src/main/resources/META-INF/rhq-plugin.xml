@@ -957,19 +957,29 @@
                <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables"
                                required="false" 
                                type="longString" 
-                               default="" 
-                               description="The variables that the Start and Restart operations will add to the environment 
-                                            of the server start script. Each name=value pair should be on a new line. Values
-                                            should *not* be enclosed in quotes.
-                                            For example: JAVA_OPTS=-Xms=128M" /> 
+                               default="" >
+                 <c:description>
+            The variables that the Start and Restart operations will add to the environment of the server start script.
+            Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
+            JAVA_OPTS=-Xms512M -Xmx1024M). On UNIX systems, the typical minimum set of environment variables is:
+            PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
+            OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
+            path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH. There is currently
+            a 2000 character limit for this value.
+                 </c:description>
+               </c:simple-property>
                <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" 
                                required="false" 
                                type="longString" 
-                               default="" 
-                               description="The arguments that the Start and Restart operations will pass to the server
-                                            start script. Each argument should be on a new line. For example: --host=127.0.0.2 .
-                                            As an exception, a space delimited option can have its value on the same line, or
-                                            on a new line. For example: -b 127.0.0.2" />
+                               default="" > 
+                 <c:description>
+            The arguments that the Start and Restart operations will pass to the server
+            start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
+            As an exception, the value of a space-delimited option can optionally be on the same line as the option -
+            for example: -c default. There is currently a 2000 character limit for this value.
+                 </c:description>
+               </c:simple-property>
                <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
                                description="The path to the script used by the Shut Down operation
                                             to shut down this JBossAS server

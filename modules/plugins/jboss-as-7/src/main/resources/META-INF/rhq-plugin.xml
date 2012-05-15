@@ -1782,7 +1782,7 @@
       <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
       <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
-      <metric property="_maxConnections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
+      <metric property="_maxConnections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
       <resource-configuration>
         <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">
@@ -4019,7 +4019,7 @@
 
         <metric property="consumer-count" description="The number of consumers consuming messages from this queue."/>
         <metric property="dead-letter-address" dataType="trait" description="The address to send dead messages to."/>
-        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>  
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>
         <metric property="durable" dataType="trait" description="Whether the queue is durable or not. The default value is true."/>
         <metric property="expiry-address" dataType="trait" description="The address to send expired messages to."/>
         <metric property="message-count" description="The number of messages currently in this queue."/>
@@ -5888,7 +5888,7 @@
             <c:simple-property name="machine" required="false" type="string" readOnly="false" description="A machine identifier for the transport"/>
             <c:simple-property name="rack" required="false" type="string" readOnly="false" description="A rack identifier for the transport"/>
             <c:simple-property name="site" required="false" type="string" readOnly="false" description="A site identifier for the transport"/>
-            <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>         
+            <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>
           </resource-configuration>
       </service>
     </service>
@@ -6605,7 +6605,7 @@
 
         <metric property="consumer-count" description="The number of consumers consuming messages from this queue."/>
         <metric property="dead-letter-address" dataType="trait" description="The address to send dead messages to."/>
-        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>  
+        <metric property="delivering-count" description="The number of messages that this queue is currently delivering to its consumers."/>
         <metric property="expiry-address" dataType="trait" description="The address to send expired messages to."/>
         <metric property="message-count" description="The number of messages currently in this queue."/>
         <metric property="messages-added" description="The number of messages added to this queue since it was created."/>
@@ -6833,12 +6833,12 @@
           <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
           <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The confirmation window size. The default value is &#45;1."/>
           <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false" defaultValue="org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy" description="Name of a class implementing a client&#45;side load balancing policy that a client can use to load balance sessions across different nodes in a cluster. The default value is org.hornetq.api.core.client.loadbalance.RoundRobinConnectionLoadBalancingPolicy."/>
-          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>          
+          <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
           <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
           <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
           <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
-          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>          
+          <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
           <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
           <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>

@@ -37,6 +37,11 @@ public class MapPropertySimpleWrapper {
         this.prop = prop;
     }
 
+    /**
+     * @param map
+     * @throws IllegalArgumentException if the map values can not be translated to a storable string. Typically this
+     * means max property length is exceeded.
+     */
     public void setValue(Map<String, String> map) {
         String stringValue;
         if (map != null) {
@@ -49,6 +54,12 @@ public class MapPropertySimpleWrapper {
         } else {
             stringValue = null;
         }
+
+        // If the value is too long then don't store it, because it will likely invalidate the Map on the way back out.
+        if (null != stringValue && stringValue.length() > PropertySimple.MAX_VALUE_LENGTH) {
+            throw new IllegalArgumentException(stringValue);
+        }
+
         this.prop.setStringValue(stringValue);
     }
 

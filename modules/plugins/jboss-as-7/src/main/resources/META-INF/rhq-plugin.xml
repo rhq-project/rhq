@@ -1707,10 +1707,12 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
+      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>

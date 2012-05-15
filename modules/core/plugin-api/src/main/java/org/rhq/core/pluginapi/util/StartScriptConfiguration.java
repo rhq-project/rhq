@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,8 @@ public class StartScriptConfiguration {
     public static final String START_SCRIPT_PREFIX_PROP = "startScriptPrefix";
     public static final String START_SCRIPT_ENV_PROP = "startScriptEnv";
     public static final String START_SCRIPT_ARGS_PROP = "startScriptArgs";
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private Configuration pluginConfig;
 
@@ -65,6 +69,7 @@ public class StartScriptConfiguration {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_PROP);
         if (prop == null) {
             prop = new PropertySimple(START_SCRIPT_PROP, null);
+            this.pluginConfig.put(prop);
         }
         prop.setValue(startScript);
     }
@@ -90,8 +95,14 @@ public class StartScriptConfiguration {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ENV_PROP);
         if (prop == null) {
             prop = new PropertySimple(START_SCRIPT_ENV_PROP, null);
+            this.pluginConfig.put(prop);
         }
-        new MapPropertySimpleWrapper(prop).setValue(startScriptEnv);
+
+        try {
+            new MapPropertySimpleWrapper(prop).setValue(startScriptEnv);
+        } catch (IllegalArgumentException e) {
+            setPropertyError(startScriptEnv, prop);
+        }
     }
 
     @NotNull
@@ -105,8 +116,22 @@ public class StartScriptConfiguration {
         PropertySimple prop = this.pluginConfig.getSimple(START_SCRIPT_ARGS_PROP);
         if (prop == null) {
             prop = new PropertySimple(START_SCRIPT_ARGS_PROP, null);
+            this.pluginConfig.put(prop);
         }
-        new ArgsPropertySimpleWrapper(prop).setValue(startScriptArgs);
+
+        try {
+            new ArgsPropertySimpleWrapper(prop).setValue(startScriptArgs);
+        } catch (IllegalArgumentException e) {
+            setPropertyError(startScriptArgs, prop);
+        }
+    }
+
+    private void setPropertyError(Object rawPropValue, PropertySimple prop) {
+        prop.setErrorMessage("The discovered value of this property was longer than "
+            + PropertySimple.MAX_VALUE_LENGTH
+            + " characters (the maximum length of an RHQ property). It has been left unset.  Please see the Agent log for the full value.");
+        log.warn("The discovered value for property [" + prop.getName()
+            + "] was too long and was left unset. It is logged here for reference: " + rawPropValue);
     }
 
     public Configuration getPluginConfig() {
@@ -139,6 +164,12 @@ public class StartScriptConfiguration {
             } else {
                 stringValue = null;
             }
+
+            // If the value is too long then don't store it, because it will likely invalidate the Map on the way back out.
+            if (null != stringValue && stringValue.length() > PropertySimple.MAX_VALUE_LENGTH) {
+                throw new IllegalArgumentException(stringValue);
+            }
+
             this.prop.setStringValue(stringValue);
         }
 

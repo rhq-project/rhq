@@ -2289,7 +2289,7 @@
    </c:simple-property>
          <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
          <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
-             <c:simple-property name="subhandlers" />
+             <c:simple-property name="subhandler" />
          </c:list-property>
        </resource-configuration>
 
@@ -2444,7 +2444,7 @@
          <!-- category is the same as 'name' for other resources. Don't list as required here -->
            &logFilter;
          <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
-             <c:simple-property name="handlers" />
+             <c:simple-property name="handler" />
          </c:list-property>
            &logLevel;
          <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true"
@@ -2544,7 +2544,7 @@
              <c:group name="Root logger" displayName="Root logger">
         &logFilter;
         <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
-     <c:simple-property name="handlers" />
+     <c:simple-property name="handler" />
         </c:list-property>
         &logLevel;
        </c:group>

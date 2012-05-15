@@ -207,6 +207,36 @@ public class OperationJsonTest {
 
     }
 
+    public void needsNoReload() throws Exception {
+
+        String resultString = "{\"outcome\":\"failed\", \"rolled-back\" : true}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString, Result.class);
+
+        assert result != null;
+        assert !result.isReloadRequired();
+    }
+
+    public void needsReload1() throws Exception {
+
+        String resultString = "{\n" +
+                "    \"outcome\":\"success\",\n" +
+                "    \"result\":{\n" +
+                "        \"enabled\":\"true\"\n" +
+                "    },\n" +
+                "    \"response-headers\":{\n" +
+                "        \"process-state\":\"reload-required\"\n" +
+                "    }\n" +
+                "}\n";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString, Result.class);
+
+        assert result != null;
+        assert result.isReloadRequired();
+    }
+
     public void complexResult2() throws Exception {
 
         String resultString = "{\n"

@@ -346,6 +346,26 @@
                   </target>
                 </configuration>
               </execution>
+              <execution>
+                 <id>delete</id>
+                 <phase>post-integration-test</phase>
+                 <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                   <target>
+                      <condition property="as7.product" value="eap" else="as">
+                         <matches pattern="^6\." string="${as7.version}"/>
+                      </condition>
+                      <property name="as7.zipfile"
+                                location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
+                      
+                      <delete file="${as7.zipfile}" />
+                      <delete dir="${java.io.tmpdir}/jboss-eap-6.0" />
+                      <delete dir="${java.io.tmpdir}/jboss-as-${as7.version}" />
+                   </target>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 

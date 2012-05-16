@@ -1164,7 +1164,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceContainer == null) {
             if (log.isDebugEnabled())
                 log.debug("No resource container for resource with id [" + resourceId
-                    + "] found, not performing a serviceScan");
+                    + "] found - not performing a serviceScan");
             return;
         }
         Resource resource = resourceContainer.getResource();
@@ -1829,6 +1829,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public Set<Resource> getResourcesWithType(ResourceType serverType) {
         return getResourcesWithType(serverType, this.platform.getChildResources());
+    }
+
+    public boolean isDiscoveryScanInProgress() {
+        return (this.inventoryThreadPoolExecutor.getActiveCount() >= 1);
     }
 
     private Set<Resource> getResourcesWithType(ResourceType serverType, Set<Resource> resources) {

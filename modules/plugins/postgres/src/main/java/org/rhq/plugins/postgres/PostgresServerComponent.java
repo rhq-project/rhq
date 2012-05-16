@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,6 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -73,6 +72,7 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  */
 public class PostgresServerComponent<T extends ResourceComponent<?>> implements DatabaseComponent<T>, ConfigurationFacet, MeasurementFacet,
     OperationFacet, CreateChildResourceFacet {
+
     private static Log log = LogFactory.getLog(PostgresServerComponent.class);
 
     private Connection connection;
@@ -165,26 +165,20 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration config = new Configuration();
-        PostgresqlConfFile confFile;
-        ConfigurationDefinition def = resourceContext.getResourceType().getResourceConfigurationDefinition();
-        try {
-            confFile = getConfigurationFile();
-            for (String propName : CONFIG_FILE_PROPERTIES) {
-                String value = confFile.getProperty(propName);
-                PropertyDefinitionSimple propDef = def.getPropertyDefinitionSimple(propName);
-                PropertySimple prop = createProperty(value, propDef);
-                config.put(prop);
-            }
-        } catch (IOException e) {
-            if (e instanceof FileNotFoundException) {
-                String msg = "Can not read the configuration files: " + e.getMessage();
-                log.debug(msg);
-                throw new Exception(msg); // don't throw FileNotFound to not confuse caller - file probably exists, but file is not readable due to permissions
-            }
+        ConfigurationDefinition configDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
 
-            log.debug("Couldn't load postgres configuration file", e);
+        // Persisted settings - obtained by reading postgresql.conf.
+        PostgresqlConfFile confFile = getConfigurationFile();
+        for (String propName : CONFIG_FILE_PROPERTIES) {
+            String value = confFile.getProperty(propName);
+            PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple(propName);
+            PropertySimple prop = createProperty(value, propDef);
+            config.put(prop);
         }
 
+        // Runtime settings (session params) - obtained via SQL.
+        // TODO (ips, 05/16/12): We should move these to a separate Resource, since they are loaded via a completely
+        //                       separate mechanism than the static config above.
         Statement statement = null;
         ResultSet resultSet = null;
         try {
@@ -192,7 +186,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             resultSet = statement.executeQuery("show all");
 
             PropertyMap runtimeSettings = new PropertyMap("runtimeSettings");
-            PropertyDefinitionMap mapDef = def.getPropertyDefinitionMap("runtimeSettings");
+            PropertyDefinitionMap mapDef = configDef.getPropertyDefinitionMap("runtimeSettings");
             config.put(runtimeSettings);
             while (resultSet.next()) {
                 String name = resultSet.getString("name");
@@ -251,7 +245,6 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     *
     * @param  report  the report where all collected measurement data will be added
     * @param  metrics the schedule of what needs to be collected when
-    *
     */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
 
@@ -472,4 +465,5 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             }
         }
     }
+
 }

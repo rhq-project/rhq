@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  * @author Ian Springer
  */
 public class PostgresqlConfFile {
+
     private Log log = LogFactory.getLog(PostgresqlConfFile.class);
 
     private Map<String, String> properties = new HashMap<String, String>();
@@ -56,6 +57,16 @@ public class PostgresqlConfFile {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     public PostgresqlConfFile(File configurationFile) throws IOException {
+        if (!configurationFile.exists()) {
+            throw new IOException("PostgreSQL configuration file [" + configurationFile
+                    + "] does not exist or is not readable. Make sure the user the RHQ Agent is running as has read permissions on the file and its parent directory.");
+        }
+
+        if (!configurationFile.canRead()) {
+            throw new IOException("PostgreSQL configuration file [" + configurationFile
+                    + "] is not readable. Make sure the user the RHQ Agent is running as has read permissions on the file.");
+        }
+
         this.configurationFile = configurationFile;
 
         // declared outside the try block, so they can be safely closed in finally block
@@ -205,8 +216,12 @@ public class PostgresqlConfFile {
         } catch (IOException e) {
             log.warn("Unable to update Postgres configuration file", e);
         } finally {
-            JDBCUtil.safeClose(r);
-            JDBCUtil.safeClose(bos);
+            try {
+                r.close();
+                bos.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 
@@ -232,11 +247,12 @@ public class PostgresqlConfFile {
                 fos.write(buf, 0, i);
             }
         } finally {
-            /*
-             * even if this method declares to throw an exception, we should still clean up after ourselves
-             */
-            JDBCUtil.safeClose(fis);
-            JDBCUtil.safeClose(fos);
+            try {
+                fis.close();
+                fos.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 
@@ -244,4 +260,5 @@ public class PostgresqlConfFile {
     public String toString() {
         return this.configurationFile.toString();
     }
+
 }

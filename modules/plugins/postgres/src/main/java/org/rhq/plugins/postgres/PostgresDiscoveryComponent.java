@@ -59,6 +59,7 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  * @author Ian Springer
  */
 public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+
     private static final Log log = LogFactory.getLog(PostgresDiscoveryComponent.class);
 
     public static final String PGDATA_DIR_CONFIGURATION_PROPERTY = "pgdataDir";
@@ -98,23 +99,27 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             PostgresqlConfFile confFile = null;
 
             if (!pgData.exists()) {
-                log.warn("PostgreSQL data directory (" + pgData + ") does not exist or cannot be read.");
+                log.warn("PostgreSQL data directory (" + pgData + ") does not exist or is not readable. "
+                        + "Make sure the user the RHQ Agent is running as has read permissions on the directory and its parent directory.");
             } else {
-
                 log.debug("PostgreSQL data directory: " + pgData);
 
                 File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
                     PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
-                if (!postgresConfFile.exists()) {
-                    log.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
-                }
-
                 log.debug("PostgreSQL configuration file: " + postgresConfFile);
 
-                try {
-                    confFile = new PostgresqlConfFile(postgresConfFile);
-                } catch (IOException e) {
-                    log.warn("Could not load PostgreSQL configuration file.", e);
+                if (!postgresConfFile.exists()) {
+                    log.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
+                } else {
+                    try {
+                        confFile = new PostgresqlConfFile(postgresConfFile);
+                    } catch (IOException e) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Could not load PostgreSQL configuration file [" + postgresConfFile + "].", e);
+                        } else {
+                            log.warn("Could not load PostgreSQL configuration file [" + postgresConfFile + "]: " + e);
+                        }
+                    }
                 }
             }
 
@@ -166,7 +171,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         String key = buildUrl(pluginConfiguration);
         Connection conn = buildConnection(pluginConfiguration, logConnectionFailure);
         String name = getServerResourceName(pluginConfiguration, conn);
-        String version = getVersion(pluginConfiguration, processInfo, discoveryContext.getSystemInformation(), conn);
+        String version = getVersion(processInfo, discoveryContext.getSystemInformation(), conn);
         JDBCUtil.safeClose(conn);
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
             DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
@@ -180,8 +185,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return url;
     }
 
-    protected static String getVersion(Configuration config, ProcessInfo processInfo, SystemInfo systemInfo,
-        Connection conn) {
+    protected static String getVersion(ProcessInfo processInfo, SystemInfo systemInfo, Connection conn) {
         String version = null;
         try {
             if (conn != null) {
@@ -206,8 +210,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     Matcher m = VERSION_FROM_COMMANDLINE.matcher(versionInfo);
                     if (m.find()) {
                         version = versionInfo.substring(m.start(), m.end());
-                    }
-                    else {
+                    } else {
                         log.debug("Can't get the process executable - does the agent have the right permissions?");
                     }
                 }
@@ -299,7 +302,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return configFilePath;
     }
 
-    private static List<String> getDatabaseNames(Configuration config, Connection conn) {
+    private static List<String> getDatabaseNames(Connection conn) {
         Statement statement = null;
         ResultSet resultSet = null;
 
@@ -328,7 +331,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     private static String getServerResourceName(Configuration config, Connection conn) {
-        List<String> schemas = getDatabaseNames(config, conn);
+        List<String> schemas = getDatabaseNames(conn);
         if (schemas.size() > 0 && schemas.size() < 3) {
             String firstDatabase = schemas.get(0);
             String secondDatabase = schemas.get(1);
@@ -337,4 +340,5 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             return config.getSimpleValue(DB_CONFIGURATION_PROPERTY, POSTGRES_DEFAULT_DATABASE_NAME);
         }
     }
+
 }

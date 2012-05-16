@@ -480,7 +480,7 @@ public class ASConnection {
         BufferedWriter writer = new BufferedWriter(stringWriter);
         try {
             long numCharsCopied = 0;
-            char[] buffer = new char[10240];
+            char[] buffer = new char[1024];
 
             int cnt;
             while (((contentLength == -1) || (numCharsCopied < contentLength)) && ((cnt = reader.read(buffer)) != -1)) {

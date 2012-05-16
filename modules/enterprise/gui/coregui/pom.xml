@@ -58,9 +58,8 @@
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
 
-        <!-- Change this to "false" via the mvn command line or your ~/.m2/settings.xml to speed
-             up gwt compilation and reduce memory consumption by avoiding report generation. -->
-        <gwt.soyc>true</gwt.soyc>
+        <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to generate report -->
+        <gwt.soyc>false</gwt.soyc>
 
         <!-- Change this to "DETAILED" via the mvn command line or your ~/.m2/settings.xml to
              make sure GWT-generated JavaScript code is not obfuscated. -->

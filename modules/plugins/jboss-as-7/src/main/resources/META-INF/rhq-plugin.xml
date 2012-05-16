@@ -3205,13 +3205,13 @@
     <resource-configuration>
       <c:list-property name="content" description="List of pieces of content that comprise the deployment." readOnly="true" >
         <c:map-property name="content" readOnly="true">
-          <c:simple-property name="input-stream-index" type="integer" readOnly="true" description="The index into the operation's attached input streams of the input stream that contains deployment content that should be uploaded to the domain's or standalone server's deployment content repository."/>
-          <c:simple-property name="hash" type="string" readOnly="true" description="The hash of managed deployment content that has been uploaded to the domain's or standalone server's deployment content repository."/>
-          <c:simple-property name="bytes" type="string" readOnly="true" description="Byte array containing the deployment content that should uploaded to the domain's or standalone server's deployment content repository."/>
-          <c:simple-property name="url" type="string" readOnly="true" description="The URL at which the deployment content is available for upload to the domain's or standalone server's deployment content repository.. Note that the URL must be accessible from the target of the operation (i.e. the Domain Controller or standalone server)."/>
-          <c:simple-property name="path" type="string" readOnly="true" description="Path (relative or absolute) to unmanaged content that is part of the deployment."/>
-          <c:simple-property name="relative-to" type="string" readOnly="true" description="Name of a system path to which the value of the 'path' is relative. If not set, the 'path' is considered to be absolute."/>
-          <c:simple-property name="archive" type="boolean" readOnly="true" description="Flag indicating whether unmanaged content is a zip archive (true) or exploded (false)."/>
+          <c:simple-property name="input-stream-index" type="integer" required="false" readOnly="true" description="The index into the operation's attached input streams of the input stream that contains deployment content that should be uploaded to the domain's or standalone server's deployment content repository."/>
+          <c:simple-property name="hash" type="string" readOnly="true" required="false" description="The hash of managed deployment content that has been uploaded to the domain's or standalone server's deployment content repository."/>
+          <c:simple-property name="bytes" type="string" readOnly="true" required="false" description="Byte array containing the deployment content that should uploaded to the domain's or standalone server's deployment content repository."/>
+          <c:simple-property name="url" type="string" readOnly="true" required="false" description="The URL at which the deployment content is available for upload to the domain's or standalone server's deployment content repository.. Note that the URL must be accessible from the target of the operation (i.e. the Domain Controller or standalone server)."/>
+          <c:simple-property name="path" type="string" readOnly="true" required="false" description="Path (relative or absolute) to unmanaged content that is part of the deployment."/>
+          <c:simple-property name="relative-to" type="string" readOnly="true" required="false" description="Name of a system path to which the value of the 'path' is relative. If not set, the 'path' is considered to be absolute."/>
+          <c:simple-property name="archive" type="boolean" readOnly="true" required="false" description="Flag indicating whether unmanaged content is a zip archive (true) or exploded (false)."/>
         </c:map-property>
       </c:list-property>
       <c:simple-property name="enabled" required="true" type="boolean" readOnly="true" description="Boolean indicating whether the deployment content is currently deployed in the runtime (or should be deployed in the runtime the next time the server starts.)"/>

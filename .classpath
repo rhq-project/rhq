@@ -289,10 +289,10 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/1.00-SNAPSHOT/morphia-1.00-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.1.GA/resteasy-links-2.3.1.GA.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.1.GA/resteasy-jaxrs-2.3.1.GA.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.1.GA/resteasy-jackson-provider-2.3.1.GA.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.1.GA/jaxrs-api-2.3.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.3.Final/resteasy-links-2.3.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.3.Final/resteasy-jaxrs-2.3.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.3.Final/resteasy-jackson-provider-2.3.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.3.Final/jaxrs-api-2.3.3.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/sasl/jboss-sasl/1.0.0.Beta9/jboss-sasl-1.0.0.Beta9.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mockito/mockito-all/1.9.0/mockito-all-1.9.0.jar"/>

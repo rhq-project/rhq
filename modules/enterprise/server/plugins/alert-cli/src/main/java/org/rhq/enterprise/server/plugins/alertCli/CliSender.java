@@ -43,7 +43,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
-import org.rhq.bindings.engine.ScriptEngineInitializer;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
@@ -61,6 +60,7 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderValidationResults;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.scripting.ScriptEngineInitializer;
 
 /**
  * Uses CLI to perform the alert notification.

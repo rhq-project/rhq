@@ -37,6 +37,7 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 import javax.script.Bindings;
@@ -47,10 +48,10 @@ import javax.script.ScriptException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.bindings.engine.JsEngineInitializer;
-import org.rhq.bindings.engine.ScriptEngineInitializer;
 import org.rhq.bindings.util.NoTopLevelIndirection;
 import org.rhq.bindings.util.PackageFinder;
+import org.rhq.scripting.ScriptEngineInitializer;
+import org.rhq.scripting.ScriptEngineProvider;
 
 /**
  * This is RHQ specific imitation of ScriptEngineFactory.
@@ -68,12 +69,55 @@ import org.rhq.bindings.util.PackageFinder;
 public class ScriptEngineFactory {
     private static final Log LOG = LogFactory.getLog(ScriptEngineFactory.class);
 
-    private static final ScriptEngineInitializer[] KNOWN_ENGINES = { new JsEngineInitializer() };
+    private static final Map<String, ScriptEngineProvider> KNOWN_PROVIDERS;
+    static {
+        KNOWN_PROVIDERS = new HashMap<String, ScriptEngineProvider>();
+        
+        reloadScriptEngineProviders(null);
+    }
 
     private ScriptEngineFactory() {
 
     }
 
+    /**
+     * Reloads the list of the known script engine providers using the given classloader
+     * or the current thread's context classloader if it is null.
+     * 
+     * @param classLoader the classloader used to find the script engine providers on the classpath
+     * 
+     * @throws IllegalStateException if more than 1 script engine provider is found for a single language
+     */
+    public static void reloadScriptEngineProviders(ClassLoader classLoader) {
+        if (classLoader == null) {
+            classLoader = Thread.currentThread().getContextClassLoader();
+        }
+
+        ServiceLoader<ScriptEngineProvider> loader = ServiceLoader.load(ScriptEngineProvider.class, classLoader);
+
+        KNOWN_PROVIDERS.clear();
+
+        for (ScriptEngineProvider provider : loader) {
+            String lang = provider.getSupportedLanguage();
+
+            if (KNOWN_PROVIDERS.containsKey(lang)) {
+                String existing = KNOWN_PROVIDERS.get(lang).getClass().getName();
+                String thisOne = provider.getClass().getName();
+                throw new IllegalStateException("'" + lang + "' scripting language provided by at least 2 providers: '"
+                    + existing + "' and '" + thisOne + "'. Only 1 provider per language is allowed.");
+            }
+
+            KNOWN_PROVIDERS.put(lang, provider);
+        }
+    }
+    
+    /**
+     * @return the set of the scripting languages supported by this factory
+     */
+    public static Set<String> getSupportedLanguages() {
+        return new HashSet<String>(KNOWN_PROVIDERS.keySet());       
+    }
+    
     /**
      * Initializes the script engine for given language.
      * 
@@ -248,13 +292,9 @@ public class ScriptEngineFactory {
     }
 
     public static ScriptEngineInitializer getInitializer(String language) {
-        for (ScriptEngineInitializer i : KNOWN_ENGINES) {
-            if (i.implementsLanguage(language)) {
-                return i;
-            }
-        }
-
-        return null;
+        ScriptEngineProvider provider = KNOWN_PROVIDERS.get(language);
+        
+        return provider == null ? null : provider.getInitializer();
     }
 
     private static boolean shouldIndirect(Method method) {

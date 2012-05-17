@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.bindings.engine;
+package org.rhq.scripting;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -33,8 +33,6 @@ import javax.script.ScriptException;
  */
 public interface ScriptEngineInitializer {
 
-    boolean implementsLanguage(String language);
-    
     ScriptEngine instantiate(Set<String> packages) throws ScriptException;
     
     /**

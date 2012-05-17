@@ -72,14 +72,17 @@ public class StandardBindings extends HashMap<String, Object> {
             this.clazz = clazz;
         }
 
+        @Override
         public String getKey() {
             return inner.getKey();
         }
 
+        @Override
         public T getValue() {
             return clazz.cast(inner.getValue());
         }
 
+        @Override
         public T setValue(T value) {
             return clazz.cast(inner.setValue(value));
         }
@@ -130,11 +133,13 @@ public class StandardBindings extends HashMap<String, Object> {
         putAll(managers);
     }
 
+    @Override
     public void preInject(ScriptEngine scriptEngine) {
         ((ScriptUtil) get(SCRIPT_UTIL)).init(scriptEngine);
         ((ScriptAssert) get(ASSERT)).init(scriptEngine);
     }
 
+    @Override
     public void postInject(ScriptEngine scriptEngine) {
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL);
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT);

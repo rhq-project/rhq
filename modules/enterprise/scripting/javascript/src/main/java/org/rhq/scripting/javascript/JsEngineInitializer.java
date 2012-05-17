@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.bindings.engine;
+package org.rhq.scripting.javascript;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -26,6 +26,8 @@ import java.util.Set;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
+import org.rhq.scripting.ScriptEngineInitializer;
 
 /**
  * 
@@ -38,10 +40,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
 
     private ScriptEngineManager engineManager = new ScriptEngineManager();
     
-    public boolean implementsLanguage(String language) {
-        return language != null && ("JavaScript".equals(language) || "ECMAScript".equals(language));
-    }
-    
+    @Override
     public ScriptEngine instantiate(Set<String> packages) throws ScriptException {
         ScriptEngine eng = engineManager.getEngineByName("JavaScript");
         
@@ -52,6 +51,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return eng;
     }
 
+    @Override
     public Set<String> generateIndirectionMethods(String boundObjectName, Set<Method> methods) {
         if (methods.size() == 0) {
             return Collections.emptySet();
@@ -82,6 +82,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return Collections.singleton(functionBuilder.toString());
     }
     
+    @Override
     public String extractUserFriendlyErrorMessage(ScriptException e) {
         String errorMessage = e.getMessage();
         

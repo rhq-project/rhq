@@ -18,6 +18,9 @@
  */
 package org.rhq.core.pc.inventory;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,9 +49,6 @@ import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * A unit test for the {@link InventoryManager}.
@@ -97,13 +97,33 @@ public class InventoryManagerTest extends Arquillian {
     }
 
     /**
+     * Tests that discovery was only run once per ResourceType.
+     *
+     * @throws Exception if an error occurs
+     */
+    @RunDiscovery
+    @Test(groups = "pc.itest.inventorymanager")
+    public void testDiscoveryRunsOnlyOncePerType() throws Exception {
+        Map<ResourceType, Integer> executionCountsByResourceType = TestResourceDiscoveryComponent
+            .getExecutionCountsByResourceType();
+        Map<ResourceType, Integer> flaggedExecutionCountsByResourceType = new HashMap<ResourceType, Integer>();
+        for (ResourceType resourceType : executionCountsByResourceType.keySet()) {
+            Integer count = executionCountsByResourceType.get(resourceType);
+            if (count > 1) {
+                flaggedExecutionCountsByResourceType.put(resourceType, count);
+            }
+        }
+        Assert.assertTrue(flaggedExecutionCountsByResourceType.isEmpty(),
+            "Discovery was executed more than once for the following types: " + flaggedExecutionCountsByResourceType);
+    }
+
+    /**
      * Tests that Resources are properly synchronized after the inventory manager is restarted with a clean data
      * directory.
      *
      * @throws Exception if an error occurs
      */
-    @Test(groups = "pc.itest.inventorymanager")
-    @RunDiscovery
+    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testDiscoveryRunsOnlyOncePerType")
     public void testSyncUnknownResources() throws Exception {
         validatePluginContainerInventory();
 
@@ -126,25 +146,6 @@ public class InventoryManagerTest extends Arquillian {
 
         // Check that inventory is still the same.
         validatePluginContainerInventory();
-    }
-
-    /**
-     * Tests that discovery was only run once per ResourceType.
-     *
-     * @throws Exception if an error occurs
-     */
-    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources", enabled = true)
-    public void testDiscoveryRunsOnlyOncePerType() throws Exception {
-        Map<ResourceType,Integer> executionCountsByResourceType = TestResourceDiscoveryComponent.getExecutionCountsByResourceType();
-        Map<ResourceType,Integer> flaggedExecutionCountsByResourceType = new HashMap<ResourceType, Integer>();
-        for (ResourceType resourceType : executionCountsByResourceType.keySet()) {
-            Integer count = executionCountsByResourceType.get(resourceType);
-            if (count > 1) {
-                flaggedExecutionCountsByResourceType.put(resourceType, count);
-            }
-        }
-        Assert.assertTrue(flaggedExecutionCountsByResourceType.isEmpty(),
-                "Discovery was executed more than once for the following types: " + flaggedExecutionCountsByResourceType);
     }
 
     private void validatePluginContainerInventory() {

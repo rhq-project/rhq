@@ -22,8 +22,6 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,7 +43,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     private Log log = LogFactory.getLog(MetricsManagerBean.class);
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void mergeMeasurementReport(MeasurementReport report) {
         MetricsServerPluginFacet metricsServer = getServerPlugin();
         long start = System.currentTimeMillis();

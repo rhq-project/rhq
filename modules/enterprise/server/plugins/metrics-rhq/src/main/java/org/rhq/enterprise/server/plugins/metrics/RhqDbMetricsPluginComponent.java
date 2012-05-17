@@ -53,6 +53,7 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
     @Override
     public void insertMetrics(MeasurementReport report) {
         MeasurementDataManagerLocal dataMgr = LookupUtil.getMeasurementDataManager();
+        //dataMgr.mergeMeasurementReport(report);
 
         if (report.getNumericData() != null && !report.getNumericData().isEmpty()) {
             dataMgr.addNumericData(report.getNumericData());

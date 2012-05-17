@@ -337,4 +337,40 @@
          </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>metrics-tests</id>
+      <activation>
+        <property>
+          <name>rhq.metrics.tests</name>
+        </property>
+      </activation>
+      <build>
+
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.11</version>
+            <configuration>
+              <suiteXmlFiles>
+                <suiteXmlFile>${project.build.testOutputDirectory}/metrics-tests.xml</suiteXmlFile>
+              </suiteXmlFiles>
+              <systemProperties>
+                <property>
+                  <name>projectVersion</name>
+                  <value>${project.version}</value>
+                </property>
+              </systemProperties>
+              <systemPropertyVariables>
+                <embeddedDeployment>true</embeddedDeployment>
+                <deploymentDirectory>target/test-classes</deploymentDirectory>
+                <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

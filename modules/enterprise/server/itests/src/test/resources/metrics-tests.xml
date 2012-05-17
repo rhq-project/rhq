@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Metrics Server Plugin Test Suite">
+  <test name="metrics-tests">
+    <packages>
+      <package name="org.rhq.enterprise.server.plugins.metrics.*"/>
+    </packages>
+  </test>
+</suite>

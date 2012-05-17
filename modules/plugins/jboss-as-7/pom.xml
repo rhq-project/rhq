@@ -302,6 +302,22 @@
       </properties>
     </profile>
 
+    <profile>
+      <id>eap600ER8.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0.ER8</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
+    </profile>
+
     <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
     <!-- activate with -Das7.itest. See also http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests -->
     <profile>

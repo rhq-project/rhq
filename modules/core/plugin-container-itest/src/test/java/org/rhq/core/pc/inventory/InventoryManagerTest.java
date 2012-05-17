@@ -25,8 +25,8 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -40,6 +40,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")
+    @TargetsContainer("pc")
     public static RhqAgentPluginArchive getTestPlugin() {
         RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar");
         return pluginJar
@@ -73,18 +75,25 @@ public class InventoryManagerTest extends Arquillian {
     @ArquillianResource
     private PluginContainer pluginContainer;
 
-    @ArquillianResource
-    private Deployer pluginDeployer;
-
     private FakeServerInventory fakeServerInventory;
+
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
         // Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(2);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+    }
+
+    @AfterDiscovery
+    public void waitForAsyncDiscoveries() throws Exception {
+        if (discoveryCompleteChecker != null) {
+            discoveryCompleteChecker.waitForDiscoveryComplete(10000);
+        }
     }
 
     /**
@@ -124,7 +133,7 @@ public class InventoryManagerTest extends Arquillian {
      *
      * @throws Exception if an error occurs
      */
-    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources")
+    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources", enabled = true)
     public void testDiscoveryRunsOnlyOncePerType() throws Exception {
         Map<ResourceType,Integer> executionCountsByResourceType = TestResourceDiscoveryComponent.getExecutionCountsByResourceType();
         Map<ResourceType,Integer> flaggedExecutionCountsByResourceType = new HashMap<ResourceType, Integer>();

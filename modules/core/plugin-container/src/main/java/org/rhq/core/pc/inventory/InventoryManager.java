@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1155,25 +1156,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * Performs a service scan on the specified Resource. NOTE: This method will block until the scan completes.
+     * Performs a service scan on the specified Resource, waiting until the scan completes to return.
      *
-     * @param resourceId the id of the Resource on which to discover services
+     * @param resourceId the id of the Resource for which to discover child services
      */
-    public void performServiceScan(int resourceId) {
+    public InventoryReport performServiceScan(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
-            if (log.isDebugEnabled())
-                log.debug("No resource container for resource with id [" + resourceId
-                    + "] found - not performing a serviceScan");
-            return;
+            // TODO (ips, 05/16/12): Shouldn't we throw an exception here??
+            if (log.isDebugEnabled()) {
+                log.debug("No resource container for Resource with id [" + resourceId
+                    + "] found - not performing a child service scan.");
+            }
+            return new InventoryReport(agent);
         }
         Resource resource = resourceContainer.getResource();
         RuntimeDiscoveryExecutor oneTimeExecutor = new RuntimeDiscoveryExecutor(this, configuration, resource);
 
+        log.debug("Scheduling child service scan for " + resource + " and waiting for it to complete...");
         try {
-            inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) oneTimeExecutor).get();
+            Future<InventoryReport> future = inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) oneTimeExecutor);
+            return future.get();
         } catch (Exception e) {
-            throw new RuntimeException("Error submitting service scan", e);
+            throw new RuntimeException("Error submitting child service scan for " + resource + ".", e);
         }
     }
 
@@ -2093,7 +2098,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         log.info("Synchronizing local inventory with Server inventory for Resource [" + syncInfo.getId()
-            + "] and its descendants...");
+                + "] and its descendants...");
 
         // Get the latest resource data rooted at the given id.
         synchInventory(syncInfo);

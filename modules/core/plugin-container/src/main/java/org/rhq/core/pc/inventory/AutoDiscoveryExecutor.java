@@ -34,8 +34,8 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.AutoDiscoveryRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -60,9 +60,12 @@ import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
 /**
- * Standard platform/server inventory detection execution. This is typically called in a non-blocking fashion, and the
- * report is returned asynchronously to the server. It is available for direct execution via a Future when running in an
- * embedded mode.
+ * Standard platform/server inventory detection execution. This looks for top level servers, typically doing
+ * process-based discovery.  It should probably be renamed to ServerDiscoveryExecutor as "AutoDiscovery" is
+ * pretty much redundant and non-descriptive. This is typically called in a non-blocking fashion, and the report
+ * is returned asynchronously to the server. It is available for direct execution via a Future when running in 
+ * an embedded mode. This is complemented by {@link RuntimeDiscoveryExecutor} for discovering new child resources
+ * in the existing inventory hierarchy.
  *
  * @author Greg Hinkle
  * @author John Mazzitelli

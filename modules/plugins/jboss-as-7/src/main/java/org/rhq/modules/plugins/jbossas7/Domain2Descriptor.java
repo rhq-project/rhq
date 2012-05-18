@@ -320,7 +320,7 @@ public class Domain2Descriptor {
      *  iv)children
      * 
      * @param indent
-     * @param childMap
+     * @param metaDataNode
      */
     private void listPropertiesAndChildren(int indent, Map<String, Object> metaDataNode) {
         if (metaDataNode == null) {
@@ -1012,7 +1012,7 @@ public class Domain2Descriptor {
 
     private void doIndent(int indent, StringBuilder sb) {
         for (int i = 0; i < indent; i++) {
-            sb.append(' ');
+            sb.append("  "); // 2 spaces
         }
     }
 

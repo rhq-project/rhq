@@ -22,6 +22,20 @@
           <artifactId>rhino</artifactId>
           <version>1.7R3</version>
        </dependency>
+       
+       <!-- JSR 223 support for Rhino -->
+       <dependency>
+          <groupId>com.sun.phobos</groupId>
+          <artifactId>phobos-js</artifactId>
+          <version>0.6.2</version>
+          <exclusions>
+             <exclusion>
+                <groupId>com.sun.phobos</groupId>
+                <artifactId>phobos-rhino</artifactId>
+             </exclusion>
+          </exclusions>
+       </dependency>
+       
     </dependencies>
     
     <build>

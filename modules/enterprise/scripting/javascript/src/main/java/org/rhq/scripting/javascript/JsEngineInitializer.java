@@ -42,7 +42,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
     
     @Override
     public ScriptEngine instantiate(Set<String> packages) throws ScriptException {
-        ScriptEngine eng = engineManager.getEngineByName("JavaScript");
+        ScriptEngine eng = engineManager.getEngineByName("rhino-nonjdk");
         
         for(String pkg : packages) {
             eng.eval("importPackage(" + pkg + ")");

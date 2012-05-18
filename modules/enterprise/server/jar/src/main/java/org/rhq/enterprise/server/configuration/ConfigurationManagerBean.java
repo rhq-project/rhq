@@ -447,6 +447,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
                 subjectManager.getOverlord(), resource.getResourceType().getId());
             // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
+            // But before we detach the entities, let's flush the entity manager to persist any pending changes.
+            // This will ensure that:
+            // 1) All changes in the entity manager are persisted
+            // 2) Any changes to the entities made after the clear() call are NOT persisted.
+            entityManager.flush();
             entityManager.clear();
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }

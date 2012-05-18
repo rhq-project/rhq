@@ -21,7 +21,8 @@ package org.rhq.core.pc.inventory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -35,11 +36,11 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
-import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -48,19 +49,16 @@ import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
- * A unit test for the {@link InventoryManager}.
- *
- * @author Ian Springer
+ * A unit test for testing discovery.
  */
-public class InventoryManagerTest extends Arquillian {
+public class DiscoveryTest extends Arquillian {
 
     @Deployment(name = "test")
     @TargetsContainer("pc")
     public static RhqAgentPluginArchive getTestPlugin() {
         RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar");
-        return pluginJar
-                .setPluginDescriptor("test-rhq-plugin.xml")
-                .addClasses(TestResourceDiscoveryComponent.class, TestResourceComponent.class);
+        return pluginJar.setPluginDescriptor("test-great-grandchild-discovery-plugin.xml").addClasses(
+            TestResourceDiscoveryComponent.class, TestResourceComponent.class);
     }
 
     @ArquillianResource
@@ -81,7 +79,7 @@ public class InventoryManagerTest extends Arquillian {
         // Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
-        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(2);
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
@@ -94,38 +92,37 @@ public class InventoryManagerTest extends Arquillian {
     }
 
     /**
-     * Tests that Resources are properly synchronized after the inventory manager is restarted with a clean data
-     * directory.
+     * Tests that discovery was only run once per ResourceType.  This tests a deep, 4-level hierarchy.
      *
      * @throws Exception if an error occurs
      */
-    @Test(groups = "pc.itest.inventorymanager")
     @RunDiscovery
-    public void testSyncUnknownResources() throws Exception {
+    @Test(groups = "pc.itest.discovery")
+    public void testDiscoveryRunsOnlyOncePerType() throws Exception {
+        // make sure our inventory is as we expect it to be
         validatePluginContainerInventory();
 
-        // Blow away the data dir, then restart the inventory manager with a fresh slate.
-        System.out.println("Purging data directory...");
-        File dataDir = pluginContainerConfiguration.getDataDirectory();
-        FileUtil.purge(dataDir, true);
-        System.out.println("Restarting PC...");
-        pluginContainer.getInventoryManager().shutdown();
-        // Note, initialize() will perform a Server->Agent sync.
-        pluginContainer.getInventoryManager().initialize();
+        // reset our discovery component's internal storage
+        TestResourceDiscoveryComponent.getExecutionCountsByResourceType().clear();
 
-        // Inventory should now be back as it was before the clean restart.
-        validatePluginContainerInventory();
+        // run our own discovery scan
+        this.pluginContainer.getInventoryManager().executeServiceScanImmediately();
 
-        // Now execute a full discovery.
-        System.out.println("Executing full discovery...");
-        pluginContainer.getInventoryManager().executeServerScanImmediately();
-        pluginContainer.getInventoryManager().executeServiceScanImmediately();
-
-        // Check that inventory is still the same.
-        validatePluginContainerInventory();
+        Map<ResourceType, Integer> executionCountsByResourceType = TestResourceDiscoveryComponent
+            .getExecutionCountsByResourceType();
+        Map<ResourceType, Integer> flaggedExecutionCountsByResourceType = new HashMap<ResourceType, Integer>();
+        for (ResourceType resourceType : executionCountsByResourceType.keySet()) {
+            Integer count = executionCountsByResourceType.get(resourceType);
+            if (count != 1) {
+                flaggedExecutionCountsByResourceType.put(resourceType, count);
+            }
+        }
+        Assert.assertTrue(flaggedExecutionCountsByResourceType.isEmpty(),
+            "Discovery was not executed once (and only once) for the following types: "
+                + flaggedExecutionCountsByResourceType);
     }
 
-    private void validatePluginContainerInventory() {
+    private void validatePluginContainerInventory() throws Exception {
         System.out.println("Validating PC inventory...");
 
         Resource platform = pluginContainer.getInventoryManager().getPlatform();
@@ -135,10 +132,24 @@ public class InventoryManagerTest extends Arquillian {
         Resource server = platform.getChildResources().iterator().next();
         Assert.assertNotNull(server);
         Assert.assertEquals(server.getInventoryStatus(), InventoryStatus.COMMITTED);
+        assert server.getResourceType().getName().equals("Test Server");
 
-        Resource service = server.getChildResources().iterator().next();
-        Assert.assertNotNull(service);
-        Assert.assertEquals(service.getInventoryStatus(), InventoryStatus.COMMITTED);
+        Resource child = server.getChildResources().iterator().next();
+        Assert.assertNotNull(child);
+        Assert.assertEquals(child.getInventoryStatus(), InventoryStatus.COMMITTED);
+        assert child.getResourceType().getName().equals("Test Service Child");
+
+        Resource grandchild = child.getChildResources().iterator().next();
+        Assert.assertNotNull(grandchild);
+        Assert.assertEquals(grandchild.getInventoryStatus(), InventoryStatus.COMMITTED);
+        assert grandchild.getResourceType().getName().equals("Test Service GrandChild");
+
+        Resource greatgrandchild = grandchild.getChildResources().iterator().next();
+        Assert.assertNotNull(greatgrandchild);
+        Assert.assertEquals(greatgrandchild.getInventoryStatus(), InventoryStatus.COMMITTED);
+        assert greatgrandchild.getResourceType().getName().equals("Test Service GreatGrandChild");
+
+        System.out.println("PC inventory validated successfully!");
     }
 
 }

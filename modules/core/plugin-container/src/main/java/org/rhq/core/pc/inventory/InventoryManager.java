@@ -2956,8 +2956,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Sending the upgrade requests to the server.");
             resourceUpgradeDelegate.sendRequests();
 
-            resourceUpgradeDelegate.disable();
-
             log.info("Resource activation and upgrade finished.");
         } catch (Throwable t) {
             log.error(
@@ -2966,6 +2964,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             //make sure to at least activate the resources
             activateAndUpgradeResourceRecursively(getPlatform(), false);
+        } finally {
+            resourceUpgradeDelegate.disable();
         }
     }
 

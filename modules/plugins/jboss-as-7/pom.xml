@@ -48,6 +48,12 @@
                http://repo1.maven.org/maven2/com/fasterxml/jackson/ -->
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
       <version>${jackson.version}</version>
     </dependency>
@@ -95,11 +101,25 @@
             <id>copy-libs</id>
             <phase>process-resources</phase>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>copy</goal>
             </goals>
             <configuration>
-              <includeScope>runtime</includeScope>
-              <excludeScope>plugin</excludeScope>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-core-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-mapper-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.jboss.sasl</groupId>
+                  <artifactId>jboss-sasl</artifactId>
+                </artifactItem>
+              </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>
           </execution>

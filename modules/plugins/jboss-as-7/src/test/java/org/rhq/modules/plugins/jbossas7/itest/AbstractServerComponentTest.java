@@ -106,8 +106,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         // "port" prop
         String portString = pluginConfig.getSimpleValue("port", null);
         Integer port = (portString != null) ? Integer.valueOf(portString) : null;
-        String portOffsetString = System.getProperty(getPortOffsetSystemPropertyName());
-        int portOffset = (portOffsetString != null) ? Integer.valueOf(portOffsetString) : 0;
+        int portOffset = getPortOffset();
         Integer expectedPort = portOffset + 9990;
         assertEquals(port, expectedPort, "Plugin config prop [port].");
 
@@ -136,6 +135,11 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         ListPropertySimpleWrapper startScriptArgsPropWrapper = new ListPropertySimpleWrapper(startScriptArgsProp);
         List<String> args = startScriptArgsPropWrapper.getValue();
         Assert.assertEquals(args, getExpectedStartScriptArgs(), "Plugin config prop [startScriptArgs]");
+    }
+
+    protected int getPortOffset() {
+        String portOffsetString = System.getProperty(getPortOffsetSystemPropertyName());
+        return (portOffsetString != null) ? Integer.valueOf(portOffsetString) : 0;
     }
 
     protected void validateStartScriptEnv(Map<String, String> env) {
@@ -248,8 +252,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         Assert.assertEquals(processes.size(), 0, "Failed to kill " + processes.size() + " " + getServerResourceType()
             + " processes: " + processes);
     }
-
-    protected abstract int getPortOffset();
 
     private List<ProcessInfo> getServerProcesses() {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();

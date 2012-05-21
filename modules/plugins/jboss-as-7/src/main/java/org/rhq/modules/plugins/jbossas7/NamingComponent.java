@@ -56,6 +56,10 @@ public class NamingComponent extends BaseComponent implements OperationFacet {
 
     private PropertyList fillMap(Map<String, Map> contexts, String name, boolean isAppCtx) {
         PropertyList pl = new PropertyList(name);
+        if (contexts == null) { // e.g. no applications deployed
+            return pl;
+        }
+
         for (String entry : contexts.keySet() ) {
             Map<String,Object> map = contexts.get(entry);
             if (map==null)

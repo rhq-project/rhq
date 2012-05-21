@@ -94,20 +94,16 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     @Override
-    protected int getPortOffset() {
-        return 50000;
-    }
-
-    @Override
     protected List<String> getExpectedStartScriptArgs() {
+        int portOffset = getPortOffset();
         String [] args = new String[] {
             "-Djboss.bind.address.management=127.0.0.1",
             "-Djboss.bind.address=127.0.0.1",
             "-Djboss.bind.address.unsecure=127.0.0.1",
-            "-Djboss.socket.binding.port-offset=50000",
-            "-Djboss.management.native.port=59999",
-            "-Djboss.management.http.port=59990",
-            "-Djboss.management.https.port=59943"
+            "-Djboss.socket.binding.port-offset=" + portOffset,
+            "-Djboss.management.native.port=" + (portOffset + 9999),
+            "-Djboss.management.http.port=" + (portOffset + 9990),
+            "-Djboss.management.https.port="  + (portOffset + 9943)
         };
         return Arrays.asList(args);
     }

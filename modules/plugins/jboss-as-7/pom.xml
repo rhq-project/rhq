@@ -377,7 +377,7 @@
                       <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
                     </chmod>
                     <replace dir="${jboss7.home}"
-                             includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
+                             includes="standalone/configuration/standalone*.xml, domain/configuration/host*.xml"
                              token="&lt;inet-address " value="&lt;loopback-address "/>
                   </target>
                 </configuration>
@@ -408,6 +408,10 @@
                     <property>
                       <name>jboss.standalone.portOffset</name>
                       <value>${jboss.standalone.portOffset}</value>
+                    </property>
+                    <property>
+                      <name>jboss.domain.portOffset</name>
+                      <value>${jboss.domain.portOffset}</value>
                     </property>
                     <property>
                       <name>jboss.standalone.nativeManagementPort</name>

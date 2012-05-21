@@ -163,18 +163,14 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
             "-Djboss.bind.address.management=127.0.0.1",
             "-Djboss.bind.address=127.0.0.1",
             "-Djboss.bind.address.unsecure=127.0.0.1",
-            "-Djboss.socket.binding.port-offset=40000" };
+            "-Djboss.socket.binding.port-offset=" + getPortOffset()
+        };
         return Arrays.asList(args);
     }
 
     @AfterSuite
     public void killServerProcesses() {
         super.killServerProcesses();
-    }
-
-    @Override
-    protected int getPortOffset() {
-        return 40000;
     }
 
 }

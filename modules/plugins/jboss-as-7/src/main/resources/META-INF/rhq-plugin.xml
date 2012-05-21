@@ -5,45 +5,47 @@
     <!ENTITY pluginName 'JBossAS7'>
 
     <!ENTITY startScriptPluginConfigGroup '
-        <c:group name="operations">
-            <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
-              <c:description>
-                The path to the script that the Start and Restart operations should use to start the server. If the path is
-                not absolute, it is resolved relative to the server home directory
-                (e.g. &quot;bin/standalone.sh&quot;, &quot;bin/domain.sh&quot;).
-              </c:description>
-            </c:simple-property>
-            <c:simple-property name="startScriptPrefix" type="string" required="false">
-              <c:description>
-                A prefix command line that should be prepended to the start script command line by the Start and Restart
-                operations; the prefix command must be an absolute path (e.g. &quot;/usr/bin/sudo&quot;). This property is
-                most commonly used to run the AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss
-                -g jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group &quot;jboss&quot;. It is also
-                possible to chain prefix commands (e.g. &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP
-                signals and to run as user &quot;jboss&quot;).
-              </c:description>
-            </c:simple-property>
-            <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables" type="longString" required="false">
-              <c:description>
-                The variables that the Start and Restart operations will add to the environment of the server start script.
-                Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
-                JAVA_OPTS=-Xms512M -Xmx1024M). On UNIX systems, the typical minimum set of environment variables is:
-                PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
-                OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
-                path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
-                JAVA_HOME is not specified, the start script will attempt to find java in the PATH.
-              </c:description>
-            </c:simple-property>
-            <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
-              <c:description>
-                The arguments that the Start and Restart operations will pass to the server
-                start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
-                As an exception, the value of a space-delimited option can optionally be on the same line as the option -
-                for example: -c standalone-ha-full.xml.
-              </c:description>
-            </c:simple-property>
-        </c:group>
-    '>
+    <c:group name="operations">
+        <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
+          <c:description>
+            The path to the script that the Start and Restart operations should use to start the server. If the path is
+            not absolute, it is resolved relative to the server home directory
+            (e.g. &quot;bin/standalone.sh&quot;, &quot;bin/domain.sh&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptPrefix" type="string" required="false">
+          <c:description>
+            A prefix command line that should be prepended to the start script command line by the Start and Restart
+            operations; the prefix command must be an absolute path (e.g. &quot;/usr/bin/sudo&quot;). This property is
+            most commonly used to run the AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss
+            -g jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group &quot;jboss&quot;. It is also
+            possible to chain prefix commands (e.g. &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP
+            signals and to run as user &quot;jboss&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables" type="longString" required="false">
+          <c:description>
+            The variables that the Start and Restart operations will add to the environment of the server start script.
+            Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
+            JAVA_OPTS=-Xms512M -Xmx1024M). On UNIX systems, the typical minimum set of environment variables is:
+            PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
+            OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
+            path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH. There is currently
+            a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
+          <c:description>
+            The arguments that the Start and Restart operations will pass to the server
+            start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
+            As an exception, the value of a space-delimited option can optionally be on the same line as the option -
+            for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+    </c:group>
+'>
+
 
     <!ENTITY logSources '
     <c:group name="events">

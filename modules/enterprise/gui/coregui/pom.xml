@@ -75,6 +75,8 @@
         <!-- The locale that GWT should fallback to if the user specified an unsupported locale via the 'locale' query
              string parameter. -->
         <gwt.fallback.locale>en</gwt.fallback.locale>
+ 
+        <enable.tags>true</enable.tags>
     </properties>
 
     <dependencies>
@@ -506,6 +508,18 @@
                 </plugins>
               </build>
         </profile>
+
+      <profile>
+        <id>disable-tags</id>
+        <activation>       
+          <property>
+            <name>brew</name>            
+          </property>
+        </activation>       
+        <properties>
+          <enable.tags>false</enable.tags>
+        </properties>
+      </profile>
 
     </profiles>
 

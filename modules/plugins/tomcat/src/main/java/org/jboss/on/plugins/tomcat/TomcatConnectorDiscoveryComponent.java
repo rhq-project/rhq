@@ -122,13 +122,15 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             String connectorON = pluginConfiguration.getSimpleValue(TomcatConnectorComponent.OBJECT_NAME_PROP, null);
             if (connectorON != null) {
                 EmsBean connectorBean = connection.getBean(connectorON);
-                EmsAttribute executorNameAttrib = connectorBean.getAttribute("executorName");
-                Object executorNameValue = executorNameAttrib.getValue();
-                if (executorNameValue != null) {
-                    String executorName = executorNameValue.toString();
-                    if (!executorName.isEmpty() && !executorName.equalsIgnoreCase("Internal")) {
-                        pluginConfiguration.put(new PropertySimple(
-                            TomcatConnectorComponent.PLUGIN_CONFIG_SHARED_EXECUTOR, executorName));
+                EmsAttribute executorNameAttrib = connectorBean.getAttribute("executorName"); // older tomcat versions won't have this attrib
+                if (executorNameAttrib != null) {
+                    Object executorNameValue = executorNameAttrib.getValue();
+                    if (executorNameValue != null) {
+                        String executorName = executorNameValue.toString();
+                        if (!executorName.isEmpty() && !executorName.equalsIgnoreCase("Internal")) {
+                            pluginConfiguration.put(new PropertySimple(
+                                TomcatConnectorComponent.PLUGIN_CONFIG_SHARED_EXECUTOR, executorName));
+                        }
                     }
                 }
             }

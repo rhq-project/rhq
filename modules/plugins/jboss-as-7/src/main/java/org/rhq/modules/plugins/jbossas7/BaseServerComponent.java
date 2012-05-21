@@ -101,18 +101,24 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @Override
     public AvailabilityType getAvailability() {
+        AvailabilityType avail;
         try {
-            @SuppressWarnings("UnusedDeclaration")
-            String launchType = readAttribute("launch-type");
-            if (lastAvail != AvailabilityType.UP) {
+            readAttribute("launch-type");
+            avail = AvailabilityType.UP;
+        } catch (Exception e) {
+            avail = AvailabilityType.DOWN;
+        }
+
+        try {
+            if ((avail == AvailabilityType.UP) && (lastAvail != AvailabilityType.UP)) {
                 validateServerAttributes();
                 log.info(getResourceDescription() + " has just come UP.");
             }
-            lastAvail = AvailabilityType.UP;
-        } catch (Exception e) {
-            lastAvail = AvailabilityType.DOWN;
+        } finally {
+            lastAvail = avail;
         }
-        return lastAvail;
+
+        return avail;
     }
 
     private void validateServerAttributes() throws InvalidPluginConfigurationException {

@@ -66,6 +66,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Base component for functionality that is common to Standalone Servers and Host Controllers.
  *
  * @author Heiko W. Rupp
+ * @author Ian Springer
  */
 public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T>
         implements MeasurementFacet {
@@ -85,10 +86,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         super.start(resourceContext);
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
-        validateServerAttributes();
         connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
                 serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        lastAvail = getAvailability();
+        @SuppressWarnings("UnusedDeclaration")
+        AvailabilityType avail = getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);

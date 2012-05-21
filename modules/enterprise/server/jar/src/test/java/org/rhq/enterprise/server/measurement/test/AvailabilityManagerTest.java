@@ -1047,6 +1047,91 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
+    /**
+     * See if merging in AvailabilityReports from the agent work if it includes a stale resource
+     *
+     * @throws Exception in case of error
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testMergeReportWithStaleResource() throws Exception {
+        EntityManager em = beginTx();
+
+        try {
+            Availability avail;
+            AvailabilityReport report;
+
+            setupResource(em);
+            commitAndClose(em);
+            em = null;
+
+            long allAvailCount = setUpAvailabilities(em);
+
+            // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
+            assert avail.getAvailabilityType() == UP;
+            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UP;
+
+            // add something after the start of last, but still be UP (result: nothing added)
+            Long currentStartTime = avail.getStartTime();
+            avail = new Availability(theResource, (currentStartTime + 3600000), UP);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+
+            // add something with a stale, non-existent resource. It should be ignored, logging a message,
+            // and the rest of the report should be processed.
+            avail = new Availability(new Resource(898989), (currentStartTime + 3600000), UP);
+            report.addAvailability(avail);
+
+            Thread.sleep(1000);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            // the agent should have been updated, but no new rows in availability were added
+            Agent agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
+            Date lastReport = new Date(agent.getLastAvailabilityReport());
+            assert lastReport != null;
+            assert countAvailabilitiesInDB(null) == allAvailCount;
+            avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
+
+            // should have returned availability3
+            // NOTE: availability3 never got an ID assigned, so we can't compare by id
+            //       assert avail.getId() == availability3.getId();
+            assert avail.getStartTime().equals(availability3.getStartTime());
+            assert avail.getAvailabilityType() == availability3.getAvailabilityType();
+            assert Math.abs(avail.getStartTime() - availability3.getStartTime()) < 1000;
+            assert avail.getEndTime() == null;
+            assert availability3.getEndTime() == null;
+
+            // change start after the start of last (result: add new avail row)
+            avail = new Availability(theResource, (currentStartTime + 7200000), DOWN);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            Thread.sleep(1000);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            // the agent should have been updated and a new row in availability was added (resource is now DOWN)
+            agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
+            assert new Date(agent.getLastAvailabilityReport()).after(lastReport);
+            assert countAvailabilitiesInDB(null) == (allAvailCount + 1);
+            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
+            Availability queriedAvail = availabilityManager.getCurrentAvailabilityForResource(overlord,
+                theResource.getId());
+            assert queriedAvail.getId() > 0;
+            assert queriedAvail.getAvailabilityType() == avail.getAvailabilityType();
+            assert Math.abs(queriedAvail.getStartTime() - avail.getStartTime()) < 1000;
+            assert queriedAvail.getEndTime() == null;
+            assert avail.getEndTime() == null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (em != null) {
+                getTransactionManager().rollback();
+                em.close();
+            }
+        }
+    }
+
     @Test(enabled = ENABLE_TESTS)
     public void testMergeReportPerformance() throws Exception {
         EntityManager em = beginTx();

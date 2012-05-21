@@ -137,6 +137,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
+    protected String getResourceDescription() {
+        return context.getResourceType() + " [" + context.getResourceKey() + "]";
+    }
+
     private BaseServerComponent findServerComponent() {
         BaseComponent<?> component = this;
         while ((component != null) && !(component instanceof BaseServerComponent)) {

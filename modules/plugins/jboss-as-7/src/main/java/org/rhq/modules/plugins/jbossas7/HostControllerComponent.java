@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -204,15 +206,23 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         return report;
     }
 
+    @NotNull
     @Override
     protected Address getEnvironmentAddress() {
         return ENVIRONMENT_ADDRESS;
     }
 
+    @NotNull
     @Override
     protected Address getHostAddress() {
         // TODO is the local controller always on host=master?? AS7-3678
         return HOST_ADDRESS;
+    }
+
+    @NotNull
+    @Override
+    protected String getBaseDirAttributeName() {
+        return "domain-base-dir";
     }
 
 }

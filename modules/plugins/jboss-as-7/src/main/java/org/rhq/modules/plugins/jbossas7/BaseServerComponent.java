@@ -78,14 +78,17 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
     private ServerPluginConfiguration serverPluginConfig;
+    private AvailabilityType lastAvail;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
+        validateServerAttributes();
         connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
                 serverPluginConfig.getUser(), serverPluginConfig.getPassword());
+        lastAvail = getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
@@ -98,39 +101,79 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @Override
     public AvailabilityType getAvailability() {
+        try {
+            @SuppressWarnings("UnusedDeclaration")
+            String launchType = readAttribute("launch-type");
+            if (lastAvail != AvailabilityType.UP) {
+                validateServerAttributes();
+                log.info(getResourceDescription() + " has just come UP.");
+            }
+            lastAvail = AvailabilityType.UP;
+        } catch (Exception e) {
+            lastAvail = AvailabilityType.DOWN;
+        }
+        return lastAvail;
+    }
+
+    private void validateServerAttributes() throws InvalidPluginConfigurationException {
+        // Validate the base dir (e.g. /opt/jboss-as-7.1.1.Final/standalone).
+        File runtimeBaseDir;
+        File baseDir;
+        try {
+            String runtimeBaseDirString = readAttribute(getEnvironmentAddress(), getBaseDirAttributeName());
+            // Canonicalize both paths before comparing them!
+            runtimeBaseDir = new File(runtimeBaseDirString).getCanonicalFile();
+            baseDir = serverPluginConfig.getBaseDir().getCanonicalFile();
+        } catch (Exception e) {
+            runtimeBaseDir = null;
+            baseDir = null;
+            log.error("Failed to validate base dir for " + getResourceDescription() + ".", e);
+        }
+        if ((runtimeBaseDir != null) && (baseDir != null)) {
+            if(!runtimeBaseDir.equals(baseDir)) {
+                throw new InvalidPluginConfigurationException("The server listening on "
+                        + serverPluginConfig.getHostname() + ":" + serverPluginConfig.getPort()
+                        + " has base dir [" + runtimeBaseDir + "], but the base dir we expected was [" + baseDir
+                        + "]. Perhaps the management hostname or port has been changed for the server with base dir ["
+                        + baseDir + "].");
+            }
+        }
+
         // Validate the mode (e.g. STANDALONE or DOMAIN).
         String runtimeMode;
         try {
             runtimeMode = readAttribute("launch-type");
         } catch (Exception e) {
-            return AvailabilityType.DOWN;
+            runtimeMode = null;
+            log.error("Failed to validate mode for " + getResourceDescription() + ".", e);
         }
-        if(!getMode().name().equals(runtimeMode)) {
-            throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was " +
-                    getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
+        if (runtimeMode != null) {
+            String mode = getMode().name();
+            if(!runtimeMode.equals(mode)) {
+                throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was " +
+                        getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
+            }
         }
 
-        // Now validate the product type (e.g. AS or EAP).
-        String discoveredTypeString = context.getPluginConfiguration().getSimpleValue("productType",
-                JBossProductType.AS.name());
-        JBossProductType discoveredType = JBossProductType.valueOf(discoveredTypeString);
-
-        String productName;
+        // Validate the product type (e.g. AS or EAP).
+        JBossProductType runtimeType;
         try {
-            productName  = readAttribute("product-name");
+            String runtimeTypeString = readAttribute("product-name");
+            runtimeType = (runtimeTypeString != null && !runtimeTypeString.isEmpty()) ?
+                    JBossProductType.getValueByProductName(runtimeTypeString) : JBossProductType.AS;
         } catch (Exception e) {
-            return AvailabilityType.DOWN;
+            runtimeType = null;
+            log.error("Failed to validate product type for " + getResourceDescription() + ".", e);
         }
-        JBossProductType runtimeType = (productName != null && !productName.isEmpty()) ?
-                JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
-
-        if (discoveredType != runtimeType) {
-            throw new InvalidPluginConfigurationException("The original product type discovered for this AS7 server was "
-                    + discoveredType
-                    + ", but the server is now reporting its product type is [" + runtimeType + "].");
+        if (runtimeType != null) {
+            String typeString = context.getPluginConfiguration().getSimpleValue("productType",
+                    JBossProductType.AS.name());
+            JBossProductType type = JBossProductType.valueOf(typeString);
+            if (runtimeType != type) {
+                throw new InvalidPluginConfigurationException("The original product type discovered for this AS7 server was "
+                        + type + ", but the server is now reporting its product type is [" + runtimeType + "].");
+            }
         }
-
-        return AvailabilityType.UP;
     }
 
     public ServerPluginConfiguration getServerPluginConfiguration() {
@@ -517,6 +560,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @NotNull
     protected abstract Address getHostAddress();
+
+    @NotNull
+    protected abstract String getBaseDirAttributeName();
 
     protected void collectConfigTrait(MeasurementReport report, MeasurementScheduleRequest request) {
         String config;

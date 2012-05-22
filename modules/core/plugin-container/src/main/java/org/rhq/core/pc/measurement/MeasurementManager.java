@@ -75,6 +75,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
  */
 public class MeasurementManager extends AgentService implements MeasurementAgentService, ContainerService,
     MeasurementManagerMBean {
+
     public static final String OBJECT_NAME = "rhq.pc:type=MeasurementManager";
 
     private static final String COLLECTOR_THREAD_POOL_NAME = "MeasurementManager.collector";
@@ -119,6 +120,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     public void initialize() {
+        LOG.info("Initializing Measurement Manager...");
+
         if (configuration.isStartManagementBean()) {
             MBeanServer server = ManagementFactory.getPlatformMBeanServer();
             try {
@@ -127,7 +130,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 LOG.error("Unable to register MeasurementManagerMBean", e);
             }
         }
-        
+
         this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
 
         int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
@@ -152,9 +155,11 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 TimeUnit.SECONDS);
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
-            Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
+            Resource platform = this.inventoryManager.getPlatform();
             reschedule(platform);
         }
+
+        LOG.info("Measurement Manager initialized.");
     }
 
     class MeasurementCollectionRequester implements Runnable {
@@ -187,6 +192,10 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     private void reschedule(Resource resource) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("In Reschedule for: " + resource);
+        }
+
         int resourceId = resource.getId();
 
         if (resourceId != 0) {
@@ -194,15 +203,17 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             if (container != null) {
                 Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
                 if (schedules != null) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Rescheduling: " + resource.getId());
+                    }
                     scheduleCollection(resourceId, schedules);
                 }
 
-                for (Resource child : resource.getChildResources()) {
+                // The container is guaranteed to have the proper children set, so recurse on that set of child resources 
+                for (Resource child : container.getResource().getChildResources()) {
                     reschedule(child);
                 }
             }
-        } else {
-            LOG.debug("Will not reschedule schedules for resource - it is not sync'ed yet: " + resource);
         }
     }
 
@@ -612,8 +623,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         if (traitValue == null) {
             // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
             Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
-            requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, traitName, 0,
-                true, DataType.TRAIT));
+            requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, traitName, 0, true,
+                DataType.TRAIT));
             Set<MeasurementData> dataset = getRealTimeMeasurementValue(container.getResource().getId(), requests);
             if (dataset != null && dataset.size() == 1) {
                 Object value = dataset.iterator().next().getValue();

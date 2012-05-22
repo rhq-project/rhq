@@ -98,6 +98,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @Override
     public void stop() {
         logFileEventDelegate.stopLogFileEventPollers();
+        lastAvail = null;
     }
 
     @Override
@@ -173,9 +174,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             log.error("Failed to validate product type for " + getResourceDescription() + ".", e);
         }
         if (runtimeType != null) {
-            String typeString = context.getPluginConfiguration().getSimpleValue("productType",
-                    JBossProductType.AS.name());
-            JBossProductType type = JBossProductType.valueOf(typeString);
+            JBossProductType type = serverPluginConfig.getProductType();
             if (runtimeType != type) {
                 throw new InvalidPluginConfigurationException("The original product type discovered for this AS7 server was "
                         + type + ", but the server is now reporting its product type is [" + runtimeType + "].");

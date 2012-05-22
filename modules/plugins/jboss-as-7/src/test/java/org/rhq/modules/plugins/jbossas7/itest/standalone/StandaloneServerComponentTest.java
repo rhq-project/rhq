@@ -83,14 +83,13 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     @Test(priority = 2)
-    public void testStandaloneServerPluginConfiguration() throws Exception {
-        return;
+    public void testStandaloneServerAttributeValidation() throws Exception {
+        testServerAttributeValidation();
     }
 
     // ******************************* METRICS ******************************* //
-    @Override
     @Test(priority = 3, enabled = true)
-    public void testReleaseVersionTrait() throws Exception {
+    public void testStandaloneReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 

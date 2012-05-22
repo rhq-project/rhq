@@ -41,11 +41,14 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.modules.plugins.jbossas7.JBossProductType;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 
 /**
  * The base class for the integration tests for the two AS7 server types.
@@ -93,6 +96,58 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
         AvailabilityType avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.UP);
+    }
+
+    public void testServerAttributeValidation() throws Exception {
+        AvailabilityType avail = getAvailability(getServerResource());
+        assertEquals(avail, AvailabilityType.UP);
+
+        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+        ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(pluginConfig);
+
+        // Change the baseDir prop.
+        File originalBaseDir = serverPluginConfig.getBaseDir();
+        serverPluginConfig.setBaseDir(new File(System.getProperty("java.io.tmpdir")));
+
+        // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
+        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+        inventoryManager.deactivateResource(getServerResource());
+        ResourceContainer serverContainer = inventoryManager.getResourceContainer(getServerResource());
+        InvalidPluginConfigurationException ipce = null;
+        try {
+            inventoryManager.activateResource(getServerResource(), serverContainer, true);
+        } catch (InvalidPluginConfigurationException e) {
+            ipce = e;
+        }
+
+        // Set the baseDir back to the original value and restart the component before making any assertions, to ensure
+        // things aren't left in a corrupt state for remaining test methods.
+        serverPluginConfig.setBaseDir(originalBaseDir);
+        inventoryManager.activateResource(getServerResource(), serverContainer, true);
+
+        Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
+                + "start() method due to invalid baseDir.");
+
+        // Change the productType prop.
+        JBossProductType originalProductType = serverPluginConfig.getProductType();
+        serverPluginConfig.setProductType(originalProductType == JBossProductType.AS ? JBossProductType.EAP : JBossProductType.AS);
+
+        // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
+        inventoryManager.deactivateResource(getServerResource());
+        ipce = null;
+        try {
+            inventoryManager.activateResource(getServerResource(), serverContainer, true);
+        } catch (InvalidPluginConfigurationException e) {
+            ipce = e;
+        }
+
+        // Set the productType back to the original value and restart the component before making any assertions, to ensure
+        // things aren't left in a corrupt state for remaining test methods.
+        serverPluginConfig.setProductType(originalProductType);
+        inventoryManager.activateResource(getServerResource(), serverContainer, true);
+
+        Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
+                + "start() method due to invalid productType.");
     }
 
     protected void validatePluginConfiguration(Configuration pluginConfig) {

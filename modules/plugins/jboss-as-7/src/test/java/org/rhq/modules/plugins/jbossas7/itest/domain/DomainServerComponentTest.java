@@ -71,10 +71,14 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
+    @Test(priority = 1001)
+    public void testDomainServerAttributeValidation() throws Exception {
+        testServerAttributeValidation();
+    }
+
     // ******************************* METRICS ******************************* //
-    @Override
     @Test(priority = 1002, enabled = true)
-    public void testReleaseVersionTrait() throws Exception {
+    public void testDomainReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 

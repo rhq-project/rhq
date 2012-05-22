@@ -1113,8 +1113,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // inventory with the server side as well as to disallow any other server-agent traffic during
             // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
             // time the upgrade kicks in..
-            if (!resourceUpgradeDelegate.enabled()
-                && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
+            if (!isResourceUpgradeActive() && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || 
+                    !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, configuration.getChildResourceDiscoveryDelay(),
                     TimeUnit.SECONDS);
@@ -1205,7 +1205,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
         //happens before any scanning infrastructure is established.
-        if (!resourceUpgradeDelegate.enabled() && scan) {
+        if (!isResourceUpgradeActive() && scan) {
             log.info("Deleted resource #[" + resourceId + "] - this will trigger a server scan now");
             inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
         }
@@ -2310,6 +2310,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
+     * The resource upgrade should only occur during the {@link #initialize()} method and should be
+     * switched off at all other times.
+     * 
+     * @return true if resource upgrade is currently active, false otherwise
+     */
+    public boolean isResourceUpgradeActive() {
+        return resourceUpgradeDelegate.enabled();
+    }
+    
+    /**
      * Always use this before accessing the event listeners because this ensures
      * thread safety.
      *
@@ -2904,7 +2914,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {
-        if (resourceUpgradeDelegate.enabled()) {
+        if (isResourceUpgradeActive()) {
             //don't do anything during upgrade. The resources are only started during the upgrade process.
             return;
         }

@@ -48,6 +48,7 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * The context object that {@link ResourceComponent} objects will have access - it will have all the information that
@@ -67,6 +68,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private static final Log LOG = LogFactory.getLog(ResourceContext.class);
 
     private final String resourceKey;
+    private final String resourceUuid;
     private final ResourceType resourceType;
     private final String version;
     private final T parentResourceComponent;
@@ -76,7 +78,6 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
-    private final File resourceDataDirectory;
     private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
@@ -163,7 +164,6 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.dataDirectory = dataDirectory;
-        this.resourceDataDirectory = new File(dataDirectory, resource.getUuid());
         this.pluginContainerName = pluginContainerName;
         this.pluginContainerDeployment = pluginContainerDeployment;
         if (temporaryDirectory == null) {
@@ -183,6 +183,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
             parentResourceUuid = resource.getParentResource().getUuid();
         }
         this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resourceType);
+
+        this.resourceUuid = resource.getUuid();
     }
 
     /**
@@ -217,16 +219,44 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
-     * The {@link Resource#getUuid() uuid} of the resource this context is associated with.
+     * The data directory of the resource this context is associated with.
      *
-     * @return the resource's uuid string
+     * @return resource data directory
      */
     public File getResourceDataDirectory() {
+        File resourceDataDirectory = new File(dataDirectory, this.getAncestryBasedResourceKey());
+
+        try {
+            File oldResourceDataDirectory = new File(dataDirectory, this.resourceUuid);
+            if (oldResourceDataDirectory.exists()) {
+                oldResourceDataDirectory.renameTo(resourceDataDirectory);
+            }
+        } catch (Exception e) {
+            //Just prevent an exception related to renaming of the old
+            //data resource directory from causing this method fail.
+            //This method should continue and create the new folder
+            //as if the old folder never existed.
+        }
+
         if (!resourceDataDirectory.exists()) {
             resourceDataDirectory.mkdirs();
         }
 
-        return this.resourceDataDirectory;
+        return resourceDataDirectory;
+    }
+
+    /**
+     * The data directory of a child to be created for the resource this context is associated with.
+     *
+     * @return child resource data directory
+     */
+    public File getFutureChildResourceDataDirectory(String childResourceKey) {
+        File childResourceDataDirectory = new File(dataDirectory, this.getAncestryBasedResourceKey(childResourceKey));
+        if (!childResourceDataDirectory.exists()) {
+            childResourceDataDirectory.mkdirs();
+        }
+
+        return childResourceDataDirectory;
     }
 
     /**
@@ -504,5 +534,39 @@ public class ResourceContext<T extends ResourceComponent<?>> {
 
             return ret;
         }
+    }
+
+    /**
+     * Calculates a unique key based on parents' resource keys. The final key is the SHA256
+     * all the ancestry resource keys.
+     *
+     * @return key
+     */
+    private String getAncestryBasedResourceKey() {
+        return this.getAncestryBasedResourceKey(null);
+    }
+
+    /**
+     * Calculates a unique key based on parents' resource keys.
+     *
+     * @param prefixKey extra key to be appended at the beginning of the digest process
+     * @return key
+     */
+    private String getAncestryBasedResourceKey(String prefixKey) {
+        MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
+        if (prefixKey != null) {
+            messageDigest.add(prefixKey.getBytes());
+        }
+
+        messageDigest.add(this.resourceKey.getBytes());
+
+        ResourceContext<?> ancestor = this.parentResourceContext;
+        while (ancestor != null) {
+            messageDigest.add(ancestor.getResourceKey().getBytes());
+            ancestor = ancestor.getParentResourceContext();
+        }
+
+        return messageDigest.getDigestString();
     }
 }

@@ -5,11 +5,13 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -21,6 +23,7 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
@@ -49,9 +52,11 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ProfileServiceComponent component;
+    private ResourceContext<?> parentResourceContext;
 
-    public CreateChildResourceFacetDelegate(ProfileServiceComponent component) {
+    public CreateChildResourceFacetDelegate(ProfileServiceComponent component, ResourceContext<?> parentResourceContext) {
         this.component = component;
+        this.parentResourceContext = parentResourceContext;
     }
 
     public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
@@ -158,7 +163,7 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
             SystemInfo systemInfo  = component.getResourceContext().getSystemInformation();
             return new ScriptDeployer(jbossHome, systemInfo, downloader);
         } else {
-            return new ManagedComponentDeployer(profileServiceConnection, downloader);
+            return new ManagedComponentDeployer(profileServiceConnection, downloader, parentResourceContext);
         }
     }
 

@@ -19,13 +19,9 @@
 package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,8 +39,9 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.content.FileContentDelegate;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
@@ -62,10 +59,13 @@ public class ManagedComponentDeployer implements Deployer {
 
     private PackageDownloader downloader;
     private ProfileServiceConnection profileServiceConnection;
+    private ResourceContext<?> parentResourceContext;
 
-    public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
+    public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader,
+        ResourceContext<?> parentResourceContext) {
         this.downloader = downloader;
         this.profileServiceConnection = profileServiceConnection;
+        this.parentResourceContext = parentResourceContext;
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
@@ -89,7 +89,6 @@ public class ManagedComponentDeployer implements Deployer {
             abortIfApplicationAlreadyDeployed(resourceType, archiveFile);
 
             Configuration deployTimeConfig = details.getDeploymentTimeConfiguration();
-            @SuppressWarnings({ "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
             DeploymentManager deploymentManager = this.profileServiceConnection.getDeploymentManager();
@@ -135,43 +134,14 @@ public class ManagedComponentDeployer implements Deployer {
             // If deployed exploded, we need to store the SHA of source package in META-INF/MANIFEST.MF for correct
             // versioning.
             if (deployExploded) {
-                MessageDigestGenerator sha256Generator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
-                String shaString = sha256Generator.calcDigestString(archiveFile);
                 URI deploymentURI = URI.create(deploymentName);
                 // e.g.: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
                 String deploymentPath = deploymentURI.getPath();
                 File deploymentFile = new File(deploymentPath);
-                if (deploymentFile.isDirectory()) {
-                    File manifestFile = new File(deploymentFile, "META-INF/MANIFEST.MF");
-                    Manifest manifest;
-                    if (manifestFile.exists()) {
-                        FileInputStream inputStream = new FileInputStream(manifestFile);
-                        try {
-                            manifest = new Manifest(inputStream);
-                        } finally {
-                            inputStream.close();
-                        }
-                    } else {
-                        File metaInf = new File(deploymentFile, "META-INF");
-                        if (!metaInf.exists())
-                            if (!metaInf.mkdir())
-                                throw new Exception("Could not create directory " + deploymentFile + "META-INF.");
+                FileContentDelegate fileContentDelegate = new FileContentDelegate();
 
-                        manifestFile = new File(metaInf, "MANIFEST.MF");
-                        manifest = new Manifest();
-                    }
-                    Attributes attribs = manifest.getMainAttributes();
-                    attribs.putValue("RHQ-Sha256", shaString);
-                    FileOutputStream outputStream = new FileOutputStream(manifestFile);
-                    try {
-                        manifest.write(outputStream);
-                    } finally {
-                        outputStream.close();
-                    }
-                } else {
-                    LOG.error("Exploded deployment '" + deploymentFile
-                            + "' does not exist or is not a directory - unable to add RHQ versioning metadata to META-INF/MANIFEST.MF.");
-                }
+                fileContentDelegate.saveDeploymentSHA(archiveFile, deploymentFile,
+                    parentResourceContext.getFutureChildResourceDataDirectory(archiveName));
             }
 
             // Reload the management view to pickup the ManagedDeployment for the app we just deployed.

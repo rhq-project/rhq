@@ -190,7 +190,7 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
         this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath,
             resourceContext.getContentContext());
 
-        this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this);
+        this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this, this.getResourceContext());
 
         // prepare to perform async avail checking
         Configuration pc = resourceContext.getPluginConfiguration();

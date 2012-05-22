@@ -274,26 +274,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 + "' to '" + backupOfOriginalFile + "'.");
         }
 
-        // Now stop the original app.
-        try {
-            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
-            DeploymentUtils.run(progress);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
-        }
-
-        // And then remove it (this will delete the physical file/dir from the deploy dir).
-        try {
-            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
-            DeploymentUtils.run(progress);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
-        }
-
-        // Deploy away!
-        log.debug("Deploying '" + tempFile + "'...");
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
 
         // as crazy as it might sound, there is apparently no way for you to ask the profile service
@@ -328,7 +308,25 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             }
         }
 
+        // Now stop the original app.
         try {
+            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+            DeploymentUtils.run(progress);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
+        }
+
+        // And then remove it (this will delete the physical file/dir from the deploy dir).
+        try {
+            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
+            DeploymentUtils.run(progress);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
+        }
+
+        // Deploy away!
+        try {
+            log.debug("Deploying '" + tempFile + "'...");
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
@@ -383,7 +381,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Remove temporary files created by this deployment.
         deleteTemporaryFile(backupDir);
-        deleteTemporaryFile(tempFile);
+        deleteTemporaryFile(tempFile.getParentFile());
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -461,8 +459,11 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails)
         throws Exception {
-        File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir, this.deploymentFile.getName() + UUID.randomUUID().getLeastSignificantBits());
+        File tempDir = new File(getResourceContext().getTemporaryDirectory(), "/deploy"
+            + UUID.randomUUID().getLeastSignificantBits());
+        tempDir.mkdirs();
+
+        File tempFile = new File(tempDir, this.deploymentFile.getName());
 
         OutputStream tempOutputStream = null;
         try {

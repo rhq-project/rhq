@@ -8,11 +8,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.domain.resource.DeleteResourceStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.*;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 
@@ -420,6 +416,10 @@ public class ImageManager {
         default:
             return "availBar/unknown.png";
         }
+    }
+
+    public static String getAlertStatusCheckedIcon() {
+        return "global/Check_16.png";
     }
 
     public static String getAlertIcon(AlertPriority priority) {

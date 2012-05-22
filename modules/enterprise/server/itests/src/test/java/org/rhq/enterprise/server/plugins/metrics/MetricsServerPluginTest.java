@@ -35,6 +35,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.apache.commons.io.FileUtils;
+import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -51,6 +52,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -94,14 +96,20 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
     private MetricsServerPluginService metricsServerPluginService;
 
+    private Subject overlord;
+
     @BeforeClass
     public void prepareTests() throws Exception {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        overlord = subjectManager.getOverlord();
+
         initMetricsServer();
         createInventory();
     }
 
     public void createInventory() throws Exception {
         purgeRawTables();
+        purge1HourTable();
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -180,6 +188,14 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
     }
 
     private void purgeRawTables() throws SQLException {
+        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
+    }
+
+    private void purge1HourTable() throws SQLException {
+        purgeTables("rhq_measurement_data_num_1h");
+    }
+
+    private void purgeTables(String... tables) throws SQLException {
         // This method was previous implemented using EntityManager.createNativeQuery
         // and called from within a TransactionCallback. It was causing a
         // TransactionRequiredException, and I am not clear why. I suspect it is a
@@ -191,7 +207,7 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
         try {
             connection.setAutoCommit(false);
-            for (String table : MeasurementDataManagerUtility.getAllRawTables()) {
+            for (String table : tables) {
                 Statement statement = connection.createStatement();
                 try {
                     statement.execute("delete from " + table);
@@ -224,40 +240,72 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
     @Test
     public void insertNumericData() throws Exception {
-        long now = System.currentTimeMillis();
-        long oneMinuteAgo = now - MINUTE;
-        long twoMinutesAgo = now - (MINUTE * 2);
-        long threeMinutesAgo = now - (MINUTE * 3);
+        DateTime now = new DateTime();
+        DateTime oneMinuteAgo = now.minusMinutes(1);
+        DateTime twoMinutesAgo = now.minusMinutes(2);
+        DateTime threeMinutesAgo = now.minusMinutes(3);
 
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
 
         final MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(threeMinutesAgo, request, 3.2));
-        report.addData(new MeasurementDataNumeric(twoMinutesAgo, request, 3.9));
-        report.addData(new MeasurementDataNumeric(oneMinuteAgo, request, 2.6));
-        report.setCollectionTime(now);
+        report.addData(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), request, 3.2));
+        report.addData(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), request, 3.9));
+        report.addData(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
+        report.setCollectionTime(now.getMillis());
 
         MeasurementReport dummyReport = new MeasurementReport();
-        dummyReport.addData(new MeasurementDataNumeric(now, -1, 0.0));
+        dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
 
         MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
         // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
         metricsManager.mergeMeasurementReport(dummyReport);
         metricsManager.mergeMeasurementReport(report);
 
-        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
-        Subject overlord = subjectMgr.getOverlord();
-
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         List<MeasurementDataNumeric> actual = dataManager.findRawData(overlord, dynamicSchedule.getId(),
-            threeMinutesAgo - SECOND, now);
+            threeMinutesAgo.minusSeconds(1).getMillis(), now.getMillis());
 
         List<MeasurementDataNumeric> expected = asList(
-            new MeasurementDataNumeric(threeMinutesAgo, dynamicSchedule.getId(), 3.2),
-            new MeasurementDataNumeric(twoMinutesAgo, dynamicSchedule.getId(), 3.9),
-            new MeasurementDataNumeric(oneMinuteAgo, dynamicSchedule.getId(), 2.6));
+            new MeasurementDataNumeric(threeMinutesAgo.getMillis(), dynamicSchedule.getId(), 3.2),
+            new MeasurementDataNumeric(twoMinutesAgo.getMillis(), dynamicSchedule.getId(), 3.9),
+            new MeasurementDataNumeric(oneMinuteAgo.getMillis(), dynamicSchedule.getId(), 2.6));
 
         AssertUtils.assertCollectionEqualsNoOrder(expected, actual, "Failed to insert numeric data");
+    }
+
+    @Test
+    public void calculateAggregates() {
+        DateTime now = new DateTime().hourOfDay().roundFloorCopy();
+        DateTime oneHourAgo = now.minusHours(1);
+
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+
+        final MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(12).getMillis(), request, 3.2));
+        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(10).getMillis(), request, 3.9));
+        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(6).getMillis(), request, 2.6));
+
+        report.setCollectionTime(now.getMillis());
+
+        MeasurementReport dummyReport = new MeasurementReport();
+        dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
+
+        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
+        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
+        metricsManager.mergeMeasurementReport(dummyReport);
+        metricsManager.mergeMeasurementReport(report);
+
+        metricsManager.compressPurgeAndTruncate();
+
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+
+        MeasurementAggregate aggregate = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
+            oneHourAgo.minusMinutes(30).getMillis(), now.getMillis());
+
+        assertNotNull(aggregate);
+        assertEquals("Failed to calculate the min", 2.6, aggregate.getMin());  Double d;
+        assertEquals("Failed to calculate the max", 3.9, aggregate.getMax());
+        assertEquals("Failed to calculate the average", (3.2 + 3.9 + 2.6) / 3.0, aggregate.getAvg());
     }
 
 }

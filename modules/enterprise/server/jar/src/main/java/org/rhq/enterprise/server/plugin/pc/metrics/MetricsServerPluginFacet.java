@@ -30,4 +30,6 @@ public interface MetricsServerPluginFacet {
 
     void insertMetrics(MeasurementReport report);
 
+    void calculateAggregates();
+
 }

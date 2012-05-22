@@ -19,20 +19,26 @@
  *
  */
 
-package org.rhq.enterprise.server.measurement;
+package org.rhq.enterprise.server.drift;
 
-import javax.ejb.Local;
-
-import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 
 /**
- * @author John Sanda
- */
-@Local
-public interface MetricsManagerLocal {
+* @author John Sanda
+*/
+public class TestDriftServerPluginContainer extends DriftServerPluginContainer {
+    private DriftServerPluginService driftServerPluginService;
 
-    void mergeMeasurementReport(MeasurementReport report);
+    public TestDriftServerPluginContainer(
+        DriftServerPluginService driftServerPluginService, MasterServerPluginContainer master) {
+        super(master);
+        this.driftServerPluginService = driftServerPluginService;
+    }
 
-    void compressPurgeAndTruncate();
-
+    @Override
+    protected ServerPluginManager createPluginManager() {
+        return new TestDriftServerPluginManager(this);
+    }
 }

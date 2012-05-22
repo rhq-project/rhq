@@ -21,11 +21,14 @@
 
 package org.rhq.enterprise.server.plugins.metrics;
 
+import java.sql.SQLException;
+
 import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.bundle.MetricsException;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginFacet;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -53,17 +56,16 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
     @Override
     public void insertMetrics(MeasurementReport report) {
         MeasurementDataManagerLocal dataMgr = LookupUtil.getMeasurementDataManager();
-        //dataMgr.mergeMeasurementReport(report);
+        dataMgr.mergeMeasurementReport(report);
+    }
 
-        if (report.getNumericData() != null && !report.getNumericData().isEmpty()) {
-            dataMgr.addNumericData(report.getNumericData());
-        }
-        if (report.getTraitData() != null && !report.getTraitData().isEmpty()) {
-            dataMgr.addTraitData(report.getTraitData());
-        }
-        if (report.getCallTimeData() != null && !report.getCallTimeData().isEmpty()) {
-            CallTimeDataManagerLocal callTimeDataMgr = LookupUtil.getCallTimeDataManager();
-            callTimeDataMgr.addCallTimeData(report.getCallTimeData());
+    @Override
+    public void calculateAggregates() {
+        MeasurementCompressionManagerLocal compressionMgr = LookupUtil.getMeasurementCompressionManager();
+        try {
+            compressionMgr.compressPurgeAndTruncate();
+        } catch (SQLException e) {
+            throw new MetricsException(e);
         }
     }
 }

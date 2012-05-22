@@ -34,6 +34,7 @@ import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.enterprise.server.drift.TestDriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
@@ -93,7 +95,9 @@ public class MetricsServerPluginService extends ServerPluginService implements M
         protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
             ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
             MetricsServerPluginContainer metricsPC = new TestMetricsServerPluginContainer(this);
+            DriftServerPluginContainer driftPC = new TestDriftServerPluginContainer(null, this);
             pcs.add(metricsPC);
+            pcs.add(driftPC);
 
             return pcs;
         }

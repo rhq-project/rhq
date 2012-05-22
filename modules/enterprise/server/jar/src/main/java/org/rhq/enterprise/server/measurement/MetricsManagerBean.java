@@ -22,6 +22,8 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +45,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     private Log log = LogFactory.getLog(MetricsManagerBean.class);
 
     @Override
-    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void mergeMeasurementReport(MeasurementReport report) {
         MetricsServerPluginFacet metricsServer = getServerPlugin();
         long start = System.currentTimeMillis();
@@ -57,6 +59,13 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         if (log.isDebugEnabled()) {
             log.debug("Measurement storage for [" + report.getDataCount() + "] took " + time + "ms");
         }
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void compressPurgeAndTruncate() {
+        MetricsServerPluginFacet metricsServer = getServerPlugin();
+        metricsServer.calculateAggregates();
     }
 
     private MetricsServerPluginFacet getServerPlugin() {

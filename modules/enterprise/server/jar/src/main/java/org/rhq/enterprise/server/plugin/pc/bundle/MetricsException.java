@@ -19,20 +19,26 @@
  *
  */
 
-package org.rhq.enterprise.server.measurement;
-
-import javax.ejb.Local;
-
-import org.rhq.core.domain.measurement.MeasurementReport;
+package org.rhq.enterprise.server.plugin.pc.bundle;
 
 /**
  * @author John Sanda
  */
-@Local
-public interface MetricsManagerLocal {
+public class MetricsException extends RuntimeException {
 
-    void mergeMeasurementReport(MeasurementReport report);
+    public MetricsException() {
+        super();
+    }
 
-    void compressPurgeAndTruncate();
+    public MetricsException(String message) {
+        super(message);
+    }
 
+    public MetricsException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MetricsException(Throwable cause) {
+        super(cause);
+    }
 }

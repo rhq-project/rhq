@@ -134,6 +134,13 @@
          <scope>test</scope>
       </dependency>
 
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.1</version>
+      <scope>test</scope>
+    </dependency>
+
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
@@ -343,7 +350,7 @@
       <id>metrics-tests</id>
       <activation>
         <property>
-          <name>rhq.metrics.tests</name>
+          <name>metrics</name>
         </property>
       </activation>
       <build>

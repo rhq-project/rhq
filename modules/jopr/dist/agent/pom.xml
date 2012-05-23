@@ -53,7 +53,7 @@
             <id>build-dist</id>
             <phase>generate-resources</phase>
             <configuration>
-              <tasks>      
+              <target>
                 <property name="jopr.trunk.dir" location="../../.." />             
                 <property name="rhq.agent.dist.zipfile" location="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${rhq.version}/rhq-enterprise-agent-${rhq.version}.zip" />
                 <property name="rhq.connectors.dist.zipfile" location="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${rhq.version}/rhq-product_connectors-${rhq.version}.zip" />
@@ -75,7 +75,7 @@
                 <copy todir="${jopr.agent.dist.dir}">         
                    <fileset dir="${jopr.trunk.dir}" includes="LICENSE*" />
                 </copy>                                                
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

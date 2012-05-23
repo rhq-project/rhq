@@ -53,7 +53,7 @@
           <execution>
             <phase>process-classes</phase>
             <configuration>
-              <tasks>
+              <target>
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.compile.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
@@ -63,7 +63,7 @@
                       <include name="**/*.class" />
                    </classfileset>
                 </i18n>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -97,12 +97,12 @@
                         <id>deploy</id>
                         <phase>compile</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <mkdir dir="${rhq.deploymentDir}" />
                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Updating ${deployment.file}...</echo>
                             <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -113,11 +113,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Deleting ${deployment.file}...</echo>
                             <delete file="${deployment.file}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -151,7 +151,7 @@
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -171,7 +171,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -181,7 +181,7 @@
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -202,7 +202,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

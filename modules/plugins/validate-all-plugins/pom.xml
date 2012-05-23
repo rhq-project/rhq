@@ -23,7 +23,7 @@
                <execution>
                   <phase>integration-test</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <property name="test.classpath" refid="maven.test.classpath" />
                         <echo>Validating plugins...</echo>
                         <java classname="org.rhq.core.pc.plugin.PluginValidator" failonerror="true" fork="true">
@@ -65,7 +65,7 @@
                            <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y" />
                            -->
                         </java>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>

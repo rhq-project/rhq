@@ -104,7 +104,7 @@
                   <id>client-distribution</id>
                   <phase>compile</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <echo>ant.version=${ant.version}</echo>
 
                         <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">                           
@@ -126,7 +126,7 @@
                            <property name="ant.contrib.version" value="${ant.contrib.version}" />
                            <property name="webservice.version" value="${project.version}" />
                         </ant>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>

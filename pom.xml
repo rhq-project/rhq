@@ -975,7 +975,7 @@
                   </goals>
                   <phase>generate-sources</phase>
                   <configuration>
-                      <tasks>
+                      <target>
                           <mkdir dir="target" />
 
                           <tstamp>
@@ -989,7 +989,7 @@
                              <arg value="-n1"/>
                           </exec>
                           <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
-                      </tasks>
+                      </target>
                   </configuration>
               </execution>
 
@@ -1000,10 +1000,10 @@
                       <goal>run</goal>
                   </goals>
                   <configuration>
-                      <tasks>
+                      <target>
                           <echo level="debug">buildTime = ${buildTime}</echo>
                           <echo level="debug">buildNumber = ${buildNumber}</echo>
-                      </tasks>
+                      </target>
                   </configuration>
               </execution>
 
@@ -1012,11 +1012,11 @@
                 <phase>site</phase>
                 <inherited>false</inherited>
                 <configuration>
-                   <tasks>
+                   <target>
                       <property name="apidocs.dir" value="target/apidocs" />
 
                       <copy dir="modules/core/domain/target/site/apidocs" todir="${apidocs.dir}/domain"/>
-                   </tasks>
+                   </target>
                 </configuration>
                 <goals>
                    <goal>run</goal>
@@ -1193,9 +1193,9 @@
             <phase>validate</phase>
             <inherited>false</inherited>
             <configuration>
-              <tasks>
+              <target>
                 <echo>.                            !!!!!!! dev profile is active !!!!!!!</echo>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

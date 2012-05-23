@@ -162,7 +162,7 @@ rhq-agent.latest.build-number=${buildNumber}
                   <id>deploy</id>
                   <phase>package</phase>
                   <configuration>
-                    <tasks>
+                    <target>
                       <echo>*** Cleaning old ${rhq.deploymentDir}...</echo>
                       <mkdir dir="${rhq.deploymentDir}" />
                       <delete failonerror="false">
@@ -171,7 +171,7 @@ rhq-agent.latest.build-number=${buildNumber}
                       <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentJar}" />
                       <echo>*** Updating ${deployment.file}...</echo>
                       <copy file="${basedir}/target/${rhq.projectJar}" toFile="${deployment.file}" />
-                    </tasks>
+                    </target>
                   </configuration>
                   <goals>
                     <goal>run</goal>
@@ -181,12 +181,12 @@ rhq-agent.latest.build-number=${buildNumber}
                   <id>undeploy</id>
                   <phase>clean</phase>
                   <configuration>
-                    <tasks>
+                    <target>
                       <echo>*** Deleting ${rhq.deploymentDir}...</echo>
                       <delete failonerror="false">
                         <fileset dir="${rhq.deploymentDir}" includes="*" />
                       </delete>
-                    </tasks>
+                    </target>
                   </configuration>
                   <goals>
                     <goal>run</goal>
@@ -218,7 +218,7 @@ rhq-agent.latest.build-number=${buildNumber}
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -238,7 +238,7 @@ rhq-agent.latest.build-number=${buildNumber}
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -248,7 +248,7 @@ rhq-agent.latest.build-number=${buildNumber}
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -269,7 +269,7 @@ rhq-agent.latest.build-number=${buildNumber}
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

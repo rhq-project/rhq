@@ -148,12 +148,12 @@
                 <id>deploy</id>
                 <phase>install</phase>
                 <configuration>
-                  <tasks>
+                  <target>
                     <mkdir dir="${rhq.deploymentDir}" />
                     <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                     <echo>*** Updating ${deployment.file}...</echo>
                     <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                  </tasks>
+                  </target>
                 </configuration>
                 <goals>
                   <goal>run</goal>

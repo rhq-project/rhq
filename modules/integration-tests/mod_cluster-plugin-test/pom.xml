@@ -282,7 +282,7 @@
                      <execution>
                         <phase>process-test-resources</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <echo>Setting up plugin dependencies...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/testsetup" />
@@ -320,7 +320,7 @@
                                  </fileset>
                               </move>
                               <delete dir="target/testsetup/lib/hyperic-sigar-${sigar.version}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>

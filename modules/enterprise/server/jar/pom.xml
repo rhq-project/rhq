@@ -606,7 +606,7 @@
                <execution>
                   <phase>process-classes</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <!-- generate the I18N resource bundles -->
                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
@@ -634,7 +634,7 @@ Build-Jdk=${java.version}
 Build-OS-Name=${os.name}
 Build-OS-Version=${os.version}
 </echo>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -646,7 +646,7 @@ Build-OS-Version=${os.version}
                   <id>Extract JMS classes from RAR needed for JMS tests</id>
                   <phase>process-classes</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <unzip src="src/test/resources/jms-ra.rar" dest="target">
                            <patternset>
                               <include name="jms-ra.jar"/>
@@ -657,7 +657,7 @@ Build-OS-Version=${os.version}
                               <include name="org/**"/>
                            </patternset>
                         </unzip>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -845,13 +845,13 @@ Build-OS-Version=${os.version}
                         <id>deploy</id>
                         <phase>compile</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
                               <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                  <fileset dir="target/classes" />
                               </copy>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -867,13 +867,13 @@ Build-OS-Version=${os.version}
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
                                  <patternset>
                                     <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -884,11 +884,11 @@ Build-OS-Version=${os.version}
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                               <delete dir="${deployment.dir}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -941,7 +941,7 @@ Build-OS-Version=${os.version}
                         <id>remote-api</id>
                         <phase>compile</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
                               <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server" />
                               <property name="maven.compile.classpath" refid="maven.compile.classpath" />
@@ -958,7 +958,7 @@ Build-OS-Version=${os.version}
                                  <link href="http://download.oracle.com/javase/6/docs/api/" />
                                  <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
                               </javadoc>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -990,7 +990,7 @@ Build-OS-Version=${os.version}
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -1012,7 +1012,7 @@ Build-OS-Version=${os.version}
                         <exclude name="**/DynamicConfigurationPropertyBean.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -1022,7 +1022,7 @@ Build-OS-Version=${os.version}
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -1043,7 +1043,7 @@ Build-OS-Version=${os.version}
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

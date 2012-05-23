@@ -182,7 +182,7 @@
             <id>Generate I18N Resource Bundles</id>
             <phase>process-classes</phase>
             <configuration>
-              <tasks>
+              <target>
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
                 <!--<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">-->
@@ -198,7 +198,7 @@
                   </fileset>
                   <mapper type="glob" from="*" to="*.unfiltered" />
                 </copy>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -256,13 +256,13 @@
                         <id>deploy-classes</id>
                         <phase>compile</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
                             <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
                             <copy todir="${classes.dir}" verbose="${rhq.verbose}">
                                <fileset dir="target/classes" />
                             </copy>
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -273,14 +273,14 @@
                         <id>deploy</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/target/${project.build.finalName}" />
                             </copy>
                             <delete dir="${deployment.dir}.rej" /> <!-- need to remove any residual backups -->
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -291,11 +291,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                             <delete dir="${deployment.dir}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>

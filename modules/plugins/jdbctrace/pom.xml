@@ -41,14 +41,14 @@
                   <id>Package helper jar</id>
                   <phase>process-classes</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <echo>Preparing the internal byteman helper jar to be installed in byteman classpath</echo>
                         <mkdir dir="${project.build.outputDirectory}/helper" />
                         <jar destfile="${project.build.outputDirectory}/helper/rhq-jdbctrace-plugin-helper.jar">
                            <fileset dir="${project.build.outputDirectory}"
                                     includes="**/org/rhq/plugins/jdbctrace/helper/*.class"/>
                          </jar>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -106,7 +106,7 @@
                      <execution>
                         <phase>pre-integration-test</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/itest" />
@@ -137,7 +137,7 @@
                                  </fileset>
                               </move>
                               <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -204,12 +204,12 @@
                         <id>deploy</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <mkdir dir="${rhq.deploymentDir}" />
                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Updating ${deployment.file}...</echo>
                             <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" update="true" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -220,7 +220,7 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
@@ -228,7 +228,7 @@
                              </unjar>
                              <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -239,11 +239,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Deleting ${deployment.file}...</echo>
                             <delete file="${deployment.file}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -277,7 +277,7 @@
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
                  <configuration>                  
-                   <tasks> 
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" /> 
                    <mkdir dir="target/cobertura/backup"/>
@@ -297,7 +297,7 @@
                         <include name="**/*.class"/>
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -307,7 +307,7 @@
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -328,7 +328,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties"/>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

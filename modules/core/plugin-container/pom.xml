@@ -128,7 +128,7 @@
             <id>process-test-resources</id>
             <phase>process-test-resources</phase>
             <configuration>
-              <tasks>
+              <target>
                  <echo>SIGAR java library version used is ${sigar.version}</echo>
                  <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory</echo>
                  <mkdir dir="${project.build.directory}/jboss-sigar" />
@@ -152,7 +152,7 @@
                     </fileset>
                  </move>
                  <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -163,7 +163,7 @@
             <id>process-test-classes</id>
             <phase>process-test-classes</phase>
             <configuration>
-              <tasks unless="maven.test.skip">
+              <target unless="maven.test.skip">
                  <echo>Assembling the resource upgrade test plugins</echo>
                  <copy toDir="${project.build.testOutputDirectory}/tmp/v1/META-INF">
                     <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v1/rhq-plugin.xml" />
@@ -336,7 +336,7 @@
                  </jar>
 
                  <delete dir="${project.build.testOutputDirectory}/tmp" />
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -411,7 +411,7 @@
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -431,7 +431,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -441,7 +441,7 @@
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -462,7 +462,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

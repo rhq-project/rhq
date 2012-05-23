@@ -157,7 +157,6 @@ rhq-agent.latest.build-number=${buildNumber}
           <plugins>
             <plugin>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.1</version>
               <executions>
                 <execution>
                   <id>deploy</id>

@@ -452,6 +452,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String description = buildDefaultResourceDescription(hostPort, productType);
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
+        pluginConfig.put(new PropertySimple("productType",productType.name()));
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, pluginConfig, null);

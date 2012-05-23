@@ -126,12 +126,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private void validateServerAttributes() throws InvalidPluginConfigurationException {
         // Validate the base dir (e.g. /opt/jboss-as-7.1.1.Final/standalone).
         File runtimeBaseDir;
-        File baseDir;
+        File baseDir=null;
         try {
             String runtimeBaseDirString = readAttribute(getEnvironmentAddress(), getBaseDirAttributeName());
             // Canonicalize both paths before comparing them!
             runtimeBaseDir = new File(runtimeBaseDirString).getCanonicalFile();
-            baseDir = serverPluginConfig.getBaseDir().getCanonicalFile();
+            File baseDirTmp = serverPluginConfig.getBaseDir();
+            if (baseDirTmp != null) { // may be null for manually added servers
+                baseDir = baseDirTmp.getCanonicalFile();
+            }
         } catch (Exception e) {
             runtimeBaseDir = null;
             baseDir = null;
@@ -209,6 +212,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      * @throws Exception If anything goes wrong
      */
     protected OperationResult restartServer(Configuration parameters) throws Exception {
+
+        OperationResult operationResult = new OperationResult();
+        if (isManuallyAddedServer(operationResult, "Restarting")) {
+            return operationResult;
+        }
+
         List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
             OperationResult result  = new OperationResult();
@@ -256,6 +265,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      */
     protected OperationResult startServer() {
         OperationResult operationResult = new OperationResult();
+        if (isManuallyAddedServer(operationResult, "Starting")) {
+            return operationResult;
+        }
 
         List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
@@ -317,6 +329,14 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
+    }
+
+    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
+        if (pluginConfiguration.get("manuallyAdded")!=null) {
+            operationResult.setErrorMessage(operation + " is not enabled for manually added servers");
+            return true;
+        }
+        return false;
     }
 
     private void setErrorMessage(OperationResult operationResult, List<String> errors) {

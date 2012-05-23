@@ -6,7 +6,7 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
-import org.rhq.plugins.modcluster.model.ProxyInfo;
+import org.rhq.modules.plugins.jbossas7.modcluster.ProxyInfo;
 
 /**
  * Component class for ModCluster Webapp Context 

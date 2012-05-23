@@ -459,7 +459,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails)
         throws Exception {
-        File tempDir = new File(getResourceContext().getTemporaryDirectory(), "/deploy"
+        File tempDir = new File(getResourceContext().getTemporaryDirectory(), "deploy"
             + UUID.randomUUID().getLeastSignificantBits());
         tempDir.mkdirs();
 

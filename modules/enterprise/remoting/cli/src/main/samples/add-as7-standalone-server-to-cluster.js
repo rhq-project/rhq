@@ -28,20 +28,33 @@
  * @param copyDeployments whether or not to copy the deployments from the existing
  *        member to the new member
  */
-function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource, doCopyDeployments) {
+function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource, doCopyDeployments) {  
     println("Reading config of the existing cluster member");
-    var clusterConfig = _getClusterSignificantConfig(existingClusterMemberResource);
+    var existingMember = {
+        'id' : existingClusterMemberResource.id,
+	'resourceConfiguration' : _getLiveResourceConfiguration(existingClusterMemberResource),
+	'pluginConfiguration' : _getPluginConfiguration(existingClusterMemberResource)
+    };
+    
+    var clusterConfig = _getClusterSignificantConfig(existingClusterMemberResource.children,
+        existingMember.pluginConfiguration, existingMember.resourceConfiguration);
 
     println("Reading config of the new member");
-    var memberConfig = _getClusterSignificantConfig(newAs7Resource);
+    var newMember = {
+        'id' : newAs7Resource.id,
+	'resourceConfiguration' : _getLiveResourceConfiguration(newAs7Resource),
+	'pluginConfiguration' : _getPluginConfiguration(newAs7Resource)
+    };
 
-    var memberResourceConfiguration = newAs7Resource.resourceConfiguration.deepCopy(false);
+    var memberConfig = _getClusterSignificantConfig(newAs7Resource.children, newMember.pluginConfiguration, newMember.resourceConfiguration);
+
+    var memberResourceConfiguration = newMember.resourceConfiguration.deepCopy(false);
 
     if (memberConfig['config'] != clusterConfig['config']) {
         println("The configurations of the servers differ.\n" +
             "The new cluster member's configuration will be changed to match the configuration of the existing member.");
 
-        newAs7Resource.updatePluginConfiguration(_changeConfig(newAs7Resource.pluginConfiguration, clusterConfig['config']));
+        newAs7Resource.updatePluginConfiguration(_changeConfig(newMember.pluginConfiguration, clusterConfig['config']));
 
         //we need to restart straight away so that we see the changes to the
         //rest of the configuration caused by the change of current config.
@@ -49,12 +62,17 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
         newAs7Resource.restart();
 
         //refresh the resource
-        newAs7Resource = ProxyFactory.getResource(newAs7Resource.id);
-
+        newAs7Resource = ProxyFactory.getResource(newMember.id);
+        newMember = {
+            'id' : newAs7Resource.id,
+	    'resourceConfiguration' : _getLiveResourceConfiguration(newAs7Resource),
+	    'pluginConfiguration' : _getPluginConfiguration(newAs7Resource)
+        };
+	
         //refresh the cluster specific config after the restart with the new
         //config
-        memberConfig = _getClusterSignificantConfig(newAs7Resource);
-        memberResourceConfiguration = newAs7Resource.resourceConfiguration;
+        memberConfig = _getClusterSignificantConfig(newAs7Resource.children, newMember.pluginConfiguration, newMember.resourceConfiguration);
+        memberResourceConfiguration = newMember.resourceConfiguration;
     }
 
     //now check what's the node name we see
@@ -63,7 +81,7 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
         _updateNodeName(memberResourceConfiguration, newNodeName);
 
         newAs7Resource.updateResourceConfiguration(memberResourceConfiguration);
-        memberResourceConfiguration = newAs7Resource.resourceConfiguration.deepCopy(false);
+        memberResourceConfiguration = newMember.resourceConfiguration.deepCopy(false);
     }
 
     //now apply the socket binding changes for jgroups and other cluster
@@ -76,10 +94,12 @@ function addToCluster(newAs7Resource, newNodeName, existingClusterMemberResource
 
             println("Updating socket bindings of jgroups, messaging and modcluster subsystems");
 
-            var portOffset = javascriptString(child.resourceConfiguration.getSimpleValue('port-offset', '0'));
+	    var resourceConfig = _getLiveResourceConfiguration(child);
+	
+            var portOffset = javascriptString(resourceConfig.getSimpleValue('port-offset', '0'));
             var clusterMemberPortOffset = clusterConfig['port-offset'];
 
-            var newConfig = child.resourceConfiguration.deepCopy(false);
+            var newConfig = resourceConfig.deepCopy(false);
 
             _updateSocketBindings(newConfig, portOffset, clusterMemberPortOffset, clusterConfig['jgroups']);
             _updateSocketBindings(newConfig, portOffset, clusterMemberPortOffset, clusterConfig['messaging']);
@@ -183,21 +203,28 @@ function _getConfigName(as7PluginConfig) {
 
     var args = argsValue.split('\n');
 
-    var shortParam = '-c ';
-    var longParam = '--config=';
-
+    var possibleParams = ['-c ', '-c=', '--server-config='];
+    
     var ret = null;
     for (i in args) {
         var arg = args[i];
 
-        var cPos = arg.indexOf(shortParam);
-        var ccPos = arg.indexOf(longParam);
+	var found = false;
+	
+	for(j in possibleParams) {
+	    var param = possibleParams[j];
+	    var pos = arg.indexOf(param);
 
-        if (cPos >= 0) {
-            ret = arg.substring(cPos + shortParam.length).trim();
-        } else if (ccPos >= 0) {
-            ret = arg.substring(ccPos + longParam.length).trim();
-        }
+	    if (pos >= 0) {
+	        ret = arg.substring(pos + param.length).trim();
+		found = true;
+		break;
+	    }
+	}
+
+	if (found) {
+	    break;
+	}
     }
 
     if (ret != null && ret.startsWith('%') && ret.endsWith('%')) {
@@ -213,24 +240,24 @@ function _changeConfig(pluginConfig, configName) {
 
     var args = argsValue.split('\n');
 
-    var shortParam = '-c ';
-    var longParam = '--config=';
-
+    var possibleParams = ['-c ', '-c=', '--server-config='];
+    
     var updated = false;
 
     for (i in args) {
         var arg = args[i];
 
-        var cPos = arg.indexOf(shortParam);
-        var ccPos = arg.indexOf(longParam);
+	for(j in possibleParams) {
+	    var param = possibleParams[j];
 
-        if (cPos >= 0) {
-            args[i] = "-c " + configName;
-            updated = true;
-        } else if (ccPos >= 0) {
-            args[i] = "--config=" + configName;
-            updated = true;
-        }
+	    var pos = arg.indexOf(param);
+
+	    if (pos >= 0) {
+	        args[i] = param + configName;
+		updated = true;
+		break;
+	    }
+	}
 
         if (updated) {
             break;
@@ -424,22 +451,25 @@ function _updateSocketBindings(socketBindingsConfig, portOffset, clusterMemberPo
  *
  * @param resource the resource proxy of the AS7
  */
-function _getClusterSignificantConfig(as7Resource) {
+function _getClusterSignificantConfig(children, pluginConfiguration, resourceConfiguration) {
     var ret = {};
 
-    ret['config'] = javascriptString(_getConfigName(as7Resource.pluginConfiguration));
+    ret['config'] = javascriptString(_getConfigName(pluginConfiguration));
 
-    ret['node-name'] = javascriptString(as7Resource.resourceConfiguration.getSimpleValue('node-name', null));
+    ret['node-name'] = javascriptString(resourceConfiguration.getSimpleValue('node-name', null));
 
     //the standalone server has a single socket binding group
-    for(var i in as7Resource.children) {
-        var child = as7Resource.children[i];
+    for(var i in children) {
+        var child = children[i];
         if (child.resourceType.plugin != 'JBossAS7') {
             continue;
         }
         if (child.resourceType.name == 'SocketBindingGroup') {
-            ret['port-offset'] = javascriptString(child.resourceConfiguration.getSimpleValue('port-offset', '0'));
-            var ports = child.resourceConfiguration.get('*');
+
+	    var resourceConfig = _getLiveResourceConfiguration(child);
+	    
+            ret['port-offset'] = javascriptString(resourceConfig.getSimpleValue('port-offset', '0'));
+            var ports = resourceConfig.get('*');
             var portIterator = ports.list.iterator();
 
             var jgroups = {};
@@ -476,9 +506,11 @@ function _getClusterSignificantConfig(as7Resource) {
 
                 var caches = {};
 
+		var containerConfig = _getLiveResourceConfiguration(cacheContainer);
+		
                 cacheContainers[cacheContainer.name] = {
-                    'default-cache' : javascriptString(cacheContainer.resourceConfiguration.getSimpleValue('default-cache', null)),
-                    'aliases' : _asArray(cacheContainer.resourceConfiguration.get('aliases')),
+                    'default-cache' : javascriptString(containerConfig.getSimpleValue('default-cache', null)),
+                    'aliases' : _asArray(containerConfig.get('aliases')),
                     'caches' : caches
                 };
 
@@ -486,10 +518,10 @@ function _getClusterSignificantConfig(as7Resource) {
                     var cache = cacheContainer.children[c];
 
                     caches[cache.name] = {
-                        '_flavor' : javascriptString(cache.resourceConfiguration.getSimpleValue('_flavor', null)),
-                        'batching' : javascriptString(cache.resourceConfiguration.getSimpleValue('batching', null)),
-                        'indexing' : javascriptString(cache.resourceConfiguration.getSimpleValue('indexing', null)),
-                        'mode' : javascriptString(cache.resourceConfiguration.getSimpleValue('mode', null))
+                        '_flavor' : javascriptString(containerConfig.getSimpleValue('_flavor', null)),
+                        'batching' : javascriptString(containerConfig.getSimpleValue('batching', null)),
+                        'indexing' : javascriptString(containerConfig.getSimpleValue('indexing', null)),
+                        'mode' : javascriptString(containerConfig.getSimpleValue('mode', null))
                     };
                 }
             }
@@ -528,4 +560,24 @@ function _asArray(propertyList) {
     }
 
     return ret;
+}
+
+function _getPluginConfiguration(resource) {
+  if (typeof(resource) == 'number') {
+      resource = ProxyFactory.getResource(resource)
+  } else {
+      resource = ProxyFactory.getResource(resource.id)
+  }
+  return resource.pluginConfiguration
+}
+
+function _getLiveResourceConfiguration(resource) {
+    var id;
+    if (typeof(resource) == 'number') {
+        id = resource;  
+    } else {
+        id = resource.id
+    }
+
+    return ConfigurationManager.getLiveResourceConfiguration(id, false) 
 }

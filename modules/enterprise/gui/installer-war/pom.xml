@@ -26,15 +26,15 @@
     <product.name>RHQ</product.name>
     <product.fullName>RHQ</product.fullName>
     <product.url.domain>rhq-project.org</product.url.domain>
-    <product.sales.email>sales@rhq-project.org</product.sales.email>
-    <product.support.email>info@rhq-project.org</product.support.email>
+    <product.sales.email>rhq-users@lists.fedorahosted.org</product.sales.email>
+    <product.support.email>rhq-users@lists.fedorahosted.org</product.support.email>
     <product.version>${project.version}</product.version>
-    <product.help.doc.root>http://support.rhq-project.org/display/JOPR2/</product.help.doc.root>
+    <product.help.doc.root>http://www.rhq-project.org/display/JOPR2/</product.help.doc.root>
     <product.help.installation>Installation</product.help.installation>
     <product.help.guide.server>Running+the+RHQ+Server</product.help.guide.server>
     <product.help.guide.agent>Running+the+RHQ+Agent</product.help.guide.agent>
     <product.help.FAQ>FAQ</product.help.FAQ>
-    <product.help.config.props>http://support.rhq-project.org/display/JOPR2/Startup+Properties#ConfiguringtheServer</product.help.config.props>
+    <product.help.config.props>http://www.rhq-project.org/display/JOPR2/Startup+Properties#StartupProperties-</product.help.config.props>
   </properties>
 
   <dependencies>

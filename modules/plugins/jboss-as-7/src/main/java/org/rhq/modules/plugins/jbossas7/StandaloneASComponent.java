@@ -63,12 +63,25 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             String requestName = request.getName();
             if (requestName.equals(SERVER_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
+            } else if (requestName.equals("multicastAddress")) {
+                collectMulticastAddressTrait(report, request);
             } else {
                 leftovers.add(request); // handled below
             }
         }
 
         super.getValues(report, leftovers);
+    }
+
+    @Override
+    protected Address getServerAddress() {
+        return getAddress();
+    }
+
+    @Override
+    protected String getSocketBindingGroup() {
+        // TODO (ips): Can this ever be something other than "standard-sockets"?
+        return "standard-sockets";
     }
 
     @Override

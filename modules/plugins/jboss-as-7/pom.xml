@@ -379,6 +379,12 @@
                     <replace dir="${jboss7.home}"
                              includes="standalone/configuration/standalone*.xml, domain/configuration/host*.xml"
                              token="&lt;inet-address " value="&lt;loopback-address "/>
+                    <!-- TODO (ips, 05/24/12): The below starts the managed servers in HA mode, but it also causes a
+                                               slew of HornetQ authentication errors - figure out how to make those go
+                                               away. -->
+                    <!--<replace dir="${jboss7.home}"
+                             includes="domain/configuration/host.xml"
+                             token=' group="main-server-group"' value=' group="other-server-group"'/>-->
                   </target>
                 </configuration>
               </execution>

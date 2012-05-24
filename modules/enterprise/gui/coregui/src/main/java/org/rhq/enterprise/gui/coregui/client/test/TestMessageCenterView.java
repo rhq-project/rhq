@@ -58,25 +58,30 @@ public class TestMessageCenterView extends LocatableVLayout {
         }
 
         final SelectItem severityMenu = new SelectItem("severityItem", "Severity");
+        severityMenu.setWidth(200);
         severityMenu.setValueMap(severityChoices);
         severityMenu.setDefaultValue(Severity.Blank.name());
 
-        final SelectItem optionMenu = new SelectItem();
-        optionMenu.setTitle("Message Options");
+        final SelectItem optionMenu = new SelectItem("optionMenu", "Message Options");
         optionMenu.setWidth(200);
         optionMenu.setMultiple(true);
         optionMenu.setMultipleAppearance(MultipleAppearance.GRID);
         optionMenu.setValueMap(optionChoices);
         optionMenu.setAllowEmptyValue(true);
 
-        final SliderItem exceptionItem = new SliderItem();
-        exceptionItem.setTitle("Exception Depth");
-        exceptionItem.setWidth(250);
+        final SliderItem exceptionItem = new SliderItem("exceptionItem", "Exception Depth");
+        exceptionItem.setWidth(200);
         exceptionItem.setMinValue(0);
         exceptionItem.setMaxValue(10);
         exceptionItem.setDefaultValue(0);
 
-        final TextItem conciseMessageItem = new TextItem("conciseMessage", "Message");
+        final TextItem conciseMessageItem = new TextItem("conciseMessage", "Concise Message");
+        conciseMessageItem.setWidth(200);
+        conciseMessageItem.setValue("A concise message string.");
+
+        final TextItem detailsMessageItem = new TextItem("detailsMessage", "Details or Root Cause Message");
+        detailsMessageItem.setWidth(200);
+        detailsMessageItem.setValue("The details or the inner-most exception message.");
 
         ButtonItem button = new ButtonItem("showMessage", "Show Message");
         button.addClickHandler(new ClickHandler() {
@@ -91,28 +96,29 @@ public class TestMessageCenterView extends LocatableVLayout {
 
                 Severity severity = Severity.valueOf(severityMenu.getValueAsString());
                 String conciseMessage = conciseMessageItem.getValueAsString();
+                String detailsMessage = detailsMessageItem.getValueAsString();
                 Message msg;
                 Number exceptionDepth = (Number) exceptionItem.getValue();
                 if (exceptionDepth != null && exceptionDepth.intValue() > 0) {
                     Throwable t = null;
                     for (int depth = exceptionDepth.intValue(); depth > 0; depth--) {
                         if (t == null) {
-                            t = new Throwable("Innermost exception here at depth #" + depth);
+                            t = new Throwable(detailsMessage);
                         } else {
                             t = new Throwable("Exception at depth #" + depth, t);
                         }
                     }
                     msg = new Message(conciseMessage, t, severity, options);
                 } else {
-                    msg = new Message(conciseMessage, "When there is no exception, a detailed message can go here.",
-                        severity, options);
+                    msg = new Message(conciseMessage, detailsMessage, severity, options);
                 }
                 CoreGUI.getMessageCenter().notify(msg);
             }
         });
 
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
-        form.setItems(severityMenu, optionMenu, exceptionItem, conciseMessageItem, button);
+        form.setWidth(500);
+        form.setItems(severityMenu, optionMenu, exceptionItem, conciseMessageItem, detailsMessageItem, button);
 
         addMember(form);
     }

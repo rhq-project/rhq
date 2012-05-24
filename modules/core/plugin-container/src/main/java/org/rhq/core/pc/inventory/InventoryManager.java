@@ -1498,13 +1498,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-            ClassLoader classLoader;
-            try {
-                classLoader = factory.getResourceClassloader(resource);
-            } catch (PluginContainerException e) {
-                log.error("Access to resource [" + resource + "] will fail due to missing classloader", e);
-                classLoader = null;
-            }
+            ClassLoader classLoader = getResourceClassLoader(resource);
             resourceContainer = new ResourceContainer(resource, classLoader);
             if (!this.configuration.isInsideAgent()) {
                 // Auto-sync if the PC is running within the embedded JBossAS console.
@@ -1514,18 +1508,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } else {
             // container already exists, but make sure the classloader exists too
             if (resourceContainer.getResourceClassLoader() == null) {
-                PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-                ClassLoader classLoader;
-                try {
-                    classLoader = factory.getResourceClassloader(resource);
-                } catch (PluginContainerException e) {
-                    log.error("Access to resource [" + resource + "] will fail due to missing classloader!", e);
-                    classLoader = null;
-                }
+                ClassLoader classLoader = getResourceClassLoader(resource);
                 resourceContainer.setResourceClassLoader(classLoader);
             }
         }
         return resourceContainer;
+    }
+
+    private ClassLoader getResourceClassLoader(Resource resource) {
+        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
+        ClassLoader classLoader;
+        try {
+            classLoader = factory.getResourceClassloader(resource);
+        } catch (PluginContainerException e) {
+            if (log.isTraceEnabled()) {
+                log.trace("Access to resource [" + resource + "] will fail due to missing classloader.", e);
+            } else {
+                log.debug("Access to resource [" + resource + "] will fail due to missing classloader - cause: " + e);
+            }
+            classLoader = null;
+        }
+        return classLoader;
     }
 
     /**
@@ -1594,6 +1597,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 + "]...");
         }
 
+        ResourceContainer parentResourceContainer;
+        Resource parentResource = resource.getParentResource();
+        if (parentResource == null) {
+            parentResourceContainer = null;
+        } else {
+            parentResourceContainer = getResourceContainer(parentResource);
+            if (parentResourceContainer == null) {
+                // The parent probably just got uninventoried - log a DEBUG message and abort.
+                log.debug(resource + " not being prepared for activation - container not found for parent "
+                        + parentResource + ".");
+                return false;
+            }
+        }
+
         // If the component does not even exist yet, we need to instantiate it and set it on the container.
         if (component == null) {
             if (log.isDebugEnabled()) {
@@ -1601,28 +1618,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             try {
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(resource);
-
             } catch (Throwable e) {
                 throw new PluginContainerException("Could not build component for Resource [" + resource + "]", e);
             }
             container.setResourceComponent(component);
         }
 
-        // start the resource, but only if its parent component is running. If the parent is null, that means
-        // the resource is, itself, the root platform and we always activate that.
-        ResourceContainer parentResourceContainer;
-        boolean isParentStarted;
-
-        if (resource.getParentResource() == null) {
-            parentResourceContainer = null;
-            isParentStarted = true;
-        } else {
-            parentResourceContainer = getResourceContainer(resource.getParentResource());
-            isParentStarted = (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
-        }
+        // Start the resource, but only if its parent component is running. If the parent is null, that means
+        // the resource is, itself, the root platform, which we always activate.
+        boolean isParentStarted = (parentResourceContainer == null) || (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
 
         if (isParentStarted) {
-
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ResourceType type = resource.getResourceType();
             ResourceDiscoveryComponent discoveryComponent = factory
@@ -1642,8 +1648,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             ResourceComponent<?> parentComponent = null;
             ResourceContext<?> parentResourceContext = null;
-            if (resource.getParentResource() != null) {
-                ResourceContainer rc = getResourceContainer(resource.getParentResource());
+            if (parentResource != null) {
+                ResourceContainer rc = getResourceContainer(parentResource);
 
                 parentComponent = rc.getResourceComponent();
                 parentResourceContext = rc.getResourceContext();
@@ -1652,8 +1658,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContext context = createResourceContext(resource, parentComponent, parentResourceContext,
                 discoveryComponent);
             container.setResourceContext(context);
-            return true;
 
+            return true;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Resource [" + resource + "] not being prepared for activation; parent isn't started: "
@@ -2806,15 +2812,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (parentResourceContainer != null) {
                 parentResource = parentResourceContainer.getResource();
             } else {
-                parentResource = null; // TODO right thing to do? Or directly return?
+                log.debug("Skipping merge of " + resourceFromServer
+                        + " into local inventory, since a container was not found for its parent "
+                        + parentResourceFromServer + ".");
+                return;
             }
         } else {
+            // A null parent means this is the platform.
             parentResource = null;
         }
 
         // See if the Resource already exists in our inventory.
         Resource existingResource = findMatchingChildResource(resourceFromServer, parentResource);
-        if (parentResource == null && existingResource == null) {
+        if ((existingResource == null) &&
+                (resourceFromServer.getResourceType().getCategory() == ResourceCategory.PLATFORM)) {
             // This should never happen, but add a check so we'll know if it ever does.
             log.error("Existing platform [" + this.platform + "] has different Resource type and/or Resource key than "
                 + "platform in Server inventory: " + resourceFromServer);

@@ -51,7 +51,8 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
     public void testAllMetricsHaveNonNullValues() throws Exception {
         Map<ResourceType, String[]> excludedMetricNamesByType = new HashMap<ResourceType, String[]>();
         // It's normal for the "startTime" trait to be null for a Managed Server that is down/disabled.
-        excludedMetricNamesByType.put(ManagedServerTest.RESOURCE_TYPE, new String[] {"startTime"});
+        // It's normal for the "multicastAddress" trait to be null for a Managed Server that is not configured for JGroups HA.
+        excludedMetricNamesByType.put(ManagedServerTest.RESOURCE_TYPE, new String[] {"startTime", "multicastAddress"});
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

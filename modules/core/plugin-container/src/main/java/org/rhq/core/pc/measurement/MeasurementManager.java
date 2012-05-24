@@ -197,11 +197,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                     scheduleCollection(resourceId, schedules);
                 }
 
-<<<<<<< HEAD
-                for (Resource child : resource.getChildResources()) {
-=======
                 for (Resource child : this.inventoryManager.getContainerChildren(container)) {
->>>>>>> 14d53ea... [823942] Prefer resource container Resource when recursing hierarchy
                     reschedule(child);
                 }
             }

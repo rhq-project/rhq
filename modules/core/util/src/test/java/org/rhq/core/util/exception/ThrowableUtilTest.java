@@ -23,6 +23,7 @@
 package org.rhq.core.util.exception;
 
 import java.sql.SQLException;
+
 import org.testng.annotations.Test;
 
 /**
@@ -38,15 +39,16 @@ public class ThrowableUtilTest {
     public void testGetAllMessagesArray() {
         assert ThrowableUtil.getAllMessagesArray(null, false).length == 0;
         assert ThrowableUtil.getAllMessagesArray(new Throwable(), false).length == 1;
-        assert ThrowableUtil.getAllMessagesArray(new Throwable(), false)[0] == null;
+        assert ThrowableUtil.getAllMessagesArray(new Throwable(), false)[0].equals(Throwable.class.getName());
         assert ThrowableUtil.getAllMessagesArray(new Throwable((String) null), false).length == 1;
-        assert ThrowableUtil.getAllMessagesArray(new Throwable((String) null), false)[0] == null;
+        assert ThrowableUtil.getAllMessagesArray(new Exception((String) null), false)[0].equals(Exception.class
+            .getName());
         assert ThrowableUtil.getAllMessagesArray(new Throwable("boo"), false).length == 1;
         assert ThrowableUtil.getAllMessagesArray(new Throwable("boo"), false)[0].equals("boo");
 
         assert ThrowableUtil.getAllMessages(null, false).equals(">> exception was null <<");
-        assert ThrowableUtil.getAllMessages(new Throwable(), false).equals("null");
-        assert ThrowableUtil.getAllMessages(new Throwable((String) null), false).equals("null");
+        assert ThrowableUtil.getAllMessages(new Throwable(), false).equals(Throwable.class.getName());
+        assert ThrowableUtil.getAllMessages(new Throwable((String) null), false).equals(Throwable.class.getName());
         assert ThrowableUtil.getAllMessages(new Throwable("boo"), false).equals("boo");
 
         Throwable t = new Throwable("one", new Exception("two", new Error("three")));
@@ -59,9 +61,9 @@ public class ThrowableUtilTest {
         t = new Throwable("one", new Exception(null, new Error("three")));
         assert ThrowableUtil.getAllMessagesArray(t, false).length == 3;
         assert ThrowableUtil.getAllMessagesArray(t, false)[0].equals("one");
-        assert ThrowableUtil.getAllMessagesArray(t, false)[1] == null;
+        assert ThrowableUtil.getAllMessagesArray(t, false)[1].equals(Exception.class.getName());
         assert ThrowableUtil.getAllMessagesArray(t, false)[2].equals("three");
-        assert ThrowableUtil.getAllMessages(t, false).equals("one -> null -> three");
+        assert ThrowableUtil.getAllMessages(t, false).equals("one -> " + Exception.class.getName() + " -> three");
     }
 
     public void testSqlException() {

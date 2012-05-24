@@ -166,7 +166,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
         }
 
-        for (Resource child : r.getChildResources()) {
+        for (Resource child : inventoryMgr.getContainerChildren(container)) {
             initSchedules(child, inventoryMgr);
         }
     }
@@ -216,8 +216,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     // Drift was previously reported. We will fetch a snapshot of the
                     // latest change set and write that to disk so that we avoid reporting
                     // drift that has already been reported to the server.
-                    DriftSnapshot deltaSnapshot = driftServer.getSnapshot(driftDefinition.getId(), snapshot
-                        .getVersion(), snapshot.getVersion());
+                    DriftSnapshot deltaSnapshot = driftServer.getSnapshot(driftDefinition.getId(),
+                        snapshot.getVersion(), snapshot.getVersion());
                     File deltaFile = new File(currentSnapshotFile.getParentFile(), DriftDetector.FILE_CHANGESET_DELTA);
                     Headers deltaHeaders = createHeaders(resource.getId(), driftDefinition);
                     deltaHeaders.setVersion(snapshot.getVersion());
@@ -263,7 +263,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                         log.debug("Resending " + contentZipFile.getPath());
                     }
                     sendChangeSetContentToServer(Integer.parseInt(resourceDir.getName()), defDir.getName(),
-                            contentZipFile);
+                        contentZipFile);
                 }
             }
         }
@@ -368,10 +368,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
             driftServer.sendFilesZip(resourceId, driftDefName, token, contentZipFile.length(),
-                    remoteInputStream(new BufferedInputStream(new FileInputStream(contentZipFile))));
+                remoteInputStream(new BufferedInputStream(new FileInputStream(contentZipFile))));
         } catch (FileNotFoundException e) {
             log.error("An error occurred while trying to send change set content zip file " + contentZipFile.getPath()
-                    + " to server.", e);
+                + " to server.", e);
         }
     }
 
@@ -599,9 +599,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void ackChangeSet(int resourceId, String defName) {
-        log
-            .info("Received server change set ack for [resourceId: " + resourceId + ", driftDefinition:" + defName
-                + "]");
+        log.info("Received server change set ack for [resourceId: " + resourceId + ", driftDefinition:" + defName + "]");
 
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
         File changeSetDir = new File(resourceDir, defName);

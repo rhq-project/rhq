@@ -121,6 +121,7 @@ public class GroupCreateStep extends AbstractWizardStep {
 
             TextAreaItem description = new AutoFitTextAreaItem("description", MSG.common_title_description());
             description.setWidth(300);
+            description.setLength(100);
 
             CheckboxItem recursive = new CheckboxItem("recursive", MSG.view_groupCreateWizard_createStep_recursive());
 

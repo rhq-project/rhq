@@ -102,18 +102,14 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         return super.getAvailability();
     }
 
-
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
-
-        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
-        for (MeasurementScheduleRequest req : requests) {
-            if (req.getName().startsWith("_skm:"))
-                skmRequests.add(req);
-        }
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
         for (MeasurementScheduleRequest request : requests) {
-            if (request.getName().equals("startTime")) {
+            if (request.getName().startsWith("_skm:")) {
+                skmRequests.add(request);
+            } else if (request.getName().equals("startTime")) {
                 String path = getPath();
                 path = path.replace("server-config", "server");
                 Address address = new Address(path);
@@ -127,10 +123,13 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                     MeasurementDataTrait data = new MeasurementDataTrait(request, new Date(startTime).toString());
                     report.addData(data);
                 }
-            } else if (!request.getName().startsWith("_skm:")) {
+            } else if (request.getName().equals("multicastAddress")) {
+                collectMulticastAddressTrait(report, request);
+            } else {
                 leftovers.add(request);
             }
         }
+
         // Now handle the skm (this could go into a common method with BaseServerComponent's impl.
         if (skmRequests.size() > 0) {
             Address address = new Address();
@@ -166,6 +165,42 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
 
         if (!leftovers.isEmpty())
             super.getValues(report, leftovers);
+    }
+
+    @Override
+    protected Address getServerAddress() {
+        String serverConfigElement = getAddress().get(1);
+        String serverName = serverConfigElement.substring(serverConfigElement.indexOf('=') + 1);
+        Address serverAddress = getAddress().getParent();
+        serverAddress.add("server", serverName);
+        return serverAddress;
+    }
+
+    @Override
+    protected String getSocketBindingGroup() {
+        String socketBindingGroup;
+        try {
+            socketBindingGroup = readAttribute("socket-binding-group");
+        } catch (Exception e) {
+            socketBindingGroup = null;
+        }
+        if (socketBindingGroup == null) {
+            String group;
+            try {
+                group = readAttribute("group");
+            } catch (Exception e) {
+                group = null;
+            }
+            if (group != null) {
+                Address groupAddress = new Address("server-group", group);
+                try {
+                    socketBindingGroup = readAttribute(groupAddress, "socket-binding-group");
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        }
+        return socketBindingGroup;
     }
 
     @Override

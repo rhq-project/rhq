@@ -186,6 +186,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return serverPluginConfig;
     }
 
+    public StartScriptConfiguration getStartScriptConfiguration() {
+        return startScriptConfig;
+    }
+
     @Override
     public ASConnection getASConnection() {
         return connection;

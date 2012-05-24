@@ -62,6 +62,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
@@ -740,6 +741,79 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     + "] - response: " + res);
         }
         return (T) res.getResult();
+    }
+
+    protected Address getServerAddress() {
+        throw new UnsupportedOperationException();
+    }
+
+    protected String getSocketBindingGroup() {
+        throw new UnsupportedOperationException();
+    }
+
+    protected void collectMulticastAddressTrait(MeasurementReport report, MeasurementScheduleRequest request) {
+        Address jgroupsUdpStackAddress = new Address(getServerAddress());
+        jgroupsUdpStackAddress.add("subsystem", "jgroups");
+        jgroupsUdpStackAddress.add("stack", "udp");
+        jgroupsUdpStackAddress.add("transport", "TRANSPORT");
+
+        String socketBinding;
+        try {
+            socketBinding = readAttribute(jgroupsUdpStackAddress, "socket-binding");
+        } catch (Exception e) {
+            socketBinding = null;
+        }
+
+        if (socketBinding != null) {
+            Address jgroupsSocketBindingAddress = new Address(getServerAddress());
+            String socketBindingGroup = getSocketBindingGroup();
+            jgroupsSocketBindingAddress.add("socket-binding-group", socketBindingGroup);
+            jgroupsSocketBindingAddress.add("socket-binding", socketBinding);
+            String multicastHost = null;
+            Integer multicastPort;
+            try {
+                try {
+                    Map<String, String> map = readAttribute(jgroupsSocketBindingAddress, "multicast-address", Map.class);
+                    String expressionValue = map.get("EXPRESSION_VALUE");
+                    int beginIndex = expressionValue.indexOf("${jboss.default.multicast.address");
+                    if (beginIndex >= 0) {
+                        int endIndex = expressionValue.indexOf('}', beginIndex);
+                        if (endIndex >= 0) {
+                            String expression = expressionValue.substring(beginIndex + 2, endIndex);
+                            StartScriptConfiguration startScriptConfig = getServerComponent().getStartScriptConfiguration();
+                            List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
+                            for (String startScriptArg : startScriptArgs) {
+                                if (startScriptArg.startsWith("-Djboss.default.multicast.address=")) {
+                                    multicastHost = startScriptArg.substring("-Djboss.default.multicast.address=".length());
+                                    break;
+                                }
+                            }
+                            if (multicastHost == null) {
+                                int colonIndex = expression.indexOf(':');
+                                String defaultValue = (colonIndex >= 0) ? expression.substring(colonIndex + 1) : null;
+                                if (defaultValue != null) {
+                                    multicastHost = defaultValue;
+                                } else {
+                                    log.error("Failed to resolve expression value [" + expressionValue
+                                            + "] of 'multicast-address' attribute.");
+                                }
+                            }
+                        }
+                    }
+                } catch (ClassCastException cce) {
+                    multicastHost = readAttribute(jgroupsSocketBindingAddress, "multicast-address");
+                }
+                multicastPort = readAttribute(jgroupsSocketBindingAddress, "multicast-port", Integer.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to lookup multicast address for socket binding [" + socketBinding + "].");
+            }
+
+            if (multicastHost != null && multicastPort != null) {
+                String multicastAddress = multicastHost + ":" + multicastPort;
+                MeasurementDataTrait data = new MeasurementDataTrait(request, multicastAddress);
+                report.addData(data);
+            }
+        }
     }
 
     private static class ComplexRequest {

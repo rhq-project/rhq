@@ -905,6 +905,8 @@
       <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
               displayType="summary"/>
       <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
+      <metric property="multicastAddress" displayName="JGroups Multicast Address" dataType="trait" displayType="summary"
+              description="the host and port used by JGroups for multicast"/>
 
       <event name="logEntry" description="an entry in a log file"/>
 
@@ -1322,6 +1324,8 @@
             displayType="summary"/>
     &serverKindMetrics;
     <metric property="startTime" dataType="trait" displayName="Server Start Time" defaultOn="true"/>
+    <metric property="multicastAddress" displayName="JGroups Multicast Address" dataType="trait" displayType="summary"
+            description="the host and port used by JGroups for multicast"/>
 
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>

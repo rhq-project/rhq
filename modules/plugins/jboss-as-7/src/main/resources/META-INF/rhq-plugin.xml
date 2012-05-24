@@ -1410,14 +1410,14 @@
       <!-- This service locates the ModCluster node identifier aka jvmRoute details, parses getProxyInformation
            from a valid modcluster configuration and only exposes webapplications hosted by the AS7 instance co-located
            with the RHQ agent.  Of these exposed resources the supported enable*/disable*/stop* -context operations
-           are supported. In a homogeneous cluster environment where RHQ monitors all cluster members as well the entire 
-           webapp application context suite should be controllable via RHQ groups or from individual modcluster instances. 
+           are supported. In a homogeneous cluster environment where RHQ monitors all cluster members as well the entire
+           webapp application context suite should be controllable via RHQ groups or from individual modcluster instances.
       -->
       <!-- [BZ 823624] this is disabled until this bug is addressed. Will need to uncomment and populate jvmRoute in
               ModClusterContextDiscoveryComponent -->
-      <!--<service name="Webapp Context" 
+      <!--<service name="Webapp Context"
 		class="ModClusterContextComponent"
-		discovery="ModClusterContextDiscoveryComponent"  
+		discovery="ModClusterContextDiscoveryComponent"
 		description="Webapp Context">
 
 	   <plugin-configuration>
@@ -1666,7 +1666,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="true" description="Protocol binding"/>        
+            <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="true" description="Protocol binding"/>
           </resource-configuration>
 
           <service name="Post Handler (Managed Server)"
@@ -2018,7 +2018,9 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to SMTP server">
+              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+            </c:simple-property>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -2035,7 +2037,9 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to IMAP server">
+              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+            </c:simple-property>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -2052,7 +2056,9 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server">
+              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+            </c:simple-property>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -3546,7 +3552,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>        
+          <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
         </resource-configuration>
 
         <service name="Post Handler"
@@ -3970,6 +3976,38 @@
                                type="boolean" defaultValue="false"/>
             <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
             <c:simple-property name="multicast-port:expr" displayName="Multicast Port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured. ${} Expresions are allowed." required="false"/>
+          </c:map-property>
+        </c:list-property>
+      </c:group>
+      <c:group name="children:remote-destination-outbound-socket-binding:name+" displayName="Remote outbound sockets">
+        <c:list-property name="*1" displayName="Bindings">
+          <c:map-property name="*:name">
+            <c:simple-property name="name" description="The name of the socket binding. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
+            <c:simple-property name="port:expr" displayName="Port" required="true" description="The port number of the remote destination to which the outbound socket should connect. ${} Expresions are allowed."/>
+            <c:simple-property name="host" displayName="Host" required="true" description="The host name or the IP address of the remote destination to which this outbound socket will connect."/>
+            <c:simple-property name="source-interface" displayName="Source Interface" required="false" description="The name of the interface which will be used for the source address of the outbound socket.">
+              <c:option-source target="resource" expression="type='Network Interface' plugin=&pluginName;"/>
+            </c:simple-property>
+            <c:simple-property name="source-port:expr" displayName="Source Port" required="false" description="The port number which will be used as the source port of the outbound socket.. ${} Expresions are allowed."/>
+            <c:simple-property name="fixed-source-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other outbound sockets in the socket group."
+                               type="boolean" defaultValue="false"/>
+
+          </c:map-property>
+        </c:list-property>
+      </c:group>
+      <c:group name="children:local-destination-outbound-socket-binding:name+" displayName="Local outbound sockets">
+        <c:list-property name="*2" displayName="Bindings">
+          <c:map-property name="*:name">
+            <c:simple-property name="name" description="The name of the socket binding. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
+            <c:simple-property name="socket-binding-ref" required="true" readOnly="false" description="The name of the local socket-binding which will be used to determine the port to which this outbound socket connects.">
+              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+            </c:simple-property>
+            <c:simple-property name="source-interface" displayName="Source Interface" required="false" description="The name of the interface which will be used for the source address of the outbound socket.">
+              <c:option-source target="resource" expression="type='Network Interface' plugin=&pluginName;"/>
+            </c:simple-property>
+            <c:simple-property name="source-port:expr" displayName="Source Port" required="false" description="The port number which will be used as the source port of the outbound socket.. ${} Expresions are allowed."/>
+            <c:simple-property name="fixed-source-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other outbound sockets in the socket group."
+                               type="boolean" defaultValue="false"/>
           </c:map-property>
         </c:list-property>
       </c:group>
@@ -6704,7 +6742,9 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
+            <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
           <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
           <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
@@ -6726,7 +6766,9 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
+            <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
           <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
           <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>
@@ -6748,7 +6790,9 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server"/>
+          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
+            <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
+          </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
           <c:simple-property name="ssl" required="false" type="boolean" readOnly="false" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
           <c:simple-property name="username" required="false" type="string" readOnly="false" description="Username to authenticate on server"/>

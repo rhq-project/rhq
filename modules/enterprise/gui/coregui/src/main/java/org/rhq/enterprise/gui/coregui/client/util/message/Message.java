@@ -36,6 +36,7 @@ public class Message {
     private static final String PRE_CLOSE = "=~/pre~=";
     protected String conciseMessage;
     protected String detailedMessage;
+    protected String rootCauseMessage = null;
     protected Date fired = new Date();
     protected Severity severity;
     protected EnumSet<Option> options;
@@ -117,7 +118,8 @@ public class Message {
     }
 
     public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, PRE_OPEN + ErrorHandler.getAllMessages(details, true, BR) + PRE_CLOSE, severity, options);
+        this(conciseMessage, getDetailedMessageFromThrowable(details), severity, options);
+        this.rootCauseMessage = ErrorHandler.getRootCauseMessage(details);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
@@ -126,6 +128,10 @@ public class Message {
         this.detailedMessage = makeRestrictedHtmlMessage(escapedDetailedMessage);
         this.severity = (severity != null) ? severity : Severity.Info;
         this.options = (options != null) ? options : EnumSet.noneOf(Option.class);
+    }
+
+    private static String getDetailedMessageFromThrowable(Throwable t) {
+        return PRE_OPEN + ErrorHandler.getAllMessages(t, true, BR) + PRE_CLOSE;
     }
 
     /**
@@ -146,6 +152,10 @@ public class Message {
 
     public String getDetailedMessage() {
         return detailedMessage;
+    }
+
+    public String getRootCauseMessage() {
+        return rootCauseMessage;
     }
 
     public Date getFired() {
@@ -173,6 +183,7 @@ public class Message {
         return "Message{" //
             + "conciseMessage='" + this.conciseMessage + '\'' //
             + ", detailedMessage='" + this.detailedMessage + '\'' //
+            + ", rootCauseMessage='" + this.rootCauseMessage + '\'' //
             + ", fired=" + this.fired //
             + ", severity=" + this.severity //
             + ", options=" + this.options + '}';

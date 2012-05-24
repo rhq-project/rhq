@@ -77,6 +77,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
+    private static final ViewName PAGE_MESSAGE_CENTER_TEST = new ViewName("MessageCenterTest");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
     private static final ViewName PAGE_NUMBER_FORMAT_TEST = new ViewName("NumberFormatTest");
     private static final ViewName PAGE_ASYNC = new ViewName("Async");
@@ -225,6 +226,12 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildMiscSection() {
+        NavigationItem messageCenterItem = new NavigationItem(PAGE_MESSAGE_CENTER_TEST, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestMessageCenterView(extendLocatorId(PAGE_MESSAGE_CENTER_TEST.getName()));
+            }
+        });
+
         NavigationItem numberFormatItem = new NavigationItem(PAGE_NUMBER_FORMAT_TEST, null, new ViewFactory() {
             public Canvas createView() {
                 return new TestNumberFormatView(extendLocatorId(PAGE_NUMBER_FORMAT_TEST.getName()));
@@ -249,7 +256,8 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, numberFormatItem, pluralizationItem, asyncItem, rpcItem);
+        return new NavigationSection(MISC_SECTION_VIEW_ID, messageCenterItem, numberFormatItem, pluralizationItem,
+            asyncItem, rpcItem);
     }
 
 }

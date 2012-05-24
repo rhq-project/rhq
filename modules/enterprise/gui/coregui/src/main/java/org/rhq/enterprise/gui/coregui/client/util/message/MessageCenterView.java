@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
@@ -353,11 +352,15 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         StaticTextItem date = new StaticTextItem("time", MSG.view_messageCenter_messageTime());
         date.setValue(TimestampCellFormatter.format(message.fired, TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
+        StaticTextItem rootCause = new StaticTextItem("rootCause", MSG.view_messageCenter_messageRootCause());
+        rootCause.setValue(message.rootCauseMessage);
+        rootCause.setVisible(message.rootCauseMessage != null);
+
         StaticTextItem detail = new StaticTextItem("detail", MSG.view_messageCenter_messageDetail());
         detail.setTitleVAlign(VerticalAlignment.TOP);
         detail.setValue(message.detailedMessage);
 
-        form.setItems(title, severity, date, detail);
+        form.setItems(title, severity, date, rootCause, detail);
 
         final Window dialogWin = new LocatableWindow("MessageCenterDetailsWindow");
         dialogWin.setTitle(MSG.common_title_message());

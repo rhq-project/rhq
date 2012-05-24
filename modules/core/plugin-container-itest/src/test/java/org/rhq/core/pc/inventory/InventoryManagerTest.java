@@ -48,7 +48,7 @@ import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
- * A unit test for the {@link InventoryManager}.
+ * An integration test for the {@link InventoryManager}.
  *
  * @author Ian Springer
  */
@@ -122,6 +122,38 @@ public class InventoryManagerTest extends Arquillian {
         pluginContainer.getInventoryManager().executeServiceScanImmediately();
 
         // Check that inventory is still the same.
+        validatePluginContainerInventory();
+    }
+
+    /**
+     * Tests that uninventorying Resources works.
+     *
+     * @throws Exception if an error occurs
+     */
+    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources")
+    public void testUninventoryResources() throws Exception {
+        validatePluginContainerInventory();
+
+        Resource platform = pluginContainer.getInventoryManager().getPlatform();
+        Resource server = platform.getChildResources().iterator().next();
+
+        // Uninventory the server.
+        fakeServerInventory.removeResource(server);
+        pluginContainer.getInventoryManager().uninventoryResource(server.getId());
+
+        platform = pluginContainer.getInventoryManager().getPlatform();
+        Assert.assertNotNull(platform);
+        Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+
+        Assert.assertTrue(platform.getChildResources().isEmpty(), "Platform still has children: "
+                + platform.getChildResources());
+
+        // Now execute a full discovery.
+        System.out.println("Executing full discovery...");
+        pluginContainer.getInventoryManager().executeServerScanImmediately();
+        pluginContainer.getInventoryManager().executeServiceScanImmediately();
+
+        // Check that inventory is back to what it was before we uninventoried the server.
         validatePluginContainerInventory();
     }
 

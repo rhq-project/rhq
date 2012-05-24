@@ -209,7 +209,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                     scheduleCollection(resourceId, schedules);
                 }
 
-                for (Resource child : this.inventoryManager.getContainerChildren(container)) {
+                for (Resource child : this.inventoryManager.getContainerChildren(resource, container)) {
                     reschedule(child);
                 }
             }

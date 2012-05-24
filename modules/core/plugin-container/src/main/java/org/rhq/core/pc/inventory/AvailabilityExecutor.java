@@ -348,8 +348,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             availabilityReport.addAvailability(availability);
         }
 
-        // traverse the hierarchy using the container's resource, which should be up to date
-        for (Resource child : this.inventoryManager.getContainerChildren(resourceContainer)) {
+        for (Resource child : this.inventoryManager.getContainerChildren(resource, resourceContainer)) {
             checkInventory(child, availabilityReport, current, isForced, scan);
         }
 

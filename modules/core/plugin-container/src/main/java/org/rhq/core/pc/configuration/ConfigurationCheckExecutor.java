@@ -127,7 +127,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             }
 
             if (checkChildren) {
-                for (Resource child : this.inventoryManager.getContainerChildren(resourceContainer)) {
+                for (Resource child : this.inventoryManager.getContainerChildren(resource, resourceContainer)) {
                     try {
                         checkConfigurations(child, true);
                     } catch (Exception e) {

@@ -166,7 +166,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
         }
 
-        for (Resource child : inventoryMgr.getContainerChildren(container)) {
+        for (Resource child : inventoryMgr.getContainerChildren(r, container)) {
             initSchedules(child, inventoryMgr);
         }
     }

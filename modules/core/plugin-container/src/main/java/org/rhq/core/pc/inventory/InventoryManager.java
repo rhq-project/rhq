@@ -1299,22 +1299,42 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * the container's resource is guaranteed to be up to date.
      *  
      * @param parentResource
-     * @return the children, may be empty, not null.
+     * @return the children. parentResouce children if there is no container. May be empty. Not null.
      */
     public Set<Resource> getContainerChildren(Resource parentResource) {
-        ResourceContainer container = getResourceContainer(parentResource);
-        return (null == container) ? parentResource.getChildResources() : container.getResource().getChildResources();
+        return getContainerChildren(parentResource, getResourceContainer(parentResource));
     }
 
-    /**
+    /** 
      * Get the parent resource's children, ensuring we use the resource container version of the resource, because
      * the container's resource is guaranteed to be up to date.
      *  
+     * @param parentResource
      * @param parentContainer
-     * @return the children, empty if parentContainer is null or there are no children. not null.
+     * @return the children, empty if parentContainer is null or there are no children. not null. 
+     * @return the children, may be empty, not null.
      */
-    public Set<Resource> getContainerChildren(ResourceContainer parentContainer) {
-        return (null == parentContainer) ? new HashSet<Resource>() : parentContainer.getResource().getChildResources();
+    public Set<Resource> getContainerChildren(Resource parentResource, ResourceContainer container) {
+        if (null == container) {
+            return parentResource.getChildResources();
+        }
+
+        Resource parentContainerResource = container.getResource();
+
+        // this is just to log whether there was an reason to actually call this method
+        if (parentResource != parentContainerResource && log.isDebugEnabled()) {
+            Set<Resource> containerChildren = parentContainerResource.getChildResources();
+            Set<Resource> localChildren = parentResource.getChildResources();
+            if (containerChildren.equals(localChildren)) {
+                log.debug("Container resource different from local resource.\n Container: " + parentContainerResource
+                    + "\n     Local: " + parentResource);
+            } else {
+                log.debug("Container resource different from local resource and children differ!\n Container:"
+                    + container + containerChildren + "\n      Local:" + parentResource + localChildren);
+            }
+        }
+
+        return parentContainerResource.getChildResources();
     }
 
     public Resource getPlatform() {
@@ -1609,7 +1629,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (parentResourceContainer == null) {
                 // The parent probably just got uninventoried - log a DEBUG message and abort.
                 log.debug(resource + " not being prepared for activation - container not found for parent "
-                        + parentResource + ".");
+                    + parentResource + ".");
                 return false;
             }
         }
@@ -1629,7 +1649,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         // Start the resource, but only if its parent component is running. If the parent is null, that means
         // the resource is, itself, the root platform, which we always activate.
-        boolean isParentStarted = (parentResourceContainer == null) || (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
+        boolean isParentStarted = (parentResourceContainer == null)
+            || (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
 
         if (isParentStarted) {
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
@@ -1983,7 +2004,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer container = getResourceContainer(resource);
             if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
                 // traverse the hierarchy using the container's resource, which should be up to date
-                for (Resource child : getContainerChildren(container)) {
+                for (Resource child : getContainerChildren(resource, container)) {
                     deactivateResource(child);
                 }
 
@@ -2816,8 +2837,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parentResource = parentResourceContainer.getResource();
             } else {
                 log.debug("Skipping merge of " + resourceFromServer
-                        + " into local inventory, since a container was not found for its parent "
-                        + parentResourceFromServer + ".");
+                    + " into local inventory, since a container was not found for its parent "
+                    + parentResourceFromServer + ".");
                 return;
             }
         } else {
@@ -2827,8 +2848,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         // See if the Resource already exists in our inventory.
         Resource existingResource = findMatchingChildResource(resourceFromServer, parentResource);
-        if ((existingResource == null) &&
-                (resourceFromServer.getResourceType().getCategory() == ResourceCategory.PLATFORM)) {
+        if ((existingResource == null)
+            && (resourceFromServer.getResourceType().getCategory() == ResourceCategory.PLATFORM)) {
             // This should never happen, but add a check so we'll know if it ever does.
             log.error("Existing platform [" + this.platform + "] has different Resource type and/or Resource key than "
                 + "platform in Server inventory: " + resourceFromServer);
@@ -3047,7 +3068,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (activate) {
             try {
                 activateResource(resource, container, false);
-                for (Resource child : getContainerChildren(container)) {
+                for (Resource child : getContainerChildren(resource, container)) {
                     activateAndUpgradeResourceRecursively(child, doUpgrade);
                 }
             } catch (InvalidPluginConfigurationException e) {

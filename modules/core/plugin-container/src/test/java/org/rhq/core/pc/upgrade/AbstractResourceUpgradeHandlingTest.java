@@ -113,7 +113,7 @@ public abstract class AbstractResourceUpgradeHandlingTest extends ResourceUpgrad
                 "A resource that has not been upgraded due to upgrade error in parent should be stopped.");
 
             //recurse, since the whole subtree under the failed resource should be not upgraded and stopped.
-            Set<Resource> children = im.getContainerChildren(rc);
+            Set<Resource> children = im.getContainerChildren(res, rc);
             checkResourcesNotUpgraded(children, children.size());
         }
     }

@@ -2998,7 +2998,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the acl provider module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the acl provider module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -3045,7 +3045,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -3073,7 +3073,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the auth module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the auth module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
                 <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="true" description="Reference to a login module stack name previously configured in the same security domain."/>
               </c:map-property>
@@ -3100,7 +3100,7 @@
                       <c:option value="required"/>
                     </c:property-options>
                   </c:simple-property>
-                  <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
+                  <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
                   <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
                 </c:map-property>
               </c:list-property>
@@ -3129,7 +3129,7 @@
                       <c:option value="required"/>
                     </c:property-options>
                   </c:simple-property>
-                  <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the policy module code is located."/>
+                  <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the policy module code is located."/>
                   <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
                 </c:map-property>
             </c:list-property>
@@ -3157,7 +3157,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="true" description="Name of JBoss Module where the identity trust module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the identity trust module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -4197,7 +4197,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -4246,7 +4246,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -4275,7 +4275,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
                 <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="false" description="Reference to a login module stack name previously configured in the same security domain."/>
               </c:map-property>
@@ -4303,7 +4303,7 @@
                       <c:option value="required"/>
                     </c:property-options>
                   </c:simple-property>
-                  <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
+                  <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
                   <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
                 </c:map-property>
               </c:list-property>
@@ -4333,7 +4333,7 @@
                       <c:option value="required"/>
                     </c:property-options>
                   </c:simple-property>
-                  <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
+                  <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
                   <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
                 </c:map-property>
             </c:list-property>
@@ -4362,7 +4362,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -7992,7 +7992,7 @@
                   <c:option value="required"/>
                 </c:property-options>
               </c:simple-property>
-              <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
+              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
               <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
             </c:map-property>
           </c:list-property>
@@ -8041,7 +8041,7 @@
                   <c:option value="required"/>
                 </c:property-options>
               </c:simple-property>
-              <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
+              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
               <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
             </c:map-property>
           </c:list-property>
@@ -8070,7 +8070,7 @@
                   <c:option value="required"/>
                 </c:property-options>
               </c:simple-property>
-              <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
+              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
               <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="false" description="Reference to a login module stack name previously configured in the same security domain."/>
             </c:map-property>
@@ -8098,7 +8098,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               </c:map-property>
             </c:list-property>
@@ -8128,7 +8128,7 @@
                     <c:option value="required"/>
                   </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
+                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
                 <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
               </c:map-property>
           </c:list-property>
@@ -8157,7 +8157,7 @@
                   <c:option value="required"/>
                 </c:property-options>
               </c:simple-property>
-              <c:simple-property name="module" required="true" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
+              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
               <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
             </c:map-property>
           </c:list-property>

@@ -63,8 +63,9 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
      * Remove the group and all its members.
      */
     @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    public void tearDownGroups() throws Exception {
         if (env != null) {
+            System.out.println("Tearing down groups...");
             Iterator<LargeGroupEnvironment> iter = env.iterator();
             while (iter.hasNext()) {
                 LargeGroupEnvironment doomed = iter.next();
@@ -75,6 +76,50 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
         }
     }
 
+    public void testSearchBarAvailabilityQueryUP() throws Exception {
+        GroupAvailCounts gac = new GroupAvailCounts(5, 0, 0, 0);
+        PageList<ResourceGroupComposite> pageList = testGroupQueriesWithSearchBar(gac, "availability=up");
+        assert pageList.size() == 1;
+
+        tearDownGroups();
+        pageList = testGroupQueriesWithSearchBar(gac, "availability != up");
+        assert pageList.size() == 0;
+    }
+
+    public void testSearchBarAvailabilityQueryDOWN() throws Exception {
+        GroupAvailCounts gac = new GroupAvailCounts(0, 5, 0, 0);
+        PageList<ResourceGroupComposite> pageList = testGroupQueriesWithSearchBar(gac, "availability=down");
+        assert pageList.size() == 1;
+
+        tearDownGroups();
+        pageList = testGroupQueriesWithSearchBar(gac, "availability != down");
+        assert pageList.size() == 0;
+    }
+
+    public void testSearchBarAvailabilityQueryDISABLED() throws Exception {
+        GroupAvailCounts gac = new GroupAvailCounts(0, 0, 0, 5);
+        PageList<ResourceGroupComposite> pageList = testGroupQueriesWithSearchBar(gac, "availability=disabled");
+        assert pageList.size() == 1;
+
+        tearDownGroups();
+        pageList = testGroupQueriesWithSearchBar(gac, "availability != disabled");
+        assert pageList.size() == 0;
+    }
+
+    public void testSearchBarAvailabilityQueryMIXED() throws Exception {
+        // when a group has a mix of up/down/disabled resources, it will not be returned with the avail search expression
+        GroupAvailCounts gac = new GroupAvailCounts(2, 2, 0, 2);
+        PageList<ResourceGroupComposite> pageList = testGroupQueriesWithSearchBar(gac, "availability=up");
+        assert pageList.size() == 0;
+
+        tearDownGroups();
+        pageList = testGroupQueriesWithSearchBar(gac, "availability=down");
+        assert pageList.size() == 0;
+
+        tearDownGroups();
+        pageList = testGroupQueriesWithSearchBar(gac, "availability=disabled");
+        assert pageList.size() == 0;
+    }
 
     public void testSmallGroups() throws Exception {
         ArrayList<GroupAvailCounts> gacs = new ArrayList<LargeGroupCriteriaTest.GroupAvailCounts>();
@@ -107,6 +152,30 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
         testGroupQueries(gacs);
     }
 
+    private PageList<ResourceGroupComposite> testGroupQueriesWithSearchBar(GroupAvailCounts gac, String searchExpression)
+        throws Exception {
+        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
+        env = new ArrayList<LargeGroupEnvironment>(1);
+
+        LargeGroupEnvironment lgeWithTypes = null;
+        env.add(createLargeGroupWithNormalUserRoleAccessWithInventoryStatus(lgeWithTypes, gac.total, gac.down,
+            gac.unknown, gac.disabled, Permission.CONFIGURE_READ));
+
+        ResourceGroupCriteria criteria;
+        PageList<ResourceGroupComposite> pageList;
+        long start;
+
+        // test findResourceGroupCompositesByCriteria where the criteria will use the search bar feature
+        SessionTestHelper.simulateLogin(env.get(0).normalSubject);
+        criteria = new ResourceGroupCriteria();
+        criteria.setSearchExpression(searchExpression);
+        start = System.currentTimeMillis();
+        pageList = groupManager.findResourceGroupCompositesByCriteria(env.get(0).normalSubject, criteria);
+        System.out.println("criteria with search==>" + (System.currentTimeMillis() - start) + "ms");
+        return pageList;
+    }
+
     private void testGroupQueries(ArrayList<GroupAvailCounts> groupAvailCounts) throws Exception {
         ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
@@ -133,7 +202,8 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
             criteria = new ResourceGroupCriteria();
             start = System.currentTimeMillis();
             pageList = groupManager.findResourceGroupCompositesByCriteria(lge.normalSubject, criteria);
-            System.out.println("findResourceGroupCompositesByCriteria #" + i + "==>" + (System.currentTimeMillis() - start) + "ms");
+            System.out.println("findResourceGroupCompositesByCriteria #" + i + "==>"
+                + (System.currentTimeMillis() - start) + "ms");
             assert pageList.size() == 1 : "the query should only have selected the one group for our user";
             groupComp = pageList.get(0);
             System.out.println("-->" + groupComp);

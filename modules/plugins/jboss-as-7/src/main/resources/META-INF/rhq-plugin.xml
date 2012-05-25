@@ -865,245 +865,26 @@
        </includes>
     </drift-definition>
 
-    <server name="Managed Server"
-            discovery="ManagedASDiscovery"
-            class="ManagedASComponent"
-            createDeletePolicy="both"
-        >
-      <plugin-configuration>
-        <c:simple-property name="path" readOnly="true"/>
-
-        &logSources;
-      </plugin-configuration>
-
-      <operation name="start" description="Start this server instance." displayName="Start">
-        <parameters>
-          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is started." default="false" type="boolean"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-      <operation name="stop" description="Stop this server instance." displayName="Stop">
-        <parameters>
-          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is stopped." default="false" type="boolean"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-      <operation name="restart" description="Restart this server instance." displayName="Restart">
-        <parameters>
-          <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is restarted." default="false" type="boolean"/>
-        </parameters>
-        <results>
-          <c:simple-property name="operationResult"/>
-        </results>
-      </operation>
-
-      &serverKindMetrics;
-      <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
-              displayType="summary"/>
-      <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
-      <metric property="multicastAddress" displayName="JGroups Multicast Address" dataType="trait" displayType="summary"
-              description="the host and port used by JGroups for multicast"/>
-
-      <event name="logEntry" description="an entry in a log file"/>
-
-      <resource-configuration>
-        <!-- IF you add properties here, you also need to update org.rhq.modules.plugins.jbossas7.ManagedASComponent.loadResourceConfiguration -->
-        <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
-          <c:option-source target="resource" expression="type=^Host$ plugin=&pluginName;"/>
-        </c:simple-property>
-        <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to.">
-          <c:option-source target="resource" expression="type=ServerGroup"/>
-        </c:simple-property>
-        <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="true" default="standard-sockets">
-          <c:option-source target="resource" expression="type=SocketBindingGroup"/>
-        </c:simple-property>
-        <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
-
-        <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
-
-<!--
-        <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
-          <c:option-source target="resource" expression="type='JVM Definition' plugin=&pluginName;"/>
-        </c:simple-property>
--->
-
-        <c:group name="children:system-property:name+" displayName="System-properties">
-          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
-            <c:map-property name="*:name" displayName="Name" readOnly="true">
-              <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
-              <c:simple-property name="value" displayName="Value"/>
-              <c:simple-property name="boot-time" defaultValue="true" default="true" required="false"
-                                 description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
-                <c:property-options>
-                  <c:option value="true"/>
-                  <c:option value="false"/>
-                </c:property-options>
-              </c:simple-property>
-            </c:map-property>
-          </c:list-property>
-        </c:group>
-
-      </resource-configuration>
-
-      <service name="ManagedServerDeployment"
-               class="DeploymentComponent"
-               discovery="SubsystemDiscovery"
-               createDeletePolicy="neither"
-               description="Deployed package on a managed server. Go to server groups to manipulate it"
-          >
-        <plugin-configuration>
-          <c:simple-property name="path" default="deployment" readOnly="true"/>
-          <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
-        </plugin-configuration>
-
-        <metric property="status" dataType="trait"
-                description="The current runtime status of a deployment. Possible status modes are OK, FAILED, and STOPPED. FAILED indicates a dependency is missing or a service could not start. STOPPED indicates that the deployment was manually stopped."/>
-
-        <resource-configuration>
-          <c:simple-property name="name" readOnly="true"/>
-          <c:simple-property name="runtime-name" readOnly="true"/>
-          <c:simple-property name="content" readOnly="true"/>
-        </resource-configuration>
-      </service>
-
-    </server> <!-- managed server -->
-
-    <service name="Profile"
-             description="A profile in a domain. Profiles are assigned to server groups."
-             discovery="SubsystemDiscovery"
-             class="BaseComponent">
-
-      <plugin-configuration>
-        <c:simple-property name="path" default="profile" readOnly="true"/>
-      </plugin-configuration>
-
-      <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
-      list is different. Update similar Standalone service if changes are necessary. -->
-      <service name="ModCluster Domain Service"
-               class="ModClusterComponent"
-               discovery="ModClusterDiscoveryComponent"
-               description="Mod_cluster support"
-               singleton="true"
-          >
-
-        <runs-inside>
-          <parent-resource-type name="Profile" plugin="&pluginName;"/>
-        </runs-inside>
-
-        <plugin-configuration>
-          <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
-        </plugin-configuration>
-
-        <service name="Domain Service Configuration"
-		 discovery="SubsystemDiscovery"
-		 class="ModClusterComponent">
-
-	   <plugin-configuration>
-	     <c:simple-property name="path" readOnly="true" default="mod-cluster-config=configuration"/>
-	   </plugin-configuration>
-
-           &modclusterSharedOpsConfig;
-
-		<service name="Domain Dynamic Load Provider"
-			 discovery="SubsystemDiscovery"
-			 createDeletePolicy="delete-only"
-			 class="BaseComponent">
-
-		   <runs-inside>
-			<parent-resource-type name="Service Configuration" plugin="&pluginName;"/>
-			<parent-resource-type name="ModCluster Service Configuration" plugin="&pluginName;"/>
-		   </runs-inside>
-
-		   <plugin-configuration>
-		     <c:simple-property name="path" readOnly="true" default="dynamic-load-provider=configuration"/>
-		   </plugin-configuration>
-
-		   <resource-configuration>
-		     <c:simple-property name="decay" required="false" type="integer" readOnly="false" defaultValue="2" description="Decay. The default value is 2."/>
-		     <c:simple-property name="history" required="false" type="integer" readOnly="false" defaultValue="9" description="History. The default value is 9."/>
-		   </resource-configuration>
-
-		     <service name="Domain Custom Load Metric"
-			      discovery="SubsystemDiscovery"
-			      createDeletePolicy="delete-only"
-			      class="BaseComponent">
-
-			<plugin-configuration>
-			  <c:simple-property name="path" readOnly="true" default="custom-load-metric"/>
-			</plugin-configuration>
-
-		       <resource-configuration>
-			 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1"/>
-			 <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
-			 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
-		       </resource-configuration>
-
-		     </service><!-- End of custom-load-metric service -->
-
-		     <service name="Domain Load Metric"
-			      discovery="SubsystemDiscovery"
-			      createDeletePolicy="delete-only"
-			      class="BaseComponent">
-
-			<plugin-configuration>
-			  <c:simple-property name="path" readOnly="true" default="load-metric"/>
-			</plugin-configuration>
-
-		       <resource-configuration>
-			 <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1."/>
-		         <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
-		          <c:property-options>
-		           <c:option value="busyness"/>
-		           <c:option value="cpu" />
-		           <c:option value="heap"/>
-		           <c:option value="mem"/>
-		           <c:option value="requests"/>
-		           <c:option value="receive-traffic"/>
-		           <c:option value="send-traffic"/>
-		           <c:option value="sessions"/>
-		          </c:property-options>
-		         </c:simple-property>
-			 <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
-		       </resource-configuration>
-
-		     </service><!-- End of load-metric service -->
-
-		</service><!-- End of dynamic-load-provider service -->
-
-		<service name="Domain Ssl"
-			 discovery="SubsystemDiscovery"
-			 createDeletePolicy="both"
-			 class="BaseComponent">
-
-		   <runs-inside>
-			<parent-resource-type name="ModCluster Standalone Service" plugin="&pluginName;"/>
-			<parent-resource-type name="ModCluster Domain Service" plugin="&pluginName;"/>
-		   </runs-inside>
-
-			<plugin-configuration>
-			  <c:simple-property name="path" readOnly="true" default="ssl=configuration"/>
-			</plugin-configuration>
-
-			<resource-configuration>
-			   <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
-			   <c:simple-property name="ca-revocation-ur" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
-			   <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" defaultValue="${user.home}/.keystore" description="Key file for the certificate."/>
-			   <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
-			   <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
-			   <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="changeit" description="Password."/>
-			   <c:simple-property name="protocol" required="false" type="string" readOnly="false" defaultValue="TLS" description="The SSL protocols that are enabled."/>
-			</resource-configuration>
-
-		</service><!-- End of ssl service -->
-
-        </service><!-- End of Domain Modcluster Service Configuration -->
-      </service>
-
-    </service>
+    <help>
+      <![CDATA[
+      The server can be started, restarted, or stopped via the Start, Restart, and Shutdown operations. The Start and
+      Restart operations start the server by executing the server start script, typically domain.sh on UNIX or
+      domain.bat on Windows. The following connection settings can be used to configure the start script execution:
+      <ul>
+<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-as-7.1.1.Final/bin/domain.sh")</li>
+<li>Start Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")</li>
+<li>Start Script Arguments - arguments to be passed to the start script (e.g. "--host-config=host-master.xml")</li>
+<li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
+      </ul>
+      These settings are automatically initialized by the JBossAS7 plugin discovery code to match the currently running
+      server process' command line and environment.
+      <p/>
+      The settings are not used by the Stop operation, since it stops the server via the management interface, not via
+      a script.
+      <p/>
+      For more detailed descriptions of the settings, see the Connection Settings section below.
+    ]]>
+    </help>
 
     <service name="ServerGroup"
              description="A server group on this domain"
@@ -1673,11 +1454,759 @@
          <resource-configuration>
             <c:simple-property name="waittime" type="integer" required="false" defaultValue="50" description="The number of seconds to wait for the context to be stopped." />
          </resource-configuration>
+
       </service>--><!-- End of WebAppContext service -->
      </service><!-- End of Standalone Modcluster Service Configuration -->
     </service><!-- End of ModCluster Standalone Service -->
 
   </server> <!-- JBossAS7 Standalone Server -->
+
+  <server name="Managed Server"
+          discovery="ManagedASDiscovery"
+          class="ManagedASComponent"
+          createDeletePolicy="both">
+
+    <runs-inside>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true"/>
+      &logSources;
+    </plugin-configuration>
+
+    <operation name="start" description="Start this server instance." displayName="Start">
+      <parameters>
+        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is started." default="false" type="boolean"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+    <operation name="stop" description="Stop this server instance." displayName="Stop">
+      <parameters>
+        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is stopped." default="false" type="boolean"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+    <operation name="restart" description="Restart this server instance." displayName="Restart">
+      <parameters>
+        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is restarted." default="false" type="boolean"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+
+    &serverKindMetrics;
+    <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state" displayType="summary"/>
+    <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
+    <metric property="multicastAddress" displayName="JGroups Multicast Address" dataType="trait" displayType="summary" description="the host and port used by JGroups for multicast"/>
+
+    <event name="logEntry" description="an entry in a log file"/>
+
+    <resource-configuration>
+      <!-- IF you add properties here, you also need to update org.rhq.modules.plugins.jbossas7.ManagedASComponent.loadResourceConfiguration -->
+      <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
+        <c:option-source target="resource" expression="type=^Host$ plugin=&pluginName;"/>
+      </c:simple-property>
+      <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to.">
+        <c:option-source target="resource" expression="type=ServerGroup"/>
+      </c:simple-property>
+      <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="true" default="standard-sockets">
+        <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+      </c:simple-property>
+      <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
+      <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>
+      <!--
+              <c:simple-property name="jmv" displayName="JVM" defaultValue="default" type="string" description="JVM definition to use with this server">
+                <c:option-source target="resource" expression="type='JVM Definition' plugin=&pluginName;"/>
+              </c:simple-property>
+      -->
+      <c:group name="children:system-property:name+" displayName="System-properties">
+        <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+          <c:map-property name="*:name" displayName="Name" readOnly="true">
+            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+            <c:simple-property name="value" displayName="Value"/>
+            <c:simple-property name="boot-time" defaultValue="true" default="true" required="false"
+                               description="If true the system property is passed on the command-line to the started server jvm. If false, it will be pushed to the server as part of the startup sequence.">
+              <c:property-options>
+                <c:option value="true"/>
+                <c:option value="false"/>
+              </c:property-options>
+            </c:simple-property>
+          </c:map-property>
+        </c:list-property>
+      </c:group>
+    </resource-configuration>
+
+    <service name="ManagedServerDeployment"
+             class="DeploymentComponent"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="neither"
+             description="Deployed package on a managed server. Go to server groups to manipulate it">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="deployment" readOnly="true"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="status" dataType="trait" description="The current runtime status of a deployment. Possible status modes are OK, FAILED, and STOPPED. FAILED indicates a dependency is missing or a service could not start. STOPPED indicates that the deployment was manually stopped."/>
+
+      <resource-configuration>
+        <c:simple-property name="name" readOnly="true"/>
+        <c:simple-property name="runtime-name" readOnly="true"/>
+        <c:simple-property name="content" readOnly="true"/>
+      </resource-configuration>
+    </service>
+
+    <service name="Naming (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="NamingComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+        <results>
+          <c:list-property name="java-contexts">
+            <c:map-property name="context">
+              <c:simple-property name="context"/>
+              <c:simple-property name="name"/>
+              <c:simple-property name="value"/>
+            </c:map-property>
+          </c:list-property>
+          <c:list-property name="applications">
+            <c:map-property name="context">
+              <c:simple-property name="context"/>
+              <c:simple-property name="name"/>
+              <c:simple-property name="value"/>
+            </c:map-property>
+          </c:list-property>
+        </results>
+      </operation>
+
+      <service name="Binding (Managed Server)"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="JNDI bindings for primitive types">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="binding"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory">
+            <c:property-options>
+              <c:option value="simple"/>
+              <c:option value="lookup"/>
+              <c:option value="object-factory"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="class" required="false" type="string" readOnly="false" description="The object factory class name for object factory bindings"/>
+          <c:simple-property name="lookup" required="false" type="string" readOnly="false" description="The entry to lookup in JNDI for lookup bindings"/>
+          <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module to load the object factory from for object factory bindings"/>
+          <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
+          <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
+        </resource-configuration>
+      </service>
+    </service>
+
+    <service name="Webservices (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="WebservicesComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="modify-wsdl-address" required="false" type="boolean" readOnly="true" description="Whether the soap address can be modified."/>
+        <c:simple-property name="wsdl-host" required="false" type="string" readOnly="true" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
+        <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="true" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+        <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="true" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+      </resource-configuration>
+
+      <service name="Endpoint (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="endpoint-config"/>
+        </plugin-configuration>
+
+        <service name="Post Handler Chain (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="post-handler-chain"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="true" description="Protocol binding"/>        
+          </resource-configuration>
+
+          <service name="Post Handler (Managed Server)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="handler"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="class" required="true" type="string" readOnly="true" description="Handler class"/>
+            </resource-configuration>
+          </service>
+        </service>
+
+        <service name="Pre Handler Chain (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="pre-handler-chain"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="true" description="Protocol binding"/>
+          </resource-configuration>
+
+          <service name="Pre Handler (Managed Server)"
+                   discovery="SubsystemDiscovery"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="handler"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="class" required="true" type="string" readOnly="true" description="Handler class"/>
+            </resource-configuration>
+          </service>
+        </service>
+      </service>
+    </service>
+
+    <service name="JacORB (Managed Server)"
+              class="BaseComponent"
+              discovery="SubsystemDiscovery"
+              description="JacORB subsystem configuration"
+              singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="add-component-via-interceptor" required="false" type="string" readOnly="true" defaultValue="on" description="Indicates whether SSL components should be added by an IOR interceptor (on) or not (off). The default value is on."/>
+        <c:simple-property name="cache-poa-names" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether POA names should be cached (on) or not (off). The default value is off."/>
+        <c:simple-property name="cache-typecodes" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether typecodes should be cached (on) or not (off). The default value is off."/>
+        <c:simple-property name="chunk-custom-rmi-valuetypes" required="false" type="string" readOnly="true" defaultValue="on" description="Indicates whether custom RMI valuetypes should be encoded as chunks (on) or not (off). The default value is on."/>
+        <c:simple-property name="client-requires" required="false" type="string" readOnly="true" defaultValue="None" description="Value that indicates the client SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is None."/>
+        <c:simple-property name="client-supports" required="false" type="string" readOnly="true" defaultValue="MutualAuth" description="Value that indicates the client SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is MutualAuth."/>
+        <c:simple-property name="client-timeout" required="false" type="integer" readOnly="true" defaultValue="0" description="The client-side connection timeout value in milliseconds. A value of zero indicates that the connection never times out. The default value is 0."/>
+        <c:simple-property name="comet" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether interoperability with Comet's ORB is enabled (on) or not (off). The default value is off."/>
+        <c:simple-property name="export-corbaloc" required="false" type="string" readOnly="true" defaultValue="on" description="Indicates whether the root context should be exported as corbaloc::address:port/NameService (on) or not (off). The default value is on."/>
+        <c:simple-property name="giop-minor-version" required="false" type="integer" readOnly="true" defaultValue="2" description="The GIOP minor version to be used. The default value is 2."/>
+        <c:simple-property name="indirection-encoding-disable" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether indirection encoding for repeated typecodes should be disabled (on) or not (off). The default value is off."/>
+        <c:simple-property name="iona" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether interoperability with IONA's ASP is enabled (on) or not (off). The default value is off."/>
+        <c:simple-property name="lax-boolean-encoding" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether any non-zero CDR encoded boolean value should be interpreted as true (on) or not (off). The default value is off."/>
+        <c:simple-property name="max-managed-buf-size" required="false" type="integer" readOnly="true" defaultValue="24" description="The log2 of maximum size managed by the internal buffer manager. The default value is 24."/>
+        <c:simple-property name="max-server-connections" required="false" type="integer" readOnly="true" defaultValue="2147483647" description="The maximum number of connections accepted by the server. The default value is 2147483647."/>
+        <c:simple-property name="max-threads" required="false" type="integer" readOnly="true" defaultValue="32" description="The maximum number of active request processor threads. Threads are first obtained from the pool and once the pool is exhausted new threads are created until the number of threads reaches this limit. New requests will wait until an active thread finishes its job. The default value is 32."/>
+        <c:simple-property name="monitoring" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether the monitoring GUI should be displayed (on) or not (off). The default value is off."/>
+        <c:simple-property name="name" required="false" type="string" readOnly="true" defaultValue="JBoss" description="The name of the running ORB. The default value is JBoss."/>
+        <c:simple-property name="outbuf-cache-timeout" required="false" type="integer" readOnly="true" defaultValue="-1" description="The buffer cache timeout in milliseconds. The default value is -1."/>
+        <c:simple-property name="outbuf-size" required="false" type="integer" readOnly="true" defaultValue="2048" description="The size of the network buffers for outgoing messages. The default value is 2048."/>
+        <c:simple-property name="pool-size" required="false" type="integer" readOnly="true" defaultValue="5" description="The size of the request processors thread-pool. Threads that finish processing a request are placed back in the pool if the pool is not full and discarded otherwise. The default value is 5."/>
+        <c:simple-property name="print-version" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether the version number should be printed during ORB startup (on) or not (off). The default value is off."/>
+        <c:list-property name="properties" required="false" readOnly="true" description="A list of generic key/value properties.">
+          <c:map-property name="property:collapsed" displayName="Property" readOnly="true">
+            <c:simple-property name="name:0" type="string" displayName="Name" required="true" readOnly="true"/>
+            <c:simple-property name="value:1" type="string" displayName="Value" required="true" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:simple-property name="queue-max" required="false" type="integer" readOnly="true" defaultValue="100" description="The maximum number of requests that can be queued. The default value is 100."/>
+        <c:simple-property name="queue-min" required="false" type="integer" readOnly="true" defaultValue="10" description="The size of the queue for notifying waiting requests. In other words, blocked requests are only notified when the queue has no more than queue-min requests. The default value is 10."/>
+        <c:simple-property name="queue-wait" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether requests that exceed the maximum queue size should wait (on) or not (off). When disabled, a TRANSIENT exception is thrown if the queue is full. The default value is off."/>
+        <c:simple-property name="retries" required="false" type="integer" readOnly="true" defaultValue="5" description="The number of retries if connections cannot be promptly established. The default value is 5."/>
+        <c:simple-property name="retry-interval" required="false" type="integer" readOnly="true" defaultValue="500" description="The interval in milliseconds between retries. The default value is 500."/>
+        <c:simple-property name="root-context" required="false" type="string" readOnly="true" defaultValue="JBoss/Naming/root" description="The naming service root context. The default value is JBoss/Naming/root."/>
+        <c:simple-property name="security" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether the security interceptors are to be installed (on) or not (off). The default value is off."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The name of the security domain that holds the key and trust stores that will be used to establish SSL connections."/>
+        <c:simple-property name="server-requires" required="false" type="string" readOnly="true" defaultValue="None" description="Value that indicates the server SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is None."/>
+        <c:simple-property name="server-supports" required="false" type="string" readOnly="true" defaultValue="MutualAuth" description="Value that indicates the server SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth). The default value is MutualAuth."/>
+        <c:simple-property name="server-timeout" required="false" type="integer" readOnly="true" defaultValue="0" description="The server-side connection timeout value in milliseconds. A value of zero indicates that the connection never times out. The default value is 0."/>
+        <c:simple-property name="strict-check-on-tc-creation" required="true" type="string" readOnly="true" defaultValue="off" description="Indicates whether the method create_abstract_interface_tc should perform a validation check on the name parameter (on) or not (off). The default value is off."/>
+        <c:simple-property name="sun" required="false" type="string" readOnly="true" defaultValue="on" description="Indicates whether interoperability with Sun's ORB is enabled (on) or not (off). The default value is on."/>
+        <c:simple-property name="support-ssl" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether SSL is to be supported (on) or not (off). The default value is off."/>
+        <c:simple-property name="transactions" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether the transactions interceptors are to be installed (on or spec) or not (off). The value 'on' enabled JTS while 'spec' enables a spec compliant mode (non JTS) that rejects incoming transaction contexts. The default value is off."/>
+        <c:simple-property name="use-bom" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether GIOP 1.2 byte order markers should be used (on) or not (off). The default value is off."/>
+        <c:simple-property name="use-imr" required="false" type="string" readOnly="true" defaultValue="off" description="Indicates whether the implementation repository should be used (on) or not (off). The default value is off."/>
+      </resource-configuration>
+    </service>
+
+    <service name="JAXR (Managed Server)"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JAXR subsystem."
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="subsystem=jaxr" readOnly="true"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="class" required="false" type="string" readOnly="true" description="The JAXR ConnectionFactory implementation class"/>
+        <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The JNDI name under which the JAXR ConnectionFactory is bound"/>
+      </resource-configuration>
+
+      <service name="Property (JAXR - Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="A JAXR property. The identity of the resource defines the property name.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="property"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="value" required="true" type="string" readOnly="true" description="The JAXR property value."/>
+        </resource-configuration>
+      </service>
+    </service>
+
+    <service name="JPA (Managed Server)"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the JPA subsystem."
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="default-datasource" required="false" type="string" readOnly="true" description="The name of the default global datasource."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EE (Managed Server)"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="The configuration of the EE subsystem."
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" default="subsystem=ee" readOnly="true"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="ear-subdeployments-isolated" required="false" type="boolean" readOnly="true" defaultValue="false" description="Flag indicating whether each of the subdeployments within a .ear can access classes belonging to another subdeployment within the same .ear. A value of false means the subdeployments can see classes belonging to other subdeployments within the .ear. The default value is false."/>
+        <c:list-property name="global-modules" description="A list of modules that should be made available to all deployments." required="false" readOnly="true">
+          <c:map-property name="globalmodule" displayName="Global module" readOnly="true">
+            <c:simple-property name="name" type="string" displayName="Name" required="true" readOnly="true"/>
+            <c:simple-property name="slot" type="string" displayName="Slot" required="true" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="Infinispan (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="IspnComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <service name="Cache Container (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="IspnCContainerComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="cache-container"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="default-cache" required="false" type="string" readOnly="true" description="The default infinispan cache"/>
+          <!-- TODO select from child cache services -->
+          <c:list-property name="aliases" required="false" description="The list of aliases for this cache container" readOnly="true">
+            <c:simple-property name="alias" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi name to which to bind this cache container"/>
+          <c:simple-property name="start" required="false" type="string" readOnly="true" defaultValue="LAZY" description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+            <c:property-options>
+              <c:option value="LAZY"/>
+              <c:option value="EAGER"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="listener-executor" required="false" type="string" readOnly="true" description="The executor used for the replication queue"/>
+          <c:simple-property name="eviction-executor" required="false" type="string" readOnly="true" description="The scheduled executor used for eviction"/>
+          <c:simple-property name="module" required="false" type="string" readOnly="true" defaultValue="org.jboss.as.clustering.infinispan" description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
+          <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="true" description="The executor used for asynchronous cache operations"/>
+        </resource-configuration>
+
+        <service name="Cache (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="IspnCacheComponent">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="distributed-cache|local-cache|invalidation-cache|replicated-cache"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="_flavor" displayName="Kind of cache" required="true" readOnly="true" default="local-cache" description="What special kind of cache is this.">
+              <c:property-options>
+                <c:option value="local-cache"/>
+                <c:option value="invalidation-cache"/>
+                <c:option value="distributed-cache"/>
+                <c:option value="replicated-cache"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+              <c:property-options>
+                <c:option value="LAZY"/>
+                <c:option value="EAGER"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false" description="If enabled, the invocation batching API will be made available for this cache."/>
+            <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE" description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
+              <c:property-options>
+                <c:option value="NONE"/>
+                <c:option value="LOCAL"/>
+                <c:option value="ALL"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="The jndi-name to which to bind this cache instance."/>
+            <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+              <c:property-options>
+                <c:option value="SYNC"/>
+                <c:option value="ASYNC"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+            <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+            <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+            <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
+            <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="true" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
+            <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
+            <c:simple-property name="owners" required="false" type="integer" readOnly="true" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
+            <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="true" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
+          </resource-configuration>
+        </service>
+
+        <service name="Transport (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                 description="The description of the transport used by this cache container">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="cluster" required="false" type="string" readOnly="true" description="The name of the group communication cluster"/>
+            <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The executor to use for the transport"/>
+            <c:simple-property name="lock-timeout" required="false" type="long" readOnly="true" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
+            <c:simple-property name="machine" required="false" type="string" readOnly="true" description="A machine identifier for the transport"/>
+            <c:simple-property name="rack" required="false" type="string" readOnly="true" description="A rack identifier for the transport"/>
+            <c:simple-property name="site" required="false" type="string" readOnly="true" description="A site identifier for the transport"/>
+            <c:simple-property name="stack" required="false" type="string" readOnly="true" description="The jgroups stack to use for the transport"/>
+          </resource-configuration>
+        </service>
+      </service>
+    </service>
+
+    <service name="JGroups (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="default-stack" description="Default stack to use" readOnly="true"/>
+      </resource-configuration>
+    </service>
+
+    <service name="Remoting (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=remoting"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:simple-property name="worker-read-threads" required="false" type="integer" readOnly="true" defaultValue="1" description="The number of read threads to create for the remoting worker. The default value is 1."/>
+        <c:simple-property name="worker-task-core-threads" required="false" type="integer" readOnly="true" defaultValue="4" description="The number of core threads for the remoting worker task thread pool. The default value is 4."/>
+        <c:simple-property name="worker-task-keepalive" required="false" type="integer" readOnly="true" defaultValue="60" description="The number of milliseconds to keep non-core remoting worker task threads alive. The default value is 60."/>
+        <c:simple-property name="worker-task-limit" required="false" type="integer" readOnly="true" defaultValue="16384" description="The maximum number of remoting worker tasks to allow before rejecting. The default value is 16384."/>
+        <c:simple-property name="worker-task-max-threads" required="false" type="integer" readOnly="true" defaultValue="16" description="The maximum number of threads for the remoting worker task thread pool. The default value is 16."/>
+        <c:simple-property name="worker-write-threads" required="false" type="integer" readOnly="true" defaultValue="1" description="The number of write threads to create for the remoting worker. The default value is 1."/>
+      </resource-configuration>
+    </service>
+
+    <service name="Mail (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <service name="Mail Session (Managed Server)"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="mail-session"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="debug" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enables javamail debugging. The default value is false."/>
+          <c:simple-property name="from" required="false" type="string" readOnly="true" description="From address that is used as default from, if not set when sending"/>
+          <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="JNDI name to where mail session should be bound"/>
+        </resource-configuration>
+
+        <service name="SMTP Mail Server (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="server=smtp"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+
+        <service name="IMAP Mail Server (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="server=imap"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+
+        <service name="POP3 Mail Server (Managed Server)"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true">
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="server=pop3"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
+            <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
+            <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
+            <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
+          </resource-configuration>
+        </service>
+      </service>
+    </service>
+
+  </server>
+
+
+  <service name="Profile"
+           description="A profile in a domain. Profiles are assigned to server groups."
+           discovery="SubsystemDiscovery"
+           class="BaseComponent">
+
+    <plugin-configuration>
+      <c:simple-property name="path" default="profile" readOnly="true"/>
+    </plugin-configuration>
+
+      <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
+      list is different. Update similar Standalone service if changes are necessary. -->
+      <service name="ModCluster Domain Service"
+               class="ModClusterComponent"
+               discovery="ModClusterDiscoveryComponent"
+               description="Mod_cluster support"
+               singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
+        </plugin-configuration>
+
+        <service name="Domain Service Configuration"
+                 discovery="SubsystemDiscovery"
+                 class="ModClusterComponent">
+
+          <plugin-configuration>
+           <c:simple-property name="path" readOnly="true" default="mod-cluster-config=configuration"/>
+          </plugin-configuration>
+
+           &modclusterSharedOpsConfig;
+
+           <service name="Domain Dynamic Load Provider"
+                    discovery="SubsystemDiscovery"
+                    createDeletePolicy="delete-only"
+                    class="BaseComponent">
+
+            <runs-inside>
+              <parent-resource-type name="Service Configuration" plugin="&pluginName;"/>
+              <parent-resource-type name="ModCluster Service Configuration" plugin="&pluginName;"/>
+            </runs-inside>
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="dynamic-load-provider=configuration"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+             <c:simple-property name="decay" required="false" type="integer" readOnly="false" defaultValue="2" description="Decay. The default value is 2."/>
+             <c:simple-property name="history" required="false" type="integer" readOnly="false" defaultValue="9" description="History. The default value is 9."/>
+            </resource-configuration>
+
+           <service name="Domain Custom Load Metric"
+                    discovery="SubsystemDiscovery"
+                    createDeletePolicy="delete-only"
+                    class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="custom-load-metric"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1"/>
+              <c:simple-property name="class" required="true" type="string" readOnly="false" description="Class name of the custom metric."/>
+              <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+            </resource-configuration>
+          </service><!-- End of custom-load-metric service -->
+
+          <service name="Domain Load Metric"
+                   discovery="SubsystemDiscovery"
+                   createDeletePolicy="delete-only"
+                   class="BaseComponent">
+
+            <plugin-configuration>
+              <c:simple-property name="path" readOnly="true" default="load-metric"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+              <c:simple-property name="capacity" required="false" type="integer" readOnly="false" defaultValue="1" description="Capacity of the metric. The default value is 1."/>
+              <c:simple-property name="type" required="true" type="string" defaultValue="busyness" readOnly="false" description="Type of the metric">
+                <c:property-options>
+                  <c:option value="busyness"/>
+                  <c:option value="cpu" />
+                  <c:option value="heap"/>
+                  <c:option value="mem"/>
+                  <c:option value="requests"/>
+                  <c:option value="receive-traffic"/>
+                  <c:option value="send-traffic"/>
+                  <c:option value="sessions"/>
+                </c:property-options>
+              </c:simple-property>
+              <c:simple-property name="weight" required="false" type="integer" readOnly="false" defaultValue="1" description="Weight of the metric. The default value is 1."/>
+            </resource-configuration>
+          </service><!-- End of load-metric service -->
+        </service><!-- End of dynamic-load-provider service -->
+
+        <service name="Domain Ssl"
+                 discovery="SubsystemDiscovery"
+                 createDeletePolicy="both"
+                 class="BaseComponent">
+
+          <runs-inside>
+            <parent-resource-type name="ModCluster Standalone Service" plugin="&pluginName;"/>
+            <parent-resource-type name="ModCluster Domain Service" plugin="&pluginName;"/>
+          </runs-inside>
+
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="ssl=configuration"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="ca-certificate-file" required="false" type="string" readOnly="false" description="Certificate authority."/>
+            <c:simple-property name="ca-revocation-ur" required="false" type="string" readOnly="false" description="Certificate authority revocation list."/>
+            <c:simple-property name="certificate-key-file" required="false" type="string" readOnly="false" defaultValue="${user.home}/.keystore" description="Key file for the certificate."/>
+            <c:simple-property name="cipher-suite" required="false" type="string" readOnly="false" description="The allowed cipher suite."/>
+            <c:simple-property name="key-alias" required="false" type="string" readOnly="false" description="The key alias."/>
+            <c:simple-property name="password" required="false" type="string" readOnly="false" defaultValue="changeit" description="Password."/>
+            <c:simple-property name="protocol" required="false" type="string" readOnly="false" defaultValue="TLS" description="The SSL protocols that are enabled."/>
+          </resource-configuration>
+        </service><!-- End of ssl service -->
+      </service><!-- End of Domain Modcluster Service Configuration -->
+    </service>
+
+    <service name="Naming (Profile)"
+             discovery="SubsystemDiscovery"
+             class="NamingComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
+      </plugin-configuration>
+
+      <service name="Binding (Profile)"
+               class="BaseComponent"
+               discovery="SubsystemDiscovery"
+               description="JNDI bindings for primitive types"
+               createDeletePolicy="both">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="binding"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory">
+            <c:property-options>
+              <c:option value="simple"/>
+              <c:option value="lookup"/>
+              <c:option value="object-factory"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="class" required="false" type="string" readOnly="false" description="The object factory class name for object factory bindings"/>
+          <c:simple-property name="lookup" required="false" type="string" readOnly="false" description="The entry to lookup in JNDI for lookup bindings"/>
+          <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module to load the object factory from for object factory bindings"/>
+          <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
+          <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
+        </resource-configuration>
+      </service>
+    </service>
+
+  </service>
 
   <service name="JVM"
            discovery="JVMDiscoveryComponent"
@@ -1951,7 +2480,6 @@
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="connector"/>
       </plugin-configuration>
-
 
       <metric property="bytesSent" measurementType="trendsup" description="Number of byte sent by the connector."/>
       <metric property="bytesReceived" measurementType="trendsup" description="Number of byte received by the connector (POST data)."/>
@@ -2781,7 +3309,6 @@
       >
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
@@ -2882,33 +3409,12 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
       <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
-
-    <!--  REMOVING. These are lifecycle operations for AS container itself.  Don't think we want to allow
-       customers to be able to remove/add a subsystem via RHQ.
-   <operation name="add" description="Adds the web services subsystem.">
-     <parameters>
-       <c:simple-property name="modify-wsdl-address" required="false" type="boolean" readOnly="false" description="Whether the soap address can be modified."/>
-       <c:simple-property name="wsdl-host" required="false" type="string" readOnly="false" description="The WSDL, that is a required deployment artifact for an endpoint, has a &lt;soap:address&gt; element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &lt;soap:address&gt; is a valid URL, JBossWS will not rewrite it unless 'modify-wsdl-address' is true. If the content of &lt;soap:address&gt; is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'wsdl-host' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &lt;soap:address&gt;"/>
-       <c:simple-property name="wsdl-port" required="false" type="integer" readOnly="false" description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
-       <c:simple-property name="wsdl-secure-port" required="false" type="integer" readOnly="false" description="The secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
-     </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Adds the web services subsystem."/>
-     </results>
-   </operation>
-
-   <operation name="remove" description="Removes the web services subsystem.">
-     <results>
-        <c:simple-property name="operationResult"/>
-     </results>
-   </operation> -->
 
     <resource-configuration>
       <c:simple-property name="modify-wsdl-address" required="false" type="boolean" readOnly="false" description="Whether the soap address can be modified."/>
@@ -2920,78 +3426,68 @@
     <service name="Endpoint"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-        >
+             createDeletePolicy="both">
+
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="endpoint-config"/>
       </plugin-configuration>
 
-      <resource-configuration>
-        <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
-        <c:list-property name="property" required="false" description="A list of generic key/value properties.">
-         <c:map-property name="property:collapsed" displayName="Property">
-           <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
-           <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
-         </c:map-property>
-        </c:list-property>
-      </resource-configuration>
-
       <service name="Post Handler Chain"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
-          >
+               createDeletePolicy="both">
+
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="post-handler-chain"/>
         </plugin-configuration>
 
-    <service name="Post Handler"
-       discovery="SubsystemDiscovery"
-       class="BaseComponent"
-        >
+        <resource-configuration>
+          <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>        
+        </resource-configuration>
 
-      <runs-inside>
-          <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
-          <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
-      </runs-inside>
+        <service name="Post Handler"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
-         <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="handler"/>
-         </plugin-configuration>
-         <resource-configuration>
-      <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
-         </resource-configuration>
-       </service>
-      </service><!-- End of post handler chain service -->
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="handler"/>
+          </plugin-configuration>
+
+          <resource-configuration>
+            <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+          </resource-configuration>
+        </service>
+      </service>
 
       <service name="Pre Handler Chain"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
-          >
+               createDeletePolicy="both">
+
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="pre-handler-chain"/>
         </plugin-configuration>
+
         <resource-configuration>
           <c:simple-property name="protocol-bindings" required="false" type="string" readOnly="false" description="Protocol binding"/>
         </resource-configuration>
 
-    <service name="Pre Handler"
-       discovery="SubsystemDiscovery"
-       class="BaseComponent"
-        >
+        <service name="Pre Handler"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 createDeletePolicy="both">
 
-      <runs-inside>
-          <parent-resource-type name="Pre Handler Chain"  plugin="&pluginName;"/>
-          <parent-resource-type name="Post Handler Chain"  plugin="&pluginName;"/>
-      </runs-inside>
+          <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="handler"/>
+          </plugin-configuration>
 
-         <plugin-configuration>
-      <c:simple-property name="path" readOnly="true" default="handler"/>
-         </plugin-configuration>
-         <resource-configuration>
-      <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
-         </resource-configuration>
-       </service><!-- End of Pre Handler service definition -->
-      </service> <!-- End of Pre Handler Chain service definition -->
-    </service> <!-- End of Endpoint service definition -->
+          <resource-configuration>
+            <c:simple-property name="class" required="true" type="string" readOnly="false" description="Handler class"/>
+          </resource-configuration>
+        </service>
+      </service>
+    </service>
 
   </service>
 
@@ -3001,14 +3497,11 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Host" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
@@ -4769,12 +5262,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -4834,7 +5325,6 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
@@ -4989,12 +5479,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jaxr" readOnly="true"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5028,12 +5516,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5096,12 +5582,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" default="subsystem=ee" readOnly="true"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -5116,8 +5600,10 @@
   </service>
 
   <service name="Security"
-         discovery="SubsystemDiscovery"
-         class="BaseComponent">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           description="The configuration of the security subsystem."
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -5130,342 +5616,187 @@
       <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
-   <operation name="add" description="Adds the security subsystem.">
-     <parameters>
-       <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads."/>
-     </parameters>
-     <results>
-        <c:simple-property name="operationResult" description="Adds the security subsystem." />
-     </results>
-   </operation>
+    <resource-configuration>
+      <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" defaultValue="false" description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads. The default value is false."/>
+    </resource-configuration>
 
-   <operation name="remove" description="Removes the security subsystem.">
-     <results>
-        <c:simple-property name="operationResult" description="Removes the security subsystem." />
-     </results>
-   </operation>
+    <service name="Security Domain"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             createDeletePolicy="both">
 
-   <resource-configuration>
-     <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="false" defaultValue="false"
-         description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads. The default value is false."/>
-   </resource-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="security-domain"/>
+      </plugin-configuration>
 
-     <service name="Security Domain"
-              discovery="SubsystemDiscovery"
-              class="BaseComponent">
+      <operation name="flush-cache" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed.">
+        <results>
+          <c:simple-property name="operationResult" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed."/>
+        </results>
+      </operation>
 
-       <plugin-configuration>
-           <c:simple-property name="path" readOnly="true" default="security-domain"/>
-       </plugin-configuration>
+      <operation name="list-cached-principals" description="Lists the principals stored in the authentication cache for this security domain.">
+        <results>
+          <c:simple-property name="operationResult" description="Lists the principals stored in the authentication cache for this security domain."/>
+        </results>
+      </operation>
 
-       <operation name="add" description="Add a security domain.">
-         <parameters>
-           <c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Add a security domain." />
-         </results>
-       </operation>
+      <resource-configuration>
+        <c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache."/>
+      </resource-configuration>
 
-       <operation name="flush-cache" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove entries stored in the authentication cache for this security domain. A single entry can be flushed by using the principal argument with the username as the value. If no argument is passed to the operation, all entries are flushed." />
-         </results>
-       </operation>
+      <service name="ACL"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-       <operation name="list-cached-principals" description="Lists the principals stored in the authentication cache for this security domain.">
-         <results>
-            <c:simple-property name="operationResult" description="Lists the principals stored in the authentication cache for this security domain." />
-         </results>
-       </operation>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="acl"/>
+        </plugin-configuration>
 
-       <operation name="remove" description="Remove a security domain.">
-         <results>
-            <c:simple-property name="operationResult" description="Remove a security domain." />
-         </results>
-       </operation>
+        <resource-configuration>
+          <c:list-property name="acl-modules" required="false" description="List of acl modules">
+            <c:simple-property name="acl-modules"/>
+          </c:list-property>
+        </resource-configuration>
 
-       <resource-configuration>
-         <c:simple-property name="cache-type" required="false" type="string" readOnly="false" description="Adds a cache to speed up authentication checks. Allowed values are &apos;default&apos; to use simple map as the cache and &apos;infinispan&apos; to use an Infinispan cache."/>
-       </resource-configuration>
+      </service>
 
-         <service name="acl"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
+      <service name="Audit"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="acl"/>
-             </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="audit"/>
+        </plugin-configuration>
 
-           <operation name="add" description="Adds an ACL configuration">
-             <parameters>
-               <c:simple-property name="acl-modules" required="true" type="string" readOnly="false" description="List of acl modules"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds an ACL configuration" />
-             </results>
-           </operation>
+        <resource-configuration>
+          <c:list-property name="provider-modules" required="false" description="List of provider modules">
+            <c:simple-property name="provider-modules"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
 
-           <operation name="remove" description="Removes an ACL configuration">
-             <results>
-                <c:simple-property name="operationResult" description="Removes an ACL configuration" />
-             </results>
-           </operation>
+      <service name="Authentication"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-           <resource-configuration>
-             <c:list-property name="acl-modules" required="false" description="List of acl modules" >
-                 <c:simple-property name="acl-modules" />
-             </c:list-property>
-           </resource-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="authentication"/>
+        </plugin-configuration>
 
-         </service>
-         <service name="audit"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
+        <resource-configuration>
+          <c:list-property name="login-modules" required="false" description="List of authentication modules">
+            <c:simple-property name="login-modules"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
 
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="audit"/>
-             </plugin-configuration>
+      <service name="Authorization"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-           <operation name="add" description="Adds an audit configuration">
-             <parameters>
-               <c:simple-property name="provider-modules" required="true" type="string" readOnly="false" description="List of provider modules"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds an audit configuration" />
-             </results>
-           </operation>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="authorization"/>
+        </plugin-configuration>
 
-           <operation name="remove" description="Removes and audit configuration">
-             <results>
-                <c:simple-property name="operationResult" description="Removes and audit configuration" />
-             </results>
-           </operation>
+        <resource-configuration>
+          <c:list-property name="policy-modules" required="false" description="List of authorization modules">
+            <c:simple-property name="policy-modules"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
 
-           <resource-configuration>
-             <c:list-property name="provider-modules" required="false" description="List of provider modules" >
-                 <c:simple-property name="provider-modules" />
-             </c:list-property>
-           </resource-configuration>
+      <service name="Identity Trust"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-         </service>
-         <service name="authentication"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="identity-trust"/>
+        </plugin-configuration>
 
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="authentication"/>
-             </plugin-configuration>
+        <resource-configuration>
+          <c:list-property name="trust-modules" required="false" description="List of trust modules">
+            <c:simple-property name="trust-modules"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
 
-           <operation name="add" description="Adds a traditional authentication configuration">
-             <parameters>
-               <c:simple-property name="login-modules" required="true" type="string" readOnly="false" description="List of authentication modules"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds a traditional authentication configuration" />
-             </results>
-           </operation>
+      <service name="JSSE"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-           <operation name="remove" description="Removes a traditional authentication configuration">
-             <results>
-                <c:simple-property name="operationResult" description="Removes a traditional authentication configuration" />
-             </results>
-           </operation>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="jsse"/>
+        </plugin-configuration>
 
-           <resource-configuration>
-             <c:list-property name="login-modules" required="false" description="List of authentication modules" >
-                 <c:simple-property name="login-modules" />
-             </c:list-property>
-           </resource-configuration>
+        <resource-configuration>
+          <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
+          <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
+          <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
+          <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory">
+            <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the KeyManagerFactory."/>
+            <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyManagerFactory."/>
+          </c:map-property>
+          <c:map-property name="keystore" required="false" description="Configures a JSSE key store">
+            <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless."/>
+            <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;."/>
+            <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the keystore."/>
+            <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyStore."/>
+            <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the keystore Provider constructor when instantiating it."/>
+          </c:map-property>
+          <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
+          <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
+          <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
+          <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory">
+            <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the TrustManagerFactory."/>
+            <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the TrustManagerFactory."/>
+          </c:map-property>
+          <c:map-property name="truststore" required="false" description="Configures a JSSE trust store">
+            <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless."/>
+            <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;."/>
+            <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the truststore."/>
+            <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the truststore."/>
+            <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the truststore Provider constructor when instantiating it."/>
+          </c:map-property>
+        </resource-configuration>
+      </service>
 
-         </service>
-         <service name="authorization"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
+      <service name="Mapping"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               createDeletePolicy="both">
 
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="authorization"/>
-             </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="mapping"/>
+        </plugin-configuration>
 
-           <operation name="add" description="Adds an authorization configuration">
-             <parameters>
-               <c:simple-property name="policy-modules" required="true" type="string" readOnly="false" description="List of authorization modules"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds an authorization configuration" />
-             </results>
-           </operation>
+        <resource-configuration>
+          <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information">
+            <c:simple-property name="mapping-modules"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+    </service>
 
-           <operation name="remove" description="Removes an authorization configuration">
-             <results>
-                <c:simple-property name="operationResult" description="Removes an authorization configuration" />
-             </results>
-           </operation>
+    <service name="Vault"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent">
 
-           <resource-configuration>
-             <c:list-property name="policy-modules" required="false" description="List of authorization modules" >
-                 <c:simple-property name="policy-modules" />
-             </c:list-property>
-           </resource-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="vault"/>
+      </plugin-configuration>
 
-         </service>
-         <service name="identity-trust"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
-
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="identity-trust"/>
-             </plugin-configuration>
-
-           <operation name="add" description="Adds an identity trust configuration.">
-             <parameters>
-               <c:simple-property name="trust-modules" required="true" type="string" readOnly="false" description="List of trust modules"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds an identity trust configuration." />
-             </results>
-           </operation>
-
-           <operation name="remove" description="Removes an identity trust configuration.">
-             <results>
-                <c:simple-property name="operationResult" description="Removes an identity trust configuration." />
-             </results>
-           </operation>
-
-           <resource-configuration>
-             <c:list-property name="trust-modules" required="false" description="List of trust modules" >
-                 <c:simple-property name="trust-modules" />
-             </c:list-property>
-           </resource-configuration>
-
-         </service>
-         <service name="jsse"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
-
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="jsse"/>
-             </plugin-configuration>
-
-           <operation name="add" description="Adds a JSSE configuration">
-             <parameters>
-               <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
-      <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
-      <c:simple-property name="truststore" required="false" type="string" readOnly="false" description="Configures a JSSE trust store"/>
-      <c:simple-property name="trust-manager" required="false" type="string" readOnly="false" description="JSEE Trust Manager factory"/>
-      <c:simple-property name="key-manager" required="false" type="string" readOnly="false" description="JSEE Key Manager factory"/>
-      <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
-      <c:simple-property name="keystore" required="false" type="string" readOnly="false" description="Configures a JSSE key store"/>
-      <c:simple-property name="additional-properties" required="false" type="string" readOnly="false" description="Additional properties that may be necessary to configure JSSE."/>
-      <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
-      <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
-      <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds a JSSE configuration" />
-             </results>
-           </operation>
-
-           <operation name="remove" description="Removes a JSSE configuration.">
-             <results>
-                <c:simple-property name="operationResult" description="Removes a JSSE configuration." />
-             </results>
-           </operation>
-
-           <resource-configuration>
-             <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
-             <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
-             <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
-             <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory" >
-                 <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the KeyManagerFactory."/>
-                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyManagerFactory."/>
-             </c:map-property>
-             <c:map-property name="keystore" required="false" description="Configures a JSSE key store" >
-                 <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-                 <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;."/>
-                 <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the keystore."/>
-                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyStore."/>
-                 <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the keystore Provider constructor when instantiating it."/>
-             </c:map-property>
-             <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
-             <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
-             <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
-             <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory" >
-                 <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the TrustManagerFactory."/>
-                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the TrustManagerFactory."/>
-             </c:map-property>
-             <c:map-property name="truststore" required="false" description="Configures a JSSE trust store" >
-                 <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-                 <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;."/>
-                 <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the truststore."/>
-                 <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the truststore."/>
-                 <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the truststore Provider constructor when instantiating it."/>
-             </c:map-property>
-           </resource-configuration>
-
-         </service>
-         <service name="mapping"
-                  discovery="SubsystemDiscovery"
-                  class="BaseComponent">
-
-             <plugin-configuration>
-               <c:simple-property name="path" readOnly="true" default="mapping"/>
-             </plugin-configuration>
-
-           <operation name="add" description="Adds a mapping configuration.">
-             <parameters>
-               <c:simple-property name="mapping-modules" required="true" type="string" readOnly="false" description="List of modules that map principal, role, and credential information"/>
-             </parameters>
-             <results>
-                <c:simple-property name="operationResult" description="Adds a mapping configuration." />
-             </results>
-           </operation>
-
-           <operation name="remove" description="Removes a mapping configuration.">
-             <results>
-                <c:simple-property name="operationResult" description="Removes a mapping configuration." />
-             </results>
-           </operation>
-
-           <resource-configuration>
-             <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information" >
-                 <c:simple-property name="mapping-modules" />
-             </c:list-property>
-           </resource-configuration>
-
-         </service>
-     </service>
-     <service name="vault"
-              discovery="SubsystemDiscovery"
-              class="BaseComponent">
-
-         <plugin-configuration>
-           <c:simple-property name="path" readOnly="true" default="vault"/>
-         </plugin-configuration>
-
-       <operation name="add" description="Adds a security vault configuration">
-         <parameters>
-           <c:simple-property name="code" required="false" type="string" readOnly="false" description="Fully Qualified Name of the Security Vault Implementation."/>
-    <c:simple-property name="options" required="false" type="string" readOnly="false" description="Security Vault options."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Adds a security vault configuration" />
-         </results>
-       </operation>
-
-       <operation name="remove" description="Removes a security vault configuration">
-         <results>
-            <c:simple-property name="operationResult" description="Removes a security vault configuration" />
-         </results>
-       </operation>
-
-       <resource-configuration>
-         <c:simple-property name="code" required="false" type="string" readOnly="false" description="Fully Qualified Name of the Security Vault Implementation."/>
-       </resource-configuration>
-
-     </service>
-  </service><!-- End of Security subsystem service -->
-
+      <resource-configuration>
+        <c:simple-property name="code" required="false" type="string" readOnly="false" description="Fully Qualified Name of the Security Vault Implementation."/>
+      </resource-configuration>
+    </service>
+  </service>
 
   <service name="Threads"
            discovery="SubsystemDiscovery"
@@ -5959,12 +6290,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="Cache Container"
@@ -6101,12 +6430,10 @@
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=remoting"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <resource-configuration>
@@ -6155,7 +6482,7 @@
       </c:list-property>
     </resource-configuration>
 
-    <service name="Property"
+    <service name="Property (Osgi)"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="A framework property. The identity of the resource defines the property name.">
@@ -6221,14 +6548,12 @@
            singleton="true">
 
     <runs-inside>
-      <parent-resource-type name="Profile"  plugin="&pluginName;"/>
-      <parent-resource-type name="JBossAS7 Standalone Server"  plugin="&pluginName;"/>
-      <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
+      <parent-resource-type name="Profile" plugin="&pluginName;"/>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
-      <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
     </plugin-configuration>
 
     <service name="Mail Session"
@@ -7723,4 +8048,43 @@
       <c:simple-property name="value" required="true" type="string" readOnly="false" description="The parameter value"/>
     </resource-configuration>
   </service>
+
+
+  <service name="Property"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           description="A property"
+           createDeletePolicy="both">
+
+    <runs-inside>
+      <parent-resource-type name="Endpoint" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="property"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+       <c:simple-property name="value" required="false" type="string" readOnly="false" description="The property value."/>
+    </resource-configuration>
+  </service>
+
+  <service name="Property (Read Only)"
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           description="A property">
+
+    <runs-inside>
+      <parent-resource-type name="Endpoint (Managed Server)" plugin="&pluginName;"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="property"/>
+    </plugin-configuration>
+
+    <resource-configuration>
+       <c:simple-property name="value" required="false" type="string" readOnly="true" description="The property value."/>
+    </resource-configuration>
+  </service>
+
 </plugin>

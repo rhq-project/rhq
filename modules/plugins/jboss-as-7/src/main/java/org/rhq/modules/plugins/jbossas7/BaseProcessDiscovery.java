@@ -442,6 +442,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
         JBossProductType productType = productInfo.getProductType();
 
+        if (productType==null) {
+            throw new InvalidPluginConfigurationException("Can not connect to [" + hostname + ":" + port + "] as user [" + user +"]. Did you provide the correct credentials?");
+        }
+
         HostPort hostPort = new HostPort(false);
         HostPort managementHostPort = new HostPort(false);
         managementHostPort.host = hostname;

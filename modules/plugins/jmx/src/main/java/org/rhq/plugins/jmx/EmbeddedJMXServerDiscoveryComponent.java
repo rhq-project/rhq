@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
@@ -77,15 +78,17 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         return Collections.singleton(resourceDetails);
     }
 
+    @Nullable
     private EmsBean getRuntimeMXBean(ResourceDiscoveryContext<JMXComponent<?>> context) {
         EmsConnection emsConnection = context.getParentResourceComponent().getEmsConnection();
-        EmsBean runtimeMBean;
-        if (emsConnection != null) {
+        if (emsConnection == null) {
             log.debug("Parent EMS connection is null for [" + context.getParentResourceContext().getResourceKey() + "] "
-                    + context.getParentResourceContext().getResourceType() + " JVM.");
-            runtimeMBean = emsConnection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
-        } else {
-            runtimeMBean = null;
+                                + context.getParentResourceContext().getResourceType() + " JVM.");
+            return null;
+        }
+
+        EmsBean runtimeMBean = emsConnection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
+        if (runtimeMBean == null) {
             log.debug("MBean [" + ManagementFactory.RUNTIME_MXBEAN_NAME + "] not found for ["
                     + context.getParentResourceContext().getResourceKey() + "] "
                     + context.getParentResourceContext().getResourceType() + " JVM.");

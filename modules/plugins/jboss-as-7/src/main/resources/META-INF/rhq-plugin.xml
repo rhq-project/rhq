@@ -9069,8 +9069,9 @@
       </service>
     </service>
 
+  </service>
 
-    <service name="Messaging-Provider"
+  <service name="Messaging-Provider"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="The messaging subsystems"

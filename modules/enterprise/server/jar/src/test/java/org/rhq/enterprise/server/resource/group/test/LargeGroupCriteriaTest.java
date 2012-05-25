@@ -159,7 +159,7 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
         env = new ArrayList<LargeGroupEnvironment>(1);
 
         LargeGroupEnvironment lgeWithTypes = null;
-        env.add(createLargeGroupWithNormalUserRoleAccessWithInventoryStatus(lgeWithTypes, gac.total, gac.down,
+        env.add(createLargeGroupWithNormalUserRoleAccess(lgeWithTypes, gac.total, gac.down,
             gac.unknown, gac.disabled, Permission.CONFIGURE_READ));
 
         ResourceGroupCriteria criteria;

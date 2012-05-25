@@ -368,7 +368,8 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step1.getAdditionalProperties().get("name").equals("test-prop");
         assert step1.getAdditionalProperties().get("value").equals("Heiko");
         assert step2.getAdditionalProperties().get("name").equals("check-interval");
-        assert step2.getAdditionalProperties().get("value").equals("23");
+        assert step2.getAdditionalProperties().get("value").equals(23);
+        assert step3.getAdditionalProperties().get("value").equals(true);
 
     }
 
@@ -583,7 +584,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         additionalProperties = cop.step(2).getAdditionalProperties();
         assert additionalProperties.get("name").equals("bar");
-        assert additionalProperties.get("value").equals("456");
+        assert additionalProperties.get("value").equals(456);
 
     }
 
@@ -796,12 +797,12 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
     }
 
-    /** Tests that c:group entries are updated correctly in addition to special c:group syntax handling. 
+    /** Tests that c:group entries are updated correctly in addition to special c:group syntax handling.
      *  Ex. <c:group name="proxy" displayName="Proxy Options">
      *       <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
      *       <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
      *      </c:group>
-     * 
+     *
      * @throws Exception
      */
     public void testUpdateGroupConfiguration() throws Exception {
@@ -842,5 +843,23 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
             assert value.equals(properties.get(name)) : "Value for property '" + name
                 + "' was not updated correctly. Expected '" + properties.get(name) + "' but was '" + value + "'.";
         }
+    }
+
+    public void testIgnoreProperty() throws Exception {
+        ConfigurationDefinition definition = loadDescriptor("testIgnore");
+
+        Configuration configuration = new Configuration();
+
+        configuration.put(new PropertySimple("normal","0xdeadbeef"));
+        configuration.put(new PropertySimple("test:ignore","Hello world!")); // should not create a step
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(configuration, new Address());
+
+        assert cop != null;
+        assert cop.numberOfSteps() == 1 : "One step was expected, but got " + cop.numberOfSteps();
+
     }
 }

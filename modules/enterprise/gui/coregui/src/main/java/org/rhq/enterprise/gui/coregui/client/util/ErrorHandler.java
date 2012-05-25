@@ -64,7 +64,16 @@ public class ErrorHandler {
         if (allMessages == null || allMessages.length == 0) {
             return null;
         }
-        return allMessages[allMessages.length - 1];
+        String lastMessage = allMessages[allMessages.length - 1];
+
+        // our server side uses ThrowableUtil.getAllMessages which combines all
+        // causes into one long message with each cause separated with the marker " -> ".
+        // If we see that marker, take the message after the last marker.
+        int lastMarker = lastMessage.lastIndexOf(" -> ");
+        if (lastMarker != -1) {
+            lastMessage = lastMessage.substring(lastMarker + 4);
+        }
+        return lastMessage;
     }
 
     public static String getAllMessages(Throwable t) {

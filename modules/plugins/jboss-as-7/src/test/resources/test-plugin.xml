@@ -166,6 +166,14 @@
        </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="testIgnore">
+
+      <resource-configuration>
+        <c:simple-property name="normal" readOnly="false"/>
+        <c:simple-property name="test:ignore" readOnly="false" required="false"/>
+      </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="listOfSimple1">
 
         <resource-configuration>
@@ -281,12 +289,12 @@
             </c:group>
         </resource-configuration>
     </server>
-    
+
     <!-- Simple c:group entries from descriptor with no special handling. -->
     <service name="simpleGroupNoSpecial"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
-             description="simple grouped properties. No special handling"    
+             description="simple grouped properties. No special handling"
              singleton="true">
         <resource-configuration>
           <c:group name="proxy" displayName="Proxy Options">
@@ -302,21 +310,21 @@
               <!--<c:option-source target="resource" expression="type=Connector plugin=&pluginName;"/>-->
             </c:simple-property>
           </c:group>
-       </resource-configuration>   
-    </service>  
+       </resource-configuration>
+    </service>
 
     <!-- Same as previous but for update. -->
     <service name="simpleGroupNoSpecialUpdate"
              class="BaseComponent"
              discovery="SubsystemDiscovery"
-             description="simple grouped properties. No special handling"    
+             description="simple grouped properties. No special handling"
              singleton="true">
         <resource-configuration>
           <c:group name="proxy" displayName="Proxy Options">
             <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
             <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
           </c:group>
-       </resource-configuration>   
+       </resource-configuration>
     </service>
 
 </plugin>

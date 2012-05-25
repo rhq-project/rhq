@@ -359,6 +359,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 }
             }
 
+            // Allow to modify the configuration coming in from the RHQ server see also BZ 825120
+            if (report.getResourceType().getName().equals("Network Interface")) {
+                Configuration configuration = report.getResourceConfiguration();
+                NetworkInterfaceComponent.preProcessCreateChildConfiguration(configuration);
+            }
 
             CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
             return delegate.createResource(report);

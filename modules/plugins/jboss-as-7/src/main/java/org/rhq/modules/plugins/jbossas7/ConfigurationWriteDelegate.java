@@ -426,6 +426,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (property.getStringValue() == null && !propertyDefinition.isRequired())
             return;
 
+        if (property.getName().endsWith(":ignore")) // Caller takes care
+            return;
+
         if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
 
@@ -488,7 +491,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 entry = new SimpleEntry<String, Object>(realName, null);
             }
         } else {
-            entry = new SimpleEntry<String, Object>(name, property.getStringValue());
+            Object o = getObjectWithType(propertyDefinition,property.getStringValue());
+            entry = new SimpleEntry<String, Object>(name, o);
         }
 
         return entry;
@@ -632,6 +636,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
 
         String val = (String) entry.getValue();
+        Object ret = getObjectWithType(pds, val);
+
+        return ret;
+    }
+
+    private Object getObjectWithType(PropertyDefinitionSimple pds, String val) {
         PropertySimpleType type = pds.getType();
         Object ret;
         switch (type) {
@@ -656,7 +666,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             default:
                 ret= val;
         }
-
         return ret;
     }
 

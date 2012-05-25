@@ -6159,8 +6159,10 @@
 
   <service name="Network Interface"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
-           description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
+           class="NetworkInterfaceComponent"
+           description="A named network interface, along with required criteria for determining the IP address to associate with that interface"
+           createDeletePolicy="both"
+      >
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
@@ -6171,6 +6173,64 @@
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true" default="interface"/>
     </plugin-configuration>
+
+    <resource-configuration>
+
+      <c:simple-property name="inet-address" required="false" type="string" readOnly="false"
+                         description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not the address matches the given value. Value is either a IP address in IPv6 or IPv4 dotted decimal notation, or a hostname that can be resolved to an IP address. An &apos;undefined&apos; value means this attribute is not relevant to the IP address selection."/>
+
+      <c:group name="address" displayName="Wildcard selection (exactly one property must be set to true)">
+        <c:simple-property name="any-address" required="true" type="boolean" readOnly="false" default="true" defaultValue="false"
+                           description="Attribute indicating that sockets using this interface should be bound to a wildcard address. The IPv6 wildcard address (&#58;&#58;) will be used unless the java.net.preferIpV4Stack system property is set to true, in which case the IPv4 wildcard address (0.0.0.0) will be used. If a socket is bound to an IPv6 anylocal address on a dual&#45;stack machine, it can accept both IPv6 and IPv4 traffic; if it is bound to an IPv4 (IPv4&#45;mapped) anylocal address, it can only accept IPv4 traffic."/>
+        <c:simple-property name="any-ipv4-address" required="true" type="boolean" readOnly="false" default="false" defaultValue="false"
+                           description="Attribute indicating that sockets using this interface should be bound to the IPv4 wildcard address (0.0.0.0)."/>
+        <c:simple-property name="any-ipv6-address" required="true" type="boolean" readOnly="false" default="false" defaultValue="false"
+                           description="Attribute indicating that sockets using this interface should be bound to the IPv6 wildcard address (&#58;&#58;)."/>
+      </c:group>
+<!-- TODO revisit later BZ 825169
+      <c:simple-property name="wildcard:ignore" displayName="Address family selection" defaultValue="any-address" default="any-address"
+          description="Attribute indicating that sockets using this interface should be bound to a wildcard address. If set to 'Any', the IPv6 wildcard address (&#58;&#58;) will be used unless the java.net.preferIpV4Stack system property is set to true, in which case the IPv4 wildcard address (0.0.0.0) will be used. If a socket is bound to an IPv6 anylocal address on a dual&#45;stack machine, it can accept both IPv6 and IPv4 traffic; if it is bound to an IPv4 (IPv4&#45;mapped) anylocal address, it can only accept IPv4 traffic.">
+        <c:property-options>
+          <c:option value="any-address" name="Any"/>
+          <c:option value="any-ipv4-address" name="Any IPv4"/>
+          <c:option value="any-ipv6-address" name="Any IPv6"/>
+        </c:property-options>
+      </c:simple-property>
+-->
+
+      <c:group name="advanced" displayName="Advanced settings" hiddenByDefault="true">
+        <c:simple-property name="link-local-address" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not the address is link&#45;local. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection."/>
+        <c:simple-property name="loopback" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not it is a loopback address.  An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection."/>
+        <c:simple-property name="loopback-address" required="false" type="string" readOnly="false"
+                           description="Attribute indicating that the IP address for this interface should be the given value, if a loopback interface exists on the machine. A &apos;loopback address&apos; may not actually be configured on the machine&apos;s loopback interface. Differs from inet&#45;address in that the given value will be used even if no NIC can be found that has the IP specified address associated with it. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection."/>
+
+        <c:simple-property name="multicast" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not its network interface supports multicast.  An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection."/>
+
+
+        <c:simple-property name="nic" required="false" type="string" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether its network interface has the given name. The name of a network interface (e.g. eth0, eth1, lo). An &apos;undefined&apos; value means this attribute is not relevant to the IP address selection."/>
+
+        <c:simple-property name="nic-match" required="false" type="string" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether its network interface has a name that matches the given regular expression. Value is a regular expression against which the names of the network interfaces available on the machine can be matched to find an acceptable interface. An &apos;undefined&apos; value means this attribute is not relevant to the IP address selection."/>
+
+        <c:simple-property name="point-to-point" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not its network interface is a point&#45;to&#45;point interface. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection"/>
+        <c:simple-property name="public-address" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or not it is a publicly routable address. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection"/>
+        <c:simple-property name="site-local-address" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or it is a site&#45;local address. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection"/>
+        <c:simple-property name="subnet-match" required="false" type="string" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether or it the address fits in the given subnet definition. Value is a network IP address and the number of bits in the address&apos; network prefix, written in &apos;slash notation&apos;; e.g. &apos;192.168.0.0/16&apos;. An &apos;undefined&apos; value means this attribute is not relevant to the IP address selection."/>
+
+        <c:simple-property name="up" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether its network interface is currently up. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection"/>
+        <c:simple-property name="virtual" required="false" type="boolean" readOnly="false"
+                           description="Attribute indicating that part of the selection criteria for choosing an IP address for this interface should be whether its network interface is a virtual interface. An &apos;undefined&apos; or &apos;false&apos; value means this attribute is not relevant to the IP address selection"/>
+      </c:group>
+    </resource-configuration>
   </service>
 
 

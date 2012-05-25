@@ -52,6 +52,7 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
  *
  * @author Ian Springer
  */
+@RunDiscovery
 public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")
@@ -99,8 +100,7 @@ public class InventoryManagerTest extends Arquillian {
      *
      * @throws Exception if an error occurs
      */
-    @Test(groups = "pc.itest.inventorymanager")
-    @RunDiscovery
+    @Test(groups = "pc.itest.inventorymanager", priority = 1)
     public void testSyncUnknownResources() throws Exception {
         validatePluginContainerInventory();
 
@@ -130,7 +130,7 @@ public class InventoryManagerTest extends Arquillian {
      *
      * @throws Exception if an error occurs
      */
-    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources")
+    @Test(groups = "pc.itest.inventorymanager", priority = 1)
     public void testUninventoryResources() throws Exception {
         validatePluginContainerInventory();
 
@@ -164,10 +164,14 @@ public class InventoryManagerTest extends Arquillian {
         Assert.assertNotNull(platform);
         Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
+        Assert.assertEquals(platform.getChildResources().size(), 1,
+                "platform child Resources: " + platform.getChildResources());
         Resource server = platform.getChildResources().iterator().next();
         Assert.assertNotNull(server);
         Assert.assertEquals(server.getInventoryStatus(), InventoryStatus.COMMITTED);
 
+        Assert.assertEquals(server.getChildResources().size(), 1,
+                "server child Resources: " + server.getChildResources());
         Resource service = server.getChildResources().iterator().next();
         Assert.assertNotNull(service);
         Assert.assertEquals(service.getInventoryStatus(), InventoryStatus.COMMITTED);

@@ -97,7 +97,7 @@ public class DiscoveryTest extends Arquillian {
      * @throws Exception if an error occurs
      */
     @RunDiscovery
-    @Test(groups = "pc.itest.discovery")
+    @Test(groups = "pc.itest.discovery", priority = 10)
     public void testDiscoveryRunsOnlyOncePerType() throws Exception {
         // make sure our inventory is as we expect it to be
         validatePluginContainerInventory();

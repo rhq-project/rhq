@@ -2680,9 +2680,9 @@
         <c:simple-property name="default-mdb-instance-pool" required="false" type="string" readOnly="true" description="Name of the default MDB instance pool, which will be applicable to all MDBs, unless overridden at the deployment or bean level"/>
         <c:simple-property name="default-resource-adapter-name" required="false" type="string" readOnly="true" defaultValue="hornetq-ra" description="Name of the default resource adapter name that will be used by MDBs, unless overridden at the deployment or bean level. The default value is hornetq-ra."/>
         <c:simple-property name="default-sfsb-cache" required="false" type="string" readOnly="true" description="Name of the default stateful bean cache, which will be applicable to all stateful EJBs, unless overridden at the deployment or bean level"/>
-        <c:simple-property name="default-singleton-bean-access-timeout:expr" required="false" type="string" readOnly="true" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
+        <c:simple-property name="default-singleton-bean-access-timeout:expr" displayName="Default Singleton Bean Access Timeout" required="false" type="string" readOnly="true" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
         <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="true" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
-        <c:simple-property name="default-stateful-bean-access-timeout:expr" required="false" type="string" readOnly="true" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
+        <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="true" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
         <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="true" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
       </resource-configuration>
 
@@ -2708,7 +2708,7 @@
             <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
             <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
           </c:map-property>
-          <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="true" description="The maximum thread pool size."/>
+          <c:simple-property name="max-threads:expr" displayName="Max Threads" required="false" type="string" readOnly="true" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="true" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
         </resource-configuration>
@@ -2725,12 +2725,12 @@
 
         <resource-configuration>
           <c:simple-property name="groups-path" required="false" type="string" readOnly="true" defaultValue="ejb3/groups"/>
-          <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="true" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+          <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="true" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
           <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="true" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-          <c:simple-property name="max-size:expr" required="false" type="string" readOnly="true" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+          <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="true" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
           <c:simple-property name="relative-to" required="false" type="string" readOnly="true" defaultValue="jboss.server.data.dir"/>
           <c:simple-property name="sessions-path" required="false" type="string" readOnly="true" defaultValue="ejb3/sessions"/>
-          <c:simple-property name="subdirectory-count:expr" required="false" type="string" readOnly="true" defaultValue="100"/>
+          <c:simple-property name="subdirectory-count:expr" displayName="Subdirectory Count" required="false" type="string" readOnly="true" defaultValue="100"/>
         </resource-configuration>
       </service>
 
@@ -2744,8 +2744,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="true" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="true" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="true" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="true" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
           <c:simple-property name="timeout-unit" required="false" type="string" readOnly="true" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
         </resource-configuration>
       </service>
@@ -2780,9 +2780,9 @@
           <c:simple-property name="bean-cache" required="false" type="string" readOnly="true" description="The name of the cache used to store bean instances."/>
           <c:simple-property name="cache-container" required="false" type="string" readOnly="true" defaultValue="ejb" description="The name of the cache container used for the bean and client-mappings caches. The default value is ejb."/>
           <c:simple-property name="client-mappings-cache" required="false" type="string" readOnly="true" defaultValue="remote-connector-client-mappings" description="The name of the cache used to store client-mappings of the EJB remoting connector's socket-bindings. The default value is remote-connector-client-mappings."/>
-          <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="true" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+          <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="true" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
           <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="true" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-          <c:simple-property name="max-size:expr" required="false" type="string" readOnly="true" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+          <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="true" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
           <c:simple-property name="passivate-events-on-replicate" required="false" type="boolean" readOnly="true" defaultValue="true" description="Indicates whether replication should trigger passivation events on the bean. The default value is true."/>
         </resource-configuration>
       </service>
@@ -3898,9 +3898,9 @@
         <c:simple-property name="default-mdb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default MDB instance pool, which will be applicable to all MDBs, unless overridden at the deployment or bean level"/>
         <c:simple-property name="default-resource-adapter-name" required="false" type="string" readOnly="false" defaultValue="hornetq-ra" description="Name of the default resource adapter name that will be used by MDBs, unless overridden at the deployment or bean level. The default value is hornetq-ra."/>
         <c:simple-property name="default-sfsb-cache" required="false" type="string" readOnly="false" description="Name of the default stateful bean cache, which will be applicable to all stateful EJBs, unless overridden at the deployment or bean level"/>
-        <c:simple-property name="default-singleton-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
+        <c:simple-property name="default-singleton-bean-access-timeout:expr" displayName="Default Singleton Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
         <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
-        <c:simple-property name="default-stateful-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
+        <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
         <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
       </resource-configuration>
 
@@ -3937,12 +3937,12 @@
 
         <resource-configuration>
           <c:simple-property name="groups-path" required="false" type="string" readOnly="false" defaultValue="ejb3/groups"/>
-          <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+          <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
           <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-          <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+          <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
           <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"/>
           <c:simple-property name="sessions-path" required="false" type="string" readOnly="false" defaultValue="ejb3/sessions"/>
-          <c:simple-property name="subdirectory-count:expr" required="false" type="string" readOnly="false" defaultValue="100"/>
+          <c:simple-property name="subdirectory-count:expr" displayName="Subdirectory Count" required="false" type="string" readOnly="false" defaultValue="100"/>
         </resource-configuration>
       </service>
 
@@ -3957,8 +3957,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-          <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+          <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
           <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
         </resource-configuration>
       </service>
@@ -3995,9 +3995,9 @@
           <c:simple-property name="bean-cache" required="false" type="string" readOnly="false" description="The name of the cache used to store bean instances."/>
           <c:simple-property name="cache-container" required="false" type="string" readOnly="false" defaultValue="ejb" description="The name of the cache container used for the bean and client-mappings caches. The default value is ejb."/>
           <c:simple-property name="client-mappings-cache" required="false" type="string" readOnly="false" defaultValue="remote-connector-client-mappings" description="The name of the cache used to store client-mappings of the EJB remoting connector's socket-bindings. The default value is remote-connector-client-mappings."/>
-          <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+          <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
           <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-          <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+          <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
           <c:simple-property name="passivate-events-on-replicate" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates whether replication should trigger passivation events on the bean. The default value is true."/>
         </resource-configuration>
       </service>
@@ -6920,8 +6920,8 @@
         <c:simple-property name="log-journal-write-rate" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to periodically log the journal&apos;s write rate and flush rate. The default value is false."/>
         <c:simple-property name="management-address" required="false" type="string" readOnly="false" defaultValue="jms.queue.hornetq.management" description="Address to send management messages to. The default value is jms.queue.hornetq.management."/>
         <c:simple-property name="management-notification-address" required="false" type="string" readOnly="false" defaultValue="hornetq.notifications" description="The name of the address that consumers bind to  to receive management notifications. The default value is hornetq.notifications."/>
-        <c:simple-property name="memory-measure-interval:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
-        <c:simple-property name="memory-warning-threshold:expr" required="false" type="string" readOnly="false" defaultValue="25" description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
+        <c:simple-property name="memory-measure-interval:expr" displayName="Memory Measure Interval" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
+        <c:simple-property name="memory-warning-threshold:expr" displayName="Memory Warning Threshold" required="false" type="string" readOnly="false" defaultValue="25" description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
         <c:simple-property name="message-counter-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether message counters are enabled. The default value is false."/>
         <c:simple-property name="message-counter-max-day-history" required="false" type="integer" readOnly="false" defaultValue="10" description="How many days to keep message counter history. The default value is 10."/>
         <c:simple-property name="message-counter-sample-period" required="false" type="long" readOnly="false" defaultValue="10000" description="The sample period (in ms) to use for message counters. The default value is 10000."/>
@@ -6936,13 +6936,13 @@
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
-        <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
+        <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="false" defaultValue="other" description="The security domain to use to verify user and role information. The default value is other."/>
         <c:simple-property name="security-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether security is enabled. The default value is true."/>
         <c:simple-property name="security-invalidation-interval" required="false" type="long" readOnly="false" defaultValue="10000" description="How long (in ms) to wait before invalidating the security cache. The default value is 10000."/>
         <c:simple-property name="server-dump-interval" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="How often to dump basic runtime information to the server log. A value less than 1 disables this feature. The default value is &#45;1."/>
         <c:simple-property name="shared-store" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server is using a shared store for failover. The default value is true."/>
-        <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
+        <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
         <c:simple-property name="transaction-timeout" required="false" type="long" readOnly="false" defaultValue="300000" description="How long (in ms) before a transaction can be removed from the resource manager after create time. The default value is 300000."/>
         <c:simple-property name="transaction-timeout-scan-period" required="false" type="long" readOnly="false" defaultValue="1000" description="How often (in ms) to scan for timeout transactions. The default value is 1000."/>
         <c:simple-property name="wild-card-routing-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server supports wild card routing. The default value is true."/>
@@ -8468,9 +8468,9 @@
       <c:simple-property name="default-mdb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default MDB instance pool, which will be applicable to all MDBs, unless overridden at the deployment or bean level"/>
       <c:simple-property name="default-resource-adapter-name" required="false" type="string" readOnly="false" defaultValue="hornetq-ra" description="Name of the default resource adapter name that will be used by MDBs, unless overridden at the deployment or bean level. The default value is hornetq-ra."/>
       <c:simple-property name="default-sfsb-cache" required="false" type="string" readOnly="false" description="Name of the default stateful bean cache, which will be applicable to all stateful EJBs, unless overridden at the deployment or bean level"/>
-      <c:simple-property name="default-singleton-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
+      <c:simple-property name="default-singleton-bean-access-timeout:expr" displayName="Default Singleton Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for singleton beans. The default value is 5000."/>
       <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
-      <c:simple-property name="default-stateful-bean-access-timeout:expr" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
+      <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
       <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
     </resource-configuration>
 
@@ -8514,12 +8514,12 @@
 
       <resource-configuration>
         <c:simple-property name="groups-path" required="false" type="string" readOnly="false" defaultValue="ejb3/groups"/>
-        <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+        <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
         <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-        <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+        <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
         <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"/>
         <c:simple-property name="sessions-path" required="false" type="string" readOnly="false" defaultValue="ejb3/sessions"/>
-        <c:simple-property name="subdirectory-count:expr" required="false" type="string" readOnly="false" defaultValue="100"/>
+        <c:simple-property name="subdirectory-count:expr" displayName="Subdirectory count" required="false" type="string" readOnly="false" defaultValue="100"/>
       </resource-configuration>
     </service>
 
@@ -8534,8 +8534,8 @@
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
-        <c:simple-property name="timeout:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
+        <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="20" description="The maximum number of bean instances that the pool can hold at a given point in time. The default value is 20."/>
+        <c:simple-property name="timeout:expr" displayName="Timeout" required="false" type="string" readOnly="false" defaultValue="5" description="The maximum amount of time to wait for a bean instance to be available from the pool. The default value is 5."/>
         <c:simple-property name="timeout-unit" required="false" type="string" readOnly="false" defaultValue="MINUTES" description="The instance acquisition timeout unit. The default value is MINUTES."/>
       </resource-configuration>
     </service>
@@ -8572,9 +8572,9 @@
         <c:simple-property name="bean-cache" required="false" type="string" readOnly="false" description="The name of the cache used to store bean instances."/>
         <c:simple-property name="cache-container" required="false" type="string" readOnly="false" defaultValue="ejb" description="The name of the cache container used for the bean and client-mappings caches. The default value is ejb."/>
         <c:simple-property name="client-mappings-cache" required="false" type="string" readOnly="false" defaultValue="remote-connector-client-mappings" description="The name of the cache used to store client-mappings of the EJB remoting connector's socket-bindings. The default value is remote-connector-client-mappings."/>
-        <c:simple-property name="idle-timeout:expr" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
+        <c:simple-property name="idle-timeout:expr" displayName="Idle Timeout" required="false" type="string" readOnly="false" defaultValue="300" description="The timeout in units specified by idle-timeout-unit, after which a bean will passivate. The default value is 300."/>
         <c:simple-property name="idle-timeout-unit" required="false" type="string" readOnly="false" defaultValue="SECONDS" description="The unit of idle-timeout. The default value is SECONDS."/>
-        <c:simple-property name="max-size:expr" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
+        <c:simple-property name="max-size:expr" displayName="Max Size" required="false" type="string" readOnly="false" defaultValue="10000" description="The maximum number of beans this cache should store before forcing old beans to passivate. The default value is 10000."/>
         <c:simple-property name="passivate-events-on-replicate" required="false" type="boolean" readOnly="false" defaultValue="true" description="Indicates whether replication should trigger passivation events on the bean. The default value is true."/>
       </resource-configuration>
     </service>
@@ -9440,8 +9440,8 @@
         <c:simple-property name="log-journal-write-rate" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to periodically log the journal&apos;s write rate and flush rate. The default value is false."/>
         <c:simple-property name="management-address" required="false" type="string" readOnly="false" defaultValue="jms.queue.hornetq.management" description="Address to send management messages to. The default value is jms.queue.hornetq.management."/>
         <c:simple-property name="management-notification-address" required="false" type="string" readOnly="false" defaultValue="hornetq.notifications" description="The name of the address that consumers bind to  to receive management notifications. The default value is hornetq.notifications."/>
-        <c:simple-property name="memory-measure-interval:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
-        <c:simple-property name="memory-warning-threshold:expr" required="false" type="string" readOnly="false" defaultValue="25" description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
+        <c:simple-property name="memory-measure-interval:expr" displayName="Memory Measure Interval" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="Frequency to sample JVM memory in ms (or &#45;1 to disable memory sampling). The default value is &#45;1."/>
+        <c:simple-property name="memory-warning-threshold:expr" displayName="Memory Warning Threshold" required="false" type="string" readOnly="false" defaultValue="25" description="Percentage of available memory which if exceeded results in a warning log. The default value is 25."/>
         <c:simple-property name="message-counter-enabled" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether message counters are enabled. The default value is false."/>
         <c:simple-property name="message-counter-max-day-history" required="false" type="integer" readOnly="false" defaultValue="10" description="How many days to keep message counter history. The default value is 10."/>
         <c:simple-property name="message-counter-sample-period" required="false" type="long" readOnly="false" defaultValue="10000" description="The sample period (in ms) to use for message counters. The default value is 10000."/>
@@ -9456,13 +9456,13 @@
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
-        <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
+        <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The number of threads that the main scheduled thread pool has. The default value is 5."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="false" defaultValue="other" description="The security domain to use to verify user and role information. The default value is other."/>
         <c:simple-property name="security-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether security is enabled. The default value is true."/>
         <c:simple-property name="security-invalidation-interval" required="false" type="long" readOnly="false" defaultValue="10000" description="How long (in ms) to wait before invalidating the security cache. The default value is 10000."/>
         <c:simple-property name="server-dump-interval" required="false" type="long" readOnly="false" defaultValue="&#45;1" description="How often to dump basic runtime information to the server log. A value less than 1 disables this feature. The default value is &#45;1."/>
         <c:simple-property name="shared-store" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether this server is using a shared store for failover. The default value is true."/>
-        <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
+        <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The number of threads that the main thread pool has. &#45;1 means no limit. The default value is 30."/>
         <c:simple-property name="transaction-timeout" required="false" type="long" readOnly="false" defaultValue="300000" description="How long (in ms) before a transaction can be removed from the resource manager after create time. The default value is 300000."/>
         <c:simple-property name="transaction-timeout-scan-period" required="false" type="long" readOnly="false" defaultValue="1000" description="How often (in ms) to scan for timeout transactions. The default value is 1000."/>
         <c:simple-property name="wild-card-routing-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server supports wild card routing. The default value is true."/>
@@ -9842,8 +9842,8 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
-          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
           <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>
         </resource-configuration>
@@ -9887,10 +9887,10 @@
           <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
           <c:simple-property name="ha" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
           <c:simple-property name="jndi-params" required="false" type="string" readOnly="false" description="The JNDI params to use for locating the destination for incoming connections."/>
-          <c:simple-property name="max-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
+          <c:simple-property name="max-pool-size:expr" displayName="Max Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The maximum size for the pool. The default value is &#45;1."/>
           <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
           <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
-          <c:simple-property name="min-pool-size:expr" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
+          <c:simple-property name="min-pool-size:expr" displayName="Min Pool Size" required="false" type="string" readOnly="false" defaultValue="&#45;1" description="The minimum size for the pool. The default value is &#45;1."/>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="The default password to use with this connection factory. This is only needed when pointing the connection factory to a remote host."/>
           <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
           <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The producer max rate. The default value is &#45;1."/>
@@ -9898,10 +9898,10 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="0" description="The reconnect attempts. The default value is 0."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The retry interval. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="The retry interval multiplier. The default value is 1.0."/>
-          <c:simple-property name="scheduled-thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
+          <c:simple-property name="scheduled-thread-pool-max-size:expr" displayName="Scheduled Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="5" description="The scheduled thread pool max size. The default value is 5."/>
           <c:simple-property name="setup-attempts" required="false" type="integer" readOnly="false" description="The number of times to set up an MDB endpoint"/>
           <c:simple-property name="setup-interval" required="false" type="long" readOnly="false" description="The interval between attempts at setting up an MDB endpoint."/>
-          <c:simple-property name="thread-pool-max-size:expr" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
+          <c:simple-property name="thread-pool-max-size:expr" displayName="Thread Pool Max Size" required="false" type="string" readOnly="false" defaultValue="30" description="The thread pool max size. The default value is 30."/>
           <c:simple-property name="transaction" required="false" type="string" readOnly="false" defaultValue="transaction" description="TODO. The default value is transaction."/>
           <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The transaction batch size. The default value is 1048576."/>
           <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" defaultValue="true" description="True to use global pools. The default value is true."/>

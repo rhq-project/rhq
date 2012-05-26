@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 ]>
 
-<section id="${plugin.displayName} Plugin">
+<section id="${pluginId}">
     <title>${plugin.displayName} Plugin</title>
 
     <table>
@@ -31,9 +31,13 @@
     <para>${plugin.help}</para>
 #end
 
-#if ( !${resourceTypes.empty} )
-    <bridgehead>Resource Types</bridgehead>
-    <para>{children:all=true|style=h3}</para>
+    <bridgehead>Top-Level Resource Types</bridgehead>
+#if ( !${typeIds.empty} )
+    <itemizedlist>
+#foreach( ${typeId} in ${typeIds} )
+        <listitem><simpara><xref linkend="${typeId}"/></simpara></listitem>
+#end
+    </itemizedlist>
 #else
     <para>This plugin does not define any Resource types. It it probably an "abstract plugin", that is, one that
           provides Resource components and/or discovery components that can be used by other plugins.</para>

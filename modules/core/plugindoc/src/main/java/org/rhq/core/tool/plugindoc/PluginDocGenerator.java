@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
@@ -110,6 +111,7 @@ public class PluginDocGenerator {
                 + ioe.getMessage());
         }
 
+        loadProperties(props);
     }
 
     public void loadProperties(Properties props) {
@@ -336,7 +338,7 @@ public class PluginDocGenerator {
 
         Plugin plugin = descriptorProcessor.getPlugin();
         generateDocbookPluginPage(resourceTypes, docbookOutputDir, plugin);
-        generateDocbookResourceTypePages(null, resourceTypes, docbookOutputDir, plugin);
+        generateDocbookResourceTypePages(new ArrayList<ResourceType>(), resourceTypes, docbookOutputDir, plugin);
     }
 
     private File generateDocbookPluginPage(Set<ResourceType> resourceTypes, File docBookOutputDir, Plugin plugin) {
@@ -352,15 +354,23 @@ public class PluginDocGenerator {
 
         docbookPluginTemplateProcessor.getContext().put("rhqVersion", RHQ_VERSION);
         docbookPluginTemplateProcessor.getContext().put("plugin", plugin);
-        docbookPluginTemplateProcessor.getContext().put("resourceTypes", resourceTypes);
-        String docbookOutputFileName = escapeFileName(getPageTitle(plugin) + ".xml");
+        String pluginId = getPluginId(plugin);
+        docbookPluginTemplateProcessor.getContext().put("pluginId", pluginId);
+        List<String> typeIds = new ArrayList<String>(resourceTypes.size());
+        for (ResourceType type : resourceTypes) {
+            String typeId = getTypeId(type, new ArrayList<ResourceType>());
+            typeIds.add(typeId);
+        }
+        docbookPluginTemplateProcessor.getContext().put("typeIds", typeIds);
+
+        String docbookOutputFileName = escapeFileName(pluginId + ".xml");
         File docbookPluginOutputFile = new File(docBookOutputDir, docbookOutputFileName);
         docbookPluginTemplateProcessor.processTemplate(docbookPluginOutputFile);
 
         return docbookPluginOutputFile;
     }
 
-    private void generateDocbookResourceTypePages(ResourceType parentType, Set<ResourceType> resourceTypes,
+    private void generateDocbookResourceTypePages(List<ResourceType> ancestorTypes, Set<ResourceType> resourceTypes,
                                                   File docbookOutputDir, Plugin plugin) {
         VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(
                 DOCBOOK_RESOURCE_TYPE_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH,
@@ -375,12 +385,22 @@ public class PluginDocGenerator {
             System.out.println("Generating DocBook content for " + resourceType + " Resource type...");
 
             docbookTemplateProcessor.getContext().put("resourceType", resourceType);
-            String docbookOutputFileName = escapeFileName(getPageTitle(resourceType, parentType) + ".xml");
+            String typeId = getTypeId(resourceType, ancestorTypes);
+            docbookTemplateProcessor.getContext().put("typeId", typeId);
+            List<String> childTypeIds = new ArrayList<String>(resourceType.getChildResourceTypes().size());
+            for (ResourceType childType : resourceType.getChildResourceTypes()) {
+                String childTypeId = typeId + ":" + escapeXmlId(childType.getName());
+                childTypeIds.add(childTypeId);
+            }
+            docbookTemplateProcessor.getContext().put("childTypeIds", childTypeIds);
+            String docbookOutputFileName = escapeFileName(typeId) + ".xml";
             File docbookOutputFile = new File(docbookOutputDir, docbookOutputFileName);
             docbookTemplateProcessor.processTemplate(docbookOutputFile);
 
             // Recurse on child types.
-            generateDocbookResourceTypePages(resourceType, resourceType.getChildResourceTypes(), docbookOutputDir,
+            List<ResourceType> childAncestorTypes = new ArrayList<ResourceType>(ancestorTypes);
+            childAncestorTypes.add(resourceType);
+            generateDocbookResourceTypePages(childAncestorTypes, resourceType.getChildResourceTypes(), docbookOutputDir,
                     plugin);
         }
     }
@@ -540,6 +560,10 @@ public class PluginDocGenerator {
         return escapePageTitle(title);
     }
 
+    private static String getPluginId(Plugin plugin) {
+        return escapeXmlId(plugin.getName());
+    }
+
     private static String getPageTitle(ResourceType resourceType, ResourceType parentType) {
         StringBuilder buffer = new StringBuilder();
 
@@ -572,6 +596,21 @@ public class PluginDocGenerator {
         return escapePageTitle(buffer.toString());
     }
 
+    private static String getTypeId(ResourceType resourceType, List<ResourceType> ancestorTypes) {
+        StringBuilder buffer = new StringBuilder();
+
+        String pluginName = resourceType.getPlugin();
+        buffer.append(pluginName).append(':');
+
+        for (ResourceType ancestorType : ancestorTypes) {
+            buffer.append(ancestorType.getName()).append(':');
+        }
+
+        buffer.append(resourceType.getName());
+
+        return escapeXmlId(buffer.toString());
+    }
+
     private static String getContentAsString(File contentFile) throws IOException {
         StringBuilder content = new StringBuilder();
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(contentFile)));
@@ -587,15 +626,16 @@ public class PluginDocGenerator {
     }
 
     private static String escapeFileName(String fileName) {
-        // DocBook doesn't like parentheses or dashes in filenames.
-        fileName = fileName.replaceAll("\\(", "").replaceAll("\\)", "").replace('-', ':');
-
-        // Remove other characters that are generally undesirable in filenames.
-        return fileName.replace('/', '_').replace('\\', '_').replace(' ', '_');
+        // Remove characters that are generally undesirable in filenames.
+        return fileName.replace(' ', '_').replaceAll("[\\\\/\\(\\)\\[\\]\\?\\*]", "-");
     }
 
     private static String escapePageTitle(String fileName) {
         return fileName.replace('/', '-');
+    }
+
+    private static String escapeXmlId(String id) {
+        return id.replace(' ', '_').replaceAll("[^-\\._:A-Za-z0-9]", "-");
     }
 
     public static void main(String[] args) throws PluginDocGeneratorException {

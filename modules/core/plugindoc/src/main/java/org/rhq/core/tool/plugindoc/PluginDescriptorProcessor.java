@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  */
 package org.rhq.core.tool.plugindoc;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +56,7 @@ import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -86,7 +89,7 @@ public class PluginDescriptorProcessor {
         }
 
         for (ServiceDescriptor serviceDescriptor : pluginDescriptor.getServices()) {
-            ResourceType serviceType = parseServiceDescriptor(serviceDescriptor, null);
+            ResourceType serviceType = parseServiceDescriptor(serviceDescriptor, null, null);
             if (isRootType(serviceType)) {
                 resourceTypes.add(serviceType);
             }
@@ -97,8 +100,8 @@ public class PluginDescriptorProcessor {
 
     private static boolean isRootType(ResourceType type) {
         boolean result;
-        if ((type.getParentResourceTypes() == null) || (type.getParentResourceTypes().size() <= 1)) {
-            result = true;
+        if ((type.getParentResourceTypes() == null) || (type.getParentResourceTypes().isEmpty())) {
+            result = (type.getCategory() != ResourceCategory.SERVICE);
         } else {
             result = false;
             for (ResourceType parentType : type.getParentResourceTypes()) {
@@ -159,7 +162,7 @@ public class PluginDescriptorProcessor {
         sourcePlugin = (sourcePlugin == null) ? "" : sourcePlugin.trim();
         sourceServer = (sourceServer == null) ? "" : sourceServer.trim();
 
-        if ((sourcePlugin.length() == 0) && (sourceServer.length() == 0)) {
+        if (sourcePlugin.isEmpty() && sourceServer.isEmpty()) {
             // not using Embedded extension model
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentType);
@@ -175,24 +178,45 @@ public class PluginDescriptorProcessor {
             parseResourceDescriptor(serverDescriptor, serverResourceType, null, null, null);
         } else if ((sourcePlugin.length() > 0) && (sourceServer.length() > 0)) {
             // using Embedded extension model - the defined type is actually a copy of another plugin's server type
-            // TODO
+            log.debug("Parsing embedded server type {" + pluginDescriptor.getName() + "}"
+                    + serverDescriptor.getName() + ", which extends server type {" + sourcePlugin + "}" + sourceServer + "...");
+
+            Map<String, ServerDescriptor> pluginServerDescriptors = getPluginServerDescriptors(sourcePlugin);
+            ServerDescriptor sourceServerDescriptor = pluginServerDescriptors.get(sourceServer);
+
+            if (sourceServerDescriptor == null) {
+                log.warn("There is no server type named [" + sourceServer + "] from a plugin named [" + sourcePlugin
+                        + "]. This is probably because that plugin is missing. Resource Type [{"
+                        + pluginDescriptor.getName() + "}" + serverDescriptor.getName() + "] will be ignored.");
+                return null;
+            }
 
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentType);
 
-            // let the plugin writer override these, if not, pick up the source type's values
+            // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
+            // values.
             serverResourceType.setDescription(serverDescriptor.getDescription());
-            serverResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serverResourceType, serverDescriptor.getSubCategory()));
+            setSubCategory(serverDescriptor, serverResourceType);
+
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
                 .setCreateDeletePolicy(convertCreateDeletePolicy(serverDescriptor.getCreateDeletePolicy()));
             serverResourceType.setSingleton(serverDescriptor.isSingleton());
 
-            String discoveryClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), serverDescriptor
-                .getDiscovery());
-            String componentClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), serverDescriptor
-                .getClazz());
+            parseResourceDescriptor(sourceServerDescriptor, serverResourceType, null, null, sourcePlugin);
+            // The above incorporates children from the source descriptor. The following incorporates
+            // children from this descriptor
+
+            // Look for child server types
+            for (ServerDescriptor childServerDescriptor : serverDescriptor.getServers()) {
+                parseServerDescriptor(childServerDescriptor, serverResourceType);
+            }
+
+            // Look for child service types
+            for (ServiceDescriptor childServiceDescriptor : serverDescriptor.getServices()) {
+                parseServiceDescriptor(childServiceDescriptor, serverResourceType, null);
+            }
         } else {
             // this should never happen - the XML parser should have failed to even get this far
             throw new InvalidPluginDescriptorException("Both sourcePlugin and sourceType must be defined: "
@@ -213,16 +237,21 @@ public class PluginDescriptorProcessor {
         return serverResourceType;
     }
 
-    private ResourceType parseServiceDescriptor(ServiceDescriptor serviceDescriptor, ResourceType parentType)
+    private ResourceType parseServiceDescriptor(ServiceDescriptor serviceDescriptor, ResourceType parentType,
+                                                String parentSourcePlugin)
         throws InvalidPluginDescriptorException {
         ResourceType serviceResourceType;
         String sourcePlugin = serviceDescriptor.getSourcePlugin();
-        String sourceService = serviceDescriptor.getSourceType();
+        // Fallback to using the source plugin of your parent if you don't override.
+        if (sourcePlugin == null) {
+            sourcePlugin = parentSourcePlugin;
+        }
+        String sourceType = serviceDescriptor.getSourceType();
 
         sourcePlugin = (sourcePlugin == null) ? "" : sourcePlugin.trim();
-        sourceService = (sourceService == null) ? "" : sourceService.trim();
+        sourceType = (sourceType == null) ? "" : sourceType.trim();
 
-        if ((sourcePlugin.length() == 0) && (sourceService.length() == 0)) {
+        if (sourcePlugin.isEmpty() && sourceType.isEmpty()) {
             // not using Embedded extension model
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
@@ -242,29 +271,43 @@ public class PluginDescriptorProcessor {
                     + "The <process-scan> elements will be ignored in resource type: " + serviceResourceType);
             }
         } else if (sourcePlugin.length() > 0) {
-            // using Embedded extension model - the defined type is actually a copy of another plugin's service type
-            // TODO
+            // Using Embedded extension model - the defined type is actually a copy of another plugin's service or server type.
+            log.debug("Parsing embedded service type {" + pluginDescriptor.getName() + "}"
+                    + serviceDescriptor.getName() + ", which extends type {" + sourcePlugin + "}" + sourceType + "...");
 
-            ServiceDescriptor sourceServiceDescriptor;
-            if (sourceService.length() == 0) {
-                sourceServiceDescriptor = serviceDescriptor;
+            ResourceDescriptor sourceTypeDescriptor;
+            if (sourceType.isEmpty()) {
+                sourceTypeDescriptor = serviceDescriptor;
+            } else {
+                Map<String, ServiceDescriptor> pluginServiceDescriptors = getPluginServiceDescriptors(sourcePlugin);
+                sourceTypeDescriptor = pluginServiceDescriptors.get(sourceType);
+                if (sourceTypeDescriptor == null) {
+                    Map<String, ServerDescriptor> pluginServerDescriptors = getPluginServerDescriptors(sourcePlugin);
+                    sourceTypeDescriptor = pluginServerDescriptors.get(sourceType);
+                }
+            }
+
+            if (sourceTypeDescriptor == null) {
+                log.warn("There is no service or server type named [" + sourceType + "] from a plugin named ["
+                        + sourcePlugin + "]. This is probably because that plugin is missing. Resource Type [{"
+                        + pluginDescriptor.getName() + "}" + serviceDescriptor.getName() + "] will be ignored.");
+                return null;
             }
 
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
 
-            // let the plugin writer override these, if not, pick up the source type's values
+            // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
+            // values.
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
-            serviceResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serviceResourceType, serviceDescriptor.getSubCategory()));
+            setSubCategory(serviceDescriptor, serviceResourceType);
+
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));
             serviceResourceType.setSingleton(serviceDescriptor.isSingleton());
 
-            String pluginPackage = ""; // TODO
-            String discoveryClass = getFullyQualifiedComponentClassName(pluginPackage, serviceDescriptor.getDiscovery());
-            String componentClass = getFullyQualifiedComponentClassName(pluginPackage, serviceDescriptor.getClazz());
+            parseResourceDescriptor(sourceTypeDescriptor, serviceResourceType, null, null, sourcePlugin);
         } else {
             // this should never happen - the XML parser should have failed to even get this far
             throw new InvalidPluginDescriptorException("Both sourcePlugin and sourceType must be defined: "
@@ -279,6 +322,20 @@ public class PluginDescriptorProcessor {
         }
 
         return serviceResourceType;
+    }
+
+    private static void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
+        throws InvalidPluginDescriptorException {
+        String subCatName = resourceDescriptor.getSubCategory();
+        if (subCatName != null) {
+            ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
+                resourceType, subCatName);
+            if (subCat == null)
+                throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
+                    + "] specified a subcategory (" + subCatName
+                    + ") that is not defined as a child subcategory of one of its ancestor resource types.");
+            resourceType.setSubCategory(subCat);
+        }
     }
 
     private void addRunsInsideParentTypes(ResourceDescriptor resourceDescriptor, ResourceType resourceType) {
@@ -401,7 +458,7 @@ public class PluginDescriptorProcessor {
             }
 
             for (ServiceDescriptor serviceDescriptor : ((PlatformDescriptor) resourceDescriptor).getServices()) {
-                parseServiceDescriptor(serviceDescriptor, resourceType);
+                parseServiceDescriptor(serviceDescriptor, resourceType, sourcePlugin);
             }
         }
 
@@ -411,13 +468,13 @@ public class PluginDescriptorProcessor {
             }
 
             for (ServiceDescriptor serviceDescriptor : ((ServerDescriptor) resourceDescriptor).getServices()) {
-                parseServiceDescriptor(serviceDescriptor, resourceType);
+                parseServiceDescriptor(serviceDescriptor, resourceType, sourcePlugin);
             }
         }
 
         if (resourceDescriptor instanceof ServiceDescriptor) {
             for (ServiceDescriptor serviceDescriptor : ((ServiceDescriptor) resourceDescriptor).getServices()) {
-                parseServiceDescriptor(serviceDescriptor, resourceType);
+                parseServiceDescriptor(serviceDescriptor, resourceType, sourcePlugin);
             }
         }
     }
@@ -434,6 +491,53 @@ public class PluginDescriptorProcessor {
         return packageName + '.' + baseClassName;
     }
 
+    private Map<String, ServerDescriptor> getPluginServerDescriptors(String pluginName) {
+        Map<String, ServerDescriptor> pluginServerDescriptors = new HashMap<String, ServerDescriptor>();
+
+        // In plugindoc, we only support embedding types from this plugin.
+        if (pluginName.equals(this.pluginDescriptor.getName())) {
+            for (ServerDescriptor server : pluginDescriptor.getServers()) {
+                pluginServerDescriptors.put(server.getName(), server);
+            }
+        }
+
+        return pluginServerDescriptors;
+    }
+
+    private Map<String, ServiceDescriptor> getPluginServiceDescriptors(String pluginName) {
+        Map<String, ServiceDescriptor> pluginServiceDescriptors = new HashMap<String, ServiceDescriptor>();
+
+        // In plugindoc, we only support embedding types from this plugin.
+        if (pluginName.equals(this.pluginDescriptor.getName())) {
+            addPluginServiceDescriptors(pluginDescriptor.getServices(), pluginServiceDescriptors);
+            addPluginServiceDescriptors(pluginDescriptor.getServers(), pluginServiceDescriptors);
+        }
+
+        return pluginServiceDescriptors;
+    }
+
+    private void addPluginServiceDescriptors(Collection<? extends ResourceDescriptor> parents,
+        Map<String, ServiceDescriptor> descriptors) {
+        if (parents != null) {
+            for (ResourceDescriptor parent : parents) {
+                List<ServiceDescriptor> services;
+                if (parent instanceof ServerDescriptor) {
+                    services = ((ServerDescriptor) parent).getServices();
+                } else if (parent instanceof ServiceDescriptor) {
+                    services = ((ServiceDescriptor) parent).getServices();
+                } else {
+                    throw new IllegalStateException("Unsupported parent descriptor type: "
+                            + parent.getClass().getName());
+                }
+
+                for (ServiceDescriptor service : services) {
+                    descriptors.put(service.getName(), service);
+                    addPluginServiceDescriptors(service.getServices(), descriptors); // recurse down the hierarchy
+                }
+            }
+        }
+    }
+
     /**
      * Converts the creation data descriptor (JAXB) object into the domain enumeration.
      *
@@ -444,13 +548,13 @@ public class PluginDescriptorProcessor {
      */
     private ResourceCreationDataType convertCreationDataType(ResourceCreationData creationType) {
         switch (creationType) {
-        case CONTENT: {
-            return ResourceCreationDataType.CONTENT;
-        }
+            case CONTENT: {
+                return ResourceCreationDataType.CONTENT;
+            }
 
-        case CONFIGURATION: {
-            return ResourceCreationDataType.CONFIGURATION;
-        }
+            case CONFIGURATION: {
+                return ResourceCreationDataType.CONFIGURATION;
+            }
         }
 
         return null;
@@ -466,21 +570,21 @@ public class PluginDescriptorProcessor {
      */
     private CreateDeletePolicy convertCreateDeletePolicy(ResourceCreateDeletePolicy policy) {
         switch (policy) {
-        case BOTH: {
-            return CreateDeletePolicy.BOTH;
-        }
+            case BOTH: {
+                return CreateDeletePolicy.BOTH;
+            }
 
-        case CREATE_ONLY: {
-            return CreateDeletePolicy.CREATE_ONLY;
-        }
+            case CREATE_ONLY: {
+                return CreateDeletePolicy.CREATE_ONLY;
+            }
 
-        case DELETE_ONLY: {
-            return CreateDeletePolicy.DELETE_ONLY;
-        }
+            case DELETE_ONLY: {
+                return CreateDeletePolicy.DELETE_ONLY;
+            }
 
-        case NEITHER: {
-            return CreateDeletePolicy.NEITHER;
-        }
+            case NEITHER: {
+                return CreateDeletePolicy.NEITHER;
+            }
         }
 
         return null;

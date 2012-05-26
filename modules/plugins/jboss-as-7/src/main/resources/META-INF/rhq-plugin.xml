@@ -4661,6 +4661,10 @@
            discovery="SubsystemDiscovery"
            class="BaseComponent">
 
+    <runs-inside>
+      <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
+    </runs-inside>
+
     <plugin-configuration>
       <c:simple-property name="path" default="profile" readOnly="true"/>
     </plugin-configuration>

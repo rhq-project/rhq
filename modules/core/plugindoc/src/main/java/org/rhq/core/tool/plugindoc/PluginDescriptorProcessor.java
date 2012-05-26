@@ -101,7 +101,7 @@ public class PluginDescriptorProcessor {
     private static boolean isRootType(ResourceType type) {
         boolean result;
         if ((type.getParentResourceTypes() == null) || (type.getParentResourceTypes().isEmpty())) {
-            result = (type.getCategory() != ResourceCategory.SERVICE);
+            result = true;
         } else {
             result = false;
             for (ResourceType parentType : type.getParentResourceTypes()) {
@@ -379,71 +379,55 @@ public class PluginDescriptorProcessor {
         // 6) Artifacts
         // 7) Sub categories
 
-        if (discoveryClass == null) {
-            discoveryClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), resourceDescriptor
-                .getDiscovery());
+        resourceType.setPlugin(pluginDescriptor.getName());
+
+        if (resourceDescriptor.getPluginConfiguration() != null) {
+            resourceType.setPluginConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType.getName(),
+                resourceDescriptor.getPluginConfiguration()));
         }
 
-        if (componentClass == null) {
-            componentClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), resourceDescriptor
-                .getClazz());
+        if (resourceDescriptor.getResourceConfiguration() != null) {
+            resourceType.setResourceConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType
+                .getName(), resourceDescriptor.getResourceConfiguration()));
         }
 
-        try {
-            resourceType.setPlugin(pluginDescriptor.getName());
-
-            if (resourceDescriptor.getPluginConfiguration() != null) {
-                resourceType.setPluginConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType.getName(),
-                    resourceDescriptor.getPluginConfiguration()));
+        int displayPosition = 1;
+        for (MetricDescriptor metricDescriptor : resourceDescriptor.getMetric()) {
+            List<MeasurementDefinition> measurementDefinitions = MetricsMetadataParser.parseMetricsMetadata(
+                metricDescriptor, resourceType);
+            for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+                measurementDefinition.setDisplayOrder(displayPosition++);
+                resourceType.addMetricDefinition(measurementDefinition);
             }
+        }
 
-            if (resourceDescriptor.getResourceConfiguration() != null) {
-                resourceType.setResourceConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType
-                    .getName(), resourceDescriptor.getResourceConfiguration()));
-            }
+        for (OperationDescriptor operationDescriptor : resourceDescriptor.getOperation()) {
+            resourceType.addOperationDefinition(OperationsMetadataParser
+                .parseOperationDescriptor(operationDescriptor));
+        }
 
-            int displayPosition = 1;
-            for (MetricDescriptor metricDescriptor : resourceDescriptor.getMetric()) {
-                List<MeasurementDefinition> measurementDefinitions = MetricsMetadataParser.parseMetricsMetadata(
-                    metricDescriptor, resourceType);
-                for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
-                    measurementDefinition.setDisplayOrder(displayPosition++);
-                    resourceType.addMetricDefinition(measurementDefinition);
-                }
-            }
+        for (ProcessScanDescriptor processMatch : resourceDescriptor.getProcessScan()) {
+            System.out.println(resourceType.getName() + ": "
+                + new ProcessScan(processMatch.getQuery(), processMatch.getName()));
+            resourceType.addProcessScan(new ProcessScan(processMatch.getQuery(), processMatch.getName()));
+        }
 
-            for (OperationDescriptor operationDescriptor : resourceDescriptor.getOperation()) {
-                resourceType.addOperationDefinition(OperationsMetadataParser
-                    .parseOperationDescriptor(operationDescriptor));
-            }
+        for (ContentDescriptor contentDescriptor : resourceDescriptor.getContent()) {
+            resourceType.addPackageType(ContentMetadataParser.parseContentDescriptor(contentDescriptor));
+        }
 
-            for (ProcessScanDescriptor processMatch : resourceDescriptor.getProcessScan()) {
-                System.out.println(resourceType.getName() + ": "
-                    + new ProcessScan(processMatch.getQuery(), processMatch.getName()));
-                resourceType.addProcessScan(new ProcessScan(processMatch.getQuery(), processMatch.getName()));
+        if (resourceDescriptor.getSubcategories() != null) {
+            for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
+                .getSubcategory()) {
+                resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
+                    resourceType));
             }
+        }
 
-            for (ContentDescriptor contentDescriptor : resourceDescriptor.getContent()) {
-                resourceType.addPackageType(ContentMetadataParser.parseContentDescriptor(contentDescriptor));
-            }
-
-            // TODO not sure we really want this wrapping <subcategories> element since no one else uses it
-            if (resourceDescriptor.getSubcategories() != null) {
-                for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
-                    .getSubcategory()) {
-                    resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
-                        resourceType));
-                }
-            }
-
-            Help help = resourceDescriptor.getHelp();
-            if ((help != null) && !help.getContent().isEmpty()) {
-                resourceType.setHelpTextContentType(help.getContentType());
-                resourceType.setHelpText(String.valueOf(help.getContent().get(0)));
-            }
-        } catch (InvalidPluginDescriptorException e) {
-            // TODO: Should we be storing these for viewing in server? Breaking deployment? What?
-            throw e;
+        Help help = resourceDescriptor.getHelp();
+        if ((help != null) && !help.getContent().isEmpty()) {
+            resourceType.setHelpTextContentType(help.getContentType());
+            resourceType.setHelpText(String.valueOf(help.getContent().get(0)));
         }
 
         allTypes.put(resourceType, resourceType);

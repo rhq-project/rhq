@@ -219,9 +219,47 @@
      </c:simple-property>
 '>
 
+    <!ENTITY logLevelReadOnly '
+           <c:simple-property name="level" required="false" type="string" readOnly="true" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
+            <c:property-options>
+              <c:option value="ALL"/>
+              <c:option value="CONFIG"/>
+              <c:option value="DEBUG"/>
+              <c:option value="ERROR"/>
+              <c:option value="FATAL"/>
+              <c:option value="FINE"/>
+              <c:option value="FINER"/>
+              <c:option value="FINEST"/>
+              <c:option value="INFO"/>
+              <c:option value="OFF"/>
+              <c:option value="TRACE"/>
+              <c:option value="WARN"/>
+              <c:option value="WARNING"/>
+            </c:property-options>
+     </c:simple-property>
+'>
+
     <!ENTITY logFilter '
          <!--
          <c:simple-property name="filter" required="false" description="Defines a simple filter type.">
+          <c:property-options>
+           <c:option value="accept"/>
+           <c:option value="all"/>
+           <c:option value="any"/>
+           <c:option value="change-level"/>
+           <c:option value="deny"/>
+           <c:option value="level"/>
+           <c:option value="level-range"/>
+           <c:option value="match"/>
+           <c:option value="not"/>
+           <c:option value="replace"/>
+          </c:property-options>
+         </c:simple-property>-->
+'>
+
+    <!ENTITY logFilterReadOnly '
+         <!--
+         <c:simple-property name="filter" required="false" readOnly="true" description="Defines a simple filter type.">
           <c:property-options>
            <c:option value="accept"/>
            <c:option value="all"/>
@@ -277,6 +315,25 @@
         <c:option value="user.dir" />
         <c:option value="user.home" />
              </c:property-options>
+            </c:simple-property>
+          </c:map-property>
+'>
+
+    <!ENTITY logFileReadOnly '
+          <c:map-property name="file" required="true" readOnly="true" description="The file description consisting of the path and optional relative to path.">
+            <c:simple-property name="path" required="true" readOnly="true" description="The filesystem path."/>
+            <c:simple-property name="relative-to" required="false" readOnly="true" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">
+              <c:property-options>
+                <c:option value="java.home" />
+                <c:option value="jboss.domain.servers.dir" />
+                <c:option value="jboss.home" />
+                <c:option value="jboss.server.base.dir" />
+                <c:option value="jboss.server.data.dir" />
+                <c:option value="jboss.server.log.dir" />
+                <c:option value="jboss.server.tmp.dir" />
+                <c:option value="user.dir" />
+                <c:option value="user.home" />
+              </c:property-options>
             </c:simple-property>
           </c:map-property>
 '>
@@ -4650,6 +4707,186 @@
             <c:simple-property name="factory-class" required="true" type="string" readOnly="true" description="Class name of the factory class that can instantiate the connector service."/>
           </resource-configuration>
         </service>
+      </service>
+    </service>
+
+    <service name="Logging (Managed Server)"
+             discovery="SubsystemDiscovery"
+             class="LoggerComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="subsystem=logging"/>
+        <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+        <c:group name="child:root-logger=ROOT" displayName="Root logger">
+          &logFilterReadOnly;
+          &logLevelReadOnly;
+          <c:list-property name="handlers" required="true" readOnly="true" description="The Handlers associated with this Logger.">
+            <c:simple-property name="handler" type="string" readOnly="true" description="The Handlers associated with this Logger."/>
+          </c:list-property>
+        </c:group>
+      </resource-configuration>
+
+      <service name="Async Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="async-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+          <c:simple-property name="overflow-action" required="true" type="string" readOnly="true" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
+            <c:property-options>
+              <c:option value="BLOCK"/>
+              <c:option value="DISCARD"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:simple-property name="queue-length" required="true" type="integer" readOnly="true" description="The queue length to use before flushing writing"/>
+          <c:list-property name="subhandlers" readOnly="true" required="false" description="The Handlers associated with this async handler.">
+            <c:simple-property name="subhandler" readOnly="true"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Console Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="console-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="true" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+          <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+          <c:simple-property name="target" required="false" type="string" readOnly="true" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
+            <c:property-options>
+              <c:option value="System.err" name="System.err"/>
+              <c:option value="System.out" name="System.out"/>
+            </c:property-options>
+          </c:simple-property>
+        </resource-configuration>
+      </service>
+
+      <service name="Custom Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="custom-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="class" required="true" type="string" readOnly="true" description="The logging handler class to be used."/>
+          <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+          <c:simple-property name="module" required="true" type="string" readOnly="true" description="The module that the logging handler depends on." />
+          <c:list-property name="properties" readOnly="true">
+            <c:map-property name="properties:collapsed" readOnly="true" displayName="Properties">
+              <c:simple-property name="name:0" displayName="Name" required="true" readOnly="true" description="The name of the configuration property."/>
+              <c:simple-property name="value:1" displayName="Value" required="true" readOnly="true" description="The value of the configuration property."/>
+            </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+
+      <service name="File Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="file-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="append" required="false" type="boolean" readOnly="true" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="true" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+          <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
+          &logFileReadOnly;
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+        </resource-configuration>
+      </service>
+
+      <service name="Logger (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="logger"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <!-- category is the same as 'name' for other resources. Don't list as required here -->
+          &logFilterReadOnly;
+          <c:list-property name="handlers" required="false" readOnly="true" description="The Handlers associated with this Logger.">
+            <c:simple-property name="handler" readOnly="true" />
+          </c:list-property>
+          &logLevelReadOnly;
+          <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="true" defaultValue="true" description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
+        </resource-configuration>
+
+      </service>
+
+      <service name="Periodic Rotating File Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="append" required="false" type="boolean" readOnly="true" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="true" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+          <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
+          &logFileReadOnly;
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+          <c:simple-property name="suffix" required="true" type="string" readOnly="true" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
+        </resource-configuration>
+      </service>
+
+      <service name="Size Rotating File Handler (Managed Server)"
+               discovery="SubsystemDiscovery"
+               createDeletePolicy="neither"
+               class="BaseComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:simple-property name="append" required="false" type="boolean" readOnly="true" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+          <c:simple-property name="autoflush" required="false" type="boolean" readOnly="true" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+          <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
+          &logFileReadOnly;
+          &logFilterReadOnly;
+          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+          &logLevelReadOnly;
+          <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="true" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
+          <c:simple-property name="rotate-size" required="true" type="string" readOnly="true" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
+        </resource-configuration>
       </service>
     </service>
 

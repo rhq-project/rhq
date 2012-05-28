@@ -4268,7 +4268,27 @@
           <resource-configuration>
             <c:list-property name="login-modules" required="false" description="List of authentication modules">
               <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
+               <c:simple-property name="code" required="true" type="string" readOnly="true"
+                description="Class name of the module to be instantiated.">
+                  <c:property-options>
+                    <c:option value="AdvancedADLdap" />
+                    <c:option value="AdvancedLdap" />
+                    <c:option value="Certificate" />
+                    <c:option value="CertificateRoles" />
+                    <c:option value="Client" />
+                    <c:option value="Database" />
+                    <c:option value="DatabaseCertificate" />
+                    <c:option value="DatabaseUsers" />
+                    <c:option value="Identity" />
+                    <c:option value="Kerberos" />
+                    <c:option value="Ldap" />
+                    <c:option value="LdapExtended" />
+                    <c:option value="RoleMapping" />
+                    <c:option value="Simple" />
+                    <c:option value="SPNEGOUsers" />
+                    <c:option value="UserRoles" />
+                  </c:property-options>
+                </c:simple-property>
                 <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
                   <c:property-options>
                     <c:option value="sufficient"/>
@@ -8068,7 +8088,27 @@
         <resource-configuration>
           <c:list-property name="login-modules" required="false" description="List of authentication modules">
             <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
+               <c:simple-property name="code" required="true" type="string" readOnly="true"
+                description="Class name of the module to be instantiated.">
+                  <c:property-options>
+                    <c:option value="AdvancedADLdap" />
+                    <c:option value="AdvancedLdap" />
+                    <c:option value="Certificate" />
+                    <c:option value="CertificateRoles" />
+                    <c:option value="Client" />
+                    <c:option value="Database" />
+                    <c:option value="DatabaseCertificate" />
+                    <c:option value="DatabaseUsers" />
+                    <c:option value="Identity" />
+                    <c:option value="Kerberos" />
+                    <c:option value="Ldap" />
+                    <c:option value="LdapExtended" />
+                    <c:option value="RoleMapping" />
+                    <c:option value="Simple" />
+                    <c:option value="SPNEGOUsers" />
+                    <c:option value="UserRoles" />
+                  </c:property-options>
+                </c:simple-property>
               <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
                 <c:property-options>
                   <c:option value="sufficient"/>

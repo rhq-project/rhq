@@ -19,14 +19,19 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
-<#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.ResourceWithType>" -->
+<#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.GroupDefinitionRest>" -->
 <html>
 <ul>
     <#-- the next looks odd, but the incoming var is a list -->
+    <#if (var?size>0) >
     <#list var as var>
     <li>
-        <#include "resourceWithType.ftl"/>
+        <#include "groupDefinition.ftl"/>
     </li>
     </#list>
+    <#else>
+       <strong>No Definitions have been set up</strong>
+    </#if>
+
 </ul>
 <html>

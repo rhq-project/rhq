@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,37 +19,44 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
-<#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.MetricSchedule" -->
+<#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.GroupDefinitionRest" -->
 <html>
-    <table border=1>
+    <table>
         <thead>
-            <tr>
-                <td>Name</td><td>Value</td>
-            </tr>
+        <tr>
+            <td>Name</td><td>Value</td>
+        </tr>
         </thead>
         <tr>
-            <td>Id</td><td>${var.scheduleId}</td>
+            <td>Name</td><td>${var.name}</td>
         </tr>
         <tr>
-            <td>Internal Name</td><td>${var.scheduleName}</td>
+            <td>Id</td><td>${var.id}</td>
         </tr>
         <tr>
-            <td>Name</td><td>${var.displayName}</td>
+            <td>Description</td><td>${var.description}</td>
         </tr>
         <tr>
-            <td>Enabled</td><td>${var.enabled?string("Yes","No")}</td>
+            <td>Recalculation interval (ms)</td><td>${var.recalcInterval}</td>
         </tr>
         <tr>
-            <td>Collection interval (ms)</td><td>${var.collectionInterval}</td>
+            <td>Recursive</td><td>${var.recursive?string("Yes","No")}</td>
         </tr>
         <tr>
-            <td>Units</td><td>${var.unit}</td>
+            <td>Expression</td>
+            <td>
+            <#list var.expression as line>
+                ${line}<br/>
+            </#list>
+            </td>
+        </tr>
+        <tr>
+            <td>Groups</td>
+            <td>
+                <#list var.generatedGroupIds as groupId>
+                    <a href="/rest/1/group/${groupId?c}.html">${groupId?c}</a>
+                </#list>
+            </td>
         </tr>
     </table>
-    Links<br/>
-    <ul>
-        <#list var.links as link>
-            <li><a href="${link.href}.html">${link.rel}</a> </li>
-        </#list>
-    </ul>
 </html>

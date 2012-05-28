@@ -9,11 +9,13 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -29,12 +31,21 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionDeleteException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
+import org.rhq.enterprise.server.rest.domain.GroupDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -57,6 +68,9 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     @EJB
     ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    GroupDefinitionManagerLocal definitionManager;
 
     public Response getGroups(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
@@ -282,5 +296,191 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         gr.getLinks().add(link);
 
         return gr;
+    }
+
+    @Override
+    @GET
+    @Path("/definitions")
+    public Response getDefinitions(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        PageList<GroupDefinition> gdlist =  definitionManager.getGroupDefinitions(caller,new PageControl());
+        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
+        for (GroupDefinition def: gdlist) {
+            GroupDefinitionRest definitionRest = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(),
+                    def.getRecalculationInterval());
+            definitionRest.setExpression(def.getExpressionAsList());
+
+            List<Integer> generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
+            for (ResourceGroup group : def.getManagedResourceGroups() ) {
+                generatedGroups.add(group.getId());
+            }
+            definitionRest.setGeneratedGroupIds(generatedGroups);
+            list.add(definitionRest);
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listGroupDefinition", list), mediaType);
+        }
+        else {
+            GenericEntity<List<GroupDefinitionRest>> ret = new GenericEntity<List<GroupDefinitionRest>>(list) {
+            };
+            builder = Response.ok(ret);
+        }
+
+        return builder.build();
+    }
+
+    @Override
+    @GET
+    @Path("/definition/{id}")
+    public Response getDefinition(@PathParam("id") int definitionId, @Context Request request,
+                                  @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        try {
+            GroupDefinition def = definitionManager.getById(definitionId);
+            GroupDefinitionRest gdr = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(), def.getRecalculationInterval());
+            gdr.setRecursive(def.isRecursive());
+            List<Integer> generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
+            for (ResourceGroup group : def.getManagedResourceGroups() ) {
+                generatedGroups.add(group.getId());
+            }
+            gdr.setGeneratedGroupIds(generatedGroups);
+            gdr.setExpression(def.getExpressionAsList());
+
+            MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+            Response.ResponseBuilder builder;
+            if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                builder = Response.ok(renderTemplate("groupDefinition", gdr), mediaType);
+            }
+            else {
+                builder= Response.ok(gdr);
+            }
+            return builder.build();
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group definition with id " + definitionId);
+        }
+    }
+
+    @Override
+    @DELETE
+    @Path("/definition/{id}")
+    public Response deleteDefinition(@PathParam("id") int definitionId, @Context Request request,
+                                     @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        try {
+            GroupDefinition def = definitionManager.getById(definitionId);
+            definitionManager.removeGroupDefinition(caller,definitionId);
+            return Response.ok().build();
+        } catch (GroupDefinitionNotFoundException e) {
+            // Idem potent
+            return Response.ok().build();
+        } catch (GroupDefinitionDeleteException e) {
+            throw new StuffNotFoundException("Group definition with id " + definitionId);
+        }
+    }
+
+    @Override
+    @POST
+    @Path("/definitions")
+    public Response createDefinition(
+                        GroupDefinitionRest definition,
+                                     @Context Request request, @Context HttpHeaders headers,
+                                     @Context UriInfo uriInfo) {
+
+        Response.ResponseBuilder builder = null;
+
+        if (definition.getName()==null||definition.getName().isEmpty()) {
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity("No name for the definition given");
+        }
+        if (builder!=null)
+            return builder.build();
+
+
+        GroupDefinition gd = new GroupDefinition(definition.getName());
+        gd.setDescription(definition.getDescription());
+        List<String> expressionList = definition.getExpression();
+        StringBuilder sb = new StringBuilder();
+        for(String e : expressionList ) {
+            sb.append(e);
+            sb.append("\n");
+        }
+        gd.setExpression(sb.toString());
+        gd.setRecalculationInterval(definition.getRecalcInterval());
+        gd.setRecursive(definition.isRecursive());
+
+        try {
+            GroupDefinition res = definitionManager.createGroupDefinition(caller,gd);
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/group/definition/{id}");
+            URI location = uriBuilder.build(res.getId());
+            builder= Response.created(location);
+
+        } catch (GroupDefinitionAlreadyExistsException e) {
+            builder =Response.status(Response.Status.CONFLICT);
+        } catch (GroupDefinitionCreateException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return builder.build();
+    }
+
+    @Override
+    @PUT
+    @Path("/definition/{id}")
+    public Response updateDefinition(@PathParam("id") int definitionId,
+                                     boolean recalculate, GroupDefinitionRest definition,
+                                     @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        GroupDefinition gd;
+        try {
+            gd = definitionManager.getById(definitionId);
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group Definition with id " + definitionId);
+        }
+
+        Response.ResponseBuilder builder = null;
+
+        if (!definition.getName().isEmpty())
+            gd.setName(definition.getName());
+        gd.setDescription(definition.getDescription());
+        List<String> expressionList = definition.getExpression();
+        StringBuilder sb = new StringBuilder();
+        for(String e : expressionList ) {
+            sb.append(e);
+            sb.append("\n");
+        }
+        gd.setExpression(sb.toString());
+
+        gd.setRecalculationInterval(definition.getRecalcInterval());
+        gd.setRecursive(definition.isRecursive());
+
+        try {
+            definitionManager.updateGroupDefinition(caller,gd);
+        } catch (Exception e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity(e.getLocalizedMessage());
+            return builder.build();
+        }
+
+        String msg=null;
+        if (recalculate) {
+            try {
+                definitionManager.calculateGroupMembership(caller,gd.getId());
+            } catch (Exception e) {
+                msg = e.getLocalizedMessage();
+//                e.printStackTrace();  // TODO: Customise this generated block
+            }
+        }
+        builder = Response.ok(gd);
+        if (msg!=null) {
+            builder.entity(msg);
+        }
+
+        return builder.build();
     }
 }

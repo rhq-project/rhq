@@ -73,7 +73,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>${gwt.mavev.plugin.version}</version>
+                <version>${gwt.maven.plugin.version}</version>
 
                 <executions>
                     <execution>

@@ -109,9 +109,18 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
         else {
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            // TODO how to signal "need reload"
+            // signal "need reload"
+            if (result.isReloadRequired()) {
+                PropertySimple oobMessage = new PropertySimple("__OOB",
+                    "The server needs a reload for the latest changes to come effective.");
+                conf.put(oobMessage);
+            }
+            if (result.isRestartRequired()) {
+                PropertySimple oobMessage = new PropertySimple("__OOB",
+                    "The server needs a restart for the latest changes to come effective.");
+                conf.put(oobMessage);
+            }
         }
-
     }
 
     protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf, Address address) {

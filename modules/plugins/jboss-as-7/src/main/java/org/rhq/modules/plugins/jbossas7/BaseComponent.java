@@ -283,6 +283,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             PropertySimple oobMessage = new PropertySimple("__OOB","The server needs a reload for the latest changes to come effective.");
             configuration.put(oobMessage);
         }
+        if (res.isRestartRequired()) {
+            PropertySimple oobMessage = new PropertySimple("__OOB",
+                "The server needs a restart for the latest changes to come effective.");
+            configuration.put(oobMessage);
+        }
         return configuration;
     }
 

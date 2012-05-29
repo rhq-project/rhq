@@ -31,6 +31,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -82,6 +83,11 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
         if (!confPath.contains("=")) { // NO = -> no sub path, but a type
             lookForChildren = true;
+        }
+
+        if (isIspnForJDG(context, confPath)) {
+            log.debug("We have JDG as child, ignoring the {JBossAS7}Infinispan type");
+            return details;
         }
 
         // Construct the full path including the parent
@@ -182,6 +188,42 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         }
 
         return details;
+    }
+
+    private boolean isIspnForJDG(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
+
+        // Check if this is ISPN
+        if (!"subsystem=infinispan".equals(confPath))
+            return false;
+
+        ResourceType ourType = context.getResourceType();
+        if (ourType.getPlugin().equals("JDG"))
+            return false;
+
+        if (!ourType.getName().equals("Infinispan"))
+            return false;
+
+        // So we are {JBossAS7}Infinispan
+        Set<ResourceType> parentTypes = ourType.getParentResourceTypes();
+        ResourceType parent = null;
+        for (ResourceType type : parentTypes) {
+            if (type.getName().equals("JBossAS7 Standalone Server") && type.getPlugin().equals("JBossAS7")) {
+                parent = type;
+                break;
+            }
+        }
+        if (parent==null)
+            return false;
+
+        // So we are as7/eap and need to check now if we have a JDG plugin's ISPN resource as child
+        boolean found = false;
+        for (ResourceType type: parent.getChildResourceTypes()) {
+            if (type.getPlugin().equals("JDG") && type.getName().equals("Infinispan")) {
+                found = true;
+            }
+        }
+
+        return found;
     }
 
 }

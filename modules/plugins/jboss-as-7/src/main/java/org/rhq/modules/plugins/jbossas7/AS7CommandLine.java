@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
@@ -146,7 +145,7 @@ public class AS7CommandLine extends JavaCommandLine {
     private URL toURL(String value) {
         URL propertiesURL;
         try {
-            propertiesURL = URI.create(value).toURL();
+            propertiesURL = new URL(value);
             if (propertiesURL.getProtocol().equals("file")) {
                 String path = propertiesURL.getPath();
                 File file = new File(path);
@@ -156,13 +155,13 @@ public class AS7CommandLine extends JavaCommandLine {
                     propertiesURL = absoluteFile.toURI().toURL();
                 }
             }
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException murle) {
             // it's probably just a path, e.g. "/opt/jboss-as-7.1.1.Final/bin/jboss-as.properties" or "jboss-as.properties"
             File file = new File(value);
             File absoluteFile = getAbsoluteFile(file);
             try {
                 propertiesURL = absoluteFile.toURI().toURL();
-            } catch (MalformedURLException e1) {
+            } catch (MalformedURLException murle2) {
                 propertiesURL = null;
                 log.error("Value of class option " + PROPERTIES_OPTION + " (" + value + ") is not a valid URL.");
             }

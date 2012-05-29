@@ -127,44 +127,6 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         return resourceReport;
     }
 
-    void addAdditionalToOp(Operation op, Configuration parameters, String parameterName, boolean optional) {
-        String value = parameters.getSimpleValue(parameterName, null);
-        if (value == null) {
-            if (!optional) {
-                throw new IllegalArgumentException("Required parameter [" + parameterName + "] for operation ["
-                    + op.getName() + "] is not defined.");
-            }
-        } else {
-            op.addAdditionalProperty(parameterName, value);
-        }
-    }
-
-    void addRequiredToOp(Operation op, Configuration parameters, String property) {
-        addAdditionalToOp(op, parameters, property, false);
-    }
-
-    void addOptionalToOp(Operation op, Configuration parameters, String property) {
-        addAdditionalToOp(op, parameters, property, true);
-    }
-
-    @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-
-        Operation op = new Operation("disable", getAddress());
-        Result res = getASConnection().execute(op);
-        if (!res.isSuccess()) {
-            report.setErrorMessage("Was not able to disable the datasource for config changes: "
-                + res.getFailureDescription());
-            return;
-        }
-
-        super.updateResourceConfiguration(report);
-
-        op = new Operation("enable", getAddress());
-        res = getASConnection().execute(op);
-
-    }
-
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
@@ -217,14 +179,14 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         Result res = getASConnection().execute(op);
 
         if (res.isSuccess()) {
-            String tmp = (String) res.getResult();
+            Integer tmp = (Integer) res.getResult();
             if (tmp == null) { // server
                 if (request.getName().equals("max-pool-size"))
-                    tmp = "20"; // The default value
+                    tmp = 20; // The default value
                 else if (request.getName().equals("min-pool-size"))
-                    tmp = "0"; // The default value
+                    tmp = 0; // The default value
                 else
-                    tmp ="-1"; // Fallback for unknown requests
+                    tmp =-1; // Fallback for unknown requests
             }
             Double val = Double.valueOf(tmp);
             MeasurementDataNumeric data = new MeasurementDataNumeric(request, val);

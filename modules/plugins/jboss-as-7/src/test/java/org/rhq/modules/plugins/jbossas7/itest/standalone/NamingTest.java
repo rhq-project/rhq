@@ -37,7 +37,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 /**
- * Test stuff around socket bindings.
+ * Test stuff around naming subsystem
  * This could actually also run for domain mode
  * @author Heiko W. Rupp
  */

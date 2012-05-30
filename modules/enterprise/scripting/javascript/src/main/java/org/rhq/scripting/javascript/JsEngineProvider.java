@@ -32,7 +32,7 @@ public class JsEngineProvider implements ScriptEngineProvider {
 
     @Override
     public String getSupportedLanguage() {
-        return "JavaScript";
+        return "javascript";
     }
 
     @Override

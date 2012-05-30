@@ -35,10 +35,11 @@ import javax.script.Bindings;
 public class ScriptCommandTest {
 
     ScriptCommand cmd;
+    ClientMain client;
     
     @Test(enabled=false)
     public void executeShouldSetDefaultBindings() throws Exception {
-        ClientMain client = createClient();
+        client = createClient();
         cmd = new ScriptCommand();
         String script = "exec var x = 1;";
         String[] args = asList(script).toArray(new String[] {});
@@ -61,7 +62,7 @@ public class ScriptCommandTest {
     }
 
     void assertSubjectBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object subject = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("subject");
 
         assertNotNull(subject, "Expected variable 'subject' to be bound to script in global scope");
@@ -72,7 +73,7 @@ public class ScriptCommandTest {
     }
 
     void assertManagersBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         List<String> mgrsNotBound = new ArrayList<String>();
 
         for (RhqManagers mgr : RhqManagers.values()) {
@@ -88,7 +89,7 @@ public class ScriptCommandTest {
     }
 
     void assertPrettyWriterBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object writer = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("pretty");
 
         assertNotNull(writer, "Expected variable 'pretty' to be bound to script in global scope");
@@ -99,7 +100,7 @@ public class ScriptCommandTest {
     }
 
     void assertScriptUtilsBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object scriptUtil = scriptEngine.get("scriptUtil");
 
         assertNotNull(scriptUtil, "Expected variable 'scriptUtil' to be bound to script in engine scope");
@@ -110,7 +111,7 @@ public class ScriptCommandTest {
     }
 
     void assertIsDefinedFunctionBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object function = scriptEngine.get("isDefined");
 
         assertNotNull(function, "Expected function 'isDefined' to be bound to script in engine scope");

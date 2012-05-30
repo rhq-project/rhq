@@ -23,7 +23,8 @@
           <version>1.7R3</version>
        </dependency>
        
-       <!-- JSR 223 support for Rhino -->
+<!-- we no longer depend on Phobos because we now bundle the Phobos script engine with
+     our own modifications. 
        <dependency>
           <groupId>com.sun.phobos</groupId>
           <artifactId>phobos-js</artifactId>
@@ -35,7 +36,7 @@
              </exclusion>
           </exclusions>
        </dependency>
-       
+ -->              
     </dependencies>
     
     <build>
@@ -44,6 +45,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                    <argLine>-Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>    
+                    <!-- This is important, because some of the tests try to exit the JVM. -->
+                    <failIfNoTests>true</failIfNoTests>                    
                 </configuration>
             </plugin>
         </plugins>

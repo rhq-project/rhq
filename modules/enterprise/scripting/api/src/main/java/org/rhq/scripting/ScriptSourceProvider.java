@@ -17,25 +17,19 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.scripting.javascript;
+package org.rhq.scripting;
 
-import java.io.PrintWriter;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+import java.io.Reader;
+import java.net.URI;
 
 /**
- * 
+ * Scripts in RHQ can be stored in various locations or maybe not even in the filesystem.
+ * Implementations of this interface can be used to provide the contents of the scripts
+ * based on URIs. 
  *
  * @author Lukas Krejci
  */
-public class Main {
+public interface ScriptSourceProvider {
 
-    public static void main(String[] args) throws Exception {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("rhino-nonjdk");               
-        
-        engine.getContext().setWriter(new PrintWriter(System.out, true));
-        engine.eval("importPackage(java.lang); println('ahoj')");
-    }
+    Reader getScriptSource(URI location);
 }

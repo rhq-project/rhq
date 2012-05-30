@@ -19,11 +19,28 @@
 
 package org.rhq.scripting;
 
+import java.util.List;
+
 /**
- * TODO This will hook into the interactive code completion provided by the CLI.
- *
+ * An interface for performing code completion in a given language.
+ * This inspired by the jline's <code>Completor</code> interface but
+ * is defined separately so that we don't introduce a dependency on 
+ * jline where it doesn't make sense.
+ * 
  * @author Lukas Krejci
  */
 public interface CodeCompletion {
 
+    /**
+     * Generates the completion candidates and fills the supplied list with them.
+     * 
+     * @param context the context of the code completion, usually that is the current
+     * statement being edited by the user
+     * @param cursorPosition the position of the cursor inside the context
+     * @param completions this should be a list of strings but is intentionally left raw
+     * so that this interface is compatible with jline's <code>Completor</code>.
+     * @return the character index in the context for which the completion candidates were
+     * actually generated (might be different from the cursorPosition).
+     */
+    int complete(String context, int cursorPosition, @SuppressWarnings("rawtypes") List candidates);
 }

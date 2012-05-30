@@ -56,7 +56,6 @@ import org.rhq.enterprise.client.script.ScriptCmdLine;
  */
 public class ScriptCommand implements ClientCommand {
 
-    private ScriptEngine jsEngine;
     private StandardBindings bindings;
 
     private final Log log = LogFactory.getLog(ScriptCommand.class);
@@ -65,21 +64,6 @@ public class ScriptCommand implements ClientCommand {
 
     private boolean isMultilineScript = false;
     private boolean inMultilineScript = false;
-
-    public ScriptEngine getScriptEngine() {
-        if (jsEngine == null) {
-            try {
-                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript",
-                    new PackageFinder(Arrays.asList(getLibDir())), null);
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return jsEngine;
-    }
 
     public String getPromptCommandString() {
         return "exec";
@@ -100,8 +84,8 @@ public class ScriptCommand implements ClientCommand {
                 CmdLineParser cmdLineParser = new CmdLineParser();
                 ScriptCmdLine scriptCmdLine = cmdLineParser.parse(args);
 
-                bindScriptArgs(scriptCmdLine);
-                executeUtilScripts();
+                bindScriptArgs(client, scriptCmdLine);
+                executeUtilScripts(client);
 
                 FileReader reader = new FileReader(scriptCmdLine.getScriptFileName());
                 try {
@@ -153,7 +137,7 @@ public class ScriptCommand implements ClientCommand {
 
         try {
 
-            Object result = getScriptEngine().eval(script.toString());
+            Object result = client.getScriptEngine().eval(script.toString());
             inMultilineScript = false;
             script = new StringBuilder();
             if (result != null) {
@@ -199,7 +183,7 @@ public class ScriptCommand implements ClientCommand {
         bindings.put("configurationEditor", new ConfigurationEditor(client));
         bindings.put("rhq", new Controller(client));
 
-        ScriptEngine engine = getScriptEngine();
+        ScriptEngine engine = client.getScriptEngine();
 
         ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
 
@@ -212,7 +196,7 @@ public class ScriptCommand implements ClientCommand {
             initBindings(client);
 
         } else {
-            ScriptEngine engine = getScriptEngine();
+            ScriptEngine engine = client.getScriptEngine();
 
             // remove any current manager bindings from the engine, they may not be valid for the
             // new client. The new standard bindings will include any new managers.
@@ -228,12 +212,12 @@ public class ScriptCommand implements ClientCommand {
         return;
     }
 
-    private void executeUtilScripts() {
+    private void executeUtilScripts(ClientMain client) {
         InputStream stream = getClass().getResourceAsStream("test_utils.js");
         InputStreamReader reader = new InputStreamReader(stream);
 
         try {
-            getScriptEngine().eval(reader);
+            client.getScriptEngine().eval(reader);
         } catch (ScriptException e) {
             log.warn("An error occurred while executing test_utils.js", e);
         }
@@ -254,17 +238,17 @@ public class ScriptCommand implements ClientCommand {
 
     }
 
-    private void bindScriptArgs(ScriptCmdLine cmdLine) {
-        bindArgsArray(cmdLine);
+    private void bindScriptArgs(ClientMain client, ScriptCmdLine cmdLine) {
+        bindArgsArray(client, cmdLine);
 
         if (cmdLine.getArgType() == ScriptCmdLine.ArgType.NAMED) {
-            bindNamedArgs(cmdLine);
+            bindNamedArgs(client, cmdLine);
         }
 
-        getScriptEngine().put("script", new File(cmdLine.getScriptFileName()).getName());
+        client.getScriptEngine().put("script", new File(cmdLine.getScriptFileName()).getName());
     }
 
-    private void bindArgsArray(ScriptCmdLine cmdLine) {
+    private void bindArgsArray(ClientMain client, ScriptCmdLine cmdLine) {
         String[] args = new String[cmdLine.getArgs().size()];
         int i = 0;
 
@@ -272,19 +256,19 @@ public class ScriptCommand implements ClientCommand {
             args[i++] = arg.getValue();
         }
 
-        getScriptEngine().put("args", args);
+        client.getScriptEngine().put("args", args);
     }
 
-    private void bindNamedArgs(ScriptCmdLine cmdLine) {
+    private void bindNamedArgs(ClientMain client, ScriptCmdLine cmdLine) {
         for (ScriptArg arg : cmdLine.getArgs()) {
             NamedScriptArg namedArg = (NamedScriptArg) arg;
-            getScriptEngine().put(namedArg.getName(), namedArg.getValue());
+            client.getScriptEngine().put(namedArg.getName(), namedArg.getValue());
         }
     }
 
-    private boolean executeScriptFile(Reader reader, ClientMain client) {
+    private boolean executeScriptFile( Reader reader, ClientMain client) {
         try {
-            Object result = getScriptEngine().eval(reader);
+            Object result = client.getScriptEngine().eval(reader);
             if (result != null) {
                 if (client.isInteractiveMode()) {
                     new TabularWriter(client.getPrintWriter()).print(result);
@@ -312,14 +296,5 @@ public class ScriptCommand implements ClientCommand {
     public String getDetailedHelp() {
         return "Execute a statement or a script. The following service managers are available: "
             + Arrays.toString(RhqManagers.values());
-    }
-
-    public ScriptContext getContext() {
-        return getScriptEngine().getContext();
-    }
-
-    private File getLibDir() {
-        String cwd = System.getProperty("user.dir");
-        return new File(cwd, "lib");
     }
 }

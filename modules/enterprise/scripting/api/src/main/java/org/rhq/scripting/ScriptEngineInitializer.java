@@ -20,6 +20,7 @@
 package org.rhq.scripting;
 
 import java.lang.reflect.Method;
+import java.security.PermissionCollection;
 import java.util.Set;
 
 import javax.script.ScriptEngine;
@@ -33,7 +34,20 @@ import javax.script.ScriptException;
  */
 public interface ScriptEngineInitializer {
 
-    ScriptEngine instantiate(Set<String> packages) throws ScriptException;
+    /**
+     * Instantiates a new script engine, makes the provided java packages "imported" into the context
+     * (i.e. classes from those packages can be instantiated without providing the full class name)
+     * and makes the script engine use the scriptSourceProvider to locate scripts.
+     * 
+     * @param packages the list of java packages to be imported in the context
+     * @param scriptSourceProvider the provider of the sources of scripts - can be null to use no
+     * script source provider and depend on the default module loading mechanisms of the script language
+     * @param permissions the security permissions the script engine should execute the script with, can be null
+     * in which case the script engine is unsecured
+     * @return a newly instantiated script engine configured as above
+     * @throws ScriptException
+     */
+    ScriptEngine instantiate(Set<String> packages, ScriptSourceProvider scriptSourceProvider, PermissionCollection permissions) throws ScriptException;
     
     /**
      * This function returns a definition string in the script engine's language

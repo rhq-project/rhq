@@ -26,14 +26,19 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -42,6 +47,8 @@ import jline.MultiCompletor;
 import jline.SimpleCompletor;
 import mazz.i18n.Msg;
 
+import org.rhq.bindings.ScriptEngineFactory;
+import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
@@ -81,20 +88,23 @@ public class ClientMain {
     private int port = 7080;
     private String user;
     private String pass;
+    private String language;
     private ArrayList<String> notes = new ArrayList<String>();
-
+    
     // reference to the webservice reference factory
     private RemoteClient remoteClient;
 
     // The subject that will be used to carry out all requested actions
     private Subject subject;
-
+    
     private InteractiveJavascriptCompletor serviceCompletor;
 
     private boolean interactiveMode = true;
 
     private Recorder recorder = new NoOpRecorder();
 
+    private ScriptEngine engine;
+    
     private class StartupConfiguration {
         public boolean askForPassword;
         public boolean displayUsage;
@@ -187,8 +197,7 @@ public class ClientMain {
     }
     
     private void initServiceCompletor() {
-        ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        this.serviceCompletor.setContext(sc.getContext());
+        this.serviceCompletor.setContext(getScriptEngine().getContext());
 
         if (remoteClient != null) {
             this.serviceCompletor.setServices(remoteClient.getManagers());
@@ -363,7 +372,7 @@ public class ClientMain {
         } else {
             boolean result = commands.get("exec").execute(this, args);
             if (loggedIn()) {
-                this.serviceCompletor.setContext(((ScriptCommand) commands.get("exec")).getContext());
+                this.serviceCompletor.setContext(getScriptEngine().getContext());
             }
 
             return result;
@@ -460,6 +469,7 @@ public class ClientMain {
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f'),
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'),
+            new LongOpt("language", LongOpt.REQUIRED_ARGUMENT, null, 'l'),
             new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, null, -2) };
 
         Getopt getopt = new Getopt("Cli", args, sopts, lopts, false);
@@ -540,6 +550,9 @@ public class ClientMain {
                 }
                 break;
             }
+            case 'l':
+                this.language = getopt.getOptarg();
+                break;
             }
         }
 
@@ -619,12 +632,31 @@ public class ClientMain {
         this.outputWriter = writer;
     }
 
+    public String getLanguage() {
+        return this.language == null ? "javascript" : this.language;
+    }
+    
     public int getConsoleWidth() {
         //the console reader might be null when this method is asked for the output
         //width in non-interactive mode where we don't attach to stdin.
         return this.consoleReader == null ? DEFAULT_CONSOLE_WIDTH : this.consoleReader.getTermwidth();
     }
 
+    public ScriptEngine getScriptEngine() {
+        if (engine == null) {
+            try {
+                engine = ScriptEngineFactory.getScriptEngine(getLanguage(),
+                    new PackageFinder(Arrays.asList(getLibDir())), null);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return engine;
+    }
+    
     public Map<String, ClientCommand> getCommands() {
         return commands;
     }
@@ -654,5 +686,10 @@ public class ClientMain {
 
     public void setRecorder(Recorder recorder) {
         this.recorder = recorder;
+    }
+    
+    private static File getLibDir() {
+        String cwd = System.getProperty("user.dir");
+        return new File(cwd, "lib");
     }
 }

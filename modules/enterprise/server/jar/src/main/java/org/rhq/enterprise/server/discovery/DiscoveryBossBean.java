@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -438,9 +439,18 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + " to manually add child resources.");
         }
 
+        Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
+
+        if (!resourceType.isSupportsManualAdd()) {
+            throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
+                                + parentResource + ", since the " + resourceType
+                                + " type does not support manual add.");
+        }
+
+        abortResourceManualAddIfExistingSingleton(parentResource, resourceType);
+
         MergeResourceResponse mergeResourceResponse;
         try {
-            Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
             AgentClient agentClient = this.agentManager.getAgentClient(parentResource.getAgent());
             mergeResourceResponse = agentClient.getDiscoveryAgentService().manuallyAddResource(resourceType,
                 parentResourceId, pluginConfiguration, user.getId());
@@ -1058,6 +1068,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private <T> boolean needsUpgrade(T oldValue, T newValue) {
         return newValue != null && (oldValue == null || !newValue.equals(oldValue));
+    }
+
+    private void abortResourceManualAddIfExistingSingleton(Resource parentResource, ResourceType resourceType) {
+        if (resourceType.isSingleton()) {
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.addFilterParentResourceId(parentResource.getId());
+            resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
+                    resourceCriteria);
+            if (childResourcesOfType.size() >= 1) {
+                throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
+                        + parentResource + ", since " + resourceType
+                        + " is a singleton type, and there is already a child Resource of that type. "
+                        + "If the existing child Resource corresponds to a managed Resource which no longer exists, "
+                        + "uninventory it and then try again.");
+            }
+        }
     }
 
 }

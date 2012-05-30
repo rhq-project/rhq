@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,9 @@ import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
+import javax.ejb.EJBException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.persistence.EntityManager;
@@ -42,6 +44,9 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -50,19 +55,37 @@ import org.xml.sax.InputSource;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
+
+/**
+ * A unit test for {@link DiscoveryBossBean}.
+ */
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
+
     private DiscoveryBossLocal discoveryBoss;
+
+    private SubjectManagerLocal subjectManager;
+
+    private ResourceManagerLocal resourceManager;
 
     private MBeanServer dummyJBossMBeanServer;
 
@@ -76,9 +99,13 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     private Agent agent;
 
+    private TestServerCommunicationsService agentServiceContainer;
+
     @BeforeClass
     public void beforeClass() throws Exception {
         discoveryBoss = LookupUtil.getDiscoveryBoss();
+        subjectManager = LookupUtil.getSubjectManager();
+        resourceManager = LookupUtil.getResourceManager();
     }
 
     @BeforeMethod
@@ -95,6 +122,26 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         serviceType1 = getEntityManager().find(ResourceType.class, 3);
         serviceType2 = getEntityManager().find(ResourceType.class, 4);
         agent = getEntityManager().find(Agent.class, 1);
+
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
+        when(agentServiceContainer.discoveryService.manuallyAddResource(any(ResourceType.class), anyInt(),
+                any(Configuration.class), anyInt())).thenAnswer(new Answer<MergeResourceResponse>() {
+            public MergeResourceResponse answer(InvocationOnMock invocation) throws Throwable {
+                Resource resource = new Resource(1000000);
+                resource.setUuid(UUID.randomUUID().toString());
+                ResourceType resourceType = (ResourceType) invocation.getArguments()[0];
+                resource.setResourceType(resourceType);
+                long randomLong = UUID.randomUUID().getLeastSignificantBits();
+                resource.setResourceKey(String.valueOf("key-" + randomLong));
+                resource.setName("name-" + randomLong);
+                int parentResourceId = (Integer)invocation.getArguments()[1];
+                Resource parentResource = resourceManager.getResource(subjectManager.getOverlord(), parentResourceId);
+                resource.setParentResource(parentResource);
+                Integer ownerSubjectId = (Integer) invocation.getArguments()[3];
+                return discoveryBoss.addResource(resource, ownerSubjectId);
+            }
+        });
     }
 
     @AfterMethod(alwaysRun = true)
@@ -156,6 +203,39 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert syncInfo != null;
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void testManuallyAddResource() throws Exception {
+        InventoryReport inventoryReport = new InventoryReport(agent);
+
+        Resource platform = new Resource("alpha", "platform", platformType);
+        Resource server = new Resource("bravo", "server", serverType);
+        platform.addChildResource(server);
+        Resource service2 = new Resource("delta", "service 2", serviceType2);
+        server.addChildResource(service2);
+
+        platform.setUuid("" + new Random().nextInt());
+        server.setUuid("" + new Random().nextInt());
+        service2.setUuid("" + new Random().nextInt());
+
+        inventoryReport.addAddedRoot(platform);
+
+        ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert syncInfo != null;
+
+        ResourceSyncInfo serverSyncInfo = syncInfo.getChildSyncInfos().iterator().next();
+        Resource resource1 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
+                serverSyncInfo.getId(), new Configuration());
+
+        try {
+            Resource resource2 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
+                    serverSyncInfo.getId(), new Configuration());
+            fail("Manually adding a singleton that already existed succeeded: " + resource2);
+        } catch (EJBException e) {
+            assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());
+            assertTrue(String.valueOf(e.getCause()), e.getCause().getMessage().contains("singleton"));
+        }
     }
 
     /**

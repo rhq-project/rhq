@@ -52,7 +52,7 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
-                       singleton="0"
+                       singleton="1"
                        plugin="test"
                        deleted="0"/>
 

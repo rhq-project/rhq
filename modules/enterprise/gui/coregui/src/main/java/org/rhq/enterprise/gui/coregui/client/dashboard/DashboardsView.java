@@ -188,6 +188,9 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
+                if (selectedDashboardView.isMaximized()) {
+                    selectedDashboardView.restorePortlet();
+                }
                 selectedDashboardView.setEditMode(editMode);
             }
         });

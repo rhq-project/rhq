@@ -52,6 +52,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
@@ -452,12 +453,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         MergeResourceResponse mergeResourceResponse;
         try {
             AgentClient agentClient = this.agentManager.getAgentClient(parentResource.getAgent());
-            mergeResourceResponse = agentClient.getDiscoveryAgentService().manuallyAddResource(resourceType,
-                parentResourceId, pluginConfiguration, user.getId());
+            DiscoveryAgentService discoveryAgentService = agentClient.getDiscoveryAgentService();
+            mergeResourceResponse = discoveryAgentService.manuallyAddResource(resourceType,
+                    parentResourceId, pluginConfiguration, user.getId());
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error adding " + resourceType.getName()
-                + " resource to inventory as a child of the resource with id " + parentResourceId + " - cause: "
-                + e.getLocalizedMessage(), e);
+            throw new RuntimeException("Error adding [" + resourceType
+                + "] Resource to inventory as a child of " + parentResource + " - cause: " + e, e);
         }
 
         return mergeResourceResponse;

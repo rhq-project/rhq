@@ -522,54 +522,102 @@ public class ResourceTreeView extends LocatableVLayout {
         // Create Child Menu
         Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
         if (!creatableChildTypes.isEmpty()) {
-            MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
+            final MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
             boolean hasCreateChildPermission = resourcePermission.isCreateChildResources();
             createChildMenu.setEnabled(hasCreateChildPermission);
             if (hasCreateChildPermission) {
-                Menu createChildSubMenu = new Menu();
-                Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-                Set<String> displayNames = displayNameMap.keySet();
-                for (String displayName : displayNames) {
-                    MenuItem createItem = new MenuItem(displayName);
-                    final ResourceType childType = displayNameMap.get(displayName);
-                    createItem.addClickHandler(new ClickHandler() {
-                        public void onClick(MenuItemClickEvent event) {
-                            ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
+                final Menu createChildSubMenu = new Menu();
+                final Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.addFilterParentResourceId(resource.getId());
+                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                    new AsyncCallback<PageList<Resource>>() {
+
+                        @Override
+                        public void onSuccess(PageList<Resource> result) {
+                            Menu filteredSubmenu = checkForSingletons(result, resource, displayNameMap,
+                                createChildSubMenu);
+                            createChildMenu.setSubmenu(filteredSubmenu);
+                            resourceContextMenu.addItem(createChildMenu);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Log.error("Error resources with parentId:" + resource.getId(), caught);
                         }
                     });
-                    createChildSubMenu.addItem(createItem);
-                }
-                createChildMenu.setSubmenu(createChildSubMenu);
-            }
 
-            resourceContextMenu.addItem(createChildMenu);
+            } else {
+                resourceContextMenu.addItem(createChildMenu);
+            }
         }
 
         // Manual Import Menu
         Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);
 
         if (!importableChildTypes.isEmpty()) {
-            MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
+            final MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
             boolean hasManualImportPermission = resourcePermission.isCreateChildResources();
             importChildMenu.setEnabled(hasManualImportPermission);
             if (hasManualImportPermission) {
-                Menu importChildSubMenu = new Menu();
-                Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
-                Set<String> displayNames = displayNameMap.keySet();
-                for (final String displayName : displayNames) {
-                    MenuItem importItem = new MenuItem(displayName);
-                    final ResourceType childType = displayNameMap.get(displayName);
-                    importItem.addClickHandler(new ClickHandler() {
-                        public void onClick(MenuItemClickEvent event) {
-                            ResourceFactoryImportWizard.showImportWizard(resource, childType);
+                final Menu importChildSubMenu = new Menu();
+                final Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.addFilterParentResourceId(resource.getId());
+                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                    new AsyncCallback<PageList<Resource>>() {
+
+                        @Override
+                        public void onSuccess(PageList<Resource> result) {
+                            Menu filteredSubmenu = checkForSingletons(result, resource, displayNameMap,
+                                importChildSubMenu);
+                            importChildMenu.setSubmenu(filteredSubmenu);
+                            resourceContextMenu.addItem(importChildMenu);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Log.error("Error resources with parentId:" + resource.getId(), caught);
                         }
                     });
-                    importChildSubMenu.addItem(importItem);
-                }
-                importChildMenu.setSubmenu(importChildSubMenu);
+
+            } else {
+                resourceContextMenu.addItem(importChildMenu);
             }
-            resourceContextMenu.addItem(importChildMenu);
         }
+    }
+
+    private Menu checkForSingletons(PageList<Resource> siblings, final Resource resource,
+        Map<String, ResourceType> displayNameMap, Menu submentuToAdd) {
+        Set<String> displayNames = displayNameMap.keySet();
+        for (final String displayName : displayNames) {
+            MenuItem itemToAdd = new MenuItem(displayName);
+            final ResourceType childType = displayNameMap.get(displayName);
+            boolean disabled = false;
+            // for each already added child, check if the type is the same.
+            // If yes, disable the menu item
+            if (displayNameMap.get(displayName).isSingleton()) {
+                for (Resource sibling : siblings) {
+                    if (sibling.getResourceType().equals(displayNameMap.get(displayName))) {
+                        disabled = true;
+                        break;
+                    }
+                }
+            }
+            // if the condition obove is not satisfied, add the menu item
+            if (!disabled) {
+                itemToAdd.addClickHandler(new ClickHandler() {
+                    public void onClick(MenuItemClickEvent event) {
+                        ResourceFactoryImportWizard.showImportWizard(resource, childType);
+                    }
+                });
+                submentuToAdd.addItem(itemToAdd);
+            }
+            
+        }
+        return submentuToAdd;
     }
 
     /**
@@ -692,7 +740,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                             //2 lines could be uncommented and the lines below them refactorized
                                             //MeasurementUserPreferences measurementPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
                                             //String selectedView = measurementPreferences.getSelectedView(String.valueOf(resource.getId()));
-                                            
+
                                             final int sid = UserSessionManager.getSessionSubject().getId();
                                             SubjectCriteria c = new SubjectCriteria();
                                             c.addFilterId(sid);
@@ -701,11 +749,15 @@ public class ResourceTreeView extends LocatableVLayout {
                                                 new AsyncCallback<PageList<Subject>>() {
                                                     public void onSuccess(PageList<Subject> result) {
                                                         if (result.size() > 0) {
-                                                            UserPreferences uPreferences = new UserPreferences(result.get(0));
-                                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(uPreferences);
-                                                            String selectedView = mPreferences.getSelectedView(String.valueOf(resource.getId()));
-                                                            
-                                                            addNewMetric(String.valueOf(resource.getId()), selectedView, resourceGraphElements);
+                                                            UserPreferences uPreferences = new UserPreferences(result
+                                                                .get(0));
+                                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(
+                                                                uPreferences);
+                                                            String selectedView = mPreferences.getSelectedView(String
+                                                                .valueOf(resource.getId()));
+
+                                                            addNewMetric(String.valueOf(resource.getId()),
+                                                                selectedView, resourceGraphElements);
                                                         } else {
                                                             Log.trace("Error obtaining subject with id:" + sid);
                                                         }
@@ -727,9 +779,9 @@ public class ResourceTreeView extends LocatableVLayout {
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
     }
-    
+
     private void addNewMetric(String id, String selectedView, String resourceGraphElements) {
-      //construct portal.war url to access
+        //construct portal.war url to access
         String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
         baseUrl += "?id=" + id;
         baseUrl += "&view=" + selectedView;
@@ -740,10 +792,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         try {
             b.setCallback(new RequestCallback() {
-                public void onResponseReceived(final Request request,
-                    final Response response) {
-                    Log.trace("Successfully submitted request to add graph to view:"
-                        + url);
+                public void onResponseReceived(final Request request, final Response response) {
+                    Log.trace("Successfully submitted request to add graph to view:" + url);
 
                     //kick off a page reload.
                     String currentViewPath = History.getToken();

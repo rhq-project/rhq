@@ -22,9 +22,6 @@
  */
 package org.rhq.enterprise.client;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,18 +32,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.client.commands.ClientCommand;
+import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.client.script.CommandLineParseException;
+import org.rhq.enterprise.clientapi.RemoteClient;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 import jline.ArgumentCompletor;
 import jline.Completor;
 import jline.ConsoleReader;
 import jline.MultiCompletor;
 import jline.SimpleCompletor;
 import mazz.i18n.Msg;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.commands.ClientCommand;
-import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.enterprise.client.script.CommandLineParseException;
-import org.rhq.enterprise.clientapi.RemoteClient;
 
 /**
  * @author Greg Hinkle
@@ -411,13 +410,14 @@ public class ClientMain {
         List<String> args = new ArrayList<String>();
         boolean keep_going = true;
 
-        // we don't want to parse numbers and we want ' to be a normal word
-        // character
         strtok.ordinaryChars('0', '9');
         strtok.ordinaryChar('.');
         strtok.ordinaryChar('-');
-        strtok.ordinaryChar('\'');
-        strtok.wordChars(33, 127);
+        strtok.quoteChar('\'');
+        strtok.quoteChar('"');
+        strtok.wordChars(33, 33);
+        strtok.wordChars(35, 38);
+        strtok.wordChars(40, 127);
 
         // parse the command line
         while (keep_going) {
@@ -431,7 +431,7 @@ public class ClientMain {
 
             if (nextToken == java.io.StreamTokenizer.TT_WORD) {
                 args.add(strtok.sval);
-            } else if (nextToken == '\"') {
+            } else if (nextToken == '\"' || nextToken == '\'') {
                 args.add(strtok.sval);
             } else if ((nextToken == java.io.StreamTokenizer.TT_EOF) || (nextToken == java.io.StreamTokenizer.TT_EOL)) {
                 keep_going = false;

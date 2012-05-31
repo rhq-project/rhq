@@ -1,6 +1,6 @@
 /*
-fcontext * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -182,17 +181,30 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
-                        getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
 
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
-                                    caught);
-                            }
+                        // [BZ 827203] Disable this view to prevent fast-click issues. It will get re-enabled when
+                        //             the detail resource or group view is done with its async init and calls
+                        //             notifyViewRenderedListeners() on itself.
+                        disable();
 
-                            public void onSuccess(ResourceGroup result) {
-                                renderAutoGroup(result);
-                            }
-                        });
+                        try {
+                            getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+                                public void onSuccess(ResourceGroup result) {
+                                    renderAutoGroup(result);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    // Make sure to re-enable ourselves.
+                                    enable();
+                                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
+                                        caught);
+                                }
+                            });
+                        } catch (RuntimeException re) {
+                            // Make sure to re-enable ourselves.
+                            enable();
+                            CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), re);
+                        }
                     } else {
                         // TODO: probably clicked on a subcategory, do we need a message?
                         treeGrid.deselectRecord(selectedRecord);
@@ -246,7 +258,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private void getAutoGroupBackingGroup(final AutoGroupTreeNode agNode, final AsyncCallback<ResourceGroup> callback) {
         final ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
 
-        // get the children tree nodes and build a child resourceId array 
+        // get the children tree nodes and build a child resourceId array
         TreeNode[] children = treeGrid.getTree().getChildren(agNode);
         final int[] childIds = new int[children.length];
         for (int i = 0, size = children.length; (i < size); ++i) {
@@ -262,13 +274,13 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
+                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_node(), caught));
             }
 
             public void onSuccess(PageList<ResourceGroup> result) {
                 if (result.isEmpty()) {
                     // Not found, create new backing group
-                    // the backing group name is a display name using a unique parentResource-resourceType combo 
+                    // the backing group name is a display name using a unique parentResource-resourceType combo
                     final String backingGroupName = agNode.getBackingGroupName();
                     ResourceGroup backingGroup = new ResourceGroup(backingGroupName);
                     backingGroup.setAutoGroupParentResource(agNode.getParentResource());
@@ -277,7 +289,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.createPrivateResourceGroup(backingGroup, childIds,
                         new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_create(), caught);
+                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_create(), caught));
                             }
 
                             public void onSuccess(ResourceGroup result) {
@@ -299,7 +311,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_update(), caught);
+                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_update(), caught));
                             }
 
                             public void onSuccess(Void result) {

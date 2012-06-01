@@ -1899,7 +1899,7 @@
 
     <service name="Infinispan (Managed Server)"
              discovery="SubsystemDiscovery"
-             class="IspnComponent"
+             class="BaseComponent"
              singleton="true">
 
       <plugin-configuration>
@@ -1909,7 +1909,7 @@
 
       <service name="Cache Container (Managed Server)"
                discovery="SubsystemDiscovery"
-               class="IspnCContainerComponent">
+               class="TemplatedSubResourcesComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="cache-container"/>
@@ -1936,21 +1936,13 @@
 
         <service name="Cache (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="IspnCacheComponent">
+                 class="TemplatedComponent">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="distributed-cache|local-cache|invalidation-cache|replicated-cache"/>
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="_flavor" displayName="Kind of cache" required="true" readOnly="true" default="local-cache" description="What special kind of cache is this.">
-              <c:property-options>
-                <c:option value="local-cache"/>
-                <c:option value="invalidation-cache"/>
-                <c:option value="distributed-cache"/>
-                <c:option value="replicated-cache"/>
-              </c:property-options>
-            </c:simple-property>
             <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
               <c:property-options>
                 <c:option value="LAZY"/>
@@ -1980,6 +1972,27 @@
             <c:simple-property name="module" required="false" type="string" readOnly="true" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
             <c:simple-property name="owners" required="false" type="integer" readOnly="true" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
             <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="true" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
+
+            <c:simple-property name="__type" displayName="Type of cache" required="true" readOnly="true" default="local-cache" description="Type of cache">
+              <c:property-options>
+                <c:option value="local-cache"/>
+                <c:option value="invalidation-cache"/>
+                <c:option value="distributed-cache"/>
+                <c:option value="replicated-cache"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:template name="Local Cache" description="Local Cache">
+              <c:simple-property name="__type" readOnly="true" default="local-cache"/>
+            </c:template>
+            <c:template name="Invalidation Cache" description="Invalidation Cache">
+              <c:simple-property name="__type" readOnly="true" default="invalidation-cache"/>
+            </c:template>
+            <c:template name="Distributed Cache" description="Distributed Cache">
+              <c:simple-property name="__type" readOnly="true" default="distributed-cache"/>
+            </c:template>
+            <c:template name="Replicated Cache" description="Replicated Cache">
+              <c:simple-property name="__type" readOnly="true" default="replicated-cache"/>
+            </c:template>
           </resource-configuration>
         </service>
 
@@ -11090,7 +11103,7 @@
 
   <service name="Infinispan"
            discovery="SubsystemDiscovery"
-           class="IspnComponent"
+           class="BaseComponent"
            singleton="true">
 
     <runs-inside>
@@ -11104,7 +11117,7 @@
 
     <service name="Cache Container"
              discovery="SubsystemDiscovery"
-             class="IspnCContainerComponent"
+             class="TemplatedSubResourcesComponent"
              createDeletePolicy="both"
              creationDataType="configuration">
 
@@ -11133,7 +11146,7 @@
 
       <service name="Cache"
                discovery="SubsystemDiscovery"
-               class="IspnCacheComponent"
+               class="TemplatedComponent"
                createDeletePolicy="both"
                creationDataType="configuration">
 
@@ -11142,14 +11155,6 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="_flavor" displayName="Kind of cache" required="true" readOnly="true" default="local-cache" description="What special kind of cache is this.">
-            <c:property-options>
-              <c:option value="local-cache"/>
-              <c:option value="invalidation-cache"/>
-              <c:option value="distributed-cache"/>
-              <c:option value="replicated-cache"/>
-            </c:property-options>
-          </c:simple-property>
           <c:simple-property name="start" required="false" type="string" readOnly="false" default="LAZY" description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
             <c:property-options>
               <c:option value="LAZY"/>
@@ -11165,7 +11170,7 @@
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
-          <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+          <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
             <c:property-options>
               <c:option value="SYNC"/>
               <c:option value="ASYNC"/>
@@ -11174,12 +11179,32 @@
           <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
           <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
           <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-
           <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="false" defaultValue="false" description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
           <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="false" defaultValue="600000" description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
           <c:simple-property name="module" required="false" type="string" readOnly="false" description="The module whose class loader should be used when building this cache&apos;s configuration."/>
           <c:simple-property name="owners" required="false" type="integer" readOnly="false" defaultValue="2" description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
           <c:simple-property name="virtual-nodes" required="false" type="integer" readOnly="false" defaultValue="1" description="Controls the number of virtual nodes per &apos;real&apos; node. If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash must be used if you wish to take advantage of virtual nodes. A default of 1 is used. The default value is 1."/>
+
+          <c:simple-property name="__type" displayName="Type of cache" required="true" readOnly="true" default="local-cache" description="Type of cache">
+            <c:property-options>
+              <c:option value="local-cache"/>
+              <c:option value="invalidation-cache"/>
+              <c:option value="distributed-cache"/>
+              <c:option value="replicated-cache"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:template name="Local Cache" description="Local Cache">
+            <c:simple-property name="__type" readOnly="true" default="local-cache"/>
+          </c:template>
+          <c:template name="Invalidation Cache" description="Invalidation Cache">
+            <c:simple-property name="__type" readOnly="true" default="invalidation-cache"/>
+          </c:template>
+          <c:template name="Distributed Cache" description="Distributed Cache">
+            <c:simple-property name="__type" readOnly="true" default="distributed-cache"/>
+          </c:template>
+          <c:template name="Replicated Cache" description="Replicated Cache">
+            <c:simple-property name="__type" readOnly="true" default="replicated-cache"/>
+          </c:template>
         </resource-configuration>
       </service>
 

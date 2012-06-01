@@ -196,6 +196,8 @@ public class DashboardView extends LocatableVLayout {
         portalLayout.destroy();
         portalLayout = null;
 
+        portletWindows.clear();
+
         buildPortlets();
     }
 
@@ -548,7 +550,6 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private void loadPortletWindows() {
-
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 String locatorId = getPortletLocatorId(portalLayout, storedPortlet);

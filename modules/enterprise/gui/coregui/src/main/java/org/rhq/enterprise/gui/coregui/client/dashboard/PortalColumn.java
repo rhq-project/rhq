@@ -78,7 +78,9 @@ public class PortalColumn extends VStack {
 
     @Override
     public void destroy() {
+        removeFromParent();
         SeleniumUtility.destroyMembers(this);
+
         super.destroy();
     }
 }

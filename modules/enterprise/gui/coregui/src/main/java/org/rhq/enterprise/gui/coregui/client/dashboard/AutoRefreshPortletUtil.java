@@ -38,6 +38,7 @@ public class AutoRefreshPortletUtil {
         //cancel any existing timer
         if (null != refreshTimer) {
             refreshTimer.cancel();
+            refreshTimer = null;
         }
 
         if (refreshInterval >= MeasurementUtility.MINUTES) {
@@ -48,7 +49,9 @@ public class AutoRefreshPortletUtil {
                     // if the portlet is already refreshing or if the portlet is not currently on screen then
                     // don't bother doing the work. this protects against unnecessary or unwanted db queries
                     // being performed in the background.
-                    if (!autoRefreshPortlet.isRefreshing() && autoRefreshPortletCanvas.isVisible()) {
+                    if (!autoRefreshPortlet.isRefreshing() && autoRefreshPortletCanvas.isDrawn()
+                        && autoRefreshPortletCanvas.isVisible()) {
+
                         autoRefreshPortlet.refresh();
                     }
                 }

@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlID;
@@ -38,6 +39,7 @@ public class GroupDefinitionRest {
     private long recalcInterval;
     private boolean recursive=false;
     List<Integer> generatedGroupIds;
+    List<Link> links = new ArrayList<Link>();
 
     public GroupDefinitionRest() {
     }
@@ -104,4 +106,17 @@ public class GroupDefinitionRest {
     public void setRecursive(boolean recursive) {
         this.recursive = recursive;
     }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public void addLink(Link link) {
+        this.links.add(link);
+    }
+
 }

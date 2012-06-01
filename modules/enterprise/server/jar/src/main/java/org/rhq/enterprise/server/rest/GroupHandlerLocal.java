@@ -111,48 +111,51 @@ public interface GroupHandlerLocal {
     public Response removeResource(
             @ApiParam("Id of the existing group") @PathParam("id") int id,
             @ApiParam("Id of the resource to remove") @PathParam("resourceId") int resourceId,
-                                   @Context Request request, @Context HttpHeaders headers,
+                             @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @GET
     @Path("/definitions")
     @ApiOperation(value="List all existing GroupDefinitions",multiValueResponse = true)
-    public Response getDefinitions(@Context Request request,@Context HttpHeaders headers,
-                                   @Context UriInfo uriInfo);
+    public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
+                                        @Context UriInfo uriInfo);
 
     @GET
     @Path("/definition/{id}")
+    @Cache(isPrivate = true,maxAge = 60)
     @ApiOperation(value = "Retrieve a single GroupDefinition by id")
-    public Response getDefinition(
+    public Response getGroupDefinition(
             @ApiParam("The id of the definition to retrieve") @PathParam("id") int definitionId,
-                                  @Context Request request, @Context HttpHeaders headers,
-                                  @Context UriInfo uriInfo);
+            @Context Request request, @Context HttpHeaders headers,
+            @Context UriInfo uriInfo);
+
     @DELETE
     @Path("/definition/{id}")
-    @ApiOperation("Delete the group definition with the passed id")
-    public Response deleteDefinition(
+    @ApiOperation("Delete the GroupDefinition with the passed id")
+    public Response deleteGroupDefinition(
             @ApiParam("The id of the definition to delete") @PathParam("id") int definitionId,
-                                  @Context Request request, @Context HttpHeaders headers,
-                                  @Context UriInfo uriInfo);
+            @Context Request request, @Context HttpHeaders headers,
+            @Context UriInfo uriInfo);
 
     @POST
     @Path("/definitions")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Create a new group definition. Returns the location of the new definition in the header.")
-    public Response createDefinition(
-                                     GroupDefinitionRest definition,
-                                     @Context Request request, @Context HttpHeaders headers,
-                                     @Context UriInfo uriInfo);
+    @ApiOperation("Create a new GroupDefinition. The name of the group is required in the passed definition.")
+    public Response createGroupDefinition(
+            GroupDefinitionRest definition,
+            @Context Request request, @Context HttpHeaders headers,
+            @Context UriInfo uriInfo);
 
     @PUT
     @Path("/definition/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Update an existing group definition")
-    public Response updateDefinition(
-            @ApiParam("ID fo the definition to update") @PathParam("id") int definitionId,
-            @ApiParam("If true, trigger a re-calculation") @QueryParam("recalculate") @DefaultValue("false") boolean recalculate,
-                                     GroupDefinitionRest definition,
-                                     @Context Request request, @Context HttpHeaders headers,
-                                     @Context UriInfo uriInfo);
+    @ApiOperation("Update an existing GroupDefinition")
+    public Response updateGroupDefinition(
+            @ApiParam("Id fo the definition to update") @PathParam("id") int definitionId,
+            @ApiParam("If true, trigger a re-calculation") @QueryParam("recalculate") @DefaultValue(
+                    "false") boolean recalculate,
+            GroupDefinitionRest definition,
+            @Context Request request, @Context HttpHeaders headers,
+            @Context UriInfo uriInfo);
 
 }

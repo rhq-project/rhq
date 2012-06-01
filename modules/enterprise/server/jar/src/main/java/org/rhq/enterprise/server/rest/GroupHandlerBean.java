@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.rest;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -277,20 +278,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    public Response getDefinitions(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
+                                        @Context UriInfo uriInfo) {
 
         PageList<GroupDefinition> gdlist =  definitionManager.getGroupDefinitions(caller,new PageControl());
         List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
         for (GroupDefinition def: gdlist) {
-            GroupDefinitionRest definitionRest = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(),
-                    def.getRecalculationInterval());
-            definitionRest.setExpression(def.getExpressionAsList());
-
-            List<Integer> generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
-            for (ResourceGroup group : def.getManagedResourceGroups() ) {
-                generatedGroups.add(group.getId());
-            }
-            definitionRest.setGeneratedGroupIds(generatedGroups);
+            GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);
+            createLinksForGDRest(uriInfo,definitionRest);
             list.add(definitionRest);
         }
 
@@ -310,19 +305,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    public Response getDefinition(int definitionId, @Context Request request,
-                                  @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getGroupDefinition(int definitionId, @Context Request request,
+                                       @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
             GroupDefinition def = definitionManager.getById(definitionId);
-            GroupDefinitionRest gdr = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(), def.getRecalculationInterval());
-            gdr.setRecursive(def.isRecursive());
-            List<Integer> generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
-            for (ResourceGroup group : def.getManagedResourceGroups() ) {
-                generatedGroups.add(group.getId());
-            }
-            gdr.setGeneratedGroupIds(generatedGroups);
-            gdr.setExpression(def.getExpressionAsList());
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(def);
+
+            createLinksForGDRest(uriInfo,gdr);
 
             MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
             Response.ResponseBuilder builder;
@@ -338,26 +328,44 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         }
     }
 
+    private GroupDefinitionRest buildGDRestFromDefinition(GroupDefinition def) {
+        GroupDefinitionRest gdr = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(), def.getRecalculationInterval());
+        gdr.setRecursive(def.isRecursive());
+
+        List<Integer> generatedGroups;
+        if (def.getManagedResourceGroups()!=null) {
+            generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
+            for (ResourceGroup group : def.getManagedResourceGroups() ) {
+                generatedGroups.add(group.getId());
+            }
+        } else {
+            generatedGroups = Collections.emptyList();
+        }
+        gdr.setGeneratedGroupIds(generatedGroups);
+        gdr.setExpression(def.getExpressionAsList());
+        return gdr;
+    }
+
     @Override
-    public Response deleteDefinition(int definitionId, @Context Request request,
-                                     @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response deleteGroupDefinition(int definitionId, @Context Request request,
+                                          @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
             GroupDefinition def = definitionManager.getById(definitionId);
             definitionManager.removeGroupDefinition(caller,definitionId);
-            return Response.ok().build();
+            return Response.noContent().build(); // Return 206, as we don't include a body
         } catch (GroupDefinitionNotFoundException e) {
             // Idem potent
-            return Response.ok().build();
+            return Response.noContent().build(); // Return 206, as we don't include a body
         } catch (GroupDefinitionDeleteException e) {
             throw new StuffNotFoundException("Group definition with id " + definitionId);
         }
     }
 
     @Override
-    public Response createDefinition(GroupDefinitionRest definition,
-                                     @Context Request request, @Context HttpHeaders headers,
-                                     @Context UriInfo uriInfo) {
+    public Response createGroupDefinition(GroupDefinitionRest definition,
+                                          @Context Request request, @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
 
         Response.ResponseBuilder builder = null;
 
@@ -386,7 +394,13 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/group/definition/{id}");
             URI location = uriBuilder.build(res.getId());
+
+            Link link = new Link("edit",location.toString());
             builder= Response.created(location);
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(res);
+            createLinksForGDRest(uriInfo,gdr);
+
+            builder.entity(gdr);
 
         } catch (GroupDefinitionAlreadyExistsException e) {
             builder =Response.status(Response.Status.CONFLICT);
@@ -398,9 +412,10 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    public Response updateDefinition(int definitionId,
-                                     boolean recalculate, GroupDefinitionRest definition,
-                                     @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response updateGroupDefinition(int definitionId,
+                                          boolean recalculate, GroupDefinitionRest definition,
+                                          @Context Request request, @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
 
         GroupDefinition gd;
         try {
@@ -434,20 +449,38 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
             return builder.build();
         }
 
-        String msg=null;
         if (recalculate) {
             try {
                 definitionManager.calculateGroupMembership(caller,gd.getId());
             } catch (Exception e) {
-                msg = e.getLocalizedMessage();
-//                e.printStackTrace();  // TODO: Customise this generated block
             }
         }
-        builder = Response.ok(gd);
-        if (msg!=null) {
-            builder.entity(msg);
+
+        try {
+            // Re-fetch, as groups may have changed
+            gd = definitionManager.getById(gd.getId());
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(gd);
+            createLinksForGDRest(uriInfo, gdr);
+
+            builder = Response.ok(gdr);
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group Definition with id " + gd.getId());
         }
 
         return builder.build();
+    }
+
+    private void createLinksForGDRest(UriInfo uriInfo, GroupDefinitionRest gdr) {
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/definition/{id}");
+        URI location = uriBuilder.build(gdr.getId());
+        Link link = new Link("edit",location.toString());
+        gdr.addLink(link);
+
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/definition");
+        location = uriBuilder.build(new Object[]{});
+        link = new Link("create",location.toString());
+        gdr.addLink(link);
     }
 }

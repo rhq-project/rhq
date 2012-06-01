@@ -18,7 +18,7 @@
   -->
 
 <!--
- Taken from https://github.com/pilhuhn/swagger-core/blob/apt/modules/java-jaxrs-apt/src/main/xsl/apiout2html.xsl
+ Taken from https://github.com/pilhuhn/swagger-core/blob/org.rhq.helpers.rest_docs_generator.test/modules/java-jaxrs-org.rhq.helpers.rest_docs_generator.test/src/main/xsl/apiout2html.xsl
  and modified for docbook
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://docbook.org/ns/docbook"

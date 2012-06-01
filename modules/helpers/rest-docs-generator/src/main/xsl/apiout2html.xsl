@@ -1,65 +1,39 @@
-<!--
- Taken from https://github.com/pilhuhn/swagger-core/blob/org.rhq.helpers.rest_docs_generator.test/modules/java-jaxrs-org.rhq.helpers.rest_docs_generator.test/src/main/xsl/apiout2html.xsl
--->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-
-  <xsl:param name="basePath"/>
-  <xsl:strip-space elements="a"/>
 
   <xsl:template match="/api">
     <html>
       <head>
         <title>Api documentation</title>
         <style type="text/css">
-          h2 {background-color:#ADD8E6   }
-          h3 {background-color:#C0C0C0   }
+          h2 {background-color:#6464FF   }
+          h3 {background-color:#42EE42   }
           th {font-weight:bold; font-size:120% }
-          em {font-style:italic}
+          em {font-style:italic; font-size:110%; background-color:LightYellow}
         </style>
       </head>
       <body>
-        <h1>REST-api documentation</h1>
-        <em>Base path (if not otherwise specified) : <xsl:value-of select="$basePath"/></em>
-        <h2>Table of contents</h2>
-        <ul>
-          <xsl:for-each select="class">
-            <xsl:sort select="@basePath"/>
-            <xsl:sort select="@path"/>
-            <li>
-              <xsl:element name="a">
-                <xsl:attribute name="href">#<xsl:value-of select="@path"/></xsl:attribute>
-                 <xsl:if test="@basePath">
-                   <xsl:value-of select="@basePath"/>
-                 </xsl:if>/<xsl:value-of select="@path"/>
-              </xsl:element>
-            </li>
-          </xsl:for-each>
-        </ul>
         <xsl:apply-templates>
-          <xsl:sort select="@basePath"/>
-          <xsl:sort select="@path"/>
+            <xsl:sort select="class/@path"/>
         </xsl:apply-templates>
       </body>
     </html>
   </xsl:template>
 
   <xsl:template match="class">
-    <xsl:element name="h2">
-      <xsl:attribute name="id"><xsl:value-of select="@path"/></xsl:attribute>
-      /<xsl:value-of select="@path"/>
+    <h2>/<xsl:value-of select="@path"/>
       <xsl:if test="@shortDesc">
       : <xsl:value-of select="@shortDesc"/>
       </xsl:if>
-    </xsl:element>
+      <xsl:if test="@basePath">
+        ( Base: <xsl:value-of select="@basePath"/> )
+      </xsl:if>
+    </h2>
+    Class: <xsl:value-of select="@name"/><br/>
     <em><xsl:value-of select="@description"/></em>
-    <p/>
-    Defining class: <xsl:value-of select="@name"/><br/>
     <br/>
     <xsl:if test="method">
       Methods:<br/>
-      <xsl:apply-templates>
-        <xsl:sort select="@path"/>
-      </xsl:apply-templates>
+      <xsl:apply-templates/>
     </xsl:if>
     <p/>
   </xsl:template>

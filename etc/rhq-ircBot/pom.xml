@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.rhq.etc</groupId>
+  <artifactId>rhq-ircbot</artifactId>
+  <version>1.0</version>
+  <packaging>jar</packaging>
+
+  <name>RHQ IRC Bot</name>
+  <description>an IRC bot for doing helpful stuff on the Freenode #rhq channel</description>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.pircbotx</groupId>
+      <artifactId>pircbotx</artifactId>
+      <version>1.7</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.j2bugzilla</groupId>
+      <artifactId>j2bugzilla</artifactId>
+      <version>2.0</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <verbose>true</verbose>
+          <proc>none</proc>
+          <!-- disable annotation processing -->
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>org.rhq.etc.ircbot.RhqIrcBot</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <!-- this is used for inheritance merges -->
+            <phase>package</phase>
+            <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+
+  </build>
+
+</project>
+

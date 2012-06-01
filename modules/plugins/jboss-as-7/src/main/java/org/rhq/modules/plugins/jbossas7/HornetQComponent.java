@@ -30,7 +30,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
  * Component class for HornetQ related stuff
  * @author Heiko W. Rupp
  */
-public class HornetQComponent extends BaseComponent {
+public class HornetQComponent extends TemplatedSubResourcesComponent {
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {

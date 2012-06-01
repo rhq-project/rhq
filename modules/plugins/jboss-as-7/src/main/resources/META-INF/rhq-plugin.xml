@@ -2931,7 +2931,7 @@
 
     <service name="Threads (Managed Server)"
              discovery="SubsystemDiscovery"
-             class="ThreadsComponent"
+             class="TemplatedSubResourcesComponent"
              singleton="true">
 
       <plugin-configuration>
@@ -2963,8 +2963,9 @@
 
       <service name="ThreadPool (Managed Server)"
                discovery="SubsystemDiscovery"
-               class="ThreadPoolComponent"
-               description="A thread pool executor">
+               class="TemplatedComponent"
+               description="A thread pool executor"
+               createDeletePolicy="neither">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
@@ -2978,15 +2979,15 @@
         <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
-          <c:map-property name="keepalive-time" readOnly="true" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" readOnly="true" type="long" description="The time"/>
-            <c:simple-property name="unit" required="true" readOnly="true" type="string" description="The time unit"/>
+          <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
+            <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
           </c:map-property>
-          <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
+          <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
-          <c:simple-property name="thread-factory" required="false" type="string" readOnly="true" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
+          <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-          <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
+          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
             <c:property-options>
               <c:option value="bounded-queue-thread-pool"/>
               <c:option value="queueless-thread-pool"/>
@@ -2995,16 +2996,16 @@
             </c:property-options>
           </c:simple-property>
           <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="bounded-queue-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
           </c:template>
           <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="queueless-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
           </c:template>
           <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
           </c:template>
           <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="unbounded-queue-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
           </c:template>
         </resource-configuration>
       </service>
@@ -4614,17 +4615,37 @@
 
         <service name="Path (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 createDeletePolicy="neither"
-                 singleton="true">
+                 class="TemplatedComponent"
+                 createDeletePolicy="neither">
 
           <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="path=journal-directory"/>
+            <c:simple-property name="path" readOnly="true" default="path"/>
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="path" required="true" type="string" readOnly="false" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
-            <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+            <c:simple-property name="path" required="true" type="string" readOnly="true" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
+            <c:simple-property name="relative-to" required="false" type="string" readOnly="true" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+
+            <c:simple-property name="__name" readOnly="true" displayName="Path Type" description="Path Type">
+              <c:property-options>
+                <c:option value="journal-directory"/>
+                <c:option value="paging-directory"/>
+                <c:option value="large-messages-directory"/>
+                <c:option value="bindings-directory"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:template name="Journal Directory" description="The directory in which the message journal lives. The default is ${jboss.server.data.dir}/messaging/journal.">
+              <c:simple-property name="__name" readOnly="true" default="journal-directory"/>
+            </c:template>
+            <c:template name="Paging Directory" description="The directory where page files are stored. The default is ${jboss.server.data.dir}/messaging/paging.">
+              <c:simple-property name="__name" readOnly="true" default="paging-directory"/>
+            </c:template>
+            <c:template name="Large Messages Directory" description="The directory in which large messages are stored. The default is ${jboss.server.data.dir}/messaging/largemessages.">
+              <c:simple-property name="__name" readOnly="true" default="large-messages-directory"/>
+            </c:template>
+            <c:template name="Bindings Directory" description="The directory in which the bindings journal lives. The default is ${jboss.server.data.dir}/messaging/bindings.">
+              <c:simple-property name="__name" readOnly="true" default="bindings-directory"/>
+            </c:template>
           </resource-configuration>
         </service>
 
@@ -5729,7 +5750,7 @@
 
     <service name="Threads (Profile)"
              discovery="SubsystemDiscovery"
-             class="ThreadsComponent"
+             class="TemplatedSubResourcesComponent"
              singleton="true">
 
       <plugin-configuration>
@@ -5761,7 +5782,7 @@
 
       <service name="ThreadPool (Profile)"
                discovery="SubsystemDiscovery"
-               class="ThreadPoolComponent"
+               class="TemplatedComponent"
                description="A thread pool executor"
                createDeletePolicy="both">
 
@@ -5778,7 +5799,7 @@
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-          <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
+          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
             <c:property-options>
               <c:option value="bounded-queue-thread-pool"/>
               <c:option value="queueless-thread-pool"/>
@@ -5787,16 +5808,16 @@
             </c:property-options>
           </c:simple-property>
           <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="bounded-queue-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
           </c:template>
           <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="queueless-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
           </c:template>
           <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
           </c:template>
           <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-            <c:simple-property name="type" readOnly="true" default="unbounded-queue-thread-pool"/>
+            <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
           </c:template>
         </resource-configuration>
       </service>
@@ -6659,17 +6680,37 @@
 
         <service name="Path (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 createDeletePolicy="both"
-                 singleton="true">
+                 class="TemplatedComponent"
+                 createDeletePolicy="both">
 
           <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="path=journal-directory"/>
+            <c:simple-property name="path" readOnly="true" default="path"/>
           </plugin-configuration>
 
           <resource-configuration>
             <c:simple-property name="path" required="true" type="string" readOnly="false" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
             <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+
+            <c:simple-property name="__name" readOnly="true" displayName="Path Type" description="Path Type">
+              <c:property-options>
+                <c:option value="journal-directory"/>
+                <c:option value="paging-directory"/>
+                <c:option value="large-messages-directory"/>
+                <c:option value="bindings-directory"/>
+              </c:property-options>
+            </c:simple-property>
+            <c:template name="Journal Directory" description="The directory in which the message journal lives. The default is ${jboss.server.data.dir}/messaging/journal.">
+              <c:simple-property name="__name" readOnly="true" default="journal-directory"/>
+            </c:template>
+            <c:template name="Paging Directory" description="The directory where page files are stored. The default is ${jboss.server.data.dir}/messaging/paging.">
+              <c:simple-property name="__name" readOnly="true" default="paging-directory"/>
+            </c:template>
+            <c:template name="Large Messages Directory" description="The directory in which large messages are stored. The default is ${jboss.server.data.dir}/messaging/largemessages.">
+              <c:simple-property name="__name" readOnly="true" default="large-messages-directory"/>
+            </c:template>
+            <c:template name="Bindings Directory" description="The directory in which the bindings journal lives. The default is ${jboss.server.data.dir}/messaging/bindings.">
+              <c:simple-property name="__name" readOnly="true" default="bindings-directory"/>
+            </c:template>
           </resource-configuration>
         </service>
 
@@ -10569,7 +10610,7 @@
 
   <service name="Threads"
            discovery="SubsystemDiscovery"
-           class="ThreadsComponent"
+           class="TemplatedSubResourcesComponent"
            singleton="true">
 
     <runs-inside>
@@ -10605,7 +10646,7 @@
 
     <service name="ThreadPool"
              discovery="SubsystemDiscovery"
-             class="ThreadPoolComponent"
+             class="TemplatedComponent"
              description="A thread pool executor"
              createDeletePolicy="both">
 
@@ -10629,7 +10670,7 @@
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
         <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-        <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
+        <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
           <c:property-options>
             <c:option value="bounded-queue-thread-pool"/>
             <c:option value="queueless-thread-pool"/>
@@ -10638,16 +10679,16 @@
           </c:property-options>
         </c:simple-property>
         <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-          <c:simple-property name="type" readOnly="true" default="bounded-queue-thread-pool"/>
+          <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
         </c:template>
         <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-          <c:simple-property name="type" readOnly="true" default="queueless-thread-pool"/>
+          <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
         </c:template>
         <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-          <c:simple-property name="type" readOnly="true" default="scheduled-thread-pool"/>
+          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
         </c:template>
         <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-          <c:simple-property name="type" readOnly="true" default="unbounded-queue-thread-pool"/>
+          <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
         </c:template>
       </resource-configuration>
     </service>
@@ -12674,17 +12715,37 @@
 
       <service name="Path"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               createDeletePolicy="both"
-               singleton="true">
+               class="TemplatedComponent"
+               createDeletePolicy="both">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="path=journal-directory"/>
+          <c:simple-property name="path" readOnly="true" default="path"/>
         </plugin-configuration>
 
         <resource-configuration>
           <c:simple-property name="path" required="true" type="string" readOnly="false" description="The actual filesystem path. Treated as an absolute path, unless the &apos;relative&#45;to&apos; attribute is specified, in which case the value is treated as relative to that path. &lt;p&gt;If treated as an absolute path, the actual runtime pathname specified by the value of this attribute will be determined as follows&#58; &lt;/p&gt;If this value is already absolute, then the value is directly used.  Otherwise the runtime pathname is resolved in a system&#45;dependent way.  On UNIX systems, a relative pathname is made absolute by resolving it against the current user directory. On Microsoft Windows systems, a relative pathname is made absolute by resolving it against the current directory of the drive named by the pathname, if any; if not, it is resolved against the current user directory."/>
           <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
+
+          <c:simple-property name="__name" readOnly="true" displayName="Path Type" description="Path Type">
+            <c:property-options>
+              <c:option value="journal-directory"/>
+              <c:option value="paging-directory"/>
+              <c:option value="large-messages-directory"/>
+              <c:option value="bindings-directory"/>
+            </c:property-options>
+          </c:simple-property>
+          <c:template name="Journal Directory" description="The directory in which the message journal lives. The default is ${jboss.server.data.dir}/messaging/journal.">
+            <c:simple-property name="__name" readOnly="true" default="journal-directory"/>
+          </c:template>
+          <c:template name="Paging Directory" description="The directory where page files are stored. The default is ${jboss.server.data.dir}/messaging/paging.">
+            <c:simple-property name="__name" readOnly="true" default="paging-directory"/>
+          </c:template>
+          <c:template name="Large Messages Directory" description="The directory in which large messages are stored. The default is ${jboss.server.data.dir}/messaging/largemessages.">
+            <c:simple-property name="__name" readOnly="true" default="large-messages-directory"/>
+          </c:template>
+          <c:template name="Bindings Directory" description="The directory in which the bindings journal lives. The default is ${jboss.server.data.dir}/messaging/bindings.">
+            <c:simple-property name="__name" readOnly="true" default="bindings-directory"/>
+          </c:template>
         </resource-configuration>
       </service>
 

@@ -190,7 +190,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
             testPlugin.setVersion(descriptor.getVersion());
         }
         try {
-            pluginMgr.registerPlugin(getOverlord(), testPlugin, descriptor, null, true);
+            pluginMgr.registerPlugin(testPlugin, descriptor, null, true);
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException(t);

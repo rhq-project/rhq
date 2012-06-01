@@ -122,9 +122,8 @@ public interface PluginManagerLocal {
      * @param metadata The plugin descriptor file
      * @param pluginFile the actual plugin file whose content will be stored in the database (will be ignored if null)
      * @param forceUpdate if <code>true</code>, the plugin's types will be updated, even if the plugin hasn't changed since
-     *                    the last time it was registered
      */
-    void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor metadata, File pluginFile, boolean forceUpdate)
+    void registerPlugin(Plugin plugin, PluginDescriptor metadata, File pluginFile, boolean forceUpdate)
         throws Exception;
 
     /** Exists only to for transactional boundary reasons. Not for general consumption. */
@@ -132,7 +131,7 @@ public interface PluginManagerLocal {
         boolean forceUpdate) throws Exception;
 
     /** Exists only for transactional boundary reasons. Not for general consumption. */
-    boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
+    boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
         throws Exception;
 
     /**

@@ -529,7 +529,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             pluginDup.setVersion(plugin.getVersion());
             PluginDescriptor pluginDescriptor = this.testPluginDescriptors.get(pluginId);
             File localPluginFile = this.testPluginFiles.get(pluginId);
-            pluginMgr.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile, false);
+            pluginMgr.registerPlugin(pluginDup, pluginDescriptor, localPluginFile, false);
         }
         return;
     }

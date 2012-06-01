@@ -41,7 +41,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
@@ -478,9 +477,7 @@ public class ProductPluginDeployer {
             // since we assume we are called in the proper deployment order, this should not fail
             // if we are called when hot-deploying a plugin whose dependencies aren't deployed, this will fail
             PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            pluginMgr.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile,
-                forceUpdate);
+            pluginMgr.registerPlugin(plugin, pluginDescriptor, localPluginFile, forceUpdate);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.url + "]", e);
         }

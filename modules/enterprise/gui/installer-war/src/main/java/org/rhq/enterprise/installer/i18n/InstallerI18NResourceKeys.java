@@ -175,7 +175,7 @@ public interface InstallerI18NResourceKeys {
         + "Once complete you will be able to log on and use ${product.name}.")
     String WELCOME_MESSAGE = "welcomeMessage";
 
-    @I18NMessage(locale = "en", value = "Starting up, please wait...")
+    @I18NMessage(locale = "en", value = "Starting up, please wait... (this may take several minutes)")
     String STARTING = "starting";
 
     @I18NMessage(locale = "en", value = "${product.name} will be installed!")

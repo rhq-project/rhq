@@ -106,7 +106,8 @@ public class StartupServlet extends HttpServlet {
         resp.setHeader("Cache-Control", "no-cache, no-store");
         resp.setHeader("Expires", "-1");
         resp.setHeader("Pragma", "no-cache");
-        resp.setStatus(initialized ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        // as opposed to SC_OK (200), return a special value due to https://issues.jboss.org/browse/JBWEB-188.
+        resp.setStatus(initialized ? 288 : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
     }
 
     /**

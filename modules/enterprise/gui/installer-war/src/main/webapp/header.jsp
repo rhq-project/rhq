@@ -25,7 +25,7 @@
 
          function doLoad()
          {
-            setTimeout( "refresh()", 5*1000 )
+            setTimeout( "refresh()", 15*1000 )
 
             try
             {
@@ -57,9 +57,9 @@
          {
             if (xmlRequest.readyState == 4)
             {
-               // 200 means page is OK, 401 means we are being asked to authenticate the user
-               // in either case, it means the RHQ Console is ready
-               if (xmlRequest.status == 200 || xmlRequest.status == 401)
+               // 288 means page is OK (note, we don't use 200 because of https://issues.jboss.org/browse/JBWEB-188),
+               // 401 means we are being asked to authenticate the user in either case, it means the RHQ Console is ready
+               if (xmlRequest.status == 288 || xmlRequest.status == 401)
                {
                   linkText = "${bundle.alreadyInstalledStartedLink}";
                   reminderText = "${bundle.alreadyInstalledReminder}";

@@ -112,25 +112,36 @@ public class RhqIrcBot extends ListenerAdapter {
                 disconnectEvent.getBot().reconnect();
                 connected = true;
             } catch (Exception e) {
-                // ignore
+                System.err.println("Failed to reconnect to " + disconnectEvent.getBot().getServer() + " IRC server: " + e);
             }
         }
     }
 
     public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.err.println("Usage: RhqIrcBot IRC_SERVER IRC_CHANNEL");
+            System.err.println(" e.g.: RhqIrcBot irc.freenode.net '#rhq'");
+            System.exit(1);
+        }
+        String server = args[0];
+        String channel = args[1];
+        if (channel.charAt(0) != '#') {
+            channel = '#' + channel;
+        }
+
         PircBotX bot = new PircBotX();
 
         bot.setName("rhq-bot");
         bot.setVersion("1.0");
-        bot.setFinger("#rhq IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
+        bot.setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
 
         bot.setVerbose(true);
         bot.getListenerManager().addListener(new RhqIrcBot());
         bot.setSocketTimeout(1 * 60 * 1000); // 1 minute
 
         // TODO: Try other Freenode IRC servers if this one is down.
-        bot.connect("irc.freenode.net");
-        bot.joinChannel("#rhq");
+        bot.connect(server);
+        bot.joinChannel(channel);
     }
 
 }

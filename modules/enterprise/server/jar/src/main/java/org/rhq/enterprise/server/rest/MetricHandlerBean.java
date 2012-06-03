@@ -216,6 +216,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
+
         if (startTime==0) {
             endTime = System.currentTimeMillis();
             startTime = endTime - EIGHT_HOURS;
@@ -361,7 +365,15 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     }
 
     @Override
-    public List<MetricAggregate> getAggregatesForResource( int resourceId) {
+    public List<MetricAggregate> getAggregatesForResource(int resourceId, long startTime, long endTime) {
+
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
+        if (startTime==0) {
+            startTime = endTime - EIGHT_HOURS;
+        }
+
 
         List<MeasurementSchedule> schedules = scheduleManager.findSchedulesForResourceAndType(caller,
                 resourceId, DataType.MEASUREMENT, null,false);
@@ -370,11 +382,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         }
         List<MetricAggregate> ret = new ArrayList<MetricAggregate>(schedules.size());
 
-        long now = System.currentTimeMillis();
-        long then = now - EIGHT_HOURS;
-
         for (MeasurementSchedule schedule: schedules) {
-            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),then,now);
+            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),startTime,endTime);
             MetricAggregate res = new MetricAggregate(schedule.getId(), aggr.getMin(),aggr.getAvg(),aggr.getMax());
             ret.add(res);
         }

@@ -71,8 +71,8 @@ public interface MetricHandlerLocal {
     @ApiOperation(value = "Get the bucketized metric values for the schedule ")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
     Response getMetricData(@ApiParam("Schedule Id of the values to query") @PathParam("scheduleId") int scheduleId,
-                           @ApiParam("Start time since epoch") @QueryParam("startTime")  long startTime,
-                           @ApiParam("End time since epoch") @QueryParam("endTime") long endTime,
+                           @ApiParam(value="Start time since epoch.", defaultValue = "End time - 8h") @QueryParam("startTime")  long startTime,
+                           @ApiParam(value="End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
                            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
                                   @QueryParam("hideEmpty") boolean hideEmpty,
                                   @Context Request request,
@@ -94,7 +94,10 @@ public interface MetricHandlerLocal {
     @Path("data/resource/{resourceId}")
     @ApiOperation("Retrieve a list of high/low/average/data aggregate for the resource")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
-    List<MetricAggregate> getAggregatesForResource(@ApiParam("Resource to query") @PathParam("resourceId") int resourceId);
+    List<MetricAggregate> getAggregatesForResource(
+            @ApiParam("Resource to query") @PathParam("resourceId") int resourceId,
+            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
+            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime);
 
     /**
      * Get information about the schedule

@@ -192,10 +192,9 @@ commands named "config", "setconfig" and "setup" and the command line options
                endpoints found in the agent's failover list. This helps
                provide a mechanism to quickly detect problems with the
                public endpoints configured for all RHQ Servers.
+               The default is false.
                -->
-               <!--
-               <entry key="rhq.agent.test-failover-list-at-startup" value="false" />
-               -->
+               <entry key="rhq.agent.test-failover-list-at-startup" value="true" />
 
                <!--
                _______________________________________________________________

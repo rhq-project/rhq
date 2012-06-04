@@ -36,6 +36,7 @@ import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -2691,17 +2692,33 @@ public class AgentMain {
             for (int i = 0; i < failoverList.size(); i++) {
                 ServerEntry server = failoverList.get(i);
                 Socket socket = null;
+                boolean connectError = true; // assume a failure will occur
                 try {
                     LOG.debug(AgentI18NResourceKeys.TEST_FAILOVER_LIST_ENTRY, server.address, server.port);
-                    socket = new Socket(server.address, server.port);
+                    InetAddress inetAddress = InetAddress.getByName(server.address);
+                    InetSocketAddress socketAddress = new InetSocketAddress(inetAddress, server.port);
+                    socket = new Socket();
+                    socket.setSoTimeout(5000);
+                    socket.connect(socketAddress, 5000);
+                    connectError = false; // we successfully connected to the server
                 } catch (UnknownHostException e) {
                     LOG.error(AgentI18NResourceKeys.FAILOVER_LIST_UNKNOWN_HOST, server.address);
-                } catch (IOException e) {
+                } catch (Exception e) {
+                    if (socket != null) {
+                        try {
+                            socket.close(); // just clean up our last socket connect attempt
+                        } catch (Exception ignore) {
+                        }
+                    }
                     try {
-                        socket = new Socket(server.address, server.securePort);
-                    } catch (UnknownHostException e1) {
-                        LOG.error(AgentI18NResourceKeys.FAILOVER_LIST_UNKNOWN_HOST, server.address);
-                    } catch (IOException e1) {
+                        LOG.debug(AgentI18NResourceKeys.TEST_FAILOVER_LIST_ENTRY, server.address, server.securePort);
+                        InetAddress inetAddress = InetAddress.getByName(server.address);
+                        InetSocketAddress socketAddress = new InetSocketAddress(inetAddress, server.securePort);
+                        socket = new Socket();
+                        socket.setSoTimeout(5000);
+                        socket.connect(socketAddress, 5000);
+                        connectError = false; // we successfully connected to the server
+                    } catch (Exception e1) {
                         String err = ThrowableUtil.getAllMessages(e1);
                         LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_UNREACHABLE_HOST, server.address, server.port,
                             server.securePort, err);
@@ -2712,7 +2729,8 @@ public class AgentMain {
                             socket.close();
                         } catch (Exception e) {
                         }
-                    } else {
+                    }
+                    if (connectError) {
                         failedServers.add(server.toString());
                     }
                 }

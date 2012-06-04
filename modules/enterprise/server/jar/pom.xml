@@ -873,15 +873,15 @@ Build-OS-Version=${os.version}
 
    </build>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <!-- TODO temporary for the swagger annotations -->
+  <repositories>
+    <repository>
+      <!-- TODO change when the annotations are puplished. This is temporary for the swagger annotations for REST-docu -->
        <id>sonatype-oss-snapshot</id>
        <name>Sonatype OSS Snapshot repository</name>
        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </pluginRepository>
+    </repository>
 
-  </pluginRepositories>
+  </repositories>
 
    <profiles>
 

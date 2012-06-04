@@ -24,10 +24,16 @@ package org.rhq.core.domain.resource;
 import javax.ejb.ApplicationException;
 
 /**
+ * This exception should be throw when invoking an agent service fails because the agent is
+ * down or otherwise unreachable. This class is defined in the in the domain module instead
+ * of the server/jar module because it needs to be accessible by the UI.
+ *
  * @author John Sanda
  */
 @ApplicationException(rollback = true)
 public class CannotConnectToAgentException extends RuntimeException {
+    private static final long serialVersionUID = -1L;
+
     public CannotConnectToAgentException() {
         super();
     }

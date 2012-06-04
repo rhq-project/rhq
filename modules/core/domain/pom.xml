@@ -66,6 +66,13 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
 
+     <dependency>
+       <groupId>jboss</groupId>
+       <artifactId>jboss-ejb3x</artifactId>
+       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+       <scope>provided</scope> <!-- by JBossAS -->
+     </dependency>
+
       <!--  needed for hibernate Instrument task
       <dependency>
          <groupId>javassist</groupId>

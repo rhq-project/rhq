@@ -38,6 +38,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -52,6 +54,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
@@ -610,6 +613,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         } catch (NoResultException nre) {
             return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
+        } catch(CannotConnectException e) {
+            log.error("Error while sending create resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
+                CreateResourceStatus.FAILURE, errorMessage, null);
+            resourceFactoryManager.completeCreateResource(response);
+
+            throw new CannotConnectToAgentException("Error while sending create resource request to agent service", e);
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
 
@@ -660,6 +673,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             resourceFactoryAgentService.deleteResource(request);
 
             return persistedHistory;
+        } catch(CannotConnectException e) {
+            log.error("Error while sending delete resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
+                DeleteResourceStatus.FAILURE, errorMessage);
+            resourceFactoryManager.completeDeleteResourceRequest(response);
+
+            throw new CannotConnectToAgentException("Error while sending delete resource request to agent service", e);
         } catch (Exception e) {
             log.error("Error while sending delete resource request to agent service", e);
 

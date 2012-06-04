@@ -516,12 +516,14 @@
        <artifactId>swagger-annotations_2.9.1</artifactId>
        <version>1.1-SNAPSHOT</version>
      </dependency>
+<!--
      <dependency>
        <groupId>org.rhq.helpers</groupId>
        <artifactId>rest-docs-generator</artifactId>
        <version>${project.version}</version>
        <scope>compile</scope>
      </dependency>
+-->
 
        <dependency>
            <groupId>org.yaml</groupId>
@@ -780,6 +782,7 @@ Build-OS-Version=${os.version}
 
         <!-- Document generation from the Annotations on the REST-API. -->
         <!-- TODO move to a better suited processing phase -->
+<!--
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>apt-maven-plugin</artifactId>
@@ -792,7 +795,7 @@ Build-OS-Version=${os.version}
               <id>create-rest-api-reports</id>
               <phase>process-classes</phase>
               <goals>
-                <!-- We want to process the classes in src/ -->
+                &lt;!&ndash; We want to process the classes in src/ &ndash;&gt;
                 <goal>process</goal>
               </goals>
             </execution>
@@ -812,7 +815,7 @@ Build-OS-Version=${os.version}
           <configuration>
             <transformationSets>
               <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
+                &lt;!&ndash; org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal &ndash;&gt;
                 <dir>target/generated-resources/apt</dir>
                 <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
                 <parameters>
@@ -829,7 +832,7 @@ Build-OS-Version=${os.version}
                 </fileMappers>
               </transformationSet>
               <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
+                &lt;!&ndash; org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal &ndash;&gt;
                 <dir>target/generated-resources/apt</dir>
                 <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
                 <parameters>
@@ -868,6 +871,7 @@ Build-OS-Version=${os.version}
             <generateToc>true</generateToc>
           </configuration>
         </plugin>
+-->
 
       </plugins>
 

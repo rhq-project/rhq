@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import sun.net.InetAddressCachePolicy;
+
 import com.j2bugzilla.base.Bug;
 import com.j2bugzilla.base.BugzillaConnector;
 import com.j2bugzilla.base.BugzillaException;
@@ -15,6 +17,7 @@ import com.j2bugzilla.rpc.GetBug;
 import org.apache.xmlrpc.XmlRpcException;
 import org.pircbotx.PircBotX;
 import org.pircbotx.User;
+import org.pircbotx.hooks.Listener;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -109,7 +112,16 @@ public class RhqIrcBot extends ListenerAdapter {
         while (!connected) {
             Thread.sleep(60 * 1000L); // 1 minute
             try {
-                disconnectEvent.getBot().reconnect();
+                PircBotX oldBot = disconnectEvent.getBot();
+                PircBotX newBot = createBot();
+                newBot.connect(oldBot.getServer());
+                for (String channel : oldBot.getChannelsNames()) {
+                    newBot.joinChannel(channel);
+                }
+                Set<Listener> oldListeners = new HashSet<Listener>(oldBot.getListenerManager().getListeners());
+                for (Listener oldListener : oldListeners) {
+                    oldBot.getListenerManager().removeListener(oldListener);
+                }
                 connected = true;
             } catch (Exception e) {
                 System.err.println("Failed to reconnect to " + disconnectEvent.getBot().getServer() + " IRC server: " + e);
@@ -129,6 +141,16 @@ public class RhqIrcBot extends ListenerAdapter {
             channel = '#' + channel;
         }
 
+        PircBotX bot = createBot();
+        System.setProperty("networkaddress.cache.ttl", String.valueOf(InetAddressCachePolicy.NEVER));
+        System.setProperty("networkaddress.cache.negative.ttl", String.valueOf(InetAddressCachePolicy.NEVER));
+
+        // TODO: Try other Freenode IRC servers if this one is down.
+        bot.connect(server);
+        bot.joinChannel(channel);
+    }
+
+    private static PircBotX createBot() {
         PircBotX bot = new PircBotX();
 
         bot.setName("rhq-bot");
@@ -138,10 +160,7 @@ public class RhqIrcBot extends ListenerAdapter {
         bot.setVerbose(true);
         bot.getListenerManager().addListener(new RhqIrcBot());
         bot.setSocketTimeout(1 * 60 * 1000); // 1 minute
-
-        // TODO: Try other Freenode IRC servers if this one is down.
-        bot.connect(server);
-        bot.joinChannel(channel);
+        return bot;
     }
 
 }

@@ -35,6 +35,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -111,7 +112,12 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
                 resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
+                        if (caught instanceof CannotConnectToAgentException) {
+                            CoreGUI.getMessageCenter().notify(new Message(MSG.view_inventory_resources_deleteFailed2(),
+                                Severity.Warning));
+                        } else {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
+                        }
                     }
 
                     public void onSuccess(List<DeleteResourceHistory> result) {

@@ -51,6 +51,8 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
+import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
@@ -66,6 +68,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -456,6 +459,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             DiscoveryAgentService discoveryAgentService = agentClient.getDiscoveryAgentService();
             mergeResourceResponse = discoveryAgentService.manuallyAddResource(resourceType,
                     parentResourceId, pluginConfiguration, user.getId());
+        } catch (CannotConnectException e) {
+            throw new CannotConnectToAgentException("Error adding [" + resourceType + "] Resource to inventory as " +
+                "a child of " + parentResource + " - cause: " + e.getMessage(), e);
         } catch (RuntimeException e) {
             throw new RuntimeException("Error adding [" + resourceType
                 + "] Resource to inventory as a child of " + parentResource + " - cause: " + e, e);

@@ -102,15 +102,15 @@
     </plugins>
   </build>
 
-  <pluginRepositories>
-    <pluginRepository>
+  <repositories>
+    <repository>
       <!-- TODO temporary for the swagger annotations -->
       <id>sonatype-oss-snapshot</id>
       <name>Sonatype OSS Snapshot repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </pluginRepository>
+    </repository>
 
-  </pluginRepositories>
+  </repositories>
 
 
   <dependencies>

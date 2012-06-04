@@ -516,14 +516,12 @@
        <artifactId>swagger-annotations_2.9.1</artifactId>
        <version>1.1-SNAPSHOT</version>
      </dependency>
-<!--
      <dependency>
        <groupId>org.rhq.helpers</groupId>
        <artifactId>rest-docs-generator</artifactId>
        <version>${project.version}</version>
        <scope>compile</scope>
      </dependency>
--->
 
        <dependency>
            <groupId>org.yaml</groupId>
@@ -782,25 +780,36 @@ Build-OS-Version=${os.version}
 
         <!-- Document generation from the Annotations on the REST-API. -->
         <!-- TODO move to a better suited processing phase -->
-<!--
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>apt-maven-plugin</artifactId>
-          <version>1.0-alpha-4</version>
+          <groupId>org.bsc.maven</groupId>
+          <artifactId>maven-processor-plugin</artifactId>
+          <version>2.0.6-redhat</version>
           <configuration>
-            <factory>org.rhq.helpers.rest_docs_generator.SwaggerAptFactory</factory>
+            <processors>
+              <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+            </processors>
+              <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
           </configuration>
           <executions>
             <execution>
               <id>create-rest-api-reports</id>
               <phase>process-classes</phase>
               <goals>
-                &lt;!&ndash; We want to process the classes in src/ &ndash;&gt;
+                <!-- We want to process the classes in src/ -->
                 <goal>process</goal>
               </goals>
             </execution>
           </executions>
         </plugin>
+        <!-- Disable annotation processors during normal compilation -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgument>-proc:none</compilerArgument>
+          </configuration>
+        </plugin>
+
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>xml-maven-plugin</artifactId>
@@ -815,8 +824,8 @@ Build-OS-Version=${os.version}
           <configuration>
             <transformationSets>
               <transformationSet>
-                &lt;!&ndash; org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal &ndash;&gt;
-                <dir>target/generated-resources/apt</dir>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
+                <dir>target/docs/xml</dir>
                 <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
                 <parameters>
                   <parameter>
@@ -824,7 +833,7 @@ Build-OS-Version=${os.version}
                     <value>http://localhost:7080/rest/1</value>
                   </parameter>
                 </parameters>
-                <outputDir>${project.build.directory}</outputDir>
+                <outputDir>${project.build.directory}/docs/html</outputDir>
                 <fileMappers>
                   <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                     <targetExtension>.html</targetExtension>
@@ -832,7 +841,7 @@ Build-OS-Version=${os.version}
                 </fileMappers>
               </transformationSet>
               <transformationSet>
-                &lt;!&ndash; org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal &ndash;&gt;
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
                 <dir>target/generated-resources/apt</dir>
                 <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
                 <parameters>
@@ -841,7 +850,7 @@ Build-OS-Version=${os.version}
                     <value>http://localhost:7080/rest/1</value>
                   </parameter>
                 </parameters>
-                <outputDir>${project.build.directory}</outputDir>
+                <outputDir>${project.build.directory}/docs/xml</outputDir>
                 <fileMappers>
                   <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                     <targetExtension>.dbx.xml</targetExtension>
@@ -865,13 +874,12 @@ Build-OS-Version=${os.version}
               </execution>
           </executions>
           <configuration>
-            <sourceDirectory>target</sourceDirectory>
+            <sourceDirectory>target/docs/xml</sourceDirectory>
             <includes>rest-api-out.dbx.xml</includes>
             <hyphenate>false</hyphenate>
             <generateToc>true</generateToc>
           </configuration>
         </plugin>
--->
 
       </plugins>
 

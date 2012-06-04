@@ -37,9 +37,7 @@
     <module>bundleGen</module>
     <module>jeeGen</module>
     <module>perftest-support</module>
-<!--
     <module>rest-docs-generator</module>
--->
 
     <!-- Not built by default because people will need this only rarely when developing tests. -->
     <!-- <module>inventory-serializer</module>  -->

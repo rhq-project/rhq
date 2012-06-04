@@ -5,8 +5,25 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.xml.parsers.DocumentBuilder;
@@ -18,10 +35,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import com.sun.mirror.apt.*;
-import com.sun.mirror.declaration.*;
-import com.sun.mirror.type.AnnotationType;
-import com.sun.mirror.type.TypeMirror;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
@@ -37,26 +50,41 @@ import org.w3c.dom.Element;
  * Processor for JAX-RS classes
  * @author Heiko W. Rupp
  */
-class ClassLevelProcessor implements AnnotationProcessor {
 
-    private static final String JAVAX_WS_RS = "javax.ws.rs.";
+@SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE})
+@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedAnnotationTypes(value = {"com.wordnik.swagger.annotations.*","javax.ws.rs.*"})
+public class ClassLevelProcessor extends AbstractProcessor {
+
+    private static final String JAVAX_WS_RS = "javax.ws.rs";
     private static final String[] HTTP_METHODS = {"GET","PUT","POST","HEAD","DELETE","OPTIONS"};
     private static final String[] PARAM_SKIP_ANNOTATIONS = {"javax.ws.rs.core.UriInfo","javax.ws.rs.core.HttpHeaders","javax.servlet.http.HttpServletRequest","javax.ws.rs.core.Request"};
     private static final String API_OUT_XML = "rest-api-out.xml";
-    private static final String AT_PATH = "javax.ws.rs.Path";
-
-    private AnnotationProcessorEnvironment env;
-    private String targetDir;
+    public static final String TARGET_DIRECTORY = "targetDirectory";
+    public static final String VERBOSE = "verbose";
 
     Log log = LogFactory.getLog(getClass().getName());
 
-    public ClassLevelProcessor(AnnotationProcessorEnvironment env, String targetDir) {
-        this.env = env;
-        this.targetDir = targetDir;
+    private String targetDirectory;
+    boolean verbose = false;
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnvironment) {
+        super.init(processingEnvironment);
+        Map<String,String>options =  processingEnv.getOptions();
+        if (options.containsKey(TARGET_DIRECTORY)) {
+            targetDirectory = options.get(TARGET_DIRECTORY);
+        }
+        if (options.containsKey(VERBOSE))
+            verbose=true;
     }
 
     @Override
-    public void process() {
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+
+        // We are invoked twice, but do our work already in the first round
+        if (roundEnv.processingOver())
+            return true;
 
         Document doc;
         DocumentBuilder documentBuilder;
@@ -65,15 +93,17 @@ class ClassLevelProcessor implements AnnotationProcessor {
             doc = documentBuilder.newDocument();
         }
         catch (Exception e) {
-            e.printStackTrace();
-            return;
+            log.error(e);
+            return false;
         }
 
         Element root = doc.createElement("api");
         doc.appendChild(root);
 
-        // Loop over all classes and find class level annotations we are interested in
-        processClass(doc, root);
+        // Loop over all classes
+        for (javax.lang.model.element.Element t : roundEnv.getRootElements()) { // classes to process
+            processClass(doc, root, (TypeElement)t);
+        }
 
         try {
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -81,104 +111,123 @@ class ClassLevelProcessor implements AnnotationProcessor {
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes"); // do xml indent
 
-            // We initialize here for String writing to also see the result on stdout TODO change later
+            // We initialize here for String writing to be able to also see the result on stdout
             StreamResult result = new StreamResult(new StringWriter());
             DOMSource source = new DOMSource(doc);
             transformer.transform(source, result);
 
             String xmlString = result.getWriter().toString();
-//            System.out.println(xmlString);
+            if (verbose)
+                System.out.println(xmlString);
 
-            File f;
-            if (targetDir!=null) {
-                File td = new File(targetDir);
-                if (!td.exists())
-                    td.mkdirs();
+            File f ;
+            if (targetDirectory!=null) {
+                File targetDir = new File(targetDirectory);
+                if (!targetDir.exists())
+                    targetDir.mkdirs();
 
-                f = new File(td, API_OUT_XML);
+                f = new File(targetDir, API_OUT_XML);
             }
             else
                 f = new File(API_OUT_XML);
 
             String path = f.getAbsolutePath();
-            log.info("... writing to " + path);
+            String s = "..... writing to [" + path + "] ......";
+            if (verbose)
+                System.out.println(s);
+            else
+                log.info(s);
+
             try {
                 FileWriter fw = new FileWriter(f);
                 fw.write(xmlString);
                 fw.flush();
                 fw.close();
             } catch (IOException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+                log.error(e);
             }
 
         } catch (TransformerException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.error(e);
         }
-
+        return true;
     }
 
-    private void processClass(Document doc, Element root) {
-        for (TypeDeclaration td : env.getSpecifiedTypeDeclarations()) {
-            String basePath = getPathValue(td);
-            if (basePath==null || basePath.isEmpty()) {
-                log.debug("No @Path found on " + td.getQualifiedName() + " - skipping");
-                continue;
-            }
+    private void processClass(Document doc, Element xmlRoot, TypeElement classElementIn) {
 
-            Element classElement = doc.createElement("class");
-            String className = td.toString();
-            classElement.setAttribute("name",className);
-            classElement.setAttribute("path",basePath);
-            Api api = td.getAnnotation(Api.class);
-            if (api!=null) {
-                String shortDescription = api.value();
-                setOptionalAttribute(classElement, "shortDesc", shortDescription);
-                String longDescription = api.description();
-                setOptionalAttribute(classElement, "description", longDescription);
-                String basePathAttr = api.basePath();
-                setOptionalAttribute(classElement, "basePath",basePathAttr);
-            }
+        log.debug("Looking at " + classElementIn.getQualifiedName().toString());
+        Path basePath = classElementIn.getAnnotation(Path.class);
+        if (basePath==null || basePath.value().isEmpty()) {
+            log.debug("No @Path found on " + classElementIn.getQualifiedName() + " - skipping");
+            return;
+        }
 
-            root.appendChild(classElement);
+        Element classElement = doc.createElement("class");
+        String className = classElementIn.toString();
+        classElement.setAttribute("name",className);
+        classElement.setAttribute("path",basePath.value());
+        Api api = classElementIn.getAnnotation(Api.class);
+        if (api!=null) {
+            String shortDescription = api.value();
+            setOptionalAttribute(classElement, "shortDesc", shortDescription);
+            String longDescription = api.description();
+            setOptionalAttribute(classElement, "description", longDescription);
+            String basePathAttr = api.basePath();
+            setOptionalAttribute(classElement, "basePath",basePathAttr);
+        }
 
-            // Loop over the methods on this class
-            processMethods(doc, td, classElement);
+        xmlRoot.appendChild(classElement);
+
+        // Loop over the methods on this class
+        for (ExecutableElement m : ElementFilter.methodsIn(classElementIn.getEnclosedElements())) {
+            processMethods(doc, m, classElement);
         }
     }
 
 
-    private void processMethods(Document doc, TypeDeclaration td, Element classElement) {
-        for (MethodDeclaration m : td.getMethods()) {
-            String path = getPathValue(m);
+    private void processMethods(Document doc, ExecutableElement td, Element classElement) {
 
-            Element methodElement = doc.createElement("method");
-            methodElement.setAttribute("path",path);
-            classElement.appendChild(methodElement);
-            methodElement.setAttribute("name", m.getSimpleName());
-            String httpMethod = getHttpMethod(m.getAnnotationMirrors());
-            methodElement.setAttribute("method",httpMethod);
-            String description = getValue(m, ApiOperation.class.getName(), "value");
-            setOptionalAttribute(methodElement,"description",description);
-            String responseClass = getValue(m,ApiOperation.class.getName(), "responseClass");
-            setOptionalAttribute(methodElement,"returnType",responseClass,m.getReturnType().toString());
+        log.debug("  Looking at method " + td.getSimpleName().toString());
 
-            // Loop over the parameters
-            processParams(doc, m, methodElement);
-
-            processErrors(doc,m, methodElement);
-
+        Path pathAnnotation = td.getAnnotation(Path.class);
+        if (pathAnnotation==null) {
+            return;
         }
+        String path = pathAnnotation.value();
+
+        Element methodElement = doc.createElement("method");
+        methodElement.setAttribute("path",path);
+        classElement.appendChild(methodElement);
+        Name elementName = td.getSimpleName();
+        methodElement.setAttribute("name", elementName.toString());
+        String httpMethod = getHttpMethod(td.getAnnotationMirrors());
+        methodElement.setAttribute("method",httpMethod);
+        ApiOperation apiOperation = td.getAnnotation(ApiOperation.class);
+        if (apiOperation!=null) {
+        String description = apiOperation.value();
+        setOptionalAttribute(methodElement, "description", description);
+
+        String responseClass = !apiOperation.responseClass().equals("ok")? apiOperation.responseClass() : null;
+
+        setOptionalAttribute(methodElement,"returnType",responseClass,td.getReturnType().toString());
+        }
+
+        // Loop over the parameters
+        processParams(doc, td, methodElement);
+
+        processErrors(doc,td, methodElement);
+
     }
 
     /**
      * Process the parameters of a method.
      * @param doc Xml Document to add the output to
-     * @param m Method to look for parameters
+     * @param methodElement Method to look for parameters
      * @param parent The parent xml element to tack the results on
      */
-    private void processParams(Document doc, MethodDeclaration m, Element parent) {
-        for (ParameterDeclaration p : m.getParameters()) {
-            TypeMirror t = p.getType();
+    private void processParams(Document doc, javax.lang.model.element.Element methodElement, Element parent) {
+        for (javax.lang.model.element.Element modelElement : methodElement.getEnclosedElements()) {
+            TypeMirror t = modelElement.asType();
 
             if (skipParamType(t))
                 continue;
@@ -187,9 +236,9 @@ class ClassLevelProcessor implements AnnotationProcessor {
             // determine name
             String name;
             String paramType="-body-";
-            PathParam pp = p.getAnnotation(PathParam.class);
-            QueryParam qp = p.getAnnotation(QueryParam.class);
-            ApiParam ap = p.getAnnotation(ApiParam.class);
+            PathParam pp = modelElement.getAnnotation(PathParam.class);
+            QueryParam qp = modelElement.getAnnotation(QueryParam.class);
+            ApiParam ap = modelElement.getAnnotation(ApiParam.class);
             if (pp != null) {
                 name = pp.value();
                 paramType="Path";
@@ -200,23 +249,27 @@ class ClassLevelProcessor implements AnnotationProcessor {
             }
             else if (ap!=null)
                 name = ap.name();
-            else
-                name = p.getSimpleName();
+            else {
+                Name nameElement = modelElement.getSimpleName();
+                name = nameElement.toString();
+            }
 
-            element.setAttribute("name",name);
+            element.setAttribute("name", name);
             element.setAttribute("paramType",paramType);
-            String description = getValue(p, ApiParam.class.getName(), "value");
-            setOptionalAttribute(element, "description", description);
-            String required = getValue(p, ApiParam.class.getName(), "required");
-            if (isPathParam(p)) // PathParams are always required
-                required="true";
+            ApiParam apiParam = modelElement.getAnnotation(ApiParam.class);
+            if (apiParam!=null) {
+                String description = apiParam.value();
+                setOptionalAttribute(element, "description", description);
+                String required = String.valueOf(apiParam.required());
+                if (isPathParam(modelElement)) // PathParams are always required
+                    required="true";
 
-            setOptionalAttribute(element,"required",required,"false");
-            String allowedValues = getValue(p, ApiParam.class.getName(), "allowableValues");
-            setOptionalAttribute(element,"allowableValues",allowedValues,"all");
-
+                setOptionalAttribute(element, "required", required, "false");
+                String allowedValues = apiParam.allowableValues();
+                setOptionalAttribute(element, "allowableValues", allowedValues, "all");
+            }
             String defaultValue;
-            DefaultValue dva = p.getAnnotation(DefaultValue.class);
+            DefaultValue dva = modelElement.getAnnotation(DefaultValue.class);
             if (dva!=null)
                 defaultValue = dva.value();
             else if (ap!=null)
@@ -235,13 +288,13 @@ class ClassLevelProcessor implements AnnotationProcessor {
     /**
      * Look at the ApiError(s) annotations and populate the output
      * @param doc XML Document to add
-     * @param m MethodDeclaration to look at
+     * @param methodElement MethodDeclaration to look at
      * @param parent The parent xml element to attach the result to
      */
-    private void processErrors(Document doc, MethodDeclaration m, Element parent) {
-        ApiError ae = m.getAnnotation(ApiError.class);
+    private void processErrors(Document doc, javax.lang.model.element.Element methodElement, Element parent) {
+        ApiError ae = methodElement.getAnnotation(ApiError.class);
         processError(doc,ae,parent);
-        ApiErrors aes = m.getAnnotation(ApiErrors.class);
+        ApiErrors aes = methodElement.getAnnotation(ApiErrors.class);
         if (aes != null) {
             for (ApiError ae2 : aes.value()) {
                 processError(doc,ae2,parent);
@@ -282,85 +335,29 @@ class ClassLevelProcessor implements AnnotationProcessor {
         return skip;
     }
 
-    /**
-     * Get the value of the @Path annotation. This is stripped from leading and trailing slashed
-     * @param m Declaration to look at
-     * @return Path with leading and trailing slashes stripped or null on error
-     */
-    private String getPathValue(Declaration m) {
-        String path = getValue(m,AT_PATH,"value");
-        if (path==null)
-            return null;
-
-        if (path.startsWith("/"))
-            path = path.substring(1);
-        if (path.endsWith("/"))
-            path = path.substring(0,path.length()-1);
-
-        return path;
-    }
 
 
-
-    /**
-     * Get the value of a certain annotation on a declaration.
-     * Annotation is e.g. of the form <pre>@com.acme.Annot(value"xyz")</pre>.
-     * @param declaration The declaration of class/method/param....
-     * @param annotationName Fully qualified name of the annotation - com.acme.Annot in above example
-     * @param param The param of the annotation to query - value in above example. The parameter name may end in ().
-     * If parens are not provided, they will be attached internally.
-     * @return The value of the param - or null it not found
-     */
-    private String getValue(Declaration declaration, String annotationName, String param) {
-
-        if (!param.endsWith("()")) {
-            param = param+"()";
-        }
-
-        Collection<AnnotationMirror> mirrors = declaration.getAnnotationMirrors();
-
-        for (AnnotationMirror am : mirrors) {
-            AnnotationType annotationType = am.getAnnotationType();
-            AnnotationTypeDeclaration annotationTypeDeclaration = annotationType.getDeclaration();
-            String qName = annotationTypeDeclaration.getQualifiedName();
-            if (qName.equals(annotationName)) {
-                // found the annotation, now get the parameter value
-                for (AnnotationTypeElementDeclaration decl : am.getElementValues().keySet()) {
-                    if (decl.toString().equals(param)) {
-                        String s = am.getElementValues().get(decl).toString();
-                        // remove quotes we get passed in
-                        if (s.startsWith("\""))
-                            s = s.substring(1);
-                        if (s.endsWith("\""))
-                            s = s.substring(0,s.length()-1);
-                        return s;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean isPathParam(Declaration decl) {
+    private boolean isPathParam(javax.lang.model.element.Element decl) {
         return hasAnnotation(decl,"javax.ws.rs.PathParam");
     }
 
     /**
-     * Check if a certain annoation is present or not
+     * Check if a certain annotation is present or not
      * @param declaration Declaration to look at
      * @param annotationName Name of the annotation
      * @return true if found, false otherwise
      */
-    private boolean hasAnnotation(Declaration declaration, String annotationName) {
+    private boolean hasAnnotation(javax.lang.model.element.Element declaration, String annotationName) {
 
         boolean found = false;
 
-        Collection<AnnotationMirror> mirrors = declaration.getAnnotationMirrors();
+        Collection<? extends AnnotationMirror> mirrors = declaration.getAnnotationMirrors();
 
         for (AnnotationMirror am : mirrors) {
-            AnnotationType annotationType = am.getAnnotationType();
-            AnnotationTypeDeclaration annotationTypeDeclaration = annotationType.getDeclaration();
-            String qName = annotationTypeDeclaration.getQualifiedName();
+            DeclaredType annotationType = am.getAnnotationType();
+            javax.lang.model.element.Element annotationTypeDeclaration = annotationType.asElement();
+            String qName = annotationTypeDeclaration.getSimpleName().toString();
+            log.debug("AM: " + am + " , " + qName);
             if (qName.equals(annotationName)) {
                 found = true;
                 break;
@@ -376,15 +373,16 @@ class ClassLevelProcessor implements AnnotationProcessor {
      * @param annotationMirrors mirrors for the method
      * @return The http method string or null if it can not be determined
      */
-    private String getHttpMethod(Collection<AnnotationMirror> annotationMirrors) {
+    private String getHttpMethod(Collection<? extends AnnotationMirror> annotationMirrors) {
         for (AnnotationMirror am : annotationMirrors) {
-            String qName = am.getAnnotationType().getDeclaration().getQualifiedName();
-            if (qName.startsWith(JAVAX_WS_RS)) {
-                qName = qName.substring(JAVAX_WS_RS.length());
-//                System.out.println(" Checking qname " + qName);
+            javax.lang.model.element.Element element = am.getAnnotationType().asElement();
+            String pName = element.getEnclosingElement().toString();
+            String cName = element.getSimpleName().toString();
+            if (pName.startsWith(JAVAX_WS_RS)) {
                 for (String name : HTTP_METHODS) {
-                    if (qName.equals(name))
+                    if (cName.equals(name)) {
                         return name;
+                    }
                 }
             }
         }

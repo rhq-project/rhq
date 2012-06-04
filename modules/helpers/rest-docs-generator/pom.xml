@@ -47,6 +47,8 @@
       </testResource>
     </testResources>
     <plugins>
+
+<!--
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
@@ -54,12 +56,16 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+-->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>apt-maven-plugin</artifactId>
-        <version>1.0-alpha-4</version>
+        <groupId>org.bsc.maven</groupId>
+        <artifactId>maven-processor-plugin</artifactId>
+        <version>2.0.6-redhat</version>
         <configuration>
-          <factory>com.wordnik.swagger.jaxrs.apt.SwaggerAptFactory</factory>
+          <processors>
+            <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+          </processors>
+            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml,-Averbose=true</compilerArguments>
         </configuration>
         <executions>
           <execution>
@@ -67,11 +73,20 @@
             <phase>process-classes</phase>
             <goals>
               <!-- We want to process the classes in test/ -->
-              <goal>test-process</goal>
+              <goal>process-test</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
+      <!-- Disable annotation processors during normal compilation -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgument>-proc:none</compilerArgument>
+        </configuration>
+      </plugin>
+      <!-- now xml translate the output from above to html -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>xml-maven-plugin</artifactId>
@@ -86,10 +101,10 @@
         <configuration>
           <transformationSets>
             <transformationSet>
-              <!-- apt plugin wrote to generated-test-resources, as we ran the test-process goal -->
-              <dir>target/generated-test-resources/apt</dir>
+              <!-- target dir from -AtargetDirectory=... above -->
+              <dir>target/docs/xml</dir>
               <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
-              <outputDir>${project.build.directory}</outputDir>
+              <outputDir>${project.build.directory}/docs/html</outputDir>
               <fileMappers>
                 <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                   <targetExtension>.html</targetExtension>
@@ -130,6 +145,12 @@
       <groupId>com.wordnik</groupId>
       <artifactId>swagger-annotations_2.9.1</artifactId>
       <version>1.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>${commons-logging.version}</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>

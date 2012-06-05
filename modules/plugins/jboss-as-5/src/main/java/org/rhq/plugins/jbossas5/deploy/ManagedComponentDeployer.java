@@ -61,6 +61,11 @@ public class ManagedComponentDeployer implements Deployer {
     private ProfileServiceConnection profileServiceConnection;
     private ResourceContext<?> parentResourceContext;
 
+    /**
+     * @deprecated To be used only by the ESB plugin (backwards compatibility).
+     * Replaced by {@link #ManagedComponentDeployer(ProfileServiceConnection, PackageDownloader, ResourceContext)}
+     */
+    @Deprecated
     public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
         this(profileServiceConnection, downloader, null);
     }

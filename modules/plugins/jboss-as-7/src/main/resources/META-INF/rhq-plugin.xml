@@ -6585,6 +6585,27 @@
             <c:simple-property name="routing-name" required="false" type="string" readOnly="false" description="Routing name of the divert"/>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a class used to transform the message&apos;s body or properties before it is diverted."/>
           </resource-configuration>
+
+	    <service name="Module Option"
+		     discovery="SubsystemDiscovery"
+		     class="BaseComponent"
+                     createDeletePolicy="both"
+		     description="The module options to be used."
+		     singleton="true">
+
+	      <plugin-configuration>
+		<c:simple-property name="path" readOnly="true" default="module-options"/>
+	      </plugin-configuration>
+
+	      <resource-configuration>
+                <c:list-property name="Modules Options" required="false" description="List of module options.">
+                  <c:map-property name="*" required="false">
+                    <c:simple-property name="name"/>
+                    <c:simple-property name="value"/>
+                  </c:map-property>
+                </c:list-property>
+	      </resource-configuration>
+            </service>
         </service>
 
         <service name="Queue (Profile)"
@@ -10377,7 +10398,7 @@
 
       <service name="Authentication (Classic)"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="ModuleOptionsComponent"
                singleton="true"
                createDeletePolicy="both">
 
@@ -10417,11 +10438,33 @@
                   <c:option value="required"/>
                 </c:property-options>
               </c:simple-property>
-              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
+<!--              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
+              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>-->
             </c:map-property>
           </c:list-property>
         </resource-configuration>
+
+	    <service name="Module Options (Classic)"
+		     discovery="ModuleOptionsDiscoveryComponent"
+		     class="ModuleOptionsComponent"
+                     createDeletePolicy="both"
+		     singleton="true"
+		     description="The module options to be used.">
+
+	      <plugin-configuration>
+		<c:simple-property name="path" readOnly="true" default="module-options"/>
+	      </plugin-configuration>
+
+	      <resource-configuration>
+                <c:list-property name="Modules Options" required="false" description="List of module options.">
+                  <c:map-property name="*" required="false">
+                    <c:simple-property name="name"/>
+                    <c:simple-property name="value"/>
+                  </c:map-property>
+                </c:list-property>
+	      </resource-configuration>
+            </service>	
+
       </service>
 
       <service name="Authentication (Jaspi)"

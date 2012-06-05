@@ -824,7 +824,7 @@ Build-OS-Version=${os.version}
           <configuration>
             <transformationSets>
               <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
                 <dir>target/docs/xml</dir>
                 <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
                 <parameters>
@@ -841,8 +841,8 @@ Build-OS-Version=${os.version}
                 </fileMappers>
               </transformationSet>
               <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to generated-resources, as we ran the process goal -->
-                <dir>target/generated-resources/apt</dir>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
                 <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
                 <parameters>
                   <parameter>
@@ -874,7 +874,7 @@ Build-OS-Version=${os.version}
               </execution>
           </executions>
           <configuration>
-            <sourceDirectory>target/docs/xml</sourceDirectory>
+            <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
             <includes>rest-api-out.dbx.xml</includes>
             <hyphenate>false</hyphenate>
             <generateToc>true</generateToc>

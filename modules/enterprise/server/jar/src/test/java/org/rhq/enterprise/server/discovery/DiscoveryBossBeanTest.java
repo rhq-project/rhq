@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.discovery;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -72,10 +76,6 @@ import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.when;
-
 /**
  * A unit test for {@link DiscoveryBossBean}.
  */
@@ -125,7 +125,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
-        when(agentServiceContainer.discoveryService.manuallyAddResource(any(ResourceType.class), anyInt(),
+        when(
+            agentServiceContainer.discoveryService.manuallyAddResource(any(ResourceType.class), anyInt(),
                 any(Configuration.class), anyInt())).thenAnswer(new Answer<MergeResourceResponse>() {
             public MergeResourceResponse answer(InvocationOnMock invocation) throws Throwable {
                 Resource resource = new Resource(1000000);
@@ -135,7 +136,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 long randomLong = UUID.randomUUID().getLeastSignificantBits();
                 resource.setResourceKey(String.valueOf("key-" + randomLong));
                 resource.setName("name-" + randomLong);
-                int parentResourceId = (Integer)invocation.getArguments()[1];
+                int parentResourceId = (Integer) invocation.getArguments()[1];
                 Resource parentResource = resourceManager.getResource(subjectManager.getOverlord(), parentResourceId);
                 resource.setParentResource(parentResource);
                 Integer ownerSubjectId = (Integer) invocation.getArguments()[3];
@@ -146,9 +147,13 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
-        MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
+        try {
+            MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
 
-        cleanDB();
+            cleanDB();
+        } finally {
+            unprepareForTestAgents();
+        }
     }
 
     @Test(groups = "integration.ejb3")
@@ -226,11 +231,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         ResourceSyncInfo serverSyncInfo = syncInfo.getChildSyncInfos().iterator().next();
         Resource resource1 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
-                serverSyncInfo.getId(), new Configuration());
+            serverSyncInfo.getId(), new Configuration());
 
         try {
             Resource resource2 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
-                    serverSyncInfo.getId(), new Configuration());
+                serverSyncInfo.getId(), new Configuration());
             fail("Manually adding a singleton that already existed succeeded: " + resource2);
         } catch (EJBException e) {
             assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());

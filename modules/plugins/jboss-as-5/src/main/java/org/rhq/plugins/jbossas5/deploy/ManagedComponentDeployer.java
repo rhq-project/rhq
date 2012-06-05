@@ -48,7 +48,7 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
  * This implementation handles deploying stuff using the standard JBoss deployment APIs.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ManagedComponentDeployer implements Deployer {
@@ -60,6 +60,10 @@ public class ManagedComponentDeployer implements Deployer {
     private PackageDownloader downloader;
     private ProfileServiceConnection profileServiceConnection;
     private ResourceContext<?> parentResourceContext;
+
+    public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
+        this(profileServiceConnection, downloader, null);
+    }
 
     public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader,
         ResourceContext<?> parentResourceContext) {
@@ -133,7 +137,7 @@ public class ManagedComponentDeployer implements Deployer {
 
             // If deployed exploded, we need to store the SHA of source package in META-INF/MANIFEST.MF for correct
             // versioning.
-            if (deployExploded) {
+            if (deployExploded && this.parentResourceContext != null) {
                 URI deploymentURI = URI.create(deploymentName);
                 // e.g.: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
                 String deploymentPath = deploymentURI.getPath();

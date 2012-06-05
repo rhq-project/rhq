@@ -1646,10 +1646,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             return;
         }
 
-        int bundleId = 0;
-        if (deleteBundleIfEmpty) {
-            bundleId = bundleVersion.getBundle().getId(); // note that we lazy load this if we never plan to delete the bundle
-        }
+        // After we delete this bundle version, this is the version order value that is being removed.
+        // Later we need to re-order the other bundles that are newer than this so their version orders are readjusted.
+        int doomedBundleVersionOrder = bundleVersion.getVersionOrder();
+
+        int bundleId = bundleVersion.getBundle().getId();
 
         // deployments replace other deployments and have a self-referring FK.  The deployments
         // need to be removed in a way that will ensure that a replaced deployment is not removed
@@ -1671,7 +1672,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             if (q.getResultList().size() == 0) {
                 // there are no more bundle versions left, blow away the bundle and all repo/bundle files associated with it
                 deleteBundle(subject, bundleId);
+                doomedBundleVersionOrder = -1; // just a marker to let us know not to bother with adjusting version orders
             }
+        }
+
+        if (doomedBundleVersionOrder >= 0) {
+            q = entityManager.createNamedQuery(BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID_AFTER_DELETE);
+            q.setParameter("bundleId", bundleId);
+            q.setParameter("versionOrder", doomedBundleVersionOrder);
+            q.executeUpdate();
         }
 
         return;

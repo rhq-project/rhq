@@ -61,6 +61,15 @@ public class ManagedComponentDeployer implements Deployer {
     private ProfileServiceConnection profileServiceConnection;
     private ResourceContext<?> parentResourceContext;
 
+    /**
+     * @deprecated To be used only by the ESB plugin (backwards compatibility).
+     * Replaced by {@link #ManagedComponentDeployer(ProfileServiceConnection, PackageDownloader, ResourceContext)}
+     */
+    @Deprecated
+    public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
+        this(profileServiceConnection, downloader, null);
+    }
+
     public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader,
         ResourceContext<?> parentResourceContext) {
         this.downloader = downloader;
@@ -133,7 +142,7 @@ public class ManagedComponentDeployer implements Deployer {
 
             // If deployed exploded, we need to store the SHA of source package in META-INF/MANIFEST.MF for correct
             // versioning.
-            if (deployExploded) {
+            if (deployExploded && this.parentResourceContext != null) {
                 URI deploymentURI = URI.create(deploymentName);
                 // e.g.: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
                 String deploymentPath = deploymentURI.getPath();

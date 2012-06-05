@@ -155,7 +155,7 @@
         <resource-configuration>
 
           <c:group name="proxy" displayName="Proxy Options">
-            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+            <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with commas."/>
             <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
           </c:group>
 
@@ -173,7 +173,7 @@
 
           <c:group name="context" displayName="Web Context Options">
             <c:simple-property name="excluded-contexts" required="false" type="string" readOnly="false" defaultValue="ROOT,admin-console,invoker,jbossws,jmx-console,juddi,web-console"
-                               description="List of contexts mod_cluster should ignore, Format String separated with comas."/>
+                               description="List of contexts mod_cluster should ignore, Format String separated with commas."/>
             <c:simple-property name="auto-enable-contexts" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable contexts even if disabled in mod_cluster_manger (httpd)."/>
           </c:group>
 
@@ -1321,8 +1321,8 @@
 
       <operation name="list-proxies" description="Read the list of httpd connected to the node.">
         <results>
-          <!-- List of proxies the node is connected to. Format (hostname:port) separated with comas.-->
-          <c:simple-property name="proxy-list" description="List of proxies the node is connected to. Format (hostname:port) separated with comas"/>
+          <!-- List of proxies the node is connected to. Format (hostname:port) separated with commas.-->
+          <c:simple-property name="proxy-list" description="List of proxies the node is connected to. Format (hostname:port) separated with commas"/>
         </results>
       </operation>
 

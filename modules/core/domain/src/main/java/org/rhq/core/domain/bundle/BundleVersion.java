@@ -57,6 +57,11 @@ import org.rhq.core.domain.tagging.Tag;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID_AFTER_DELETE, query = "" //
+        + "UPDATE BundleVersion bv "//
+        + "   SET bv.versionOrder = (bv.versionOrder-1) " //
+        + " WHERE bv.bundle.id = :bundleId " //
+        + "   AND bv.versionOrder > :versionOrder"), //
     @NamedQuery(name = BundleVersion.UPDATE_VERSION_ORDER_BY_BUNDLE_ID, query = "" // 
         + "UPDATE BundleVersion bv "//
         + "   SET bv.versionOrder = (bv.versionOrder+1) " //
@@ -83,6 +88,7 @@ import org.rhq.core.domain.tagging.Tag;
 public class BundleVersion implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String UPDATE_VERSION_ORDER_BY_BUNDLE_ID_AFTER_DELETE = "BundleVersion.updateVersionOrderByBundleIdAfterDelete";
     public static final String UPDATE_VERSION_ORDER_BY_BUNDLE_ID = "BundleVersion.updateVersionOrderByBundleId";
     public static final String QUERY_FIND_LATEST_BY_BUNDLE_ID = "BundleVersion.findLatestByBundleId";
     public static final String QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID = "BundleVersion.findVersionsByBundleId";

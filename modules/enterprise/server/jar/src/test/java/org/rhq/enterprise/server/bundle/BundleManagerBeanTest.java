@@ -533,6 +533,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         bCriteria.addFilterId(b1.getId());
         bResults = bundleManager.findBundlesByCriteria(overlord, bCriteria);
         assert bResults.size() == 0 : "Should have deleted bundle since no versions exists anymore";
+
+        // make sure our composite query is OK and can show us 0 bundles, too
+        PageList<BundleWithLatestVersionComposite> composites;
+        bCriteria = new BundleCriteria();
+        composites = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, bCriteria);
+        assert composites.size() == 0;
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -696,6 +702,51 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assert results.get(1).getBundleDescription().equals(b2.getDescription());
         assert results.get(1).getLatestVersion().equals("9.1");
         assert results.get(1).getVersionsCount().longValue() == 1L;
+
+        // now delete one of the older bundle versions and make sure the ordering remains intact
+        bundleManager.deleteBundleVersion(overlord, bv1.getId(), true);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
+        assert results.size() == 2 : results;
+        assert results.get(0).getBundleId().equals(b1.getId());
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getVersionsCount().longValue() == 3L;
+        assert results.get(1).getBundleId().equals(b2.getId());
+        assert results.get(1).getBundleName().equals(b2.getName());
+        assert results.get(1).getBundleDescription().equals(b2.getDescription());
+        assert results.get(1).getLatestVersion().equals("9.1");
+        assert results.get(1).getVersionsCount().longValue() == 1L;
+
+        // now add another bundle version and make sure the ordering is updated properly [BZ 828905]
+        BundleVersion bv5 = createBundleVersion(b1.getName() + "-5", "5.0", b1);
+        assertNotNull(bv5);
+        assertEquals("5.0", bv5.getVersion());
+        assert 3 == bv5.getVersionOrder();
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleId().equals(b1.getId());
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("5.0");
+        assert results.get(0).getVersionsCount().longValue() == 4L;
+
+        // delete the latest bundle version and make sure we didn't screw up the order
+        bundleManager.deleteBundleVersion(overlord, bv5.getId(), true);
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleId().equals(b1.getId());
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getVersionsCount().longValue() == 3L;
+
+        // delete the oldest bundle version and make sure we didn't screw up the order
+        bundleManager.deleteBundleVersion(overlord, bv4.getId(), true); // deleting version 0.5
+        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
+        assert results.get(0).getBundleId().equals(b1.getId());
+        assert results.get(0).getBundleName().equals(b1.getName());
+        assert results.get(0).getBundleDescription().equals(b1.getDescription());
+        assert results.get(0).getLatestVersion().equals("2.0");
+        assert results.get(0).getVersionsCount().longValue() == 2L;
     }
 
     @Test(enabled = TESTS_ENABLED)

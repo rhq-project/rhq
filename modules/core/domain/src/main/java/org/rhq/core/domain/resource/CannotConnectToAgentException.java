@@ -32,7 +32,7 @@ import javax.ejb.ApplicationException;
  */
 @ApplicationException(rollback = true)
 public class CannotConnectToAgentException extends RuntimeException {
-    private static final long serialVersionUID = -1L;
+    private static final long serialVersionUID = 1L;
 
     public CannotConnectToAgentException() {
         super();

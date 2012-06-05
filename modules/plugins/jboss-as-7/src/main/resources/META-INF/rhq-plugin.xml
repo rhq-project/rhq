@@ -768,6 +768,60 @@
       </resource-configuration>
 '>
 
+    <!ENTITY loginModuleResourceConfig '
+      <resource-configuration>
+             <c:simple-property name="code" required="true" type="string" readOnly="true"
+              description="Class name of the module to be instantiated.">
+                <c:property-options>
+                  <c:option value="AdvancedADLdap" />
+                  <c:option value="AdvancedLdap" />
+                  <c:option value="Certificate" />
+                  <c:option value="CertificateRoles" />
+                  <c:option value="CertificateUsers" />
+                  <c:option value="Client" />
+                  <c:option value="ConfigureIdentity" />
+                  <c:option value="Database" />
+                  <c:option value="DatabaseCertificate" />
+                  <c:option value="DatabaseUsers" />
+                  <c:option value="Identity" />
+                  <c:option value="Kerberos" />
+                  <c:option value="Ldap" />
+                  <c:option value="LdapExtended" />
+                  <c:option value="LdapUsers" />
+                  <c:option value="PropertiesUsers" />
+                  <c:option value="RoleMapping" />
+                  <c:option value="RunAs" />
+                  <c:option value="Simple" />
+                  <c:option value="SimpleUsers" />
+                  <c:option value="SPNEGOUsers" />
+                  <c:option value="UsersRoles" />
+                </c:property-options>
+              </c:simple-property>
+            <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
+              <c:property-options>
+                <c:option value="optional"/>
+                <c:option value="required"/>
+                <c:option value="requisite"/>
+                <c:option value="sufficient"/>
+              </c:property-options>
+            </c:simple-property>
+      </resource-configuration>
+'>
+
+    <!ENTITY flagModuleResourceConfig '
+	<resource-configuration>
+            <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
+            <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
+              <c:property-options>
+                <c:option value="optional"/>
+                <c:option value="required"/>
+                <c:option value="requisite"/>
+                <c:option value="sufficient"/>
+              </c:property-options>
+            </c:simple-property>
+        </resource-configuration>
+'>
+
     ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
@@ -3095,272 +3149,306 @@
          </c:simple-property>
         </resource-configuration>
 
-        <service name="ACL (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+  <service name="ACL (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="acl=classic"/>
-          </plugin-configuration>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="acl=classic" />
+    </plugin-configuration>
 
-          <resource-configuration>
-            <c:list-property name="acl-modules" required="false" description="List of acl modules">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the acl provider module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+		&flagModuleResourceConfig;
+    <service name="Acl Modules (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-        <service name="Audit (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="acl-modules" />
+      </plugin-configuration>
+		      &flagModuleResourceConfig;
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="audit=classic"/>
-          </plugin-configuration>
+      <service name="Module Options (Acl - Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
-          <resource-configuration>
-            <c:list-property name="provider-modules" required="false" description="List of provider modules">
-               <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-        <service name="Authentication (Classic - Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Acl - Managed Server) -->
+    </service><!-- End of Acl Modules (Managed Server) -->
+  </service>
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="authentication=classic"/>
-          </plugin-configuration>
+  <service name="Audit (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
 
-          <resource-configuration>
-            <c:list-property name="login-modules" required="false" description="List of authentication modules">
-              <c:map-property name="*" required="false">
-               <c:simple-property name="code" required="true" type="string" readOnly="true"
-                description="Class name of the module to be instantiated.">
-                  <c:property-options>
-                    <c:option value="AdvancedADLdap" />
-                    <c:option value="AdvancedLdap" />
-                    <c:option value="Certificate" />
-                    <c:option value="CertificateRoles" />
-                    <c:option value="Client" />
-                    <c:option value="Database" />
-                    <c:option value="DatabaseCertificate" />
-                    <c:option value="DatabaseUsers" />
-                    <c:option value="Identity" />
-                    <c:option value="Kerberos" />
-                    <c:option value="Ldap" />
-                    <c:option value="LdapExtended" />
-                    <c:option value="RoleMapping" />
-                    <c:option value="Simple" />
-                    <c:option value="SPNEGOUsers" />
-                    <c:option value="UserRoles" />
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="audit=classic" />
+    </plugin-configuration>
 
-        <service name="Authentication (Jaspi - Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+    </resource-configuration>
+    <service name="Provider Modules (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="authentication=jaspi"/>
-          </plugin-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="provider-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+      </resource-configuration>
 
-          <resource-configuration>
-            <c:list-property name="auth-modules" required="true" description="List of authentication modules to be used." >
-                  <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the auth module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-                <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="true" description="Reference to a login module stack name previously configured in the same security domain."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
+      <service name="Module Options (Provider Modules - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
 
-          <service name="Login Module Stack (Managed Server)"
-                   discovery="SubsystemDiscovery"
-                   class="BaseComponent">
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-              <plugin-configuration>
-                  <c:simple-property name="path" readOnly="true" default="login-module-stack"/>
-              </plugin-configuration>
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Provider Modules - Managed Server) -->
+    </service><!-- End of Provider Modules - Managed Server -->
+  </service>
 
-            <resource-configuration>
-              <c:list-property name="login-modules" required="true" description="List of authentication modules" >
-                <c:map-property name="*" required="false">
-                  <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                  <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                    <c:property-options>
-                      <c:option value="sufficient"/>
-                      <c:option value="requisite"/>
-                      <c:option value="optional"/>
-                      <c:option value="required"/>
-                    </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the login module code is located."/>
-                  <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-                </c:map-property>
-              </c:list-property>
-            </resource-configuration>
-          </service>
-        </service>
+  <service name="Authentication (Classic - Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
 
-        <service name="Authorization (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=classic" />
+    </plugin-configuration>
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="authorization=classic"/>
-          </plugin-configuration>
+    <service name="Login Modules (Classic - Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-          <resource-configuration>
-            <c:list-property name="policy-modules" required="false" description="List of authorization modules">
-                <c:map-property name="*" required="false">
-                  <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                  <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                    <c:property-options>
-                      <c:option value="sufficient"/>
-                      <c:option value="requisite"/>
-                      <c:option value="optional"/>
-                      <c:option value="required"/>
-                    </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the policy module code is located."/>
-                  <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-                </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-modules" />
+      </plugin-configuration>
+      
+            &loginModuleResourceConfig;
 
-        <service name="Identity Trust (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+      <service name="Module Options (Classic - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="identity-trust=classic"/>
-          </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-          <resource-configuration>
-            <c:list-property name="trust-modules" required="false" description="List of trust modules">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="true" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="true" description="Name of JBoss Module where the identity trust module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options -->
+    </service><!-- End of Login Modules (Classic - Managed Server) -->
+  </service><!-- End of Authentication (Classic - Managed Server) -->
 
-        <service name="JSSE (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent">
+  <service name="Authentication (Jaspi - Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="jsse"/>
-          </plugin-configuration>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=jaspi" />
+    </plugin-configuration>
 
-          <resource-configuration>
-            <c:simple-property name="cipher-suites" required="false" type="string" readOnly="true" description="Comma separated list of cipher suites to enable on SSLSockets."/>
-            <c:simple-property name="client-alias" required="false" type="string" readOnly="true" description="Preferred alias to use when the KeyManager chooses the client alias."/>
-            <c:simple-property name="client-auth" required="false" type="boolean" readOnly="true" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
-            <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory">
-              <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the KeyManagerFactory."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyManagerFactory."/>
-            </c:map-property>
-            <c:map-property name="keystore" required="false" description="Configures a JSSE key store">
-              <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-              <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;."/>
-              <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the keystore."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the KeyStore."/>
-              <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the keystore Provider constructor when instantiating it."/>
-            </c:map-property>
-            <c:simple-property name="protocols" required="false" type="string" readOnly="true" description="Comma separated list of protocols to enable on SSLSockets."/>
-            <c:simple-property name="server-alias" required="false" type="string" readOnly="true" description="Preferred alias to use when the KeyManager chooses the server alias."/>
-            <c:simple-property name="service-auth-token" required="false" type="string" readOnly="true" description="Token to retrieve PrivateKeys from the KeyStore."/>
-            <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory">
-              <c:simple-property name="algorithm" required="false" type="string" readOnly="true" description="Algorithm to use when creating the TrustManagerFactory."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the TrustManagerFactory."/>
-            </c:map-property>
-            <c:map-property name="truststore" required="false" description="Configures a JSSE trust store">
-              <c:simple-property name="password" required="false" type="string" readOnly="true" description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-              <c:simple-property name="type" required="false" type="string" readOnly="true" description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;."/>
-              <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the truststore."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="true" description="Provider class name to use when creating the truststore."/>
-              <c:simple-property name="provider-argument" required="false" type="string" readOnly="true" description="String argument to pass to the truststore Provider constructor when instantiating it."/>
-            </c:map-property>
-          </resource-configuration>
-        </service>
+          &loginModuleResourceConfig;
 
-        <service name="Mapping (Managed Server)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true">
+    <service name="Login Module Stack (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="mapping=classic"/>
-          </plugin-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-module-stack" />
+      </plugin-configuration>
 
-          <resource-configuration>
-            <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="true" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="type" required="true" type="string" readOnly="true" description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential.."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="true" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+	      &loginModuleResourceConfig;
+
+      <service name="Module Options (Login Module Stack (Managed Server))" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options -->
+
+    </service>
+  </service>
+
+  <service name="Authorization (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authorization=classic" />
+    </plugin-configuration>
+
+	  &flagModuleResourceConfig;
+
+    <service name="Authorization Modules (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="policy-modules" />
+      </plugin-configuration>
+
+			&flagModuleResourceConfig;
+
+      <service name="Module Options (Authorization - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Authorization - Managed Server) -->
+    </service><!-- End of Authorization Modules (Managed Server) -->
+  </service>
+
+  <service name="Identity Trust (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="identity-trust=classic" />
+    </plugin-configuration>
+
+	  &flagModuleResourceConfig;
+    <service name="Identity Trust Modules (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="trust-modules" />
+      </plugin-configuration>
+
+		      &flagModuleResourceConfig;
+
+      <service name="Module Options (Identity Trust - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Identity Trust - Managed Server) -->
+    </service><!-- End of Identity Trust Modules (Managed Server) -->
+  </service>
+
+  <service name="JSSE (Managed Server)" discovery="SubsystemDiscovery" class="BaseComponent">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="jsse" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="cipher-suites" required="false" type="string" readOnly="true"
+        description="Comma separated list of cipher suites to enable on SSLSockets." />
+      <c:simple-property name="client-alias" required="false" type="string" readOnly="true"
+        description="Preferred alias to use when the KeyManager chooses the client alias." />
+      <c:simple-property name="client-auth" required="false" type="boolean" readOnly="true"
+        description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side." />
+      <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory">
+        <c:simple-property name="algorithm" required="false" type="string" readOnly="true"
+          description="Algorithm to use when creating the KeyManagerFactory." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="true"
+          description="Provider class name to use when creating the KeyManagerFactory." />
+      </c:map-property>
+      <c:map-property name="keystore" required="false" description="Configures a JSSE key store">
+        <c:simple-property name="password" required="false" type="string" readOnly="true"
+          description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless." />
+        <c:simple-property name="type" required="false" type="string" readOnly="true"
+          description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;." />
+        <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the keystore." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="true"
+          description="Provider class name to use when creating the KeyStore." />
+        <c:simple-property name="provider-argument" required="false" type="string" readOnly="true"
+          description="String argument to pass to the keystore Provider constructor when instantiating it." />
+      </c:map-property>
+      <c:simple-property name="protocols" required="false" type="string" readOnly="true"
+        description="Comma separated list of protocols to enable on SSLSockets." />
+      <c:simple-property name="server-alias" required="false" type="string" readOnly="true"
+        description="Preferred alias to use when the KeyManager chooses the server alias." />
+      <c:simple-property name="service-auth-token" required="false" type="string" readOnly="true"
+        description="Token to retrieve PrivateKeys from the KeyStore." />
+      <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory">
+        <c:simple-property name="algorithm" required="false" type="string" readOnly="true"
+          description="Algorithm to use when creating the TrustManagerFactory." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="true"
+          description="Provider class name to use when creating the TrustManagerFactory." />
+      </c:map-property>
+      <c:map-property name="truststore" required="false" description="Configures a JSSE trust store">
+        <c:simple-property name="password" required="false" type="string" readOnly="true"
+          description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless." />
+        <c:simple-property name="type" required="false" type="string" readOnly="true"
+          description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;." />
+        <c:simple-property name="url" required="false" type="string" readOnly="true" description="URL of the truststore." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="true"
+          description="Provider class name to use when creating the truststore." />
+        <c:simple-property name="provider-argument" required="false" type="string" readOnly="true"
+          description="String argument to pass to the truststore Provider constructor when instantiating it." />
+      </c:map-property>
+    </resource-configuration>
+  </service>
+
+  <service name="Mapping (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="mapping=classic" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+      <c:simple-property name="type" required="true" type="string" readOnly="false"
+        description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+        <c:property-options>
+          <c:option value="attribute" />
+          <c:option value="credential" />
+          <c:option value="principal" />
+          <c:option value="role" />
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+    <service name="Mapping Modules (Managed Server)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="mapping-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+        <c:simple-property name="type" required="true" type="string" readOnly="false"
+          description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+          <c:property-options>
+            <c:option value="attribute" />
+            <c:option value="credential" />
+            <c:option value="principal" />
+            <c:option value="role" />
+          </c:property-options>
+        </c:simple-property>
+      </resource-configuration>
+
+      <service name="Module Options (Mapping - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Mapping - Managed Server) -->
+    </service><!-- End of Mapping Modules (Managed Server) -->
+  </service>
       </service>
 
       <service name="Vault (Managed Server)"
@@ -5863,8 +5951,8 @@
     </service>
 
     <service name="Security (Profile)"
-             discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             discovery="ModuleOptionsDiscoveryComponent"
+             class="ModuleOptionsComponent"
              description="The configuration of the security subsystem."
              singleton="true">
 
@@ -5877,8 +5965,8 @@
       </resource-configuration>
 
       <service name="Security Domain (Profile)"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               discovery="ModuleOptionsDiscoveryComponent"
+               class="ModuleOptionsComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -5894,281 +5982,305 @@
          </c:simple-property>
         </resource-configuration>
 
-        <service name="ACL (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+  <service name="ACL (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="acl=classic"/>
-          </plugin-configuration>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="acl=classic" />
+    </plugin-configuration>
 
-          <resource-configuration>
-            <c:list-property name="acl-modules" required="false" description="List of acl modules">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+		&flagModuleResourceConfig;
+    <service name="Acl Modules (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-        <service name="Audit (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="acl-modules" />
+      </plugin-configuration>
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="audit=classic"/>
-          </plugin-configuration>
+		      &flagModuleResourceConfig;
 
-          <resource-configuration>
-            <c:list-property name="provider-modules" required="false" description="List of provider modules">
-               <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+      <service name="Module Options (Acl - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
-        <service name="Authentication (Classic - Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="authentication=classic"/>
-          </plugin-configuration>
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Acl - Profile) -->
+    </service><!-- End of Acl Modules (Profile) -->
+  </service>
 
-          <resource-configuration>
-            <c:list-property name="login-modules" required="false" description="List of authentication modules">
-              <c:map-property name="*" required="false">
-               <c:simple-property name="code" required="true" type="string" readOnly="true"
-                description="Class name of the module to be instantiated.">
-                  <c:property-options>
-                    <c:option value="AdvancedADLdap" />
-                    <c:option value="AdvancedLdap" />
-                    <c:option value="Certificate" />
-                    <c:option value="CertificateRoles" />
-                    <c:option value="Client" />
-                    <c:option value="Database" />
-                    <c:option value="DatabaseCertificate" />
-                    <c:option value="DatabaseUsers" />
-                    <c:option value="Identity" />
-                    <c:option value="Kerberos" />
-                    <c:option value="Ldap" />
-                    <c:option value="LdapExtended" />
-                    <c:option value="RoleMapping" />
-                    <c:option value="Simple" />
-                    <c:option value="SPNEGOUsers" />
-                    <c:option value="UserRoles" />
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+  <service name="Audit (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
 
-        <service name="Authentication (Jaspi - Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="audit=classic" />
+    </plugin-configuration>
 
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="authentication=jaspi"/>
-          </plugin-configuration>
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+    </resource-configuration>
+    <service name="Provider Modules (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-          <resource-configuration>
-            <c:list-property name="auth-modules" required="true" description="List of authentication modules to be used." >
-                  <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-                <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="false" description="Reference to a login module stack name previously configured in the same security domain."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="provider-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+      </resource-configuration>
 
-          <service name="Login Module Stack (Profile)"
-                   discovery="SubsystemDiscovery"
-                   class="BaseComponent"
-                   createDeletePolicy="both">
+      <service name="Module Options (Provider Modules - Profile)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
 
-              <plugin-configuration>
-                  <c:simple-property name="path" readOnly="true" default="login-module-stack"/>
-              </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-            <resource-configuration>
-              <c:list-property name="login-modules" required="true" description="List of authentication modules" >
-                <c:map-property name="*" required="false">
-                  <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                  <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                    <c:property-options>
-                      <c:option value="sufficient"/>
-                      <c:option value="requisite"/>
-                      <c:option value="optional"/>
-                      <c:option value="required"/>
-                    </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
-                  <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-                </c:map-property>
-              </c:list-property>
-            </resource-configuration>
-          </service>
-        </service>
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Provider Modules - Profile) -->
+    </service><!-- End of Provider Modules (Profile) -->
+  </service>
 
-        <service name="Authorization (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+  <service name="Authentication (Classic - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="authorization=classic"/>
-          </plugin-configuration>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=classic" />
+    </plugin-configuration>
 
-          <resource-configuration>
-            <c:list-property name="policy-modules" required="false" description="List of authorization modules">
-                <c:map-property name="*" required="false">
-                  <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                  <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                    <c:property-options>
-                      <c:option value="sufficient"/>
-                      <c:option value="requisite"/>
-                      <c:option value="optional"/>
-                      <c:option value="required"/>
-                    </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
-                  <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-                </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+    <service name="Login Modules (Classic - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-        <service name="Identity Trust (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-modules" />
+      </plugin-configuration>
+      
+            &loginModuleResourceConfig;
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="identity-trust=classic"/>
-          </plugin-configuration>
+      <service name="Module Options (Classic - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
-          <resource-configuration>
-            <c:list-property name="trust-modules" required="false" description="List of trust modules">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
 
-        <service name="JSSE (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 createDeletePolicy="both">
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options -->
+    </service><!-- End of Module Options -->
+  </service><!-- End of Authentication (Classic) -->
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="jsse"/>
-          </plugin-configuration>
+  <service name="Authentication (Jaspi - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
 
-          <resource-configuration>
-            <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false" description="Comma separated list of cipher suites to enable on SSLSockets."/>
-            <c:simple-property name="client-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the client alias."/>
-            <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false" description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side."/>
-            <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory">
-              <c:simple-property name="algorithm" required="false" type="string" readOnly="false" description="Algorithm to use when creating the KeyManagerFactory."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="false" description="Provider class name to use when creating the KeyManagerFactory."/>
-            </c:map-property>
-            <c:map-property name="keystore" required="false" description="Configures a JSSE key store">
-              <c:simple-property name="password" required="false" type="string" readOnly="false" description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-              <c:simple-property name="type" required="false" type="string" readOnly="false" description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;."/>
-              <c:simple-property name="url" required="false" type="string" readOnly="false" description="URL of the keystore."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="false" description="Provider class name to use when creating the KeyStore."/>
-              <c:simple-property name="provider-argument" required="false" type="string" readOnly="false" description="String argument to pass to the keystore Provider constructor when instantiating it."/>
-            </c:map-property>
-            <c:simple-property name="protocols" required="false" type="string" readOnly="false" description="Comma separated list of protocols to enable on SSLSockets."/>
-            <c:simple-property name="server-alias" required="false" type="string" readOnly="false" description="Preferred alias to use when the KeyManager chooses the server alias."/>
-            <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false" description="Token to retrieve PrivateKeys from the KeyStore."/>
-            <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory">
-              <c:simple-property name="algorithm" required="false" type="string" readOnly="false" description="Algorithm to use when creating the TrustManagerFactory."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="false" description="Provider class name to use when creating the TrustManagerFactory."/>
-            </c:map-property>
-            <c:map-property name="truststore" required="false" description="Configures a JSSE trust store">
-              <c:simple-property name="password" required="false" type="string" readOnly="false" description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless."/>
-              <c:simple-property name="type" required="false" type="string" readOnly="false" description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;."/>
-              <c:simple-property name="url" required="false" type="string" readOnly="false" description="URL of the truststore."/>
-              <c:simple-property name="provider" required="false" type="string" readOnly="false" description="Provider class name to use when creating the truststore."/>
-              <c:simple-property name="provider-argument" required="false" type="string" readOnly="false" description="String argument to pass to the truststore Provider constructor when instantiating it."/>
-            </c:map-property>
-          </resource-configuration>
-        </service>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=jaspi" />
+    </plugin-configuration>
 
-        <service name="Mapping (Profile)"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
-                 createDeletePolicy="both">
+          &loginModuleResourceConfig;
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="mapping=classic"/>
-          </plugin-configuration>
+    <service name="Login Module Stack (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
 
-          <resource-configuration>
-            <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential.."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-module-stack" />
+      </plugin-configuration>
+
+	      &loginModuleResourceConfig;
+
+      <service name="Module Options (Login Module Stack (Profile))" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options -->
+
+    </service>
+  </service>
+
+  <service name="Authorization (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authorization=classic" />
+    </plugin-configuration>
+
+	&flagModuleResourceConfig;
+    <service name="Authorization Modules (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="policy-modules" />
+      </plugin-configuration>
+			&flagModuleResourceConfig;
+
+      <service name="Module Options (Authorization - Profile)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Authorization - Profile) -->
+    </service><!-- End of Authorization Modules (Profile) -->
+  </service>
+
+  <service name="Identity Trust (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="identity-trust=classic" />
+    </plugin-configuration>
+
+	&flagModuleResourceConfig;
+    <service name="Identity Trust Modules (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="trust-modules" />
+      </plugin-configuration>
+		      &flagModuleResourceConfig;
+
+      <service name="Module Options (Identity Trust - Profile)" discovery="ModuleOptionsDiscoveryComponent"
+        class="ModuleOptionsComponent" singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Identity Trust - Profile) -->
+    </service><!-- End of Identity Trust Modules (Profile) -->
+  </service>
+
+  <service name="JSSE (Profile)" discovery="SubsystemDiscovery" class="BaseComponent" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="jsse" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="cipher-suites" required="false" type="string" readOnly="false"
+        description="Comma separated list of cipher suites to enable on SSLSockets." />
+      <c:simple-property name="client-alias" required="false" type="string" readOnly="false"
+        description="Preferred alias to use when the KeyManager chooses the client alias." />
+      <c:simple-property name="client-auth" required="false" type="boolean" readOnly="false"
+        description="Boolean attribute to indicate if client&apos;s certificates should also be authenticated on the server side." />
+      <c:map-property name="key-manager" required="false" description="JSEE Key Manager factory">
+        <c:simple-property name="algorithm" required="false" type="string" readOnly="false"
+          description="Algorithm to use when creating the KeyManagerFactory." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="false"
+          description="Provider class name to use when creating the KeyManagerFactory." />
+      </c:map-property>
+      <c:map-property name="keystore" required="false" description="Configures a JSSE key store">
+        <c:simple-property name="password" required="false" type="string" readOnly="false"
+          description="Sets the password of the keystore. Either this or &apos;truststore&#45;password&apos; must be present otherwise the security domain will be useless." />
+        <c:simple-property name="type" required="false" type="string" readOnly="false"
+          description="Type of the keystore. If not set, type defaults to &apos;JKS&apos;." />
+        <c:simple-property name="url" required="false" type="string" readOnly="false" description="URL of the keystore." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="false"
+          description="Provider class name to use when creating the KeyStore." />
+        <c:simple-property name="provider-argument" required="false" type="string" readOnly="false"
+          description="String argument to pass to the keystore Provider constructor when instantiating it." />
+      </c:map-property>
+      <c:simple-property name="protocols" required="false" type="string" readOnly="false"
+        description="Comma separated list of protocols to enable on SSLSockets." />
+      <c:simple-property name="server-alias" required="false" type="string" readOnly="false"
+        description="Preferred alias to use when the KeyManager chooses the server alias." />
+      <c:simple-property name="service-auth-token" required="false" type="string" readOnly="false"
+        description="Token to retrieve PrivateKeys from the KeyStore." />
+      <c:map-property name="trust-manager" required="false" description="JSEE Trust Manager factory">
+        <c:simple-property name="algorithm" required="false" type="string" readOnly="false"
+          description="Algorithm to use when creating the TrustManagerFactory." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="false"
+          description="Provider class name to use when creating the TrustManagerFactory." />
+      </c:map-property>
+      <c:map-property name="truststore" required="false" description="Configures a JSSE trust store">
+        <c:simple-property name="password" required="false" type="string" readOnly="false"
+          description="Sets the password of the truststore. Either this or &apos;keystore&#45;password&apos; must be present otherwise the security domain will be useless." />
+        <c:simple-property name="type" required="false" type="string" readOnly="false"
+          description="Type of the truststore. If not set, type defaults to &apos;JKS&apos;." />
+        <c:simple-property name="url" required="false" type="string" readOnly="false" description="URL of the truststore." />
+        <c:simple-property name="provider" required="false" type="string" readOnly="false"
+          description="Provider class name to use when creating the truststore." />
+        <c:simple-property name="provider-argument" required="false" type="string" readOnly="false"
+          description="String argument to pass to the truststore Provider constructor when instantiating it." />
+      </c:map-property>
+    </resource-configuration>
+  </service>
+
+  <service name="Mapping (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="mapping=classic" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+      <c:simple-property name="type" required="true" type="string" readOnly="false"
+        description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+        <c:property-options>
+          <c:option value="attribute" />
+          <c:option value="credential" />
+          <c:option value="principal" />
+          <c:option value="role" />
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+    <service name="Mapping Modules (Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="mapping-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+        <c:simple-property name="type" required="true" type="string" readOnly="false"
+          description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+          <c:property-options>
+            <c:option value="attribute" />
+            <c:option value="credential" />
+            <c:option value="principal" />
+            <c:option value="role" />
+          </c:property-options>
+        </c:simple-property>
+      </resource-configuration>
+
+      <service name="Module Options (Mapping - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
+        </plugin-configuration>
+
+        <resource-configuration>
+          <c:map-property name="Module Options" required="false" />
+        </resource-configuration>
+      </service><!-- End of Module Options (Mapping - Profile) -->
+    </service><!-- End of Mapping Modules (Managed Server) -->
+  </service>
       </service>
 
       <service name="Vault (Profile)"
@@ -6611,6 +6723,27 @@
             <c:simple-property name="routing-name" required="false" type="string" readOnly="false" description="Routing name of the divert"/>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a class used to transform the message&apos;s body or properties before it is diverted."/>
           </resource-configuration>
+
+	    <service name="Module Option"
+		     discovery="SubsystemDiscovery"
+		     class="BaseComponent"
+                     createDeletePolicy="both"
+		     description="The module options to be used."
+		     singleton="true">
+
+	      <plugin-configuration>
+		<c:simple-property name="path" readOnly="true" default="module-options"/>
+	      </plugin-configuration>
+
+	      <resource-configuration>
+                <c:list-property name="Modules Options" required="false" description="List of module options.">
+                  <c:map-property name="*" required="false">
+                    <c:simple-property name="name"/>
+                    <c:simple-property name="value"/>
+                  </c:map-property>
+                </c:list-property>
+	      </resource-configuration>
+            </service>
         </service>
 
         <service name="Queue (Profile)"
@@ -10323,8 +10456,8 @@
     </resource-configuration>
 
     <service name="Security Domain"
-             discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             discovery="ModuleOptionsDiscoveryComponent"
+             class="ModuleOptionsComponent"
              createDeletePolicy="both">
 
       <plugin-configuration>
@@ -10352,219 +10485,200 @@
          </c:simple-property>
       </resource-configuration>
 
-      <service name="ACL"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="ACL" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent" singleton="true"
+    createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="acl=classic" />
+    </plugin-configuration>
+
+        &flagModuleResourceConfig;
+    <service name="Acl Modules" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="acl-modules" />
+      </plugin-configuration>
+	&flagModuleResourceConfig;
+
+      <service name="Module Options (Acl)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="acl=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="acl-modules" required="false" description="List of acl modules">
-            <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-              <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                <c:property-options>
-                  <c:option value="sufficient"/>
-                  <c:option value="requisite"/>
-                  <c:option value="optional"/>
-                  <c:option value="required"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the acl provider module code is located."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options (Acl) -->
+    </service><!-- End of Acl Modules -->
+  </service>
 
-      <service name="Audit"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="Audit" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent" singleton="true"
+    createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="audit=classic" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+    </resource-configuration>
+    <service name="Provider Modules" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="provider-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+      </resource-configuration>
+
+      <service name="Module Options (Provider Modules)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="audit=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="provider-modules" required="false" description="List of provider modules">
-             <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options (Provider Modules) -->
+    </service><!-- End of Provider Modules -->
+  </service>
 
-      <service name="Authentication (Classic)"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="Authentication (Classic)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=classic" />
+    </plugin-configuration>
+
+    &loginModuleResourceConfig;
+
+    <service name="Login Modules (Classic)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-modules" />
+      </plugin-configuration>
+
+      &loginModuleResourceConfig;
+
+      <service name="Module Options (Classic)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="authentication=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="login-modules" required="false" description="List of authentication modules">
-            <c:map-property name="*" required="false">
-               <c:simple-property name="code" required="true" type="string" readOnly="true"
-                description="Class name of the module to be instantiated.">
-                  <c:property-options>
-                    <c:option value="AdvancedADLdap" />
-                    <c:option value="AdvancedLdap" />
-                    <c:option value="Certificate" />
-                    <c:option value="CertificateRoles" />
-                    <c:option value="Client" />
-                    <c:option value="Database" />
-                    <c:option value="DatabaseCertificate" />
-                    <c:option value="DatabaseUsers" />
-                    <c:option value="Identity" />
-                    <c:option value="Kerberos" />
-                    <c:option value="Ldap" />
-                    <c:option value="LdapExtended" />
-                    <c:option value="RoleMapping" />
-                    <c:option value="Simple" />
-                    <c:option value="SPNEGOUsers" />
-                    <c:option value="UserRoles" />
-                  </c:property-options>
-                </c:simple-property>
-              <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                <c:property-options>
-                  <c:option value="sufficient"/>
-                  <c:option value="requisite"/>
-                  <c:option value="optional"/>
-                  <c:option value="required"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options -->
+    </service><!-- End of Login Modules (Classic) -->
+  </service><!-- End of Authentication (Classic) -->
 
-      <service name="Authentication (Jaspi)"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="Authentication (Jaspi)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authentication=jaspi" />
+    </plugin-configuration>
+
+	&loginModuleResourceConfig;
+
+    <service name="Login Module Stack" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="login-module-stack" />
+      </plugin-configuration>
+
+	 &loginModuleResourceConfig;
+
+      <service name="Module Options (Login Module Stack)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="authentication=jaspi"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="auth-modules" required="true" description="List of authentication modules to be used." >
-                <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-              <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                <c:property-options>
-                  <c:option value="sufficient"/>
-                  <c:option value="requisite"/>
-                  <c:option value="optional"/>
-                  <c:option value="required"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the auth module code is located."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              <c:simple-property name="login-module-stack-ref" required="false" type="string" readOnly="false" description="Reference to a login module stack name previously configured in the same security domain."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
+      </service><!-- End of Module Options -->
 
-        <service name="Login Module Stack"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 createDeletePolicy="both">
+    </service>
+  </service>
 
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="login-module-stack"/>
-            </plugin-configuration>
+  <service name="Authorization" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
 
-          <resource-configuration>
-            <c:list-property name="login-modules" required="true" description="List of authentication modules" >
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the login module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-            </c:list-property>
-          </resource-configuration>
-        </service>
-      </service>
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="authorization=classic" />
+    </plugin-configuration>
 
-      <service name="Authorization"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+	&flagModuleResourceConfig;
+
+    <service name="Authorization Modules" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="policy-modules" />
+      </plugin-configuration>
+		     
+                      &flagModuleResourceConfig;
+
+      <service name="Module Options (Authorization)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="authorization=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="policy-modules" required="false" description="List of authorization modules">
-              <c:map-property name="*" required="false">
-                <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-                <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                  <c:property-options>
-                    <c:option value="sufficient"/>
-                    <c:option value="requisite"/>
-                    <c:option value="optional"/>
-                    <c:option value="required"/>
-                  </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the policy module code is located."/>
-                <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-              </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options (Authorization) -->
+    </service><!-- End of Authorization Modules -->
+  </service>
 
-      <service name="Identity Trust"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="Identity Trust" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    singleton="true" createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="identity-trust=classic" />
+    </plugin-configuration>
+
+        &flagModuleResourceConfig;
+
+    <service name="Identity Trust Modules" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="trust-modules" />
+      </plugin-configuration>
+
+        &flagModuleResourceConfig;
+
+      <service name="Module Options (Identity Trust)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="identity-trust=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="trust-modules" required="false" description="List of trust modules">
-            <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-              <c:simple-property name="flag" required="true" type="string" readOnly="false" description="The flag controls how the module participates in the overall procedure. Allowed values are requisite, required, sufficient or optional.">
-                <c:property-options>
-                  <c:option value="sufficient"/>
-                  <c:option value="requisite"/>
-                  <c:option value="optional"/>
-                  <c:option value="required"/>
-                </c:property-options>
-              </c:simple-property>
-              <c:simple-property name="module" required="false" type="string" readOnly="false" description="Name of JBoss Module where the identity trust module code is located."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options (Identity Trust) -->
+    </service><!-- End of Identity Trust Modules -->
+  </service>
 
       <service name="JSSE"
                discovery="SubsystemDiscovery"
@@ -10607,26 +10721,59 @@
         </resource-configuration>
       </service>
 
-      <service name="Mapping"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               singleton="true"
-               createDeletePolicy="both">
+  <service name="Mapping" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent" singleton="true"
+    createDeletePolicy="both">
+
+    <plugin-configuration>
+      <c:simple-property name="path" readOnly="true" default="mapping=classic" />
+    </plugin-configuration>
+
+    <resource-configuration>
+      <c:simple-property name="code" required="true" type="string" readOnly="false"
+        description="Class name of the module to be instantiated." />
+      <c:simple-property name="type" required="true" type="string" readOnly="false"
+        description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+        <c:property-options>
+          <c:option value="attribute" />
+          <c:option value="credential" />
+          <c:option value="principal" />
+          <c:option value="role" />
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+    <service name="Mapping Modules" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+      createDeletePolicy="both">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="mapping-modules" />
+      </plugin-configuration>
+      <resource-configuration>
+        <c:simple-property name="code" required="true" type="string" readOnly="false"
+          description="Class name of the module to be instantiated." />
+        <c:simple-property name="type" required="true" type="string" readOnly="false"
+          description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential..">
+          <c:property-options>
+            <c:option value="attribute" />
+            <c:option value="credential" />
+            <c:option value="principal" />
+            <c:option value="role" />
+          </c:property-options>
+        </c:simple-property>
+      </resource-configuration>
+
+      <service name="Module Options (Mapping)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+        singleton="true">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="mapping=classic"/>
+          <c:simple-property name="path" readOnly="true" default="module-options" />
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="mapping-modules" required="false" description="List of modules that map principal, role, and credential information">
-            <c:map-property name="*" required="false">
-              <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
-              <c:simple-property name="type" required="true" type="string" readOnly="false" description="Type of mapping this module performs. Allowed values are principal, role, attribute or credential.."/>
-              <c:simple-property name="module-options" required="false" type="string" readOnly="false" description="List of module options containing a name/value pair."/>
-            </c:map-property>
-          </c:list-property>
+          <c:map-property name="Module Options" required="false" />
         </resource-configuration>
-      </service>
+      </service><!-- End of Module Options (Mapping) -->
+    </service><!-- End of Mapping Modules -->
+  </service>
     </service>
 
     <service name="Vault"

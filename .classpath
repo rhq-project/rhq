@@ -153,7 +153,7 @@
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>
-    <classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>  
+	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-test-util/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
@@ -241,7 +241,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws/jbossws-native-core/3.1.1.GA/jbossws-native-core-3.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.6.1/swizzle-confluence-1.6.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/1.6.1/swizzle-confluence-1.6.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jvnet/inflector/0.7.0/inflector-0.7.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/augeas/0.0.2/augeas-0.0.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
@@ -308,7 +308,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.0.Final/arquillian-container-spi-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.0.Final/arquillian-container-test-api-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.0.Final/arquillian-testng-core-1.0.0.Final.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>    
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

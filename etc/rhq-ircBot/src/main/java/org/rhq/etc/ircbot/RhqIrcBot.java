@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import sun.net.InetAddressCachePolicy;
-
 import com.j2bugzilla.base.Bug;
 import com.j2bugzilla.base.BugzillaConnector;
 import com.j2bugzilla.base.BugzillaException;
@@ -21,6 +19,7 @@ import org.pircbotx.hooks.Listener;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
+import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 /**
  * An IRC bot for doing helpful stuff on the Freenode #rhq channel.
@@ -46,13 +45,24 @@ public class RhqIrcBot extends ListenerAdapter {
         JON_DEVS.add("stefan_n");
     }
 
+    private String server;
+    private String channel;
     private BugzillaConnector bzConnector = new BugzillaConnector();
     private Map<Integer, Long> bugLogTimestamps = new HashMap<Integer, Long>();
 
+    public RhqIrcBot(String server, String channel) {
+        this.server = server;
+        this.channel = channel;
+    }
+
     @Override
     public void onMessage(MessageEvent event) throws Exception {
-        String message = event.getMessage();
+        PircBotX bot = event.getBot();
+        if (!bot.getNick().equals(bot.getName())) {
+            bot.changeNick(bot.getName());
+        }
 
+        String message = event.getMessage();
         Matcher bugMatcher = BUG_PATTERN.matcher(message);
         while (bugMatcher.find()) {
             int bugId = Integer.valueOf(bugMatcher.group(2));
@@ -68,7 +78,7 @@ public class RhqIrcBot extends ListenerAdapter {
                     //e1.printStackTrace();
                     Throwable cause = e1.getCause();
                     String details = (cause instanceof XmlRpcException) ? cause.getMessage() : e1.getMessage();
-                    event.getBot().sendMessage(event.getChannel(), "Failed to access BZ " + bugId + ": " + details);
+                    bot.sendMessage(event.getChannel(), "Failed to access BZ " + bugId + ": " + details);
                     continue;
                 }
             }
@@ -82,18 +92,18 @@ public class RhqIrcBot extends ListenerAdapter {
                 }
                 Long timestamp = bugLogTimestamps.get(bugId);
                 if ((timestamp == null) || ((System.currentTimeMillis() - timestamp) > (5 * 60 * 1000L))) {
-                    event.getBot().sendMessage(event.getChannel(), "BZ " + bugId + " [product=" + product
+                    bot.sendMessage(event.getChannel(), "BZ " + bugId + " [product=" + product
                             + ", priority=" + bug.getPriority() + ", status=" + bug.getStatus() + "] "
                             + bug.getSummary() + " [ https://bugzilla.redhat.com/" + bugId + " ]");
                 }
                 bugLogTimestamps.put(bugId, System.currentTimeMillis());
             } else {
-                event.getBot().sendMessage(event.getChannel(), "BZ " + bugId + " does not exist.");
+                bot.sendMessage(event.getChannel(), "BZ " + bugId + " does not exist.");
             }
         }
 
         if (message.matches(".*\\b(jon-team|jboss-on-team)\\b.*")) {
-            Set<User> users = event.getBot().getUsers(event.getChannel());
+            Set<User> users = bot.getUsers(event.getChannel());
             StringBuilder presentJonDevs = new StringBuilder();
             for (User user : users) {
                 String nick = user.getNick();
@@ -101,9 +111,16 @@ public class RhqIrcBot extends ListenerAdapter {
                     presentJonDevs.append(nick).append(' ');
                 }
             }
-            event.getBot().sendMessage(event.getChannel(), presentJonDevs + ": see message from "
+            bot.sendMessage(event.getChannel(), presentJonDevs + ": see message from "
                     + event.getUser().getNick() + " above");
         }
+    }
+
+    @Override
+    public void onPrivateMessage(PrivateMessageEvent privateMessageEvent) throws Exception {
+        PircBotX bot = privateMessageEvent.getBot();
+        bot.sendMessage(privateMessageEvent.getUser(), "Hi, I am " + bot.getFinger() + ".");
+        // TODO: Implement a HELP command.
     }
 
     @Override
@@ -112,20 +129,21 @@ public class RhqIrcBot extends ListenerAdapter {
         while (!connected) {
             Thread.sleep(60 * 1000L); // 1 minute
             try {
-                PircBotX oldBot = disconnectEvent.getBot();
-                PircBotX newBot = createBot();
-                newBot.connect(oldBot.getServer());
-                for (String channel : oldBot.getChannelsNames()) {
-                    newBot.joinChannel(channel);
-                }
-                Set<Listener> oldListeners = new HashSet<Listener>(oldBot.getListenerManager().getListeners());
-                for (Listener oldListener : oldListeners) {
-                    oldBot.getListenerManager().removeListener(oldListener);
-                }
+                PircBotX newBot = createBot(this);
+                newBot.connect(this.server);
+                newBot.joinChannel(this.channel);
+
                 connected = true;
             } catch (Exception e) {
                 System.err.println("Failed to reconnect to " + disconnectEvent.getBot().getServer() + " IRC server: " + e);
             }
+        }
+
+        // Try to clean up the old bot, so it can release any memory, sockets, etc. it's using.
+        PircBotX oldBot = disconnectEvent.getBot();
+        Set<Listener> oldListeners = new HashSet<Listener>(oldBot.getListenerManager().getListeners());
+        for (Listener oldListener : oldListeners) {
+            oldBot.getListenerManager().removeListener(oldListener);
         }
     }
 
@@ -141,16 +159,14 @@ public class RhqIrcBot extends ListenerAdapter {
             channel = '#' + channel;
         }
 
-        PircBotX bot = createBot();
-        System.setProperty("networkaddress.cache.ttl", String.valueOf(InetAddressCachePolicy.NEVER));
-        System.setProperty("networkaddress.cache.negative.ttl", String.valueOf(InetAddressCachePolicy.NEVER));
+        RhqIrcBot rhqBot = new RhqIrcBot(server, channel);
 
-        // TODO: Try other Freenode IRC servers if this one is down.
+        PircBotX bot = createBot(rhqBot);
         bot.connect(server);
         bot.joinChannel(channel);
     }
 
-    private static PircBotX createBot() {
+    private static PircBotX createBot(RhqIrcBot rhqBot) {
         PircBotX bot = new PircBotX();
 
         bot.setName("rhq-bot");
@@ -158,7 +174,9 @@ public class RhqIrcBot extends ListenerAdapter {
         bot.setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
 
         bot.setVerbose(true);
-        bot.getListenerManager().addListener(new RhqIrcBot());
+        bot.setAutoNickChange(true);
+
+        bot.getListenerManager().addListener(rhqBot);
         bot.setSocketTimeout(1 * 60 * 1000); // 1 minute
         return bot;
     }

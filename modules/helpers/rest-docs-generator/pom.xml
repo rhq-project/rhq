@@ -65,7 +65,9 @@
           <processors>
             <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
           </processors>
-            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml,-Averbose=true</compilerArguments>
+          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+          <!-- comment in next line to get the xml on stdout for debugging -->
+            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
         </configuration>
         <executions>
           <execution>

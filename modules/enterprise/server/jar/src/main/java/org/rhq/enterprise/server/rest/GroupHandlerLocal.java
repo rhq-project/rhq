@@ -34,7 +34,7 @@ import org.rhq.enterprise.server.rest.domain.GroupRest;
  * @author Heiko W. Rupp
  */
 @Local
-@Path("/group/")
+@Path("/group")
 @Api(value="Deal with groups and DynaGroups", description = "Api that deals with resource groups and group definitions")
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML, "application/yaml"})
 public interface GroupHandlerLocal {

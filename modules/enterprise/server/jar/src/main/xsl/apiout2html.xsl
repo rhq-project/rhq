@@ -30,7 +30,7 @@
                 <xsl:attribute name="href">#<xsl:value-of select="@path"/></xsl:attribute>
                  <xsl:if test="@basePath">
                    <xsl:value-of select="@basePath"/>
-                 </xsl:if>/<xsl:value-of select="@path"/>
+                 </xsl:if><xsl:value-of select="@path"/>
               </xsl:element>
             </li>
           </xsl:for-each>
@@ -46,7 +46,7 @@
   <xsl:template match="class">
     <xsl:element name="h2">
       <xsl:attribute name="id"><xsl:value-of select="@path"/></xsl:attribute>
-      /<xsl:value-of select="@path"/>
+      <xsl:value-of select="@path"/>
       <xsl:if test="@shortDesc">
       : <xsl:value-of select="@shortDesc"/>
       </xsl:if>
@@ -65,7 +65,9 @@
   </xsl:template>
 
   <xsl:template match="method">
-    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of select="../@path"/>/<xsl:value-of select="@path"/></h3>
+    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of select="../@path"/>
+      <xsl:if test="@path != '/'"><xsl:value-of select="@path"/></xsl:if>
+    </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>
     <xsl:choose>

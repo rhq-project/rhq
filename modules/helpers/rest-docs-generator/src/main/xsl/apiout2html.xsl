@@ -20,7 +20,7 @@
   </xsl:template>
 
   <xsl:template match="class">
-    <h2>/<xsl:value-of select="@path"/>
+    <h2><xsl:value-of select="@path"/>
       <xsl:if test="@shortDesc">
       : <xsl:value-of select="@shortDesc"/>
       </xsl:if>
@@ -39,7 +39,9 @@
   </xsl:template>
 
   <xsl:template match="method">
-    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of select="../@path"/>/<xsl:value-of select="@path"/></h3>
+    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of select="../@path"/>
+        <xsl:if test="@path != '/'"><xsl:value-of select="@path"/></xsl:if>
+    </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>
     <xsl:choose>

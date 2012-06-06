@@ -788,7 +788,9 @@ Build-OS-Version=${os.version}
             <processors>
               <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
             </processors>
-              <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+            <!-- Comment the next line in to get more verbose output for debugging -->
+            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
           </configuration>
           <executions>
             <execution>
@@ -826,6 +828,7 @@ Build-OS-Version=${os.version}
               <transformationSet>
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
                 <dir>target/docs/xml</dir>
+                <includes><include>rest-api-out.xml</include></includes>
                 <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
                 <parameters>
                   <parameter>
@@ -843,6 +846,7 @@ Build-OS-Version=${os.version}
               <transformationSet>
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
                 <dir>target/docs/xml</dir>
+                <includes><include>rest-api-out.xml</include></includes>
                 <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
                 <parameters>
                   <parameter>

@@ -45,7 +45,7 @@
             <xsl:if test="@basePath">
               <xsl:value-of select="@basePath"/>
             </xsl:if>
-            /<xsl:value-of select="@path"/>
+            <xsl:value-of select="@path"/>
             </link>
           </xsl:element>
         </xsl:for-each>
@@ -63,7 +63,7 @@
         <xsl:value-of select="@path"/>
       </xsl:attribute>
       <title>
-        /<xsl:value-of select="@path"/>
+        <xsl:value-of select="@path"/>
         <xsl:if test="@shortDesc">
         : <xsl:value-of select="@shortDesc"/>
         </xsl:if>
@@ -89,10 +89,10 @@
     <listitem>
       <simpara>
         <emphasis role="bold"><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of
-          select="../@path"/>/<xsl:value-of select="@path"/>
+          select="../@path"/><xsl:if test="@path != '/'"><xsl:value-of select="@path"/></xsl:if>
         </emphasis>
       </simpara>
-      <!--<subtitle><xsl:value-of select="@description"/></subtitle>-->
+      <simpara><xsl:value-of select="@description"/></simpara>
       <xsl:choose>
         <xsl:when test="param">
           <table>

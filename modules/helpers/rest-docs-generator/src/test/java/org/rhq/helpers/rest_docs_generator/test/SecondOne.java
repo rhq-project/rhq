@@ -36,7 +36,7 @@ import org.rhq.helpers.rest_docs_generator.test.FooBean;
 @Path("bla")
 public interface SecondOne {
 
-    @Path("bla")
+    @Path("bla/{id}")
     @PUT
     @ApiError(code=404,reason = "Resource with the passed key not found")
     public Response putSomeData(

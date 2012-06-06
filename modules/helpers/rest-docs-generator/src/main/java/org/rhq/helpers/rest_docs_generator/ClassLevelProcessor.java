@@ -19,6 +19,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -62,6 +63,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
     private static final String API_OUT_XML = "rest-api-out.xml";
     public static final String TARGET_DIRECTORY = "targetDirectory";
     public static final String VERBOSE = "verbose";
+    private static final String BODY_INDICATOR = "-body-";
 
     Log log = LogFactory.getLog(getClass().getName());
 
@@ -225,20 +227,19 @@ public class ClassLevelProcessor extends AbstractProcessor {
      * @param methodElement Method to look for parameters
      * @param parent The parent xml element to tack the results on
      */
-    private void processParams(Document doc, javax.lang.model.element.Element methodElement, Element parent) {
-        for (javax.lang.model.element.Element modelElement : methodElement.getEnclosedElements()) {
-            TypeMirror t = modelElement.asType();
-
+    private void processParams(Document doc, ExecutableElement methodElement, Element parent) {
+        for (VariableElement paramElement : methodElement.getParameters()) {
+            TypeMirror t = paramElement.asType();
             if (skipParamType(t))
                 continue;
             Element element = doc.createElement("param");
             parent.appendChild(element);
             // determine name
             String name;
-            String paramType="-body-";
-            PathParam pp = modelElement.getAnnotation(PathParam.class);
-            QueryParam qp = modelElement.getAnnotation(QueryParam.class);
-            ApiParam ap = modelElement.getAnnotation(ApiParam.class);
+            String paramType= BODY_INDICATOR;
+            PathParam pp = paramElement.getAnnotation(PathParam.class);
+            QueryParam qp = paramElement.getAnnotation(QueryParam.class);
+            ApiParam ap = paramElement.getAnnotation(ApiParam.class);
             if (pp != null) {
                 name = pp.value();
                 paramType="Path";
@@ -250,18 +251,18 @@ public class ClassLevelProcessor extends AbstractProcessor {
             else if (ap!=null)
                 name = ap.name();
             else {
-                Name nameElement = modelElement.getSimpleName();
+                Name nameElement = paramElement.getSimpleName();
                 name = nameElement.toString();
             }
 
             element.setAttribute("name", name);
             element.setAttribute("paramType",paramType);
-            ApiParam apiParam = modelElement.getAnnotation(ApiParam.class);
+            ApiParam apiParam = paramElement.getAnnotation(ApiParam.class);
             if (apiParam!=null) {
                 String description = apiParam.value();
                 setOptionalAttribute(element, "description", description);
                 String required = String.valueOf(apiParam.required());
-                if (isPathParam(modelElement)) // PathParams are always required
+                if (pp!=null || paramType.equals(BODY_INDICATOR)) // PathParams are always required
                     required="true";
 
                 setOptionalAttribute(element, "required", required, "false");
@@ -269,7 +270,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 setOptionalAttribute(element, "allowableValues", allowedValues, "all");
             }
             String defaultValue;
-            DefaultValue dva = modelElement.getAnnotation(DefaultValue.class);
+            DefaultValue dva = paramElement.getAnnotation(DefaultValue.class);
             if (dva!=null)
                 defaultValue = dva.value();
             else if (ap!=null)
@@ -288,10 +289,10 @@ public class ClassLevelProcessor extends AbstractProcessor {
     /**
      * Look at the ApiError(s) annotations and populate the output
      * @param doc XML Document to add
-     * @param methodElement MethodDeclaration to look at
+     * @param methodElement Method declaration to look at
      * @param parent The parent xml element to attach the result to
      */
-    private void processErrors(Document doc, javax.lang.model.element.Element methodElement, Element parent) {
+    private void processErrors(Document doc, ExecutableElement methodElement, Element parent) {
         ApiError ae = methodElement.getAnnotation(ApiError.class);
         processError(doc,ae,parent);
         ApiErrors aes = methodElement.getAnnotation(ApiErrors.class);
@@ -325,6 +326,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
      */
     private boolean skipParamType(TypeMirror t) {
         String name = t.toString();
+        System.out.print("skipParamType: " + name + "... ");
         boolean skip=false;
         for (String toSkip : PARAM_SKIP_ANNOTATIONS) {
             if (toSkip.equals(name)) {
@@ -332,13 +334,8 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 break;
             }
         }
+        System.out.println(skip);
         return skip;
-    }
-
-
-
-    private boolean isPathParam(javax.lang.model.element.Element decl) {
-        return hasAnnotation(decl,"javax.ws.rs.PathParam");
     }
 
     /**

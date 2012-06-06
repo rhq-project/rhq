@@ -20,7 +20,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.ws.rs.DefaultValue;
@@ -326,7 +325,6 @@ public class ClassLevelProcessor extends AbstractProcessor {
      */
     private boolean skipParamType(TypeMirror t) {
         String name = t.toString();
-        System.out.print("skipParamType: " + name + "... ");
         boolean skip=false;
         for (String toSkip : PARAM_SKIP_ANNOTATIONS) {
             if (toSkip.equals(name)) {
@@ -334,36 +332,8 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 break;
             }
         }
-        System.out.println(skip);
         return skip;
     }
-
-    /**
-     * Check if a certain annotation is present or not
-     * @param declaration Declaration to look at
-     * @param annotationName Name of the annotation
-     * @return true if found, false otherwise
-     */
-    private boolean hasAnnotation(javax.lang.model.element.Element declaration, String annotationName) {
-
-        boolean found = false;
-
-        Collection<? extends AnnotationMirror> mirrors = declaration.getAnnotationMirrors();
-
-        for (AnnotationMirror am : mirrors) {
-            DeclaredType annotationType = am.getAnnotationType();
-            javax.lang.model.element.Element annotationTypeDeclaration = annotationType.asElement();
-            String qName = annotationTypeDeclaration.getSimpleName().toString();
-            log.debug("AM: " + am + " , " + qName);
-            if (qName.equals(annotationName)) {
-                found = true;
-                break;
-            }
-        }
-        return found;
-
-    }
-
 
     /**
      * Determine the http method (@GET, @PUT etc.) from the list of annotations on the method

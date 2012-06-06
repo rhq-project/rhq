@@ -72,8 +72,8 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
     private static String moduleOptionsNode = ",module-options";
 
     public enum ModuleOptionType {
-        Authentication("login-modules"), Authorization("policy-modules"), Mapping("mapping-modules"), Audit(
-            "provider-modules");
+        Acl("acl-modules"), Audit("provider-modules"), Authentication("login-modules"), Authorization("policy-modules"), IdentityTrust(
+            "trust-modules"), Mapping("mapping-modules");
         private String attribute = "";
         public static HashMap<String, ModuleOptionType> typeMap = new HashMap<String, ModuleOptionType>();
         static {
@@ -133,8 +133,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
 
             //populate attribute values
             List<Value> currentAttributeState = new ArrayList<Value>();
-            currentAttributeState = populateSecurityDomainModuleOptions(result,
-                loadModuleOptionType(attribute));
+            currentAttributeState = populateSecurityDomainModuleOptions(result, loadModuleOptionType(attribute));
 
             Operation write = new WriteAttribute(address);
             write.addAdditionalProperty("name", attribute);//attribute to execute on
@@ -225,7 +224,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
         super.updateResourceConfiguration(report);
     }
 
-    private static ModuleOptionType loadModuleOptionType(String attribute) {
+    public static ModuleOptionType loadModuleOptionType(String attribute) {
         ModuleOptionType located = ModuleOptionType.typeMap.get(attribute);
         if (located == null) {
             throw new IllegalArgumentException("Unknown node '" + attribute
@@ -244,7 +243,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
      * @param type ModuleOptionType
      * @return List<Value> type populated with moduleOption details.
      */
-    private List<Value> populateSecurityDomainModuleOptions(Result result, ModuleOptionType type) {
+    public List<Value> populateSecurityDomainModuleOptions(Result result, ModuleOptionType type) {
         //initialize empty
         List<Value> populated = new ArrayList<Value>();
         //stores current <module-options> defined.
@@ -309,7 +308,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
 
     @JsonSerialize(include = Inclusion.NON_NULL)
     public static class Value {
-        // no args for json.
+        // no args for jackson.
         public Value() {
         };
 
@@ -366,12 +365,18 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
 
         //overrides the type name for serialization/deserialization.
         @JsonProperty(value = "module-options")
-        private LinkedHashMap<String, Object> options = new LinkedHashMap<String, Object>();
+        @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+        private LinkedHashMap<String, Object> options = null;
 
+        @JsonProperty(value = "module-options")
         public LinkedHashMap<String, Object> getOptions() {
+            if (options == null) {
+                options = new LinkedHashMap<String, Object>();
+            }
             return options;
         }
 
+        @JsonProperty(value = "module-options")
         public void setOptions(LinkedHashMap<String, Object> options) {
             this.options = options;
         }

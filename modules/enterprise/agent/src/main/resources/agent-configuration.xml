@@ -610,13 +610,18 @@ commands named "config", "setconfig" and "setup" and the command line options
                _______________________________________________________________
                rhq.agent.plugins.child-discovery.delay-secs
 
-               Defines the delay between merging newly committed resources into the inventory
-               and kicking off a discovery to discover their child resources.
+               Defines the delay between merging newly committed or modified resources with 
+               the inventory and kicking off a discovery to discover their child resources.
                Once the RHQ administrator imports a server or platform into the inventory,
-               the agent is notified about that action and such resources are "merged" into
-               the agent's inventory with a "committed" status signifying that they are of
-               interest to RHQ. This setting then configures the speed with which the child
-               resources will appear in the inventory afterwards.
+               or a connection settings change is made on a resource, the agent is notified 
+               about that action and such resources are "merged" into the agent's inventory 
+               with a "committed" status and updated details. 
+               This setting defines the delay between the agent notifying such change and
+               performing the discovery to find if the change made any difference in the 
+               children of the resources in question.
+               Note that in the case of newly imported resources, their immediate children 
+               are discovered immediately. It is only the further levels that are governed
+               by this setting.
                The value is specified in seconds.
                -->
                <!--

@@ -93,7 +93,12 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         //retrieve the filters.
         String groupFilter = (String) systemConfig.get(RHQConstants.LDAPGroupFilter);
         if ((groupFilter != null) && (!groupFilter.trim().isEmpty())) {
-            String filter = String.format("(%s)", groupFilter);
+            String filter;
+            if (groupFilter.startsWith("(") && groupFilter.endsWith(")"))
+                filter = groupFilter;  // RFC 2254 does not allow for ((expression))
+            else
+                filter = String.format("(%s)", groupFilter); // not wrapped in (), wrap it
+
             return buildGroup(systemConfig, filter);
         }
         return emptyAvailableGroups;
@@ -256,10 +261,10 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     /**Build/retrieve the user DN. Not usually a property.
-     * 
+     *
      * @param options
      * @param userName
-     * @param usePosixGroups boolean indicating whether we search for groups with posixGroup format 
+     * @param usePosixGroups boolean indicating whether we search for groups with posixGroup format
      * @return
      */
     private String getUserAttribute(Properties options, String userName, boolean usePosixGroups) {

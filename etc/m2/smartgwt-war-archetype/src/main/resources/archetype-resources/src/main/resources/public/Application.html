@@ -1,16 +1,15 @@
 #set( $symbol_pound = '#' )
 #set( $symbol_dollar = '$' )
 #set( $symbol_escape = '\' )
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!-- The HTML 4.01 Transitional DOCTYPE declaration-->
-<!-- above set at the top of the file will set     -->
-<!-- the browser's rendering engine into           -->
-<!-- "Quirks Mode". Replacing this declaration     -->
-<!-- with a "Standards Mode" doctype is supported, -->
-<!-- but may lead to some differences in layout.   -->
-
 <html>
 <head>
+   <!-- this forces us to emulate IE8 "quirks" mode regardless of IE browser version.  It:
+        1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
+           http://forums.smartclient.com/showthread.php?t=15973
+        2) solves initial app load issues that we experienced on some XP and Vista/Windows7  flavors.
+   -->
+    <meta http-equiv="X-UA-Compatible" content="IE=8"/>
+
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <!--                                           -->
     <!-- Any title is fine                         -->

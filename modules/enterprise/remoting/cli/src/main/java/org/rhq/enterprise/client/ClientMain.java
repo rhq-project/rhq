@@ -410,26 +410,46 @@ public class ClientMain {
         List<String> args = new ArrayList<String>();
         boolean keep_going = true;
 
+        boolean isScriptFileCommand = false;
+
+        // we don't want to parse numbers and we want ' to be a normal word
+        // character
         strtok.ordinaryChars('0', '9');
         strtok.ordinaryChar('.');
         strtok.ordinaryChar('-');
-        strtok.quoteChar('\'');
-        strtok.quoteChar('"');
-        strtok.wordChars(33, 33);
-        strtok.wordChars(35, 38);
-        strtok.wordChars(40, 127);
+        strtok.ordinaryChar('\'');
+        strtok.wordChars(33, 127);
 
         // parse the command line
         while (keep_going) {
             int nextToken;
 
             try {
+                // if we are executing a script file and have reached the arguments, we
+                // want to reset the tokenizer's syntax so that handle single and double
+                // quotes correctly.
+                if (isScriptFileCommand && args.size() > 2 && args.get(args.size() - 2).equals("-f")) {
+                    strtok.resetSyntax();
+                    strtok.ordinaryChars('0', '9');
+                    strtok.ordinaryChar('.');
+                    strtok.ordinaryChar('-');
+                    strtok.quoteChar('\'');
+                    strtok.quoteChar('"');
+                    strtok.wordChars(33, 33);
+                    strtok.wordChars(35, 38);
+                    strtok.wordChars(40, 127);
+                }
+
                 nextToken = strtok.nextToken();
+
             } catch (IOException e) {
                 nextToken = StreamTokenizer.TT_EOF;
             }
 
             if (nextToken == java.io.StreamTokenizer.TT_WORD) {
+                if (args.size() > 0 && strtok.sval.equals("-f")) {
+                    isScriptFileCommand = true;
+                }
                 args.add(strtok.sval);
             } else if (nextToken == '\"' || nextToken == '\'') {
                 args.add(strtok.sval);
@@ -437,7 +457,6 @@ public class ClientMain {
                 keep_going = false;
             }
         }
-
         return args.toArray(new String[args.size()]);
     }
 

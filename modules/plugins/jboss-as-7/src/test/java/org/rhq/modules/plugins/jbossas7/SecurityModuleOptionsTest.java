@@ -20,9 +20,12 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
@@ -51,6 +54,25 @@ public class SecurityModuleOptionsTest extends AbstractConfigurationHandlingTest
     private static ASConnection con = null;
     private static ObjectMapper mapper = null;
     private ModuleOptionsComponent moc = null;
+
+    //Define some shared and reusable content
+    static HashMap<String, String> jsonMap = new HashMap<String, String>();
+    static {
+        jsonMap
+            .put(
+                "login-modules",
+                "[{\"flag\":\"required\", \"code\":\"Ldap\", \"module-options\":{\"bindDn\":\"uid=ldapSecureUser,ou=People,dc=redat,dc=com\", \"bindPw\":\"test126\", \"allowEmptyPasswords\":\"true\"}}]");
+        //              "[{\"flag\":\"required\", \"code\":\"Ldap\"}]");
+        jsonMap
+            .put(
+                "policy-modules",
+                "[{\"flag\":\"requisite\", \"code\":\"LdapExtended\", \"module-options\":{\"policy\":\"module\", \"policy1\":\"module1\"}}]");
+        jsonMap
+            .put("mapping-modules",
+                "[{\"code\":\"Test\", \"type\":\"attribute\", \"module-options\":{\"mapping\":\"module\", \"mapping1\":\"module1\"}}]");
+        jsonMap.put("provider-modules",
+            "[{\"code\":\"Providers\", \"module-options\":{\"provider\":\"module\", \"provider1\":\"module1\"}}]");
+    }
 
     //    @BeforeSuite
     //    void loadPluginDescriptor() throws Exception {
@@ -163,6 +185,71 @@ public class SecurityModuleOptionsTest extends AbstractConfigurationHandlingTest
                 System.out.println("\n" + type.ordinal() + " " + type.name());
             }
         }
+    }
+
+    /**Attempts to create a new Authentication node(authentication=classic) with a
+     * 'login-modules' attribute complete with 'code':'Ldap' and 'flag':'required' 
+     *  and some sample 'module-options' values.
+     *  
+     *   This cannot be enabled because of JIRA https://issues.jboss.org/browse/AS7-4951
+     * 
+     */
+    @Test(enabled = false)
+    public void testCreateSecurityDomainChildLoginModules() {
+        boolean execute = true;
+        boolean verboseOutput = true;
+        String address = "subsystem=security,security-domain=testDomain3,authentication=classic";
+        //               address = "subsystem=security,security-domain=testDomain3,authorization=classic";
+        //               address = "subsystem=security,security-domain=testDomain3,audit=classic";
+        //               address = "subsystem=security,security-domain=testDomain3,mapping=classic";
+        String attribute = ModuleOptionType.Authentication.getAttribute();
+        //               attribute = ModuleOptionType.Authorization.getAttribute();
+        //               attribute = ModuleOptionType.Audit.getAttribute();
+        //               attribute = ModuleOptionType.Mapping.getAttribute();
+
+        //test operation- read property always available.
+        Operation op = null;
+
+        //read the login-modules attribute
+        op = new ReadAttribute(new Address(address), attribute);
+        Result result = exerciseOperation(op, execute, verboseOutput);
+        assert result.isSuccess() == true : "The operation '" + op + "' failed to read the resource."
+            + result.getFailureDescription();
+        //extract current results
+        Object rawResult = result.getResult();
+
+        //#### Have to create new content for the new node.
+        List<Value> list2 = new ArrayList<Value>();
+        try {
+            // loading 'login-module'
+            JsonNode node = mapper.readTree(jsonMap.get(attribute));
+            result.setResult(mapper.treeToValue(node, Object.class));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //populate the Value component complete with module Options.
+        list2 = moc.populateSecurityDomainModuleOptions(result, moc.loadModuleOptionType(attribute));
+
+        //add the login-modules attribute
+        //        op = new WriteAttribute(new Address(address));
+        op = new Operation("add", new Address(address));
+        op.addAdditionalProperty("name", attribute);//attribute to execute on
+
+        //now complete the write operation by updating the value
+        op.addAdditionalProperty("value", list2);
+
+        result = exerciseOperation(op, execute, verboseOutput);
+        assert ((result.isSuccess() == true) || (result.getOutcome() == null)) : "The operation '" + op
+            + "' failed to write the resource.." + result.getFailureDescription();
+
+        //read the login-modules attribute
+        op = new ReadAttribute(new Address(address), attribute);
+        result = exerciseOperation(op, execute, verboseOutput);
+        assert result.isSuccess() == true : "The operation '" + op + "' failed to read the resource."
+            + result.getFailureDescription();
     }
 
     /** For each operation 

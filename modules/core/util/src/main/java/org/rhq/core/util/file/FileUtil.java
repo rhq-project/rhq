@@ -465,7 +465,7 @@ public class FileUtil {
      *     <tr>
      *         <td>jboss/server/**&#047;*.war</td>
      *         <td>Matches all .war files under the server directory. Sub directories are included as well such
-     *         that jboss/server/default/myapp.war jboss/server/production/myapp.war and
+     *         that jboss/server/default/myapp.war, jboss/server/production/myapp.war and
      *         jboss/server/default/myapp.ear/myapp.war all match</td>
      *     </tr>
      * </table>
@@ -502,6 +502,11 @@ public class FileUtil {
                     pathString += File.separator;
                 }
                 pathString = pathString.replace("\\", "\\\\");
+
+                // escape parens in the path, these are valid dir chars on win and also regex characters
+                pathString = pathString.replace("(", "\\(");
+                pathString = pathString.replace(")", "\\)");
+
                 regex.append(pathString).append("(");
                 buildPatternRegex(filter.getPattern(), regex);
                 regex.append(")");
@@ -534,9 +539,11 @@ public class FileUtil {
                 }
                 regex.append("[^" + separator + "]*");
 
-            } else if (c == '.') {
+            } else if (c == '.' || c == '(' || c == ')') {
                 // escape file extensions because dot is a regex character
-                regex.append("\\.");
+                // escape parens because they are regex characters
+                regex.append("\\");
+                regex.append(c);
 
             } else if (c == '\\') {
                 // escape windows separators because backslash is a regex character

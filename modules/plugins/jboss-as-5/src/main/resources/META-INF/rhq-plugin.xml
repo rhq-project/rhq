@@ -1213,16 +1213,15 @@
       Restart operations start the server by executing the server start script, typically run.sh on UNIX or
       run.bat on Windows. The following connection settings can be used to configure the start script execution:
       <ul>
-<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-eap-5.0/bin/run.sh")</li>
-<li>Start Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")</li>
+<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-eap-5.0/jboss-as/bin/run.sh")</li>
+<li>Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")
+                    the prefix is also prepsended to the stop script command line if the Stop operation is configured to
+                    stop the app server via script.</li>
 <li>Start Script Arguments - arguments to be passed to the start script (e.g. "--configuration=production")</li>
 <li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
       </ul>
       These settings are automatically initialized by the JBossAS5 plugin discovery code to match the currently running
       server process' command line and environment.
-      <p/>
-      The settings are not used by the Stop operation, since it stops the server via the management interface, not via
-      a script.
       <p/>
       For more detailed descriptions of the settings, see the Connection Settings section below.
     ]]>

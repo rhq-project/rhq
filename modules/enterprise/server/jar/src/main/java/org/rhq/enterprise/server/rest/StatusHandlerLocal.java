@@ -39,7 +39,8 @@ import com.wordnik.swagger.annotations.ApiOperation;
 @Produces({"application/json","application/xml","text/html"})
 public interface StatusHandlerLocal {
 
-    @ApiOperation("Retrieve the current configured state of the server along with some runtime information")
+    @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information",
+    responseClass = "Map 'values' with map of key-value pairs describing the status")
     @GET
     @Path("/")
     Response getStatus(@Context HttpHeaders httpHeaders);

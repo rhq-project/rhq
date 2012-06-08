@@ -29,13 +29,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.cache.Cache;
+
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.UserRest;
 
 /**
  * Bean that deals with user specific stuff
@@ -65,4 +71,12 @@ public interface UserHandlerLocal {
     public void removeResourceFromFavorites(
             @ApiParam(name="id", value = "Id of the resource")
             @PathParam("id") int id);
+
+
+    @GET
+    @Cache(maxAge = 600)
+    @Path("{id}")
+    @ApiOperation(value = "Get info about a user", responseClass = "UserRest")
+    public Response getUserDetails(@ApiParam(value="Login of the user") @PathParam("id")String loginName,
+                                   @Context Request request,@Context HttpHeaders headers);
 }

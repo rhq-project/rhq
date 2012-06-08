@@ -61,6 +61,11 @@ public interface AlertHandlerLocal {
             @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status);
 
     @GET
+    @Path("count")
+    @ApiOperation("Return a count of alerts in the system depending on criteria")
+    int countAlerts(); // TODO add some limiting to new  / old / ....
+
+    @GET
     @Path("/{id}")
     @AddLinks
     @LinkResource(value = AlertRest.class)

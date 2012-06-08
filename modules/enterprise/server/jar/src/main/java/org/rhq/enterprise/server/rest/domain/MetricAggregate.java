@@ -32,9 +32,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class MetricAggregate {
 
     Integer scheduleId;
-    double min;
-    double avg;
-    double max;
+    Double min;
+    Double avg;
+    Double max;
     int numDataPoints;
     List<DataPoint> dataPoints;
     long minTimeStamp;
@@ -44,7 +44,7 @@ public class MetricAggregate {
         dataPoints = new ArrayList<DataPoint>();
     }
 
-    public MetricAggregate(Integer scheduleId, double min, double avg, double max) {
+    public MetricAggregate(Integer scheduleId, Double min, Double avg, Double max) {
         this();
         this.scheduleId = scheduleId;
 
@@ -68,29 +68,29 @@ public class MetricAggregate {
     }
 
     @XmlElement
-    public double getMin() {
+    public Double getMin() {
         return min;
     }
 
     @XmlElement
-    public double getAvg() {
+    public Double getAvg() {
         return avg;
     }
 
     @XmlElement
-    public double getMax() {
+    public Double getMax() {
         return max;
     }
 
-    public void setMin(double min) {
+    public void setMin(Double min) {
         this.min = min;
     }
 
-    public void setAvg(double avg) {
+    public void setAvg(Double avg) {
         this.avg = avg;
     }
 
-    public void setMax(double max) {
+    public void setMax(Double max) {
         this.max = max;
     }
 
@@ -129,15 +129,19 @@ public class MetricAggregate {
 
     public static class DataPoint {
         long timeStamp;
-        double value;
-        double high;
-        double low;
+        Double value;
+        Double high;
+        Double low;
 
 
         public DataPoint() {
         }
 
-        public DataPoint(long timeStamp, double value, double high, double low) {
+        public DataPoint(long timeStamp) {
+            this.timeStamp = timeStamp;
+        }
+
+        public DataPoint(long timeStamp, Double value, Double high, Double low) {
             this.timeStamp = timeStamp;
             this.value = value;
             this.high = high;
@@ -148,7 +152,7 @@ public class MetricAggregate {
             return timeStamp;
         }
 
-        public double getValue() {
+        public Double getValue() {
             return value;
         }
 
@@ -156,23 +160,23 @@ public class MetricAggregate {
             this.timeStamp = timeStamp;
         }
 
-        public void setValue(double value) {
+        public void setValue(Double value) {
             this.value = value;
         }
 
-        public double getHigh() {
+        public Double getHigh() {
             return high;
         }
 
-        public void setHigh(double high) {
+        public void setHigh(Double high) {
             this.high = high;
         }
 
-        public double getLow() {
+        public Double getLow() {
             return low;
         }
 
-        public void setLow(double low) {
+        public void setLow(Double low) {
             this.low = low;
         }
     }

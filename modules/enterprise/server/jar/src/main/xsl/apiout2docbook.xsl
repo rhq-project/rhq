@@ -63,7 +63,8 @@
         <xsl:value-of select="@path"/>
       </xsl:attribute>
       <title>
-        <xsl:value-of select="@path"/>
+        <!--/<xsl:value-of select="@path"/>-->
+        <xsl:call-template name="class-level-path"/>
         <xsl:if test="@shortDesc">
         : <xsl:value-of select="@shortDesc"/>
         </xsl:if>
@@ -88,8 +89,8 @@
   <xsl:template match="method">
     <listitem>
       <simpara>
-        <emphasis role="bold"><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of
-          select="../@path"/><xsl:if test="@path != '/'"><xsl:value-of select="@path"/></xsl:if>
+        <emphasis role="bold"><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> /</xsl:text><xsl:value-of
+          select="../@path"/><xsl:if test="not(@path = '')">/</xsl:if><xsl:value-of select="@path"/>
         </emphasis>
       </simpara>
       <simpara><xsl:value-of select="@description"/></simpara>
@@ -188,5 +189,20 @@
       </td>
     </tr>
   </xsl:template>
+
+  <xsl:template name="class-level-path">
+    <xsl:choose>
+      <xsl:when test="@basePath">
+        <xsl:value-of select="@basePath"/>
+        <xsl:if test="not(substring(@basePath,string-length(@basePath)-1)='/')">/</xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$basePath"/>
+        <xsl:if test="not(substring($basePath,string-length($basePath)-1)='/')">/</xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:value-of select="@path"/>
+  </xsl:template>
+
 
 </xsl:stylesheet>

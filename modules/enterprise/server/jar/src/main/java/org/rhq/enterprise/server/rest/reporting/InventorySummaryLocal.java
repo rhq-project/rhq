@@ -27,8 +27,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.wordnik.swagger.annotations.Api;
+
 @Path("/inventorySummary")
 @Local
+@Api(basePath="http://localhost:7080/coregui/reports", value = "The inventory summary report")
 public interface InventorySummaryLocal {
 
     /**

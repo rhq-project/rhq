@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.i18n.client.LocalizableResource.Description;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
@@ -43,6 +44,7 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.util.ValueCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -560,27 +562,26 @@ public class ConfigurationEditor extends LocatableVLayout {
     private void addHeaderItems(List<FormItem> fields) {
         final String CELL_STYLE = "configurationEditorHeaderCell";
 
-        // TODO: i18n
         StaticTextItem nameHeader = new StaticTextItem();
-        nameHeader.setValue("Property");
+        nameHeader.setValue(MSG.view_configEdit_property());
         nameHeader.setShowTitle(false);
         nameHeader.setCellStyle(CELL_STYLE);
         fields.add(nameHeader);
 
         StaticTextItem unsetHeader = new StaticTextItem();
-        unsetHeader.setValue("Unset?");
+        unsetHeader.setValue(MSG.view_configEdit_unset());
         unsetHeader.setShowTitle(false);
         unsetHeader.setCellStyle(CELL_STYLE);
         fields.add(unsetHeader);
 
         StaticTextItem valueHeader = new StaticTextItem();
-        valueHeader.setValue("Value");
+        valueHeader.setValue(MSG.view_configEdit_value());
         valueHeader.setShowTitle(false);
         valueHeader.setCellStyle(CELL_STYLE);
         fields.add(valueHeader);
 
         StaticTextItem descriptionHeader = new StaticTextItem();
-        descriptionHeader.setValue("Description");
+        descriptionHeader.setValue(MSG.view_configEdit_description());
         descriptionHeader.setShowTitle(false);
         descriptionHeader.setCellStyle(CELL_STYLE);
         fields.add(descriptionHeader);
@@ -932,6 +933,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         final LocatableListGrid summaryTable = new LocatableListGrid(locatorId);
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
+        // [BZ 822173 - Table layout problem on configuration page.] 
+        // setBodyOverflow(Overflow.VISIBLE) && setAutoFitFieldWidths(true) issue
         summaryTable.setBodyOverflow(Overflow.VISIBLE);
         summaryTable.setOverflow(Overflow.VISIBLE);
         summaryTable.setWidth100();
@@ -1180,7 +1183,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     final Window popup = new Window();
                     popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
-                    popup.setHeight(110);
+                    popup.setHeight(140);
                     popup.setIsModal(true);
                     popup.setShowModalMask(true);
                     popup.setShowCloseButton(false);
@@ -1188,6 +1191,9 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     VLayout vLayout = new VLayout();
                     vLayout.setMargin(10);
+                    
+                    HTMLFlow description = new HTMLFlow(propertyDefinitionList.getDescription());
+                    vLayout.addMember(description);
 
                     final DynamicForm form = new DynamicForm();
 

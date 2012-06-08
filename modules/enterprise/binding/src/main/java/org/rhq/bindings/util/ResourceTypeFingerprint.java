@@ -19,7 +19,11 @@
 
 package org.rhq.bindings.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -43,6 +47,36 @@ public class ResourceTypeFingerprint {
 
     private String digest;
 
+    private static final Comparator<MeasurementDefinition> MEASUREMENT_DEFINITION_COMPARATOR = new Comparator<MeasurementDefinition>() {        
+        @Override
+        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
+    
+    private static final Comparator<OperationDefinition> OPERATION_DEFINITION_COMPARATOR = new Comparator<OperationDefinition>() {        
+        @Override
+        public int compare(OperationDefinition o1, OperationDefinition o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
+    
+    private static final Comparator<PackageType> PACKAGE_TYPE_COMPARATOR = new Comparator<PackageType>() {        
+        @Override
+        public int compare(PackageType o1, PackageType o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
+          
+    private static final Comparator<PropertyDefinition> PROPERTY_DEFINITION_COMPARATOR = new Comparator<PropertyDefinition>() {
+
+        @Override
+        public int compare(PropertyDefinition o1, PropertyDefinition o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+        
+    };
+    
     public ResourceTypeFingerprint(ResourceType rt, Collection<MeasurementDefinition> measurements,
         Collection<OperationDefinition> operations, Collection<PackageType> packageTypes,
         ConfigurationDefinition pluginConfigurationDefinition, ConfigurationDefinition resourceConfigurationDefinition) {
@@ -101,7 +135,9 @@ public class ResourceTypeFingerprint {
         if (defs == null) {
             bld.append("null");
         } else {
-            for (MeasurementDefinition d : defs) {
+            List<MeasurementDefinition> adefs = new ArrayList<MeasurementDefinition>(defs);            
+            Collections.sort(adefs, MEASUREMENT_DEFINITION_COMPARATOR);
+            for (MeasurementDefinition d : adefs) {
                 addRepresentation(d, bld);
             }
         }
@@ -111,7 +147,9 @@ public class ResourceTypeFingerprint {
         if (defs == null) {
             bld.append("null");
         } else {
-            for (OperationDefinition d : defs) {
+            List<OperationDefinition> odefs = new ArrayList<OperationDefinition>(defs);            
+            Collections.sort(odefs, OPERATION_DEFINITION_COMPARATOR);
+            for (OperationDefinition d : odefs) {
                 addRepresentation(d, bld);
             }
         }
@@ -121,7 +159,9 @@ public class ResourceTypeFingerprint {
         if (defs == null) {
             bld.append("null");
         } else {
-            for (PackageType d : defs) {
+            List<PackageType> pdefs = new ArrayList<PackageType>(defs);            
+            Collections.sort(pdefs, PACKAGE_TYPE_COMPARATOR);
+            for (PackageType d : pdefs) {
                 addRepresentation(d, bld);
             }
         }
@@ -150,8 +190,9 @@ public class ResourceTypeFingerprint {
     }
 
     private static void addRepresentation(Map<String, PropertyDefinition> defs, StringBuilder bld) {
-        for (Map.Entry<String, PropertyDefinition> entry : defs.entrySet()) {
-            PropertyDefinition def = entry.getValue();
+        List<PropertyDefinition> pdefs = new ArrayList<PropertyDefinition>(defs.values());
+        Collections.sort(pdefs, PROPERTY_DEFINITION_COMPARATOR);
+        for (PropertyDefinition def : pdefs) {
             addRepresentation(def, bld);
         }
     }

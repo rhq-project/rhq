@@ -1183,7 +1183,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     final Window popup = new Window();
                     popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
-                    popup.setHeight(140);
+                    popup.setHeight(145);
                     popup.setIsModal(true);
                     popup.setShowModalMask(true);
                     popup.setShowCloseButton(false);

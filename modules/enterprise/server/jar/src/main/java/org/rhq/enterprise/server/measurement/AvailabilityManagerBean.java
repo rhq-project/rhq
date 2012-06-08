@@ -664,8 +664,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         platformAvailType = (null == platformAvailType) ? AvailabilityType.UNKNOWN : platformAvailType;
         childAvailType = (null == childAvailType) ? AvailabilityType.UNKNOWN : childAvailType;
 
-        // get the platform resource as well as all child resources not already at childAvailType (since these are the
-        // ones we need to change)
+        // get the platform resource if not already at platformAvailType (since this is the one 
+        // we need to change)
         Query query = entityManager
             .createNamedQuery(Availability.FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
         query.setParameter("agentId", agentId);
@@ -673,7 +673,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // should be 0 or 1 entry
         List<ResourceIdWithAvailabilityComposite> platformResourcesWithStatus = query.getResultList();
 
-        // get the platform resource as well as all child resources not disabled and not already at childAvailType
+        // get the child resources not disabled and not already at childAvailType
         // (since these are the ones we need to change)
         query = entityManager.createNamedQuery(Availability.FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
         query.setParameter("agentId", agentId);

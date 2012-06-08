@@ -32,14 +32,24 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.UserRest;
 
 /**
  * Class that deals with user specific stuff
@@ -110,6 +120,30 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
             updateFavorites(favIds);
         }
 
+    }
+
+    public Response getUserDetails(String loginName, Request request, HttpHeaders headers) {
+
+        Subject subject = subjectManager.getSubjectByName(loginName);
+        if (subject == null)
+            throw new StuffNotFoundException("User with login " + loginName);
+
+        EntityTag eTag = new EntityTag(Long.toOctalString(subject.hashCode()));
+        Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
+
+        if (builder == null) {
+            UserRest user = new UserRest(subject.getId(), subject.getName());
+            user.setFirstName(subject.getFirstName());
+            user.setLastName(subject.getLastName());
+            user.setEmail(subject.getEmailAddress());
+            user.setTel(subject.getPhoneNumber());
+
+            MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+            builder = Response.ok(user, mediaType);
+            builder.tag(eTag);
+
+        }
+        return builder.build();
     }
 
     private void updateFavorites(Set<Integer> favIds) {

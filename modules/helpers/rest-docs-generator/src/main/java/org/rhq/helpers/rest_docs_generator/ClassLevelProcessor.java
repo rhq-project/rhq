@@ -166,7 +166,9 @@ public class ClassLevelProcessor extends AbstractProcessor {
         Element classElement = doc.createElement("class");
         String className = classElementIn.toString();
         classElement.setAttribute("name",className);
-        classElement.setAttribute("path",basePath.value());
+        String value = basePath.value();
+        value = cleanOutPath(value);
+        classElement.setAttribute("path", value);
         Api api = classElementIn.getAnnotation(Api.class);
         if (api!=null) {
             String shortDescription = api.value();
@@ -195,6 +197,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
             return;
         }
         String path = pathAnnotation.value();
+        path = cleanOutPath(path);
 
         Element methodElement = doc.createElement("method");
         methodElement.setAttribute("path",path);
@@ -382,6 +385,19 @@ public class ClassLevelProcessor extends AbstractProcessor {
         else {
             xmlElement.setAttribute(name,defaultValue);
         }
+    }
+
+
+    private String cleanOutPath(String in) {
+        if (in.equals("/"))
+            return "";
+
+        if (in.startsWith("/"))
+            in = in.substring(1);
+        if (in.endsWith("/"))
+            in = in.substring(0,in.length()-1);
+
+        return in;
     }
 
 }

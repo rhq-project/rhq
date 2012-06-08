@@ -36,6 +36,8 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -74,6 +76,21 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
             ret.add(ar);
         }
         return ret;
+    }
+
+    @Override
+    public int countAlerts() {
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        criteria.fetchAlertDefinition(false);
+        criteria.fetchConditionLogs(false);
+        criteria.fetchRecoveryAlertDefinition(false);
+        criteria.fetchNotificationLogs(false);
+        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
+        PageList<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
+        int count = alerts.getTotalSize();
+
+        return count;
     }
 
     @Override

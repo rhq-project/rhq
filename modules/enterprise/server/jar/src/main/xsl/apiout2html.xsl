@@ -28,9 +28,8 @@
             <li>
               <xsl:element name="a">
                 <xsl:attribute name="href">#<xsl:value-of select="@path"/></xsl:attribute>
-                 <xsl:if test="@basePath">
-                   <xsl:value-of select="@basePath"/>
-                 </xsl:if><xsl:value-of select="@path"/>
+                <xsl:call-template name="class-level-path"/>
+
               </xsl:element>
             </li>
           </xsl:for-each>
@@ -43,10 +42,25 @@
     </html>
   </xsl:template>
 
+  <xsl:template name="class-level-path">
+    <xsl:choose>
+      <xsl:when test="@basePath">
+        <xsl:value-of select="@basePath"/>
+        <xsl:if test="not(substring(@basePath,string-length(@basePath)-1)='/')">/</xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$basePath"/>
+        <xsl:if test="not(substring($basePath,string-length($basePath)-1)='/')">/</xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:value-of select="@path"/>
+  </xsl:template>
+
   <xsl:template match="class">
     <xsl:element name="h2">
       <xsl:attribute name="id"><xsl:value-of select="@path"/></xsl:attribute>
-      <xsl:value-of select="@path"/>
+      <!--/<xsl:value-of select="@path"/>-->
+      <xsl:call-template name="class-level-path"/>
       <xsl:if test="@shortDesc">
       : <xsl:value-of select="@shortDesc"/>
       </xsl:if>
@@ -65,8 +79,8 @@
   </xsl:template>
 
   <xsl:template match="method">
-    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> </xsl:text><xsl:value-of select="../@path"/>
-      <xsl:if test="@path != '/'"><xsl:value-of select="@path"/></xsl:if>
+    <h3><xsl:value-of select="@method"/><xsl:text xml:space="preserve"> /</xsl:text><xsl:value-of select="../@path"/>
+      <xsl:if test="not(@path = '')">/</xsl:if><xsl:value-of select="@path"/>
     </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>

@@ -29,8 +29,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.wordnik.swagger.annotations.Api;
+
 @Path("/platformUtilization")
 @Local
+@Api(basePath="http://localhost:7080/coregui/reports", value = "The platform utilization report")
 public interface PlatformUtilizationLocal {
 
     @GET

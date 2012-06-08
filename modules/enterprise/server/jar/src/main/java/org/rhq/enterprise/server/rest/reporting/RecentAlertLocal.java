@@ -10,8 +10,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.wordnik.swagger.annotations.Api;
+
 @Path("/recentAlerts")
 @Local
+@Api(basePath="http://localhost:7080/coregui/reports", value = "The recent alerts report")
 public interface RecentAlertLocal {
 
     @GET

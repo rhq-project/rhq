@@ -57,6 +57,9 @@ public abstract class MeasurementData implements Serializable {
     @Transient
     private String name;
 
+    @Transient
+    protected MeasurementScheduleRequest scheduleRequest;
+
     /**
      * Use this constructor if the data was collected on-demand and not part of a scheduled collection.
      */
@@ -75,11 +78,13 @@ public abstract class MeasurementData implements Serializable {
     protected MeasurementData(long timestamp, MeasurementScheduleRequest request) {
         this(new MeasurementDataPK(timestamp, request.getScheduleId()));
         this.setName(request.getName());
+        this.scheduleRequest = request;
     }
 
     protected MeasurementData(MeasurementScheduleRequest request) {
         this(new MeasurementDataPK(System.currentTimeMillis(), request.getScheduleId()));
         this.setName(request.getName());
+        this.scheduleRequest = request;
     }
 
     protected MeasurementData(long timestamp, int scheduleId) {

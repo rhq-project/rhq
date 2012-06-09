@@ -54,7 +54,7 @@ import javax.persistence.Table;
         + " WHERE r.id = :resourceId " + "  AND d.id = :definitionId " + "ORDER BY trait.id.timestamp DESC "),
     @NamedQuery(name = MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementDataTrait t WHERE t.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
 @Table(name = "RHQ_MEASUREMENT_DATA_TRAIT")
-public class MeasurementDataTrait extends MeasurementData {
+public class MeasurementDataTrait extends MeasurementData implements TraitMeasurement {
 
     /**
      * Find current traits for a Resource in :resourceId that have a certain displayType in :displayType
@@ -146,8 +146,33 @@ public class MeasurementDataTrait extends MeasurementData {
         return value;
     }
 
+    @Override
     public void setValue(String value) {
         this.value = value;
+    }
+
+    @Override
+    public int getDefinitionId() {
+        if (schedule == null || schedule.getDefinition() == null) {
+            return scheduleRequest.getDefinitionId();
+        }
+        return getSchedule().getDefinition().getId();
+    }
+
+    @Override
+    public String getDisplayName() {
+        if (schedule == null || schedule.getDefinition() == null) {
+            return scheduleRequest.getDisplayName();
+        }
+        return getSchedule().getDefinition().getDisplayName();
+    }
+
+    @Override
+    public DisplayType getDisplayType() {
+        if (schedule == null || schedule.getDefinition() == null) {
+            return scheduleRequest.getDisplayType();
+        }
+        return getSchedule().getDefinition().getDisplayType();
     }
 
     @Override

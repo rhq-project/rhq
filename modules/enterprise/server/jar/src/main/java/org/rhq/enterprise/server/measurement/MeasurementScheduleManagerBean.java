@@ -748,17 +748,22 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
 
         // use composite query -- won't load managed entities, requires minimal wire transfer
-        String scheduleRequestQueryString = "" //
-            + "SELECT ms.resource.id, " //
-            + "       ms.id, " //
-            + "       ms.definition.name, " //
-            + "       ms.interval, " //
-            + "       ms.enabled, " //
-            + "       ms.definition.dataType, " //
-            + "       ms.definition.rawNumericType " //
-            + "  FROM MeasurementSchedule ms " //
-            + " WHERE ms.id IN ( " + scheduleSubQuery + " ) " //
-            + "   AND ms.resource.agent.id = :agentId";
+//        String scheduleRequestQueryString = "" //
+//            + "SELECT ms.resource.id, " //
+//            + "       ms.id, " //
+//            + "       ms.definition.name, " //
+//            + "       ms.interval, " //
+//            + "       ms.enabled, " //
+//            + "       ms.definition.dataType, " //
+//            + "       ms.definition.rawNumericType " //
+//            + "  FROM MeasurementSchedule ms " //
+//            + " WHERE ms.id IN ( " + scheduleSubQuery + " ) " //
+//            + "   AND ms.resource.agent.id = :agentId";
+
+        String scheduleRequestQueryString =
+            "SELECT s " +
+            "FROM MeasurementSchedule s " +
+            "WHERE s.id IN ( " + scheduleSubQuery + " ) AND s.resource.agent.id = :agentId";
         if (log.isDebugEnabled()) {
             log.debug("scheduleRequestQueryString: " + scheduleRequestQueryString);
         }
@@ -767,24 +772,34 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Map<Integer, ResourceMeasurementScheduleRequest> agentRequests = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
         for (int nextAgentId : agentIds) {
             scheduleRequestQuery.setParameter("agentId", nextAgentId);
-            List<Object[]> scheduleRequests = scheduleRequestQuery.getResultList();
-            for (Object[] nextScheduleDataSet : scheduleRequests) {
-                int resourceId = (Integer) nextScheduleDataSet[0];
-                ResourceMeasurementScheduleRequest resourceRequest = agentRequests.get(resourceId);
+            List<MeasurementSchedule> schedules = scheduleRequestQuery.getResultList();
+            for (MeasurementSchedule schedule : schedules) {
+                ResourceMeasurementScheduleRequest resourceRequest = agentRequests.get(schedule.getResource().getId());
                 if (resourceRequest == null) {
-                    resourceRequest = new ResourceMeasurementScheduleRequest(resourceId);
-                    agentRequests.put(resourceId, resourceRequest);
+                    resourceRequest = new ResourceMeasurementScheduleRequest(schedule.getResource().getId());
+                    agentRequests.put(schedule.getResource().getId(), resourceRequest);
                 }
-
-                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest( //
-                    (Integer) nextScheduleDataSet[1], // scheduleId
-                    (String) nextScheduleDataSet[2], // definitionName,
-                    (Long) nextScheduleDataSet[3], // interval,
-                    (Boolean) nextScheduleDataSet[4], // enabled,
-                    (DataType) nextScheduleDataSet[5], // dataType,
-                    (NumericType) nextScheduleDataSet[6]); // rawNumericType
-                resourceRequest.addMeasurementScheduleRequest(requestData);
+                resourceRequest.addMeasurementScheduleRequest(new MeasurementScheduleRequest(schedule));
             }
+
+//            List<Object[]> scheduleRequests = scheduleRequestQuery.getResultList();
+//            for (Object[] nextScheduleDataSet : scheduleRequests) {
+//                int resourceId = (Integer) nextScheduleDataSet[0];
+//                ResourceMeasurementScheduleRequest resourceRequest = agentRequests.get(resourceId);
+//                if (resourceRequest == null) {
+//                    resourceRequest = new ResourceMeasurementScheduleRequest(resourceId);
+//                    agentRequests.put(resourceId, resourceRequest);
+//                }
+//
+//                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest( //
+//                    (Integer) nextScheduleDataSet[1], // scheduleId
+//                    (String) nextScheduleDataSet[2], // definitionName,
+//                    (Long) nextScheduleDataSet[3], // interval,
+//                    (Boolean) nextScheduleDataSet[4], // enabled,
+//                    (DataType) nextScheduleDataSet[5], // dataType,
+//                    (NumericType) nextScheduleDataSet[6]); // rawNumericType
+//                resourceRequest.addMeasurementScheduleRequest(requestData);
+//            }
 
             boolean markResources = false;
             try {
@@ -1145,6 +1160,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     Boolean enabled = (Boolean) results.getBoolean(5);
                     DataType dataType = DataType.values()[results.getInt(6)];
                     NumericType rawNumericType = NumericType.values()[results.getInt(7)];
+                    DisplayType displayType = DisplayType.values()[results.getInt(8)];
+                    String displayName = results.getString(9);
+                    Integer definitionId = results.getInt(10);
+
                     if (results.wasNull()) {
                         rawNumericType = null;
                     }
@@ -1157,7 +1176,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     }
 
                     MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
-                        interval, enabled, dataType, rawNumericType);
+                        interval, enabled, dataType, rawNumericType, displayType, displayName, definitionId);
                     scheduleRequest.addMeasurementScheduleRequest(requestData);
                 }
             } finally {

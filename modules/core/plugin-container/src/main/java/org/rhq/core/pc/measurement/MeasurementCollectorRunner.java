@@ -24,6 +24,7 @@ package org.rhq.core.pc.measurement;
 
 import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -110,7 +111,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                         scheduleHistory.addRequests(requests);
                     }
 
-                    getValues(measurementComponent, report, requests, container.getResource());
+                    getValues(measurementComponent, report, copy(requests), container.getResource());
                 }
 
                 this.measurementManager.reschedule(requests);
@@ -127,7 +128,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
     }
 
     private void getValues(MeasurementFacet measurementComponent, MeasurementReport report,
-        Set<? extends MeasurementScheduleRequest> requests, Resource resource) {
+        Set<MeasurementScheduleRequest> requests, Resource resource) {
         try {
             long start = System.currentTimeMillis();
             measurementComponent.getValues(report, (Set<MeasurementScheduleRequest>) requests);
@@ -150,6 +151,23 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                     + ThrowableUtil.getAllMessages(t));
             }
         }
+    }
+
+    /**
+     * This function copies the ScheduleMeasurementInfo objects into MeasurementScheduleRequest objects. The reason
+     * for this is that the schedule gets stored as a member of the MeasurementData objects. ScheduleMeasurementInfo
+     * only exists in the plugin container, and if it is serialized and sent to the server, exceptions are throws
+     * since it is not on the classpath.
+     *
+     * @param schedules
+     * @return
+     */
+    private Set<MeasurementScheduleRequest> copy(Set<ScheduledMeasurementInfo> schedules) {
+        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(schedules.size());
+        for (ScheduledMeasurementInfo schedule : schedules) {
+            requests.add(schedule.copy());
+        }
+        return requests;
     }
 
     public void run() {

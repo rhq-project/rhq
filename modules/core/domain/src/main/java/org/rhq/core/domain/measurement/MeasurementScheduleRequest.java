@@ -46,14 +46,26 @@ public class MeasurementScheduleRequest implements Serializable {
     private boolean enabled;
     private DataType dataType;
     private NumericType rawNumericType;
+    private DisplayType displayType;
+    private String displayName;
+    private int definitionId;
+
+    /**
+     * no-arg constructor is required by GWT compiler
+     */
+    private MeasurementScheduleRequest() {
+    }
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
-        this.scheduleId = schedule.getId();
-        this.name = schedule.getDefinition().getName();
-        this.interval = schedule.getInterval();
-        this.enabled = schedule.isEnabled();
-        this.dataType = schedule.getDefinition().getDataType();
-        this.rawNumericType = schedule.getDefinition().getRawNumericType();
+        scheduleId = schedule.getId();
+        name = schedule.getDefinition().getName();
+        interval = schedule.getInterval();
+        enabled = schedule.isEnabled();
+        dataType = schedule.getDefinition().getDataType();
+        rawNumericType = schedule.getDefinition().getRawNumericType();
+        displayType = schedule.getDefinition().getDisplayType();
+        displayName = schedule.getDefinition().getDisplayName();
+        definitionId = schedule.getDefinition().getId();
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType) {
@@ -70,13 +82,29 @@ public class MeasurementScheduleRequest implements Serializable {
         this.rawNumericType = rawNumericType;
     }
 
+    public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
+        NumericType rawNumericType, DisplayType displayType, String displayName, int definitionId) {
+        this.scheduleId = scheduleId;
+        this.name = name;
+        this.interval = interval;
+        this.enabled = enabled;
+        this.dataType = dataType;
+        this.rawNumericType = rawNumericType;
+        this.displayType = displayType;
+        this.displayName = displayName;
+        this.definitionId = definitionId;
+    }
+
     public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
-        this.scheduleId = scheduleRequest.scheduleId;
-        this.name = scheduleRequest.name;
-        this.interval = scheduleRequest.interval;
-        this.enabled = scheduleRequest.enabled;
-        this.dataType = scheduleRequest.dataType;
-        this.rawNumericType = scheduleRequest.rawNumericType;
+        scheduleId = scheduleRequest.scheduleId;
+        name = scheduleRequest.name;
+        interval = scheduleRequest.interval;
+        enabled = scheduleRequest.enabled;
+        dataType = scheduleRequest.dataType;
+        rawNumericType = scheduleRequest.rawNumericType;
+        displayType = scheduleRequest.displayType;
+        displayName = scheduleRequest.displayName;
+        definitionId = scheduleRequest.definitionId;
     }
 
     public String getName() {
@@ -123,10 +151,38 @@ public class MeasurementScheduleRequest implements Serializable {
         return rawNumericType;
     }
 
+    public DisplayType getDisplayType() {
+        return displayType;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
+    public MeasurementScheduleRequest copy() {
+        MeasurementScheduleRequest copy = new MeasurementScheduleRequest();
+        copy.scheduleId = this.scheduleId;
+        copy.name = this.name;
+        copy.interval = this.interval;
+        copy.enabled = this.enabled;
+        copy.dataType = this.dataType;
+        copy.rawNumericType = this.rawNumericType;
+        copy.displayType = this.displayType;
+        copy.displayName = this.displayName;
+        copy.definitionId = this.definitionId;
+
+        return copy;
+    }
+
     @Override
     public String toString() {
         return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
-            + ", enabled=" + enabled + ", dataType=" + dataType + ", rawNumericType=" + rawNumericType + "]";
+            + ", enabled=" + enabled + ", dataType=" + dataType + ", rawNumericType=" + rawNumericType +
+            " displayType=" + displayType + " displayName=" + displayName + " definitionId= " + definitionId + "]";
     }
 
     @Override

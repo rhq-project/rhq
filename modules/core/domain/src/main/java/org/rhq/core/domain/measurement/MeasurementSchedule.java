@@ -152,7 +152,8 @@ public class MeasurementSchedule implements Serializable {
     public static final String FIND_BY_IDS = "MeasurementSchedule.findByIds";
 
     public static final String NATIVE_QUERY_REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST = "" //
-        + "SELECT ms.RESOURCE_ID, ms.ID, def.NAME, ms.COLL_INTERVAL, ms.ENABLED, def.DATA_TYPE, def.RAW_NUMERIC_TYPE " //
+        + "SELECT ms.RESOURCE_ID, ms.ID, def.NAME, ms.COLL_INTERVAL, ms.ENABLED, def.DATA_TYPE, def.RAW_NUMERIC_TYPE, " //
+        + "       def.DISPLAY_TYPE, def.DISPLAY_NAME, def.ID"
         + "  FROM RHQ_MEASUREMENT_SCHED ms " //
         + "  JOIN RHQ_MEASUREMENT_DEF def ON ms.DEFINITION = def.ID " //
         + " WHERE ms.RESOURCE_ID IN ( @@RESOURCES@@ )";

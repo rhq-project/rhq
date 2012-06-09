@@ -29,6 +29,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 public class RhqIrcBot extends ListenerAdapter {
 
     private static final Pattern BUG_PATTERN = Pattern.compile("(?i)(bz|bug)[ ]*(\\d{6,7})");
+    private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
 
     private static final Set<String> JON_DEVS = new HashSet<String>();
     static {
@@ -119,7 +120,14 @@ public class RhqIrcBot extends ListenerAdapter {
     @Override
     public void onPrivateMessage(PrivateMessageEvent privateMessageEvent) throws Exception {
         PircBotX bot = privateMessageEvent.getBot();
-        bot.sendMessage(privateMessageEvent.getUser(), "Hi, I am " + bot.getFinger() + ".");
+        String message = privateMessageEvent.getMessage();
+        Matcher echoMatcher = ECHO_PATTERN.matcher(message);
+        if (echoMatcher.matches()) {
+            String echoMessage = echoMatcher.group(1);
+            bot.sendMessage(this.channel, echoMessage);
+        } else {
+            bot.sendMessage(privateMessageEvent.getUser(), "Hi, I am " + bot.getFinger() + ".");
+        }
         // TODO: Implement a HELP command.
     }
 

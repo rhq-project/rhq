@@ -114,6 +114,28 @@
        </profile>
 
       <profile>
+         <id>metrics</id>
+         <activation>
+            <property>
+               <name>metrics</name>
+            </property>
+         </activation>
+         <modules>
+            <!-- agent -->
+            <module>core</module>
+            <module>common/drift</module>            
+            <module>enterprise/comm</module>
+            <module>enterprise/agent</module>
+            <module>enterprise/agentupdate</module>
+            <!-- coregui -->
+            <module>enterprise/server/jar</module>
+            <module>enterprise/gui/coregui</module>            
+            <!-- server plugin -->
+            <module>enterprise/server/plugins/metrics-rhq</module>
+         </modules>
+       </profile>
+
+      <profile>
          <id>plugins</id>
          <activation>
             <property>

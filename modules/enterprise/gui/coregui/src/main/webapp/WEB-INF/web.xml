@@ -190,6 +190,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TestGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MetricsGWTService</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MetricsGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
     </servlet>
@@ -368,6 +372,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TestGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TestGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+      <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MetricsGWTService</servlet-name>
+      <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MetricsGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>

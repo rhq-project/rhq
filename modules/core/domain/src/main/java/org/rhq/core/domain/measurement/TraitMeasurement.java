@@ -21,10 +21,14 @@
 
 package org.rhq.core.domain.measurement;
 
+import java.io.Serializable;
+
 /**
  * @author John Sanda
  */
-public interface TraitMeasurement {
+public interface TraitMeasurement extends Serializable {
+
+    long getTimestamp();
 
     String getValue();
 

@@ -21,6 +21,9 @@
 
 package org.rhq.enterprise.server.measurement;
 
+import java.util.List;
+
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -28,7 +31,10 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
@@ -43,6 +49,49 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class MetricsManagerBean implements MetricsManagerLocal {
 
     private Log log = LogFactory.getLog(MetricsManagerBean.class);
+
+    @EJB
+    private MeasurementScheduleManagerLocal scheduleManager;
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<? extends TraitMeasurement> findResourceTraits(Subject subject, MeasurementDataTraitCriteria criteria) {
+        MetricsServerPluginFacet metricsServer = getServerPlugin();
+        return metricsServer.findTraitsByCriteria(subject, criteria);
+    }
+
+//    @Override
+//    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+//    public List<ResourceTraitMeasurementDTO> findResourceTraitMeasurements(Subject subject,
+//        MeasurementDataTraitCriteria criteria) {
+//        MetricsServerPluginFacet metricsServer = getServerPlugin();
+//        PageList<? extends TraitMeasurement> traits = metricsServer.findTraitsByCriteria(subject, criteria);
+//
+//        int[] scheduleIds = new int[traits.size()];
+//        int i = 0;
+//        for (TraitMeasurement trait : traits) {
+//            scheduleIds[i++] = trait.getScheduleId();
+//        }
+//
+//        List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByIds(scheduleIds);
+//
+//        List<ResourceTraitMeasurementDTO> resourceTraits = new ArrayList<ResourceTraitMeasurementDTO>(traits.size());
+//        for (TraitMeasurement trait : traits) {
+//            MeasurementSchedule schedule = findSchedule(schedules, trait.getScheduleId());
+//            resourceTraits.add(new ResourceTraitMeasurementDTO(schedule.getResource(), trait));
+//        }
+//
+//        return resourceTraits;
+//    }
+//
+//    private MeasurementSchedule findSchedule(List<MeasurementSchedule> schedules, int scheduleId) {
+//        for (MeasurementSchedule schedule : schedules) {
+//            if (schedule.getId() == scheduleId) {
+//                return schedule;
+//            }
+//        }
+//        return null;
+//    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

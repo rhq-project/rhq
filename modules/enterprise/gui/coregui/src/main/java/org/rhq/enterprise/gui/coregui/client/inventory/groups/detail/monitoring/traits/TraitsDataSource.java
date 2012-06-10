@@ -23,11 +23,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -38,11 +40,15 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -50,8 +56,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Ian Springer
  */
-public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
+public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<MeasurementDataTrait> {
     private int groupId;
+
+    private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     public TraitsDataSource(int groupId) {
         this.groupId = groupId;
@@ -100,6 +108,26 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         return fields;
     }
 
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementDataTraitCriteria criteria) {
+        final long startTime = System.currentTimeMillis();
+
+        this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(PageList<MeasurementDataTrait> result) {
+                long fetchDuration = System.currentTimeMillis() - startTime;
+                Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
+
+                dataRetrieved(result, response, request);
+            }
+        });
+    }
+
     @Override
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = super.copyValues(from);
@@ -146,7 +174,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
                     record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                response.setTotalRows(result.size()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });

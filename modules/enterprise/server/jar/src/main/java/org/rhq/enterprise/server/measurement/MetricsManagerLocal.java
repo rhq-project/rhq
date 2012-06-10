@@ -21,9 +21,14 @@
 
 package org.rhq.enterprise.server.measurement;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.TraitMeasurement;
 
 /**
  * @author John Sanda
@@ -35,4 +40,5 @@ public interface MetricsManagerLocal {
 
     void compressPurgeAndTruncate();
 
+    List<? extends TraitMeasurement> findResourceTraits(Subject subject, MeasurementDataTraitCriteria criteria);
 }

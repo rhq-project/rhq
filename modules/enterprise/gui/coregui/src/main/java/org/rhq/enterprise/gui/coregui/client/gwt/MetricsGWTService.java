@@ -19,23 +19,19 @@
  *
  */
 
-package org.rhq.enterprise.server.plugin.pc.metrics;
+package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import org.rhq.core.domain.auth.Subject;
+import java.util.List;
+
+import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * @author John Sanda
  */
-public interface MetricsServerPluginFacet {
+public interface MetricsGWTService extends RemoteService {
 
-    void insertMetrics(MeasurementReport report);
-
-    void calculateAggregates();
-
-    PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria);
-
+    List<TraitMeasurement> findResourceTraits(MeasurementDataTraitCriteria criteria) throws RuntimeException;
 }

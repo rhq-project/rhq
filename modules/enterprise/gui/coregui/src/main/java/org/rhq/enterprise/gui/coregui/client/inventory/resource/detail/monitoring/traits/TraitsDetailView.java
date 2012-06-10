@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  */
 public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView {
     public TraitsDetailView(String locatorId, int resourceId, int definitionId) {
-        super(locatorId, null, new TraitsDataSource(), createCriteria(resourceId, definitionId)
+        super(locatorId, null, new TraitsDataSource(resourceId), createCriteria(resourceId, definitionId)
         );
     }
 

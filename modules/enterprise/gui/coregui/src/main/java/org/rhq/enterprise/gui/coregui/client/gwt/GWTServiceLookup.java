@@ -206,6 +206,10 @@ public class GWTServiceLookup {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
 
+    public static MetricsGWTServiceAsync getMetricsService() {
+        return secure(MetricsGWTServiceAsync.Util.getInstance());
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         return (T) secure(sdt, -1);

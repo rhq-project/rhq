@@ -20,12 +20,17 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
 
 /**
@@ -33,7 +38,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  *
  * @author Ian Springer
  */
-public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
+public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<TraitMeasurement> {
+
+    private int resourceId;
+
+    public TraitsDataSource(int resourceId) {
+        this.resourceId = resourceId;
+    }
 
     @Override
     protected List<DataSourceField> addDataSourceFields() {
@@ -48,12 +59,36 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
     }
 
     @Override
-    public ListGridRecord copyValues(MeasurementDataTrait from) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementDataTraitCriteria criteria) {
+        metricsService.findResourceTraits(criteria, new AsyncCallback<List<TraitMeasurement>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            @Override
+            public void onSuccess(List<TraitMeasurement> result) {
+                dataRetrieved(result, response, request);
+            }
+        });
+    }
+
+    @Override
+    public ListGridRecord copyValues(TraitMeasurement from) {
         ListGridRecord record = super.copyValues(from);
-
-        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getSchedule().getResource()
-            .getId());
-
+        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
         return record;
     }
+
+//    @Override
+//    public ListGridRecord copyValues(ResourceTraitMeasurementDTO from) {
+//        ListGridRecord record = super.copyValues(from);
+//
+//        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
+//
+//        return record;
+//    }
 }

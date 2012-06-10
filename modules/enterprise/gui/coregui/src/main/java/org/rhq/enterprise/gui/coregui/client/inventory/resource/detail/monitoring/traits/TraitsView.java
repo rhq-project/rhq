@@ -33,7 +33,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
     private int resourceId;
 
     public TraitsView(String locatorId, int resourceId) {
-        super(locatorId, new TraitsDataSource(), createCriteria(resourceId));
+        super(locatorId, new TraitsDataSource(resourceId), createCriteria(resourceId));
         this.resourceId = resourceId;
     }
 

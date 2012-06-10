@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -31,18 +30,16 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.gwt.MetricsGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -50,9 +47,12 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitDataSource extends
-    RPCDataSource<MeasurementDataTrait, MeasurementDataTraitCriteria> {
+public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeasurement> extends
+    RPCDataSource <T, MeasurementDataTraitCriteria> {
+
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
+
+    protected MetricsGWTServiceAsync metricsService = GWTServiceLookup.getMetricsService();
 
     protected AbstractMeasurementDataTraitDataSource() {
         setCanMultiSort(true);
@@ -108,31 +108,57 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response,
-        final MeasurementDataTraitCriteria criteria) {
-        final long startTime = System.currentTimeMillis();
+//    protected void executeFetch(final DSRequest request, final DSResponse response,
+//        final MeasurementDataTraitCriteria criteria) {
+//        final long startTime = System.currentTimeMillis();
+//
+//        this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
+//            public void onFailure(Throwable caught) {
+//                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
+//                response.setStatus(RPCResponse.STATUS_FAILURE);
+//                processResponse(request.getRequestId(), response);
+//            }
+//
+//            public void onSuccess(PageList<MeasurementDataTrait> result) {
+//                long fetchDuration = System.currentTimeMillis() - startTime;
+//                Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
+//
+//                dataRetrieved(result, response, request);
+//            }
+//        });
+//    }
 
-        this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
 
-            public void onSuccess(PageList<MeasurementDataTrait> result) {
-                long fetchDuration = System.currentTimeMillis() - startTime;
-                Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
+//    @Override
+//    protected void executeFetch(final DSRequest request, final DSResponse response,
+//        MeasurementDataTraitCriteria criteria) {
+//        metricsService.findResourceTraits(criteria, new AsyncCallback<List<ResourceTraitMeasurementDTO>>() {
+//            @Override
+//            public void onFailure(Throwable caught) {
+//                CoreGUI.getErrorHandler().handleError("failed to fetch traits", caught);
+//                response.setStatus(RPCResponse.STATUS_FAILURE);
+//                processResponse(request.getRequestId(), response);
+//            }
+//
+//            @Override
+//            public void onSuccess(List<ResourceTraitMeasurementDTO> result) {
+//                dataRetrieved(result, response, request);
+//            }
+//        });
+//    }
 
-                dataRetrieved(result, response, request);
-            }
-        });
-    }
+//    protected void dataRetrieved(final List<ResourceTraitMeasurementDTO> result, final DSResponse response,
+//        final DSRequest request) {
+//        response.setData(buildRecords(result));
+//        // For paging to work, we have to specify size of full result set.
+//        response.setTotalRows(result.size());
+//        processResponse(request.getRequestId(), response);
+//    }
 
-    protected void dataRetrieved(final PageList<MeasurementDataTrait> result, final DSResponse response,
-        final DSRequest request) {
+    protected void dataRetrieved(List<T> result, DSResponse response, DSRequest request) {
         response.setData(buildRecords(result));
         // For paging to work, we have to specify size of full result set.
-        response.setTotalRows(result.getTotalSize());
+        response.setTotalRows(result.size());
         processResponse(request.getRequestId(), response);
     }
 
@@ -164,21 +190,36 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
     }
 
     @Override
-    public MeasurementDataTrait copyValues(Record from) {
+    public T copyValues(Record from) {
         return null;
     }
 
+//    @Override
+//    public ListGridRecord copyValues(ResourceTraitMeasurementDTO from) {
+//        ListGridRecord record = new ListGridRecord();
+//
+//        record.setAttribute("primaryKey", from.getTrait().getScheduleId() + ":" + from.getTrait().getTimestamp());
+//        record.setAttribute("id", from.getTrait().getDefinitionId());
+//        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
+//            new Date(from.getTrait().getTimestamp()));
+//        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getTrait().getDisplayName());
+//        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getTrait().getValue());
+//
+//        return record;
+//    }
+
     @Override
-    public ListGridRecord copyValues(MeasurementDataTrait from) {
+    public ListGridRecord copyValues(T from) {
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
-        record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, new Date(from.getTimestamp()));
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition()
-            .getDisplayName());
+        record.setAttribute("id", from.getDefinitionId());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
+            new Date(from.getTimestamp()));
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());
 
         return record;
     }
+
 }

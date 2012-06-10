@@ -19,23 +19,15 @@
  *
  */
 
-package org.rhq.enterprise.server.plugin.pc.metrics;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.TraitMeasurement;
-import org.rhq.core.domain.util.PageList;
+package org.rhq.core.domain.measurement;
 
 /**
  * @author John Sanda
  */
-public interface MetricsServerPluginFacet {
+public interface ResourceTraitMeasurement {
 
-    void insertMetrics(MeasurementReport report);
+    TraitMeasurement getTrait();
 
-    void calculateAggregates();
 
-    PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria);
 
 }

@@ -23,7 +23,11 @@ package org.rhq.enterprise.server.plugins.metrics;
 
 import java.sql.SQLException;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -51,6 +55,12 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
 
     @Override
     public void shutdown() {
+    }
+
+    @Override
+    public PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria) {
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        return dataManager.findTraitsByCriteria(subject, criteria);
     }
 
     @Override

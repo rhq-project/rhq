@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Generates md5 and sha1 checksum files for all Maven artifacts in the specified dir, or in the current dir if no dir is 
+# specified.
+
+if [ -n "$1" ]; then
+  root_dir="$1"
+else
+  root_dir=.
+fi
+echo root_dir=\"$root_dir\"
+
+find $root_dir -regextype posix-extended -regex '.*\.(pom|xml|jar|war|ear|zip)' | while read FILE; do
+  echo "Processing $FILE..."
+  checksum=`md5sum $FILE`
+  echo -n ${checksum%% *} > $FILE.md5
+  checksum=`sha1sum $FILE`
+  echo -n ${checksum%% *} > $FILE.sha1
+done
+

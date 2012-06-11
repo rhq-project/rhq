@@ -537,7 +537,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
-                measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
+                measurementDefinition.getDataType(), measurementDefinition.getRawNumericType(), 0);
         Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
         requests.add(request);
         try {

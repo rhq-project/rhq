@@ -151,6 +151,11 @@ public class MeasurementDataTrait extends MeasurementData implements TraitMeasur
         this.value = value;
     }
 
+    // The following methods that are part of the TraitMeasurement interface and get the
+    // values through either the schedule, definition, or scheduleRequest are rather
+    // susceptible to NPEs. These APIs are going to change and this right now is just
+    // part of a prototyping effort.
+
     @Override
     public int getDefinitionId() {
         if (schedule == null || schedule.getDefinition() == null) {
@@ -173,6 +178,14 @@ public class MeasurementDataTrait extends MeasurementData implements TraitMeasur
             return scheduleRequest.getDisplayType();
         }
         return getSchedule().getDefinition().getDisplayType();
+    }
+
+    @Override
+    public int getResourceId() {
+        if (schedule == null) {
+            return scheduleRequest.getResourceId();
+        }
+        return getSchedule().getResource().getId();
     }
 
     @Override

@@ -524,7 +524,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     }
                     MeasurementScheduleRequest msr = new MeasurementScheduleRequest(schedId, name,
                         ((collectionInterval > 0) ? collectionInterval : existingInterval), enable, dataType,
-                        numericType);
+                        numericType, resourceId);
                     req.addMeasurementScheduleRequest(msr);
                 }
 
@@ -1176,7 +1176,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     }
 
                     MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
-                        interval, enabled, dataType, rawNumericType, displayType, displayName, definitionId);
+                        interval, enabled, dataType, rawNumericType, displayType, displayName, definitionId,
+                        resourceId);
                     scheduleRequest.addMeasurementScheduleRequest(requestData);
                 }
             } finally {

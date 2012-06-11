@@ -40,6 +40,7 @@ public class MeasurementScheduleRequest implements Serializable {
      */
     public static final int NO_SCHEDULE_ID = 1;
 
+    private int resourceId;
     private int scheduleId;
     private String name;
     private long interval;
@@ -57,6 +58,7 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
+        resourceId = schedule.getResource().getId();
         scheduleId = schedule.getId();
         name = schedule.getDefinition().getName();
         interval = schedule.getInterval();
@@ -69,21 +71,24 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType) {
-        this(scheduleId, name, interval, enabled, dataType, null);
+        this(scheduleId, name, interval, enabled, dataType, null, 0);
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
-                                      NumericType rawNumericType) {
+        NumericType rawNumericType, int resourceId) {
+
         this.scheduleId = scheduleId;
         this.name = name;
         this.interval = interval;
         this.enabled = enabled;
         this.dataType = dataType;
         this.rawNumericType = rawNumericType;
+        this.resourceId = resourceId;
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
-        NumericType rawNumericType, DisplayType displayType, String displayName, int definitionId) {
+        NumericType rawNumericType, DisplayType displayType, String displayName, int definitionId, int resourceId) {
+        this.resourceId = resourceId;
         this.scheduleId = scheduleId;
         this.name = name;
         this.interval = interval;
@@ -96,6 +101,7 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
+        resourceId = scheduleRequest.resourceId;
         scheduleId = scheduleRequest.scheduleId;
         name = scheduleRequest.name;
         interval = scheduleRequest.interval;
@@ -113,6 +119,10 @@ public class MeasurementScheduleRequest implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getResourceId() {
+        return resourceId;
     }
 
     public int getScheduleId() {
@@ -165,6 +175,7 @@ public class MeasurementScheduleRequest implements Serializable {
 
     public MeasurementScheduleRequest copy() {
         MeasurementScheduleRequest copy = new MeasurementScheduleRequest();
+        copy.resourceId = this.resourceId;
         copy.scheduleId = this.scheduleId;
         copy.name = this.name;
         copy.interval = this.interval;
@@ -182,7 +193,8 @@ public class MeasurementScheduleRequest implements Serializable {
     public String toString() {
         return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
             + ", enabled=" + enabled + ", dataType=" + dataType + ", rawNumericType=" + rawNumericType +
-            " displayType=" + displayType + " displayName=" + displayName + " definitionId= " + definitionId + "]";
+            " displayType=" + displayType + " displayName=" + displayName + " definitionId= " + definitionId +
+            ", resourceId=" + resourceId + "]";
     }
 
     @Override

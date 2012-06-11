@@ -778,6 +778,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             propertyDefinitionMap = propertyDefinitionMapClone;
         }
         LocatableVLayout layout = new LocatableVLayout(parentLocatorId + "_Layout");
+        
+        HTMLFlow description = new HTMLFlow(propertyDefinitionMap.getDescription());
+        layout.addMember(description);
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
         LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(),

@@ -25,6 +25,7 @@ import javax.lang.model.util.ElementFilter;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -177,6 +178,17 @@ public class ClassLevelProcessor extends AbstractProcessor {
             setOptionalAttribute(classElement, "description", longDescription);
             String basePathAttr = api.basePath();
             setOptionalAttribute(classElement, "basePath",basePathAttr);
+        }
+        Produces produces = classElementIn.getAnnotation(Produces.class);
+        if (produces!=null) {
+            String[] types = produces.value();
+            Element pElement = doc.createElement("produces");
+            classElement.appendChild(pElement);
+            for (String type : types) {
+                Element tElement = doc.createElement("type");
+                pElement.appendChild(tElement);
+                tElement.setTextContent(type);
+            }
         }
 
         xmlRoot.appendChild(classElement);

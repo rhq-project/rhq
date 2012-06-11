@@ -74,6 +74,9 @@
         Defining class:
         <xsl:value-of select="@name"/>
       </simpara>
+      <xsl:call-template name="print-created-media-types">
+        <xsl:with-param name="produces" select="produces"/>
+      </xsl:call-template>
       <para>
         <xsl:if test="method">
           <itemizedlist>
@@ -202,6 +205,24 @@
       </xsl:otherwise>
     </xsl:choose>
     <xsl:value-of select="@path"/>
+  </xsl:template>
+
+  <!-- emit media types produced -->
+  <xsl:template name="print-created-media-types">
+    <xsl:param name="produces"/>
+
+    <xsl:if test="$produces">
+      <simpara>
+        Produces:
+        <xsl:for-each select="$produces/type">
+          <xsl:value-of select="."/>
+          <xsl:if test="not(position() = last())">
+            <xsl:text>, </xsl:text>
+          </xsl:if>
+        </xsl:for-each>
+      </simpara>
+    </xsl:if>
+
   </xsl:template>
 
 

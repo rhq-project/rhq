@@ -69,6 +69,9 @@
     <p/>
     Defining class: <xsl:value-of select="@name"/><br/>
     <br/>
+    <xsl:call-template name="print-created-media-types">
+      <xsl:with-param name="produces" select="produces"/>
+    </xsl:call-template>
     <xsl:if test="method">
       Methods:<br/>
       <xsl:apply-templates>
@@ -127,6 +130,23 @@
         <td><xsl:value-of select="@code"/></td>
         <td><xsl:value-of select="@reason"/></td>
     </tr>
+  </xsl:template>
+
+  <!-- emit media types produced -->
+  <xsl:template name="print-created-media-types">
+    <xsl:param name="produces"/>
+
+    <xsl:if test="$produces">
+      <b>Produces:</b>
+      <ul>
+      <xsl:for-each select="$produces/type">
+        <li>
+        <xsl:value-of select="."/>
+        </li>
+      </xsl:for-each>
+      </ul>
+  </xsl:if>
+
   </xsl:template>
 
 </xsl:stylesheet>

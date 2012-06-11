@@ -65,7 +65,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.domain.*;
 
@@ -77,8 +76,6 @@ import org.rhq.enterprise.server.rest.domain.*;
 @Stateless
 public class ResourceHandlerBean extends AbstractRestBean implements ResourceHandlerLocal {
 
-    @EJB
-    ResourceManagerLocal resMgr;
     @EJB
     AvailabilityManagerLocal availMgr;
     @EJB
@@ -188,7 +185,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public AvailabilityRest getAvailability(int resourceId) {
+    public Response getAvailability(int resourceId, HttpHeaders headers) {
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
         AvailabilityRest availabilityRest;
@@ -197,7 +194,16 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                 .getResource().getId());
         else
             availabilityRest = new AvailabilityRest(avail.getStartTime(), resourceId);
-        return availabilityRest;
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("availability.ftl",availabilityRest), mediaType);
+        } else {
+            builder = Response.ok(availabilityRest);
+        }
+        return builder.build();
     }
 
     @Override
@@ -331,21 +337,6 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
         return links;
     }
-
-    private Resource fetchResource(int resourceId) {
-        Resource res;
-        res = getFromCache(resourceId, Resource.class);
-        if (res == null) {
-            res = resMgr.getResource(caller, resourceId);
-            if (res != null)
-                putToCache(resourceId, Resource.class, res);
-            else
-                throw new StuffNotFoundException("Resource with id " + resourceId);
-        }
-        return res;
-    }
-
-
 
     @Override
     public Response createPlatform(@PathParam("name") String name, StringValue typeValue, @Context UriInfo uriInfo) {

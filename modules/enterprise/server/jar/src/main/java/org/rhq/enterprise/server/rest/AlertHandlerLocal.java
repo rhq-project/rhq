@@ -28,6 +28,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -35,11 +38,9 @@ import com.wordnik.swagger.annotations.ApiParam;
 
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
-import org.jboss.resteasy.links.LinkResources;
 
 import org.rhq.enterprise.server.rest.domain.AlertRest;
 import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
-import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Deal with Alerts
@@ -58,7 +59,8 @@ public interface AlertHandlerLocal {
     @ApiOperation("List all alerts")
     List<AlertRest> listAlerts(
             @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status);
+            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+            @Context Request request, @Context UriInfo uriInfo);
 
     @GET
     @Path("count")
@@ -68,26 +70,22 @@ public interface AlertHandlerLocal {
     @GET
     @Path("/{id}")
     @AddLinks
-    @LinkResource(value = AlertRest.class)
     @ApiOperation("Get one alert with the passed id")
-    AlertRest getAlert(@ApiParam("Id of the alert to retrieve") @PathParam("id") int id);
+    AlertRest getAlert(@ApiParam("Id of the alert to retrieve") @PathParam("id") int id, @Context UriInfo uriInfo);
 
     @PUT
     @Path("/{id}")
-    @LinkResource
     @ApiOperation(value = "Mark the alert as acknowledged (by the caller)")
     AlertRest ackAlert(
-            @ApiParam(value = "Id of the alert to acknowledge") @PathParam("id") int id);
+            @ApiParam(value = "Id of the alert to acknowledge") @PathParam("id") int id, @Context UriInfo uriInfo);
 
     @DELETE
     @Path("/{id}")
-    @LinkResource(value = AlertRest.class)
     @ApiOperation(value = "Remove the alert from the lit of alerts")
     void purgeAlert(
             @ApiParam(value = "Id of the alert to remove") @PathParam("id") int id);
 
     @GET
-    @LinkResource(rel="definition",value = AlertDefinitionRest.class)
     @Path("/{id}/definition")
     @ApiOperation("Get the alert definition (basics) for the alert")
     AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId);
@@ -104,4 +102,10 @@ public interface AlertHandlerLocal {
     @Path("/definition/{id}")
     @ApiOperation("Get one AlertDefinition by id")
     AlertDefinitionRest getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId);
+
+    @PUT
+    @Path("/definition/{id}")
+    @ApiOperation(value = "Update the alert definition (priority, enablement)", notes = "Priority must be HIGH,LOW,MEDIUM")
+    AlertDefinitionRest updateDefinition(@ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
+                                         AlertDefinitionRest definition, @Context Request request);
 }

@@ -94,9 +94,9 @@ public interface ResourceHandlerLocal {
     @GET
     @Path("/{id}/availability")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
-    @ApiOperation("Return the current availability for the passed resource")
-    AvailabilityRest getAvailability(
-            @ApiParam("Id of the resource to query") @PathParam("id") int resourceId);
+    @ApiOperation(value = "Return the current availability for the passed resource", responseClass = "AvailabilityRest")
+    Response getAvailability(
+            @ApiParam("Id of the resource to query") @PathParam("id") int resourceId, @Context HttpHeaders headers);
 
     @PUT
     @Path("/{id}/availability")

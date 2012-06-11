@@ -688,7 +688,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 }
                 else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                     pw.println("<table>");
-                    pw.print("<th><td>time</td><td>value</td></th>");
+                    pw.print("<tr><th>time</th><th>value</th></tr>\n");
                     while (rs.next()) {
                         pw.print("  <tr>");
                         pw.print("<td>");

@@ -24,19 +24,16 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-
-import org.jboss.resteasy.links.AddLinks;
-import org.jboss.resteasy.links.LinkResource;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -62,17 +59,16 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     AlertDefinitionManagerLocal alertDefinitionManager;
 
 
-    @GET
-    @AddLinks
-    @LinkResource(value = AlertRest.class)
     @Override
-    public List<AlertRest> listAlerts(@QueryParam("page") int page, @QueryParam("status") String status) {
+    public List<AlertRest> listAlerts(int page, String status, Request request, UriInfo uriInfo) {
+
+
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPaging(page,20); // TODO implement linking to next page
         PageList<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
         List<AlertRest> ret = new ArrayList<AlertRest>(alerts.size());
         for (Alert al : alerts) {
-            AlertRest ar = alertToDomain(al);
+            AlertRest ar = alertToDomain(al, uriInfo);
             ret.add(ar);
         }
         return ret;
@@ -94,35 +90,32 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     }
 
     @Override
-    public AlertRest getAlert(@PathParam("id") int id) {
+    public AlertRest getAlert(int id, UriInfo uriInfo) {
 
         Alert al = findAlertWithId(id);
-        AlertRest ar = alertToDomain(al);
+        AlertRest ar = alertToDomain(al, uriInfo);
         return ar;
     }
 
 
 
     @Override
-    public AlertRest ackAlert(@PathParam("id") int id) {
+    public AlertRest ackAlert(int id, UriInfo uriInfo) {
         findAlertWithId(id); // Ensure the alert exists
         alertManager.acknowledgeAlerts(caller,new int[]{id});
         Alert al = findAlertWithId(id);
-        AlertRest ar = alertToDomain(al);
+        AlertRest ar = alertToDomain(al, uriInfo);
         return ar;
     }
 
     @Override
-    public void purgeAlert(@PathParam("id") int id) {
+    public void purgeAlert(int id) {
         alertManager.deleteAlerts(caller,new int[]{id});
 
     }
 
     @Override
-    @GET
-    @LinkResource(rel = "definition")
-    @Path("/{id}/definition")
-    public AlertDefinitionRest getDefinitionForAlert(@PathParam("id") int alertId) {
+    public AlertDefinitionRest getDefinitionForAlert(int alertId) {
         Alert al = findAlertWithId(alertId);
         AlertDefinition def = al.getAlertDefinition();
         AlertDefinitionRest ret = definitionToDomain(def);
@@ -130,8 +123,7 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     }
 
     @Override
-    public List<AlertDefinitionRest> listAlertDefinitions(@QueryParam("page") int page,
-                                                      @QueryParam("status") String status) {
+    public List<AlertDefinitionRest> listAlertDefinitions(int page, String status) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.setPaging(page,20); // TODO add link to next page
@@ -145,9 +137,7 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     }
 
     @Override
-    @GET
-    @Path("/definition/{id}")
-    public AlertDefinitionRest getAlertDefinition(@PathParam("id") int definitionId) {
+    public AlertDefinitionRest getAlertDefinition(int definitionId) {
 
         AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         if (def==null)
@@ -156,10 +146,27 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
         return adr;
     }
 
+    @Override
+    public AlertDefinitionRest updateDefinition(int definitionId, AlertDefinitionRest definitionRest, Request request) {
+        AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller,definitionId);
+        if (def==null)
+            throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
+
+        def.setEnabled(definitionRest.isEnabled());
+        def.setPriority(AlertPriority.valueOf(definitionRest.getPriority()));
+
+        def = alertDefinitionManager.updateAlertDefinition(caller,def.getId(),def,false);
+
+        definitionRest = definitionToDomain(def);
+
+        return definitionRest;
+    }
+
     private AlertDefinitionRest definitionToDomain(AlertDefinition def) {
         AlertDefinitionRest adr = new AlertDefinitionRest(def.getId());
         adr.setName(def.getName());
         adr.setEnabled(def.getEnabled());
+        adr.setPriority(def.getPriority().getName());
 
         return adr;
     }
@@ -180,7 +187,7 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
         return alerts.get(0);
     }
 
-    public AlertRest alertToDomain(Alert al) {
+    public AlertRest alertToDomain(Alert al, UriInfo uriInfo) {
         AlertRest ret = new AlertRest();
         ret.setId(al.getId());
         AlertDefinition alertDefinition = al.getAlertDefinition();
@@ -195,7 +202,10 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
 
         ret.setDescription(alertManager.prettyPrintAlertConditions(al,false));
 
-        ret.setResource(new ResourceWithType(alertDefinition.getResource().getId()));
+        Resource r = fetchResource(alertDefinition.getResource().getId());
+        ResourceWithType rwt = fillRWT(r,uriInfo);
+
+        ret.setResource(rwt);
 
         return ret;
     }

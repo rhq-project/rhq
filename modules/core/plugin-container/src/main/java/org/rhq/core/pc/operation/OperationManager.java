@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
-import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
+import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -83,8 +83,8 @@ public class OperationManager extends AgentService implements OperationAgentServ
         LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(10000);
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         int maxPoolSize = configuration.getOperationInvokerThreadPoolSize();
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, maxPoolSize, 1000, TimeUnit.MILLISECONDS, queue,
-            threadFactory);
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(maxPoolSize, maxPoolSize, 1000, TimeUnit.MILLISECONDS,
+            queue, threadFactory);
         operationGateway = new OperationThreadPoolGateway(threadPool);
     }
 

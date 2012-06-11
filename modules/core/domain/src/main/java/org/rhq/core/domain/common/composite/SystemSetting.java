@@ -86,6 +86,7 @@ public enum SystemSetting {
         "CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true),
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true),
+    ACTIVE_METRICS_PLUGIN("ACTIVE_METRICS_PLUGIN", PropertySimpleType.STRING, false, true),
 
     /** 
      * allow plugin initiated resource name & description upgrades (resource key is always upgradable)

@@ -20,6 +20,8 @@ public class SystemSettings extends HashMap<SystemSetting, String> implements Se
 
     private Map<String, String> driftPlugins = new HashMap<String, String>();
 
+    private Map<String, String> metricsPlugins = new HashMap<String, String>();
+
     public static SystemSettings fromMap(Map<String, String> properties) {
         SystemSettings ret = new SystemSettings();
         
@@ -51,6 +53,10 @@ public class SystemSettings extends HashMap<SystemSetting, String> implements Se
         if (original.driftPlugins != null) {
             driftPlugins.putAll(original.driftPlugins);
         }
+
+        if (original.metricsPlugins != null) {
+            metricsPlugins.putAll(original.metricsPlugins);
+        }
     }
     
     @Override
@@ -75,6 +81,14 @@ public class SystemSettings extends HashMap<SystemSetting, String> implements Se
 
     public void setDriftPlugins(Map<String, String> driftPlugins) {
         this.driftPlugins = driftPlugins;
+    }
+
+    public Map<String, String> getMetricsPlugins() {
+        return metricsPlugins;
+    }
+
+    public void setMetricsPlugins(Map<String, String> metricsPlugins) {
+        this.metricsPlugins = metricsPlugins;
     }
 
     public Configuration toConfiguration() {

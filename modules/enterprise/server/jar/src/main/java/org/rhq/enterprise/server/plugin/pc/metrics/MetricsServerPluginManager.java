@@ -21,10 +21,17 @@
 
 package org.rhq.enterprise.server.plugin.pc.metrics;
 
+import static org.rhq.core.domain.common.composite.SystemSetting.ACTIVE_METRICS_PLUGIN;
+
+import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Sanda
@@ -38,7 +45,21 @@ public class MetricsServerPluginManager extends ServerPluginManager {
     }
 
     public MetricsServerPluginFacet getMetricsServerPluginComponent() {
-        return (MetricsServerPluginFacet) getServerPluginComponent("metrics-rhq");
+        Properties sysConfig = getSysConfig();
+        String pluginName = sysConfig.getProperty(ACTIVE_METRICS_PLUGIN.getInternalName());
+
+        if (pluginName == null) {
+            throw new RuntimeException(ACTIVE_METRICS_PLUGIN + " system configuration property is not set.");
+        }
+
+        return (MetricsServerPluginFacet) getServerPluginComponent(pluginName);
+    }
+
+    private Properties getSysConfig() {
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        SystemManagerLocal systemMgr = LookupUtil.getSystemManager();
+
+        return systemMgr.getSystemConfiguration(subjectMgr.getOverlord());
     }
 
 }

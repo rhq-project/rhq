@@ -131,7 +131,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
                 // build our config definition and populate our config editor
                 editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config,
-                    result.getDriftPlugins()), config);
+                    result.getDriftPlugins(), result.getMetricsPlugins()), config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
                 canvas.addMember(editor);
 
@@ -280,7 +280,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      * @param driftPlugins the set of drift server plugins that are currently deployed
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, Map<String, String> driftPlugins) {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, Map<String, String> driftPlugins,
+        Map<String, String> metricsPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         PropertyGroupDefinition generalGroup = new PropertyGroupDefinition("general");
@@ -308,6 +309,11 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
+
+        PropertyGroupDefinition metricsGroup = new PropertyGroupDefinition("metricsPlugin");
+        metricsGroup.setDisplayName(MSG.view_admin_systemSettings_group_metrics());
+        metricsGroup.setOrder(5);
+        metricsGroup.setDefaultHidden(false);
 
         for (SystemSetting prop : SystemSetting.values()) {
 
@@ -538,6 +544,22 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 }
 
                 pd.setEnumeratedValues(options, false);
+                break;
+
+            /////////////////////////////////////////////
+            // Metrics Server Configuration Properties //
+            /////////////////////////////////////////////
+            case ACTIVE_METRICS_PLUGIN:
+                pd.setDescription(MSG.view_admin_systemSettings_ActiveMetricsServerPlugin_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ActiveMetricsServerPlugin_name());
+                pd.setPropertyGroupDefinition(metricsGroup);
+
+                List<PropertyDefinitionEnumeration> metricsOptions = new ArrayList<PropertyDefinitionEnumeration>();
+                for (Map.Entry<String, String> entry : metricsPlugins.entrySet()) {
+                    metricsOptions.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));
+                }
+
+                pd.setEnumeratedValues(metricsOptions, false);
                 break;
             }
         }

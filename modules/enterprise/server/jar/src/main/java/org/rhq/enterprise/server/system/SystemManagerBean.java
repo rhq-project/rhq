@@ -77,6 +77,8 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
@@ -330,6 +332,34 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return (DriftServerPluginManager) pc.getPluginManager();
     }
 
+    private Map<String, String> getMetricsServerPlugins() {
+        MetricsServerPluginManager pluginMgr = getMetricsServerPluginManager();
+        Map<String, String> plugins = new HashMap<String, String>();
+
+        for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
+            plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+        }
+
+        return plugins;
+    }
+
+    private MetricsServerPluginManager getMetricsServerPluginManager() {
+        MasterServerPluginContainer masterPC = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (masterPC == null) {
+            log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+            return null;
+        }
+
+        MetricsServerPluginContainer pc = masterPC.getPluginContainerByClass(MetricsServerPluginContainer.class);
+        if (pc == null) {
+            log.warn(MetricsServerPluginContainer.class + " has not been loaded by the " + masterPC.getClass() +
+                " yet");
+            return null;
+        }
+
+        return (MetricsServerPluginManager) pc.getPluginManager();
+    }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void loadSystemConfigurationCacheInNewTx() {
         // this is used by our timer, so any exceptions coming out here doesn't throw away our timer
@@ -366,6 +396,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
 
         settings.setDriftPlugins(getDriftServerPlugins());
+        settings.setMetricsPlugins(getMetricsServerPlugins());
 
         cachedSystemSettings = settings;
     }

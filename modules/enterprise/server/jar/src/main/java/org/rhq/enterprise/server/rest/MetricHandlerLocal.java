@@ -188,7 +188,7 @@ public interface MetricHandlerLocal {
     @POST
     @Path("data/raw")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Submit a series of (numerical) metric values to the server")
+    @ApiOperation(value="Submit a series of (numerical) metric values to the server",responseClass = "No response")
     Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers);
 
     @GET

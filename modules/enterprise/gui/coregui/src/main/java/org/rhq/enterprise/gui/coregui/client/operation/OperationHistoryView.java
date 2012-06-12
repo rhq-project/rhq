@@ -19,6 +19,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -29,6 +33,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -44,10 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -210,8 +211,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     }
 
                     public void onFailure(Throwable caught) {
-                        // TODO: i18n
-                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_operationHistoryList_deleteFailure(operationHistoryToRemove.toString()),
                             caught);
                         failureIds.add(operationHistoryToRemove.getId());
                         handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
@@ -222,15 +223,13 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
         if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
-            // TODO: i18n
             if (successIds.size() == numberOfRecordsToBeDeleted) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+                    new Message(MSG.view_operationHistoryList_deleteSuccess(String.valueOf(numberOfRecordsToBeDeleted))));
             } else {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + successIds.size()
-                        + " operation history items, but failed to delete the items with the following IDs: "
-                        + failureIds));
+                    new Message(MSG.view_operationHistoryList_deletePartialSuccess(String.valueOf(successIds.size()),
+                        failureIds.toString())));
             }
             refresh();
         }

@@ -79,7 +79,7 @@
    <entry key="rhq.communications.multicast-detector.enabled"                        value="true" />
    <entry key="rhq.communications.multicast-detector.multicast-address"              value="224.16.16.16" />
    <entry key="rhq.communications.multicast-detector.bind-address"                   value="0.0.0.0" />
-   <entry key="rhq.communications.multicast-detector.port"                           value="16162" />
+   <entry key="rhq.communications.multicast-detector.port"                           value="${agent2.communications.multicast-detector.port}" />
    <entry key="rhq.communications.multicast-detector.default-time-delay"             value="5000" />
    <entry key="rhq.communications.multicast-detector.heartbeat-time-delay"           value="1000" />
    <entry key="rhq.communications.connector.rhqtype"                                 value="agent" />

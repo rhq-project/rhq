@@ -164,6 +164,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         try {
             redeployOnServer(detail.getKey().getName(), hash);
             response.setOverallRequestResult(ContentResponseResult.SUCCESS);
+            //we just deployed a different file on the AS7 server, so let's refresh ourselves
+            deploymentFile = determineDeploymentFile();
             DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(), ContentResponseResult.SUCCESS);
                     response.addPackageResponse(packageResponse);
 

@@ -72,12 +72,12 @@ public class AgentComm4Test extends AgentCommTestBase {
     public void testAgentConfigurationOverride() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "socket", "127.0.0.1", 22345, null);
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "12345");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_SERVER_BIND_PORT);
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
         setServerLocatorUriProperties(props2, "socket", "127.0.0.1", 12345, null);
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22345");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_SERVER_BIND_PORT);
         m_agent2Test.setConfigurationOverrides(props2);
 
         AgentMain agent1 = m_agent1Test.createAgent(true);
@@ -86,8 +86,8 @@ public class AgentComm4Test extends AgentCommTestBase {
         assert agent1.isStarted() : "agent1 should have been started";
         assert agent2.isStarted() : "agent2 should have been started";
 
-        assert agent1.getServiceContainer().getConfiguration().getConnectorBindPort() == 12345;
-        assert agent2.getServiceContainer().getConfiguration().getConnectorBindPort() == 22345;
+        assert agent1.getServiceContainer().getConfiguration().getConnectorBindPort() == Integer.parseInt(AGENT1_SERVER_BIND_PORT);
+        assert agent2.getServiceContainer().getConfiguration().getConnectorBindPort() == Integer.parseInt(AGENT2_SERVER_BIND_PORT);
 
         agent1.shutdown();
         agent2.shutdown();

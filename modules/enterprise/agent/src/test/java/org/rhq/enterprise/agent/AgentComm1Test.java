@@ -100,9 +100,9 @@ public class AgentComm1Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoWithPreprocessorAuthenticatorOverSSL() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
@@ -120,9 +120,9 @@ public class AgentComm1Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
@@ -458,9 +458,9 @@ public class AgentComm1Test extends AgentCommTestBase {
         // set up the SSL configuration.
         // note a side test - see that the internal remote pojo service is created even with dynamic discovery turned off
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -471,9 +471,9 @@ public class AgentComm1Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
@@ -643,9 +643,9 @@ public class AgentComm1Test extends AgentCommTestBase {
     public void testAgentStreamingDataToPojoOverSSLBigData() throws Exception {
         // set up the SSL configuration.
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -655,9 +655,9 @@ public class AgentComm1Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");

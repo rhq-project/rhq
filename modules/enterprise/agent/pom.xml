@@ -16,6 +16,15 @@
   <name>RHQ Enterprise Agent</name>
   <description>RHQ Agent</description>
 
+  <properties>
+    <agent1.server.bind-port>11111</agent1.server.bind-port>
+    <agent2.server.bind-port>22222</agent2.server.bind-port>
+    <agent1.communications.connector.bind-port>11111</agent1.communications.connector.bind-port>
+    <agent2.communications.connector.bind-port>22222</agent2.communications.connector.bind-port>
+    <agent1.communications.multicast-detector.port>17777</agent1.communications.multicast-detector.port>
+    <agent2.communications.multicast-detector.port>18888</agent2.communications.multicast-detector.port>
+  </properties>
+
   <dependencies>
 
     <!-- Internal Deps -->
@@ -223,6 +232,14 @@ Build-Number=${buildNumber}
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+            <agent1.server.bind-port>${agent1.server.bind-port}</agent1.server.bind-port>
+            <agent2.server.bind-port>${agent2.server.bind-port}</agent2.server.bind-port>
+            <agent1.communications.connector.bind-port>${agent1.communications.connector.bind-port}</agent1.communications.connector.bind-port>
+            <agent2.communications.connector.bind-port>${agent2.communications.connector.bind-port}</agent2.communications.connector.bind-port>
+            <agent1.communications.multicast-detector.port>${agent1.communications.multicast-detector.port}</agent1.communications.multicast-detector.port>
+            <agent2.communications.multicast-detector.port>${agent2.communications.multicast-detector.port}</agent2.communications.multicast-detector.port>
+          </systemPropertyVariables>
           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
         </configuration>
       </plugin>

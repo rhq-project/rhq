@@ -71,7 +71,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
 
-        Thread.sleep(100 * 1000L);
+        Thread.sleep(20 * 1000L);
     }
 
 
@@ -136,8 +136,12 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
 
     @Test(priority = 11)
     public void executeNoArgOperations() throws Exception {
-        final List<String> ignoredSubsystems = new ArrayList<String>();
+        List<String> ignoredSubsystems = new ArrayList<String>();
         ignoredSubsystems.add("ModCluster Standalone Service");
+
+        List<String> ignoredOperations = new ArrayList<String>();
+        ignoredOperations.add("subsystem:force-failover");
+        ignoredOperations.add("enable");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
@@ -161,9 +165,12 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
             }
 
             for (OperationDefinition operationUnderTest : resourceUnderTest.getResourceType().getOperationDefinitions()) {
-                if (operationUnderTest.getParametersConfigurationDefinition() == null
-                    || operationUnderTest.getParametersConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
-                    this.invokeOperationAndAssertSuccess(resourceUnderTest, operationUnderTest.getName(), null);
+                if (!ignoredOperations.contains(operationUnderTest.getName())) {
+                    if (operationUnderTest.getParametersConfigurationDefinition() == null
+                        || operationUnderTest.getParametersConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
+                        this.invokeOperationAndAssertSuccess(resourceUnderTest, operationUnderTest.getName(),
+                            new Configuration());
+                    }
                 }
             }
         }

@@ -23,6 +23,7 @@
 package com.jboss.jbossnetwork.product.jbpm.handlers;
 
 import org.jbpm.graph.exe.ExecutionContext;
+
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
 import org.rhq.core.pluginapi.operation.OperationServicesResultCode;
 
@@ -105,6 +106,11 @@ public class ControlActionHandler extends BaseHandler {
                     TRANSITION_ERROR);
                 break;
             }
+
+        case CANCELED: {
+            error(executionContext, operationError, "Canceled [" + actionName + "] action on server.", TRANSITION_ERROR);
+            break;
+        }
 
             case TIMED_OUT: {
                 error(executionContext, operationError, "Action [" + actionName +

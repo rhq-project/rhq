@@ -230,6 +230,13 @@ public class ParallelOperationsTest {
             jobsCompleted.put(jobId, timeoutTime);
             opResults.put(jobId, "TIMEOUT");
         }
+
+        public void operationCanceled(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+            long canceledTime) {
+            //println( "~~~~~~~~~~~~~~ server service - timed out: " + jobId + " : " + formatTime( timeoutTime ) );
+            jobsCompleted.put(jobId, canceledTime);
+            opResults.put(jobId, "CANCELED");
+        }
     }
 
     private static void println(String msg) {

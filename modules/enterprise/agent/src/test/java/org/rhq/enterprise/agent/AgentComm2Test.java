@@ -48,9 +48,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testCreateKeystoreSecureAgent() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "socket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "socket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
 
         m_agent1Test.setConfigurationOverrides(props1);
 
@@ -71,9 +71,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testCreateKeystoreSecureServer() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
 
         m_agent1Test.setConfigurationOverrides(props1);
 
@@ -95,9 +95,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageServerAuthFailure() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -107,9 +107,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
@@ -157,9 +157,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageClientAuthFailure() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_FILE, "");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
@@ -170,9 +170,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -221,9 +221,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageNoAuth() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -233,9 +233,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -294,9 +294,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     public void testSendSecureMessageFullAuth() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
             "target/testdata2/keystore.dat");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
@@ -308,9 +308,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
             "target/testdata/keystore.dat");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
@@ -368,9 +368,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     public void testSendSecureMessageFullAuthWrongKeystorePassword() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_PASSWORD,
             "invalidpassword");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
@@ -384,9 +384,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_PASSWORD,
             "invalidpassword2");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
@@ -426,9 +426,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     public void testSendSecureMessageClientAuthWantWithTruststore() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
             "target/testdata2/keystore.dat");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
@@ -440,9 +440,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
             "target/testdata/keystore.dat");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
@@ -504,9 +504,9 @@ public class AgentComm2Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageNoAuthDifferentProtocol() throws Exception {
         Properties props1 = new Properties();
-        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
+        setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", AGENT2_SERVER_BIND_PORT, null);
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT1_COMM_CONNECTOR_BIND_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "TLS");
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "SSL");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");
@@ -516,9 +516,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
-        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", 11111, null);
+        setServerLocatorUriProperties(props2, "sslsocket", "127.0.0.1", AGENT1_SERVER_BIND_PORT, null);
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "sslsocket");
-        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, AGENT2_COMM_CONNECTOR_BIND_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SOCKET_PROTOCOL, "SSL");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_SOCKET_PROTOCOL, "TLS");
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "false");

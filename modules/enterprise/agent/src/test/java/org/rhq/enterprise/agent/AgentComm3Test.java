@@ -65,12 +65,14 @@ public class AgentComm3Test extends AgentCommTestBase {
         // make it so the server auto-detection features do not detect anything
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.SERVER_AUTO_DETECTION, "true");
-        props1.setProperty(ServiceContainerConfigurationConstants.MULTICASTDETECTOR_PORT, "17777");
+        props1.setProperty(ServiceContainerConfigurationConstants.MULTICASTDETECTOR_PORT,
+            AGENT1_COMM_MULTICAST_DECTECTOR_PORT);
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SERVER_POLLING_INTERVAL, "-1");
 
         Properties props2 = new Properties();
         props2.setProperty(AgentConfigurationConstants.SERVER_AUTO_DETECTION, "true");
-        props2.setProperty(ServiceContainerConfigurationConstants.MULTICASTDETECTOR_PORT, "18888");
+        props2.setProperty(ServiceContainerConfigurationConstants.MULTICASTDETECTOR_PORT,
+            AGENT2_COMM_MULTICAST_DECTECTOR_PORT);
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SERVER_POLLING_INTERVAL, "-1");
 
         m_agent1Test.setConfigurationOverrides(props1);

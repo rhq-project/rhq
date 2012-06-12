@@ -24,9 +24,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -37,10 +41,24 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  *
  * @author John Mazzitelli
  */
-public class AgentCommTestBase {
+@Listeners(AgentCommTestBase.class)
+public class AgentCommTestBase implements IInvokedMethodListener {
     protected static final int LARGE_STRING_SIZE = 100000;
     protected static final String LARGE_STRING;
     protected static final byte[] LARGE_STRING_BYTES;
+
+    protected static final String AGENT1_SERVER_BIND_PORT = System.getProperty("agent1.server.bind-port", "11111");
+    protected static final String AGENT2_SERVER_BIND_PORT = System.getProperty("agent2.server.bind-port", "22222");
+
+    protected static final String AGENT1_COMM_CONNECTOR_BIND_PORT = System.getProperty(
+        "agent1.communications.connector.bind-port", "11111");
+    protected static final String AGENT2_COMM_CONNECTOR_BIND_PORT = System.getProperty(
+        "agent2.communications.connector.bind-port", "22222");
+
+    protected static final String AGENT1_COMM_MULTICAST_DECTECTOR_PORT = System.getProperty(
+        "agent1.communications.multicast-detector.port", "17777");
+    protected static final String AGENT2_COMM_MULTICAST_DECTECTOR_PORT = System.getProperty(
+        "agent2.communications.multicast-detector.port", "18888");
 
     static {
         StringBuffer stream_data_buf = new StringBuffer(LARGE_STRING_SIZE);
@@ -57,6 +75,20 @@ public class AgentCommTestBase {
 
     protected AgentTestClass m_agent1Test;
     protected AgentTestClass m_agent2Test;
+
+    @Override
+    public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+        System.out.println("before " + getTestMethod(method));
+    }
+
+    @Override
+    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
+        System.out.println("after " + getTestMethod(method));
+    }
+
+    private String getTestMethod(IInvokedMethod method) {
+        return method.getTestMethod().getTestClass().getName() + "." + method.getTestMethod().getMethodName();
+    }
 
     /**
      * Creates new agent test classes.
@@ -76,6 +108,8 @@ public class AgentCommTestBase {
         // make sure we create keystore files - some tests needs both existing at the same time as soon as they begin
         File keystore_file1 = new File("target/testdata/keystore.dat");
 
+        //Assert.assertFalse(keystore_file1 + " should not exist", keystore_file1.exists());
+        keystore_file1.delete();
         if (!keystore_file1.exists()) {
             keystore_file1.getParentFile().mkdirs();
             m_agent1Test.createAgent(false);
@@ -89,6 +123,8 @@ public class AgentCommTestBase {
         }
 
         File keystore_file2 = new File("target/testdata2/keystore.dat");
+        //Assert.assertFalse(keystore_file2 + " should not exist", keystore_file2.exists());
+        keystore_file2.delete();
         if (!keystore_file2.exists()) {
             keystore_file2.getParentFile().mkdirs();
             m_agent2Test.createAgent(false);
@@ -106,7 +142,7 @@ public class AgentCommTestBase {
      * Ensures any agent that was started is shutdown and all configuration is cleared so as not to retain overridden
      * preferences left over by the tests.
      */
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
         if (m_agent1Test != null) {
             AgentMain agent = m_agent1Test.getAgent();
@@ -171,6 +207,25 @@ public class AgentCommTestBase {
         props.setProperty(AgentConfigurationConstants.SERVER_TRANSPORT, transport);
         props.setProperty(AgentConfigurationConstants.SERVER_BIND_ADDRESS, addr);
         props.setProperty(AgentConfigurationConstants.SERVER_BIND_PORT, Integer.toString(port));
+        if (transport_params != null) {
+            props.setProperty(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, transport_params);
+        }
+    }
+
+    /**
+     * This will set the appropriate properties in <code>props</code> to define the server locator URI.
+     *
+     * @param props
+     * @param transport
+     * @param addr
+     * @param port
+     * @param transport_params
+     */
+    protected void setServerLocatorUriProperties(Properties props, String transport, String addr, String port,
+                                                 String transport_params) {
+        props.setProperty(AgentConfigurationConstants.SERVER_TRANSPORT, transport);
+        props.setProperty(AgentConfigurationConstants.SERVER_BIND_ADDRESS, addr);
+        props.setProperty(AgentConfigurationConstants.SERVER_BIND_PORT, port);
         if (transport_params != null) {
             props.setProperty(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, transport_params);
         }

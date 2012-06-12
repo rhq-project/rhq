@@ -75,7 +75,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
     }
 
 
-    @Test(priority = 12, enabled = false)
+    @Test(priority = 12)
     public void loadUpdateTemplatedResourceConfiguration() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
@@ -99,6 +99,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         }
 
         int errorCount = 0;
+
         while (!unparsedResources.isEmpty()) {
             Resource resourceUnderTest = unparsedResources.poll();
 
@@ -110,34 +111,30 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
                 }
             }
 
-            Configuration resourceUnderTestConfig = configurationManager.loadResourceConfiguration(resourceUnderTest
-                .getId());
+            if (resourceUnderTest.getResourceType().getResourceConfigurationDefinition() != null) {
+                Configuration configUnderTest = configurationManager
+                    .loadResourceConfiguration(resourceUnderTest.getId());
 
-            Assert.assertNotNull(resourceUnderTestConfig);
+                ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(1, configUnderTest,
+                    resourceUnderTest.getId());
+                ConfigurationUpdateResponse updateResponse = configurationManager
+                    .executeUpdateResourceConfigurationImmediately(updateRequest);
 
-            ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(1, resourceUnderTestConfig,
-                resourceUnderTest.getId());
-            ConfigurationUpdateResponse updateResponse = configurationManager
-                .executeUpdateResourceConfigurationImmediately(updateRequest);
-
-            Assert.assertNotNull(updateResponse);
-            if (updateResponse.getErrorMessage() != null) {
-                log.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                log.info(updateResponse.getErrorMessage());
-                log.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-                errorCount++;
+                Assert.assertNotNull(updateResponse);
+                if (updateResponse.getErrorMessage() != null) {
+                    errorCount++;
+                    log.error("------------------------------");
+                    log.error(resourceUnderTest);
+                    log.error(updateResponse.getErrorMessage());
+                    log.error("------------------------------");
+                }
             }
         }
-
-        log.info("?????????????????????????????");
-        log.info(errorCount);
-        log.info("?????????????????????????????");
 
         Assert.assertEquals(errorCount, 0);
     }
 
-    @Test(priority = 11, enabled = false)
+    @Test(priority = 11)
     public void executeNoArgOperations() throws Exception {
         final List<String> ignoredSubsystems = new ArrayList<String>();
         ignoredSubsystems.add("ModCluster Standalone Service");

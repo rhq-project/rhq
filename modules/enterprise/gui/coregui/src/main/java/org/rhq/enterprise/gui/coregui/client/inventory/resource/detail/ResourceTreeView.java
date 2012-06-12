@@ -83,6 +83,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -250,7 +251,15 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
 
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                updateSelection();
+                // expand the tree if nothing is selected
+                if (selectedNodeId == null) {
+                    updateSelection();
+                }
+                // do not update the selection when expanding other tree node (BZ 816086)
+                TreeNode parent = dataArrivedEvent.getParentNode();
+                if  (parent instanceof EnhancedTreeNode && ((EnhancedTreeNode) parent).getID().equals(selectedNodeId)) {
+                        updateSelection();
+                }
             }
         });
     }

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -36,6 +40,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -45,14 +50,15 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -86,6 +92,56 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         SortSpecifier sortSpec = new SortSpecifier(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
             SortDirection.DESCENDING);
         getListGrid().setSort(new SortSpecifier[] { sortSpec });
+
+        // the below addTableAction and the enclosing TableAction anon class code is taken from
+        // OperationHistoryView. I don't know why we have an abstract operation history list hierarchy separate
+        // from OperationHistoryView. Perhaps independently developed and the developer of one didn't know the other
+        // existed. In any case, this code is almost identical as the table action in OperationHistoryView with the
+        // exception that this code uses AbstractOperationHistoryDataSource.Field constants.
+        addTableAction(extendLocatorId("Cancel"), MSG.common_button_cancel(),
+            MSG.view_operationHistoryList_cancelConfirm(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    for (ListGridRecord item : selection) {
+                        if (!OperationRequestStatus.INPROGRESS.name().equals(
+                            item.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                            count--; // one selected item was not in-progress, it doesn't count
+                        }
+                    }
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int numCancelRequestsSubmitted = 0;
+                    OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
+                    for (ListGridRecord toBeCanceled : selection) {
+                        // only cancel those selected operations that are currently in progress
+                        if (OperationRequestStatus.INPROGRESS.name().equals(
+                            toBeCanceled.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                            numCancelRequestsSubmitted++;
+                            final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                            opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
+                                public void onSuccess(Void result) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
+                                        .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+
+                                public void onFailure(Throwable caught) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
+                                        .valueOf(historyId)), caught, Severity.Error, EnumSet
+                                        .of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+                            });
+                        }
+                    }
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_operationHistoryList_cancelSubmitted(String
+                            .valueOf(numCancelRequestsSubmitted)), Severity.Info));
+                    refreshTableInfo();
+                }
+            });
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {

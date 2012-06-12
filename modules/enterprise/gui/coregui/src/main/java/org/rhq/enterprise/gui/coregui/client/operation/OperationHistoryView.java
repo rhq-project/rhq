@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -47,8 +48,11 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -164,6 +168,52 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     protected void setupTableInteractions() {
+
+        addTableAction(extendLocatorId("Cancel"), MSG.common_button_cancel(),
+            MSG.view_operationHistoryList_cancelConfirm(),
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    for (ListGridRecord item : selection) {
+                        if (!OperationRequestStatus.INPROGRESS.name().equals(
+                            item.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                            count--; // one selected item was not in-progress, it doesn't count
+                        }
+                    }
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int numCancelRequestsSubmitted = 0;
+                    OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
+                    for (ListGridRecord toBeCanceled : selection) {
+                        // only cancel those selected operations that are currently in progress
+                        if (OperationRequestStatus.INPROGRESS.name().equals(
+                            toBeCanceled.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                            numCancelRequestsSubmitted++;
+                            final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                            opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
+                                public void onSuccess(Void result) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
+                                        .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+
+                                public void onFailure(Throwable caught) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
+                                        .valueOf(historyId)), caught, Severity.Error, EnumSet
+                                        .of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+                            });
+                        }
+                    }
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_operationHistoryList_cancelSubmitted(String
+                            .valueOf(numCancelRequestsSubmitted)), Severity.Info));
+                    refreshTableInfo();
+                }
+            });
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {

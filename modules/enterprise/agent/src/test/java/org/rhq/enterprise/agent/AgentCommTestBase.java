@@ -30,7 +30,6 @@ import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
 
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -41,7 +40,6 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  *
  * @author John Mazzitelli
  */
-@Listeners(AgentCommTestBase.class)
 public class AgentCommTestBase implements IInvokedMethodListener {
     protected static final int LARGE_STRING_SIZE = 100000;
     protected static final String LARGE_STRING;
@@ -108,8 +106,6 @@ public class AgentCommTestBase implements IInvokedMethodListener {
         // make sure we create keystore files - some tests needs both existing at the same time as soon as they begin
         File keystore_file1 = new File("target/testdata/keystore.dat");
 
-        //Assert.assertFalse(keystore_file1 + " should not exist", keystore_file1.exists());
-        keystore_file1.delete();
         if (!keystore_file1.exists()) {
             keystore_file1.getParentFile().mkdirs();
             m_agent1Test.createAgent(false);
@@ -123,8 +119,6 @@ public class AgentCommTestBase implements IInvokedMethodListener {
         }
 
         File keystore_file2 = new File("target/testdata2/keystore.dat");
-        //Assert.assertFalse(keystore_file2 + " should not exist", keystore_file2.exists());
-        keystore_file2.delete();
         if (!keystore_file2.exists()) {
             keystore_file2.getParentFile().mkdirs();
             m_agent2Test.createAgent(false);
@@ -142,7 +136,7 @@ public class AgentCommTestBase implements IInvokedMethodListener {
      * Ensures any agent that was started is shutdown and all configuration is cleared so as not to retain overridden
      * preferences left over by the tests.
      */
-    @AfterMethod(alwaysRun = true)
+    @AfterMethod
     public void tearDown() {
         if (m_agent1Test != null) {
             AgentMain agent = m_agent1Test.getAgent();

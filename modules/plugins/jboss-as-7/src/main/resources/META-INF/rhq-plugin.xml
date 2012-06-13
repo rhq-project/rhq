@@ -7011,7 +7011,7 @@
         <metric property="valid" dataType="trait" description="Whether this this memory manager is valid in the Java virtual machine."/>
 
         <resource-configuration>
-          <c:list-property name="memory-pool-names" required="true" description="The name of memory pools that this garbage collector manages.">
+          <c:list-property name="memory-pool-names" required="true" readOnly="true" description="The name of memory pools that this garbage collector manages.">
             <c:simple-property name="memory-pool-names" readOnly="true"/>
           </c:list-property>
         </resource-configuration>

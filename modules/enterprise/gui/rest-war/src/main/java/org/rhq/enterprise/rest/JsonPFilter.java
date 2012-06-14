@@ -63,8 +63,7 @@ public class JsonPFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String requestedType = httpRequest.getHeader("accept");
-        if ("application/jsonp".equals(requestedType) && hasCallback(httpRequest)) {
+        if (hasCallback(httpRequest)) {
 
             String callback = getCallback(httpRequest);
 

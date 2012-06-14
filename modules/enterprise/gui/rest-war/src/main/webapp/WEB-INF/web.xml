@@ -29,8 +29,8 @@
       <filter-class>org.rhq.enterprise.rest.JsonPFilter</filter-class>
       <init-param>
         <param-name>filter.jsonp.callback</param-name>
-        <param-value>callback</param-value>
-        <description>Name of the callback to use for JsonP (?callback=...)</description>
+        <param-value>jsonp</param-value>
+        <description>Name of the callback to use for JsonP (?jsonp=...)</description>
       </init-param>
     </filter>
 

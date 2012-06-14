@@ -85,14 +85,19 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         showRootCauseMenuItem.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(MenuItemClickEvent event) {
-                String rootCause = MessageBar.this.currentMessage.getRootCauseMessage();
-                SC.say(MSG.view_messageCenter_messageRootCause(), rootCause);
+                Message msg = MessageBar.this.currentMessage;
+                if (msg != null) {
+                    String rootCause = msg.getRootCauseMessage();
+                    if (rootCause != null) {
+                        SC.say(MSG.view_messageCenter_messageRootCause(), rootCause);
+                    }
+                }
             }
         });
         showRootCauseMenuItem.setEnableIfCondition(new MenuItemIfFunction() {
             public boolean execute(Canvas target, Menu menu, MenuItem item) {
-                return MessageBar.this.currentMessage != null
-                    && MessageBar.this.currentMessage.getRootCauseMessage() != null;
+                Message msg = MessageBar.this.currentMessage;
+                return msg != null && msg.getRootCauseMessage() != null;
             }
         });
 

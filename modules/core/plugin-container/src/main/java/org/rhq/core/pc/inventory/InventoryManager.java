@@ -694,7 +694,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
-        Throwable startError = null;
 
         try {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
@@ -805,14 +804,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (log.isDebugEnabled()) {
                 log.debug("Activating resource [" + resource + "]...");
             }
-            // if it fails to start keep going, we already have the resource in inventory and
-            // need to coordinate with the server. The new resource will be unavailable but at least
-            // it will be accessible and editable by the user. Report the start exception at the end.
-            try {
-                activateResource(resource, resourceContainer, newPluginConfig);
-            } catch (Throwable t) {
-                startError = t;
-            }
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
 
@@ -829,11 +820,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
             postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
 
-            if (null != startError) {
-                handleInvalidPluginConfigurationResourceError(resource, startError);
+            // Note that it is important to activate the resource *AFTER* it has been synced with the
+            // server so that the resource has a valid id (which is needed by at least the content
+            // subsystem).
+            try {
+                activateResource(resource, resourceContainer, newPluginConfig);
+            } catch (Throwable t) {
+                // if it fails to start keep going, we already have the resource in inventory and
+                // we are in sync with the server. The new resource will be unavailable but at least
+                // it will be accessible and editable by the user. Report the start exception at the end.
+                handleInvalidPluginConfigurationResourceError(resource, t);
                 throw new PluginContainerException("The resource [" + resource
                     + "] has been added but could not be started. Verify the supplied configuration values: ",
-                    startError);
+                    t);
             }
         }
 

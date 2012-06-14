@@ -16,7 +16,7 @@
 
   <name>smartgwt-war-archetype</name>
   <description>archetype for a Maven project for a SmartGWT web application (WAR)</description>
-  <url>http://rhq-project.org/</url>
+  <url>http://www.jboss.org/rhq/</url>
 
   <licenses>
     <license>

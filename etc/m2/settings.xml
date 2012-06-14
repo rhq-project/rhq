@@ -248,7 +248,7 @@
         <!--<rhq.containerDir>C:/home/bob/rhq-dev-container</rhq.containerDir>-->
 
         <!-- set browser(s) to compile the GWT stuff for
-          ~~ See http://rhq-project.org/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
+          ~~ See https://docs.jboss.org/author/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
           ~~ for details and browser versions
           ~~ Possible values are: ie6,ie8,ie9,gecko,gecko1_8,safari,opera
         -->
@@ -277,8 +277,8 @@
     <profile>
       <id>publish</id>
       <properties>
-        <confluenceUrl>http://rhq-project.org/</confluenceUrl>
-        <confluenceSpace>JOPR2</confluenceSpace>
+        <confluenceUrl>https://docs.jboss.org/author/display/</confluenceUrl>
+        <confluenceSpace>RHQ</confluenceSpace>
         <confluenceParentPageTitle>Managed Resources</confluenceParentPageTitle>
         <confluenceUserName>SET_ME</confluenceUserName>
         <confluencePassword>SET_ME</confluencePassword>

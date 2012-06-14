@@ -30,7 +30,7 @@
                            <classpath>
                               <pathelement path="${test.classpath}" />
                               
-                              <!-- See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas -->
+                              <!-- See also: https://docs.jboss.org/author/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas -->
                               
                               <pathelement location="../disk/target/rhq-serverplugin-disk-${project.version}.jar" />
                               <pathelement location="../jboss-software/target/rhq-serverplugin-jboss-software-${project.version}.jar" />

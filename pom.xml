@@ -11,7 +11,7 @@
 
   <name>RHQ</name>
   <description>RHQ is a server management and monitoring suite primarily targeted at JBoss software.</description>
-  <url>http://rhq-project.org/</url>
+  <url>http://www.jboss.org/rhq/</url>
   <inceptionYear>2008</inceptionYear>
 
   <organization>
@@ -47,12 +47,12 @@
     <product.shortName>RHQ</product.shortName>
     <product.name>RHQ</product.name>
     <product.fullName>RHQ</product.fullName>
-    <product.url>http://www.rhq-project.org/</product.url>
-    <product.urlDomain>rhq-project.org</product.urlDomain>
+    <product.url>http://www.jboss.org/rhq</product.url>
+    <product.urlDomain>jboss.org</product.urlDomain>
     <product.salesEmail>rhq-users@lists.fedorahosted.org</product.salesEmail>
     <product.supportEmail>rhq-users@lists.fedorahosted.org</product.supportEmail>
     <product.version>${project.version}</product.version>
-    <product.helpDocRoot>http://www.rhq-project.org/display/JOPR2/</product.helpDocRoot>
+    <product.helpDocRoot>https://docs.jboss.org/author/display/RHQ/User+Documentation</product.helpDocRoot>
     <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
     <doUpdate>false</doUpdate>

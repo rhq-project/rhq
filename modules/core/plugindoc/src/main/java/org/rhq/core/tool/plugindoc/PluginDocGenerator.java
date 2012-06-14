@@ -115,8 +115,8 @@ public class PluginDocGenerator {
     }
 
     public void loadProperties(Properties props) {
-        this.confluenceUrl = props.getProperty("confluenceUrl", "http://rhq-project.org/");
-        this.confluenceSpace = props.getProperty("confluenceSpace", "JOPR2");
+        this.confluenceUrl = props.getProperty("confluenceUrl", "https://docs.jboss.org/author/display/");
+        this.confluenceSpace = props.getProperty("confluenceSpace", "RHQ");
         this.confluenceParentPageTitle = props.getProperty("confluenceParentPageTitle", "Management Plugins");
         this.confluenceUserName = props.getProperty("confluenceUserName");
         this.confluencePassword = props.getProperty("confluencePassword");

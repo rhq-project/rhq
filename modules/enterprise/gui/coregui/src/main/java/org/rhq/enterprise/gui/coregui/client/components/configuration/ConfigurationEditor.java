@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.i18n.client.LocalizableResource.Description;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
@@ -575,13 +574,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         fields.add(unsetHeader);
 
         StaticTextItem valueHeader = new StaticTextItem();
-        valueHeader.setValue(MSG.view_configEdit_value());
+        valueHeader.setValue(MSG.common_title_value());
         valueHeader.setShowTitle(false);
         valueHeader.setCellStyle(CELL_STYLE);
         fields.add(valueHeader);
 
         StaticTextItem descriptionHeader = new StaticTextItem();
-        descriptionHeader.setValue(MSG.view_configEdit_description());
+        descriptionHeader.setValue(MSG.common_title_description());
         descriptionHeader.setShowTitle(false);
         descriptionHeader.setCellStyle(CELL_STYLE);
         fields.add(descriptionHeader);

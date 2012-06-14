@@ -255,6 +255,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                             uri = uriBuilder.build(schedule.getId());
                             Link metricLink = new Link("metric", uri.toString());
                             ms.addLink(metricLink);
+                            uriBuilder = uriInfo.getBaseUriBuilder();
+                            uriBuilder.path("/metric/data/{id}/raw");
+                            uri = uriBuilder.build(schedule.getId());
+                            metricLink = new Link("metric-raw", uri.toString());
+                            ms.addLink(metricLink);
                         }
                         // create link to the resource
                         uriBuilder = uriInfo.getBaseUriBuilder();

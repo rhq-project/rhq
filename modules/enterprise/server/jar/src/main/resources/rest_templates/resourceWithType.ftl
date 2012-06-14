@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,9 @@
 <#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.ResourceWithType" -->
 
     <table>
-        <thead>
         <tr>
-            <td>Name</td><td>Value</td>
+            <th>Name</th><th>Value</th>
         </tr>
-        </thead>
         <tr>
             <td>Name</td><td>${var.resourceName}</td>
         </tr>

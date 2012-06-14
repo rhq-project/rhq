@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -39,6 +42,7 @@ public class AlertRest {
     long ackTime;
     long alertTime;
     String description;
+    List<Link> links = new ArrayList<Link>();
 
     public void setResource(ResourceWithType resource) {
         this.resource = resource;
@@ -68,7 +72,6 @@ public class AlertRest {
     public AlertDefinitionRest getAlertDefinition() {
         return alertDefinition;
     }
-
 
     public boolean isDefinitionEnabled() {
         return definitionEnabled;
@@ -112,5 +115,17 @@ public class AlertRest {
 
     public ResourceWithType getResource() {
         return resource;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public void addLink(Link link) {
+        links.add(link);
     }
 }

@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import java.util.List;
-
 import javax.ejb.Local;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -40,14 +38,12 @@ import com.wordnik.swagger.annotations.ApiParam;
 
 import org.jboss.resteasy.annotations.cache.Cache;
 
-import org.rhq.enterprise.server.rest.domain.ResourceWithType;
-import org.rhq.enterprise.server.rest.domain.UserRest;
 
 /**
  * Bean that deals with user specific stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
+@Produces({"application/json","application/xml","text/plain","text/html"})
 @Path("/user")
 @Local
 @Api(value="Api that deals with user related stuff")
@@ -55,12 +51,12 @@ public interface UserHandlerLocal {
 
     @GET
     @Path("favorites/resource")
-    @ApiOperation(value = "Return a list of favorite resources", multiValueResponse = true)
-    public List<ResourceWithType> getFavorites(@Context UriInfo uriInfo);
+    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true)
+    Response getFavorites(@Context UriInfo uriInfo,@Context HttpHeaders headers);
 
     @PUT
     @Path("favorites/resource/{id}")
-    @ApiOperation(value = "Add a resource as favorite")
+    @ApiOperation(value = "Add a resource as favorite for the caller")
     public void addFavoriteResource(
             @ApiParam(name = "id", value = "Id of the resource")
             @PathParam("id") int id);

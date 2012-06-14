@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,20 +27,13 @@ import java.util.TreeSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
-import com.wordnik.swagger.annotations.ApiParam;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -83,26 +76,34 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     ResourceManagerLocal resourceManager;
 
     @Override
-    @GET
-    @Path("favorites/r")
-    public List<ResourceWithType> getFavorites(UriInfo uriInfo) {
+    public Response getFavorites(UriInfo uriInfo, HttpHeaders httpHeaders) {
 
         Set<Integer> favIds = getResourceIdsForFavorites();
         List<ResourceWithType> ret = new ArrayList<ResourceWithType>();
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
         for (Integer id : favIds) {
             Resource res = resourceManager.getResource(caller,id);
 
             ResourceWithType rwt = fillRWT(res,uriInfo);
             ret.add(rwt);
         }
-        return ret;
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listResourceWithType", ret), mediaType);
+        } else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(ret) {
+            };
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
+
     }
 
 
     @Override
-    @PUT
-    @Path("favorites/r/{id}")
-    public void addFavoriteResource(@PathParam("id") int id) {
+    public void addFavoriteResource(int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (!favIds.contains(id)) {
             favIds.add(id);
@@ -111,9 +112,7 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     }
 
     @Override
-    @DELETE
-    @Path("favorites/r/{id}")
-    public void removeResourceFromFavorites(@PathParam("id") int id) {
+    public void removeResourceFromFavorites(int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);

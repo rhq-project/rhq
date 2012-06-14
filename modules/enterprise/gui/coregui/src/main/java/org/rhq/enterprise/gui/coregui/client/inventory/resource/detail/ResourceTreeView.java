@@ -93,6 +93,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -257,8 +258,8 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
                 // do not update the selection when expanding other tree node (BZ 816086)
                 TreeNode parent = dataArrivedEvent.getParentNode();
-                if  (parent instanceof EnhancedTreeNode && ((EnhancedTreeNode) parent).getID().equals(selectedNodeId)) {
-                        updateSelection();
+                if (parent instanceof EnhancedTreeNode && ((EnhancedTreeNode) parent).getID().equals(selectedNodeId)) {
+                    updateSelection();
                 }
             }
         });
@@ -298,7 +299,8 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.createPrivateResourceGroup(backingGroup, childIds,
                         new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
-                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_create(), caught));
+                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_create(),
+                                    caught));
                             }
 
                             public void onSuccess(ResourceGroup result) {
@@ -320,7 +322,8 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_update(), caught));
+                                callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_update(),
+                                    caught));
                             }
 
                             public void onSuccess(Void result) {
@@ -419,8 +422,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             new ResourceTypeRepository.TypeLoadedCallback() {
 
                                 public void onTypesLoaded(ResourceType type) {
-                                    buildResourceContextMenu(node, resourceComposite, type);
-                                    resourceContextMenu.showContextMenu();
+                                    buildAndShowResourceContextMenu(node, resourceComposite, type);
                                 }
                             });
                     }
@@ -428,8 +430,8 @@ public class ResourceTreeView extends LocatableVLayout {
             });
     }
 
-    private void buildResourceContextMenu(final ResourceTreeNode node, final ResourceComposite resourceComposite,
-        final ResourceType resourceType) {
+    private void buildAndShowResourceContextMenu(final ResourceTreeNode node,
+        final ResourceComposite resourceComposite, final ResourceType resourceType) {
         final Resource resource = resourceComposite.getResource();
         final ResourcePermission resourcePermission = resourceComposite.getResourcePermission();
 
@@ -540,105 +542,134 @@ public class ResourceTreeView extends LocatableVLayout {
         // Metric graph addition menu
         resourceContextMenu.addItem(buildMetricsMenu(resourceType, resource));
 
-        // Create Child Menu
-        Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
-        if (!creatableChildTypes.isEmpty()) {
-            final MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
-            boolean hasCreateChildPermission = resourcePermission.isCreateChildResources();
-            createChildMenu.setEnabled(hasCreateChildPermission);
-            if (hasCreateChildPermission) {
-                final Menu createChildSubMenu = new Menu();
-                final Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+        // Create Child Menu and Manual Import Menu
+        final Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
+        final Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);
+        final boolean hasCreatableTypes = !creatableChildTypes.isEmpty();
+        final boolean hasImportableTypes = !importableChildTypes.isEmpty();
+        boolean canCreate = resourcePermission.isCreateChildResources();
 
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.addFilterParentResourceId(resource.getId());
-                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                    new AsyncCallback<PageList<Resource>>() {
+        Integer[] singletonChildTypes = getSingletonChildTypes(resourceType);
 
-                        @Override
-                        public void onSuccess(PageList<Resource> result) {
-                            Menu filteredSubmenu = checkForSingletons(result, resource, displayNameMap,
-                                createChildSubMenu);
-                            createChildMenu.setSubmenu(filteredSubmenu);
-                            resourceContextMenu.addItem(createChildMenu);
+        // To properly filter Create Child and Import menus we need existing singleton child resources. If the
+        // user has creat permission and the parent type has singleton child types and creatable or importable child
+        // types, perform an async call to fetch the singleton children.
+        if (canCreate && singletonChildTypes.length > 0 && (hasCreatableTypes || hasImportableTypes)) {
+
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterParentResourceId(resource.getId());
+            criteria.addFilterResourceTypeIds(singletonChildTypes);
+            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                new AsyncCallback<PageList<Resource>>() {
+
+                    @Override
+                    public void onSuccess(PageList<Resource> singletonChildren) {
+                        if (hasCreatableTypes) {
+                            Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+                            addMenu(MSG.common_button_create_child(), true, singletonChildren, resource, displayNameMap);
                         }
 
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            Log.error("Error resources with parentId:" + resource.getId(), caught);
+                        if (hasImportableTypes) {
+                            Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
+                            addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap);
                         }
-                    });
 
-            } else {
-                resourceContextMenu.addItem(createChildMenu);
+                        resourceContextMenu.showContextMenu();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.error("Error resources with parentId:" + resource.getId(), caught);
+                        resourceContextMenu.showContextMenu();
+                    }
+                });
+        } else if (canCreate && singletonChildTypes.length == 0 && (hasCreatableTypes || hasImportableTypes)) {
+            if (hasCreatableTypes) {
+                Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+                addMenu(MSG.common_button_create_child(), true, null, resource, displayNameMap);
             }
-        }
 
-        // Manual Import Menu
-        Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);
-
-        if (!importableChildTypes.isEmpty()) {
-            final MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
-            boolean hasManualImportPermission = resourcePermission.isCreateChildResources();
-            importChildMenu.setEnabled(hasManualImportPermission);
-            if (hasManualImportPermission) {
-                final Menu importChildSubMenu = new Menu();
-                final Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.addFilterParentResourceId(resource.getId());
-                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                    new AsyncCallback<PageList<Resource>>() {
-
-                        @Override
-                        public void onSuccess(PageList<Resource> result) {
-                            Menu filteredSubmenu = checkForSingletons(result, resource, displayNameMap,
-                                importChildSubMenu);
-                            importChildMenu.setSubmenu(filteredSubmenu);
-                            resourceContextMenu.addItem(importChildMenu);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            Log.error("Error resources with parentId:" + resource.getId(), caught);
-                        }
-                    });
-
-            } else {
-                resourceContextMenu.addItem(importChildMenu);
+            if (hasImportableTypes) {
+                Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
+                addMenu(MSG.common_button_import(), true, null, resource, displayNameMap);
             }
+
+            resourceContextMenu.showContextMenu();
+
+        } else {
+            if (!canCreate && hasCreatableTypes) {
+                addMenu(MSG.common_button_create_child(), false, null, null, null);
+            }
+            if (!canCreate && hasImportableTypes) {
+                addMenu(MSG.common_button_import(), false, null, null, null);
+            }
+
+            resourceContextMenu.showContextMenu();
         }
     }
 
-    private Menu checkForSingletons(PageList<Resource> siblings, final Resource resource,
-        Map<String, ResourceType> displayNameMap, Menu submentuToAdd) {
+    private void addMenu(String name, boolean enabled, List<Resource> singletonChildren, Resource resource,
+        Map<String, ResourceType> displayNameMap) {
+        MenuItem menu = new MenuItem(name);
+        if (enabled) {
+            Menu subMenu = new Menu();
+            singletonChildren = (null == singletonChildren) ? new ArrayList() : singletonChildren;
+            Menu filteredSubMenu = checkForSingletons(singletonChildren, resource, displayNameMap, subMenu, true);
+            menu.setSubmenu(filteredSubMenu);
+        } else {
+            menu.setEnabled(false);
+        }
+        resourceContextMenu.addItem(menu);
+    }
+
+    private static Integer[] getSingletonChildTypes(ResourceType type) {
+        Set<Integer> results = new TreeSet<Integer>();
+        Set<ResourceType> childTypes = type.getChildResourceTypes();
+        for (ResourceType childType : childTypes) {
+            if (childType.isSingleton()) {
+                results.add(childType.getId());
+            }
+        }
+
+        return results.toArray(new Integer[results.size()]);
+    }
+
+    private Menu checkForSingletons(List<Resource> singletonChildren, final Resource resource,
+        Map<String, ResourceType> displayNameMap, Menu subMenu, final boolean isCreate) {
+
         Set<String> displayNames = displayNameMap.keySet();
         for (final String displayName : displayNames) {
             MenuItem itemToAdd = new MenuItem(displayName);
-            final ResourceType childType = displayNameMap.get(displayName);
-            boolean disabled = false;
-            // for each already added child, check if the type is the same.
-            // If yes, disable the menu item
-            if (displayNameMap.get(displayName).isSingleton()) {
-                for (Resource sibling : siblings) {
-                    if (sibling.getResourceType().equals(displayNameMap.get(displayName))) {
-                        disabled = true;
+            final ResourceType type = displayNameMap.get(displayName);
+            boolean exists = false;
+
+            // disable the menu item for a singleton type that already has a singleton child resource
+            if (type.isSingleton()) {
+                for (Resource child : singletonChildren) {
+                    exists = child.getResourceType().equals(displayNameMap.get(displayName));
+                    if (exists) {
                         break;
                     }
                 }
             }
-            // if the condition obove is not satisfied, add the menu item
-            if (!disabled) {
+
+            // omit the type's menu item if the singleton already exists, otherwise add the necessary click handler.
+            // note: we omit as opposed to disable the menu item to match the behavior of the buttons in the Inventory
+            // -> Child Resources view, which has no facility to do the anologous disabling.
+            if (!exists) {
                 itemToAdd.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryImportWizard.showImportWizard(resource, childType);
+                        if (isCreate) {
+                            ResourceFactoryCreateWizard.showCreateWizard(resource, type);
+                        } else {
+                            ResourceFactoryImportWizard.showImportWizard(resource, type);
+                        }
                     }
                 });
-                submentuToAdd.addItem(itemToAdd);
+                subMenu.addItem(itemToAdd);
             }
-            
         }
-        return submentuToAdd;
+        return subMenu;
     }
 
     /**
@@ -1028,31 +1059,6 @@ public class ResourceTreeView extends LocatableVLayout {
             });
         }
     }
-
-    /*private List<Resource> preload(final List<Resource> lineage) {
-
-            final ArrayList<Resource> list = new ArrayList<Resource>(lineage);
-
-            ResourceGWTServiceAsync resourceService = ResourceGWTServiceAsync.Util.getInstance();
-
-                ResourceCriteria c = new ResourceCriteria();
-                c.addFilterParentResourceId(lineage.get(0).getId());
-                resourceService.findResourcesByCriteria(CoreGUI.getSessionSubject(), c, new AsyncCallback<PageList<Resource>>() {
-                    public void onFailure(Throwable caught) {
-                        SC.say("NotGood");
-                    }
-
-                    public void onSuccess(PageList<Resource> result) {
-                        SC.say("GotONE");
-
-                        if (lineage.size() > 1) {
-                             result.addAll(preload(lineage.subList(1, lineage.size())));
-                        }
-                    }
-                });
-            }
-        }
-    */
 
     public void renderView(ViewPath viewPath) {
 

@@ -1111,10 +1111,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     }
                     if (deletedRecordNames.size() == selectedRecordCount) {
                         // all selected schedules were successfully deleted.
-                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(
-                            String.valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
-                            .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
-                                getDataTypeNamePlural(), deletedRecordNames.toString()));
+                        String deletedMessage = getDeletedMessage(deletedRecordNames.size());
+                        String deletedMessageDetail = deletedMessage + ": [" + deletedRecordNames.toString() + "]";
+                        Message message = new Message(deletedMessage, deletedMessageDetail);
                         CoreGUI.getMessageCenter().notify(message);
                         refresh();
                     }
@@ -1124,20 +1123,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }, requestProperties);
     }
 
-    protected String getDataTypeName() {
-        return "item";
-    }
-
-    protected String getDataTypeNamePlural() {
-        return "items";
-    }
-
     protected String getTitleFieldName() {
         return FIELD_NAME;
     }
 
+    protected String getDeletedMessage(int numDeleted) {
+        String num = String.valueOf(numDeleted);
+        String thing = (1 == numDeleted) ? MSG.common_label_item() : MSG.common_label_items();
+        return MSG.common_msg_deleted(num, thing);
+    }
+
     protected String getDeleteConfirmMessage() {
-        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
+        return MSG.common_msg_deleteConfirm(MSG.common_label_items());
     }
 
     protected void hideField(ListGridField field) {

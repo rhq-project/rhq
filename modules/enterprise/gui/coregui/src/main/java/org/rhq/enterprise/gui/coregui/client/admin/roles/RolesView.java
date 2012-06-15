@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
@@ -31,9 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -49,7 +50,6 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-
     private boolean hasManageSecurity;
 
     public RolesView(String locatorId, boolean hasManageSecurity) {
@@ -58,10 +58,10 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
         setEscapeHtmlInDetailsLinkColumn(true);
-        
+
         this.hasManageSecurity = hasManageSecurity;
     }
-    
+
     @Override
     protected void configureTable() {
         updateSelectionStyle();
@@ -161,13 +161,8 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
     }
 
     @Override
-    protected String getDataTypeName() {
-        return MSG.common_label_role();
-    }
-
-    @Override
-    protected String getDataTypeNamePlural() {
-        return MSG.common_label_roles();
+    protected String getDeleteConfirmMessage() {
+        return MSG.common_msg_deleteConfirm(MSG.common_label_roles());
     }
 
     @Override

@@ -864,17 +864,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         }
     }
 
-    protected String getDataTypeName() {
-        return "item";
-    }
-
-    protected String getDataTypeNamePlural() {
-        return "items";
-    }
-
-    protected String getDeleteConfirmMessage() {
-        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
-    }
 
     // -------------- Inner utility classes ------------- //
 

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
@@ -25,6 +28,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -37,9 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -227,13 +228,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
     }
 
     @Override
-    protected String getDataTypeName() {
-        return MSG.common_label_user();
-    }
-
-    @Override
-    protected String getDataTypeNamePlural() {
-        return MSG.common_label_users();
+    protected String getDeleteConfirmMessage() {
+        return MSG.common_msg_deleteConfirm(MSG.common_label_users());
     }
 
     @Override

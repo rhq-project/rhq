@@ -19,11 +19,17 @@
 package org.rhq.core.pc.inventory;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,13 +40,22 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.availability.AvailabilityContextImpl;
+import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.event.EventContextImpl;
+import org.rhq.core.pc.inventory.testplugin.ManualAddDiscoveryComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
+import org.rhq.core.pc.operation.OperationContextImpl;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -58,7 +73,7 @@ public class DiscoveryTest extends Arquillian {
     public static RhqAgentPluginArchive getTestPlugin() {
         RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar");
         return pluginJar.setPluginDescriptor("test-great-grandchild-discovery-plugin.xml").addClasses(
-            TestResourceDiscoveryComponent.class, TestResourceComponent.class);
+            TestResourceDiscoveryComponent.class, TestResourceComponent.class, ManualAddDiscoveryComponent.class);
     }
 
     @ArquillianResource
@@ -122,6 +137,57 @@ public class DiscoveryTest extends Arquillian {
                 + flaggedExecutionCountsByResourceType);
     }
 
+    @Test(groups = "pc.itest.discovery", priority = 10)
+    public void testResourceSyncedWithServerAfterManualAdd() throws Exception {
+        Mockito.when(serverServices.getDiscoveryServerService().addResource(any(Resource.class), anyInt())).then(
+            fakeServerInventory.addResource());
+
+        InventoryManager inventoryManager = pluginContainer.getInventoryManager();
+
+        Resource platform = inventoryManager.getPlatform();
+
+        Configuration myPluginConfig = new Configuration();
+        myPluginConfig.put(new PropertySimple("test", "value"));
+
+        ResourceType resourceType = pluginContainer.getPluginManager().getMetadataManager()
+            .getType("Manual Add Server", "test");
+
+        MergeResourceResponse response = inventoryManager.manuallyAddResource(resourceType, platform.getId(),
+            myPluginConfig, -1);
+
+        assertFalse(response.resourceAlreadyExisted(), "The manual add resource shouldn't have existed");
+        assertNotEquals(response.getResourceId(), 0, "The manual add resource should have had its resource id set");
+
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(response.getResourceId());
+        ResourceContext<?> resourceContext = resourceContainer.getResourceContext();
+
+        assertEquals(resourceContext.getPluginConfiguration(), myPluginConfig,
+            "The manual add resource doesn't have the expected plugin config.");
+
+        assertTrue(resourceContext.getAvailabilityContext() instanceof AvailabilityContextImpl,
+            "Unexpected implementation clas of the AvailabilityContext, please fix this test.");
+        assertEquals(((AvailabilityContextImpl) resourceContext.getAvailabilityContext()).getResource().getId(),
+            response.getResourceId(),
+            "Availability subsystem isn't aware of the correct resource id for manual add resource");
+
+        assertTrue(resourceContext.getContentContext() instanceof ContentContextImpl,
+            "Unexpected implementation class of ContentContext, please fix this test");
+        assertEquals(((ContentContextImpl) resourceContext.getContentContext()).getResourceId(),
+            response.getResourceId(),
+            "Content subsystem isn't aware of the correct resource id for manual add resource");
+
+        assertTrue(resourceContext.getEventContext() instanceof EventContextImpl,
+            "Unexpected implementation clas of the EventContext, please fix this test.");
+        assertEquals(((EventContextImpl) resourceContext.getEventContext()).getResource().getId(),
+            response.getResourceId(), "Event subsystem isn't aware of the correct resource id for manual add resource");
+
+        assertTrue(resourceContext.getOperationContext() instanceof OperationContextImpl,
+            "Unexpected implementation clas of the OperationContext, please fix this test.");
+        assertEquals(((OperationContextImpl) resourceContext.getOperationContext()).getResourceId(),
+            response.getResourceId(),
+            "Operation subsystem isn't aware of the correct resource id for manual add resource");
+    }
+    
     private void validatePluginContainerInventory() throws Exception {
         System.out.println("Validating PC inventory...");
 

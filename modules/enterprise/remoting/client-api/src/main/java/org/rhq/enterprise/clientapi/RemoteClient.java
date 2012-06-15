@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
@@ -33,6 +34,7 @@ import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManagers;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
@@ -89,6 +91,7 @@ public class RemoteClient implements RhqFacade {
     private Subject subject;
     private Client remotingClient;
     private String subsystem = null;
+    private ProductInfo serverInfo = null;
 
     /**
      * Creates a client that will communicate with the server running on the given host
@@ -422,6 +425,24 @@ public class RemoteClient implements RhqFacade {
         return this.remotingClient;
     }
 
+    /**
+     * If the client is connected, this is version of the server that the client is talking to.
+     *
+     * @return remote server version
+     */
+    public String getServerVersion() {
+        return (this.serverInfo != null) ? this.serverInfo.getVersion() : null;
+    }
+
+    /**
+     * If the client is connected, this is build number of the server that the client is talking to.
+     *
+     * @return remote server build number
+     */
+    public String getServerBuildNumber() {
+        return (this.serverInfo != null) ? this.serverInfo.getBuildNumber() : null;
+    }
+
     private void doDisconnect() {
         try {
             if (this.remotingClient != null && this.remotingClient.isConnected()) {
@@ -431,6 +452,7 @@ public class RemoteClient implements RhqFacade {
             LOG.warn(e); // TODO what to do here?
         } finally {
             this.remotingClient = null;
+            this.serverInfo = null;
         }
     }
 
@@ -446,6 +468,16 @@ public class RemoteClient implements RhqFacade {
         Map<String, String> remotingConfig = buildRemotingConfig(locatorURI);
         this.remotingClient = new Client(locator, subsystem, remotingConfig);
         this.remotingClient.connect();
+
+        // make sure the remote server can support this client
+        this.serverInfo = getSystemManager().getProductInfo(subject);
+        try {
+            checkServerSupported(this.serverInfo);
+        } catch (Exception e) {
+            // our client cannot be supported by the server - disconnect and rethrow the exception
+            doDisconnect();
+            throw e;
+        }
     }
 
     private Map<String, String> buildRemotingConfig(String locatorURI) {
@@ -502,5 +534,44 @@ public class RemoteClient implements RhqFacade {
             configMap.put(propName, propValue);
         }
         return;
+    }
+
+    /**
+     * Checks to see if the server (whose version information is passed in) supports this client.
+     * This performs version checks and throws an IllegalStateException if the server does not
+     * support this client.
+     *
+     * @param serverVersionInfo the information about the remote server
+     *
+     * @throws IllegalStateException if the remote server does not support this client
+     */
+    private void checkServerSupported(ProductInfo serverVersionInfo) throws IllegalStateException {
+        boolean supported;
+        String clientVersionString;
+        String serverVersionString;
+
+        try {
+            clientVersionString = getClass().getPackage().getImplementationVersion();
+            serverVersionString = this.serverInfo.getVersion();
+            ComparableVersion clientVersion = new ComparableVersion(clientVersionString);
+            ComparableVersion serverVersion = new ComparableVersion(serverVersionString);
+            supported = clientVersion.equals(serverVersion);
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot determine if server version is supported.", e); // assume we can't talk to it
+        }
+
+        if (!supported) {
+            String errMsg = "This client [" + clientVersionString + "] does not support the remote server ["
+                + serverVersionString + "]";
+
+            final String propName = "rhq.client.version-check";
+            String versionCheckProp = System.getProperty(propName, "true");
+            if (versionCheckProp.equalsIgnoreCase("true")) {
+                throw new IllegalStateException(errMsg);
+            } else {
+                LOG.error(errMsg + " - '" + propName
+                    + "' was not set to true so this client will be allowed to continue but expect errors");
+            }
+        }
     }
 }

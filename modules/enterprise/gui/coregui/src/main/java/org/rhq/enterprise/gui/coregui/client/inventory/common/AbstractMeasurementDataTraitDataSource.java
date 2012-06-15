@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -47,8 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeasurement> extends
-    RPCDataSource <T, MeasurementDataTraitCriteria> {
+public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeasurement, GenericTraitMeasurementCriteria>
+    extends RPCDataSource <T, MeasurementDataTraitCriteria> {
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
@@ -171,16 +172,16 @@ public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeas
             Map values = requestCriteria.getValues();
             for (Object key : values.keySet()) {
                 String fieldName = (String) key;
-                if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID)) {
+                if (fieldName.equals(TraitMeasurementCriteria.FILTER_FIELD_RESOURCE_ID)) {
                     Integer resourceId = (Integer) values.get(fieldName);
                     criteria.addFilterResourceId(resourceId);
-                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID)) {
+                } else if (fieldName.equals(TraitMeasurementCriteria.FILTER_FIELD_GROUP_ID)) {
                     Integer groupId = (Integer) values.get(fieldName);
                     criteria.addFilterGroupId(groupId);
-                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_DEFINITION_ID)) {
+                } else if (fieldName.equals(TraitMeasurementCriteria.FILTER_FIELD_DEFINITION_ID)) {
                     Integer definitionId = (Integer) values.get(fieldName);
                     criteria.addFilterDefinitionId(definitionId);
-                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP)) {
+                } else if (fieldName.equals(TraitMeasurementCriteria.FILTER_FIELD_MAX_TIMESTAMP)) {
                     criteria.addFilterMaxTimestamp();
                 }
             }

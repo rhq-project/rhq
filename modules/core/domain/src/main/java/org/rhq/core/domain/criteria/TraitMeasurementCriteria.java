@@ -19,26 +19,36 @@
  *
  */
 
-package org.rhq.enterprise.server.measurement;
-
-import java.util.List;
-
-import javax.ejb.Local;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.TraitMeasurement;
+package org.rhq.core.domain.criteria;
 
 /**
  * @author John Sanda
  */
-@Local
-public interface MetricsManagerLocal {
+public interface TraitMeasurementCriteria {
 
-    void mergeMeasurementReport(MeasurementReport report);
+    // sort field names
+    String SORT_FIELD_SCHEDULE_ID = "scheduleId";
+    // filter field names
+    String FILTER_FIELD_SCHEDULE_ID = "scheduleId";
+    String FILTER_FIELD_RESOURCE_ID = "resourceId";
+    String FILTER_FIELD_GROUP_ID = "groupId";
+    String FILTER_FIELD_DEFINITION_ID = "definitionId";
+    String FILTER_FIELD_MAX_TIMESTAMP = "maxTimestamp";
 
-    void compressPurgeAndTruncate();
+    void addFilterResourceId(Integer resourceId);
 
-    List<? extends TraitMeasurement> findResourceTraits(Subject subject, TraitMeasurementCriteria criteria);
+    Integer getFilterResourceId();
+
+    void addFilterGroupId(Integer groupId);
+
+    Integer getFilterGroupId();
+
+    void addFilterDefinitionId(Integer definitionId);
+
+    Integer getFilterDefinitionId();
+
+    void addFilterMaxTimestamp();
+
+    boolean isFilterMaxTimestamp();
+
 }

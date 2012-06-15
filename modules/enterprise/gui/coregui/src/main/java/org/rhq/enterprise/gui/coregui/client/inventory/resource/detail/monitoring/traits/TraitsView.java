@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
 /**
@@ -50,8 +50,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
     private static Criteria createCriteria(int resourceId) {
         Criteria criteria = new Criteria();
 
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+        criteria.addCriteria(TraitMeasurementCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
+        criteria.addCriteria(TraitMeasurementCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
 
         return criteria;
     }

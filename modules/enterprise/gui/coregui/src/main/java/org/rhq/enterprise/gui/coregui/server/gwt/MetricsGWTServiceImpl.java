@@ -23,7 +23,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.List;
 
-import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.enterprise.gui.coregui.client.gwt.MetricsGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -39,21 +39,8 @@ public class MetricsGWTServiceImpl extends AbstractGWTServiceImpl implements Met
 
     private MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
 
-//    @Override
-//    public List<ResourceTraitMeasurementDTO> findResourceTraits(MeasurementDataTraitCriteria criteria)
-//        throws RuntimeException {
-//        try {
-//            List<ResourceTraitMeasurementDTO> traits = metricsManager.findResourceTraitMeasurements(getSessionSubject(),
-//                criteria);
-//            return SerialUtility.prepare(traits, "findResourceTraits");
-//        } catch (Throwable t) {
-//            throw getExceptionToThrowToClient(t);
-//        }
-//    }
-
-
     @Override
-    public List<TraitMeasurement> findResourceTraits(MeasurementDataTraitCriteria criteria) throws RuntimeException {
+    public List<TraitMeasurement> findResourceTraits(TraitMeasurementCriteria criteria) throws RuntimeException {
         try {
             List<TraitMeasurement> traits = (List<TraitMeasurement>) metricsManager.findResourceTraits(
                 getSessionSubject(), criteria);

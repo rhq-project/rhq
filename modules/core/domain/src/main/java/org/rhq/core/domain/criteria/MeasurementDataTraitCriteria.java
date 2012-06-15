@@ -35,22 +35,13 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class MeasurementDataTraitCriteria extends Criteria {
+public class MeasurementDataTraitCriteria extends Criteria implements TraitMeasurementCriteria {
     private static final long serialVersionUID = 1L;
 
-    // sort field names
-    public static final String SORT_FIELD_SCHEDULE_ID = "scheduleId";
     public static final String SORT_FIELD_TIMESTAMP = "timestamp";
     public static final String SORT_FIELD_DISPLAY_NAME = "displayName";
     public static final String SORT_FIELD_VALUE = "value";
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
-
-    // filter field names
-    public static final String FILTER_FIELD_SCHEDULE_ID = "scheduleId";
-    public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
-    public static final String FILTER_FIELD_GROUP_ID = "groupId";
-    public static final String FILTER_FIELD_DEFINITION_ID = "definitionId";
-    public static final String FILTER_FIELD_MAX_TIMESTAMP = "maxTimestamp";
 
     private Integer filterScheduleId; // requires overrides
     private Integer filterResourceId; // requires overrides
@@ -65,6 +56,21 @@ public class MeasurementDataTraitCriteria extends Criteria {
     private PageOrdering sortResourceName; // requires overrides
 
     public MeasurementDataTraitCriteria() {
+        initiOverrides();
+    }
+
+    public MeasurementDataTraitCriteria(TraitMeasurementCriteria criteria) {
+        filterResourceId = criteria.getFilterResourceId();
+        filterGroupId = criteria.getFilterGroupId();
+        filterDefinitionId = criteria.getFilterDefinitionId();
+        if (criteria.isFilterMaxTimestamp()) {
+            filterMaxTimestamp = 1;
+        }
+
+        initiOverrides();
+    }
+
+    private void initiOverrides() {
         filterOverrides.put(FILTER_FIELD_SCHEDULE_ID, "id.scheduleId = ?");
         filterOverrides.put(FILTER_FIELD_RESOURCE_ID, "schedule.resource.id = ?");
         filterOverrides.put(FILTER_FIELD_GROUP_ID, "schedule.resource.id IN " //
@@ -107,12 +113,32 @@ public class MeasurementDataTraitCriteria extends Criteria {
         this.filterGroupId = filterGroupId;
     }
 
+    @Override
+    public Integer getFilterResourceId() {
+        return filterGroupId;
+    }
+
     public void addFilterDefinitionId(Integer filterDefinitionId) {
         this.filterDefinitionId = filterDefinitionId;
     }
 
+    @Override
+    public Integer getFilterDefinitionId() {
+        return filterDefinitionId;
+    }
+
+    @Override
+    public Integer getFilterGroupId() {
+        return filterDefinitionId;
+    }
+
     public void addFilterMaxTimestamp() {
         this.filterMaxTimestamp = 1;
+    }
+
+    @Override
+    public boolean isFilterMaxTimestamp() {
+        return filterMaxTimestamp == 1;
     }
 
     public void fetchSchedule(boolean fetchSchedule) {

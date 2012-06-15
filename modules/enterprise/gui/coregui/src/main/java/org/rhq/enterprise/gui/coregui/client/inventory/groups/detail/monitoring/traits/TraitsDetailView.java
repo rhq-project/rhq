@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -68,8 +69,8 @@ public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView
     private static Criteria createCriteria(int groupId, int definitionId) {
         Criteria criteria = new Criteria();
 
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, groupId);
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_DEFINITION_ID, definitionId);
+        criteria.addCriteria(TraitMeasurementCriteria.FILTER_FIELD_GROUP_ID, groupId);
+        criteria.addCriteria(TraitMeasurementCriteria.FILTER_FIELD_DEFINITION_ID, definitionId);
 
         return criteria;
     }

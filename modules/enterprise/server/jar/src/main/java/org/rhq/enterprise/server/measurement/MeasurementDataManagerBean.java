@@ -59,6 +59,7 @@ import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -888,7 +889,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         // If the query is filtered by group id, also fetch the Resource for each schedule, so the results include the
         // Resource names.
-        if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
+        if (filterFields.get(TraitMeasurementCriteria.FILTER_FIELD_GROUP_ID) != null) {
             for (MeasurementDataTrait result : results) {
                 result.getSchedule().getResource().getName();
             }

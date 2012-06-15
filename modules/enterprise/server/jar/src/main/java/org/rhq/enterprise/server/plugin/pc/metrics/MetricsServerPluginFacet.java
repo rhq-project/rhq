@@ -22,7 +22,7 @@
 package org.rhq.enterprise.server.plugin.pc.metrics;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.util.PageList;
@@ -36,6 +36,6 @@ public interface MetricsServerPluginFacet {
 
     void calculateAggregates();
 
-    PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria);
+    PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, TraitMeasurementCriteria criteria);
 
 }

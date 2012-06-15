@@ -35,7 +35,9 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.GenericTraitMeasurementCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -56,7 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Ian Springer
  */
-public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<MeasurementDataTrait> {
+public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<MeasurementDataTrait,
+    GenericTraitMeasurementCriteria> {
     private int groupId;
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
@@ -70,7 +73,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<Mea
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField groupIdField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, MSG.dataSource_traits_group_field_groupId());
+            TraitMeasurementCriteria.FILTER_FIELD_GROUP_ID, MSG.dataSource_traits_group_field_groupId());
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
@@ -132,7 +135,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<Mea
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = super.copyValues(from);
 
-        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, this.groupId);
+        record.setAttribute(TraitMeasurementCriteria.FILTER_FIELD_GROUP_ID, this.groupId);
 
         // for ancestry handling       
         Resource resource = from.getSchedule().getResource();

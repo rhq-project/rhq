@@ -28,7 +28,9 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.GenericTraitMeasurementCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
@@ -38,7 +40,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  *
  * @author Ian Springer
  */
-public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<TraitMeasurement> {
+public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<TraitMeasurement,
+    GenericTraitMeasurementCriteria> {
 
     private int resourceId;
 
@@ -51,7 +54,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<Tra
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField resourceIdField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, MSG.common_title_resource_id());
+            TraitMeasurementCriteria.FILTER_FIELD_RESOURCE_ID, MSG.common_title_resource_id());
         resourceIdField.setHidden(true);
         fields.add(0, resourceIdField);
 
@@ -79,16 +82,8 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource<Tra
     @Override
     public ListGridRecord copyValues(TraitMeasurement from) {
         ListGridRecord record = super.copyValues(from);
-        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
+        record.setAttribute(TraitMeasurementCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
         return record;
     }
 
-//    @Override
-//    public ListGridRecord copyValues(ResourceTraitMeasurementDTO from) {
-//        ListGridRecord record = super.copyValues(from);
-//
-//        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
-//
-//        return record;
-//    }
 }

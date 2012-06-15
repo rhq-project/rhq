@@ -26,6 +26,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 
 /**
@@ -33,5 +34,5 @@ import org.rhq.core.domain.measurement.TraitMeasurement;
  */
 public interface MetricsGWTService extends RemoteService {
 
-    List<TraitMeasurement> findResourceTraits(MeasurementDataTraitCriteria criteria) throws RuntimeException;
+    List<TraitMeasurement> findResourceTraits(TraitMeasurementCriteria criteria) throws RuntimeException;
 }

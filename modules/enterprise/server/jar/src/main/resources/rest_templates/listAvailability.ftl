@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
-<#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.AvailabilityRest" -->
-
-State: ${var.type}<br/>
-Since: ${var.since?number_to_datetime}
-<#if var.until?has_content>
- until ${var.until?number_to_datetime}
-</#if>
-<br/>
-<a href="/rest/1/resource/${var.resourceId?c}.html">Back to Resource</a>
+<#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.AvailabilityRest>" -->
+<html>
+<ul>
+    <#-- the next looks odd, but the incoming var is a list -->
+    <#list var as var>
+    <li>
+        <#include "availability.ftl"/>
+    </li>
+    </#list>
+</ul>
+<html>

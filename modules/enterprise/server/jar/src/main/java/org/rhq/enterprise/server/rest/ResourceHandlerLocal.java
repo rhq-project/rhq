@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -90,13 +90,23 @@ public interface ResourceHandlerLocal {
     ResourceWithChildren getHierarchy(
             @ApiParam("Id of the resource to start with") @PathParam("id")int baseResourceId);
 
-    @LinkResource(rel = "availability", value = AvailabilityRest.class)
     @GET
     @Path("/{id}/availability")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     @ApiOperation(value = "Return the current availability for the passed resource", responseClass = "AvailabilityRest")
     Response getAvailability(
             @ApiParam("Id of the resource to query") @PathParam("id") int resourceId, @Context HttpHeaders headers);
+
+    @GET
+    @Path("/{id}/availability/history")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    @ApiOperation(value = "Return the availability history for the passed resource", responseClass = "AvailabilityRest", multiValueResponse = true)
+    Response getAvailabilityHistory(
+            @ApiParam("Id of the resource to query") @PathParam("id") int resourceId,
+            @ApiParam(value="Start time", defaultValue = "30 days ago") @QueryParam("start") long start,
+            @ApiParam(value="End time", defaultValue = "Now") @QueryParam("end") long end,
+
+             @Context HttpHeaders headers);
 
     @PUT
     @Path("/{id}/availability")

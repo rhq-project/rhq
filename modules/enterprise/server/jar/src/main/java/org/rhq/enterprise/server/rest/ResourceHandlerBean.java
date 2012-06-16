@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -59,6 +60,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -205,6 +207,47 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
         return builder.build();
     }
+
+    @Override
+    public Response getAvailabilityHistory(int resourceId, long start, long end, HttpHeaders headers) {
+        if (end==0)
+            end = System.currentTimeMillis();
+
+        if (start==0)
+            start = end - (30*86400*1000L); // 30 days
+
+        AvailabilityCriteria criteria = new AvailabilityCriteria();
+        criteria.addFilterInterval(start,end);
+        criteria.addFilterResourceId(resourceId);
+        criteria.addSortStartTime(PageOrdering.DESC);
+        List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
+        List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
+        for (Availability avail : points) {
+            AvailabilityRest availabilityRest;
+            if (avail.getAvailabilityType() != null) {
+                availabilityRest = new AvailabilityRest(avail.getAvailabilityType(), avail.getStartTime(), avail
+                    .getResource().getId());
+            }
+            else {
+                availabilityRest = new AvailabilityRest(avail.getStartTime(), resourceId);
+            }
+            if (avail.getEndTime()!=null)
+                availabilityRest.setUntil(avail.getEndTime());
+            ret.add(availabilityRest);
+        }
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listAvailability.ftl",ret), mediaType);
+        } else {
+            GenericEntity<List<AvailabilityRest>> availabilityRest = new GenericEntity<List<AvailabilityRest>>(ret) {};
+            builder = Response.ok(availabilityRest);
+        }
+        return builder.build();
+
+    }
+
 
     @Override
     public void reportAvailability(int resourceId, AvailabilityRest avail) {

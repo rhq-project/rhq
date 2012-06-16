@@ -59,11 +59,13 @@ public interface AlertHandlerLocal {
     @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest")
     Response listAlerts(
             @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+            @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
             @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue(
                     "false") boolean slim,
-            @ApiParam(value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
-                @QueryParam("since") Long since,
+            @ApiParam(
+                    value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
+            @QueryParam("since") Long since,
+            @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
             @Context Request request, @Context UriInfo uriInfo, @Context HttpHeaders headers);
 
     @GET

@@ -31,7 +31,7 @@
     </tr>
     <tr>
         <td>Id</td>
-        <td>${var.id}</td>
+        <td>${var.id?c}</td>
     </tr>
     <tr>
         <td>Description</td>
@@ -55,3 +55,4 @@
 <a href="/rest/1/alert/${var.id?c}/definition.html">Alert Definition</a>
 <a href="/rest/1/alert/${var.id?c}/conditions.html">Condition Logs</a>
 <a href="/rest/1/alert/${var.id?c}/notifications.html">Notification Logs</a>
+<a href="/rest/1/resource/${var.resource.getResourceId()}.html">Resource</a>

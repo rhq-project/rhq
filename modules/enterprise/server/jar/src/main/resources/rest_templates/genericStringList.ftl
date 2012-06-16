@@ -21,7 +21,7 @@
 -->
 <#-- @ftlvariable name="var" type="java.util.List<String>" -->
 <ul>
-    <#if var.isEmpty()>
+    <#if (var?size==0)>
         <i>Nothing to display</i>
     <#else>
         <#list var as line>

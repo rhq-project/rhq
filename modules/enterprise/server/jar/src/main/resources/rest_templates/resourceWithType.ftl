@@ -49,3 +49,4 @@
     <a href="/rest/1/resource/${var.resourceId}/children.html">Children</a><br/>
     <a href="/rest/1/resource/${var.resourceId}/schedules.html">Schedules</a><br/>
     <a href="/rest/1/resource/${var.resourceId}/availability.html">Availability</a><br/>
+    <a href="/rest/1/alert.html?resourceId=${var.resourceId}">Up to 20 Alerts for this resource</a>

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.rest;
 import javax.ejb.Local;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -51,7 +50,7 @@ public interface UserHandlerLocal {
 
     @GET
     @Path("favorites/resource")
-    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true)
+    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")
     Response getFavorites(@Context UriInfo uriInfo,@Context HttpHeaders headers);
 
     @PUT

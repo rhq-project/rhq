@@ -47,6 +47,7 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.domain.*;
@@ -69,7 +70,9 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
 
 
     @Override
-    public Response listAlerts(int page, String status, boolean slim, Long since, Request request, UriInfo uriInfo, HttpHeaders headers) {
+    public Response listAlerts(int page, String prio, boolean slim, Long since, Integer resourceId, Request request,
+                               UriInfo uriInfo,
+                               HttpHeaders headers) {
 
 
         AlertCriteria criteria = new AlertCriteria();
@@ -77,6 +80,17 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
         if (since!=null) {
             criteria.addFilterStartTime(since);
         }
+
+        if (resourceId!=null) {
+            criteria.addFilterResourceIds(resourceId);
+        }
+
+        if (!prio.equals("All")) {
+            AlertPriority alertPriority = AlertPriority.valueOf(prio.toUpperCase());
+            criteria.addFilterPriorities(alertPriority);
+        }
+        criteria.addSortCtime(PageOrdering.DESC);
+
         PageList<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
         List<AlertRest> ret = new ArrayList<AlertRest>(alerts.size());
         for (Alert al : alerts) {

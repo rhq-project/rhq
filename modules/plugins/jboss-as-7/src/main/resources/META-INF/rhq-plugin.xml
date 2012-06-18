@@ -3638,7 +3638,7 @@
           <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
           <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
           <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-          <c:list-property name="remoting-interceptors" required="false" readOnly="true" description="The list of interceptor classes used by this server." >
+          <c:list-property name="remoting-interceptors:nullable" required="false" readOnly="true" description="The list of interceptor classes used by this server." >
               <c:simple-property name="remoting-interceptors" readOnly="true"/>
           </c:list-property>
           <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -4604,7 +4604,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors" required="false" readOnly="true" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
                 <c:simple-property name="static-connectors" readOnly="true"/>
             </c:list-property>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -4727,7 +4727,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
               <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="true" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
@@ -6253,7 +6253,7 @@
           <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
           <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
           <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-          <c:list-property name="remoting-interceptors" required="false" description="The list of interceptor classes used by this server." >
+          <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server." >
               <c:simple-property name="remoting-interceptors" />
           </c:list-property>
           <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -6689,7 +6689,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
                 <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -6778,7 +6778,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
               <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
@@ -9195,7 +9195,7 @@
         <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
         <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
         <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors" required="false" description="The list of interceptor classes used by this server.">
+        <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server.">
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -11775,7 +11775,7 @@
         <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
         <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
         <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors" required="false" description="The list of interceptor classes used by this server.">
+        <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server.">
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -12742,7 +12742,7 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+          <c:list-property name="static-connectors:nullable" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
             <c:simple-property name="static-connectors"/>
           </c:list-property>
           <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -12865,7 +12865,7 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+          <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
             <c:simple-property name="static-connectors"/>
           </c:list-property>
           <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>

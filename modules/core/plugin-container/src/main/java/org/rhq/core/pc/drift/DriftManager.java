@@ -664,6 +664,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         // get the resource entity stored in our local inventory
         InventoryManager im = getInventoryManager();
         ResourceContainer container = im.getResourceContainer(resourceId);
+
+        if (container == null) {
+            log.error("Cannot determine base directory for " + driftDefinition + ". No resource container found " +
+                "for resource id " + resourceId + ". You may want to restart the agent with the -u option so that " +
+                "the agent's local inventory is synchronized with and consistent with the server's inventory.");
+            throw new IllegalArgumentException("Cannot determine base directory for " + driftDefinition +
+                ". No resource container found for resource id " + resourceId);
+        }
+
         Resource resource = container.getResource();
 
         // find out the type of base location that is specified by the drift def

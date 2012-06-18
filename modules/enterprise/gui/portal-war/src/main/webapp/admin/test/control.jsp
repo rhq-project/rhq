@@ -79,7 +79,8 @@
    typeManager = LookupUtil.getResourceTypeManagerRemote();
    serverPlugins = LookupUtil.getServerPlugins();
 
-   String result = null;
+   String result = null;   
+   String resultNoEscape = null;   
    String mode = pageContext.getRequest().getParameter("mode");
    String failure = null;
    try
@@ -207,14 +208,14 @@
 
       else if ("snapshotMeasurementTables".equals(mode))
       {
-         result = "<table>";
+         resultNoEscape = "<table>";
          Map<String, Long> tableCounts = measurementTestBean.snapshotMeasurementTables();
          for (Map.Entry<String, Long> nextCount : tableCounts.entrySet()) {
              String tableAlias = nextCount.getKey();
              Long tableCount = nextCount.getValue();
-             result += "<tr><td>" + tableAlias + "</td><td>" + tableCount + "</td></tr>";
+             resultNoEscape += "<tr><td>" + tableAlias + "</td><td>" + tableCount + "</td></tr>";
          }
-         result += "</table>"; 
+         resultNoEscape += "</table>"; 
       }
       else if ("typeManagerRemote".equals(mode))
       {
@@ -238,16 +239,26 @@
 
    pageContext.setAttribute("executed", mode);
    pageContext.setAttribute("result", result);
+   pageContext.setAttribute("resultNoEscape", resultNoEscape);   
    pageContext.setAttribute("failure", failure);
    pageContext.setAttribute("testAgentReported", Boolean.valueOf(coreTestBean.isTestAgentReported()));
 
 %>
 
 <c:if test="${executed != null}">
-   <b>Executed <c:out value="${executed}"/>: </b> <c:out value="${result}"/><br>
+   <b>Executed <c:out value="${executed}"/>
+
+   <c:if test="${result != null}">
+      : </b> <c:out value="${result}"/><br>
+   </c:if>
+
+   <c:if test="${resultNoEscape != null}">
+      : </b> ${resultNoEscape} <br>
+   </c:if>
+
    <c:if test="${failure != null}">
       <pre style="background-color: yellow;"><c:out value="${failure}"/></pre>
-   </c:if>
+   </c:if>   
 </c:if>
 
 <h2>Administration</h2>

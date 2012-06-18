@@ -22,12 +22,15 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.events.RightMouseDownEvent;
 import com.smartgwt.client.widgets.events.RightMouseDownHandler;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.MenuItemIfFunction;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
@@ -77,7 +80,28 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
                 MessageCenterView.showDetails(MessageBar.this.currentMessage);
             }
         });
-        showDetailsMenu.setItems(showDetailsMenuItem);
+
+        MenuItem showRootCauseMenuItem = new MenuItem(MSG.view_messageCenter_messageRootCause());
+        showRootCauseMenuItem.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(MenuItemClickEvent event) {
+                Message msg = MessageBar.this.currentMessage;
+                if (msg != null) {
+                    String rootCause = msg.getRootCauseMessage();
+                    if (rootCause != null) {
+                        SC.say(MSG.view_messageCenter_messageRootCause(), rootCause);
+                    }
+                }
+            }
+        });
+        showRootCauseMenuItem.setEnableIfCondition(new MenuItemIfFunction() {
+            public boolean execute(Canvas target, Menu menu, MenuItem item) {
+                Message msg = MessageBar.this.currentMessage;
+                return msg != null && msg.getRootCauseMessage() != null;
+            }
+        });
+
+        showDetailsMenu.setItems(showRootCauseMenuItem, showDetailsMenuItem);
     }
 
     @Override
@@ -157,8 +181,16 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private void updateLabel(Message message) {
         label.hide();
 
-        String contents = (message.getConciseMessage() != null) ? message.getConciseMessage() : message
-            .getDetailedMessage();
+        String contents;
+
+        if (message.getConciseMessage() != null) {
+            contents = message.getConciseMessage();
+        } else if (message.getRootCauseMessage() != null) {
+            contents = message.getRootCauseMessage();
+        } else {
+            contents = message.getDetailedMessage();
+        }
+
         label.setContents(contents);
 
         String styleName = (contents != null) ? message.getSeverity().getStyle() : null;

@@ -35,13 +35,33 @@
         <#assign sched=var.scheduleId/>
         <td>ScheduleId</td><td><a href="/rest/1/metric/schedule/${sched?c}.html">${sched?c}</a></td>    </tr>
     <tr>
-        <td>Min</td><td>${var.min}</td>
+        <td>Min</td><td>
+        <#if var.min?has_content>
+            ${var.min}
+        <#else>
+        NaN
+        </#if>
+    </td>
     </tr>
     <tr>
-        <td>Avg</td><td>${var.avg}</td>
+        <td>Avg</td>
+        <td>
+            <#if var.avg?has_content>
+            ${var.avg}
+            <#else>
+            NaN
+            </#if>
+        </td>
     </tr>
     <tr>
-        <td>Max</td><td>${var.max}</td>
+        <td>Max</td>
+        <td>
+            <#if var.max?has_content>
+            ${var.max}
+            <#else>
+            NaN
+            </#if>
+        </td>
     </tr>
     <tr>
         <td><a align="top" href="javascript:rhq.whisker(${sched?c},'one',400,200)">DataPoints</a></td><td>
@@ -54,7 +74,28 @@
             <#list var.dataPoints as item>
             <tr>
 
-                <td>${item.timeStamp?number_to_time}</td><td>${item.low}</td><td>${item.value}</td><td>${item.high}</td>
+                <td>${item.timeStamp?number_to_time}</td>
+                <td>
+                    <#if item.low?has_content>
+                    ${item.low}
+                    <#else>
+                    NaN
+                    </#if>
+                </td>
+                <td>
+                    <#if item.value?has_content>
+                        ${item.value}
+                    <#else>
+                        NaN
+                    </#if>
+                </td>
+                <td>
+                    <#if item.high?has_content>
+                        ${item.high}
+                    <#else>
+                        NaN
+                    </#if>
+                </td>
             </tr>
             </#list>
         </table>

@@ -44,19 +44,18 @@
 
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.1</version>
                         <executions>
 
                             <execution>
                                 <id>deploy</id>
                                 <phase>compile</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <mkdir dir="${rhq.deploymentDir}" />
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating ${deployment.file}...</echo>
                                         <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -67,7 +66,7 @@
                                 <id>deploy-jar-meta-inf</id>
                                 <phase>package</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                                         <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
@@ -77,7 +76,7 @@
                                         </unjar>
                                         <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                                         </jar>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -88,11 +87,11 @@
                                 <id>undeploy</id>
                                 <phase>clean</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Deleting ${deployment.file}...</echo>
                                         <delete file="${deployment.file}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -127,7 +126,7 @@
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -147,7 +146,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -157,7 +156,7 @@
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -178,7 +177,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

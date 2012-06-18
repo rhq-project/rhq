@@ -108,6 +108,13 @@ public class EventContextImpl implements EventContext {
         return getEventManager().getSigar();
     }
 
+    /**
+     * Only used for testing purposes.
+     */
+    public Resource getResource() {
+        return resource;
+    }
+
     private void registerEventPollerInternal(final EventPoller poller, int pollingInterval, final String sourceLocation) {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(poller.getEventType(),
             this.resource.getResourceType());

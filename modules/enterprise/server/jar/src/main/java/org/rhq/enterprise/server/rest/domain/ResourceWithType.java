@@ -53,7 +53,7 @@ public class ResourceWithType {
     String pluginName;
     Integer parentId;
     List<Link> links = new ArrayList<Link>();
-
+    private String ancestry;
 
     public ResourceWithType() {
     }
@@ -131,5 +131,26 @@ public class ResourceWithType {
 
     public void addLink(Link link) {
         links.add(link);
+    }
+
+    public void setAncestry(String ancestry) {
+        this.ancestry = ancestry;
+    }
+
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceWithType{" +
+                "resourceName='" + resourceName + '\'' +
+                ", resourceId=" + resourceId +
+                ", typeName='" + typeName + '\'' +
+                ", typeId=" + typeId +
+                ", pluginName='" + pluginName + '\'' +
+                ", parentId=" + parentId +
+                ", ancestry='" + ancestry + '\'' +
+                '}';
     }
 }

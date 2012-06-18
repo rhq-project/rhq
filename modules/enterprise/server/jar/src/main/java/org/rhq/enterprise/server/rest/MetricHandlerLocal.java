@@ -39,6 +39,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -49,19 +55,25 @@ import org.rhq.enterprise.server.rest.domain.StringValue;
  * Deal with metrics
  * @author Heiko W. Rupp
  */
+@Api(value = "Deal with metrics",
+        description = "This part of the API deals with exporting metrics")
 @Produces({"application/json","application/xml", "text/html"})
 @Path("/metric")
 @Local
 public interface MetricHandlerLocal {
 
+    static String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
+    static String NO_SCHEDULE_FOR_ID = "No schedule with the passed id exists";
 
     @GET
     @Path("data/{scheduleId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
-    Response getMetricData(@PathParam("scheduleId") int scheduleId,
-                                  @QueryParam("startTime")  long startTime,
-                                  @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
+    @ApiOperation(value = "Get the bucketized metric values for the schedule ")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Response getMetricData(@ApiParam("Schedule Id of the values to query") @PathParam("scheduleId") int scheduleId,
+                           @ApiParam(value="Start time since epoch.", defaultValue = "End time - 8h") @QueryParam("startTime")  long startTime,
+                           @ApiParam(value="End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+                           @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
                                   @QueryParam("hideEmpty") boolean hideEmpty,
                                   @Context Request request,
                                   @Context HttpHeaders headers);
@@ -80,7 +92,12 @@ public interface MetricHandlerLocal {
 
     @GET
     @Path("data/resource/{resourceId}")
-    List<MetricAggregate> getAggregatesForResource(@PathParam("resourceId") int resourceId);
+    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the resource")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    List<MetricAggregate> getAggregatesForResource(
+            @ApiParam("Resource to query") @PathParam("resourceId") int resourceId,
+            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
+            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime);
 
     /**
      * Get information about the schedule
@@ -93,7 +110,10 @@ public interface MetricHandlerLocal {
     @GET
     @Path("/schedule/{id}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
-    Response getSchedule(@PathParam("id") int scheduleId, @Context Request request, @Context HttpHeaders headers,
+    @ApiOperation("Get the metric schedule for the passed id")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Response getSchedule(@ApiParam("Schedule Id") @PathParam("id") int scheduleId,
+                         @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
     /**
@@ -107,7 +127,11 @@ public interface MetricHandlerLocal {
     @Path("/schedule/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    Response updateSchedule(@PathParam("id") int scheduleId,  MetricSchedule in,@Context HttpHeaders headers);
+    @ApiOperation(value = "Update the schedule (enabled, interval) ", responseClass = "MetricSchedule")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Response updateSchedule(@ApiParam("Id of the schedule to query") @PathParam("id") int scheduleId,
+                            @ApiParam(value = "New schedule data", required = true) MetricSchedule in,
+                            @Context HttpHeaders headers);
 
     /**
      * Expose the raw metrics for the given schedule
@@ -117,15 +141,20 @@ public interface MetricHandlerLocal {
      * @param duration Duration in seconds. If duration=0, startTime is used
      * @param request Injected Request headers
      * @param headers Injected HttpHeaders
-     * @return a JSON encoded stream of numerical values
+     * @return an encoded stream of numerical values
      */
+    @ApiOperation(value = "Expose the raw metrics of a single schedule. This can only expose raw data, which means the start date may "
+        + "not be older than 7 days.")
     @GET
     @Path("data/{scheduleId}/raw")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,"text/csv",MediaType.TEXT_HTML})
-    StreamingOutput getMetricDataRaw(@PathParam("scheduleId") int scheduleId,
-                                     @QueryParam("startTime") long startTime,
-                                     @QueryParam("endTime") long endTime,
-                                     @QueryParam("duration") long duration,
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    })
+    StreamingOutput getMetricDataRaw(@ApiParam(required = true) @PathParam("scheduleId") int scheduleId,
+                                     @ApiParam(value="Start time since epoch", defaultValue = "Now - 8h") @QueryParam("startTime") long startTime,
+                                     @ApiParam(value="End time since epoch", defaultValue = "Now") @QueryParam("endTime") long endTime,
+                                     @ApiParam(defaultValue = "8h = 28800000ms", value = "Timespan in ms") @QueryParam("duration") long duration,
                                      @Context Request request,
                                      @Context HttpHeaders headers);
 
@@ -142,8 +171,11 @@ public interface MetricHandlerLocal {
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Path("data/{scheduleId}/raw/{timeStamp}")
-    Response putMetricValue(@PathParam("scheduleId") int scheduleId,
-                            @PathParam("timeStamp") long timestamp, NumericDataPoint point,
+    @ApiOperation("Submit a single (numerical) metric to the server")
+    @ApiError(code=404, reason = NO_SCHEDULE_FOR_ID)
+    Response putMetricValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+                            @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
+                            @ApiParam(value = "Data point", required = true) NumericDataPoint point,
                             @Context HttpHeaders headers,
                             @Context UriInfo uriInfo);
 
@@ -156,19 +188,24 @@ public interface MetricHandlerLocal {
     @POST
     @Path("data/raw")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation(value="Submit a series of (numerical) metric values to the server",responseClass = "No response")
     Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers);
 
     @GET
     @Path("data/{scheduleId}/baseline")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    Baseline getBaseline(@PathParam("scheduleId") int scheduleId,
+    @ApiOperation(value = "Get the current baseline for the schedule")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Baseline getBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
                          @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
     @PUT
     @Path("data/{scheduleId}/baseline")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    void setBaseline(@PathParam("scheduleId") int scheduleId,
+    @ApiOperation(value = "Set a new baseline for the schedule")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    void setBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
                      Baseline baseline,
                      @Context HttpHeaders headers,
                      @Context UriInfo uriInfo);
@@ -176,10 +213,14 @@ public interface MetricHandlerLocal {
     @PUT
     @Path("data/{scheduleId}/trait")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    Response putTraitValue(@PathParam("scheduleId") int scheduleId, StringValue value);
+    @ApiOperation(value = "Submit a new trait value for the passed schedule id")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId, StringValue value);
 
     @GET
     @Path("data/{scheduleId}/trait")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    Response getTraitValue(@PathParam("scheduleId") int scheduleId);
+    @ApiOperation(value="Get the current value of the trait with the passed schedule id", responseClass = "StringValue")
+    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    Response getTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId);
 }

@@ -235,4 +235,11 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
+    public void cancelOperationHistory(int historyId, boolean ignoreAgentErrors) throws RuntimeException {
+        try {
+            operationManager.cancelOperationHistory(getSessionSubject(), historyId, ignoreAgentErrors);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

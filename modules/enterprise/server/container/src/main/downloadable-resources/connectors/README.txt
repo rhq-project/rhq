@@ -18,5 +18,5 @@ required for earlier versions of Tomcat, since they already include that jar.
 For details on how to deploy the filter to various versions of JBoss AS and
 Tomcat, see:
 
-http://rhq-project.org/display/JOPR2/Managed+Product+Configuration
+https://docs.jboss.org/author/display/RHQ/Managed+Product+Configuration
 

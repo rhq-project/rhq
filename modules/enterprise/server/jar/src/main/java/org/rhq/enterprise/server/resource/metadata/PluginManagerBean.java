@@ -332,21 +332,20 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     // Start with no transaction so we can control the transactional boundaries. This is important for a
-    // few reasons. Registering the plugin and removing obsolete types are perfromed in different, subsequent,
-    // transactions. The register may update types, and that locks various rows of the database. Those rows
+    // few reasons. Registering the plugin and removing obsolete types are performed in different, subsequent,
+    // transactions. The registration may update types, and that locks various rows of the database. Those rows
     // must be unlocked before obsolete type removal.  Type removal executes (resource) bulk delete under the covers,
     // and that will deadlock with the rows locked by the type update (at least in oracle) if performed in the same
     // transaction.  Furthermore, as mentioned, obsolete type removal removes resources of the obsolete type. We
     // need to avoid an umbrella transaction for the type removal because large inventories of obsolete resources
     // will generate very large transactions. Potentially resulting in timeouts or other issues.
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
-        boolean forceUpdate) throws Exception {
-        log.debug("Registering " + plugin);
+    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+                               boolean forceUpdate) throws Exception {
+        log.debug("Registering " + plugin + "...");
         long startTime = System.currentTimeMillis();
 
-        boolean newOrUpdated = pluginMgr.installPluginJar(subject, plugin, pluginDescriptor, pluginFile);
+        boolean newOrUpdated = pluginMgr.installPluginJar(plugin, pluginDescriptor, pluginFile);
         boolean typesUpdated = pluginMgr.registerPluginTypes(plugin.getName(), pluginDescriptor, newOrUpdated,
             forceUpdate);
 
@@ -365,22 +364,21 @@ public class PluginManagerBean implements PluginManagerLocal {
                     log.debug("Plugin [" + extPluginName
                         + "] will be re-registered because it embeds types from plugin [" + plugin.getName() + "]");
                     pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
-                    resourceMetadataManager.removeObsoleteTypes(subject, extPluginName, metadataManager);
+                    resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), extPluginName, metadataManager);
                 }
             }
 
             // now remove any obsolete types from the newly registered plugin
-            resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), metadataManager);
+            resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), plugin.getName(), metadataManager);
         }
 
         long endTime = System.currentTimeMillis();
         log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
-        File pluginFile) throws Exception {
+    public boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
+            throws Exception {
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
 

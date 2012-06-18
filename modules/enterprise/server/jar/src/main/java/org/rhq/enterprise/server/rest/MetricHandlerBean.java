@@ -60,6 +60,8 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
+
 import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -123,6 +125,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             startTime = endTime - EIGHT_HOURS;
         }
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
+
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
@@ -134,7 +139,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         if (!listList.isEmpty()) {
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-            fill(res, list,scheduleId,hideEmpty);
+            fill(res, list,scheduleId,hideEmpty, isHtml);
         }
 
         CacheControl cc = new CacheControl();
@@ -144,8 +149,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         cc.setNoCache(false);
 
         Response.ResponseBuilder builder;
-        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+        if (isHtml) {
             String htmlString = renderTemplate("metricData", res);
             builder = Response.ok(htmlString,mediaType);
         }
@@ -183,17 +187,35 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return schedule;
     }
     private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
-                                 boolean hideEmpty) {
+                                 boolean hideEmpty, boolean isHtmlOutput) {
         long minTime=Long.MAX_VALUE;
         long maxTime=0;
         res.setScheduleId(scheduleId);
 
         for (MeasurementDataNumericHighLowComposite c : list) {
             long timestamp = c.getTimestamp();
-            if (!Double.isNaN(c.getValue()) || !hideEmpty) {
-                MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
-                res.addDataPoint(dp);
+            if (Double.isNaN(c.getValue()) && hideEmpty)
+                continue;
+
+            MetricAggregate.DataPoint dp;
+            if (isHtmlOutput) {
+                dp = new MetricAggregate.DataPoint(timestamp);
+
+                Double v = c.getLowValue();
+                v= nullifyIfNaN(v);
+                dp.setLow(v);
+                v = c.getHighValue();
+                v =nullifyIfNaN(v);
+                dp.setHigh(v);
+                v = c.getValue();
+                v= nullifyIfNaN(v);
+                dp.setValue(v);
+
+            } else {
+                dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
             }
+            res.addDataPoint(dp);
+
             if (timestamp <minTime)
                 minTime= timestamp;
             if (timestamp >maxTime)
@@ -206,6 +228,12 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return res;
     }
 
+    private Double nullifyIfNaN(Double v) {
+        if (Double.isNaN(v))
+            v =null;
+        return v;
+    }
+
     @GET
     @Path("data")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_HTML})
@@ -215,6 +243,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                        @Context HttpHeaders headers) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
 
         if (startTime==0) {
             endTime = System.currentTimeMillis();
@@ -242,7 +274,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             if (!listList.isEmpty()) {
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
                 MetricAggregate res = new MetricAggregate();
-                fill(res, list,scheduleId,hideEmpty);
+                boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
+                fill(res, list,scheduleId,hideEmpty, isHtml);
                 resList.add(res);
             }
             else
@@ -361,7 +394,15 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     }
 
     @Override
-    public List<MetricAggregate> getAggregatesForResource( int resourceId) {
+    public List<MetricAggregate> getAggregatesForResource(int resourceId, long startTime, long endTime) {
+
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
+        if (startTime==0) {
+            startTime = endTime - EIGHT_HOURS;
+        }
+
 
         List<MeasurementSchedule> schedules = scheduleManager.findSchedulesForResourceAndType(caller,
                 resourceId, DataType.MEASUREMENT, null,false);
@@ -370,11 +411,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         }
         List<MetricAggregate> ret = new ArrayList<MetricAggregate>(schedules.size());
 
-        long now = System.currentTimeMillis();
-        long then = now - EIGHT_HOURS;
-
         for (MeasurementSchedule schedule: schedules) {
-            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),then,now);
+            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),startTime,endTime);
             MetricAggregate res = new MetricAggregate(schedule.getId(), aggr.getMin(),aggr.getAvg(),aggr.getMax());
             ret.add(res);
         }
@@ -650,7 +688,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 }
                 else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                     pw.println("<table>");
-                    pw.print("<th><td>time</td><td>value</td></th>");
+                    pw.print("<tr><th>time</th><th>value</th></tr>\n");
                     while (rs.next()) {
                         pw.print("  <tr>");
                         pw.print("<td>");

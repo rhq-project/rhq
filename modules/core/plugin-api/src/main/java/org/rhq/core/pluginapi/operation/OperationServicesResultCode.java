@@ -28,5 +28,5 @@ package org.rhq.core.pluginapi.operation;
  * @author Jason Dobies
  */
 public enum OperationServicesResultCode {
-    SUCCESS, FAILURE, TIMED_OUT
+    SUCCESS, FAILURE, TIMED_OUT, CANCELED
 }

@@ -186,7 +186,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     /**
      * Get availability for a Resource synchronously, with a 5 second timeout.
      *
-     * @param resource the Resource                 
+     * @param resource the Resource
      *
      * @return the report containing the collected data
      */
@@ -196,20 +196,20 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         AvailabilityFacet availFacet = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                FacetLockType.READ, timeoutMillis, false, false);        
+                FacetLockType.READ, timeoutMillis, false, false);
         AvailabilityType avail;
         try {
             avail = availFacet.getAvailability();
         } catch (Exception e) {
             System.out.println("====== Error occurred during availability check on " + resource + ": " + e);
             throw new RuntimeException("Error occurred during availability check on " + resource + ": " + e);
-        }        
+        }
         return avail;
     }
-    
+
     /**
      * Execute an operation on a Resource synchronously, with the same timeout that the PC would use.
-     * 
+     *
      * @param resource the Resource
      * @param operationName the name of the operation
      * @param params parameters to pass to the operation; may be null if the operation does not define any parameters
@@ -217,7 +217,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * @return the result of the operation
      */
     @NotNull
-    protected OperationResult invokeOperation(Resource resource, String operationName, @Nullable Configuration params) 
+    protected OperationResult invokeOperation(Resource resource, String operationName, @Nullable Configuration params)
             throws PluginContainerException {
         ResourceType resourceType = resource.getResourceType();
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
@@ -225,12 +225,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         assertNotNull(operationDefinition, "No operation named [" + operationName
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
 
-        long timeout = getDefaultTimeout(resource.getResourceType(), operationName);        
+        long timeout = getDefaultTimeout(resource.getResourceType(), operationName);
         System.out.println("=== Invoking operation [" + operationName + "] with parameters ["
                 + ((params != null) ? params.toString(true) : params) + "] on " + resource + "...");
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = timeout * 1000;
-        OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class, 
+        OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class,
                 FacetLockType.WRITE, timeoutMillis, false, false);
         OperationResult operationResult;
         try {
@@ -407,7 +407,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             findNumericMetricsAndTraitsWithNullValuesRecursively(childResource, metricsWithNullValuesByType);
         }
     }
-    
+
     protected Set<String> getNumericMetricsAndTraitsWithNullValues(Resource resource) throws Exception {
         ResourceType type = resource.getResourceType();
         Set<MeasurementDefinition> numericMetricAndTraitDefs =
@@ -426,7 +426,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected Set<String> getMetricsWithNullValues(Resource resource, Set<MeasurementDefinition> metricDefs)
             throws Exception {
         Set<String> metricsWithNullValues = new TreeSet<String>();
-        for (MeasurementDefinition metricDef : metricDefs) {                        
+        for (MeasurementDefinition metricDef : metricDefs) {
             if (!metricDef.getResourceType().equals(resource.getResourceType())) {
                 throw new IllegalArgumentException(metricDef + " is not defined by " + resource.getResourceType());
             }
@@ -441,11 +441,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             }
             if (value == null) {
                 metricsWithNullValues.add(metricDef.getName());
-            }            
+            }
         }
         return metricsWithNullValues;
     }
-    
+
     @Nullable
     protected Double collectNumericMetric(Resource resource, String metricName) throws Exception {
         System.out.println("=== Collecting numeric metric [" + metricName + "] for " + resource + "...");
@@ -515,7 +515,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * Collect a metric for a Resource synchronously, with a 7 second timeout.
      *
      * @param resource the Resource
-     * @param metricName the name of the metric                 
+     * @param metricName the name of the metric
      *
      * @return the report containing the collected data
      */
@@ -527,7 +527,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 metricName);
         assertNotNull(measurementDefinition, "No metric named [" + metricName
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
-               
+
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
@@ -547,15 +547,17 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                                 + "] on " + resource + ": " + e);
             throw new RuntimeException("Error occurred during collection of metric [" + metricName
                     + "] on " + resource + ": " + e);
-        }        
+        }
         return report;
     }
 
-    protected void invokeOperationAndAssertSuccess(Resource resource, String operationName, @Nullable Configuration params)
+    protected OperationResult invokeOperationAndAssertSuccess(Resource resource, String operationName,
+                                                              @Nullable Configuration params)
             throws PluginContainerException {
         OperationResult result = invokeOperation(resource, operationName, params);
         assertOperationSucceeded(operationName, params, result);
-    }    
+        return result;
+    }
 
     private long getDefaultTimeout(ResourceType resourceType, String operationName) {
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
@@ -580,7 +582,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         assertNull(result.getErrorMessage(), "Operation [" + operationName + "] with parameters "
                 + paramsString + " returned an error: " + result.getErrorMessage());
     }
-    
+
     protected abstract String getPluginName();
 
     protected FakeServerInventory getServerInventory() {

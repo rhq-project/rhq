@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -610,5 +611,62 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
             Assert.assertTrue(secondPropFound);
             Assert.assertTrue(thirdPropFound);
         }
+    }
+
+    /** Tests that c:group entries are loaded correctly in addition to special c:group syntax handling. 
+     *  Ex. <c:group name="proxy" displayName="Proxy Options">
+     *       <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+     *       <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+     *      </c:group>
+     * 
+     * @throws Exception
+     */
+    public void testLoadGroupedConfiguration() throws Exception {
+
+        //Fabricate the json string result.
+        String resultString = "{\n" + "   \"outcome\" : \"success\",    \"result\" : {\n"
+            + "      \"advertise\" : \"true\",\n" + "      \"advertise-socket\" : \"modcluster\",\n"
+            + "      \"balancer\" : \"undefined\",\n" + "      \"connector\" : \"ajp\",\n"
+            + "      \"proxy-list\" : \"undefined\",\n" + "      \"proxy-url\" : \"/\"\n" + "      }\n" + "}\n";
+
+        ConfigurationDefinition definition = loadServiceDescriptorElement("simpleGroupNoSpecial");
+
+        //Formally construct the json response
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        //Create fake connection and prepopulate the response.
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        //Test actual load using test-plugin.xml contents.
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+
+        //Validate loaded config.
+        assert config != null;
+
+        //check boolean contents
+        PropertySimple advertise = (PropertySimple) config.get("advertise");
+        assert advertise != null : "Boolean 'advertise' property embedded in c:group not found.";
+        boolean advertiseOn = advertise.getBooleanValue();
+        assert advertiseOn != false : "Advertise value not set to true or not defaulting to true.";
+
+        //Define properties and default values to check.
+        HashMap<String, String> properties = new HashMap<String, String>();
+        properties.put("advertise-socket", "modcluster");
+        properties.put("connector", "ajp");
+        properties.put("proxy-list", "undefined");
+        properties.put("proxy-url", "/");
+        for (String prop : properties.keySet()) {
+            PropertySimple property = (PropertySimple) config.get(prop);
+            assert property != null : "Property '" + prop + "' could not be found.";
+            String value = property.getStringValue();
+            assert value != null : "The value for property '" + prop + "' was not located.";
+            assert value.trim().equals(properties.get(prop)) : "Value for property '" + prop
+                + "' does not match. Found '" + value + "' instead of '" + properties.get(prop) + "'";
+        }
+
     }
 }

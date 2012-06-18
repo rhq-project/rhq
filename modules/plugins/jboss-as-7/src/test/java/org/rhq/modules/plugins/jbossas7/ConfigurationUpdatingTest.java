@@ -18,6 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -367,7 +368,8 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step1.getAdditionalProperties().get("name").equals("test-prop");
         assert step1.getAdditionalProperties().get("value").equals("Heiko");
         assert step2.getAdditionalProperties().get("name").equals("check-interval");
-        assert step2.getAdditionalProperties().get("value").equals("23");
+        assert step2.getAdditionalProperties().get("value").equals(23);
+        assert step3.getAdditionalProperties().get("value").equals(true);
 
     }
 
@@ -582,7 +584,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         additionalProperties = cop.step(2).getAdditionalProperties();
         assert additionalProperties.get("name").equals("bar");
-        assert additionalProperties.get("value").equals("456");
+        assert additionalProperties.get("value").equals(456);
 
     }
 
@@ -792,6 +794,72 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
                 Assert.assertEquals(mapValue.values().iterator().next(), expectedValue);
             }
         }
+
+    }
+
+    /** Tests that c:group entries are updated correctly in addition to special c:group syntax handling.
+     *  Ex. <c:group name="proxy" displayName="Proxy Options">
+     *       <c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separated with comas."/>
+     *       <c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
+     *      </c:group>
+     *
+     * @throws Exception
+     */
+    public void testUpdateGroupConfiguration() throws Exception {
+
+        ConfigurationDefinition definition = loadServiceDescriptorElement("simpleGroupNoSpecialUpdate");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+        HashMap<String, String> properties = new HashMap<String, String>();
+        properties.put("proxy-list", "127.0.0.1:7777,test.localhost.com:6666");
+        properties.put("proxy-url", "/rootWebappUrl");
+        for (String name : properties.keySet()) {//load all properties for update.
+            conf.put(new PropertySimple(name, properties.get(name)));
+        }
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == properties.size() : "Composite operation steps incorrect. Expected '"
+            + properties.size() + "' but was '" + cop.numberOfSteps() + "'.";
+        //check property values
+        for (int i = 0; i < cop.numberOfSteps(); i++) {
+            //each property maps to a separate operation.
+            Operation step = cop.step(i);
+            assert step.getOperation().equals("write-attribute") : "Write attribute not set correctly.";
+            Map<String, Object> props = step.getAdditionalProperties();
+            assert props.size() == 2 : "Property list not correct. Expected '2' property but there were '"
+                + props.size() + "'.";
+            //check that property was returned
+            String[] keys = new String[2];
+            props.keySet().toArray(keys);
+            String name = (String) props.get("name");
+            String value = (String) props.get("value");
+            assert properties.containsKey(name) : "Property '" + name + "' was not found and should have been.";
+            //check the contents of returned response.
+            assert value.equals(properties.get(name)) : "Value for property '" + name
+                + "' was not updated correctly. Expected '" + properties.get(name) + "' but was '" + value + "'.";
+        }
+    }
+
+    public void testIgnoreProperty() throws Exception {
+        ConfigurationDefinition definition = loadDescriptor("testIgnore");
+
+        Configuration configuration = new Configuration();
+
+        configuration.put(new PropertySimple("normal","0xdeadbeef"));
+        configuration.put(new PropertySimple("test:ignore","Hello world!")); // should not create a step
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(configuration, new Address());
+
+        assert cop != null;
+        assert cop.numberOfSteps() == 1 : "One step was expected, but got " + cop.numberOfSteps();
 
     }
 }

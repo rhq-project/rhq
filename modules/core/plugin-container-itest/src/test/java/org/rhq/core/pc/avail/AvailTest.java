@@ -148,7 +148,7 @@ public class AvailTest extends Arquillian {
         }
     }
 
-    @Test(groups = "pc.itest.avail")
+    @Test(groups = "pc.itest.avail", priority = 20)
     public void testDiscovery() throws Exception {
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());
@@ -170,7 +170,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(grandchildComponents2.size(), 8, "missing grandchild2");
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     public void testAvailReport() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         dumpContainers("testAvailReport() Start");
@@ -213,7 +213,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, true, false, 29, 7, 23, 28, 0, 6);
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     public void testScheduling() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
@@ -266,7 +266,7 @@ public class AvailTest extends Arquillian {
         Assert.assertTrue(numBuckets >= 3, "Random distribution seems wrong, buckets hit= " + numBuckets);
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     // If a parent changes to UP, its children must all be checked as they could legitimately be something
     // other than UP.
     public void testForceChildrenOfParentUp() throws Exception {
@@ -330,7 +330,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, false, false, 29, 14, 15, 12, 2, 0);
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     // If a parent changes to DOWN, its children should all defer to being DOWN as well.
     public void testDeferToParentDown() throws Exception {
         // don't use a ForceAvailabilityExecutor for this test, we want to manipulate what gets checked
@@ -401,7 +401,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, false, false, 29, 14, 3, 0, 2, 12);
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     public void testCheckOnlyEligible() throws Exception {
         // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp() 
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
@@ -466,7 +466,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, false, false, 29, 0, 1, 0, 0, 0);
     }
 
-    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", priority = 21)
     public void testDeferToParent() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();

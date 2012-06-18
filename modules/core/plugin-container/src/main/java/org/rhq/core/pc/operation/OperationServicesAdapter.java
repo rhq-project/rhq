@@ -132,6 +132,19 @@ public class OperationServicesAdapter implements OperationServices, OperationSer
         }
     }
 
+    public void operationCanceled(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+        long canceledTime) {
+        OperationServicesResult operationServicesResult = new OperationServicesResult(
+            OperationServicesResultCode.CANCELED);
+        operationServicesResult.setComplexResults(result);
+        operationServicesResult.setErrorStackTrace(error.getStackTraceString());
+
+        completedJobs.put(jobId, operationServicesResult);
+        synchronized (callbackLock) {
+            callbackLock.notifyAll();
+        }
+    }
+
     public void operationTimedOut(String jobId, long invocationTime, long timeoutTime) {
         OperationServicesResult operationServicesResult = new OperationServicesResult(
             OperationServicesResultCode.TIMED_OUT);

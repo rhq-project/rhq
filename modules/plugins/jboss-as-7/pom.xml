@@ -48,6 +48,12 @@
                http://repo1.maven.org/maven2/com/fasterxml/jackson/ -->
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
       <version>${jackson.version}</version>
     </dependency>
@@ -58,7 +64,7 @@
       <artifactId>jboss-sasl</artifactId>
       <version>${jboss.sasl.version}</version>
     </dependency>
-
+    
     <!-- === Test Deps === -->
 
     <dependency>
@@ -95,11 +101,26 @@
             <id>copy-libs</id>
             <phase>process-resources</phase>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>copy</goal>
             </goals>
             <configuration>
-              <includeScope>runtime</includeScope>
-              <excludeScope>plugin</excludeScope>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-core-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-mapper-asl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.jboss.sasl</groupId>
+                  <artifactId>jboss-sasl</artifactId>
+                </artifactItem>
+                
+              </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>
           </execution>
@@ -282,6 +303,38 @@
       </properties>
     </profile>
 
+    <profile>
+      <id>eap600ER8.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0.ER8</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>eap600CR1.itest.setup</id>
+
+      <activation>
+        <property>
+          <name>as7.version</name>
+          <value>6.0.0.CR1</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as7.url>Please set the as7.url system property to the location of the EAP ${as7.version} distribution zipfile.</as7.url>
+        <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
+      </properties>
+    </profile>
+
     <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
     <!-- activate with -Das7.itest. See also http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests -->
     <profile>
@@ -330,8 +383,7 @@
                     </condition>
                     <property name="as7.zipfile"
                               location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
-                    <get src="${as7.url}" dest="${as7.zipfile}"
-                         usetimestamp="true" verbose="true"/>
+                    <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true"/>
                     <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
                           tofile="${java.io.tmpdir}/jboss-as-${as7.version}" failonerror="false"
@@ -341,8 +393,14 @@
                       <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
                     </chmod>
                     <replace dir="${jboss7.home}"
-                             includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
+                             includes="standalone/configuration/standalone*.xml, domain/configuration/host*.xml"
                              token="&lt;inet-address " value="&lt;loopback-address "/>
+                    <!-- TODO (ips, 05/24/12): The below starts the managed servers in HA mode, but it also causes a
+                                               slew of HornetQ authentication errors - figure out how to make those go
+                                               away. -->
+                    <!--<replace dir="${jboss7.home}"
+                             includes="domain/configuration/host.xml"
+                             token=' group="main-server-group"' value=' group="other-server-group"'/>-->
                   </target>
                 </configuration>
               </execution>
@@ -354,50 +412,8 @@
                 </goals>
                 <configuration>
                    <target>
-                      <condition property="as7.product" value="eap" else="as">
-                         <matches pattern="^6\." string="${as7.version}"/>
-                      </condition>
-                      <property name="as7.zipfile"
-                                location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
-                      
-                      <delete file="${as7.zipfile}" />
-                      <delete dir="${java.io.tmpdir}/jboss-eap-6.0" />
-                      <delete dir="${java.io.tmpdir}/jboss-as-${as7.version}" />
+                      <delete dir="${jboss7.home}"/>
                    </target>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-          <!-- This is so we can reference the below properties in jbossas7-arquillian.xml. -->
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>properties-maven-plugin</artifactId>
-            <version>1.0-alpha-2</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>set-system-properties</goal>
-                </goals>
-                <configuration>
-                  <properties>
-                    <property>
-                      <name>jboss7.home</name>
-                      <value>${jboss7.home}</value>
-                    </property>
-                    <property>
-                      <name>jboss.standalone.bindAddress</name>
-                      <value>${jboss.standalone.bindAddress}</value>
-                    </property>
-                    <property>
-                      <name>jboss.standalone.portOffset</name>
-                      <value>${jboss.standalone.portOffset}</value>
-                    </property>
-                    <property>
-                      <name>jboss.standalone.nativeManagementPort</name>
-                      <value>${jboss.standalone.nativeManagementPort}</value>
-                    </property>
-                  </properties>
                 </configuration>
               </execution>
             </executions>
@@ -617,12 +633,12 @@
                 <id>deploy</id>
                 <phase>compile</phase>
                 <configuration>
-                  <tasks>
+                  <target>
                     <mkdir dir="${rhq.deploymentDir}"/>
                     <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                     <echo>*** Updating ${deployment.file}...</echo>
                     <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
-                  </tasks>
+                  </target>
                 </configuration>
                 <goals>
                   <goal>run</goal>
@@ -633,7 +649,7 @@
                 <id>deploy-jar-meta-inf</id>
                 <phase>package</phase>
                 <configuration>
-                  <tasks>
+                  <target>
                     <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                     <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                     <unjar src="${project.build.directory}/${project.build.finalName}.jar"
@@ -645,7 +661,7 @@
                     <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
                          update="true">
                     </jar>
-                  </tasks>
+                  </target>
                 </configuration>
                 <goals>
                   <goal>run</goal>
@@ -656,11 +672,11 @@
                 <id>undeploy</id>
                 <phase>clean</phase>
                 <configuration>
-                  <tasks>
+                  <target>
                     <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                     <echo>*** Deleting ${deployment.file}...</echo>
                     <delete file="${deployment.file}"/>
-                  </tasks>
+                  </target>
                 </configuration>
                 <goals>
                   <goal>run</goal>

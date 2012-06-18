@@ -88,6 +88,19 @@ public class Result {
         return false;
     }
 
+    @JsonIgnore
+    public boolean isRestartRequired() {
+        if (responseHeaders == null)
+            return false;
+        if (responseHeaders instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) responseHeaders;
+            if (map.containsKey("process-state") && map.get("process-state").equals("restart-required")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isSuccess() {
         return success;
     }

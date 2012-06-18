@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 ]>
 
-<section id="#displayResourceTypeLink( ${resourceType} )">
+<section id="${typeId}">
     <title>#displayResourceTypeName( ${resourceType} )</title>
 
     <bridgehead>Overview</bridgehead>
@@ -32,33 +32,12 @@
 #end
 
 
-    <bridgehead>Parent Resource Types</bridgehead>
-#if ( !${resourceType.parentResourceTypes.isEmpty()} )
-    <itemizedlist>
-#foreach ( ${parentResourceType} in ${resourceType.parentResourceTypes} )
-        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${parentResourceType} )"/></simpara></listitem>
-#end
-    </itemizedlist>
-#elseif ( ${resourceType.category.name} != "PLATFORM" )
-    <itemizedlist>
-        <listitem><simpara><xref linkend="Managed_Platforms"/></simpara></listitem>
-    </itemizedlist>
-#else
-    <para>none</para>
-#end
-
-
     <bridgehead>Child Resource Types</bridgehead>
-#if ( !${resourceType.childResourceTypes.isEmpty()} )
+#if ( !${childTypeIds.isEmpty()} )
     <itemizedlist>
-#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
-        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${childResourceType} )"/></simpara></listitem>
+#foreach( ${childTypeId} in ${childTypeIds} )
+        <listitem><simpara><xref linkend="${childTypeId}"/></simpara></listitem>
 #end
-    </itemizedlist>
-#elseif ( ${resourceType.category.name} == "PLATFORM" )
-    <itemizedlist>
-        <listitem><simpara><xref linkend="Managed_Servers"/></simpara></listitem>
-        <listitem><simpara><xref linkend="Managed_Platform_Services"/></simpara></listitem>
     </itemizedlist>
 #else
     <para>none</para>
@@ -188,8 +167,8 @@
 #end
 
 
-#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
-    <xi:include href="#displayResourceTypeLink( ${childResourceType} ).xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+#foreach( ${childTypeId} in ${childTypeIds} )
+    <xi:include href="${childTypeId}.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 #end
     
 </section>

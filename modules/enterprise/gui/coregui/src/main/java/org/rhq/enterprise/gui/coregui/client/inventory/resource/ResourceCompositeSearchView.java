@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,11 +36,14 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -47,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -58,17 +63,75 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class ResourceCompositeSearchView extends ResourceSearchView {
 
     private final ResourceComposite parentResourceComposite;
+    private boolean initialized;
+    private List<Resource> singletonChildren;
+    private Set<ResourceType> creatableChildTypes;
+    private Set<ResourceType> importableChildTypes;
+    private boolean hasCreatableTypes;
+    private boolean hasImportableTypes;
+    private boolean canCreate;
 
     public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
         String title, SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
         super(locatorId, criteria, title, sortSpecifier, excludeFields, headerIcons);
         this.parentResourceComposite = parentResourceComposite;
+        this.canCreate = this.parentResourceComposite.getResourcePermission().isCreateChildResources();
         setInitialCriteriaFixed(true);
     }
 
     public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
         String title, String... headerIcons) {
         this(locatorId, parentResourceComposite, criteria, title, null, null, headerIcons);
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+
+        // To properly filter Create Child and Import menus we need existing singleton child resources. If the
+        // user has creat permission and the parent type has singleton child types and creatable or importable child
+        // types, perform an async call to fetch the singleton children. If we make the async call don't declare this
+        // instance initialized until after it completesas we must  have the children before the menu buttons can be drawn.
+
+        final Resource parentResource = parentResourceComposite.getResource();
+        ResourceType parentType = parentResource.getResourceType();
+
+        creatableChildTypes = getCreatableChildTypes(parentType);
+        importableChildTypes = getImportableChildTypes(parentType);
+        hasCreatableTypes = !creatableChildTypes.isEmpty();
+        hasImportableTypes = !importableChildTypes.isEmpty();
+        singletonChildren = new ArrayList(); // initialize to non-null
+
+        Integer[] singletonChildTypes = getSingletonChildTypes(parentType);
+
+        if (canCreate && singletonChildTypes.length > 0 && (hasCreatableTypes || hasImportableTypes)) {
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterParentResourceId(parentResource.getId());
+            criteria.addFilterResourceTypeIds(singletonChildTypes);
+            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                new AsyncCallback<PageList<Resource>>() {
+
+                    @Override
+                    public void onSuccess(PageList<Resource> result) {
+                        singletonChildren = result;
+                        initialized = true;
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.error("Failed to load child resources for [" + parentResource + "]", caught);
+                        initialized = true;
+                    }
+                });
+
+        } else {
+            initialized = true;
+        }
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return super.isInitialized() && this.initialized;
     }
 
     // suppress unchecked warnings because the superclass has different generic types for the datasource
@@ -80,100 +143,159 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void configureTable() {
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
-            .view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(),
+            MSG.view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
 
-            // only enabled if all selected are a deletable type and if the user has delete permission
-            // on the resources. 
-            public boolean isEnabled(ListGridRecord[] selection) {
-                boolean isEnabled = super.isEnabled(selection);
+                // only enabled if all selected are a deletable type and if the user has delete permission
+                // on the resources. 
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    boolean isEnabled = super.isEnabled(selection);
 
-                if (isEnabled) {
-                    for (ListGridRecord record : selection) {
-                        ResourceComposite resComposite = (ResourceComposite) record
-                            .getAttributeAsObject("resourceComposite");
-                        Resource res = resComposite.getResource();
-                        if (!(isEnabled = res.getResourceType().isDeletable())) {
-                            break;
-                        }
-                        ResourcePermission resPermission = resComposite.getResourcePermission();
-                        if (!(isEnabled = resPermission.isDeleteResource())) {
-                            break;
+                    if (isEnabled) {
+                        for (ListGridRecord record : selection) {
+                            ResourceComposite resComposite = (ResourceComposite) record
+                                .getAttributeAsObject("resourceComposite");
+                            Resource res = resComposite.getResource();
+                            if (!(isEnabled = res.getResourceType().isDeletable())) {
+                                break;
+                            }
+                            ResourcePermission resPermission = resComposite.getResourcePermission();
+                            if (!(isEnabled = resPermission.isDeleteResource())) {
+                                break;
+                            }
                         }
                     }
+                    return isEnabled;
                 }
-                return isEnabled;
-            }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                int[] resourceIds = TableUtility.getIds(selection);
-                ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int[] resourceIds = TableUtility.getIds(selection);
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
-                resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
-                    }
+                    resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
+                        public void onFailure(Throwable caught) {
+                            if (caught instanceof CannotConnectToAgentException) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_inventory_resources_deleteFailed2(), Severity.Warning));
+                            } else {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(),
+                                    caught);
+                            }
+                        }
 
-                    public void onSuccess(List<DeleteResourceHistory> result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
+                        public void onSuccess(List<DeleteResourceHistory> result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
 
-                        refresh(true);
-                        // refresh the entire gui so it encompasses any relevant tree view. Don't just call this.refresh(),
-                        // because CoreGUI.refresh is more comprehensive.
-                        CoreGUI.refresh();
-                    }
-                });
-            }
-        });
+                            refresh(true);
+                            // refresh the entire gui so it encompasses any relevant tree view. Don't just call this.refresh(),
+                            // because CoreGUI.refresh is more comprehensive.
+                            CoreGUI.refresh();
+                        }
+                    });
+                }
+            });
 
-        if (this.parentResourceComposite.getResourcePermission().isCreateChildResources()) {
-            addImportButton();
-        }
+        addImportAndCreateButtons();
 
         super.configureTable();
     }
 
     @SuppressWarnings("unchecked")
-    private void addImportButton() {
-        ResourceType parentType = parentResourceComposite.getResource().getResourceType();
+    private void addImportAndCreateButtons() {
 
-        // manual import type menu
-        Set<ResourceType> importableChildTypes = getImportableChildTypes(parentType);
-        if (!importableChildTypes.isEmpty()) {
-            Map<String, ResourceType> displayNames = getDisplayNames(importableChildTypes);
-            LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>(displayNames);
+        final Resource parentResource = parentResourceComposite.getResource();
+        ResourceType parentType = parentResource.getResourceType();
 
-            addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        // Create Child Menu and Manual Import Menu
+        if (canCreate && (hasCreatableTypes || hasImportableTypes)) {
+
+            if (hasCreatableTypes) {
+                Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+                LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>(
+                    displayNameMap);
+                removeExistingSingletons(singletonChildren, createTypeValueMap);
+                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
+                    createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                            ResourceFactoryCreateWizard.showCreateWizard(parentResource, (ResourceType) actionValue);
+                            // we can refresh the table buttons immediately since the wizard is a dialog, the
+                            // user can't access enabled buttons anyway.
+                            ResourceCompositeSearchView.this.refreshTableInfo();
+                        }
+                    });
+            }
+
+            if (hasImportableTypes) {
+                Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
+                LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>(
+                    displayNameMap);
+                removeExistingSingletons(singletonChildren, importTypeValueMap);
+                addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
+                    new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                            ResourceFactoryImportWizard.showImportWizard(parentResource, (ResourceType) actionValue);
+                            // we can refresh the table buttons immediately since the wizard is a dialog, the
+                            // user can't access enabled buttons anyway.
+                            ResourceCompositeSearchView.this.refreshTableInfo();
+                        }
+                    });
+            }
+
+        } else {
+            if (!canCreate && hasCreatableTypes) {
+                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(),
+                    new AbstractTableAction(TableActionEnablement.NEVER) {
+                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                            // never called
+                        }
+                    });
+            }
+            if (!canCreate && hasImportableTypes) {
+                addTableAction(extendLocatorId("Import"), MSG.common_button_import(), new AbstractTableAction(
+                    TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
-                            (ResourceType) actionValue);
-                        // we can refresh the table buttons immediately since the wizard is a dialog, the
-                        // user can't access enabled buttons anyway.
-                        ResourceCompositeSearchView.this.refreshTableInfo();
+                        // never called
                     }
                 });
+            }
         }
+    }
 
-        // creatable child type menu
-        Set<ResourceType> creatableChildTypes = getCreatableChildTypes(parentType);
-        if (!creatableChildTypes.isEmpty()) {
-            Map<String, ResourceType> displayNames = getDisplayNames(creatableChildTypes);
-            LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>(displayNames);
+    private void removeExistingSingletons(List<Resource> singletonChildren, Map<String, ResourceType> displayNameMap) {
 
-            addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null, createTypeValueMap,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        List<String> existingSingletons = new ArrayList<String>();
 
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
-                            (ResourceType) actionValue);
-                        // we can refresh the table buttons immediately since the wizard is a dialog, the
-                        // user can't access enabled buttons anyway.
-                        ResourceCompositeSearchView.this.refreshTableInfo();
+        Set<String> displayNames = displayNameMap.keySet();
+        for (final String displayName : displayNames) {
+            final ResourceType type = displayNameMap.get(displayName);
+            boolean exists = false;
+
+            if (type.isSingleton()) {
+                for (Resource child : singletonChildren) {
+                    exists = child.getResourceType().equals(displayNameMap.get(displayName));
+                    if (exists) {
+                        existingSingletons.add(displayName);
+                        break;
                     }
-                });
+                }
+            }
         }
+        for (String existing : existingSingletons) {
+            displayNameMap.remove(existing);
+        }
+    }
+
+    private static Integer[] getSingletonChildTypes(ResourceType type) {
+        Set<Integer> results = new TreeSet<Integer>();
+        Set<ResourceType> childTypes = type.getChildResourceTypes();
+        for (ResourceType childType : childTypes) {
+            if (childType.isSingleton()) {
+                results.add(childType.getId());
+            }
+        }
+
+        return results.toArray(new Integer[results.size()]);
     }
 
     private static Set<ResourceType> getImportableChildTypes(ResourceType type) {
@@ -234,8 +356,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     // -------- Static Utility loaders ------------
 
     public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
-        return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
-            .valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
+        return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId",
+            String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
     }
 
 }

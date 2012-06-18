@@ -130,7 +130,7 @@
                     <execution>
                         <phase>pre-integration-test</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <taskdef
                                     resource="net/sf/antcontrib/antcontrib.properties">
                                     <classpath>
@@ -241,7 +241,7 @@
                                 <chmod perm="ugo+rx">
                                     <fileset dir="target/itest/httpd/bin" />
                                 </chmod>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>

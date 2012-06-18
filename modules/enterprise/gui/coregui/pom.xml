@@ -24,7 +24,7 @@
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
         <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
-        <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
+        <gwt-plugin.localWorkers>4</gwt-plugin.localWorkers>
 
         <coreGuiParams />
         <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
@@ -58,9 +58,8 @@
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
 
-        <!-- Change this to "false" via the mvn command line or your ~/.m2/settings.xml to speed
-             up gwt compilation and reduce memory consumption by avoiding report generation. -->
-        <gwt.soyc>true</gwt.soyc>
+        <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to generate report -->
+        <gwt.soyc>false</gwt.soyc>
 
         <!-- Change this to "DETAILED" via the mvn command line or your ~/.m2/settings.xml to
              make sure GWT-generated JavaScript code is not obfuscated. -->
@@ -70,11 +69,13 @@
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
-        <gwt.locale>en,de,ja,pt,zh,ru</gwt.locale>
+        <gwt.locale>en,de,ja,pt,zh,ru,cs</gwt.locale>
 
         <!-- The locale that GWT should fallback to if the user specified an unsupported locale via the 'locale' query
              string parameter. -->
         <gwt.fallback.locale>en</gwt.fallback.locale>
+ 
+        <enable.tags>true</enable.tags>
     </properties>
 
     <dependencies>
@@ -350,7 +351,7 @@
                         <id>Generate I18N Resource Bundles</id>
                         <phase>process-classes</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
                               <i18n outputdir="${project.buildNodes.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
                                  <classpath refid="maven.runtime.classpath" />
@@ -358,7 +359,7 @@
                                     <include name="**/*I18NResourceKeys.class" />
                                  </classfileset>
                               </i18n>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -368,14 +369,14 @@
                         <id>Maintain an unfiltered copy of i18n properties files</id>
                         <phase>process-classes</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <copy todir="${project.buildNodes.outputDirectory}">
                                  <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
                                     <include name="ApplicationResources.properties" />
                                  </fileset>
                                  <mapper type="glob" from="*" to="*.unfiltered" />
                               </copy>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -413,7 +414,7 @@
                                 <id>deploy-classes</id>
                                 <phase>compile</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <!--
                                         <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
                                         <echo>*** Copying updated files from target/${project.buildNodes.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
@@ -429,7 +430,7 @@
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                             <fileset dir="${basedir}/src/main/webapp" />
                                         </copy>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -440,7 +441,7 @@
                                 <id>deploy</id>
                                 <phase>package</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Copying updated files from
                                             target${file.separator}${project.build.finalName}${file.separator} to
@@ -449,7 +450,7 @@
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                             <fileset dir="${basedir}/target/${project.build.finalName}" />
                                         </copy>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -460,11 +461,11 @@
                                 <id>undeploy</id>
                                 <phase>clean</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                                         <delete dir="${deployment.dir}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -506,6 +507,18 @@
                 </plugins>
               </build>
         </profile>
+
+      <profile>
+        <id>disable-tags</id>
+        <activation>       
+          <property>
+            <name>brew</name>            
+          </property>
+        </activation>       
+        <properties>
+          <enable.tags>false</enable.tags>
+        </properties>
+      </profile>
 
     </profiles>
 

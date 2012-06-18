@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
@@ -25,7 +32,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ColorSelectedEvent;
 import com.smartgwt.client.widgets.form.events.ColorSelectedHandler;
-import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -36,6 +47,7 @@ import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.ItemClickEvent;
 import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
@@ -50,13 +62,25 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.*;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.*;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
-
-import java.util.*;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
@@ -68,13 +92,14 @@ public class DashboardView extends LocatableVLayout {
     private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
 
-    boolean editMode = false;
+    private boolean editMode = false;
 
     PortalLayout portalLayout;
     LocatableDynamicForm editForm;
     IMenuButton addPortlet;
 
     HashSet<PortletWindow> portletWindows = new HashSet<PortletWindow>();
+
     private static String STOP = MSG.view_dashboards_portlets_refresh_none();
     private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
     private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
@@ -96,6 +121,8 @@ public class DashboardView extends LocatableVLayout {
     // this is used to prevent an odd smartgwt problem where onInit() can get called multiple times if
     // the view is set to a Tab's pane.
     private boolean isInitialized = false;
+
+    private PortletWindow maximizedPortlet = null;
 
     /**
      * Convenience constructor for subsystem context.
@@ -168,6 +195,8 @@ public class DashboardView extends LocatableVLayout {
         portalLayout.removeFromParent();
         portalLayout.destroy();
         portalLayout = null;
+
+        portletWindows.clear();
 
         buildPortlets();
     }
@@ -521,7 +550,6 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private void loadPortletWindows() {
-
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
@@ -593,20 +621,21 @@ public class DashboardView extends LocatableVLayout {
         outline.draw();
         outline.bringToFront();
 
-        outline.animateRect(newPortletWindow.getPageLeft(), newPortletWindow.getPageTop(), newPortletWindow
-            .getVisibleWidth(), newPortletWindow.getViewportHeight(), new AnimationCallback() {
-            public void execute(boolean earlyFinish) {
-                // callback at end of animation - destroy placeholder and outline; show the new portlet
-                placeHolder.destroy();
-                outline.destroy();
-                newPortletWindow.show();
-            }
-        }, 750);
+        outline.animateRect(newPortletWindow.getPageLeft(), newPortletWindow.getPageTop(),
+            newPortletWindow.getVisibleWidth(), newPortletWindow.getViewportHeight(), new AnimationCallback() {
+                public void execute(boolean earlyFinish) {
+                    // callback at end of animation - destroy placeholder and outline; show the new portlet
+                    placeHolder.destroy();
+                    outline.destroy();
+                    newPortletWindow.show();
+                }
+            }, 750);
         save();
     }
 
-    public void removePortlet(DashboardPortlet portlet) {
-        storedDashboard.removePortlet(portlet);
+    public void removePortlet(PortletWindow portletWindow) {
+        storedDashboard.removePortlet(portletWindow.getStoredPortlet());
+        this.portletWindows.remove(portletWindow);
 
         // portlet remove means the portlet locations may have changed. The selenium testing locators include
         // positioning info. So, in this case we have to take the hit and completely refresh the dash.
@@ -752,8 +781,8 @@ public class DashboardView extends LocatableVLayout {
         boolean unpersistedDash = (storedPortlet.getDashboard().getId() == 0 || updatedPortlet.getDashboard().getId() == 0);
         boolean dashMatchId = (!unpersistedDash && (storedPortlet.getDashboard().getId() == updatedPortlet
             .getDashboard().getId()));
-        boolean dashMatchName = (unpersistedDash && storedPortlet.getDashboard().getName().equals(
-            updatedPortlet.getDashboard().getName()));
+        boolean dashMatchName = (unpersistedDash && storedPortlet.getDashboard().getName()
+            .equals(updatedPortlet.getDashboard().getName()));
         if (!(dashMatchId || dashMatchName)) {
             return false;
         }
@@ -792,6 +821,12 @@ public class DashboardView extends LocatableVLayout {
 
     public void setEditMode(boolean editMode) {
         this.editMode = editMode;
+
+        // don't allow resizing in min/max in edit mode
+        for (PortletWindow portletWindow : portletWindows) {
+            portletWindow.hideSizingHeaderControls(editMode);
+        }
+
         if (editMode) {
             this.editForm.show();
             //
@@ -872,4 +907,65 @@ public class DashboardView extends LocatableVLayout {
         return resourceComposite;
     }
 
+    public boolean isMaximized() {
+        return (maximizedPortlet != null);
+    }
+
+    public PortletWindow getMaximizePortlet() {
+        return maximizedPortlet;
+    }
+
+    public void maximizePortlet(PortletWindow portletWindow) {
+        if (isMaximized()) {
+            return;
+        }
+
+        maximizedPortlet = portletWindow;
+
+        int numColumns = storedDashboard.getColumns();
+        for (int i = 0; i < numColumns; ++i) {
+            PortalColumn col = portalLayout.getPortalColumn(i);
+            Canvas portlet = col.getMember(portletWindow.getID());
+            if (null == portlet) {
+                col.hide();
+            } else {
+                for (Canvas member : col.getMembers()) {
+                    if (!member.equals(portlet)) {
+                        member.hide();
+                    } else {
+                        ((PortletWindow) member).hideSizingHeaderControls(true);
+                        member.setHeight100();
+                    }
+                }
+            }
+        }
+
+        portalLayout.markForRedraw();
+    }
+
+    public void restorePortlet() {
+        if (!isMaximized()) {
+            return;
+        }
+
+        int numColumns = storedDashboard.getColumns();
+        for (int i = 0; i < numColumns; ++i) {
+            PortalColumn col = portalLayout.getPortalColumn(i);
+            if (!col.isVisible()) {
+                col.show();
+            } else {
+                for (Canvas member : col.getMembers()) {
+                    if (!member.isVisible()) {
+                        member.show();
+                    } else {
+                        ((PortletWindow) member).hideSizingHeaderControls(false);
+                        member.setHeight(maximizedPortlet.getStoredPortlet().getHeight());
+                    }
+                }
+            }
+        }
+
+        maximizedPortlet = null;
+        portalLayout.markForRedraw();
+    }
 }

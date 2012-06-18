@@ -854,7 +854,7 @@
                         <id>deploy</id>
                         <phase>package</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from
                                  target${file.separator}${project.build.finalName}${file.separator} to
@@ -866,7 +866,7 @@
                               <echo>*** Touching ${deployment.descriptor.file} to force redeployment of
                                  ${rhq.deploymentName}...</echo>
                               <touch file="${deployment.descriptor.file}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -877,13 +877,13 @@
                         <id>deploy-ear-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
                                  <patternset>
                                     <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -894,11 +894,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                               <delete dir="${deployment.dir}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>

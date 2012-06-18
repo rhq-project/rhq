@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -301,6 +302,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId,
                 timeout);
         } catch (Throwable t) {
+            if (t instanceof CannotConnectToAgentException) {
+                throw (CannotConnectToAgentException) t;
+            }
             throw getExceptionToThrowToClient(t);
         }
     }
@@ -310,6 +314,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
                 "ResourceService.deleteResources");
         } catch (Throwable t) {
+            if (t instanceof CannotConnectToAgentException) {
+                throw (CannotConnectToAgentException) t;
+            }
             throw getExceptionToThrowToClient(t);
         }
     }
@@ -411,6 +418,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 pluginConfiguration);
             return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
         } catch (Throwable t) {
+            if (t instanceof CannotConnectToAgentException) {
+                throw (CannotConnectToAgentException) t;
+            }
             throw getExceptionToThrowToClient(t);
         }
     }

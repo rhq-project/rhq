@@ -18,46 +18,36 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jboss.resteasy.links.AddLinks;
-import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.RESTServiceDiscovery;
-import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A single alert
  * @author Heiko W. Rupp
  */
-@URITemplate("/alert/{id}")
 @XmlRootElement
-@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class AlertRest {
 
     private int id;
     private String name;
     private AlertDefinitionRest alertDefinition;
+    private ResourceWithType resource;
     private boolean definitionEnabled;
     String ackBy;
     long ackTime;
     long alertTime;
     String description;
-
-
-	private RESTServiceDiscovery rest;
+    List<Link> links = new ArrayList<Link>();
 
     public void setResource(ResourceWithType resource) {
         this.resource = resource;
     }
 
-    private ResourceWithType resource
-            ;
 
     public void setId(int id) {
         this.id = id;
@@ -71,24 +61,17 @@ public class AlertRest {
         this.alertDefinition = alertDefinitionId;
     }
 
-    @XmlID
-    @XmlAttribute
-    public String getId() {
-        return ""+id;
+    public int getId() {
+        return id;
     }
 
-    @XmlElement
     public String getName() {
         return name;
     }
 
-    @AddLinks
-    @LinkResource(rel="definition",value = AlertDefinitionRest.class)
-    @XmlElementRef
     public AlertDefinitionRest getAlertDefinition() {
         return alertDefinition;
     }
-
 
     public boolean isDefinitionEnabled() {
         return definitionEnabled;
@@ -130,19 +113,19 @@ public class AlertRest {
         this.description = description;
     }
 
-    @AddLinks
-    @LinkResource(rel="resource",value = ResourceWithType.class)
-    @XmlElementRef
-    ResourceWithType getResource() {
+    public ResourceWithType getResource() {
         return resource;
     }
 
-    @XmlElementRef
-    public RESTServiceDiscovery getRest() {
-        return rest;
+    public List<Link> getLinks() {
+        return links;
     }
 
-    public void setRest(RESTServiceDiscovery rest) {
-        this.rest = rest;
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public void addLink(Link link) {
+        links.add(link);
     }
 }

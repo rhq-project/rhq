@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -693,7 +694,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
-        Throwable startError = null;
 
         try {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
@@ -804,14 +804,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (log.isDebugEnabled()) {
                 log.debug("Activating resource [" + resource + "]...");
             }
-            // if it fails to start keep going, we already have the resource in inventory and
-            // need to coordinate with the server. The new resource will be unavailable but at least
-            // it will be accessible and editable by the user. Report the start exception at the end.
-            try {
-                activateResource(resource, resourceContainer, newPluginConfig);
-            } catch (Throwable t) {
-                startError = t;
-            }
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
 
@@ -828,11 +820,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
             postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
 
-            if (null != startError) {
-                handleInvalidPluginConfigurationResourceError(resource, startError);
+            // Note that it is important to activate the resource *AFTER* it has been synced with the
+            // server so that the resource has a valid id (which is needed by at least the content
+            // subsystem).
+            try {
+                activateResource(resource, resourceContainer, newPluginConfig);
+            } catch (Throwable t) {
+                // if it fails to start keep going, we already have the resource in inventory and
+                // we are in sync with the server. The new resource will be unavailable but at least
+                // it will be accessible and editable by the user. Report the start exception at the end.
+                handleInvalidPluginConfigurationResourceError(resource, t);
                 throw new PluginContainerException("The resource [" + resource
                     + "] has been added but could not be started. Verify the supplied configuration values: ",
-                    startError);
+                    t);
             }
         }
 
@@ -1112,11 +1112,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // inventory with the server side as well as to disallow any other server-agent traffic during
             // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
             // time the upgrade kicks in..
-            if (!resourceUpgradeDelegate.enabled()
+            if (!isResourceUpgradeActive()
                 && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
-                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, configuration.getChildResourceDiscoveryDelay(),
-                    TimeUnit.SECONDS);
+                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
+                    configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
             }
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + syncInfo.getId()
@@ -1155,25 +1155,30 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * Performs a service scan on the specified Resource. NOTE: This method will block until the scan completes.
+     * Performs a service scan on the specified Resource, waiting until the scan completes to return.
      *
-     * @param resourceId the id of the Resource on which to discover services
+     * @param resourceId the id of the Resource for which to discover child services
      */
-    public void performServiceScan(int resourceId) {
+    public InventoryReport performServiceScan(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
-            if (log.isDebugEnabled())
-                log.debug("No resource container for resource with id [" + resourceId
-                    + "] found, not performing a serviceScan");
-            return;
+            // TODO (ips, 05/16/12): Shouldn't we throw an exception here??
+            if (log.isDebugEnabled()) {
+                log.debug("No resource container for Resource with id [" + resourceId
+                    + "] found - not performing a child service scan.");
+            }
+            return new InventoryReport(agent);
         }
         Resource resource = resourceContainer.getResource();
         RuntimeDiscoveryExecutor oneTimeExecutor = new RuntimeDiscoveryExecutor(this, configuration, resource);
 
+        log.debug("Scheduling child service scan for " + resource + " and waiting for it to complete...");
         try {
-            inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) oneTimeExecutor).get();
+            Future<InventoryReport> future = inventoryThreadPoolExecutor
+                .submit((Callable<InventoryReport>) oneTimeExecutor);
+            return future.get();
         } catch (Exception e) {
-            throw new RuntimeException("Error submitting service scan", e);
+            throw new RuntimeException("Error submitting child service scan for " + resource + ".", e);
         }
     }
 
@@ -1200,7 +1205,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
         //happens before any scanning infrastructure is established.
-        if (!resourceUpgradeDelegate.enabled() && scan) {
+        if (!isResourceUpgradeActive() && scan) {
             log.info("Deleted resource #[" + resourceId + "] - this will trigger a server scan now");
             inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
         }
@@ -1236,7 +1241,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
 
-            for (Resource child : resource.getChildResources()) {
+            Set<Resource> children = getContainerChildren(resource);
+            for (Resource child : children) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }
 
@@ -1285,6 +1291,49 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         return scanIsNeeded;
+    }
+
+    /**
+     * Get the parent resource's children, ensuring we use the resource container version of the resource, because
+     * the container's resource is guaranteed to be up to date.
+     *  
+     * @param parentResource
+     * @return the children. parentResouce children if there is no container. May be empty. Not null.
+     */
+    public Set<Resource> getContainerChildren(Resource parentResource) {
+        return getContainerChildren(parentResource, getResourceContainer(parentResource));
+    }
+
+    /** 
+     * Get the parent resource's children, ensuring we use the resource container version of the resource, because
+     * the container's resource is guaranteed to be up to date.
+     *  
+     * @param parentResource
+     * @param parentContainer
+     * @return the children, empty if parentContainer is null or there are no children. not null. 
+     * @return the children, may be empty, not null.
+     */
+    public Set<Resource> getContainerChildren(Resource parentResource, ResourceContainer container) {
+        if (null == container) {
+            return parentResource.getChildResources();
+        }
+
+        Resource parentContainerResource = container.getResource();
+
+        // this is just to log whether there was an reason to actually call this method
+        if (parentResource != parentContainerResource && log.isDebugEnabled()) {
+            Set<Resource> containerChildren = parentContainerResource.getChildResources();
+            Set<Resource> localChildren = parentResource.getChildResources();
+            if (containerChildren.equals(localChildren)) {
+                log.debug("Container resource different from local resource.\n Container: " + parentContainerResource
+                    + "\n     Local: " + parentResource);
+            } else {
+                log.debug("Container resource different from local resource and children differ!\n Container:"
+                    + container + containerChildren + "\n      Local:" + parentResource + localChildren);
+            }
+        }
+
+        return parentContainerResource.getChildResources();
     }
 
     public Resource getPlatform() {
@@ -1471,13 +1520,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-            ClassLoader classLoader;
-            try {
-                classLoader = factory.getResourceClassloader(resource);
-            } catch (PluginContainerException e) {
-                log.error("Access to resource [" + resource + "] will fail due to missing classloader", e);
-                classLoader = null;
-            }
+            ClassLoader classLoader = getResourceClassLoader(resource);
             resourceContainer = new ResourceContainer(resource, classLoader);
             if (!this.configuration.isInsideAgent()) {
                 // Auto-sync if the PC is running within the embedded JBossAS console.
@@ -1487,18 +1530,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } else {
             // container already exists, but make sure the classloader exists too
             if (resourceContainer.getResourceClassLoader() == null) {
-                PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-                ClassLoader classLoader;
-                try {
-                    classLoader = factory.getResourceClassloader(resource);
-                } catch (PluginContainerException e) {
-                    log.error("Access to resource [" + resource + "] will fail due to missing classloader!", e);
-                    classLoader = null;
-                }
+                ClassLoader classLoader = getResourceClassLoader(resource);
                 resourceContainer.setResourceClassLoader(classLoader);
             }
         }
         return resourceContainer;
+    }
+
+    private ClassLoader getResourceClassLoader(Resource resource) {
+        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
+        ClassLoader classLoader;
+        try {
+            classLoader = factory.getResourceClassloader(resource);
+        } catch (PluginContainerException e) {
+            if (log.isTraceEnabled()) {
+                log.trace("Access to resource [" + resource + "] will fail due to missing classloader.", e);
+            } else {
+                log.debug("Access to resource [" + resource + "] will fail due to missing classloader - cause: " + e);
+            }
+            classLoader = null;
+        }
+        return classLoader;
     }
 
     /**
@@ -1567,6 +1619,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 + "]...");
         }
 
+        ResourceContainer parentResourceContainer;
+        Resource parentResource = resource.getParentResource();
+        if (parentResource == null) {
+            parentResourceContainer = null;
+        } else {
+            parentResourceContainer = getResourceContainer(parentResource);
+            if (parentResourceContainer == null) {
+                // The parent probably just got uninventoried - log a DEBUG message and abort.
+                log.debug(resource + " not being prepared for activation - container not found for parent "
+                    + parentResource + ".");
+                return false;
+            }
+        }
+
         // If the component does not even exist yet, we need to instantiate it and set it on the container.
         if (component == null) {
             if (log.isDebugEnabled()) {
@@ -1574,28 +1640,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             try {
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(resource);
-
             } catch (Throwable e) {
                 throw new PluginContainerException("Could not build component for Resource [" + resource + "]", e);
             }
             container.setResourceComponent(component);
         }
 
-        // start the resource, but only if its parent component is running. If the parent is null, that means
-        // the resource is, itself, the root platform and we always activate that.
-        ResourceContainer parentResourceContainer;
-        boolean isParentStarted;
-
-        if (resource.getParentResource() == null) {
-            parentResourceContainer = null;
-            isParentStarted = true;
-        } else {
-            parentResourceContainer = getResourceContainer(resource.getParentResource());
-            isParentStarted = (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
-        }
+        // Start the resource, but only if its parent component is running. If the parent is null, that means
+        // the resource is, itself, the root platform, which we always activate.
+        boolean isParentStarted = (parentResourceContainer == null)
+            || (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
 
         if (isParentStarted) {
-
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ResourceType type = resource.getResourceType();
             ResourceDiscoveryComponent discoveryComponent = factory
@@ -1615,8 +1671,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             ResourceComponent<?> parentComponent = null;
             ResourceContext<?> parentResourceContext = null;
-            if (resource.getParentResource() != null) {
-                ResourceContainer rc = getResourceContainer(resource.getParentResource());
+            if (parentResource != null) {
+                ResourceContainer rc = getResourceContainer(parentResource);
 
                 parentComponent = rc.getResourceComponent();
                 parentResourceContext = rc.getResourceContext();
@@ -1625,8 +1681,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContext context = createResourceContext(resource, parentComponent, parentResourceContext,
                 discoveryComponent);
             container.setResourceContext(context);
-            return true;
 
+            return true;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Resource [" + resource + "] not being prepared for activation; parent isn't started: "
@@ -1797,6 +1853,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     return this.platform;
                 }
             } else {
+                // don't use container children here, the caller is providing the desired resources 
                 for (Resource child : parent.getChildResources()) {
                     if (child != null && matches(resource, child)) {
                         return child;
@@ -1821,32 +1878,45 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * Lookup all the servers with a particular server type
+     * Lookup all the resources with a particular type
      *
-     * @param  serverType the server type to match against
+     * @param  type the type to match against
      *
-     * @return the set of servers matching the provided type
+     * @return the set of resources matching the provided type
      */
-    public Set<Resource> getResourcesWithType(ResourceType serverType) {
-        return getResourcesWithType(serverType, this.platform.getChildResources());
+    public Set<Resource> getResourcesWithType(ResourceType type) {
+        return getResourcesWithType(type, getContainerChildren(this.platform));
     }
 
-    private Set<Resource> getResourcesWithType(ResourceType serverType, Set<Resource> resources) {
-        Set<Resource> servers = new HashSet<Resource>();
+    private Set<Resource> getResourcesWithType(ResourceType type, Set<Resource> resources) {
+        Set<Resource> result = new HashSet<Resource>();
 
         if (resources == null) {
-            return servers;
+            return result;
         }
 
-        for (Resource server : resources) {
-            servers.addAll(getResourcesWithType(serverType, server.getChildResources()));
+        for (Resource resource : resources) {
+            // If we're looking for SERVERs and we've hit a SERVICE, skip it as it doesn't match and
+            // we won't find SERVERs below a SERVICE
+            if (ResourceCategory.SERVER == type.getCategory()
+                && ResourceCategory.SERVICE == resource.getResourceType().getCategory()) {
+                continue;
+            }
 
-            if (serverType.equals(server.getResourceType())) {
-                servers.add(server);
+            Set<Resource> children = getContainerChildren(resource);
+            result.addAll(getResourcesWithType(type, children));
+
+            if (type.equals(resource.getResourceType())) {
+                ResourceContainer container = getResourceContainer(resource);
+                result.add((container == null) ? resource : container.getResource());
             }
         }
 
-        return servers;
+        return result;
+    }
+
+    public boolean isDiscoveryScanInProgress() {
+        return (this.inventoryThreadPoolExecutor.getActiveCount() >= 1);
     }
 
     // commenting out dead code, leaving for reference -jshaughn
@@ -1932,7 +2002,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             ResourceContainer container = getResourceContainer(resource);
             if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
-                for (Resource child : resource.getChildResources()) {
+                // traverse the hierarchy using the container's resource, which should be up to date
+                for (Resource child : getContainerChildren(resource, container)) {
                     deactivateResource(child);
                 }
 
@@ -2113,7 +2184,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // performing syncing of the children schedules in one fell swoop
                 Set<Integer> childrenIds = new HashSet<Integer>();
-                for (Resource child : resource.getChildResources()) {
+                for (Resource child : getContainerChildren(resource)) {
                     childrenIds.add(child.getId());
                 }
                 scheduleRequests = configuration.getServerServices().getMeasurementServerService()
@@ -2142,7 +2213,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (supportsDriftManagement(r)) {
                 resourceIds.add(r.getId());
             }
-            for (Resource child : r.getChildResources()) {
+
+            Set<Resource> children = getContainerChildren(r);
+            for (Resource child : children) {
                 resources.push(child);
             }
         }
@@ -2154,8 +2227,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private boolean supportsDriftManagement(Resource r) {
         PluginMetadataManager metaDataMgr = PluginContainer.getInstance().getPluginManager().getMetadataManager();
         ResourceType type = metaDataMgr.getType(r.getResourceType());
-        return type != null && type.getDriftDefinitionTemplates() != null &&
-                !type.getDriftDefinitionTemplates().isEmpty();
+        return type != null && type.getDriftDefinitionTemplates() != null
+            && !type.getDriftDefinitionTemplates().isEmpty();
     }
 
     private void syncSchedules(Set<Resource> resources) {
@@ -2298,6 +2371,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public boolean hasUpgradeMergeFailed() {
         return resourceUpgradeDelegate.hasUpgradeMergeFailed();
+    }
+
+    /**
+     * The resource upgrade should only occur during the {@link #initialize()} method and should be
+     * switched off at all other times.
+     * 
+     * @return true if resource upgrade is currently active, false otherwise
+     */
+    public boolean isResourceUpgradeActive() {
+        return resourceUpgradeDelegate.enabled();
     }
 
     /**
@@ -2466,7 +2549,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 //but we can continue the discovery in the child resource types of the existing resources.
                 //we can therefore pretend that the discovery returned the existing resources so that
                 //we can recurse into their children up in the call-chain.
-                for (Resource existingResource : parentResource.getChildResources()) {
+                for (Resource existingResource : getContainerChildren(parentResource)) {
                     if (resourceType.equals(existingResource.getResourceType())) {
                         newResources.add(existingResource);
                     }
@@ -2752,15 +2835,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (parentResourceContainer != null) {
                 parentResource = parentResourceContainer.getResource();
             } else {
-                parentResource = null; // TODO right thing to do? Or directly return?
+                log.debug("Skipping merge of " + resourceFromServer
+                    + " into local inventory, since a container was not found for its parent "
+                    + parentResourceFromServer + ".");
+                return;
             }
         } else {
+            // A null parent means this is the platform.
             parentResource = null;
         }
 
         // See if the Resource already exists in our inventory.
         Resource existingResource = findMatchingChildResource(resourceFromServer, parentResource);
-        if (parentResource == null && existingResource == null) {
+        if ((existingResource == null)
+            && (resourceFromServer.getResourceType().getCategory() == ResourceCategory.PLATFORM)) {
             // This should never happen, but add a check so we'll know if it ever does.
             log.error("Existing platform [" + this.platform + "] has different Resource type and/or Resource key than "
                 + "platform in Server inventory: " + resourceFromServer);
@@ -2810,7 +2898,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         refreshResourceComponentState(resourceContainer, pluginConfigUpdated);
 
-        // Recursively merge the children.
+        // Recursively merge the children. Note - don't recurse using containers, we're merging the
+        // the provided hierarchy not traversing the existing hierarchy
         for (Resource childResource : resourceFromServer.getChildResources()) {
             mergeResource(childResource);
         }
@@ -2895,7 +2984,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {
-        if (resourceUpgradeDelegate.enabled()) {
+        if (isResourceUpgradeActive()) {
             //don't do anything during upgrade. The resources are only started during the upgrade process.
             return;
         }
@@ -2946,8 +3035,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Sending the upgrade requests to the server.");
             resourceUpgradeDelegate.sendRequests();
 
-            resourceUpgradeDelegate.disable();
-
             log.info("Resource activation and upgrade finished.");
         } catch (Throwable t) {
             log.error(
@@ -2956,6 +3043,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             //make sure to at least activate the resources
             activateAndUpgradeResourceRecursively(getPlatform(), false);
+        } finally {
+            resourceUpgradeDelegate.disable();
         }
     }
 
@@ -2978,7 +3067,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (activate) {
             try {
                 activateResource(resource, container, false);
-                for (Resource child : resource.getChildResources()) {
+                for (Resource child : getContainerChildren(resource, container)) {
                     activateAndUpgradeResourceRecursively(child, doUpgrade);
                 }
             } catch (InvalidPluginConfigurationException e) {

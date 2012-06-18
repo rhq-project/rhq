@@ -64,8 +64,12 @@ public class UserPreferences {
     private static ArrayList<String> preferencesThatShouldNotCauseRefresh;
     static {
         preferencesThatShouldNotCauseRefresh = new ArrayList<String>();
+        // this is auto-set while navigating around and does not affect the current page
         preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
+        // this is auto-set while navigating around and does not affect the current page        
         preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
+        // this update is already applied to current portlets by the dashboard impl
+        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.PAGE_REFRESH_PERIOD);
     }
     
     public UserPreferences(Subject subject) {

@@ -14,7 +14,6 @@
 
     <container qualifier="pc">
       <configuration>
-        <property name="mode">manual</property>
         <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
         <property name="insideAgent">true</property>
         <property name="startManagementBean">false</property>

@@ -57,10 +57,13 @@
                  description="Executes the executable with a set of arguments and returns the output and exit code.">
          <parameters>
                <c:simple-property name="arguments" required="false" description="The arguments to pass to the executable." />
+               <c:simple-property name="waitTime" required="false" type="long" description="The number of seconds to wait for the process to end. If 0 or less, the operation will return immediately without waiting for the script to complete. Default is one hour." />
+               <c:simple-property name="captureOutput" required="false" type="boolean" description="If true, the script's output will be captured and returned. Default is true." />
+               <c:simple-property name="killOnTimeout" required="false" type="boolean" description="If true, and if waitTime parameter is greater than 0, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is true." />
          </parameters>
          <results>
-             <c:simple-property name="exitCode" type="integer" required="true"/>
-             <c:simple-property name="output" type="longString" required="false" />
+             <c:simple-property name="exitCode" type="integer" required="false" description="The exit code returned when the script terminated. This will not be set if the script was not waited for (i.e. the wait time was 0) or if the wait time expired before the script finished."/>
+             <c:simple-property name="output" type="longString" required="false" description="The output of the script. This will not be set if the operation was told not to capture the output."/>
          </results>
       </operation>
 

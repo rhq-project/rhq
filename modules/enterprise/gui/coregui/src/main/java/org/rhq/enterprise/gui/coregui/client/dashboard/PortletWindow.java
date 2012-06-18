@@ -22,13 +22,28 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.ArrayList;
+import java.util.Set;
+
 import com.smartgwt.client.types.DragAppearance;
 import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.HeaderControl.HeaderIcon;
-import com.smartgwt.client.widgets.events.*;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.DragResizeStopEvent;
+import com.smartgwt.client.widgets.events.DragResizeStopHandler;
+import com.smartgwt.client.widgets.events.MinimizeClickEvent;
+import com.smartgwt.client.widgets.events.MinimizeClickHandler;
+import com.smartgwt.client.widgets.events.MouseOverEvent;
+import com.smartgwt.client.widgets.events.MouseOverHandler;
+import com.smartgwt.client.widgets.events.RestoreClickEvent;
+import com.smartgwt.client.widgets.events.RestoreClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -36,8 +51,6 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -104,6 +117,12 @@ public class PortletWindow extends LocatableWindow {
         }
     };
 
+    private HeaderControl maximizeHeaderControl = new HeaderControl(HeaderControl.MAXIMIZE, new ClickHandler() {
+        public void onClick(ClickEvent event) {
+            PortletWindow.this.dashboardView.maximizePortlet(PortletWindow.this);
+        }
+    });
+
     public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet,
         EntityContext context) {
         super(locatorId);
@@ -139,18 +158,7 @@ public class PortletWindow extends LocatableWindow {
         }
 
         // customize the appearance and order of the controls in the window header
-        if (headerIcon != null) {
-            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, headerIcon, HeaderControls.HEADER_LABEL,
-                new LocatableHeaderControl(extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler),
-                new LocatableHeaderControl(extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler),
-                new LocatableHeaderControl(extendLocatorId("Help"), HeaderControl.HELP, helpHandler),
-                HeaderControls.CLOSE_BUTTON);
-        } else {
-            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
-                extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
-                extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
-                extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
-        }
+        initHeaderControls();
 
         // enable predefined component animation
         setAnimateMinimize(true);
@@ -189,13 +197,59 @@ public class PortletWindow extends LocatableWindow {
 
         addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClickEvent closeClientEvent) {
-                PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.storedPortlet);
-                destroy();
+                if (PortletWindow.this.dashboardView.isMaximized()) {
+                    PortletWindow.this.dashboardView.restorePortlet();
+                } else {
+                    PortletWindow.this.dashboardView.removePortlet(PortletWindow.this);
+                    destroy();
+                }
             }
         });
 
         setSettingsClickHandler(settingsHandler);
         setHelpClickHandler(helpHandler);
+    }
+
+    private void initHeaderControls() {
+
+        ArrayList<Object> headerControls = new ArrayList<Object>();
+
+        headerControls.add(HeaderControls.MINIMIZE_BUTTON);
+        addMinimizeClickHandler(new MinimizeClickHandler() {
+            public void onMinimizeClick(MinimizeClickEvent event) {
+                maximizeHeaderControl.hide();
+            }
+        });
+        addRestoreClickHandler(new RestoreClickHandler() {
+            public void onRestoreClick(RestoreClickEvent event) {
+                maximizeHeaderControl.show();
+            }
+        });
+
+        headerControls.add(maximizeHeaderControl);
+
+        if (headerIcon != null) {
+            headerControls.add(headerIcon);
+        }
+        headerControls.add(HeaderControls.HEADER_LABEL);
+        headerControls.add(new HeaderControl(HeaderControl.REFRESH, refreshHandler));
+        headerControls.add(new HeaderControl(HeaderControl.SETTINGS, settingsHandler));
+        headerControls.add(new HeaderControl(HeaderControl.HELP, helpHandler));
+        headerControls.add(HeaderControls.CLOSE_BUTTON);
+
+        setHeaderControls(headerControls.toArray(new Object[headerControls.size()]));
+    }
+
+    void hideSizingHeaderControls(boolean hideControls) {
+
+        if (hideControls) {
+            setShowMinimizeButton(false);
+            maximizeHeaderControl.hide();
+
+        } else {
+            setShowMinimizeButton(true);
+            maximizeHeaderControl.show();
+        }
     }
 
     @Override

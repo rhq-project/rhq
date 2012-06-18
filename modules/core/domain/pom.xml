@@ -66,6 +66,13 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
 
+     <dependency>
+       <groupId>jboss</groupId>
+       <artifactId>jboss-ejb3x</artifactId>
+       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+       <scope>provided</scope> <!-- by JBossAS -->
+     </dependency>
+
       <!--  needed for hibernate Instrument task
       <dependency>
          <groupId>javassist</groupId>
@@ -325,13 +332,12 @@
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
                         <phase>process-classes</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                            <!-- don't instrument...
                            I'm leaving this here as an example of how to apply Hibernate Instrumentation to a class.
                            Instrumentation is useful for various property-level things such as field-level lazy load.
@@ -355,7 +361,7 @@
                               <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                  <fileset dir="target/classes" />
                               </copy>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -366,11 +372,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                             <delete dir="${deployment.dir}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -444,7 +450,7 @@
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -464,7 +470,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -474,7 +480,7 @@
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -495,7 +501,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

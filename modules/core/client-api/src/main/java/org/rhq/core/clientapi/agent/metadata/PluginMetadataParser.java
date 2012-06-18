@@ -255,7 +255,7 @@ public class PluginMetadataParser {
                 parseServerDescriptor(childServerDescriptor, serverResourceType);
             }
 
-            // Look for child server types
+            // Look for child service types
             for (ServiceDescriptor childServiceDescriptor : serverDescriptor.getServices()) {
                 parseServiceDescriptor(childServiceDescriptor, serverResourceType, null);
             }

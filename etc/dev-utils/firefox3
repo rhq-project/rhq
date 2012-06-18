@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# start a FF3 instance from a manual installation, while the standard rpm version of FF (e.g. FF 13.0) is
+# simultaneously running
+nohup /opt/firefox3/firefox -P firefox3 -no-remote >/dev/null 2>&1 &
+

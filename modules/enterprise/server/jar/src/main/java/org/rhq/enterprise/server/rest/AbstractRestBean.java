@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -54,6 +55,7 @@ import org.jboss.cache.TreeCacheMBean;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
@@ -74,6 +76,8 @@ public class AbstractRestBean {
     /** The cache to use */
     @javax.annotation.Resource(name="cache")
     TreeCacheMBean treeCache;
+    @EJB
+    ResourceManagerLocal resMgr;
 
     /**
      * Renders the passed object with the help of a freemarker template into a string. Freemarket templates
@@ -335,6 +339,9 @@ public class AbstractRestBean {
         }
         else
             rwt.setParentId(0);
+
+        rwt.setAncestry(res.getAncestry());
+
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/operation/definitions");
         uriBuilder.queryParam("resourceId",res.getId());
@@ -342,15 +349,6 @@ public class AbstractRestBean {
         Link link = new Link("operationDefinitions",uri.toString());
         rwt.addLink(link);
 
-/*
-        for (Resource child : getResourcesFromCacheByParentId(res.getId())) {
-            uriBuilder = uriInfo.getBaseUriBuilder();
-            uriBuilder.path("/resource/{id}");
-            uri = uriBuilder.build(child.getId());
-            link = new Link("child",uri.toString());
-            rwt.addLink(link);
-        }
-*/
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/resource/{id}");
         uri = uriBuilder.build(res.getId());
@@ -360,6 +358,11 @@ public class AbstractRestBean {
         uriBuilder.path("/resource/{id}/schedules");
         uri = uriBuilder.build(res.getId());
         link = new Link("schedules",uri.toString());
+        rwt.addLink(link);
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}/availability");
+        uri = uriBuilder.build(res.getId());
+        link = new Link("availability",uri.toString());
         rwt.addLink(link);
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/resource/{id}/children");
@@ -375,5 +378,18 @@ public class AbstractRestBean {
         }
 
         return rwt;
+    }
+
+    protected Resource fetchResource(int resourceId) {
+        Resource res;
+        res = getFromCache(resourceId, Resource.class);
+        if (res == null) {
+            res = resMgr.getResource(caller, resourceId);
+            if (res != null)
+                putToCache(resourceId, Resource.class, res);
+            else
+                throw new StuffNotFoundException("Resource with id " + resourceId);
+        }
+        return res;
     }
 }

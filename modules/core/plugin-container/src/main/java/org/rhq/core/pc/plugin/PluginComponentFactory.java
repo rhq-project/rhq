@@ -153,7 +153,14 @@ public class PluginComponentFactory implements ContainerService {
             };            
         }
         String className = getPluginManager().getMetadataManager().getComponentClass(resourceType);
-        ClassLoader resourceClassloader = getResourceClassloader(resource);
+        ResourceContainer resourceContainer = getInventoryManager().getResourceContainer(resource);
+        if (resourceContainer == null) {
+            throw new PluginContainerException("Resource container not found for " + resource + " - cannot create ResourceComponent.");
+        }
+        ClassLoader resourceClassloader = resourceContainer.getResourceClassLoader();
+        if (resourceClassloader == null) {
+            throw new PluginContainerException("Resource classLoader not found for " + resource + " - cannot create ResourceComponent.");
+        }
         ResourceComponent component = (ResourceComponent) instantiateClass(resourceClassloader, className);
 
         if (log.isDebugEnabled()) {
@@ -173,7 +180,6 @@ public class PluginComponentFactory implements ContainerService {
      * @throws PluginContainerException if the resource's classloader could not be created
      */
     public ClassLoader getResourceClassloader(Resource resource) throws PluginContainerException {
-
         try {
             InventoryManager inventoryMgr = getInventoryManager();
             PluginManager pluginMgr = getPluginManager();
@@ -193,8 +199,8 @@ public class PluginComponentFactory implements ContainerService {
             if (parentResource != null) {
                 parentContainer = inventoryMgr.getResourceContainer(parentResource);
                 if (parentContainer == null) {
-                    throw new PluginContainerException("Missing parent resource container for parent resource="
-                        + parentResource);
+                    throw new PluginContainerException("Missing container for parent " + parentResource + " of "
+                            + resource + ".");
                 }
             } else if (resource.equals(inventoryMgr.getPlatform())) {
                 // the given resource is our top platform resource - just use its plugin classloader

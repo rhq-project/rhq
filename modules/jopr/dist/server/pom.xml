@@ -158,7 +158,7 @@
             <id>build-dist</id>
             <phase>generate-resources</phase>
             <configuration>
-              <tasks>
+              <target>
                 <echo>settings.localRepository=${settings.localRepository}</echo>
                 <echo>project.build.outputDirectory=${project.build.outputDirectory}</echo>
                 <ant antfile="src/main/scripts/dist.build.xml" target="run">
@@ -177,7 +177,7 @@
                   <property name="rhq.ds.password" value="${rhq.ds.password}" />
                   <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

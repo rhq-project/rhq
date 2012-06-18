@@ -67,7 +67,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     // want to encourage people from changing this, we do not expose this "backdoor" system property as a
     // standard plugin configuration setting/agent preference - if someone wants to do this, they must
     // explicitly pass in -D to the JVM running the plugin container.
-    private static final int GET_AVAILABILITY_TIMEOUT;
+    static final int GET_AVAILABILITY_TIMEOUT;
     private static final Random RANDOM = new Random();
     static {
         int timeout;
@@ -348,7 +348,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             availabilityReport.addAvailability(availability);
         }
 
-        for (Resource child : resource.getChildResources()) {
+        for (Resource child : this.inventoryManager.getContainerChildren(resource, resourceContainer)) {
             checkInventory(child, availabilityReport, current, isForced, scan);
         }
 

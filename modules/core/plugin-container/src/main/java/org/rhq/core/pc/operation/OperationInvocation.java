@@ -302,7 +302,13 @@ public class OperationInvocation implements Runnable {
                     }
 
                     try {
-                        operationServerService.operationFailed(jobId, null, errorResults, invocationTime, finishedTime);
+                        if (status.contains(Status.CANCELED)) {
+                            operationServerService.operationCanceled(jobId, null, errorResults, invocationTime,
+                                finishedTime);
+                        } else {
+                            operationServerService.operationFailed(jobId, null, errorResults, invocationTime,
+                                finishedTime);
+                        }
                     } catch (Throwable t) {
                         log.error("Failed to send operation failed message to server. resource=[" + resourceId
                             + "], operation=[" + operationName + "], jobId=[" + jobId + "], operation-error=["

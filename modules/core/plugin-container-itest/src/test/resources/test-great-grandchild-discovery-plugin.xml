@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="test"
+        displayName="Test"
+        description="a test plugin"
+        package="org.rhq.core.pc.inventory.testplugin"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Test Server"
+           discovery="TestResourceDiscoveryComponent"
+           class="TestResourceComponent">
+
+      <service name="Test Service Child"
+               discovery="TestResourceDiscoveryComponent"
+               class="TestResourceComponent">
+
+         <service name="Test Service GrandChild"
+                  discovery="TestResourceDiscoveryComponent"
+                  class="TestResourceComponent">
+
+            <service name="Test Service GreatGrandChild"
+                     discovery="TestResourceDiscoveryComponent"
+                     class="TestResourceComponent">
+            </service>
+         </service>
+      </service>
+   </server>
+   
+   <server name="Manual Add Server"
+           discovery="ManualAddDiscoveryComponent"
+           class="TestResourceComponent">
+      <plugin-configuration>
+         <c:simple-property name="test" />
+      </plugin-configuration>
+      <operation name="test" />      
+      <metric property="test" />      
+      <event name="test" />            
+      <content name="test" category="executableScript" />
+      <resource-configuration>
+         <c:simple-property name="test" />
+      </resource-configuration>
+      
+      <drift-definition name="test">
+        <basedir>
+            <value-context>fileSystem</value-context>
+            <value-name>test</value-name>
+        </basedir>
+      </drift-definition>
+      
+      <bundle-target>
+         <destination-base-dir name="test">
+            <value-context>fileSystem</value-context>
+            <value-name>test</value-name>
+         </destination-base-dir>
+      </bundle-target>
+      
+   </server>
+</plugin>

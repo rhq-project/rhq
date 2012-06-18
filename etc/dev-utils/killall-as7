@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Kill all AS7 standalone server processes.
+pkill -f ".*/java .* org.jboss.as.standalone.* "
+
+# Kill all AS7 host controller processes.
+pkill -f ".*/java .* org.jboss.as.process-controller.* "
+

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,10 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
@@ -43,25 +47,28 @@ import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
-import org.rhq.enterprise.server.rest.domain.Link;
-import org.rhq.enterprise.server.rest.domain.MetricSchedule;
-import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
-import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.rest.domain.*;
 
 /**
  * Class that deals with getting data about resources
@@ -72,13 +79,18 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 public class ResourceHandlerBean extends AbstractRestBean implements ResourceHandlerLocal {
 
     @EJB
-    ResourceManagerLocal resMgr;
-    @EJB
     AvailabilityManagerLocal availMgr;
     @EJB
     MeasurementScheduleManagerLocal scheduleManager;
     @EJB
     AlertManagerLocal alertManager;
+    @EJB
+    ResourceTypeManagerLocal resourceTypeManager;
+    @EJB
+    AgentManagerLocal agentMgr;
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
 
     @Override
     public Response getResource(int id, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
@@ -175,7 +187,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public AvailabilityRest getAvailability(int resourceId) {
+    public Response getAvailability(int resourceId, HttpHeaders headers) {
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
         AvailabilityRest availabilityRest;
@@ -184,8 +196,58 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                 .getResource().getId());
         else
             availabilityRest = new AvailabilityRest(avail.getStartTime(), resourceId);
-        return availabilityRest;
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("availability.ftl",availabilityRest), mediaType);
+        } else {
+            builder = Response.ok(availabilityRest);
+        }
+        return builder.build();
     }
+
+    @Override
+    public Response getAvailabilityHistory(int resourceId, long start, long end, HttpHeaders headers) {
+        if (end==0)
+            end = System.currentTimeMillis();
+
+        if (start==0)
+            start = end - (30*86400*1000L); // 30 days
+
+        AvailabilityCriteria criteria = new AvailabilityCriteria();
+        criteria.addFilterInterval(start,end);
+        criteria.addFilterResourceId(resourceId);
+        criteria.addSortStartTime(PageOrdering.DESC);
+        List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
+        List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
+        for (Availability avail : points) {
+            AvailabilityRest availabilityRest;
+            if (avail.getAvailabilityType() != null) {
+                availabilityRest = new AvailabilityRest(avail.getAvailabilityType(), avail.getStartTime(), avail
+                    .getResource().getId());
+            }
+            else {
+                availabilityRest = new AvailabilityRest(avail.getStartTime(), resourceId);
+            }
+            if (avail.getEndTime()!=null)
+                availabilityRest.setUntil(avail.getEndTime());
+            ret.add(availabilityRest);
+        }
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listAvailability.ftl",ret), mediaType);
+        } else {
+            GenericEntity<List<AvailabilityRest>> availabilityRest = new GenericEntity<List<AvailabilityRest>>(ret) {};
+            builder = Response.ok(availabilityRest);
+        }
+        return builder.build();
+
+    }
+
 
     @Override
     public void reportAvailability(int resourceId, AvailabilityRest avail) {
@@ -235,6 +297,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                             uriBuilder.path("/metric/data/{id}");
                             uri = uriBuilder.build(schedule.getId());
                             Link metricLink = new Link("metric", uri.toString());
+                            ms.addLink(metricLink);
+                            uriBuilder = uriInfo.getBaseUriBuilder();
+                            uriBuilder.path("/metric/data/{id}/raw");
+                            uri = uriBuilder.build(schedule.getId());
+                            metricLink = new Link("metric-raw", uri.toString());
                             ms.addLink(metricLink);
                         }
                         // create link to the resource
@@ -319,17 +386,137 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return links;
     }
 
-    private Resource fetchResource(int resourceId) {
-        Resource res;
-        res = getFromCache(resourceId, Resource.class);
-        if (res == null) {
-            res = resMgr.getResource(caller, resourceId);
-            if (res != null)
-                putToCache(resourceId, Resource.class, res);
-            else
-                throw new StuffNotFoundException("Resource with id " + resourceId);
+    @Override
+    public Response createPlatform(@PathParam("name") String name, StringValue typeValue, @Context UriInfo uriInfo) {
+        String typeName = typeValue.getValue();
+
+        ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,"Platforms");
+        if (type==null) {
+            throw new StuffNotFoundException("Platform with type [" + typeName + "]");
         }
-        return res;
+
+        String resourceKey = "p:" + name;
+        Resource r = resMgr.getResourceByParentAndKey(caller,null,resourceKey,"Platforms",typeName);
+        if (r!=null) {
+            // platform exists - return it
+            ResourceWithType rwt = fillRWT(r,uriInfo);
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(r.getId());
+
+
+            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
+            builder.location(uri);
+            return builder.build();
+
+        }
+
+        // Create a dummy agent per platform - otherwise we can't delete the platform later
+        Agent agent ;
+        agent = new Agent("dummy-agent:name"+name,"-dummy-p:"+name,12345,"http://foo.com/p:name/"+name,"abc-"+name);
+        agentMgr.createAgent(agent);
+
+
+
+        Resource platform = new Resource(resourceKey,name,type);
+        platform.setUuid(resourceKey);
+        platform.setAgent(agent);
+        platform.setInventoryStatus(InventoryStatus.COMMITTED);
+        platform.setModifiedBy(caller.getName());
+        platform.setDescription(type.getDescription() + ". Created via REST-api");
+        platform.setItime(System.currentTimeMillis());
+
+        try {
+            resMgr.createResource(caller,platform,-1);
+
+            createSchedules(platform);
+
+            ResourceWithType rwt = fillRWT(platform,uriInfo);
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(platform.getId());
+
+            javax.ws.rs.core.Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
+            return builder.build();
+
+
+        } catch (ResourceAlreadyExistsException e) {
+            throw new IllegalArgumentException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void createSchedules(Resource resource) {
+        ResourceType rt = resource.getResourceType();
+        Set<MeasurementDefinition> definitions = rt.getMetricDefinitions ();
+        for (MeasurementDefinition definition : definitions) {
+            MeasurementSchedule schedule = new MeasurementSchedule(definition,resource);
+            schedule.setEnabled(definition.isDefaultOn());
+            schedule.setInterval(definition.getDefaultInterval());
+            entityManager.persist(schedule);
+        }
+    }
+
+    @Override
+    public Response createResource(@PathParam("name") String name, StringValue typeValue,
+                                   @QueryParam("plugin") String plugin, int parentId, UriInfo uriInfo) {
+
+        Resource parent = resMgr.getResourceById(caller,parentId);
+        if (parent==null)
+            throw new StuffNotFoundException("Parent with id [" + parentId + "]");
+
+        String typeName = typeValue.getValue();
+        ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);
+        if (resType==null)
+            throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
+
+        String resourceKey = "res:" + name + ":" + parentId;
+
+
+        Resource r = resMgr.getResourceByParentAndKey(caller,null,resourceKey,plugin,typeName);
+        if (r!=null) {
+            // platform exists - return it
+            ResourceWithType rwt = fillRWT(r,uriInfo);
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(r.getId());
+
+
+            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
+            builder.location(uri);
+            return builder.build();
+
+        }
+
+
+        Resource res = new Resource(resourceKey,name,resType);
+        res.setUuid(resourceKey);
+        res.setAgent(parent.getAgent());
+        res.setParentResource(parent);
+        res.setInventoryStatus(InventoryStatus.COMMITTED);
+        res.setDescription(resType.getDescription() + ". Created via REST-api");
+
+        try {
+            resMgr.createResource(caller,res,parent.getId());
+
+            createSchedules(res);
+
+            ResourceWithType rwt = fillRWT(res,uriInfo);
+
+            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
+            return builder.build();
+
+
+        } catch (ResourceAlreadyExistsException e) {
+            throw new IllegalArgumentException(e);
+        }
+
+
     }
 
 }

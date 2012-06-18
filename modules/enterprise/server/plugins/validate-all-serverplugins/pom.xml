@@ -23,14 +23,14 @@
                <execution>
                   <phase>integration-test</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <property name="test.classpath" refid="maven.test.classpath" />
                         <echo>Validating plugins...</echo>
                         <java classname="org.rhq.enterprise.server.plugin.pc.ServerPluginValidatorUtil" failonerror="true" fork="true">
                            <classpath>
                               <pathelement path="${test.classpath}" />
                               
-                              <!-- See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas -->
+                              <!-- See also: https://docs.jboss.org/author/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas -->
                               
                               <pathelement location="../disk/target/rhq-serverplugin-disk-${project.version}.jar" />
                               <pathelement location="../jboss-software/target/rhq-serverplugin-jboss-software-${project.version}.jar" />
@@ -59,7 +59,7 @@
                            <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y" />
                            -->
                         </java>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>

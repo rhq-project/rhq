@@ -41,6 +41,7 @@ import org.mockito.stubbing.Answer;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -184,6 +185,24 @@ public class FakeServerInventory {
                 + discoveryChecker);
         }
         return discoveryChecker;
+    }
+
+    public synchronized Answer<MergeResourceResponse> addResource() {
+        return new Answer<MergeResourceResponse>() {
+            @Override
+            public MergeResourceResponse answer(InvocationOnMock invocation) throws Throwable {
+                Resource r = (Resource) invocation.getArguments()[0];
+                int subjectId = (Integer) invocation.getArguments()[1];
+                
+                LOG.debug("A request to add a resource [" + r + "] made by subject with id " + subjectId);
+                
+                boolean exists = getResourceStore().containsKey(r.getUuid());
+
+                r = fakePersist(r, InventoryStatus.COMMITTED, new HashSet<String>());
+
+                return new MergeResourceResponse(r.getId(), exists);
+            }
+        };
     }
 
     public synchronized Answer<ResourceSyncInfo> mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {

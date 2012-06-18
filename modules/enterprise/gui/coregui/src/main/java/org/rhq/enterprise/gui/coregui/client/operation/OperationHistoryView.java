@@ -19,6 +19,11 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -29,6 +34,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -42,12 +48,11 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -164,6 +169,52 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     protected void setupTableInteractions() {
 
+        addTableAction(extendLocatorId("Cancel"), MSG.common_button_cancel(),
+            MSG.view_operationHistoryList_cancelConfirm(),
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    for (ListGridRecord item : selection) {
+                        if (!OperationRequestStatus.INPROGRESS.name().equals(
+                            item.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                            count--; // one selected item was not in-progress, it doesn't count
+                        }
+                    }
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int numCancelRequestsSubmitted = 0;
+                    OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
+                    for (ListGridRecord toBeCanceled : selection) {
+                        // only cancel those selected operations that are currently in progress
+                        if (OperationRequestStatus.INPROGRESS.name().equals(
+                            toBeCanceled.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                            numCancelRequestsSubmitted++;
+                            final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                            opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
+                                public void onSuccess(Void result) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
+                                        .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+
+                                public void onFailure(Throwable caught) {
+                                    Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
+                                        .valueOf(historyId)), caught, Severity.Error, EnumSet
+                                        .of(Option.BackgroundJobResult));
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                };
+                            });
+                        }
+                    }
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_operationHistoryList_cancelSubmitted(String
+                            .valueOf(numCancelRequestsSubmitted)), Severity.Info));
+                    refreshTableInfo();
+                }
+            });
+
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
@@ -210,8 +261,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     }
 
                     public void onFailure(Throwable caught) {
-                        // TODO: i18n
-                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_operationHistoryList_deleteFailure(operationHistoryToRemove.toString()),
                             caught);
                         failureIds.add(operationHistoryToRemove.getId());
                         handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
@@ -222,15 +273,13 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
         if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
-            // TODO: i18n
             if (successIds.size() == numberOfRecordsToBeDeleted) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+                    new Message(MSG.view_operationHistoryList_deleteSuccess(String.valueOf(numberOfRecordsToBeDeleted))));
             } else {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + successIds.size()
-                        + " operation history items, but failed to delete the items with the following IDs: "
-                        + failureIds));
+                    new Message(MSG.view_operationHistoryList_deletePartialSuccess(String.valueOf(successIds.size()),
+                        failureIds.toString())));
             }
             refresh();
         }

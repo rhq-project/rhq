@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,27 +32,35 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
 /**
-* @author Greg Hinkle
-* @author Ian Springer
-*/
+ * This should probably be renamed to ServiceDiscoveryExecutor or maybe ChildDiscoveryExecutor.  It is responsible for
+ * discovering children of existing resources.  It recursively walks the hierarchy looking for new resources, which
+ * are typically services (but could be non-top-level servers).  It is complemented by {@link AutoDiscoveryExecutor}
+ * which looks for new top level servers.
+ * 
+ * @author Greg Hinkle
+ * @author Ian Springer
+ */
 public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
     private Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
 
@@ -62,7 +70,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     /**
      * Resource to scan. If null, the entire platform will be scanned.
      */
-    private Resource resource;
+    private Resource rootResource;
 
     public RuntimeDiscoveryExecutor(InventoryManager inventoryManager,
         PluginContainerConfiguration pluginContainerConfiguration) {
@@ -76,12 +84,12 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
      *
      * @param inventoryManager             hook back to the inventory manager
      * @param pluginContainerConfiguration configuration of this executor
-     * @param resource                     scopes the runtime scan to a particular resource
+     * @param rootResource                 scopes the runtime scan to a particular resource
      */
     public RuntimeDiscoveryExecutor(InventoryManager inventoryManager,
-        PluginContainerConfiguration pluginContainerConfiguration, Resource resource) {
+        PluginContainerConfiguration pluginContainerConfiguration, Resource rootResource) {
         this(inventoryManager, pluginContainerConfiguration);
-        this.resource = resource;
+        this.rootResource = rootResource;
     }
 
     public void run() {
@@ -90,7 +98,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
     @NotNull
     public InventoryReport call() {
-        String target = (resource != null) ? this.resource.toString() : "platform";
+        String target = (rootResource != null) ? this.rootResource.toString() : "platform";
         log.info("Executing runtime discovery scan rooted at [" + target + "]...");
         InventoryReport report = new InventoryReport(inventoryManager.getAgent());
 
@@ -101,8 +109,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             report.setEndTime(System.currentTimeMillis());
 
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Runtime discovery scan took %d ms.", (report.getEndTime() - report
-                    .getStartTime())));
+                log.debug(String.format("Runtime discovery scan took %d ms.",
+                    (report.getEndTime() - report.getStartTime())));
             }
 
             // TODO: This is always zero for embedded because we don't populate the report.
@@ -128,38 +136,17 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     }
 
     private void runtimeDiscover(InventoryReport report) throws PluginContainerException {
-        // Always start out by refreshing availabilities, since we will only scan servers that are available.
-        this.inventoryManager.executeAvailabilityScanImmediately(true);
-        if (this.resource == null) {
+
+        if (this.rootResource == null) {
             // Run a full scan for all resources in the inventory
             Resource platform = this.inventoryManager.getPlatform();
 
             // Discover platform services here
             discoverForResource(platform, report, false);
 
-            // Next discover all other services and non-top-level servers, recursively down the hierarchy
-            discoverForResourceRecursive(platform, report);
         } else {
             // Run a single scan for just a resource and its descendants
-            discoverForResource(resource, report, false);
-        }
-
-        return;
-    }
-
-    private void discoverForResourceRecursive(Resource parent, InventoryReport report) throws PluginContainerException {
-        for (Resource child : parent.getChildResources()) {
-            // See if the child has new children itself. Then we check those children to see if there are grandchildren.
-            // Note that if the child has already been added to the report, there is no need to process it again, so skip it.
-            boolean alreadyProcessed = report.getAddedRoots().contains(child);
-            if (!alreadyProcessed) {
-                discoverForResource(child, report, alreadyProcessed);
-                // We need to recurse here even though discoverForResource recurses over child, too.
-                // This is because that discovery above only goes over newly discovered resources.
-                // It is possible this child has already existing children (e.g. previously manually added)
-                // that they themselves might have additional new children that need discovering.
-                discoverForResourceRecursive(child, report);
-            }
+            discoverForResource(rootResource, report, false);
         }
 
         return;
@@ -175,8 +162,6 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
      */
     private void discoverForResource(Resource parent, InventoryReport report, boolean parentReported)
         throws PluginContainerException {
-        // TODO GH: If resource.isRuntimeDiscoveryEnabled
-        // TODO GH: If resource.isInventoryStatusCommitted
 
         log.debug("Discovering child Resources for " + parent + "...");
 
@@ -202,41 +187,74 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             return;
         }
 
-        ResourceComponent parentComponent = parentContainer.getResourceComponent();
-        if (parentComponent == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Parent component for [" + parent + "] was null; cannot perform service scan.");
+        // For each child resource type of the server, do a discovery for resources of that type
+        Set<ResourceType> childResourceTypes = parent.getResourceType().getChildResourceTypes();
+        if (null == childResourceTypes || childResourceTypes.isEmpty()) {
+            // I'm not sure it's possible, but just in case, make sure it doesn't have children. If it does, keep going
+            if (parent.getChildResources().isEmpty()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Parent resource type [" + parent + "] has no child types; cannot perform service scan.");
+                }
+                return;
             }
-            return;
         }
 
-        // Do a live check of availability here. This won't set the availability anywhere but will allow us
-        // to find nested resources, i.e. children of resources we've found during our recursive call 
-        // to discoverForResource(). Without this live check, the availability of these newly discovered
-        // resources would be null, so we would just return without checking for their children.
-        AvailabilityType availability;
-        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(parentContainer.getResourceClassLoader());
-            availability = parentComponent.getAvailability();
-        } catch (Exception e) {
-            availability = AvailabilityType.DOWN;
-        } finally {
-            Thread.currentThread().setContextClassLoader(originalCL);
+        // At this point we used to always do a live check of availability.  This buys us very little and
+        // costs us a lot.  For a platform-rooted scan this ends up being an avail check for all but leaf
+        // nodes of the tree.  That is costly on top of the discovery check itself, and is antithetical to
+        // the whole staggered avail-check approach we now have in place.  We can't even update the container
+        // with the avail check result, because all changes in avail need to be detected and reported by the
+        // AvailabilityExecutor.  We did the avail check for two reasons.  If there is no current avail we
+        // need to establish one because it may be for a resource newly discovered by this scan, and we need to know
+        // if we can in turn perform discovery on it.  We still need to do this check.  The second was to perform
+        // discovery only on UP resources.  We can keep this logic but just use the current availability
+        // stored in the container.  It may be stale, but it is likely valid, as avail does not often change.
+        // An argument could be made to always use the currently stored avail, but currently we've decided
+        // to still perform the check in two cases: if the current avail is not UP or if the resource category is
+        // SERVER.  This means we won't miss an opportunity to do discovery for stale DOWN resource, and we won't
+        // waste time doing discovery on a stale UP SERVER, which can be time consuming.  Since most resources are
+        // SERVICEs, and also are typically UP and stay UP, perfoming checks in these two situations should
+        // not add much overhead. Finally, make sure to use facet proxy to do the avail check, this allows us to use 
+        // a timeout, and therefore not hang discovery if the avail check is slow.
+        Availability currentAvailability = parentContainer.getAvailability();
+        AvailabilityType currentAvailabilityType = (null == currentAvailability) ? AvailabilityType.DOWN
+            : currentAvailability.getAvailabilityType();
+
+        // If there is no current avail, or this is a SERVER, we must perfom the live check.
+        if (AvailabilityType.UP != currentAvailabilityType
+            || ResourceCategory.SERVER == parentContainer.getResource().getResourceType().getCategory()) {
+
+            AvailabilityFacet parentComponent = null;
+            try {
+                parentComponent = parentContainer.createResourceComponentProxy(AvailabilityFacet.class,
+                    FacetLockType.NONE, AvailabilityExecutor.GET_AVAILABILITY_TIMEOUT, true, false);
+
+            } catch (PluginContainerException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Parent component for [" + parent + "] was null; cannot perform service scan.");
+                }
+                return;
+            }
+
+            try {
+                currentAvailabilityType = parentComponent.getAvailability();
+            } catch (Exception e) {
+                currentAvailabilityType = AvailabilityType.DOWN;
+            }
         }
 
-        if (availability != AvailabilityType.UP) {
+        if (AvailabilityType.UP != currentAvailabilityType) {
             if (log.isDebugEnabled()) {
                 log.debug("Availability of [" + parent + "] is not UP, cannot perform service scan on it.");
             }
             return;
         }
 
-        // For each child resource type of the server, do a discovery for resources of that type
         PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-        Set<ResourceType> childResourceTypes = parent.getResourceType().getChildResourceTypes();
-        for (ResourceType childResourceType : childResourceTypes) {
-            try {
+
+        try {
+
+            for (ResourceType childResourceType : childResourceTypes) {
                 // Make sure we have a discovery component for that type, otherwise there is nothing to do
                 ResourceDiscoveryComponent discoveryComponent = null;
                 try {
@@ -257,29 +275,36 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     log.debug("Running service scan on parent resource [" + parent + "] looking for children of type ["
                         + childResourceType + "]");
                 }
-                Set<Resource> childResources = this.inventoryManager.executeComponentDiscovery(childResourceType,
-                    discoveryComponent, parentContainer, Collections.<ProcessScanResult> emptyList());
+                Set<Resource> discoveredChildResources = this.inventoryManager
+                    .executeComponentDiscovery(childResourceType, discoveryComponent, parentContainer,
+                        Collections.<ProcessScanResult> emptyList());
 
-                // For each discovered resource, update it in the inventory manager and recursively discover its child resources
+                // For each discovered child resource, update it in the inventory manager
                 Map<String, Resource> mergedResources = new HashMap<String, Resource>();
-
-                for (Resource childResource : childResources) {
-                    boolean thisInReport = false;
+                for (Resource discoveredChildResource : discoveredChildResources) {
                     Resource mergedResource;
-                    mergedResource = this.inventoryManager.mergeResourceFromDiscovery(childResource, parent);
+                    mergedResource = this.inventoryManager.mergeResourceFromDiscovery(discoveredChildResource, parent);
                     mergedResources.put(mergedResource.getUuid(), mergedResource);
                     if ((mergedResource.getId() == 0) && !parentReported) {
                         report.addAddedRoot(parent);
-                        thisInReport = true;
                         parentReported = true;
                     }
-                    discoverForResource(mergedResource, report, thisInReport);
                 }
+
+                // get rid of any child resources of this type that were not yet committed and are now gone  
                 removeStaleResources(parent, childResourceType, mergedResources);
-            } catch (Throwable t) {
-                report.getErrors().add(new ExceptionPackage(Severity.Severe, t));
-                log.error("Error in runtime discovery", t);
+
             }
+
+            // now, recursively perform discovery on all of the parent's children, which includes the newly
+            // merged children as well as previously existing children.
+            for (Resource childResource : parent.getChildResources()) {
+                discoverForResource(childResource, report, parentReported);
+            }
+
+        } catch (Throwable t) {
+            report.getErrors().add(new ExceptionPackage(Severity.Severe, t));
+            log.error("Error in runtime discovery", t);
         }
 
         return;

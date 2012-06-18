@@ -49,7 +49,7 @@
                      <execution>
                         <phase>pre-integration-test</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
                               </echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
@@ -81,7 +81,7 @@
                                  </fileset>
                               </move>
                               <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -144,19 +144,18 @@
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
                         <id>deploy</id>
                         <!--<phase>compile</phase>-->
                         <configuration>
-                           <tasks>
+                           <target>
                               <mkdir dir="${rhq.deploymentDir}" />
                               <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                               <echo>*** Updating ${deployment.file}...</echo>
                               <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -167,11 +166,11 @@
                         <id>undeploy</id>
                         <!--<phase>clean</phase>-->
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                               <echo>*** Deleting ${deployment.file}...</echo>
                               <delete file="${deployment.file}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>

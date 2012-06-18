@@ -207,14 +207,13 @@
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
                  <executions>
 
                      <execution>
                         <id>deploy-classes</id>
                         <phase>compile</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
                             <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
                             <copy todir="${classes.dir}" verbose="${rhq.verbose}">
@@ -226,7 +225,7 @@
                                <fileset dir="${basedir}/src/main/webapp" />
                             </copy>
                             <!-- TODO: Also copy the files from src/main/webapp-filtered/, and then filter them ourselves. -->
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -237,13 +236,13 @@
                         <id>deploy</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/target/${project.build.finalName}" />
                             </copy>
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -254,11 +253,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                             <delete dir="${deployment.dir}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>

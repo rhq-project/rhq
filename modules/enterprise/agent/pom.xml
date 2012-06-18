@@ -16,6 +16,15 @@
   <name>RHQ Enterprise Agent</name>
   <description>RHQ Agent</description>
 
+  <properties>
+    <agent1.server.bind-port>11111</agent1.server.bind-port>
+    <agent2.server.bind-port>22222</agent2.server.bind-port>
+    <agent1.communications.connector.bind-port>11111</agent1.communications.connector.bind-port>
+    <agent2.communications.connector.bind-port>22222</agent2.communications.connector.bind-port>
+    <agent1.communications.multicast-detector.port>17777</agent1.communications.multicast-detector.port>
+    <agent2.communications.multicast-detector.port>18888</agent2.communications.multicast-detector.port>
+  </properties>
+
   <dependencies>
 
     <!-- Internal Deps -->
@@ -122,7 +131,7 @@
           <execution>
             <phase>process-classes</phase>
             <configuration>
-              <tasks>
+              <target>
 
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
@@ -152,7 +161,7 @@ Build-OS-Version=${os.version}
 Build-Number=${buildNumber}
 </echo>
 
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -164,7 +173,7 @@ Build-Number=${buildNumber}
             <id>agent-distro-package</id>
             <phase>install</phase>
             <configuration>
-              <tasks>
+              <target>
                 <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
                    <property name="settings.localRepository" value="${settings.localRepository}" />
                    <property name="project.version" value="${project.version}" />
@@ -185,7 +194,7 @@ Build-Number=${buildNumber}
                    <property name="augeas.zip.version" value="${augeas.zip.version}" />
                    <property name="log4j.version" value="${log4j.version}" />
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -196,10 +205,10 @@ Build-Number=${buildNumber}
             <id>clean-test-dirs</id>
             <phase>test</phase>
             <configuration>
-              <tasks>
+              <target>
                 <delete dir="${basedir}/data" />
                 <delete dir="${basedir}/plugins" />
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -223,6 +232,14 @@ Build-Number=${buildNumber}
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+            <agent1.server.bind-port>${agent1.server.bind-port}</agent1.server.bind-port>
+            <agent2.server.bind-port>${agent2.server.bind-port}</agent2.server.bind-port>
+            <agent1.communications.connector.bind-port>${agent1.communications.connector.bind-port}</agent1.communications.connector.bind-port>
+            <agent2.communications.connector.bind-port>${agent2.communications.connector.bind-port}</agent2.communications.connector.bind-port>
+            <agent1.communications.multicast-detector.port>${agent1.communications.multicast-detector.port}</agent1.communications.multicast-detector.port>
+            <agent2.communications.multicast-detector.port>${agent2.communications.multicast-detector.port}</agent2.communications.multicast-detector.port>
+          </systemPropertyVariables>
           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
         </configuration>
       </plugin>
@@ -257,7 +274,7 @@ Build-Number=${buildNumber}
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -277,7 +294,7 @@ Build-Number=${buildNumber}
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -287,7 +304,7 @@ Build-Number=${buildNumber}
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -308,7 +325,7 @@ Build-Number=${buildNumber}
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

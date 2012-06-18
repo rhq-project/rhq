@@ -97,7 +97,7 @@ public class FilterFileVisitor implements FileVisitor {
 
     /**
      * Besides converting the {@link Filter} into a {@link PathFilter}, this method does a
-     * couple additional things. If the path is a relative, it is expanded into an absolute
+     * couple additional things. If the path is relative, it is expanded into an absolute
      * path. If the path denotes a directory and if no pattern is specified, it is assumed
      * that everything under that directory including sub directories should be considered
      * matches.

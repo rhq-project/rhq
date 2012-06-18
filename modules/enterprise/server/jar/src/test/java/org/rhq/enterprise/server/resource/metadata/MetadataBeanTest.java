@@ -163,7 +163,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
 
-        pluginMgr.registerPlugin(subjectMgr.getOverlord(), plugin, pluginDescriptor, null, true);
+        pluginMgr.registerPlugin(plugin, pluginDescriptor, null, true);
 
         pluginIds.add(plugin.getId());
     }

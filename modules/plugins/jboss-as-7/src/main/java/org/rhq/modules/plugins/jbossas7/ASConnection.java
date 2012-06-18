@@ -301,15 +301,15 @@ public class ASConnection {
         return responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == HTTP_TEMPORARY_REDIRECT;
     }
 
-    private void handleAuthorizationFailureResponse(Operation operation, ResponseStatus responseCode) {
+    private void handleAuthorizationFailureResponse(Operation operation, ResponseStatus responseStatus) {
         if (log.isDebugEnabled()) {
-            log.debug("Response to " + operation + " was " + responseCode
+            log.debug("Response to " + operation + " was " + responseStatus
                     + " - throwing InvalidPluginConfigurationException...");
         }
         // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
         // warning message in the GUI.
         String message;
-        if (responseCode.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        if (responseStatus.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
         } else {
             message = "Authorization to AS7 failed - did you install a management user?";
@@ -508,48 +508,35 @@ public class ASConnection {
 
     private class ResponseStatus {
 
-        private HttpURLConnection connection;
         private Integer responseCode;
         private String responseMessage;
 
-        ResponseStatus(HttpURLConnection connection) {
-           this.connection = connection;
+        ResponseStatus(HttpURLConnection connection) throws IOException {
+            try {
+                responseCode = connection.getResponseCode();
+            } catch (IOException e) {
+                // try one more time
+                responseCode = connection.getResponseCode();
+            }
+
+            try {
+                responseMessage = connection.getResponseMessage();
+            } catch (IOException e) {
+                // try one more time
+                responseMessage = connection.getResponseMessage();
+            }
+
+            if (responseMessage == null) {
+                responseMessage = (getResponseCode() == HTTP_TEMPORARY_REDIRECT) ? "Temporary Redirect" : "";
+            }
         }
 
         public int getResponseCode() {
-            if (responseCode == null) {
-                try {
-                    responseCode = connection.getResponseCode();
-                } catch (IOException e) {
-                    try {
-                        // try again
-                        responseCode = connection.getResponseCode();
-                    } catch (IOException e1) {
-                        log.error("Failed to read response code.", e);
-                        responseCode = -1;
-                    }
-                }
-            }
             return responseCode;
         }
 
+        @NotNull
         public String getResponseMessage() {
-            if (responseMessage == null) {
-                try {
-                    responseMessage = connection.getResponseMessage();
-                } catch (IOException e) {
-                    try {
-                        // try again
-                        responseMessage = connection.getResponseMessage();
-                    } catch (IOException e1) {
-                        log.error("Failed to read response message.", e);
-                    }
-                }
-
-                if (responseMessage == null) {
-                    responseMessage = (getResponseCode() == HTTP_TEMPORARY_REDIRECT) ? "Temporary Redirect" : "";
-                }
-            }
             return responseMessage;
         }
 

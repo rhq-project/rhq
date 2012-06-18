@@ -28,7 +28,9 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -149,14 +151,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         });
         fields.add(priorityField);
 
-        ListGridField statusField = new ListGridField("status", MSG.common_title_status());
+        ListGridField statusField = new ListGridField("acknowledgingSubject", MSG.common_title_acknowledged());
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
-                    return MSG.view_alerts_field_ack_status_noAck();
+                    return "&nbsp;";
                 } else {
-                    return MSG.view_alerts_field_ack_status_ack(ackSubject);
+                    Img checkedImg = new Img(ImageManager.getAlertStatusCheckedIcon(),80,16);
+                    checkedImg.setImageType(ImageStyle.CENTER);
+                    return checkedImg.getInnerHTML();
                 }
             }
         });
@@ -170,10 +174,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                     sb.append(MSG.view_alerts_field_ack_status_noAckHover());
                 } else {
                     sb.append(" style='width:500px'>");
-                    Date ackTime = record.getAttributeAsDate("acknowledgeTime");
-                    String ackTimeString = TimestampCellFormatter.format(ackTime,
+                    Date ackDateTime = record.getAttributeAsDate("acknowledgeTime");
+                    String ackDateTimeString = TimestampCellFormatter.format(ackDateTime,
                         TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
-                    sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                    sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackDateTimeString));
                 }
                 sb.append("</p>");
                 return sb.toString();
@@ -205,7 +209,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             nameField.setWidth("15%");
             conditionField.setWidth("35%");
             priorityField.setWidth(50);
-            statusField.setWidth(100);
+            statusField.setWidth(80);
             resourceNameField.setWidth("25%");
             ancestryField.setWidth("25%");
         } else {

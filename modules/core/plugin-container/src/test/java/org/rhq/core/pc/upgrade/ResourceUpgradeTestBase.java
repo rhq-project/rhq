@@ -23,6 +23,7 @@ package org.rhq.core.pc.upgrade;
 import java.util.Set;
 
 import org.jmock.Expectations;
+
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,6 +45,7 @@ public abstract class ResourceUpgradeTestBase extends PluginContainerTest {
         expectations.ignoring(ss.getConfigurationServerService());
         expectations.ignoring(ss.getContentServerService());
         expectations.ignoring(ss.getCoreServerService());
+        expectations.ignoring(ss.getDriftServerService());
         expectations.ignoring(ss.getEventServerService());
         expectations.ignoring(ss.getMeasurementServerService());
         expectations.ignoring(ss.getOperationServerService());

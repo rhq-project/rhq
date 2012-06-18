@@ -42,6 +42,7 @@ import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -85,10 +86,39 @@ public abstract class AbstractConfigurationHandlingTest {
         return ConfigurationMetadataParser.parse("null", serverDescriptor.getResourceConfiguration());
     }
 
+    /* Attempts to load a service descriptor with name passed in.
+     */
+    protected ConfigurationDefinition loadServiceDescriptorElement(String serviceName)
+        throws InvalidPluginDescriptorException {
+
+        //locate the services
+        List<ServiceDescriptor> services = pluginDescriptor.getServices();
+
+        //locate the specific entry
+        ServiceDescriptor serviceDescriptor = findServiceEntry(serviceName, services);
+
+        assert serviceDescriptor != null : "Service descriptor not found in test plugin descriptor";
+
+        //? Validate the returned value?
+        return ConfigurationMetadataParser.parse("null", serviceDescriptor.getResourceConfiguration());
+    }
+
     private ServerDescriptor findServer(String name, List<ServerDescriptor> servers) {
         for (ServerDescriptor server : servers) {
             if (server.getName().equals(name)) {
                 return server;
+            }
+        }
+
+        return null;
+    }
+
+    /* Search for Service entries by name specified.
+     */
+    private ServiceDescriptor findServiceEntry(String name, List<ServiceDescriptor> services) {
+        for (ServiceDescriptor service : services) {
+            if (service.getName().equals(name)) {
+                return service;
             }
         }
 

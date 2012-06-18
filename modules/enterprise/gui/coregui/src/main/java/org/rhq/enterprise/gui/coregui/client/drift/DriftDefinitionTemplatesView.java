@@ -167,7 +167,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                         for (ListGridRecord record : selection) {
                             if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
                                 .booleanValue()) {
-                                break;
+                                return false;
                             }
                         }
                         result = true;

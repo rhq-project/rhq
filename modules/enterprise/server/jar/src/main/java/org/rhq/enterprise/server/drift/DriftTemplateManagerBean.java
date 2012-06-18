@@ -19,11 +19,26 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.NEVER;
+import static org.rhq.core.domain.common.EntityContext.forResource;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
-import org.rhq.core.domain.drift.*;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -33,17 +48,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import static javax.ejb.TransactionAttributeType.NEVER;
-import static org.rhq.core.domain.common.EntityContext.forResource;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 
 @Stateless
 public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, DriftTemplateManagerRemote {
@@ -164,6 +168,10 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     @Override
     public void deleteTemplate(Subject subject, int templateId) {
         DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
+        if (!template.isUserDefined()) {
+            throw new IllegalArgumentException(template.getName() + " is a plugin defined template. Plugin defined " +
+                "templates cannot be deleted.");
+        }
         for (DriftDefinition defintion : template.getDriftDefinitions()) {
             if (defintion.isAttached()) {
                 driftMgr.deleteDriftDefinition(subject, forResource(defintion.getResource().getId()), defintion

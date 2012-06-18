@@ -62,6 +62,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         public static final String OPERATION_DISPLAY_NAME = "operationDisplayName";
         public static final String PARAMETERS = "parameters";
         public static final String SUBJECT = "subject";
+        public static final String SUBJECT_ID = "subjectId";
         public static final String DESCRIPTION = "description";
         public static final String NEXT_FIRE_TIME = "nextFireTime";
         public static final String TIMEOUT = "timeout";
@@ -152,8 +153,10 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         to.setId(from.getAttributeAsInt(Field.ID));
         to.setJobName(from.getAttribute(Field.JOB_NAME));
         to.setJobGroup(from.getAttribute(Field.JOB_GROUP));
-        SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
-        to.setSubject(subjectRecord.toSubject());
+        Subject subject = new Subject();
+        subject.setName(from.getAttribute(Field.SUBJECT));
+        subject.setId(from.getAttributeAsInt(Field.SUBJECT_ID));
+        to.setSubject(subject);
         Configuration parameters = (Configuration) from.getAttributeAsObject(Field.PARAMETERS);
         Integer timeout = RecordUtility.getAttributeAsInteger(from, Field.TIMEOUT);
         if (timeout != null) {
@@ -179,8 +182,8 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         to.setAttribute(Field.ID, from.getId());
         to.setAttribute(Field.JOB_NAME, from.getJobName());
         to.setAttribute(Field.JOB_GROUP, from.getJobGroup());
-        SubjectRecord subjectRecord = new SubjectRecord(from.getSubject());
-        to.setAttribute(Field.SUBJECT, subjectRecord);
+        to.setAttribute(Field.SUBJECT, from.getSubject().getName());
+        to.setAttribute(Field.SUBJECT_ID, from.getSubject().getId());
         Configuration parameters = from.getParameters();
         to.setAttribute(Field.PARAMETERS, parameters);
         to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
@@ -266,30 +269,4 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
     protected Criteria getFetchCriteria(DSRequest request) {
         return null;
     }
-
-    public static class SubjectRecord extends ListGridRecord {
-        static final String FIELD_ID = "id";
-        static final String FIELD_NAME = "name";
-
-        public SubjectRecord(Subject subject) {
-            setAttribute(FIELD_ID, subject.getId());
-            setAttribute(FIELD_NAME, subject.getName());
-        }
-
-        public int getId() {
-            return getAttributeAsInt(FIELD_ID);
-        }
-
-        public String getName() {
-            return getAttribute(FIELD_NAME);
-        }
-
-        public Subject toSubject() {
-            Subject subject = new Subject();
-            subject.setId(getId());
-            subject.setName(getName());
-            return subject;
-        }
-    }
-
 }

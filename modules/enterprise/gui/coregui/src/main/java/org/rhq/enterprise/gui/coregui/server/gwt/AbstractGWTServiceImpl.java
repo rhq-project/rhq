@@ -29,10 +29,12 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -44,6 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
 
     private static final long serialVersionUID = 1L;
+    private Log log = LogFactory.getLog(this.getClass());
 
     private ThreadLocal<Subject> sessionSubject = new ThreadLocal<Subject>();
     private ThreadLocal<String> rpcMethod = new ThreadLocal<String>();
@@ -52,9 +55,13 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         return sessionSubject.get();
     }
 
+    protected Log getLog() {
+        return log;
+    }
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (Log.isTraceEnabled()) {
+        if (log.isTraceEnabled()) {
             printHeaders(req);
         }
 
@@ -66,11 +73,11 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
                 Subject subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
                 sessionSubject.set(subject);
             } catch (Exception e) {
-                Log.trace("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
+                log.trace("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
                 continueProcessing = false;
             }
         } else {
-            Log.debug("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
+            log.debug("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
             continueProcessing = false;
         }
 
@@ -120,8 +127,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         id.append("] ");
 
         // log the exception server-side
-        //logger.warning("Sending exception to client: " + id.toString(), t);
-        Log.warn("Sending exception to client: " + id.toString(), t);
+        log.warn("Sending exception to client: " + id.toString(), t);
 
         // cannot assume gwt client has our exception classes, only send the messages in a generic runtime exception
         return new RuntimeException(id.toString() + ThrowableUtil.getAllMessages(t));
@@ -132,9 +138,9 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         // TODO: figure out why SESSION_NAME header and other GWT-specific headers are missing occasionally
         //       seems to only happen on polling for recent alerts when there is no user activity for a few minutes
         Enumeration<String> headerNames = req.getHeaderNames();
-        Log.trace(req.getRequestURL().toString());
+        log.trace(req.getRequestURL().toString());
         while (headerNames.hasMoreElements()) {
-            Log.trace("   " + headerNames.nextElement());
+            log.trace("   " + headerNames.nextElement());
         }
     }
 }

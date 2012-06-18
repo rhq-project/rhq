@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.clientapi.RemoteClient;
@@ -111,8 +110,7 @@ public class LoginCommand implements ClientCommand {
 
         Subject subject = remoteClient.login(username, password);
 
-        ProductInfo info = remoteClient.getSystemManager().getProductInfo(subject);
-        String version = info.getVersion() + " (" + info.getBuildNumber() + ")";
+        String version = remoteClient.getServerVersion() + " (" + remoteClient.getServerBuildNumber() + ")";
         client.getPrintWriter().println("Remote server version is: " + version);
 
         // this call has the side effect of setting bindings for the new remote client and its subject

@@ -79,4 +79,11 @@ public class AvailabilityContextImpl implements AvailabilityContext {
     public void enable() {
         PluginContainer.getInstance().getInventoryManager().setResourceEnablement(resource.getId(), true);
     }
+
+    /**
+     * Only used in tests
+     */
+    public Resource getResource() {
+        return resource;
+    }
 }

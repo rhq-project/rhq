@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# A tool to find out what jars contain a certain class. Looks for the specified regex in the names of the files in all 
+# jar files recursively under the current directory, and prints the name of any jar files where a match was found.
+
+if [ $# -ne 1 ]; then
+   echo "Usage: $(basename $0) CLASS_NAME"
+   echo " e.g.: $(basename $0) com.smartgwt.client.widgets.HTMLFlow"
+   exit 1
+fi
+
+LOOK_FOR="$1"
+for i in `find . -name "*jar"`; do
+  # echo "Looking in $i ..."
+  jar tvf $i | grep "$LOOK_FOR" > /dev/null
+  if [ $? == 0 ]; then
+    echo "==> Found \"$LOOK_FOR\" in $i"
+  fi
+done
+

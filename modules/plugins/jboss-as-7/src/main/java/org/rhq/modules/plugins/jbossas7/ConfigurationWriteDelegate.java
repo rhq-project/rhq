@@ -109,9 +109,18 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
         else {
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            // TODO how to signal "need reload"
+            // signal "need reload"
+            if (result.isReloadRequired()) {
+                PropertySimple oobMessage = new PropertySimple("__OOB",
+                    "The server needs a reload for the latest changes to come effective.");
+                conf.put(oobMessage);
+            }
+            if (result.isRestartRequired()) {
+                PropertySimple oobMessage = new PropertySimple("__OOB",
+                    "The server needs a restart for the latest changes to come effective.");
+                conf.put(oobMessage);
+            }
         }
-
     }
 
     protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf, Address address) {
@@ -151,8 +160,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address);
                 }
-            }
-            if (groupName.startsWith("child:")) { // one named child resource
+            } else if (groupName.startsWith("child:")) { // one named child resource
                 String subPath = groupName.substring("child:".length());
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
@@ -227,7 +235,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                         updateProperty(conf, cop, def, address1);
                     }
                 }
-            } // child: case    TODO handle attribute: case
+
+            }// child: case    TODO handle attribute: case
+            else {//handle the base case with no special case handling
+                  //get the properties from within the group and update as usual.
+                for (PropertyDefinition propDef : configurationDefinition.getPropertiesInGroup(groupName)) {
+                    updateProperty(conf, cop, propDef, address);
+                }
+            }
         }
 
         return cop;
@@ -420,6 +435,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (property.getStringValue() == null && !propertyDefinition.isRequired())
             return;
 
+        if (property.getName().endsWith(":ignore")) // Caller takes care
+            return;
+
         if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
 
@@ -482,7 +500,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 entry = new SimpleEntry<String, Object>(realName, null);
             }
         } else {
-            entry = new SimpleEntry<String, Object>(name, property.getStringValue());
+            Object o = getObjectWithType(propertyDefinition,property.getStringValue());
+            entry = new SimpleEntry<String, Object>(name, o);
         }
 
         return entry;
@@ -626,6 +645,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
 
         String val = (String) entry.getValue();
+        Object ret = getObjectWithType(pds, val);
+
+        return ret;
+    }
+
+    private Object getObjectWithType(PropertyDefinitionSimple pds, String val) {
         PropertySimpleType type = pds.getType();
         Object ret;
         switch (type) {
@@ -650,7 +675,6 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             default:
                 ret= val;
         }
-
         return ret;
     }
 

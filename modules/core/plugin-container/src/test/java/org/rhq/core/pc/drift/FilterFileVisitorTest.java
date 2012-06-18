@@ -19,6 +19,14 @@
 
 package org.rhq.core.pc.drift;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.toFile;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.testng.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,14 +38,6 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.file.FileVisitor;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.toFile;
-import static org.rhq.core.util.file.FileUtil.forEachFile;
-import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
-import static org.testng.Assert.assertTrue;
 
 public class FilterFileVisitorTest {
 
@@ -72,6 +72,23 @@ public class FilterFileVisitorTest {
     }
 
     @Test
+    public void visitBaseDirFilesThatMatchFilters() throws Exception {
+        File fooJar = touch(basedir, "foo.jar");
+        File gooJar = touch(basedir, "goo.jar");
+        File myapp = touch(basedir, "myapp.war");
+        touch(basedir, "bar.jar");
+
+        List<Filter> includes = asList(new Filter(".", "foo*"), new Filter("./", "*.war"), new Filter("/", "goo*"));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,
+            "Filtering failed with multiple includes and no excludes");
+    }
+
+    @Test
     public void visitFilesThatMatchIncludes() throws Exception {
         File libDir = mkdir(basedir, "lib");
         File fooJar = touch(libDir, "foo.jar");
@@ -87,7 +104,38 @@ public class FilterFileVisitorTest {
         forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, fooWar, myapp), visitor.visitedFiles,
+            "Filtering failed with multiple includes and no excludes");
+    }
+
+    @Test
+    public void visitFilesThatMatchIncludesInWinParenDirs() throws Exception {
+        // win test only
+        if ('/' == File.separatorChar) {
+            return;
+        }
+
+        File root = toFile(getClass().getResource("."));
+        File winbasedir = new File(root, "base (dir)");
+        deleteDirectory(winbasedir);
+        winbasedir.mkdirs();
+
+        File parenDir = mkdir(winbasedir, "sys (x86)");
+        File fooJar = touch(parenDir, "foo.jar");
+        File fooWar = touch(parenDir, "foo-1.jar");
+        File myapp = touch(parenDir, "myapp.war");
+        touch(parenDir, "bar.jar");
+
+        List<Filter> includes = asList(new Filter(parenDir.getAbsolutePath(), "foo*"),
+            new Filter(parenDir.getAbsolutePath(), "*.war"));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(winbasedir, new FilterFileVisitor(winbasedir, includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(fooJar, fooWar, myapp), visitor.visitedFiles,
             "Filtering failed with mulitple includes and no excludes");
+
+        deleteDirectory(winbasedir);
     }
 
     @Test
@@ -114,8 +162,8 @@ public class FilterFileVisitorTest {
 
         forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
-        assertCollectionEqualsNoOrder(asList(server1Html), visitor.visitedFiles, "Visit files that do not match " +
-            "excludes filter and no includes are specified");
+        assertCollectionEqualsNoOrder(asList(server1Html), visitor.visitedFiles, "Visit files that do not match "
+            + "excludes filter and no includes are specified");
     }
 
     @Test
@@ -195,8 +243,8 @@ public class FilterFileVisitorTest {
         forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(serverEar, indexHtml), visitor.visitedFiles,
-            "When a filter path specifies a directory and no pattern is specified, all files under that directory, " +
-            "including subdirectories should be considered a match.");
+            "When a filter path specifies a directory and no pattern is specified, all files under that directory, "
+                + "including subdirectories should be considered a match.");
     }
 
     private File mkdir(File parent, String dirName) throws IOException {

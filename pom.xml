@@ -11,7 +11,7 @@
 
   <name>RHQ</name>
   <description>RHQ is a server management and monitoring suite primarily targeted at JBoss software.</description>
-  <url>http://rhq-project.org/</url>
+  <url>http://www.jboss.org/rhq/</url>
   <inceptionYear>2008</inceptionYear>
 
   <organization>
@@ -47,12 +47,12 @@
     <product.shortName>RHQ</product.shortName>
     <product.name>RHQ</product.name>
     <product.fullName>RHQ</product.fullName>
-    <product.url>http://rhq-project.org/</product.url>
-    <product.urlDomain>rhq-project.org</product.urlDomain>
-    <product.salesEmail>sales@rhq-project.org</product.salesEmail>
-    <product.supportEmail>info@rhq-project.org</product.supportEmail>
+    <product.url>http://www.jboss.org/rhq</product.url>
+    <product.urlDomain>jboss.org</product.urlDomain>
+    <product.salesEmail>rhq-users@lists.fedorahosted.org</product.salesEmail>
+    <product.supportEmail>rhq-users@lists.fedorahosted.org</product.supportEmail>
     <product.version>${project.version}</product.version>
-    <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
+    <product.helpDocRoot>https://docs.jboss.org/author/display/RHQ/User+Documentation</product.helpDocRoot>
     <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
     <doUpdate>false</doUpdate>
@@ -99,7 +99,7 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.2.4</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
-    <testng.version>6.4</testng.version>
+    <testng.version>6.5.2</testng.version>
     <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
     <augeas.classifier>el5</augeas.classifier>
@@ -107,7 +107,7 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.3.2.Final</resteasy.version>
+    <resteasy.version>2.3.3.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.0.Final</arquillian.version>
@@ -558,13 +558,13 @@
 
          <plugin>
            <artifactId>maven-antrun-plugin</artifactId>
-           <version>1.6</version>
+           <version>1.7</version>
            <dependencies>
              <!-- This includes all the "optional" tasks. -->
              <dependency>
                 <groupId>org.apache.ant</groupId>
                 <artifactId>ant-nodeps</artifactId>
-                <version>1.7.0</version>
+                <version>1.8.1</version>
              </dependency>
 
              <!-- This includes the <if> task, and a bunch of other handy tasks. -->
@@ -618,7 +618,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-enforcer-plugin</artifactId>
-           <version>1.0-beta-1</version>
+           <version>1.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-ejb-plugin</artifactId>
@@ -975,7 +975,7 @@
                   </goals>
                   <phase>generate-sources</phase>
                   <configuration>
-                      <tasks>
+                      <target>
                           <mkdir dir="target" />
 
                           <tstamp>
@@ -989,7 +989,7 @@
                              <arg value="-n1"/>
                           </exec>
                           <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
-                      </tasks>
+                      </target>
                   </configuration>
               </execution>
 
@@ -1000,10 +1000,10 @@
                       <goal>run</goal>
                   </goals>
                   <configuration>
-                      <tasks>
+                      <target>
                           <echo level="debug">buildTime = ${buildTime}</echo>
                           <echo level="debug">buildNumber = ${buildNumber}</echo>
-                      </tasks>
+                      </target>
                   </configuration>
               </execution>
 
@@ -1012,11 +1012,11 @@
                 <phase>site</phase>
                 <inherited>false</inherited>
                 <configuration>
-                   <tasks>
+                   <target>
                       <property name="apidocs.dir" value="target/apidocs" />
 
                       <copy dir="modules/core/domain/target/site/apidocs" todir="${apidocs.dir}/domain"/>
-                   </tasks>
+                   </target>
                 </configuration>
                 <goals>
                    <goal>run</goal>
@@ -1193,9 +1193,9 @@
             <phase>validate</phase>
             <inherited>false</inherited>
             <configuration>
-              <tasks>
+              <target>
                 <echo>.                            !!!!!!! dev profile is active !!!!!!!</echo>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

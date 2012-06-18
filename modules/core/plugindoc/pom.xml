@@ -102,12 +102,12 @@
             <id>plugindoc-distro-package</id>
             <phase>install</phase>
             <configuration>
-              <tasks>
+              <target>
                 <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
                    <property name="settings.localRepository" value="${settings.localRepository}" />
                    <property name="project.version" value="${project.version}" />
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

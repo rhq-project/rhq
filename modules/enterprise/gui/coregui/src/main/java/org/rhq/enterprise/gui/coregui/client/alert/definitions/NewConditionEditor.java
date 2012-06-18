@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.smartgwt.client.types.Alignment;
@@ -964,7 +965,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
-        TreeSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
+        SortedSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
             new Comparator<MeasurementDefinition>() {
 
                 @Override

@@ -201,12 +201,18 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         if (full) {
+            // do a full discovery - we ignore the -p and -r and -i options and do everything
+
             if (!agent.getClientCommandSender().isSending()) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_AGENT_NOT_CONNECTED_TO_SERVER));
             }
 
-            // do a full discovery - we ignore the -p and -r and -i options and do everything
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            if (inventoryManager.isDiscoveryScanInProgress()) {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_SCAN_ALREADY_IN_PROGRESS));
+                return;
+            }
+
             HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory()
                 .getResourceTypeBlacklist();
             if (!blacklist.isEmpty()) {

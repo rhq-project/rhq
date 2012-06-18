@@ -50,7 +50,7 @@
           <execution>
             <phase>process-test-resources</phase>
             <configuration>
-              <tasks>
+              <target>
                  <echo>SIGAR Java library version used is ${sigar.version}.</echo>
                  <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory...</echo>
                  <mkdir dir="${project.build.directory}/jboss-sigar" />
@@ -74,7 +74,7 @@
                     </fileset>
                  </move>
                  <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -177,7 +177,7 @@
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -198,7 +198,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -208,7 +208,7 @@
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -229,7 +229,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

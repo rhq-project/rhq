@@ -116,10 +116,6 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         return refreshTimer;
     }
 
-    public void setRefreshTimer(Timer refreshTimer) {
-        this.refreshTimer = refreshTimer;
-    }
-
     public PortletWindow getPortletWindow() {
         return portletWindow;
     }

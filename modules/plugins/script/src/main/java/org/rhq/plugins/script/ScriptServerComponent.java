@@ -61,7 +61,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
     private final Log log = LogFactory.getLog(ScriptServerComponent.class);
 
-    private static final long MAX_WAIT_TIME = 3600000L;
+    private static final long DEFAULT_MAX_WAIT_TIME = 3600000L;
 
     protected static final String PLUGINCONFIG_EXECUTABLE = "executable";
     protected static final String PLUGINCONFIG_WORKINGDIR = "workingDirectory";
@@ -80,6 +80,9 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     protected static final String PLUGINCONFIG_FIXED_DESC = "fixedDescription";
 
     protected static final String OPERATION_PARAM_ARGUMENTS = "arguments";
+    protected static final String OPERATION_PARAM_WAIT_TIME = "waitTime";
+    protected static final String OPERATION_PARAM_CAPTURE_OUTPUT = "captureOutput";
+    protected static final String OPERATION_PARAM_KILL_ON_TIMEOUT = "killOnTimeout";
     protected static final String OPERATION_RESULT_EXITCODE = "exitCode";
     protected static final String OPERATION_RESULT_OUTPUT = "output";
 
@@ -161,7 +164,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                 ProcessExecutionResults exeResults = exeResultsCache.get((arguments == null) ? "" : arguments);
                 if (exeResults == null) {
                     boolean captureOutput = !valueIsExitCode; // don't need output if we need to just check exit code
-                    exeResults = executeExecutable(arguments, MAX_WAIT_TIME, captureOutput);
+                    exeResults = executeExecutable(arguments, DEFAULT_MAX_WAIT_TIME, captureOutput);
                     exeResultsCache.put((arguments == null) ? "" : arguments, exeResults);
                 }
 
@@ -288,27 +291,53 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         OperationResult result = new OperationResult();
 
         String arguments = configuration.getSimpleValue(OPERATION_PARAM_ARGUMENTS, null);
+        String waitTimeStr = configuration.getSimpleValue(OPERATION_PARAM_WAIT_TIME, null);
+        String captureOutputStr = configuration.getSimpleValue(OPERATION_PARAM_CAPTURE_OUTPUT, null);
+        String killOnTimeoutStr = configuration.getSimpleValue(OPERATION_PARAM_KILL_ON_TIMEOUT, null);
 
-        ProcessExecutionResults exeResults = executeExecutable(arguments, MAX_WAIT_TIME, true);
+        long waitTime;
+        boolean captureOutput;
+        boolean killOnTimeout;
+
+        if (waitTimeStr != null) {
+            try {
+                waitTime = Long.parseLong(waitTimeStr);
+                waitTime *= 1000L; // the parameter is specified in seconds, but we need it in milliseconds
+            } catch (NumberFormatException e) {
+                throw new NumberFormatException("Wait time parameter value is invalid: " + waitTimeStr);
+            }
+        } else {
+            waitTime = DEFAULT_MAX_WAIT_TIME;
+        }
+
+        if (captureOutputStr != null) {
+            captureOutput = Boolean.parseBoolean(captureOutputStr);
+        } else {
+            captureOutput = true;
+        }
+
+        if (killOnTimeoutStr != null) {
+            killOnTimeout = Boolean.parseBoolean(killOnTimeoutStr);
+        } else {
+            killOnTimeout = true;
+        }
+
+        ProcessExecutionResults exeResults = executeExecutable(arguments, waitTime, captureOutput, killOnTimeout);
         Integer exitcode = exeResults.getExitCode();
         String output = exeResults.getCapturedOutput();
         Throwable error = exeResults.getError();
-
-        if (exitcode == null) {
-            exitcode = Integer.valueOf(-999);
-        }
-
-        if (output == null) {
-            output = "";
-        }
 
         if (error != null) {
             result.setErrorMessage(ThrowableUtil.getAllMessages(error));
         }
 
         Configuration resultsConfig = result.getComplexResults();
-        resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXITCODE, exitcode));
-        resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output));
+        if (exitcode != null) {
+            resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXITCODE, exitcode));
+        }
+        if (output != null) {
+            resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output));
+        }
 
         return result;
     }
@@ -320,20 +349,36 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     /**
      * Executes the CLI executable with the given arguments.
      * 
-     * @param args the arguments to send to the executable (may be <code>null</code>)
-     * @param wait the maximum time in milliseconds to wait for the process to execute; 0 means do not wait 
-     * @param captureOutput if <code>true</code>, the executables output will be captured and returned
+     * Same as {@link #executeExecutable(String, long, boolean, boolean)} with 'killOnTimeout' being true.
      *
      * @return the results of the execution
      *
      * @throws InvalidPluginConfigurationException
      */
-    protected ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput)
+    protected ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput) {
+        return executeExecutable(args, wait, captureOutput, true);
+    }
+
+    /**
+     * Executes the CLI executable with the given arguments.
+     * 
+     * @param args the arguments to send to the executable (may be <code>null</code>)
+     * @param wait the maximum time in milliseconds to wait for the process to execute; 0 means do not wait 
+     * @param captureOutput if <code>true</code>, the executables output will be captured and returned
+     * @param killOnTimeout if <code>true</code> and if 'wait' is greater than 0, the process will be killed if it times out
+     *
+     * @return the results of the execution
+     *
+     * @throws InvalidPluginConfigurationException
+     */
+    protected ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput,
+        boolean killOnTimeout)
         throws InvalidPluginConfigurationException {
 
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput,
+            killOnTimeout);
 
         if (log.isDebugEnabled()) {
             logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
@@ -347,13 +392,20 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     protected static ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
         String args, long wait, boolean captureOutput) throws InvalidPluginConfigurationException {
 
+        return executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput, true);
+    }
+
+    private static ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
+        String args, long wait, boolean captureOutput, boolean killOnTimeout)
+        throws InvalidPluginConfigurationException {
+
         ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
         if (args != null) {
             processExecution.setArguments(args.split(" "));
         }
         processExecution.setCaptureOutput(captureOutput);
         processExecution.setWaitForCompletion(wait);
-        processExecution.setKillOnTimeout(true);
+        processExecution.setKillOnTimeout(killOnTimeout);
 
         ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
 

@@ -74,4 +74,19 @@ public interface OperationGWTService extends RemoteService {
 
     List<GroupOperationSchedule> findScheduledGroupOperations(int groupId) throws RuntimeException;
 
+    /**
+     * Cancels a currently in-progress operation. Doing this will attempt to stop the invocation if it is currently
+     * running on the agent.
+     *
+     * <p>Note that this method will handle canceling a resource or group history - depending on what the given
+     * <code>historyId</code> refers to. If it refers to a group history, it will cancel all the resource
+     * invocations for that group invocation.</p>
+     *
+     * @param historyId         the ID of the group or resource history item identifying the in-progress operation
+     * @param ignoreAgentErrors if <code>true</code> this will still flag the history items in the database as canceled,
+     *                          even if the method failed to notify the agent(s) that the operation should be canceled.
+     *                          If <code>false</code>, this method will not update the history status unless it could
+     *                          successfully tell the agent(s) to cancel the operation.
+     */
+    void cancelOperationHistory(int historyId, boolean ignoreAgentErrors) throws RuntimeException;
 }

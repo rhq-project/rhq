@@ -724,7 +724,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             generator.setAuthorizationResourceFragment(tokenType, subject.getId());
         }
 
-        CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner<AlertDefinition>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,39 +18,60 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import java.util.List;
-
 import javax.ejb.Local;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.jboss.resteasy.annotations.cache.Cache;
+
 
 /**
  * Bean that deals with user specific stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
+@Produces({"application/json","application/xml","text/plain","text/html"})
 @Path("/user")
 @Local
+@Api(value="Api that deals with user related stuff")
 public interface UserHandlerLocal {
 
     @GET
     @Path("favorites/resource")
-    public List<ResourceWithType> getFavorites(@Context UriInfo uriInfo);
+    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")
+    Response getFavorites(@Context UriInfo uriInfo,@Context HttpHeaders headers);
 
     @PUT
     @Path("favorites/resource/{id}")
-    public void addFavoriteResource(@PathParam("id") int id);
+    @ApiOperation(value = "Add a resource as favorite for the caller")
+    public void addFavoriteResource(
+            @ApiParam(name = "id", value = "Id of the resource")
+            @PathParam("id") int id);
 
     @DELETE
     @Path("favorites/resource/{id}")
-    public void removeResourceFromFavorites(@PathParam("id") int id);
+    @ApiOperation(value="Remove a resource from favorites")
+    public void removeResourceFromFavorites(
+            @ApiParam(name="id", value = "Id of the resource")
+            @PathParam("id") int id);
+
+
+    @GET
+    @Cache(maxAge = 600)
+    @Path("{id}")
+    @ApiOperation(value = "Get info about a user", responseClass = "UserRest")
+    public Response getUserDetails(@ApiParam(value="Login of the user") @PathParam("id")String loginName,
+                                   @Context Request request,@Context HttpHeaders headers);
 }

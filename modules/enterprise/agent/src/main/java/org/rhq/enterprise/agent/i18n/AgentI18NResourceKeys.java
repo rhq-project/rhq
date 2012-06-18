@@ -1940,6 +1940,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("WARNING: Discovery will not be run for the following ResourceTypes, because they are blacklisted: {0}")
     String DISCOVERY_BLACKLISTED_TYPES = "PromptCommand.discovery.blacklisted-types";
 
+    @I18NMessage("A discovery scan is already in progress. Please wait for it to complete and then try again.")
+    String DISCOVERY_SCAN_ALREADY_IN_PROGRESS = "PromptCommand.discovery.scan-already-in-progress";
+
     @I18NMessage("Full discovery run in [{0}] ms")
     String DISCOVERY_FULL_RUN = "PromptCommand.discovery.full-run";
 

@@ -70,12 +70,12 @@ public class DriftConfigurationDefinition implements Serializable {
     // plugin container as part of regex expressions, we must make sure they are restricted to only be characters
     // valid for file system paths and regex.  And, additionally for filter patterns, the (ant-style) filter
     // wildcards. Thus, we only allow the base paths to include the separator characters "\", "/", the windows
-    // drive character ":" and the filename characters (see PROP_NAME_REGEX_PATTERN).  Filter paths can
-    // contain the same as the base path, less the drive character.  And filter patterns are the same as
-    // filter paths, plus the wildcard characters. "*", "?".
-    public static final String PROP_BASEDIR_PATH_REGEX_PATTERN = "[ \\.\\-\\w/\\:\\\\]+";
-    public static final String PROP_FILTER_PATH_REGEX_PATTERN = "[ \\.\\-\\w/\\\\]+";
-    public static final String PROP_FILTER_PATTERN_REGEX_PATTERN = "[ \\.\\-\\w/\\\\\\?\\*]+";
+    // drive character ":", parentheses to support windows (x86) type system directories, and the filename characters
+    // (see PROP_NAME_REGEX_PATTERN).  Filter paths can contain the same as the base path, less the drive character.
+    // And filter patterns are the same as filter paths, plus the wildcard characters. "*", "?".
+    public static final String PROP_BASEDIR_PATH_REGEX_PATTERN = "[ \\.\\-\\(\\)\\w/\\:\\\\]+";
+    public static final String PROP_FILTER_PATH_REGEX_PATTERN = "[ \\.\\-\\(\\)\\w/\\\\]+";
+    public static final String PROP_FILTER_PATTERN_REGEX_PATTERN = "[ \\.\\-\\(\\)\\w/\\\\\\?\\*]+";
 
     public static final boolean DEFAULT_ENABLED = true;
     public static final boolean DEFAULT_ATTACHED = true;

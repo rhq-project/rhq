@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
@@ -66,7 +67,8 @@ public class PluginDocGenerator {
     private static final String PLUGIN_DESCRIPTOR_JAXB_CONTEXT_PATH = "org.rhq.core.clientapi.descriptor.plugin";
     private static final String CONFLUENCE_PLUGIN_TEMPLATE_RESOURCE_PATH = "plugin-doc-confluence.vm";
     private static final String CONFLUENCE_RESOURCE_TYPE_TEMPLATE_RESOURCE_PATH = "resource-type-doc-confluence.vm";
-    private static final String DOCBOOK_TEMPLATE_RESOURCE_PATH = "resource-type-doc-docbook.vm";
+    private static final String DOCBOOK_PLUGIN_TEMPLATE_RESOURCE_PATH = "plugin-doc-docbook.vm";
+    private static final String DOCBOOK_RESOURCE_TYPE_TEMPLATE_RESOURCE_PATH = "resource-type-doc-docbook.vm";
     private static final String CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH = "confluence-macros.vm";
     private static final String DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH = "docbook-macros.vm";
     private static final String RHQ_VERSION = "4.4.0";
@@ -109,11 +111,12 @@ public class PluginDocGenerator {
                 + ioe.getMessage());
         }
 
+        loadProperties(props);
     }
 
     public void loadProperties(Properties props) {
-        this.confluenceUrl = props.getProperty("confluenceUrl", "http://rhq-project.org/");
-        this.confluenceSpace = props.getProperty("confluenceSpace", "JOPR2");
+        this.confluenceUrl = props.getProperty("confluenceUrl", "https://docs.jboss.org/author/display/");
+        this.confluenceSpace = props.getProperty("confluenceSpace", "RHQ");
         this.confluenceParentPageTitle = props.getProperty("confluenceParentPageTitle", "Management Plugins");
         this.confluenceUserName = props.getProperty("confluenceUserName");
         this.confluencePassword = props.getProperty("confluencePassword");
@@ -142,7 +145,7 @@ public class PluginDocGenerator {
         File baseOutputDir = new File(projectBaseDir.getParentFile(), OUTPUT_DIR_PATH);
 
         generateConfluenceContent(descriptorProcessor, resourceTypes, baseOutputDir);
-        generateDocBookContent(descriptorProcessor, resourceTypes, baseOutputDir);
+        generateDocbookContent(descriptorProcessor, resourceTypes, baseOutputDir);
     }
 
     private static Set<ResourceType> sortResourceTypes(Set<ResourceType> resourceTypes) {
@@ -155,7 +158,7 @@ public class PluginDocGenerator {
                                            Set<ResourceType> resourceTypes, File baseOutputDir)
             throws PluginDocGeneratorException {
         String pluginName = descriptorProcessor.getPluginDescriptor().getName();
-        log.info("Generating Confluence content for " + pluginName + " plugin...");
+        System.out.println("Generating Confluence content for " + pluginName + " plugin...");
 
         File confluenceBaseOutputDir = new File(baseOutputDir, "confluence");
         File confluenceOutputDir = new File(confluenceBaseOutputDir, pluginName);
@@ -248,6 +251,19 @@ public class PluginDocGenerator {
         return confluenceHelp;
     }
 
+    private static String getDocbookHelp(String helpContentType, String help) {
+        String docbookHelp;
+        if (helpContentType.contains("docbook")) {
+            docbookHelp = help;
+        } else if (helpContentType.endsWith("html")) {
+            docbookHelp = DocConverter.htmlToDocBook(help);
+        } else {
+            docbookHelp = null;
+        }
+
+        return docbookHelp;
+    }
+
     private void generateConfluenceResourceTypePages(ResourceType parentType, Set<ResourceType> resourceTypes, File confluenceOutputDir,
                                                      Plugin plugin) {
         VelocityTemplateProcessor confluenceResourceTypeTemplateProcessor = new VelocityTemplateProcessor(
@@ -311,26 +327,81 @@ public class PluginDocGenerator {
         storePage(confluence, pluginPage);
     }
 
-    private void generateDocBookContent(PluginDescriptorProcessor descriptorProcessor, Set<ResourceType> resourceTypes,
+    private void generateDocbookContent(PluginDescriptorProcessor descriptorProcessor, Set<ResourceType> resourceTypes,
                                         File baseOutputDir) {
+        String pluginName = descriptorProcessor.getPluginDescriptor().getName();
+        System.out.println("Generating DocBook content for " + pluginName + " plugin...");
+
         File docbookBaseOutputDir = new File(baseOutputDir, "docbook");
         File docbookOutputDir = new File(docbookBaseOutputDir, descriptorProcessor.getPlugin().getName());
         docbookOutputDir.mkdirs();
 
-        VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(
-            DOCBOOK_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH, EscapeDocBookReference.class);
+        Plugin plugin = descriptorProcessor.getPlugin();
+        generateDocbookPluginPage(resourceTypes, docbookOutputDir, plugin);
+        generateDocbookResourceTypePages(new ArrayList<ResourceType>(), resourceTypes, docbookOutputDir, plugin);
+    }
 
+    private File generateDocbookPluginPage(Set<ResourceType> resourceTypes, File docBookOutputDir, Plugin plugin) {
+        if (plugin.getHelp() != null) {
+            String docBookHelp = getDocbookHelp(plugin.getHelpContentType(), plugin.getHelp());
+            plugin.setHelpContentType("docbook");
+            plugin.setHelp(docBookHelp);
+        }
+
+        VelocityTemplateProcessor docbookPluginTemplateProcessor = new VelocityTemplateProcessor(
+                DOCBOOK_PLUGIN_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH,
+                EscapeDocBookReference.class);
+
+        docbookPluginTemplateProcessor.getContext().put("rhqVersion", RHQ_VERSION);
+        docbookPluginTemplateProcessor.getContext().put("plugin", plugin);
+        String pluginId = getPluginId(plugin);
+        docbookPluginTemplateProcessor.getContext().put("pluginId", pluginId);
+        List<String> typeIds = new ArrayList<String>(resourceTypes.size());
+        for (ResourceType type : resourceTypes) {
+            String typeId = getTypeId(type, new ArrayList<ResourceType>());
+            typeIds.add(typeId);
+        }
+        docbookPluginTemplateProcessor.getContext().put("typeIds", typeIds);
+
+        String docbookOutputFileName = escapeFileName(pluginId + ".xml");
+        File docbookPluginOutputFile = new File(docBookOutputDir, docbookOutputFileName);
+        docbookPluginTemplateProcessor.processTemplate(docbookPluginOutputFile);
+
+        return docbookPluginOutputFile;
+    }
+
+    private void generateDocbookResourceTypePages(List<ResourceType> ancestorTypes, Set<ResourceType> resourceTypes,
+                                                  File docbookOutputDir, Plugin plugin) {
+        VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(
+                DOCBOOK_RESOURCE_TYPE_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH,
+                EscapeDocBookReference.class);
+
+        // Traverse the type tree depth first.
         for (ResourceType resourceType : resourceTypes) {
             String htmlHelpText = resourceType.getHelpText();
             String docBookHelpText = DocConverter.htmlToDocBook(htmlHelpText);
             resourceType.setHelpText(docBookHelpText);
 
-            log.info("Generating Docbook content for " + resourceType + " Resource type...");
+            System.out.println("Generating DocBook content for " + resourceType + " Resource type...");
 
             docbookTemplateProcessor.getContext().put("resourceType", resourceType);
-            String docbookOutputFileName = escapeFileName(resourceType.getName() + ".xml");
+            String typeId = getTypeId(resourceType, ancestorTypes);
+            docbookTemplateProcessor.getContext().put("typeId", typeId);
+            List<String> childTypeIds = new ArrayList<String>(resourceType.getChildResourceTypes().size());
+            for (ResourceType childType : resourceType.getChildResourceTypes()) {
+                String childTypeId = typeId + ":" + escapeXmlId(childType.getName());
+                childTypeIds.add(childTypeId);
+            }
+            docbookTemplateProcessor.getContext().put("childTypeIds", childTypeIds);
+            String docbookOutputFileName = escapeFileName(typeId) + ".xml";
             File docbookOutputFile = new File(docbookOutputDir, docbookOutputFileName);
             docbookTemplateProcessor.processTemplate(docbookOutputFile);
+
+            // Recurse on child types.
+            List<ResourceType> childAncestorTypes = new ArrayList<ResourceType>(ancestorTypes);
+            childAncestorTypes.add(resourceType);
+            generateDocbookResourceTypePages(childAncestorTypes, resourceType.getChildResourceTypes(), docbookOutputDir,
+                    plugin);
         }
     }
 
@@ -489,6 +560,10 @@ public class PluginDocGenerator {
         return escapePageTitle(title);
     }
 
+    private static String getPluginId(Plugin plugin) {
+        return escapeXmlId(plugin.getName());
+    }
+
     private static String getPageTitle(ResourceType resourceType, ResourceType parentType) {
         StringBuilder buffer = new StringBuilder();
 
@@ -521,6 +596,21 @@ public class PluginDocGenerator {
         return escapePageTitle(buffer.toString());
     }
 
+    private static String getTypeId(ResourceType resourceType, List<ResourceType> ancestorTypes) {
+        StringBuilder buffer = new StringBuilder();
+
+        String pluginName = resourceType.getPlugin();
+        buffer.append(pluginName).append(':');
+
+        for (ResourceType ancestorType : ancestorTypes) {
+            buffer.append(ancestorType.getName()).append(':');
+        }
+
+        buffer.append(resourceType.getName());
+
+        return escapeXmlId(buffer.toString());
+    }
+
     private static String getContentAsString(File contentFile) throws IOException {
         StringBuilder content = new StringBuilder();
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(contentFile)));
@@ -536,15 +626,16 @@ public class PluginDocGenerator {
     }
 
     private static String escapeFileName(String fileName) {
-        // DocBook doesn't like parentheses or dashes in filenames.
-        fileName = fileName.replaceAll("\\(", "").replaceAll("\\)", "").replace('-', ':');
-
-        // Remove other characters that are generally undesirable in filenames.
-        return fileName.replace('/', '_').replace('\\', '_').replace(' ', '_');
+        // Remove characters that are generally undesirable in filenames.
+        return fileName.replace(' ', '_').replaceAll("[\\\\/\\(\\)\\[\\]\\?\\*]", "-");
     }
 
     private static String escapePageTitle(String fileName) {
         return fileName.replace('/', '-');
+    }
+
+    private static String escapeXmlId(String id) {
+        return id.replace(' ', '_').replaceAll("[^-\\._:A-Za-z0-9]", "-");
     }
 
     public static void main(String[] args) throws PluginDocGeneratorException {

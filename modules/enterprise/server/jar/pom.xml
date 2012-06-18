@@ -84,7 +84,7 @@
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
-      
+
        <dependency>
            <groupId>com.googlecode.java-diff-utils</groupId>
            <artifactId>diffutils</artifactId>
@@ -511,6 +511,17 @@
                </exclusion>
            </exclusions>
        </dependency>
+     <dependency>
+       <groupId>com.wordnik</groupId>
+       <artifactId>swagger-annotations_2.9.1</artifactId>
+       <version>1.1-SNAPSHOT</version>
+     </dependency>
+     <dependency>
+       <groupId>org.rhq.helpers</groupId>
+       <artifactId>rest-docs-generator</artifactId>
+       <version>${project.version}</version>
+       <scope>compile</scope>
+     </dependency>
 
        <dependency>
            <groupId>org.yaml</groupId>
@@ -606,7 +617,7 @@
                <execution>
                   <phase>process-classes</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <!-- generate the I18N resource bundles -->
                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
@@ -634,7 +645,7 @@ Build-Jdk=${java.version}
 Build-OS-Name=${os.name}
 Build-OS-Version=${os.version}
 </echo>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -646,7 +657,7 @@ Build-OS-Version=${os.version}
                   <id>Extract JMS classes from RAR needed for JMS tests</id>
                   <phase>process-classes</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <unzip src="src/test/resources/jms-ra.rar" dest="target">
                            <patternset>
                               <include name="jms-ra.jar"/>
@@ -657,7 +668,7 @@ Build-OS-Version=${os.version}
                               <include name="org/**"/>
                            </patternset>
                         </unzip>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -766,8 +777,127 @@ Build-OS-Version=${os.version}
                 </execution>
             </executions>
          </plugin>
+
+        <!-- Document generation from the Annotations on the REST-API. -->
+        <!-- TODO move to a better suited processing phase -->
+        <plugin>
+          <groupId>org.bsc.maven</groupId>
+          <artifactId>maven-processor-plugin</artifactId>
+          <version>2.0.6-redhat</version>
+          <configuration>
+            <processors>
+              <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+            </processors>
+            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+            <!-- Comment the next line in to get more verbose output for debugging -->
+            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
+          </configuration>
+          <executions>
+            <execution>
+              <id>create-rest-api-reports</id>
+              <phase>process-classes</phase>
+              <goals>
+                <!-- We want to process the classes in src/ -->
+                <goal>process</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Disable annotation processors during normal compilation -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgument>-proc:none</compilerArgument>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>xml-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>transform</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <transformationSets>
+              <transformationSet>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes><include>rest-api-out.xml</include></includes>
+                <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/html</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.html</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+              <transformationSet>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes><include>rest-api-out.xml</include></includes>
+                <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/xml</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.dbx.xml</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+            </transformationSets>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.agilejava.docbkx</groupId>
+          <artifactId>docbkx-maven-plugin</artifactId>
+          <version>2.0.9</version>
+          <executions>
+              <execution>
+                <phase>process-classes</phase>
+                <goals>
+                  <goal>generate-pdf</goal>
+                  <goal>generate-html</goal>
+                </goals>
+              </execution>
+          </executions>
+          <configuration>
+            <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
+            <includes>rest-api-out.dbx.xml</includes>
+            <hyphenate>false</hyphenate>
+            <generateToc>true</generateToc>
+          </configuration>
+        </plugin>
+
       </plugins>
+
    </build>
+
+  <repositories>
+    <repository>
+      <!-- TODO change when the annotations are puplished. This is temporary for the swagger annotations for REST-docu -->
+       <id>sonatype-oss-snapshot</id>
+       <name>Sonatype OSS Snapshot repository</name>
+       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+
+  </repositories>
 
    <profiles>
 
@@ -839,20 +969,19 @@ Build-OS-Version=${os.version}
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
                         <id>deploy</id>
                         <phase>compile</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
                               <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                  <fileset dir="target/classes" />
                               </copy>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -868,13 +997,13 @@ Build-OS-Version=${os.version}
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
                                  <patternset>
                                     <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -885,11 +1014,11 @@ Build-OS-Version=${os.version}
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                               <delete dir="${deployment.dir}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -942,7 +1071,7 @@ Build-OS-Version=${os.version}
                         <id>remote-api</id>
                         <phase>compile</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
                               <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server" />
                               <property name="maven.compile.classpath" refid="maven.compile.classpath" />
@@ -959,7 +1088,7 @@ Build-OS-Version=${os.version}
                                  <link href="http://download.oracle.com/javase/6/docs/api/" />
                                  <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
                               </javadoc>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -991,7 +1120,7 @@ Build-OS-Version=${os.version}
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -1013,7 +1142,7 @@ Build-OS-Version=${os.version}
                         <exclude name="**/DynamicConfigurationPropertyBean.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -1023,7 +1152,7 @@ Build-OS-Version=${os.version}
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -1044,7 +1173,7 @@ Build-OS-Version=${os.version}
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

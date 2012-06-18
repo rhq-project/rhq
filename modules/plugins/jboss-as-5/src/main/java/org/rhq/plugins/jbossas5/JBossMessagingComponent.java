@@ -24,7 +24,6 @@ package org.rhq.plugins.jbossas5;
 
 import java.util.Set;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -45,7 +44,7 @@ public class JBossMessagingComponent extends ManagedComponentComponent implement
 
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
-        this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this);
+        this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this, this.getResourceContext());
     }
 
     public void stop() {

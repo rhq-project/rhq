@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -51,13 +53,16 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceStatus;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -170,7 +175,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log.error("Attemping to complete a request that was not found in the database: " + response.getRequestId());
+            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 
@@ -437,6 +442,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
         PackageType newPackageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
 
+        if (!newResourceType.isCreatable() || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
+            throw new RuntimeException("Cannot create " + newResourceType + " child Resource under parent "
+                    + parentResource + ", since the " + newResourceType
+                    + " type does not support content-based Resource creation.");
+        }
+
+        abortResourceCreationIfExistingSingleton(parentResource, newResourceType);
+
         // unless version is set start versioning the package by timestamp
         packageVersionNumber = (null == packageVersionNumber) ? Long.toString(System.currentTimeMillis())
             : packageVersionNumber;
@@ -477,14 +490,22 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             + " of type: " + resourceTypeId);
 
         ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
-        Resource resource = entityManager.find(Resource.class, parentResourceId);
-        Agent agent = resource.getAgent();
+        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
+        Agent agent = parentResource.getAgent();
 
         // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResource.getId())) {
             throw new PermissionException("User [" + user.getName()
-                + "] does not have permission to create a child resource for resource [" + resource + "]");
+                + "] does not have permission to create a child resource for resource [" + parentResource + "]");
         }
+
+        if (!resourceType.isCreatable() || (resourceType.getCreationDataType() != ResourceCreationDataType.CONFIGURATION)) {
+            throw new RuntimeException("Cannot create " + resourceType + " child Resource under parent "
+                    + parentResource + ", since the " + resourceType
+                    + " type does not support configuration-based Resource creation.");
+        }
+
+        abortResourceCreationIfExistingSingleton(parentResource, resourceType);
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
@@ -573,6 +594,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
         PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
+        if (!newResourceType.isCreatable() || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
+            throw new RuntimeException("Cannot create " + newResourceType + " child Resource under parent "
+                    + parentResource + ", since the " + newResourceType
+                    + " type does not support content-based Resource creation.");
+        }
+
+        abortResourceCreationIfExistingSingleton(parentResource, newResourceType);
+
         return doCreatePackageBackedResource(subject, parentResource, newResourceType, newResourceName,
             pluginConfiguration, deploymentTimeConfiguration, packageVersion, timeout);
     }
@@ -610,6 +639,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         } catch (NoResultException nre) {
             return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
+        } catch(CannotConnectException e) {
+            log.error("Error while sending create resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
+                CreateResourceStatus.FAILURE, errorMessage, null);
+            resourceFactoryManager.completeCreateResource(response);
+
+            throw new CannotConnectToAgentException("Error while sending create resource request to agent service", e);
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
 
@@ -660,6 +699,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             resourceFactoryAgentService.deleteResource(request);
 
             return persistedHistory;
+        } catch(CannotConnectException e) {
+            log.error("Error while sending delete resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
+                DeleteResourceStatus.FAILURE, errorMessage);
+            resourceFactoryManager.completeDeleteResourceRequest(response);
+
+            throw new CannotConnectToAgentException("Error while sending delete resource request to agent service", e);
         } catch (Exception e) {
             log.error("Error while sending delete resource request to agent service", e);
 
@@ -672,4 +721,22 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             throw new RuntimeException("Error while sending delete resource request to agent service", e);
         }
     }
+
+    private void abortResourceCreationIfExistingSingleton(Resource parentResource, ResourceType resourceType) {
+        if (resourceType.isSingleton()) {
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.addFilterParentResourceId(parentResource.getId());
+            resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
+                    resourceCriteria);
+            if (childResourcesOfType.size() >= 1) {
+                throw new RuntimeException("Cannot create " + resourceType + " child Resource under parent "
+                        + parentResource + ", since " + resourceType
+                        + " is a singleton type, and there is already a child Resource of that type. "
+                        + "If the existing child Resource corresponds to a managed Resource which no longer exists, "
+                        + "uninventory it and then try again.");
+            }
+        }
+    }
+
 }

@@ -101,7 +101,7 @@
                   <id>client-distribution</id>
                   <phase>package</phase>
                   <configuration>
-                     <tasks>
+                     <target>
                         <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
 
                            <property name="buildNumber" value="${buildNumber}" />
@@ -132,7 +132,7 @@
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                         </ant>
-                     </tasks>
+                     </target>
                   </configuration>
                   <goals>
                      <goal>run</goal>
@@ -142,7 +142,7 @@
                <execution>
                   <phase>process-classes</phase>
                   <configuration>
-                  <tasks>
+                  <target>
                      <!-- generate the I18N resource bundles -->
                      <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
@@ -152,7 +152,7 @@
                            <include name="**/ClientI18NResourceKeys.class" />
                         </classfileset>
                      </i18n>
-                  </tasks>
+                  </target>
                </configuration>
                <goals>
                   <goal>run</goal>
@@ -272,13 +272,12 @@
             <plugins>
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
                      <execution>
                         <id>deploy</id>
                         <phase>install</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <echo>*** Cleaning old ${rhq.deploymentDir}...</echo>
                               <mkdir dir="${rhq.deploymentDir}" />
                               <delete failonerror="false">
@@ -287,7 +286,7 @@
                               <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentZip}" />
                               <echo>*** Updating ${deployment.file}...</echo>
                               <copy file="${basedir}/target/${rhq.projectJar}" toFile="${deployment.file}" />
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -297,12 +296,12 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <echo>*** Deleting ${rhq.deploymentDir}...</echo>
                               <delete failonerror="false">
                                  <fileset dir="${rhq.deploymentDir}" includes="*" />
                               </delete>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -334,7 +333,7 @@
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
@@ -354,7 +353,7 @@
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -364,7 +363,7 @@
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
@@ -385,7 +384,7 @@
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
                      <delete file="target/classes/cobertura.properties" />
-                   </tasks>
+                   </target>
                  </configuration>
                <goals>
                  <goal>run</goal>
@@ -399,3 +398,4 @@
    </profiles>
 
 </project>
+

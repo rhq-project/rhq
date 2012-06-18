@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,10 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
+import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
@@ -61,9 +64,11 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -438,16 +443,28 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + " to manually add child resources.");
         }
 
+        Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
+
+        if (!resourceType.isSupportsManualAdd()) {
+            throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
+                                + parentResource + ", since the " + resourceType
+                                + " type does not support manual add.");
+        }
+
+        abortResourceManualAddIfExistingSingleton(parentResource, resourceType);
+
         MergeResourceResponse mergeResourceResponse;
         try {
-            Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
             AgentClient agentClient = this.agentManager.getAgentClient(parentResource.getAgent());
-            mergeResourceResponse = agentClient.getDiscoveryAgentService().manuallyAddResource(resourceType,
-                parentResourceId, pluginConfiguration, user.getId());
+            DiscoveryAgentService discoveryAgentService = agentClient.getDiscoveryAgentService();
+            mergeResourceResponse = discoveryAgentService.manuallyAddResource(resourceType,
+                    parentResourceId, pluginConfiguration, user.getId());
+        } catch (CannotConnectException e) {
+            throw new CannotConnectToAgentException("Error adding [" + resourceType + "] Resource to inventory as " +
+                "a child of " + parentResource + " - cause: " + e.getMessage(), e);
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error adding " + resourceType.getName()
-                + " resource to inventory as a child of the resource with id " + parentResourceId + " - cause: "
-                + e.getLocalizedMessage(), e);
+            throw new RuntimeException("Error adding [" + resourceType
+                + "] Resource to inventory as a child of " + parentResource + " - cause: " + e, e);
         }
 
         return mergeResourceResponse;
@@ -1058,6 +1075,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private <T> boolean needsUpgrade(T oldValue, T newValue) {
         return newValue != null && (oldValue == null || !newValue.equals(oldValue));
+    }
+
+    private void abortResourceManualAddIfExistingSingleton(Resource parentResource, ResourceType resourceType) {
+        if (resourceType.isSingleton()) {
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.addFilterParentResourceId(parentResource.getId());
+            resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
+                    resourceCriteria);
+            if (childResourcesOfType.size() >= 1) {
+                throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
+                        + parentResource + ", since " + resourceType
+                        + " is a singleton type, and there is already a child Resource of that type. "
+                        + "If the existing child Resource corresponds to a managed Resource which no longer exists, "
+                        + "uninventory it and then try again.");
+            }
+        }
     }
 
 }

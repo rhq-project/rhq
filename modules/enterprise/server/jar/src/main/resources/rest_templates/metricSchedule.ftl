@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,9 @@
 <#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.MetricSchedule" -->
 <html>
     <table border=1>
-        <thead>
-            <tr>
-                <td>Name</td><td>Value</td>
-            </tr>
-        </thead>
+        <tr>
+            <th>Name</th><th>Value</th>
+        </tr>
         <tr>
             <td>Id</td><td>${var.scheduleId}</td>
         </tr>
@@ -45,11 +43,13 @@
         <tr>
             <td>Units</td><td>${var.unit}</td>
         </tr>
+        <tr>
+            <td>Links</td>
+            <td>
+                <#list var.links as link>
+                    <li><a href="${link.href}.html">${link.rel}</a> </li>
+                </#list>
+            </td>
+        </tr>
     </table>
-    Links<br/>
-    <ul>
-        <#list var.links as link>
-            <li><a href="${link.href}.html">${link.rel}</a> </li>
-        </#list>
-    </ul>
 </html>

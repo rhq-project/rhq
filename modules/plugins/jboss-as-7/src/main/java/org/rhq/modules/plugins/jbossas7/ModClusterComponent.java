@@ -4,9 +4,7 @@ import java.util.ArrayList;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -19,14 +17,17 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class ModClusterComponent extends BaseComponent implements OperationFacet, ConfigurationFacet {
 
-    //Ex. "/subsystem=modcluster/mod-cluster-config=configuration/" or following is valid.
-    private static String CONFIG_ADDRESS = ",mod-cluster-config=configuration";
+    static String DYNAMIC_PROVIDER = ",dynamic-load-provider=configuration";
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         Operation op = new Operation(name, getAddress());
         OperationResult operationResult = new OperationResult();
         Result result = null;
+
+        String modClusterKeyMesg = "Modcluster resource keys are not in correct format.";
+        modClusterKeyMesg += " Should be {modcluster address}:{jvmRoute}:{virtual-host}:{context} but instead ";
+        modClusterKeyMesg += " was '" + key + "'";
 
         if ("list-proxies".equals(name)) {
             result = getASConnection().execute(op);
@@ -63,30 +64,93 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
             if (result != null && result.isSuccess()) {
                 operationResult.setSimpleResult("Success");
             }
-        } else if ("disable-context".equals(name)) {
-            addAdditionalToOp(op, parameters, "virtualhost", false);
-            addAdditionalToOp(op, parameters, "context", false);
-            result = getASConnection().execute(op);
-            if ((result != null) && (result.isSuccess())) {
-                operationResult.setSimpleResult("Success");
+        } else if ("disable-context".equals(name)) {//disable handled by base case
+            //update the operation components with details from the resource being operated on.
+            //Ex. {modcluster address}:{jvmRoute}:{virtual-host}:{context}
+            String[] keyComponents = key.split(":");
+            if (keyComponents.length == 4) {
+                op.addAdditionalProperty("virtualhost", keyComponents[2]);
+                op.addAdditionalProperty("context", keyComponents[3]);
+                result = getASConnection().execute(op);
+                if ((result != null) && (result.isSuccess())) {
+                    operationResult.setSimpleResult("Success");
+                }
+            } else {
+                operationResult.setErrorMessage(modClusterKeyMesg);
+                return operationResult;
             }
-        } else if ("enable-context".equals(name)) {
-            addAdditionalToOp(op, parameters, "virtualhost", false);
-            addAdditionalToOp(op, parameters, "context", false);
-            result = getASConnection().execute(op);
-            if ((result != null) && (result.isSuccess())) {
-                operationResult.setSimpleResult("Success");
-            }
-        } else if ("stop".equals(name)) {
-            addAdditionalToOp(op, parameters, "waittime", true);
-            result = getASConnection().execute(op);
-            if ((result != null) && (result.isSuccess())) {
-                operationResult.setSimpleResult("Success");
+        } else if ("enable-context".equals(name)) {//enable handled by base case
+            String currentAddress = getAddress().getPath();
+            //update the operation components with details from the resource being operated on.
+            //Ex. {modcluster address}:{jvmRoute}:{virtual-host}:{context}
+            String[] keyComponents = key.split(":");
+            if (keyComponents.length == 4) {
+                op.addAdditionalProperty("virtualhost", keyComponents[2]);
+                op.addAdditionalProperty("context", keyComponents[3]);
+                result = getASConnection().execute(op);
+                if ((result != null) && (result.isSuccess())) {
+                    operationResult.setSimpleResult("Success");
+                }
+            } else {
+                operationResult.setErrorMessage(modClusterKeyMesg);
+                return operationResult;
             }
         } else if ("stop-context".equals(name)) {
-            addAdditionalToOp(op, parameters, "virtualhost", false);
-            addAdditionalToOp(op, parameters, "context", false);
-            addAdditionalToOp(op, parameters, "waittime", true);
+            String currentAddress = getAddress().getPath();
+            //Ex. {modcluster address}:{jvmRoute}:{virtual-host}:{context}
+            String[] keyComponents = key.split(":");
+            if (keyComponents.length == 4) {
+                op.addAdditionalProperty("virtualhost", keyComponents[2]);
+                op.addAdditionalProperty("context", keyComponents[3]);
+                addAdditionalToOp(op, parameters, "waittime", true);
+                result = getASConnection().execute(op);
+                if ((result != null) && (result.isSuccess())) {
+                    operationResult.setSimpleResult("Success");
+                }
+            } else {
+                operationResult.setErrorMessage(modClusterKeyMesg);
+                return operationResult;
+            }
+        } else if ("add-custom-metric".equals(name)) {
+            //update the address and operation name. Use class name as identifier.
+            String newOperationDestination = getAddress().getPath() + DYNAMIC_PROVIDER
+                + ",custom-load-metric,custom-load-metric=" + retrieveNewIdentifier(parameters, "class");
+            op = new Operation("add", new Address(newOperationDestination));
+            addAdditionalToOp(op, parameters, "class", false);
+            addAdditionalToOp(op, parameters, "weight", false);
+            addAdditionalToOp(op, parameters, "capacity", true);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("remove-custom-metric".equals(name)) {
+            //update the address and operation name. Use class name as identifier.
+            String newOperationDestination = getAddress().getPath() + DYNAMIC_PROVIDER
+                + ",custom-load-metric,custom-load-metric=" + retrieveNewIdentifier(parameters, "class");
+            op = new Operation("remove", new Address(newOperationDestination));
+            addAdditionalToOp(op, parameters, "class", false);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("add-metric".equals(name)) {
+            //update the address and operation name. Use class name as identifier.
+            String newOperationDestination = getAddress().getPath() + DYNAMIC_PROVIDER
+                + ",custom-load-metric,load-metric=" + retrieveNewIdentifier(parameters, "type");
+            op = new Operation("add", new Address(newOperationDestination));
+            addAdditionalToOp(op, parameters, "weight", false);
+            addAdditionalToOp(op, parameters, "capacity", true);
+            addAdditionalToOp(op, parameters, "type", false);
+            result = getASConnection().execute(op);
+            if ((result != null) && (result.isSuccess())) {
+                operationResult.setSimpleResult("Success");
+            }
+        } else if ("remove-metric".equals(name)) {
+            //update the address and operation name. Use class name as identifier.
+            String newOperationDestination = getAddress().getPath() + DYNAMIC_PROVIDER
+                + ",custom-load-metric,load-metric=" + retrieveNewIdentifier(parameters, "type");
+            op = new Operation("remove", new Address(newOperationDestination));
+            addAdditionalToOp(op, parameters, "type", false);
             result = getASConnection().execute(op);
             if ((result != null) && (result.isSuccess())) {
                 operationResult.setSimpleResult("Success");
@@ -154,32 +218,6 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
         return operationResult;
     }
 
-    @Override
-    public Configuration loadResourceConfiguration() throws Exception {
-
-        //retrieve config definition
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        //default address is not right. Update it
-        Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(),
-            modClusterConfigAddress);
-        Configuration config = delegate.loadResourceConfiguration();
-
-        return config;
-    }
-
-    @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        //default address is not right. Update it
-        Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(),
-            modClusterConfigAddress);
-        delegate.updateResourceConfiguration(report);
-
-    }
-
     void addAdditionalToOp(Operation op, Configuration parameters, String parameterName, boolean optional) {
         String value = parameters.getSimpleValue(parameterName, null);
         if (value == null) {
@@ -190,6 +228,22 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
         } else {
             op.addAdditionalProperty(parameterName, value);
         }
+    }
+
+    /** Parses the Configuration passed in and retrieves the value of the parameterName
+     *  to be used as the resource key.
+     * 
+     * @param parameters  Configuration
+     * @param parameterName specific property value to retrieve.
+     * @return
+     */
+    String retrieveNewIdentifier(Configuration parameters, String parameterName) {
+        String identifier = "";
+        //retrieve the value of the specific property identified by parameterName
+        if ((parameters != null) && (parameterName != null) && !parameterName.isEmpty()) {
+            identifier = parameters.getSimpleValue(parameterName, null);
+        }
+        return identifier;
     }
 
     @Override

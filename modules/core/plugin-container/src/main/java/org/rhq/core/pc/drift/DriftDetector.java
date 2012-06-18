@@ -413,7 +413,8 @@ public class DriftDetector implements Runnable {
         } else {
             for (Filter filter : includes) {
                 String path = filter.getPath();
-                if (".".equals(path)) {
+                // support various ways of expressing the base directory with relative paths  
+                if (".".equals(path) || "./".equals(path) || "/".equals(path)) {
                     directories.add(basedir);
                 } else {
                     directories.add(new File(basedir, path));

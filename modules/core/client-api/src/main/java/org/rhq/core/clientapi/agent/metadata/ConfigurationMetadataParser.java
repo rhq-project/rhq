@@ -295,12 +295,6 @@ public class ConfigurationMetadataParser {
                 name = option.getValue();
             }
 
-            if (option.isDefault()) {
-                log.warn("!!\nFor simple-property ["
-                    + parentProperty.getName()
-                    + "], attribute 'default' on c:option is useless and deprecated.\n   Please use the 'default' attribute on the c:simple-property.\n   The deprecated attribute will be removed in the future.\n!!");
-            }
-
             PropertyDefinitionEnumeration enumeration = new PropertyDefinitionEnumeration(name, option.getValue());
             parentProperty.addEnumeratedValues(enumeration);
         }

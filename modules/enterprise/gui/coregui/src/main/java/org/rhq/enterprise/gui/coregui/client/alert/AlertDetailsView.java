@@ -183,6 +183,14 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         StaticTextItem recoveryItem = new StaticTextItem("recovery", MSG.view_alert_details_field_recovery_info());
         recoveryItem.setValue(record.getAttribute("recoveryInfo"));
         items.add(recoveryItem);
+        
+        StaticTextItem resourceItem = new StaticTextItem("resourceName", MSG.view_alert_details_field_watched_resource());
+        resourceItem.setValue(record.getAttribute("resourceName"));
+        items.add(resourceItem);
+        
+        StaticTextItem resourceAncestryItem = new StaticTextItem("resourceAncestry", MSG.view_alert_details_field_resource_ancestry());
+        resourceAncestryItem.setValue(record.getAttribute("resourceAncestry"));
+        items.add(resourceAncestryItem);
 
         form.setItems(items.toArray(new FormItem[items.size()]));
 

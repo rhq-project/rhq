@@ -139,7 +139,7 @@
                          <id>deploy-classes</id>
                          <phase>compile</phase>
                          <configuration>
-                           <tasks>
+                           <target>
                              <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
                              <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
                              <copy todir="${classes.dir}" verbose="${rhq.verbose}">
@@ -151,7 +151,7 @@
                                 <fileset dir="${basedir}/src/main/webapp" />
                              </copy>
                              <!-- TODO: Also copy the files from src/main/webapp-filtered/, and then filter them ourselves. -->
-                           </tasks>
+                           </target>
                          </configuration>
                          <goals>
                            <goal>run</goal>
@@ -162,13 +162,13 @@
                          <id>deploy</id>
                          <phase>package</phase>
                          <configuration>
-                           <tasks>
+                           <target>
                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                              <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                 <fileset dir="${basedir}/target/${project.build.finalName}" />
                              </copy>
-                           </tasks>
+                           </target>
                          </configuration>
                          <goals>
                            <goal>run</goal>
@@ -179,11 +179,11 @@
                          <id>undeploy</id>
                          <phase>clean</phase>
                          <configuration>
-                           <tasks>
+                           <target>
                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                              <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                              <delete dir="${deployment.dir}" />
-                           </tasks>
+                           </target>
                          </configuration>
                          <goals>
                            <goal>run</goal>
@@ -218,7 +218,7 @@
                 <id>cobertura-instrument</id>
                 <phase>process-test-classes</phase>
                   <configuration>
-                    <tasks>
+                    <target>
                     <!-- prepare directory structure for cobertura-->
                     <mkdir dir="target/cobertura" />
                     <mkdir dir="target/cobertura/backup" />
@@ -240,7 +240,7 @@
                          <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
                        </fileset>
                      </cobertura-instrument>
-                    </tasks>
+                    </target>
                   </configuration>
                 <goals>
                   <goal>run</goal>
@@ -250,7 +250,7 @@
                 <id>cobertura-report</id>
                 <phase>prepare-package</phase>
                   <configuration>
-                    <tasks>
+                    <target>
                       <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                       <!-- prepare directory structure for cobertura-->
                       <mkdir dir="target/cobertura" />
@@ -273,7 +273,7 @@
                       </cobertura-report>
                       <!-- delete cobertura.properties file -->
                       <delete file="target/classes/cobertura.properties" />
-                    </tasks>
+                    </target>
                   </configuration>
                 <goals>
                   <goal>run</goal>

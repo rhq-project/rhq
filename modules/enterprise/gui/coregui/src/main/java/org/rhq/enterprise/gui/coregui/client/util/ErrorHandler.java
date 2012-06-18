@@ -20,8 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.ArrayList;
 
-import java.util.logging.Logger;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -61,6 +59,23 @@ public class ErrorHandler {
         }
     }
 
+    public static String getRootCauseMessage(Throwable t) {
+        String[] allMessages = getAllMessagesArray(t, false);
+        if (allMessages == null || allMessages.length == 0) {
+            return null;
+        }
+        String lastMessage = allMessages[allMessages.length - 1];
+
+        // our server side uses ThrowableUtil.getAllMessages which combines all
+        // causes into one long message with each cause separated with the marker " -> ".
+        // If we see that marker, take the message after the last marker.
+        int lastMarker = lastMessage.lastIndexOf(" -> ");
+        if (lastMarker != -1) {
+            lastMessage = lastMessage.substring(lastMarker + 4);
+        }
+        return lastMessage;
+    }
+
     public static String getAllMessages(Throwable t) {
         return getAllMessages(t, false, null);
     }
@@ -95,15 +110,42 @@ public class ErrorHandler {
     }
 
     public static String[] getAllMessagesArray(Throwable t) {
+        return getAllMessagesArray(t, true);
+    }
+
+    public static String[] getAllMessagesArray(Throwable t, boolean includeThrowableClassName) {
         ArrayList<String> list = new ArrayList<String>();
 
         if (t != null) {
-            list.add(t.getClass().getName() + ":" + t.getMessage());
+            String tMessage = t.getMessage();
+
+            if (includeThrowableClassName) {
+                list.add(t.getClass().getName() + ":" + tMessage);
+            } else {
+                if (tMessage != null) {
+                    list.add(tMessage);
+                } else {
+                    // even though we were told not to show throwable class name,
+                    // the problem is we have a null message - so the only thing we have to show is the class name
+                    list.add(t.getClass().getName());
+                }
+            }
 
             while ((t.getCause() != null) && (t != t.getCause())) {
                 t = t.getCause();
 
-                list.add(t.getClass().getName() + ":" + t.getMessage());
+                tMessage = t.getMessage();
+                if (includeThrowableClassName) {
+                    list.add(t.getClass().getName() + ":" + tMessage);
+                } else {
+                    if (tMessage != null) {
+                        list.add(tMessage);
+                    } else {
+                        // even though we were told not to show throwable class name,
+                        // the problem is we have a null message - so the only thing we have to show is the class name
+                        list.add(t.getClass().getName());
+                    }
+                }
             }
         }
 
@@ -130,7 +172,7 @@ public class ErrorHandler {
     }
 
     private static void getStackTraceAsCause(Throwable t, StringBuilder s, Throwable cause, String newline) {
-        s.append("Caused by: ").append(cause.getMessage()).append(newline);
+        s.append("Caused by: ").append(cause.getClass().getName() + ": " + cause.getMessage()).append(newline);
 
         for (Object line : cause.getStackTrace()) {
             s.append(INDENT).append("at ").append(line).append(newline);

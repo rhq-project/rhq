@@ -138,7 +138,8 @@ public class InventoryFile {
     }
 
     private void removeIgnoredResourcesFromChildren(Resource resource, Set<String> uuidsToIgnore) {
-        Set<Resource> children = resource.getChildResources();
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        Set<Resource> children = inventoryManager.getContainerChildren(resource);
         if (!children.isEmpty() && !uuidsToIgnore.isEmpty()) {
             Iterator<Resource> iterator = children.iterator();
             while (iterator.hasNext() && !uuidsToIgnore.isEmpty()) {
@@ -163,7 +164,8 @@ public class InventoryFile {
                 resource.setResourceType(fullResourceType);
 
                 // now reconnect all its children's types
-                Set<Resource> children = resource.getChildResources();
+                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+                Set<Resource> children = inventoryManager.getContainerChildren(resource);
                 for (Resource child : children) {
                     connectTypes(child, uuidsToIgnore);
                 }
@@ -182,7 +184,8 @@ public class InventoryFile {
 
     private void addAllUUIDsToList(Resource resource, Set<String> list) {
         list.add(resource.getUuid());
-        Set<Resource> children = resource.getChildResources();
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        Set<Resource> children = inventoryManager.getContainerChildren(resource);
         for (Resource child : children) {
             addAllUUIDsToList(child, list);
         }

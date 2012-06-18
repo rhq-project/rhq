@@ -28,7 +28,7 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
  * Defines constants related to the server-side XML Schemas, including their JAXB generated package names
  * and their .xsd files, as found in the server's classpath.
  * 
- * See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas
+ * See also: https://docs.jboss.org/author/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas
  *
  * @author John Mazzitelli
  */

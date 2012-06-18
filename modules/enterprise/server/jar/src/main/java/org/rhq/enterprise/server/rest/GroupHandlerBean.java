@@ -2,18 +2,13 @@ package org.rhq.enterprise.server.rest;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -29,12 +24,21 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionDeleteException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
+import org.rhq.enterprise.server.rest.domain.GroupDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -57,6 +61,9 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     @EJB
     ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    GroupDefinitionManagerLocal definitionManager;
 
     public Response getGroups(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
@@ -84,9 +91,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("{id}")
-    public Response getGroup(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response getGroup(int id, @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo) {
 
         ResourceGroup group = fetchGroup(id);
@@ -108,8 +113,6 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @POST
-    @Path("/")
     public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup newGroup = new ResourceGroup(group.getName());
@@ -142,9 +145,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @PUT
-    @Path("{id}")
-    public Response updateGroup(@PathParam("id") int id, GroupRest in, @Context Request request,
+    public Response updateGroup(int id, GroupRest in, @Context Request request,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
@@ -164,9 +165,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @DELETE
-    @Path("{id}")
-    public Response deleteGroup(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response deleteGroup(int id, @Context Request request, @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
         try {
@@ -180,9 +179,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @GET
-    @Path("{id}/resources")  // TODO introduce paging through the list
-    public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response getResources(int id, @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -208,9 +205,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @PUT
-    @Path("{id}/resource/{resourceId}")
-    public Response addResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    public Response addResource(int id, int resourceId,
                                 @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -221,7 +216,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         // A resource type is set for the group, so only allow to add resources with the same type.
         if (resourceGroup.getResourceType()!=null) {
             if (!res.getResourceType().equals(resourceGroup.getResourceType()))
-                return Response.status(Response.Status.NOT_ACCEPTABLE).build();
+                return Response.status(Response.Status.CONFLICT).build();
         }
 
         // TODO if comp group and no resourceTypeId set, shall we allow to have it change to a mixed group?
@@ -232,9 +227,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    @DELETE
-    @Path("{id}/resource/{resourceId}")
-    public Response removeResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
+    public Response removeResource(int id, int resourceId,
                                    @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -282,5 +275,212 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         gr.getLinks().add(link);
 
         return gr;
+    }
+
+    @Override
+    public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
+                                        @Context UriInfo uriInfo) {
+
+        PageList<GroupDefinition> gdlist =  definitionManager.getGroupDefinitions(caller,new PageControl());
+        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
+        for (GroupDefinition def: gdlist) {
+            GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);
+            createLinksForGDRest(uriInfo,definitionRest);
+            list.add(definitionRest);
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listGroupDefinition", list), mediaType);
+        }
+        else {
+            GenericEntity<List<GroupDefinitionRest>> ret = new GenericEntity<List<GroupDefinitionRest>>(list) {
+            };
+            builder = Response.ok(ret);
+        }
+
+        return builder.build();
+    }
+
+    @Override
+    public Response getGroupDefinition(int definitionId, @Context Request request,
+                                       @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        try {
+            GroupDefinition def = definitionManager.getById(definitionId);
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(def);
+
+            createLinksForGDRest(uriInfo,gdr);
+
+            MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+            Response.ResponseBuilder builder;
+            if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                builder = Response.ok(renderTemplate("groupDefinition", gdr), mediaType);
+            }
+            else {
+                builder= Response.ok(gdr);
+            }
+            return builder.build();
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group definition with id " + definitionId);
+        }
+    }
+
+    private GroupDefinitionRest buildGDRestFromDefinition(GroupDefinition def) {
+        GroupDefinitionRest gdr = new GroupDefinitionRest(def.getId(),def.getName(),def.getDescription(), def.getRecalculationInterval());
+        gdr.setRecursive(def.isRecursive());
+
+        List<Integer> generatedGroups;
+        if (def.getManagedResourceGroups()!=null) {
+            generatedGroups = new ArrayList<Integer>(def.getManagedResourceGroups().size());
+            for (ResourceGroup group : def.getManagedResourceGroups() ) {
+                generatedGroups.add(group.getId());
+            }
+        } else {
+            generatedGroups = Collections.emptyList();
+        }
+        gdr.setGeneratedGroupIds(generatedGroups);
+        gdr.setExpression(def.getExpressionAsList());
+        return gdr;
+    }
+
+    @Override
+    public Response deleteGroupDefinition(int definitionId, @Context Request request,
+                                          @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        try {
+            GroupDefinition def = definitionManager.getById(definitionId);
+            definitionManager.removeGroupDefinition(caller,definitionId);
+            return Response.noContent().build(); // Return 206, as we don't include a body
+        } catch (GroupDefinitionNotFoundException e) {
+            // Idem potent
+            return Response.noContent().build(); // Return 206, as we don't include a body
+        } catch (GroupDefinitionDeleteException e) {
+            throw new StuffNotFoundException("Group definition with id " + definitionId);
+        }
+    }
+
+    @Override
+    public Response createGroupDefinition(GroupDefinitionRest definition,
+                                          @Context Request request, @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
+
+        Response.ResponseBuilder builder = null;
+
+        if (definition.getName()==null||definition.getName().isEmpty()) {
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity("No name for the definition given");
+        }
+        if (builder!=null)
+            return builder.build();
+
+
+        GroupDefinition gd = new GroupDefinition(definition.getName());
+        gd.setDescription(definition.getDescription());
+        List<String> expressionList = definition.getExpression();
+        StringBuilder sb = new StringBuilder();
+        for(String e : expressionList ) {
+            sb.append(e);
+            sb.append("\n");
+        }
+        gd.setExpression(sb.toString());
+        gd.setRecalculationInterval(definition.getRecalcInterval());
+        gd.setRecursive(definition.isRecursive());
+
+        try {
+            GroupDefinition res = definitionManager.createGroupDefinition(caller,gd);
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/group/definition/{id}");
+            URI location = uriBuilder.build(res.getId());
+
+            Link link = new Link("edit",location.toString());
+            builder= Response.created(location);
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(res);
+            createLinksForGDRest(uriInfo,gdr);
+
+            builder.entity(gdr);
+
+        } catch (GroupDefinitionAlreadyExistsException e) {
+            builder =Response.status(Response.Status.CONFLICT);
+        } catch (GroupDefinitionCreateException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return builder.build();
+    }
+
+    @Override
+    public Response updateGroupDefinition(int definitionId,
+                                          boolean recalculate, GroupDefinitionRest definition,
+                                          @Context Request request, @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
+
+        GroupDefinition gd;
+        try {
+            gd = definitionManager.getById(definitionId);
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group Definition with id " + definitionId);
+        }
+
+        Response.ResponseBuilder builder = null;
+
+        if (!definition.getName().isEmpty())
+            gd.setName(definition.getName());
+        gd.setDescription(definition.getDescription());
+        List<String> expressionList = definition.getExpression();
+        StringBuilder sb = new StringBuilder();
+        for(String e : expressionList ) {
+            sb.append(e);
+            sb.append("\n");
+        }
+        gd.setExpression(sb.toString());
+
+        gd.setRecalculationInterval(definition.getRecalcInterval());
+        gd.setRecursive(definition.isRecursive());
+
+        try {
+            definitionManager.updateGroupDefinition(caller,gd);
+        } catch (Exception e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity(e.getLocalizedMessage());
+            return builder.build();
+        }
+
+        if (recalculate) {
+            try {
+                definitionManager.calculateGroupMembership(caller,gd.getId());
+            } catch (Exception e) {
+            }
+        }
+
+        try {
+            // Re-fetch, as groups may have changed
+            gd = definitionManager.getById(gd.getId());
+            GroupDefinitionRest gdr = buildGDRestFromDefinition(gd);
+            createLinksForGDRest(uriInfo, gdr);
+
+            builder = Response.ok(gdr);
+        } catch (GroupDefinitionNotFoundException e) {
+            throw new StuffNotFoundException("Group Definition with id " + gd.getId());
+        }
+
+        return builder.build();
+    }
+
+    private void createLinksForGDRest(UriInfo uriInfo, GroupDefinitionRest gdr) {
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/definition/{id}");
+        URI location = uriBuilder.build(gdr.getId());
+        Link link = new Link("edit",location.toString());
+        gdr.addLink(link);
+
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/definition");
+        location = uriBuilder.build(new Object[]{});
+        link = new Link("create",location.toString());
+        gdr.addLink(link);
     }
 }

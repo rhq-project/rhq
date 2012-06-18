@@ -72,7 +72,7 @@ public class CreateResourceDelegate extends ConfigurationWriteDelegate implement
                 PropertyDefinitionSimple propertyDefinition = this.configurationDefinition
                     .getPropertyDefinitionSimple(propertySimple.getName());
 
-                if (!propertyDefinition.isRequired() && propertySimple.getStringValue() == null) {
+                if (propertyDefinition==null || (!propertyDefinition.isRequired() && propertySimple.getStringValue() == null)) {
                     isEntryEligible = false;
                 } else {
                     entry = preparePropertySimple(propertySimple, propertyDefinition);

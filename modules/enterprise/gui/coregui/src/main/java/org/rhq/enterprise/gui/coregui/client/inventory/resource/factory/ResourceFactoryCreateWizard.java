@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -131,7 +132,13 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                 deployTimeConfiguration, packageVersionId, this.getNewResourceCreateTimeout(),
                 new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
+                        if (caught instanceof CannotConnectToAgentException) {
+                            CoreGUI.getMessageCenter().notify(new Message(MSG.widget_resourceFactoryWizard_execute2(),
+                                Message.Severity.Warning));
+                        } else {
+                            CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute3(), caught);
+                        }
+
                         getView().closeDialog();
                     }
 

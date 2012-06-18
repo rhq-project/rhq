@@ -246,20 +246,19 @@
 
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.1</version>
                         <executions>
 
                             <execution>
                                 <id>deploy</id>
                                 <phase>compile</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <mkdir dir="${rhq.deploymentDir}" />
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating
                                             ${deployment.file}...</echo>
                                         <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -270,12 +269,12 @@
                                 <id>undeploy</id>
                                 <phase>clean</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Deleting
                                             ${deployment.file}...</echo>
                                         <delete file="${deployment.file}" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -307,7 +306,7 @@
                         <id>bindings-api</id>
                         <phase>compile</phase>
                         <configuration>
-                           <tasks>
+                           <target>
                               <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
                               <property name="project.dir" value="./src/main/java/org/rhq/bindings" />
                               <property name="maven.compile.classpath" refid="maven.compile.classpath" />
@@ -324,7 +323,7 @@
                                  <link href="http://download.oracle.com/javase/6/docs/api/" />
                                  <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
                               </javadoc>
-                           </tasks>
+                           </target>
                         </configuration>
                         <goals>
                            <goal>run</goal>
@@ -359,7 +358,7 @@
                                 <id>cobertura-instrument</id>
                                 <phase>pre-integration-test</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <!-- prepare directory structure 
                                             for cobertura -->
                                         <mkdir dir="target/cobertura" />
@@ -383,7 +382,7 @@
                                                 <include name="**/*.class" />
                                             </fileset>
                                         </cobertura-instrument>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -393,7 +392,7 @@
                                 <id>cobertura-report</id>
                                 <phase>post-integration-test</phase>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                                         <!-- prepare directory structure 
                                             for cobertura -->
@@ -417,7 +416,7 @@
                                         <!-- delete cobertura.properties 
                                             file -->
                                         <delete file="target/classes/cobertura.properties" />
-                                    </tasks>
+                                    </target>
                                 </configuration>
                                 <goals>
                                     <goal>run</goal>
@@ -463,10 +462,10 @@
                                 </goals>
                                 <phase>generate-sources</phase>
                                 <configuration>
-                                    <tasks>                                        
+                                    <target>
                                         <!-- Ex. -DTagManager=false will disable the TagManager from remote api if this profile is active. -->
                                         <echo>Updating remote api to exclude RemoteManagers passed in.</echo>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>

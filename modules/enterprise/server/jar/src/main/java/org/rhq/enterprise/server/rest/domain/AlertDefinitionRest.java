@@ -18,28 +18,20 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jboss.resteasy.links.RESTServiceDiscovery;
-import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * Alert Definition
  * @author Heiko W. Rupp
  */
-@URITemplate("/alert/definition/{id}")
 @XmlRootElement
 public class AlertDefinitionRest {
 
     int id;
     String name;
     boolean enabled;
-
-    private RESTServiceDiscovery rest;
+    String priority;
 
 
     public AlertDefinitionRest() {
@@ -49,13 +41,14 @@ public class AlertDefinitionRest {
         this.id = id;
     }
 
-    @XmlID
-    @XmlAttribute
-    public String getId() {
-        return ""+id;
+    public int getId() {
+        return id;
     }
 
-    @XmlElement
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
@@ -64,7 +57,6 @@ public class AlertDefinitionRest {
         this.name = name;
     }
 
-    @XmlElement
     public boolean isEnabled() {
         return enabled;
     }
@@ -73,12 +65,11 @@ public class AlertDefinitionRest {
         this.enabled = enabled;
     }
 
-    @XmlElementRef
-    public RESTServiceDiscovery getRest() {
-        return rest;
+    public String getPriority() {
+        return priority;
     }
 
-    public void setRest(RESTServiceDiscovery rest) {
-        this.rest = rest;
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 }

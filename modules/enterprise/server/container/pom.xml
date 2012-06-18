@@ -152,7 +152,7 @@
             <id>prepare-container</id>
             <phase>generate-resources</phase>
             <configuration>
-              <tasks>
+              <target>
                 <echo>settings.localRepository=${settings.localRepository}</echo>
                 <echo>project.build.outputDirectory=${project.build.outputDirectory}</echo>
                 <ant antfile="src/main/scripts/rhq-container.build.xml" target="prepare-container">
@@ -201,7 +201,7 @@
 
                   <property name="rhq.sync.endpoint-address" value="${rhq.sync.endpoint-address}" />
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -212,7 +212,7 @@
             <id>prepare-release</id>
             <phase>prepare-package</phase>
             <configuration>
-              <tasks>
+              <target>
                 <echo>Preparing the release at ${project.build.outputDirectory}...</echo>
                 <ant antfile="src/main/scripts/rhq-container.build.xml" target="prepare-release">
                   <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
@@ -232,7 +232,7 @@
                   <property name="rhq.dev.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" />
                   <property name="rhq.server.enable.web.services" value="${rhq.server.enable.ws}" />
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -302,14 +302,13 @@
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
                  <executions>
 
                      <execution>
                         <id>deploy</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.containerDir}" />
                             <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
@@ -320,7 +319,7 @@
                                <fileset dir="${deployment.dir}/bin" includes="*.sh" />
                                <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                             </chmod>
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -331,11 +330,11 @@
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
+                          <target>
                             <property name="deployment.dir" location="${rhq.containerDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                             <delete dir="${deployment.dir}" />
-                          </tasks>
+                          </target>
                         </configuration>
                         <goals>
                           <goal>run</goal>
@@ -369,7 +368,7 @@
                <id>cobertura-merge</id>
                <phase>pre-integration-test</phase>
                  <configuration>
-                   <tasks>
+                   <target>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
@@ -379,7 +378,7 @@
                         <include name="**/cobertura.ser" />
                       </fileset>
                     </cobertura-merge>
-                  </tasks>
+                  </target>
                  </configuration>
                <goals>
                  <goal>run</goal>

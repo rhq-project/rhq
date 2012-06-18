@@ -56,6 +56,20 @@ public interface OperationServerService {
         long completionTime);
 
     /**
+     * Called by the agent when a server-scheduled operation was canceled.
+     *
+     * @param jobId          the server-assigned unique job id for this operation
+     * @param result         a result object that can be used to capture any information available
+     *                       up to the point of cancelation.
+     * @param error          an exception describing the cancelation
+     * @param invocationTime the time at which the agent was asked to invoke the operation (epoch millis)
+     * @param canceledTime   the time at which the operation was canceled (epoch millis)
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void operationCanceled(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+        long canceledTime);
+
+    /**
      * Called by the agent when a server-scheduled operation times out.
      *
      * @param jobId          the server-assigned unique job id for this operation

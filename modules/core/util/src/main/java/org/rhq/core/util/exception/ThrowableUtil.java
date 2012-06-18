@@ -183,10 +183,11 @@ public class ThrowableUtil {
             
             String msg;
 
+            String tMessage = t.getMessage();
             if (includeExceptionName) {
-                msg = t.getClass().getName() + ":" + t.getMessage();
+                msg = t.getClass().getName() + ":" + tMessage;
             } else {
-                msg = t.getMessage();
+                msg = (tMessage != null) ? tMessage : t.getClass().getName();
             }
 
             if (t instanceof SQLException) {
@@ -198,10 +199,11 @@ public class ThrowableUtil {
             while ((t.getCause() != null) && (t != t.getCause())) {
                 t = t.getCause();
 
+                tMessage = t.getMessage();
                 if (includeExceptionName) {
-                    msg = t.getClass().getName() + ":" + t.getMessage();
+                    msg = t.getClass().getName() + ":" + tMessage;
                 } else {
-                    msg = t.getMessage();
+                    msg = (tMessage != null) ? tMessage : t.getClass().getName();
                 }
 
                 if (t instanceof SQLException) {
@@ -278,20 +280,24 @@ public class ThrowableUtil {
         ArrayList<String> list = new ArrayList<String>();
 
         if (t != null) {
+
+            String tMessage = t.getMessage();
             if (includeExceptionName) {
-                list.add(t.getClass().getName() + ":" + t.getMessage());
+                list.add(t.getClass().getName() + ":" + tMessage);
             } else {
-                list.add(t.getMessage());
+                list.add((tMessage != null) ? tMessage : t.getClass().getName());
+
             }
 
             while ((t.getNextException() != null) && (t != t.getNextException())) {
                 String msg;
 
                 t = t.getNextException();
+                tMessage = t.getMessage();
                 if (includeExceptionName) {
-                    msg = t.getClass().getName() + ":" + t.getMessage();
+                    msg = t.getClass().getName() + ":" + tMessage;
                 } else {
-                    msg = t.getMessage();
+                    msg = (tMessage != null) ? tMessage : t.getClass().getName();
                 }
 
                 list.add(msg + "(error-code=" + t.getErrorCode() + ",sql-state=" + t.getSQLState() + ")");
@@ -355,6 +361,7 @@ public class ThrowableUtil {
         while ((t.getCause() != null) && (t != t.getCause())) {
             t = t.getCause();
         }
-        return t.getMessage();
+        String rootMessage = t.getMessage();
+        return (rootMessage != null) ? rootMessage : t.getClass().getName();
     }
 }

@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -61,12 +63,25 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             String requestName = request.getName();
             if (requestName.equals(SERVER_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
+            } else if (requestName.equals("multicastAddress")) {
+                collectMulticastAddressTrait(report, request);
             } else {
                 leftovers.add(request); // handled below
             }
         }
 
         super.getValues(report, leftovers);
+    }
+
+    @Override
+    protected Address getServerAddress() {
+        return getAddress();
+    }
+
+    @Override
+    protected String getSocketBindingGroup() {
+        // TODO (ips): Can this ever be something other than "standard-sockets"?
+        return "standard-sockets";
     }
 
     @Override
@@ -138,15 +153,23 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         super.updateResourceConfiguration(report);
     }
 
+    @NotNull
     @Override
     protected Address getEnvironmentAddress() {
         return ENVIRONMENT_ADDRESS;
     }
 
+    @NotNull
     @Override
     protected Address getHostAddress() {
         // In standalone mode, the root address is the host address.
         return getAddress();
+    }
+
+    @NotNull
+    @Override
+    protected String getBaseDirAttributeName() {
+        return "base-dir";
     }
 
 }

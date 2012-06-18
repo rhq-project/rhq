@@ -83,14 +83,13 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     @Test(priority = 2)
-    public void testStandaloneServerPluginConfiguration() throws Exception {
-        return;
+    public void testStandaloneServerAttributeValidation() throws Exception {
+        testServerAttributeValidation();
     }
 
     // ******************************* METRICS ******************************* //
-    @Override
     @Test(priority = 3, enabled = true)
-    public void testReleaseVersionTrait() throws Exception {
+    public void testStandaloneReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 
@@ -163,18 +162,14 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
             "-Djboss.bind.address.management=127.0.0.1",
             "-Djboss.bind.address=127.0.0.1",
             "-Djboss.bind.address.unsecure=127.0.0.1",
-            "-Djboss.socket.binding.port-offset=40000" };
+            "-Djboss.socket.binding.port-offset=" + getPortOffset()
+        };
         return Arrays.asList(args);
     }
 
     @AfterSuite
     public void killServerProcesses() {
         super.killServerProcesses();
-    }
-
-    @Override
-    protected int getPortOffset() {
-        return 40000;
     }
 
 }

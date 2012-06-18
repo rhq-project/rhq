@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,13 +20,11 @@
  */
 -->
 <#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.ResourceWithType" -->
-<html>
+
     <table>
-        <thead>
         <tr>
-            <td>Name</td><td>Value</td>
+            <th>Name</th><th>Value</th>
         </tr>
-        </thead>
         <tr>
             <td>Name</td><td>${var.resourceName}</td>
         </tr>
@@ -50,4 +48,6 @@
     </table>
     <a href="/rest/1/resource/${var.resourceId}/children.html">Children</a><br/>
     <a href="/rest/1/resource/${var.resourceId}/schedules.html">Schedules</a><br/>
-</html>
+    <a href="/rest/1/resource/${var.resourceId}/availability.html">Current availability</a><br/>
+    <a href="/rest/1/resource/${var.resourceId}/availability/history.html">Availability History</a><br/>
+    <a href="/rest/1/alert.html?resourceId=${var.resourceId}">Up to 20 Alerts for this resource</a>

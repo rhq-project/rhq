@@ -188,6 +188,9 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
+                if (selectedDashboardView.isMaximized()) {
+                    selectedDashboardView.restorePortlet();
+                }
                 selectedDashboardView.setEditMode(editMode);
             }
         });
@@ -320,7 +323,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         if (isRHQ) {
-            news.getConfiguration().put(new PropertySimple("address", "http://rhq-project.org/display/RHQ/Home"));
+            news.getConfiguration()
+                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/Home"));
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",

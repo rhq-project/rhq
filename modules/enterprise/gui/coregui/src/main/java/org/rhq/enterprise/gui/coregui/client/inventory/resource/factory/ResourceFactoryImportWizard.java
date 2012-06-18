@@ -27,6 +27,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -89,7 +90,13 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         GWTServiceLookup.getResourceService(300000).manuallyAddResource(createTypeId, parentResourceId,
             newConfiguration, new AsyncCallback<Resource>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_importFailure(), caught);
+                    if (caught instanceof CannotConnectToAgentException) {
+                        CoreGUI.getMessageCenter().notify(new Message(
+                            MSG.widget_resourceFactoryWizard_importFailure2(), Message.Severity.Warning));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_importFailure(), caught);
+                    }
+
                     getView().closeDialog();
                 }
 

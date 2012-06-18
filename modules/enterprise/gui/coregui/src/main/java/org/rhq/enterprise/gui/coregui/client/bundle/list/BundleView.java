@@ -201,7 +201,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
 
         IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
-        deployButton.setIcon(IconEnum.BUNDLE.getIcon16x16Path());
+        deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -230,7 +230,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         layout.addMember(deployButton);
 
         IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), MSG.common_button_delete());
-        deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
+        deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_deleteConfirm(), new BooleanCallback() {

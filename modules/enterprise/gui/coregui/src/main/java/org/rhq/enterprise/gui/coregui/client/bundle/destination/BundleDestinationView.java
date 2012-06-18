@@ -43,6 +43,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -91,7 +92,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle()
             + ": " + StringUtility.escapeHtml(bundle.getName()), "Bundles/Bundle/" + bundle.getId());
 
-        HeaderLabel header = new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"),
+        HeaderLabel header = new HeaderLabel(Canvas.getImgURL(IconEnum.BUNDLE_DESTINATION.getIcon24x24Path()),
             StringUtility.escapeHtml(destination.getName()));
 
         detail = new Canvas();
@@ -181,7 +182,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private Canvas getActionLayout(String locatorId) {
         LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
         IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
-        deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
+        deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 new BundleDeployWizard(destination).startWizard();
@@ -190,7 +191,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         actionLayout.addMember(deployButton);
 
         IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG.view_bundle_revert());
-        revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+        revertButton.setIcon(IconEnum.BUNDLE_REVERT.getIcon16x16Path());
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_revertConfirm(), new BooleanCallback() {
@@ -205,7 +206,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         actionLayout.addMember(revertButton);
 
         IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
-        purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+        purgeButton.setIcon(IconEnum.BUNDLE_DESTINATION_PURGE.getIcon16x16Path());
         purgeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
@@ -237,7 +238,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         actionLayout.addMember(purgeButton);
 
         IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
-        deleteButton.setIcon("subsystems/bundle/BundleDestinationAction_Delete_16.png");
+        deleteButton.setIcon(IconEnum.BUNDLE_DESTINATION_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {

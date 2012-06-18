@@ -18,9 +18,14 @@
  */
 package org.rhq.core.pc.upgrade;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.util.Set;
 
 import org.jmock.Expectations;
+
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
@@ -32,10 +37,6 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 /**
  * An abstract base class for Resource upgrade handling tests.
@@ -105,13 +106,15 @@ public abstract class AbstractResourceUpgradeHandlingTest extends ResourceUpgrad
             assertFalse(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
                 + " seems to be upgraded even though it shouldn't.");
 
-            ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(res);
+            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            ResourceContainer rc = im.getResourceContainer(res);
 
             assertEquals(rc.getResourceComponentState(), ResourceContainer.ResourceComponentState.STOPPED,
                 "A resource that has not been upgraded due to upgrade error in parent should be stopped.");
 
             //recurse, since the whole subtree under the failed resource should be not upgraded and stopped.
-            checkResourcesNotUpgraded(res.getChildResources(), res.getChildResources().size());
+            Set<Resource> children = im.getContainerChildren(res, rc);
+            checkResourcesNotUpgraded(children, children.size());
         }
     }
 

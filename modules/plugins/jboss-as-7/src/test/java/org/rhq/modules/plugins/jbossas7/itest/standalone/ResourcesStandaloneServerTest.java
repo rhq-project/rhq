@@ -108,6 +108,8 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         //ignored because this is not a true operation, it is handled
         //internally by a configuration property change
         ignoredOperations.add("enable");
+        //ignored because the Osgi subsystem not configured out of box
+        ignoredOperations.add("subsystem:activate");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,

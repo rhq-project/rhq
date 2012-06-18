@@ -24,22 +24,15 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
@@ -69,7 +62,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
 
-        Thread.sleep(20 * 1000L);
+        Thread.sleep(40 * 1000L);
     }
 
 
@@ -81,103 +74,46 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         //works well with real agent
         ignoredResources.add("VHost");
 
-        //ignored because the settings different when started with arquillian, inet-address is not set correctly
-        //works well with real agent
+        //created JIRA AS7-5011
+        //server is started with the configuration but unable to write it back as is
+        //due to marshaling error
         ignoredResources.add("Network Interface");
+
+        //created JIRA AS7-5012
+        //default value for  is float but the resource only accepts integers
+        ignoredResources.add("Load Metric");
+
+        //will revisit after BZ 826542 is resolved
+        ignoredResources.add("Authentication (Classic)");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
 
-        ConfigurationManager configurationManager = this.pluginContainer.getConfigurationManager();
-        configurationManager.initialize();
-        Thread.sleep(40 * 1000L);
-
-        Queue<Resource> unparsedResources = new LinkedList<Resource>();
-        for (Resource topLevelResource : server.getChildResources()) {
-            if (topLevelResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)) {
-                unparsedResources.add(topLevelResource);
-            } else {
-                log.info("Subsystem not COMMITTED " + topLevelResource + " - " + topLevelResource.getInventoryStatus());
-            }
-        }
-
-        int errorCount = 0;
-
-        while (!unparsedResources.isEmpty()) {
-            Resource resourceUnderTest = unparsedResources.poll();
-
-            for (Resource childResource : resourceUnderTest.getChildResources()) {
-                if (childResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)) {
-                    unparsedResources.add(childResource);
-                } else {
-                    log.info("Subsystem not COMMITTED " + childResource + " - " + childResource.getInventoryStatus());
-                }
-            }
-
-            if (resourceUnderTest.getResourceType().getResourceConfigurationDefinition() != null
-                && !ignoredResources.contains(resourceUnderTest.getResourceType().getName())) {
-                Configuration configUnderTest = configurationManager
-                    .loadResourceConfiguration(resourceUnderTest.getId());
-
-                ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(1, configUnderTest,
-                    resourceUnderTest.getId());
-                ConfigurationUpdateResponse updateResponse = configurationManager
-                    .executeUpdateResourceConfigurationImmediately(updateRequest);
-
-                Assert.assertNotNull(updateResponse);
-                if (updateResponse.getErrorMessage() != null) {
-                    errorCount++;
-                    log.error("------------------------------");
-                    log.error(resourceUnderTest);
-                    log.error(updateResponse.getErrorMessage());
-                    log.error("------------------------------");
-                }
-            }
-        }
-
+        int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
         Assert.assertEquals(errorCount, 0);
     }
 
     @Test(priority = 11)
-    public void executeNoArgOperations() throws Exception {
+    public void standaloneExecuteNoArgOperations() throws Exception {
         List<String> ignoredSubsystems = new ArrayList<String>();
+
+        //ignored because mod_cluster is not setup in default server configuration
+        //to be more specific, there is no server to fail-over to
         ignoredSubsystems.add("ModCluster Standalone Service");
 
         List<String> ignoredOperations = new ArrayList<String>();
+        //ignored because there is no other server to fail-over to
         ignoredOperations.add("subsystem:force-failover");
+        //ignored because this is not a true operation, it is handled
+        //internally by a configuration property change
         ignoredOperations.add("enable");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
 
-        Queue<Resource> unparsedResources = new LinkedList<Resource>();
-        for (Resource topLevelResource : server.getChildResources()) {
-            if (topLevelResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)
-                && !ignoredSubsystems.contains(topLevelResource.getResourceType().getName())) {
-                unparsedResources.add(topLevelResource);
-            }
-        }
-
-        while (!unparsedResources.isEmpty()) {
-            Resource resourceUnderTest = unparsedResources.poll();
-
-            for (Resource childResource : resourceUnderTest.getChildResources()) {
-                if (childResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)) {
-                    unparsedResources.add(childResource);
-                }
-            }
-
-            for (OperationDefinition operationUnderTest : resourceUnderTest.getResourceType().getOperationDefinitions()) {
-                if (!ignoredOperations.contains(operationUnderTest.getName())) {
-                    if (operationUnderTest.getParametersConfigurationDefinition() == null
-                        || operationUnderTest.getParametersConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
-                        this.invokeOperationAndAssertSuccess(resourceUnderTest, operationUnderTest.getName(),
-                            new Configuration());
-                    }
-                }
-            }
-        }
+        executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);
     }
+
 }

@@ -18,19 +18,29 @@
  */
 package org.rhq.core.plugin.testutil;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
@@ -44,7 +54,9 @@ import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -63,6 +75,7 @@ import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
@@ -79,17 +92,14 @@ import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
 /**
  * The base class for an Agent plugin integration test class.
  *
  * @author Ian Springer
  */
 public abstract class AbstractAgentPluginTest extends Arquillian {
+
+    private Log log = LogFactory.getLog(this.getClass());
 
     @ArquillianResource
     protected MockingServerServices serverServices;
@@ -587,6 +597,125 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected FakeServerInventory getServerInventory() {
         return serverInventory;
+    }
+
+    /**
+     * Test that loads a resource configuration and then immediately updates the resource
+     * with the exact same loaded settings.
+     *
+     * Notes:
+     * 1) load/update is not executed on the root resource provided.
+     * 2) if a resource is ignored then all of subresource of that resources are ignored
+     *
+     * @param rootResource root resource
+     * @param ignoredResources resources to be ignored
+     * @return number of errors
+     * @throws InterruptedException
+     * @throws PluginContainerException
+     */
+    protected int loadUpdateConfigChildResources(Resource rootResource, List<String> ignoredResources)
+        throws InterruptedException, PluginContainerException {
+
+        ignoredResources = (ignoredResources == null) ? new ArrayList<String>() : ignoredResources;
+
+        ConfigurationManager configManager = this.pluginContainer.getConfigurationManager();
+        configManager.initialize();
+        Thread.sleep(10 * 1000L);
+
+        Queue<Resource> unparsedResources = new LinkedList<Resource>();
+        addCommitedChildrenToCollection(unparsedResources, rootResource, ignoredResources);
+
+        int errorCount = 0;
+
+        while (!unparsedResources.isEmpty()) {
+            Resource resourceUnderTest = unparsedResources.poll();
+
+            addCommitedChildrenToCollection(unparsedResources, resourceUnderTest, ignoredResources);
+
+            if (resourceUnderTest.getResourceType().getResourceConfigurationDefinition() != null) {
+                Configuration configUnderTest = configManager.loadResourceConfiguration(resourceUnderTest.getId());
+
+                ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(1, configUnderTest,
+                    resourceUnderTest.getId());
+                ConfigurationUpdateResponse updateResponse = configManager
+                    .executeUpdateResourceConfigurationImmediately(updateRequest);
+
+                if (updateResponse == null) {
+                    errorCount++;
+                    log.error("------------------------------");
+                    log.error(resourceUnderTest);
+                    log.error("Update Response is NULL!!!!");
+                    log.error("------------------------------\n");
+                }
+                if (updateResponse.getErrorMessage() != null) {
+                    errorCount++;
+                    log.error("------------------------------");
+                    log.error(resourceUnderTest);
+                    log.error(updateResponse.getErrorMessage());
+                    log.error("------------------------------\n");
+                }
+            }
+        }
+
+        return errorCount;
+    }
+
+    /**
+     * Test that executes all the no arg operations for all the subresources of a provided resource.
+     * Notes:
+     * 1) no operations are executed on the root resource provided.
+     * 2) if a resource is ignored then all of subresource of that resources are ignored
+     *
+     * @param rootResource root resource
+     * @param ignoredResources resources to be ignored
+     * @param ignoredOperations operations to be ignored
+     * @throws PluginContainerException
+     */
+    protected void executeNoArgOperations(Resource rootResource, List<String> ignoredResources,
+        List<String> ignoredOperations) throws PluginContainerException {
+
+        ignoredResources = (ignoredResources == null) ? new ArrayList<String>() : ignoredResources;
+        ignoredOperations = (ignoredOperations == null) ? new ArrayList<String>() : ignoredOperations;
+
+        Queue<Resource> unparsedResources = new LinkedList<Resource>();
+        addCommitedChildrenToCollection(unparsedResources, rootResource, ignoredResources);
+
+        while (!unparsedResources.isEmpty()) {
+            Resource resourceUnderTest = unparsedResources.poll();
+
+            addCommitedChildrenToCollection(unparsedResources, resourceUnderTest, ignoredResources);
+
+            for (OperationDefinition operationUnderTest : resourceUnderTest.getResourceType().getOperationDefinitions()) {
+                if (!ignoredOperations.contains(operationUnderTest.getName())) {
+                    if (operationUnderTest.getParametersConfigurationDefinition() == null
+                        || operationUnderTest.getParametersConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
+                        this.invokeOperationAndAssertSuccess(resourceUnderTest, operationUnderTest.getName(),
+                            new Configuration());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds direct subresources of resources to a collection.
+     *
+     * @param accumulatorCollection accumulator collection
+     * @param rootResource root resource
+     * @param ignoredResources resources to be ignored
+     */
+    private void addCommitedChildrenToCollection(Collection<Resource> accumulatorCollection, Resource rootResource,
+        List<String> ignoredResources) {
+        for (Resource childResource : rootResource.getChildResources()) {
+            if (childResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)) {
+                if( !ignoredResources.contains(childResource.getResourceType().getName())) {
+                    accumulatorCollection.add(childResource);
+                }
+            } else {
+                log.info("Resource NOT COMMITTED --> not added to collection!! - " + childResource + " - "
+                    + childResource.getInventoryStatus());
+            }
+        }
     }
 
 }

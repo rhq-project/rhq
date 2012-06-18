@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@ import javax.interceptor.Interceptors;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -41,6 +40,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
@@ -55,6 +55,7 @@ import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
+import org.rhq.enterprise.server.rest.domain.SimplePropDef;
 
 /**
  * Deal with operations
@@ -96,6 +97,8 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
             odr.setId(def.getId());
             odr.setName(def.getName());
 
+            copyParamsForDefinition(def, odr);
+
             builder=Response.ok(odr);
 
             // Add some links
@@ -113,6 +116,26 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
         return builder.build();
 
+    }
+
+    private void copyParamsForDefinition(OperationDefinition def, OperationDefinitionRest odr) {
+        ConfigurationDefinition cd = def.getParametersConfigurationDefinition();
+        if (cd==null)
+            return;
+
+        for (Map.Entry<String,PropertyDefinition> entry : cd.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                SimplePropDef prop = new SimplePropDef();
+                prop.setName(pds.getName());
+                prop.setRequired(pds.isRequired());
+                prop.setType(pds.getType());
+                prop.setDefaultValue(pds.getDefaultValue());
+                odr.addParam(prop);
+            }
+            log.debug("copyParams: " + pd.getName() + " not yet supported");
+        }
     }
 
     @Override
@@ -139,6 +162,9 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
                 OperationDefinitionRest odr = new OperationDefinitionRest();
                 odr.setId(def.getId());
                 odr.setName(def.getName());
+
+                copyParamsForDefinition(def,odr);
+
                 UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
                 uriBuilder.path("/operation/definition/{id}");
                 uriBuilder.queryParam("resourceId",resourceId);
@@ -174,7 +200,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         }
         OperationRest operationRest = new OperationRest(resourceId,definitionId);
         operationRest.setId((int)System.currentTimeMillis()); // TODO better id (?)(we need one for pUT later on)
-        operationRest.setState("creating");
+        operationRest.setReadyToSubmit(false);
         operationRest.setName(opDef.getName());
         ConfigurationDefinition paramDefinition = opDef.getParametersConfigurationDefinition();
         if (paramDefinition != null) {
@@ -208,11 +234,11 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     @Override
     public Response updateOperation(int operationId, OperationRest operation, UriInfo uriInfo) {
 
-        if (operation.getState().equals("creating") && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
+        if (!operation.isReadyToSubmit() && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
             // TODO check all the required parameters for presence before allowing to submit
-            operation.setState("ready");
+            operation.setReadyToSubmit(true);
         }
-        if (operation.getState().equals("ready")) {
+        if (operation.isReadyToSubmit()) {
             // todo check params
 
             // submit
@@ -222,7 +248,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
                 parameters.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
             }
             ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,
-                    parameters,"TEst");
+                    parameters,"Test");
             JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/operation/history/{id}");
@@ -271,7 +297,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         history = list.get(0);
         String status;
         if (history.getStatus()==null)
-            status = " - no infomation yet -";
+            status = " - no information yet -";
         else
             status = history.getStatus().getDisplayName();
 
@@ -282,7 +308,12 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         if (history.getResults()!=null) {
             Configuration results = history.getResults();
             for (Property p : results.getProperties()) {
-                hist.getResult().put(p.getName(),p.toString());
+                String val;
+                if (p instanceof PropertySimple)
+                    val = ((PropertySimple)p).getStringValue();
+                else
+                    val = p.toString();
+                hist.getResult().put(p.getName(),val);
             }
         }
 

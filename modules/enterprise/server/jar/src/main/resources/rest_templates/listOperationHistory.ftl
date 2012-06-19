@@ -19,19 +19,19 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
-<#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.GroupDefinitionRest>" -->
+<#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.OperationHistoryRest>" -->
 <html>
 <#if (var?size>0) >
 <ul>
-<#-- the next looks odd, but the incoming var is a list -->
+
+    <#-- the next looks odd, but the incoming var is a list -->
     <#list var as var>
     <li>
-        <#include "groupDefinition.ftl"/>
+        <#include "operationHistory.ftl"/>
     </li>
     </#list>
-
 </ul>
 <#else>
-   <strong>No Definitions have been set up</strong>
+   <strong>No Operations have been run</strong>
 </#if>
 <html>

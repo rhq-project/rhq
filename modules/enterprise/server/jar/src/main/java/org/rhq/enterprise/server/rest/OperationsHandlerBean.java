@@ -27,13 +27,21 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -45,10 +53,12 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
@@ -139,7 +149,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     }
 
     @Override
-    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request) {
+    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
 
         if (resourceId == null)
             throw new ParameterMissingException("resourceId");
@@ -281,8 +291,9 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     }
 
     @Override
-    public Response outcome(String jobName, UriInfo uriInfo) {
+    public Response outcome(String jobName, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
 
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(new JobId(jobName));
@@ -295,6 +306,68 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         }
 
         history = list.get(0);
+        OperationHistoryRest hist = historyToHistoryRest(history, uriInfo);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("operationHistory.ftl",hist));
+        } else {
+            builder = Response.ok(hist);
+        }
+        if (history.getStatus()== OperationRequestStatus.SUCCESS) {
+            // add a long time cache header
+            CacheControl cc = new CacheControl();
+            cc.setMaxAge(1200);
+            builder.cacheControl(cc);
+        }
+
+        return builder.build();
+
+    }
+
+    public Response listHistory(int resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        if (resourceId>0)
+            criteria.addFilterResourceIds(resourceId);
+
+        criteria.addSortEndTime(PageOrdering.DESC);
+
+        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+
+        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>(list.size());
+        for (ResourceOperationHistory roh : list) {
+            OperationHistoryRest historyRest = historyToHistoryRest(roh,uriInfo);
+            result.add(historyRest);
+        }
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listOperationHistory.ftl", result));
+        } else {
+            GenericEntity<List<OperationHistoryRest>> res = new GenericEntity<List<OperationHistoryRest>>(result) {};
+            builder = Response.ok(res);
+        }
+        return builder.build();
+    }
+
+    @Override
+    public Response deleteOperationHistoryItem(String jobName) {
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addFilterJobId(new JobId(jobName));
+        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+        if ((list != null && !list.isEmpty())) {
+
+            ResourceOperationHistory history = list.get(0);
+            opsManager.deleteOperationHistory(caller,history.getId(),false);
+        }
+        return Response.noContent().build();
+
+    }
+
+
+    private OperationHistoryRest historyToHistoryRest(ResourceOperationHistory history, UriInfo uriInfo) {
         String status;
         if (history.getStatus()==null)
             status = " - no information yet -";
@@ -303,6 +376,10 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
         OperationHistoryRest hist = new OperationHistoryRest();
         hist.setStatus(status);
+        if (history.getResource()!=null)
+            hist.setResourceName(history.getResource().getName());
+        hist.setOperationName(history.getOperationDefinition().getName());
+        hist.lastModified(history.getModifiedTime());
         if (history.getErrorMessage()!=null)
             hist.setErrorMessage(history.getErrorMessage());
         if (history.getResults()!=null) {
@@ -317,14 +394,17 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
             }
         }
 
+        String jobName = history.getJobName();
+        String jobGroup = history.getJobGroup();
+        JobId jobId = new JobId(jobName, jobGroup);
+        hist.setJobId(jobId.toString());
+
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/operation/history/{id}");
-        URI url = uriBuilder.build(new JobId(jobName));
+        URI url = uriBuilder.build(jobId);
         Link self = new Link("self",url.toString());
         hist.getLinks().add(self);
-
-
-        return Response.ok(hist).build();
-
+        return hist;
     }
+
 }

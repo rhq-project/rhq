@@ -21,12 +21,18 @@
 -->
 <#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.MetricSchedule>" -->
 <html>
+<#if (var?size>0) >
 <ul>
     <#-- the next looks odd, but the incoming var is a list -->
+
     <#list var as var>
     <li>
         <#include "metricSchedule.ftl"/>
     </li>
     </#list>
+
 </ul>
+<#else>
+   <strong>No Schedules have been set up</strong>
+</#if>
 <html>

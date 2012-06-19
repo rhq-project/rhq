@@ -895,6 +895,12 @@ public class ConfigurationBean {
         return ((null != registeredServerNames) && !registeredServerNames.isEmpty());
     }
 
+    public boolean isInstallationSettingsConfigurable() {
+        String selectedServer = getSelectedRegisteredServerName();
+        return selectedServer == null || selectedServer.isEmpty()
+            || selectedServer.equals(I18Nmsg.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM));
+    }
+
     public List<SelectItem> getRegisteredServerNames() {
         List<SelectItem> result = new ArrayList<SelectItem>(0);
 
@@ -925,6 +931,7 @@ public class ConfigurationBean {
     // should not call getServerConfiguration.setValue()
     public void setSelectedRegisteredServerName(String selectedRegisteredServerName) {
         this.selectedRegisteredServerName = selectedRegisteredServerName;
+        setHaServerName(selectedRegisteredServerName);
     }
 
     public String getHaServerName() {

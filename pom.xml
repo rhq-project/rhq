@@ -110,7 +110,7 @@
     <resteasy.version>2.3.3.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
-    <arquillian.version>1.0.0.Final</arquillian.version>
+    <arquillian.version>1.0.1.Final</arquillian.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
 

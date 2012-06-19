@@ -296,13 +296,14 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-        criteria.addFilterJobId(new JobId(jobName));
+        JobId jobId = new JobId(jobName);
+        criteria.addFilterJobId(jobId);
 
         ResourceOperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
         if (list==null || list.isEmpty()) {
-            log.info("No history with id " + new HistoryJobId(jobName) + " found");
-            throw new StuffNotFoundException("OperationHistory with id " + new HistoryJobId(jobName));
+            log.info("No history with id " + jobId + " found");
+            throw new StuffNotFoundException("OperationHistory with id " + jobId);
         }
 
         history = list.get(0);

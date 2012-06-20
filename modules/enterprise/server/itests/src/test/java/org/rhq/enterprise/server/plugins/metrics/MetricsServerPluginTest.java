@@ -24,6 +24,8 @@ package org.rhq.enterprise.server.plugins.metrics;
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,17 +39,20 @@ import javax.persistence.EntityManager;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.jboss.ejb.plugins.cmp.jdbc.JDBCUtil;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -58,7 +63,6 @@ import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 /**
@@ -98,12 +102,20 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
     private Subject overlord;
 
+    private MetricsManagerLocal metricsManager;
+
     @BeforeClass
+    public void prepareMetricsServer() throws Exception {
+        initMetricsServer();
+    }
+
+    @BeforeMethod
     public void prepareTests() throws Exception {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         overlord = subjectManager.getOverlord();
 
-        initMetricsServer();
+        metricsManager = LookupUtil.getMetricsManager();
+
         createInventory();
     }
 
@@ -253,12 +265,8 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
         report.setCollectionTime(now.getMillis());
 
-        MeasurementReport dummyReport = new MeasurementReport();
-        dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
+        insertDummyReport(now);
 
-        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
-        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
-        metricsManager.mergeMeasurementReport(dummyReport);
         metricsManager.mergeMeasurementReport(report);
 
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
@@ -270,7 +278,54 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
             new MeasurementDataNumeric(twoMinutesAgo.getMillis(), dynamicSchedule.getId(), 3.9),
             new MeasurementDataNumeric(oneMinuteAgo.getMillis(), dynamicSchedule.getId(), 2.6));
 
-        AssertUtils.assertCollectionEqualsNoOrder(expected, actual, "Failed to insert numeric data");
+        assertCollectionEqualsNoOrder(expected, actual, "Failed to insert numeric data");
+    }
+
+    @Test
+    public void findRawNumericData() {
+        DateTime now = new DateTime();
+        DateTime beginTime = now.minusHours(4);
+        DateTime endTime = now;
+
+        int numDataPoints = 60;
+        long interval = (endTime.getMillis() - beginTime.getMillis()) / 60;
+        long[] buckets = new long[numDataPoints];
+        for (int i = 0; i < numDataPoints; ++i) {
+            buckets[i] = beginTime.getMillis() + (interval * i);
+        }
+
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(buckets[0] + 10, request, 1.1));
+        report.addData(new MeasurementDataNumeric(buckets[0] + 20, request, 2.2));
+        report.addData(new MeasurementDataNumeric(buckets[0] + 30, request, 3.3));
+        report.addData(new MeasurementDataNumeric(buckets[59] + 10, request, 4.4));
+        report.addData(new MeasurementDataNumeric(buckets[59] + 20, request, 5.5));
+        report.addData(new MeasurementDataNumeric(buckets[59] + 30, request, 6.6));
+
+        insertDummyReport(now);
+
+        metricsManager.mergeMeasurementReport(report);
+
+        List<MeasurementDataNumericHighLowComposite> actualData = metricsManager.findDataForContext(overlord,
+            EntityContext.forResource(resource.getId()), dynamicMeasuremenDef.getId(), beginTime.getMillis(),
+            endTime.getMillis());
+
+        assertEquals("Expected to get back 60 data points.", numDataPoints, actualData.size());
+
+        MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(buckets[0],
+            (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
+        MeasurementDataNumericHighLowComposite expectedBucket59 = new MeasurementDataNumericHighLowComposite(
+            buckets[59], (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
+        MeasurementDataNumericHighLowComposite expectedBucket29 = new MeasurementDataNumericHighLowComposite(
+            buckets[29], Double.NaN, Double.NaN, Double.NaN);
+
+        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0,
+            actualData.get(0));
+        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59,
+            actualData.get(59));
+        assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29,
+            actualData.get(29));
     }
 
     @Test
@@ -287,14 +342,9 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
         report.setCollectionTime(now.getMillis());
 
-        MeasurementReport dummyReport = new MeasurementReport();
-        dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
+        insertDummyReport(now);
 
-        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
-        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
-        metricsManager.mergeMeasurementReport(dummyReport);
         metricsManager.mergeMeasurementReport(report);
-
         metricsManager.compressPurgeAndTruncate();
 
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
@@ -306,6 +356,15 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         assertEquals("Failed to calculate the min", 2.6, aggregate.getMin());  Double d;
         assertEquals("Failed to calculate the max", 3.9, aggregate.getMax());
         assertEquals("Failed to calculate the average", (3.2 + 3.9 + 2.6) / 3.0, aggregate.getAvg());
+    }
+
+    private void insertDummyReport(DateTime now) {
+        MeasurementReport dummyReport = new MeasurementReport();
+        dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
+
+        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
+        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
+        metricsManager.mergeMeasurementReport(dummyReport);
     }
 
 }

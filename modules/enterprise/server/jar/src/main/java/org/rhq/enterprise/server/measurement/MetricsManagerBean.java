@@ -32,9 +32,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
@@ -52,6 +54,14 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @EJB
     private MeasurementScheduleManagerLocal scheduleManager;
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
+        int definitionId, long beginTime, long endTime) {
+        MetricsServerPluginFacet metricsServer = getServerPlugin();
+        return metricsServer.findDataForContext(subject, context, definitionId, beginTime, endTime);
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

@@ -128,7 +128,8 @@ public class HibernatePluginTest
          for (MeasurementDefinition def : resource.getResourceType().getMetricDefinitions())
          {
             Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
-            metricList.add(new MeasurementScheduleRequest(1, def.getName(), 1000, true, def.getDataType(), null));
+            metricList.add(new MeasurementScheduleRequest(1, def.getName(), 1000, true, def.getDataType(), null,
+                resource.getId()));
             MeasurementReport report = new MeasurementReport();
             ((MeasurementFacet) resourceComponent).getValues(report, metricList);
 

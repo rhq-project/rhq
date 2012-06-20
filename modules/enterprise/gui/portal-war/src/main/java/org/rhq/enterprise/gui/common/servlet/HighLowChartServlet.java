@@ -41,11 +41,11 @@ import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -143,7 +143,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
         Subject subject = user.getSubject();
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
 
         // set metric range defaults
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
@@ -159,8 +159,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
         }
 
         EntityContext context = new EntityContext(resourceId, groupId, parentId, childTypeId);
-        dataPoints = dataManager.findDataForContext(subject, context, definitionId, beginTime, endTime,
-            NUMBER_OF_DATA_POINTS).get(0);
+        dataPoints = metricsManager.findDataForContext(subject, context, definitionId, beginTime, endTime);
 
         List<HighLowMetricValue> chartDataPoints = new ArrayList<HighLowMetricValue>(dataPoints.size());
         for (MeasurementDataNumericHighLowComposite dataPoint : dataPoints) {

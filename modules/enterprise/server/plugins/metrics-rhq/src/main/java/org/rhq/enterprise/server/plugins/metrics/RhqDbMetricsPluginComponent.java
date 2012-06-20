@@ -22,12 +22,16 @@
 package org.rhq.enterprise.server.plugins.metrics;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -56,6 +60,19 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
 
     @Override
     public void shutdown() {
+    }
+
+    @Override
+    public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
+        int definitionId, long beginTime, long endTime) {
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        List<List<MeasurementDataNumericHighLowComposite>> data = dataManager.findDataForContext(subject, context,
+            definitionId, beginTime, endTime, 60);
+
+        if (data.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return data.get(0);
     }
 
     @Override

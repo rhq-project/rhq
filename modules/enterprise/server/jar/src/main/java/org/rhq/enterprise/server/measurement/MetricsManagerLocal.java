@@ -26,9 +26,11 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 /**
  * @author John Sanda
@@ -41,4 +43,7 @@ public interface MetricsManagerLocal {
     void compressPurgeAndTruncate();
 
     List<? extends TraitMeasurement> findResourceTraits(Subject subject, TraitMeasurementCriteria criteria);
+
+    List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
+        int definitionId, long beginTime, long endTime);
 }

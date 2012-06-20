@@ -21,10 +21,14 @@
 
 package org.rhq.enterprise.server.plugin.pc.metrics;
 
+import java.util.List;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -35,6 +39,9 @@ public interface MetricsServerPluginFacet {
     void insertMetrics(MeasurementReport report);
 
     void calculateAggregates();
+
+    List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
+        int definitionId, long beginTime, long endTime);
 
     PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, TraitMeasurementCriteria criteria);
 

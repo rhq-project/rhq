@@ -21,14 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.clientapi.agent.configuration;
+package org.rhq.core.domain.configuration;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
@@ -37,6 +33,51 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 @Test
 public class ConfigurationUtilityTest {
+    public void testNormalizeDefaultSimple() {
+        ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
+
+        PropertyDefinitionSimple simple = new PropertyDefinitionSimple("simple", null, false, PropertySimpleType.STRING);
+        PropertyDefinitionSimple simpleRequired = new PropertyDefinitionSimple("simpleRequired", null, true,
+            PropertySimpleType.STRING);
+        PropertyDefinitionSimple simpleDefault = new PropertyDefinitionSimple("simpleDefault", null, false,
+            PropertySimpleType.STRING);
+        PropertyDefinitionSimple simpleRequiredDefault = new PropertyDefinitionSimple("simpleRequiredDefault", null,
+            true, PropertySimpleType.STRING);
+
+        simpleDefault.setDefaultValue("!!simpleDefaultValue!!");
+        simpleRequiredDefault.setDefaultValue("!!simpleRequiredDefaultValue!!");
+
+        configDef.put(simple);
+        configDef.put(simpleRequired);
+        configDef.put(simpleDefault);
+        configDef.put(simpleRequiredDefault);
+
+        // test normalization
+        Configuration config = new Configuration();
+        ConfigurationUtility.normalizeConfiguration(config, configDef, false, false);
+        assert config.getProperties().size() == 4;
+        assert config.getSimpleValue(simple.getName(), null) == null;
+        assert config.getSimpleValue(simpleRequired.getName(), null) == null;
+        assert config.getSimpleValue(simpleDefault.getName(), null) == null;
+        assert config.getSimpleValue(simpleRequiredDefault.getName(), null) == null;
+
+        config = new Configuration();
+        ConfigurationUtility.normalizeConfiguration(config, configDef, true, false);
+        assert config.getProperties().size() == 4;
+        assert config.getSimpleValue(simple.getName(), null) == null;
+        assert config.getSimpleValue(simpleRequired.getName(), null) == null; // there is no default, so nothing to set
+        assert config.getSimpleValue(simpleDefault.getName(), null) == null;
+        assert config.getSimpleValue(simpleRequiredDefault.getName(), null).equals("!!simpleRequiredDefaultValue!!");
+
+        config = new Configuration();
+        ConfigurationUtility.normalizeConfiguration(config, configDef, false, true);
+        assert config.getProperties().size() == 4;
+        assert config.getSimpleValue(simple.getName(), null) == null; // there is no default, so nothing to set
+        assert config.getSimpleValue(simpleRequired.getName(), null) == null;
+        assert config.getSimpleValue(simpleDefault.getName(), null).equals("!!simpleDefaultValue!!");
+        assert config.getSimpleValue(simpleRequiredDefault.getName(), null) == null;
+    }
+
     public void testCreateDefaultNone() {
         // no defaults, no required props - returned config should be empty
         ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);

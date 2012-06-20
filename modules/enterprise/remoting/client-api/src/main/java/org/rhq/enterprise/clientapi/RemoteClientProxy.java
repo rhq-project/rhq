@@ -19,16 +19,12 @@
 package org.rhq.enterprise.clientapi;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.remoting.invocation.NameBasedInvocation;
-
 import org.rhq.bindings.client.AbstractRhqFacadeProxy;
 import org.rhq.bindings.client.RhqManager;
-import org.rhq.bindings.util.InterfaceSimplifier;
 import org.rhq.core.domain.server.ExternalizableStrategy;
 
 /**
@@ -46,22 +42,9 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
         super(client, manager);
     }
 
+    @Deprecated
     public Class<?> getRemoteInterface() {
         return this.getManager().remote();
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T getProcessor(RemoteClient remoteClient, RhqManager manager) {
-        try {
-            RemoteClientProxy gpc = new RemoteClientProxy(remoteClient, manager);
-
-            Class<?> intf = InterfaceSimplifier.simplify(manager.remote());
-
-            return (T) Proxy
-                .newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class<?>[] { intf }, gpc);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get remote connection proxy", e);
-        }
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -73,29 +56,9 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
         }
     }
 
-    protected Object doInvoke(Object proxy, Method originalMethod, java.lang.Class<?>[] argTypes, Object[] args) throws Throwable  {
+    protected Object doInvoke(Object proxy, Method originalMethod, Object[] args) throws Throwable  {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
 
-        String methodName = getManager().beanName() + ":" + originalMethod.getName();
-
-        String[] paramSig = createParamSignature(argTypes);
-
-        NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);
-
-        Object response = getRhqFacade().getRemotingClient().invoke(request);
-
-        if (response instanceof Throwable) {
-            throw (Throwable) response;
-        }
-
-        return response;
-    }
-
-    private String[] createParamSignature(Class<?>[] types) {
-        String[] paramSig = new String[types.length];
-        for (int x = 0; x < types.length; x++) {
-            paramSig[x] = types[x].getName();
-        }
-        return paramSig;
+        return getRhqFacade().remoteInvoke(getManager(), originalMethod, Object.class, args);
     }
 }

@@ -1,36 +1,23 @@
 package org.rhq.enterprise.client.commands;
 
-import static java.util.Collections.*;
 import static java.util.Arrays.asList;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
-import java.util.Map;
-import java.util.Collections;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 
 import org.testng.annotations.Test;
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.enterprise.clientapi.RemoteClient;
-import org.rhq.enterprise.server.alert.AlertManagerRemote;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.RepoManagerRemote;
-import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.authz.RoleManagerRemote;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
-import org.rhq.enterprise.server.auth.SubjectManagerRemote;
+
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.core.domain.auth.Subject;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptContext;
-import javax.script.Bindings;
+import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.clientapi.RemoteClient;
 
 public class ScriptCommandTest {
 
@@ -121,56 +108,6 @@ public class ScriptCommandTest {
 
         public RemoteClientStub(String host, int port) {
             super(host, port);
-        }
-
-        @Override
-        public AlertManagerRemote getAlertManager() {
-            return null;
-        }
-
-        @Override
-        public AlertDefinitionManagerRemote getAlertDefinitionManager() {
-            return null;
-        }
-
-        @Override
-        public ConfigurationManagerRemote getConfigurationManager() {
-            return null;
-        }
-
-        @Override
-        public RepoManagerRemote getRepoManager() {
-            return null;
-        }
-
-        @Override
-        public ContentManagerRemote getContentManager() {
-            return null;
-        }
-
-        @Override
-        public OperationManagerRemote getOperationManager() {
-            return null;
-        }
-
-        @Override
-        public RoleManagerRemote getRoleManager() {
-            return null;
-        }
-
-        @Override
-        public ResourceManagerRemote getResourceManager() {
-            return null;
-        }
-
-        @Override
-        public ResourceGroupManagerRemote getResourceGroupManager() {
-            return null;
-        }
-
-        @Override
-        public SubjectManagerRemote getSubjectManager() {
-            return null;
         }
     }
 

@@ -203,7 +203,7 @@ public class ClientMain {
         this.serviceCompletor.setContext(getScriptEngine().getContext());
 
         if (remoteClient != null) {
-            this.serviceCompletor.setServices(remoteClient.getManagers());
+            this.serviceCompletor.setServices(remoteClient.getScriptingAPI());
         }
     }
 

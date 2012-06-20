@@ -120,7 +120,7 @@ public class StandardBindings extends HashMap<String, Object> {
         put(SCRIPT_UTIL, new ScriptUtil(rhqFacade));
 
         if (rhqFacade != null) {
-            managers = rhqFacade.getManagers();
+            managers = rhqFacade.getScriptingAPI();
 
             put(SUBJECT, rhqFacade.getSubject());
             put(PROXY_FACTORY, new ResourceClientFactory(rhqFacade, output));

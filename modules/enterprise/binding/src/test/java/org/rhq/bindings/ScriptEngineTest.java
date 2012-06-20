@@ -86,11 +86,13 @@ public class ScriptEngineTest {
     }
     
     private ScriptEngine getScriptEngine() throws ScriptException, IOException {
-        return ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), EMPTY_BINDINGS);
+        return ScriptEngineFactory.getScriptEngine("javascript", new PackageFinder(Collections.<File> emptyList()),
+            EMPTY_BINDINGS);
     }
     
     private ScriptEngine getSecuredScriptEngine() throws ScriptException, IOException {
-        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), EMPTY_BINDINGS, new StandardScriptPermissions());
+        return ScriptEngineFactory.getSecuredScriptEngine("javascript",
+            new PackageFinder(Collections.<File> emptyList()), EMPTY_BINDINGS, new StandardScriptPermissions());
     }
     
     private void assertSecurityExceptionPresent(Throwable t) {

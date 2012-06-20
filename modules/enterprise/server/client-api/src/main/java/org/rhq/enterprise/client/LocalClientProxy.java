@@ -56,9 +56,10 @@ public class LocalClientProxy extends AbstractRhqFacadeProxy<LocalClient> {
         }
     }
     
-    protected Object doInvoke(Object proxy, Method originalMethod, java.lang.Class<?>[] argTypes, final Object[] args) throws Throwable {
+    protected Object doInvoke(Object proxy, Method originalMethod, final Object[] args) throws Throwable {
         try {
-            final Method realMethod = localSLSB.getClass().getMethod(originalMethod.getName(), argTypes);
+            final Method realMethod = localSLSB.getClass().getMethod(originalMethod.getName(),
+                originalMethod.getParameterTypes());
 
             //run this through the privileged block to elevate the privs of the script
             //the scripts don't have the AllowEjbAccessPermission but this code has
@@ -72,7 +73,9 @@ public class LocalClientProxy extends AbstractRhqFacadeProxy<LocalClient> {
                 }
             });
         } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Method [" + originalMethod + "] does not have a desimplified counterpart with arguments " + Arrays.asList(argTypes) + ".", e);
+            throw new IllegalArgumentException("Method [" + originalMethod
+                + "] does not have a desimplified counterpart with arguments "
+                + Arrays.asList(originalMethod.getParameterTypes()) + ".", e);
         }
     };
     

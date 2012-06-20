@@ -31,7 +31,6 @@ import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
 import org.jmock.Expectations;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -89,7 +88,7 @@ public class LocalClientTest extends JMockTest {
             LocalClient lc = new LocalClient(null);
             
             //this call creates the proxy and is theoretically prone to the context classloader
-            AlertManagerRemote am = lc.getAlertManager();
+            Object am = lc.getScriptingAPI().get("AlertManager");
 
             //check that both the original and simplified methods exist on the returned object
             am.getClass().getMethod("deleteAlerts", new Class<?>[] { Subject.class, int[].class });            

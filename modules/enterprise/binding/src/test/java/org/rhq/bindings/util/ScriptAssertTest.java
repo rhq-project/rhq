@@ -46,8 +46,7 @@ public class ScriptAssertTest {
     @BeforeTest
     public void verifyScriptEngineIsAvailable() throws Exception {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new FakeRhqFacade());
-        engine =
-            ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File> emptyList()),
+        engine = ScriptEngineFactory.getScriptEngine("javascript", new PackageFinder(Collections.<File> emptyList()),
                 bindings);
     }
 

@@ -102,9 +102,6 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
             } catch (NoResultException nre) { // this is the expected case 90% of the time
                 // lookup the condition entity
                 AlertCondition condition = entityManager.find(AlertCondition.class, alertConditionId);
-                if (condition == null) {
-                    // the associated AlertDefinition must have been updated, which removes all previous AlertConditions
-                }
 
                 // persist the log entry
                 AlertConditionLog conditionLog = new AlertConditionLog(condition, ctime);

@@ -22,6 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
@@ -33,6 +38,7 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -48,11 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * @author John Mazzitelli
  */
@@ -62,12 +63,14 @@ public class ConditionsEditor extends LocatableVLayout {
     private HashSet<AlertCondition> conditions;
     private Table<ConditionDataSource> table;
     private final SelectItem conditionExpression;
+    private boolean updated;
 
     public ConditionsEditor(String locatorId, SelectItem conditionExpression, ResourceType resourceType,
         HashSet<AlertCondition> conditions) {
         super(locatorId);
         this.conditionExpression = conditionExpression;
         this.resourceType = resourceType;
+        this.updated = false;
         setConditions(conditions);
     }
 
@@ -133,6 +136,14 @@ public class ConditionsEditor extends LocatableVLayout {
         table.setTableActionDisableOverride(!editable);
     }
 
+    public boolean isUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(boolean updated) {
+        this.updated = updated;
+    }
+
     private class ConditionsTable extends Table<ConditionDataSource> {
         private ConditionsTable(String locatorId) {
             super(locatorId);
@@ -191,12 +202,14 @@ public class ConditionsEditor extends LocatableVLayout {
                                     }
                                 });
 
+                                final int numConditions = conditions.size();
                                 NewConditionEditor newConditionEditor = new NewConditionEditor(
                                     extendLocatorId("newConditionEditor"), conditions,
                                     ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
                                     new Runnable() {
                                         @Override
                                         public void run() {
+                                            updated = updated || numConditions != conditions.size();
                                             winModal.markForDestroy();
                                             refresh();
                                         }
@@ -215,6 +228,7 @@ public class ConditionsEditor extends LocatableVLayout {
                     for (ListGridRecord record : selection) {
                         AlertCondition cond = getDataSource().copyValues(record);
                         conditions.remove(cond);
+                        updated = true;
                     }
                     refresh();
                 }
@@ -237,8 +251,8 @@ public class ConditionsEditor extends LocatableVLayout {
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION, MSG
-                .view_alert_common_tab_conditions_text());
+            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION,
+                MSG.view_alert_common_tab_conditions_text());
             fields.add(conditionField);
 
             return fields;

@@ -148,6 +148,11 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
         markForRedraw();
     }
 
+    @Override
+    public boolean isResetMatching() {
+        return false;
+    }
+
     private void buildForm() {
         if (!formBuilt) {
             disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", MSG

@@ -9,6 +9,8 @@ public interface EditAlertDefinitionForm {
 
     AlertDefinition getAlertDefinition();
 
+    boolean isResetMatching();
+
     void setAlertDefinition(AlertDefinition alertDef);
 
     void makeEditable();

@@ -32,8 +32,8 @@ public interface AlertDefinitionGWTService extends RemoteService {
 
     int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException;
 
-    AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean updateInternals) throws RuntimeException;
+    AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition, boolean purgeInternals)
+        throws RuntimeException;
 
     int enableAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException;
 

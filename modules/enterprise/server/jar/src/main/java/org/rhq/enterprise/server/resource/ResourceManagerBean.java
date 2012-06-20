@@ -511,13 +511,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
-            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
-            Alert.QUERY_DELETE_BY_RESOURCES, //                order
-            AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
-            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
-            AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
-            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //             Don't
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, // alter               
+            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //          the
+            Alert.QUERY_DELETE_BY_RESOURCES, //                         order
+            AlertCondition.QUERY_DELETE_BY_RESOURCES, //                of
+            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //           alert-
+            AlertNotification.QUERY_DELETE_BY_RESOURCES, //             related
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //               deletes
             JPADrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
             JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 

@@ -41,8 +41,18 @@ public interface GroupAlertDefinitionManagerLocal {
 
     int disableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
+    /**
+     * @param subject
+     * @param groupAlertDefinition
+     * @param resetMatching Incur the overhead of resetting any partial alert matching that has taken place. This *must*
+     * be set true if updating conditions, dampening rules or the conditionExpressin (ANY vs ALL).  If in doubt, set to true
+     * as the loss of partial matching is better than corrupted matching.
+     * @return
+     * @throws InvalidAlertDefinitionException
+     * @throws AlertDefinitionUpdateException
+     */
     AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
-        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+        boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
     // required to implement system side-effects as a result of modifying group membership or deleting groups
     void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd)

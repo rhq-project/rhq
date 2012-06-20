@@ -354,11 +354,17 @@ public class AlertDefinition implements Serializable {
 
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
     @OrderBy
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    // primary key
+    // We used to use DELETE_ORPHAN here. But the problem is that the the AlertCondition record is needed by the
+    // associated AlertConditionLog for presentation purposes. So, keep the AlertCondition records even if they
+    // are detached from the AlertDefinition (e.g. when the def is updated, see update() below).  They will be
+    // cleaned up in the DataPurge job after all relevant alerts have been removed and there are no longer any
+    // referencing AlertConditionLog records.
     private Set<AlertCondition> conditions = new LinkedHashSet<AlertCondition>(1); // Most alerts will only have one condition.
 
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
+    // Although similar to AlertCondition, we do use DELETE_ORPHAN here.  The reason is because AlertNotificationLog
+    // does not refer back to the AlertNotification record and therefore the notification logs are not affected
+    // by the loss of the AlertNotification that spawned the notification.
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 

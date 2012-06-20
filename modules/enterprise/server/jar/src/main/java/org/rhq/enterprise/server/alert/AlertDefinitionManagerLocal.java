@@ -60,8 +60,19 @@ public interface AlertDefinitionManagerLocal {
 
     void copyAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
+    /**
+     * @param subject
+     * @param alertDefinitionId
+     * @param alertDefinition
+     * @param resetMatching Incur the overhead of resetting any partial alert matching that has taken place. This *must*
+     * be set true if updating conditions, dampening rules or the conditionExpressin (ANY vs ALL).  If in doubt, set to true
+     * as the loss of partial matching is better than corrupted matching.
+     * @return
+     * @throws InvalidAlertDefinitionException
+     * @throws AlertDefinitionUpdateException
+     */
     AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean updateInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+        boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
     int purgeUnusedAlertDefinitions();
 

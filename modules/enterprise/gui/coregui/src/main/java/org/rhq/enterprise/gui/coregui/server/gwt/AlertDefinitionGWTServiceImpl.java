@@ -74,10 +74,10 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     @Override
     public AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean updateInternals) throws RuntimeException {
+        boolean resetMatching) throws RuntimeException {
         try {
             AlertDefinition results = alertDefManager.updateAlertDefinition(getSessionSubject(), alertDefinitionId,
-                alertDefinition, updateInternals);
+                alertDefinition, resetMatching);
             return SerialUtility.prepare(results, "updateAlertDefinition");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

@@ -451,9 +451,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId,
-        AlertDefinition alertDefinition, boolean purgeInternals) throws InvalidAlertDefinitionException,
+        AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException,
         AlertDefinitionUpdateException {
-        if (purgeInternals) {
+        if (resetMatching) {
             alertDefinitionManager.purgeInternals(alertDefinitionId);
         }
 

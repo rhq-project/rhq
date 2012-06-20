@@ -42,8 +42,7 @@ public class JsEngineProvider implements ScriptEngineProvider {
 
     @Override
     public CodeCompletion getCodeCompletion() {
-        // TODO copy this over from the CLI
-        return null;
+        return new JavascriptCompletor();
     }
 
 }

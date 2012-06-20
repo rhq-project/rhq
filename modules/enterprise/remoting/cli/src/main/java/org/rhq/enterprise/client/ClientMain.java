@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.client;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
@@ -44,6 +50,8 @@ import jline.MultiCompletor;
 import jline.SimpleCompletor;
 import mazz.i18n.Msg;
 
+import org.rhq.bindings.ScriptEngineFactory;
+import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;

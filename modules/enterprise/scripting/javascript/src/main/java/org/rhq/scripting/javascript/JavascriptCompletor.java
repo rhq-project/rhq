@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,16 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client;
+
+package org.rhq.scripting.javascript;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.MethodDescriptor;
 import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,34 +35,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jws.WebParam;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 
-import jline.Completor;
-import jline.ConsoleReader;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.utility.ReflectionUtility;
-import org.rhq.enterprise.clientapi.RemoteClientProxy;
+import org.rhq.scripting.CodeCompletion;
+import org.rhq.scripting.MetadataProvider;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but
  * handles a fair number of cases.
  *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
-public class InteractiveJavascriptCompletor implements Completor {
+public class JavascriptCompletor implements CodeCompletion {
 
-    private Map<String, Object> services;
-
+    private static final String SUBJECT_CLASS_NAME = "org.rhq.core.domain.auth.Subject";
     private ScriptContext context;
+    private MetadataProvider metadataProvider;
 
     private String lastComplete;
 
     // Consecutive times this exact complete has been requested
     private int recomplete;
-    private ConsoleReader consoleReader;
 
     private static final Set<String> IGNORED_METHODS;
     static {
@@ -83,17 +78,9 @@ public class InteractiveJavascriptCompletor implements Completor {
         IGNORED_METHODS.add("initOperations");
     }
 
-    public InteractiveJavascriptCompletor(ConsoleReader reader) {
-        this.consoleReader = reader;
-    }
-
-    public void setServices(Map<String, Object> services) {
-        this.services = services;
-    }
-
     @Override
     @SuppressWarnings("unchecked")
-    public int complete(String s, int i, @SuppressWarnings("rawtypes") List list) {
+    public int complete(PrintWriter output, String s, int i, @SuppressWarnings("rawtypes") List list) {
         try {
             if (lastComplete != null && lastComplete.equals(s)) {
                 recomplete++;
@@ -133,7 +120,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                 Object rootObject = context.getAttribute(call[0]);
                 if (rootObject != null) {
                     String theRest = base.substring(call[0].length() + 1, base.length());
-                    int matchIndex = contextComplete(rootObject, theRest, i, list);
+                    int matchIndex = contextComplete(output, rootObject, theRest, i, list);
                     Collections.sort(list);
                     return rootLength + call[0].length() + 1 + matchIndex;
                 }
@@ -146,6 +133,11 @@ public class InteractiveJavascriptCompletor implements Completor {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    @Override
+    public void setMetadataProvider(MetadataProvider metadataProvider) {
+        this.metadataProvider = metadataProvider;
     }
 
     /**
@@ -163,13 +155,14 @@ public class InteractiveJavascriptCompletor implements Completor {
      * Note: this method will not and should not execute methods, but will
      * read field properties to continue chained completions.
      *
+     * @param output the output that can the completor use to convey info to the user
      * @param baseObject the context object or class to complete from
      * @param s the relative command string to check
      * @param i
      * @param list
      * @return location of relative completion
      */
-    private int contextComplete(Object baseObject, String s, int i, List<String> list) {
+    private int contextComplete(PrintWriter output, Object baseObject, String s, int i, List<String> list) {
         String temp = s.split("\\(", 2)[0];
         if (temp.contains(".")) {
             String[] call = temp.split("\\.", 2);
@@ -179,7 +172,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                 next = next.substring(0, next.indexOf("("));
             }
 
-            Map<String, List<Object>> matches = getContextMatches(baseObject, next);
+            Map<String, List<Object>> matches = getContextMatches(output, baseObject, next);
             if (!matches.isEmpty()) {
                 Object rootObject = matches.get(next).get(0);
                 if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
@@ -192,14 +185,14 @@ public class InteractiveJavascriptCompletor implements Completor {
                     rootObject = ((Method) rootObject).getReturnType();
                 }
 
-                return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
+                return call[0].length() + 1 + contextComplete(output, rootObject, call[1], i, list);
             } else {
                 return -1;
             }
         } else {
             String[] call = s.split("\\(", 2);
 
-            Map<String, List<Object>> matches = getContextMatches(baseObject, call[0]);
+            Map<String, List<Object>> matches = getContextMatches(output, baseObject, call[0]);
 
             if (call.length == 2 && matches.containsKey(call[0])) {
 
@@ -215,7 +208,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                                 methods.add((Method) match);
                             }
                         }
-                        displaySignatures(baseObject, methods.toArray(new Method[methods.size()]));
+                        displaySignatures(output, baseObject, methods.toArray(new Method[methods.size()]));
                         return -1;
                     }
 
@@ -249,7 +242,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                         }
                     }
                 }
-                displaySignatures(baseObject, methods.toArray(new Method[methods.size()]));
+                displaySignatures(output, baseObject, methods.toArray(new Method[methods.size()]));
             } else {
                 if (matches.size() == 1 && matches.values().iterator().next().get(0) instanceof Method) {
                     list.add(matches.keySet().iterator().next()
@@ -265,14 +258,8 @@ public class InteractiveJavascriptCompletor implements Completor {
         }
     }
 
-    private void displaySignatures(Object object, Method... methods) {
+    private void displaySignatures(PrintWriter output, Object object, Method... methods) {
         try {
-            String start = this.consoleReader.getCursorBuffer().getBuffer().toString();
-            while ((this.consoleReader.getCursorBuffer().cursor > 0) && this.consoleReader.backspace()) {
-                ;
-            }
-            this.consoleReader.printNewline();
-            this.consoleReader.printNewline();
             String[][] signatures = new String[methods.length][];
             int i = 0;
             for (Method m : methods) {
@@ -287,19 +274,16 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             for (String[] sig : signatures) {
                 for (i = 0; i < (maxReturnLength - sig[0].length()); i++) {
-                    this.consoleReader.printString(" ");
+                    output.print(" ");
                 }
 
-                this.consoleReader.printString(sig[0]);
-                this.consoleReader.printString(" ");
-                this.consoleReader.printString(sig[1]);
-                this.consoleReader.printNewline();
+                output.print(sig[0]);
+                output.print(" ");
+                output.print(sig[1]);
+                output.println();
             }
-
-            this.consoleReader.drawLine();
-            this.consoleReader.putString(start);
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(output);
         }
     }
 
@@ -391,6 +375,11 @@ public class InteractiveJavascriptCompletor implements Completor {
                 }
             }
         }
+        
+        //this was originally part of the code completor that lived in the CLI
+        //I don't think we need it, because the services are present under the
+        //same names in the context. This code can never add any new matches.
+        /*
         if (services != null) {
             for (String var : services.keySet()) {
                 if (var.startsWith(start)) {
@@ -398,6 +387,8 @@ public class InteractiveJavascriptCompletor implements Completor {
                 }
             }
         }
+        */
+        
         return found;
     }
 
@@ -437,7 +428,7 @@ public class InteractiveJavascriptCompletor implements Completor {
         return found;
     }
 
-    private Map<String, List<Object>> getContextMatches(Object baseObject, String start) {
+    private Map<String, List<Object>> getContextMatches(PrintWriter output, Object baseObject, String start) {
         Map<String, List<Object>> found = new HashMap<String, List<Object>>();
 
         Class<?> baseObjectClass = null;
@@ -482,9 +473,11 @@ public class InteractiveJavascriptCompletor implements Completor {
                     && !desc.getName().startsWith("_d") && !IGNORED_METHODS.contains(desc.getName())) {
 
                     Method m = desc.getMethod();
+                    //TODO THIS IS SO WRONG - the methods are there but we just "forget" to
+                    //to mention them to the user.
                     boolean isProxy = isProxyMethod(baseObject, m);
                     Class<?>[] parameters = m.getParameterTypes();
-                    boolean startsWithSubject = ((parameters.length > 0) && parameters[0].equals(Subject.class));
+                    boolean startsWithSubject = ((parameters.length > 0) && isSubjectClass(parameters[0]));
                     if ((isProxy && startsWithSubject) || !startsWithSubject) {
 
                         List<Object> list = found.get(desc.getName());
@@ -498,64 +491,34 @@ public class InteractiveJavascriptCompletor implements Completor {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(output);
         }
         return found;
     }
 
-    private static String getSignature(Object object, Method m) {
-
-        // If its our service proxy lookup the original interface that has the annotations
-        if (isProxyMethod(object, m)) {
-            Class<?>[] params = m.getParameterTypes();
-            Class<?>[] newParams = new Class[params.length + 1];
-            System.arraycopy(params, 0, newParams, 1, params.length);
-            newParams[0] = Subject.class;
-
-            try {
-                m =
-                    ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface().getDeclaredMethod(
-                        m.getName(), newParams);
-            } catch (NoSuchMethodException nsme) {
-                //
-            }
-        }
+    private String getSignature(Object object, Method m) {
 
         StringBuilder buf = new StringBuilder();
         Type[] params = m.getGenericParameterTypes();
-        Annotation[][] annotations = m.getParameterAnnotations();
         int i = 0;
 
-        buf.append(ReflectionUtility.getSimpleTypeString(m.getGenericReturnType()));
+        buf.append(metadataProvider.getTypeName(m.getGenericReturnType(), false));
         buf.append(" ");
 
         buf.append(m.getName());
         buf.append("(");
         boolean first = true;
         for (Type type : params) {
-            if (i == 0 && type.equals(Subject.class)) {
-                i++;
-                continue;
-            }
             if (!first) {
                 buf.append(", ");
             } else {
                 first = false;
             }
 
-            String name = null;
-
-            if (annotations != null && annotations.length >= i) {
-                Annotation[] as = annotations[i];
-                for (Annotation a : as) {
-                    if (a instanceof WebParam) {
-                        name = ReflectionUtility.getSimpleTypeString(type) + " " + ((WebParam) a).name();
-                    }
-                }
-            }
-
-            if (name == null) {
-                name = ReflectionUtility.getSimpleTypeString(type);
+            String name = metadataProvider.getTypeName(type, false);
+            String paramName = metadataProvider.getParameterName(m, i);
+            if (paramName != null) {
+                name += " " + paramName;
             }
 
             buf.append(name);
@@ -567,27 +530,27 @@ public class InteractiveJavascriptCompletor implements Completor {
     }
 
     private static boolean isProxyMethod(Object object, Method m) {
+        // TODO this has to be changed - we have the MetaDataProvider which should be able
+        // to provide enough info so that the completors don't have to go through these hoops.
+        return false;
 
-        boolean result = false;
-        if (object instanceof Proxy) {
-            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
-                try {
-                    m =
-                        ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
-                            .getDeclaredMethod(m.getName(), m.getParameterTypes());
-                } catch (NoSuchMethodException e) {
-                    result = true;
-                }
-            }
-        }
-        return result;
+        //        boolean result = false;
+        //        if (object instanceof Proxy) {
+        //            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
+        //                try {
+        //                    m =
+        //                        ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
+        //                            .getDeclaredMethod(m.getName(), m.getParameterTypes());
+        //                } catch (NoSuchMethodException e) {
+        //                    result = true;
+        //                }
+        //            }
+        //        }
+        //        return result;
     }
 
-    public ScriptContext getContext() {
-        return context;
-    }
-
-    public void setContext(ScriptContext context) {
+    @Override
+    public void setScriptContext(ScriptContext context) {
         this.context = context;
     }
 
@@ -599,5 +562,17 @@ public class InteractiveJavascriptCompletor implements Completor {
         } finally {
             m.setAccessible(access);
         }
+    }
+
+    private boolean isSubjectClass(Class<?> cls) {
+        while (cls != null) {
+            if (SUBJECT_CLASS_NAME.equals(cls.getName())) {
+                return true;
+            }
+
+            cls = cls.getSuperclass();
+        }
+        
+        return false;
     }
 }

@@ -133,13 +133,11 @@ public class StandardBindings extends HashMap<String, Object> {
         putAll(managers);
     }
 
-    @Override
     public void preInject(ScriptEngine scriptEngine) {
         ((ScriptUtil) get(SCRIPT_UTIL)).init(scriptEngine);
         ((ScriptAssert) get(ASSERT)).init(scriptEngine);
     }
 
-    @Override
     public void postInject(ScriptEngine scriptEngine) {
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL);
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT);

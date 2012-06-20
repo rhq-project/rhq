@@ -19,7 +19,10 @@
 
 package org.rhq.scripting;
 
+import java.io.PrintWriter;
 import java.util.List;
+
+import javax.script.ScriptContext;
 
 /**
  * An interface for performing code completion in a given language.
@@ -32,8 +35,29 @@ import java.util.List;
 public interface CodeCompletion {
 
     /**
+     * The code completor can use the provided script context to find out about possible
+     * completions.
+     * <p>
+     * This method is called once before the first {@link #complete(PrintWriter, String, int, List)} method
+     * is called.
+     * 
+     * @param scriptContext
+     */
+    void setScriptContext(ScriptContext scriptContext);
+    
+    /**
+     * Provides the code completion implementation with the metadata provider it can use to
+     * format more meaningful completion hints.
+     * 
+     * @param metadataProvider
+     */
+    void setMetadataProvider(MetadataProvider metadataProvider);
+
+    /**
      * Generates the completion candidates and fills the supplied list with them.
      * 
+     * @param output the output the completor can use to write some additional information to convey some
+     * additional info to the user
      * @param context the context of the code completion, usually that is the current
      * statement being edited by the user
      * @param cursorPosition the position of the cursor inside the context
@@ -42,5 +66,5 @@ public interface CodeCompletion {
      * @return the character index in the context for which the completion candidates were
      * actually generated (might be different from the cursorPosition).
      */
-    int complete(String context, int cursorPosition, @SuppressWarnings("rawtypes") List candidates);
+    int complete(PrintWriter output, String context, int cursorPosition, @SuppressWarnings("rawtypes") List candidates);
 }

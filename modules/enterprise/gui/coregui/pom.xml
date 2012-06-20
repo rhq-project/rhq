@@ -298,6 +298,8 @@
                     <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
                     <style>${gwt.style}</style>
                     <strict>true</strict>
+                    <!-- compiles gwt artifacts like symbolMap outside of war so it doesnt get packaged -->
+                    <deploy>${project.build.directory}/gwt-deploy</deploy>
                 </configuration>
 
                 <executions>

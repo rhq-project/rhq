@@ -44,6 +44,17 @@
         <tr>
             <td>Recursive</td><td>${var.recursive?string("Yes","No")}</td>
         </tr>
+        <tr>
+            <td>DynaGroup</td><td>${(var.dynaGroupDefinitionId > 0)?string("Yes","No")}</td>
+        </tr>
+        <tr>
+            <td>Resource Count</td>
+            <td>${var.explicitCount}
+                <#if var.recursive>
+            ( Implicit: ${var.implicitCount} )
+                </#if>
+            </td>
+        </tr>
     </table>
     <a href="/rest/1/group/${var.id?c}/resources.html">Resources</a><br/>
 </html>

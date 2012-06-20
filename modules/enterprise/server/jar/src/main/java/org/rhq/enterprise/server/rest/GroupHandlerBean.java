@@ -249,13 +249,9 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
      */
     private ResourceGroup fetchGroup(int groupId) {
         ResourceGroup resourceGroup;
-        resourceGroup = getFromCache(groupId,ResourceGroup.class);
-        if (resourceGroup==null) {
-            resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
-            if (resourceGroup==null)
-                throw new StuffNotFoundException("Group with id " + groupId);
-            putToCache(groupId,ResourceGroup.class,resourceGroup);
-        }
+        resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
+        if (resourceGroup==null)
+            throw new StuffNotFoundException("Group with id " + groupId);
         return resourceGroup;
     }
 
@@ -267,6 +263,10 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         gr.setId(group.getId());
         gr.setCategory(group.getGroupCategory());
         gr.setRecursive(group.isRecursive());
+        if (group.getGroupDefinition()!=null)
+            gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
+        gr.setExplicitCount(group.getExplicitResources().size());
+        gr.setImplicitCount(group.getImplicitResources().size());
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/group/{id}");
         URI uri = uriBuilder.build(group.getId());

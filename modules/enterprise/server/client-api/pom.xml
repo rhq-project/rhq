@@ -46,7 +46,15 @@
          <artifactId>test-utils</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
-      </dependency>            
+      </dependency>        
+
+      <!-- Needed for the successful creation of the fake SLSB impls in the LocalClient test. -->      
+      <dependency>
+         <groupId>org.opensymphony.quartz</groupId>
+         <artifactId>quartz</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>          
   </dependencies>
 
     <profiles>

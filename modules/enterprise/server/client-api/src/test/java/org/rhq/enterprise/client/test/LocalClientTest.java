@@ -31,9 +31,12 @@ import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
 import org.jmock.Expectations;
+import org.jmock.api.Invocation;
+import org.jmock.lib.action.CustomAction;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -74,7 +77,36 @@ public class LocalClientTest extends JMockTest {
         
         context.checking(new Expectations() {{
             allowing(CONTEXT_MOCK_FOR_TEST).lookup(with(any(String.class)));
-            will(returnValue(alertManagerMock));
+                will(new CustomAction("Fake JNDI lookup") {
+
+                    @Override
+                    public Object invoke(Invocation invocation) throws Throwable {
+                        //the JNDI name is "rhq/<BEAN_NAME>/local"
+                        String jndiName = (String) invocation.getParameter(0);
+
+                        String beanName = jndiName.substring(jndiName.indexOf('/') + 1, jndiName.lastIndexOf('/'));
+
+                        String managerName = beanName.substring(0, beanName.length() - "Bean".length());
+
+                        //we basically need to define a mock implementation of both the local and remote
+                        //interface here - as if it were a proper SLSB.
+                        RhqManager manager = Enum.valueOf(RhqManager.class, managerName);
+                        Class<?> remoteIface = manager.remote();
+
+                        String localIfaceName = remoteIface.getName().substring(0,
+                            remoteIface.getName().length() - "Remote".length())
+                            + "Local";
+                        Class<?> localIface = Class.forName(localIfaceName);
+
+                        return Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { localIface,
+                            remoteIface }, new InvocationHandler() {
+                            @Override
+                            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                                return null;
+                            }
+                        });
+                    }
+                });
             
             allowing(CONTEXT_MOCK_FOR_TEST).close();
         }});

@@ -47,31 +47,29 @@ public class InterfaceSimplifier {
     
     public static Class<?> simplify(Class<?> intf) {
         try {
-            ClassPool cp = ClassPool.getDefault();
+            ClassPool classPool = ClassPool.getDefault();
 
             String simplifiedName = getSimplifiedName(intf);
             LOG.debug("Simplifying " + intf + " (simplified interface name: " + simplifiedName + ")...");
 
             try {
-                CtClass cached = cp.get(simplifiedName);
-                return Class.forName(simplifiedName, false, cp.getClassLoader());
+                @SuppressWarnings("unused")
+                CtClass cached = classPool.get(simplifiedName);
+                return Class.forName(simplifiedName, false, classPool.getClassLoader());
 
             } catch (NotFoundException e) {
                 // ok... load it
             } catch (ClassNotFoundException e) {
-                LOG.debug("Class [" + simplifiedName + "] not found - cause: " + e);
+                LOG.debug("Class [" + simplifiedName + "] not found - cause: " + e, e);
             }
 
-            CtClass cc = cp.get(intf.getName());
+            CtClass originalClass = classPool.get(intf.getName());
 
-            CtClass cz = cp.getAndRename(intf.getName(), simplifiedName);
-            //            CtClass cz = cp.makeInterface(simpleName, cc);
+            CtClass newClass = classPool.makeInterface(simplifiedName);
 
-            cz.defrost();
+            newClass.defrost();
 
-            cz.setSuperclass(cc);
-
-            CtMethod[] methods = cc.getMethods();
+            CtMethod[] methods = originalClass.getMethods();
 
             for (CtMethod originalMethod : methods) {
 
@@ -81,10 +79,10 @@ public class InterfaceSimplifier {
                     CtClass[] simpleParams = new CtClass[params.length - 1];
 
                     System.arraycopy(params, 1, simpleParams, 0, params.length - 1);
-                    cz.defrost();
+                    newClass.defrost();
 
                     CtMethod newMethod = CtNewMethod.abstractMethod(originalMethod.getReturnType(), originalMethod
-                        .getName(), simpleParams, null, cz);
+.getName(), simpleParams, null, newClass);
 
                     ParameterAnnotationsAttribute originalAnnotationsAttribute = (ParameterAnnotationsAttribute) originalMethod
                         .getMethodInfo().getAttribute(ParameterAnnotationsAttribute.visibleTag);
@@ -111,11 +109,11 @@ public class InterfaceSimplifier {
 
                     }
 
-                    cz.addMethod(newMethod);
+                    newClass.addMethod(newMethod);
                 }
             }
 
-            return cz.toClass();
+            return newClass.toClass();
 
         } catch (NotFoundException e) {
             LOG.debug("Failed to simplify " + intf + " - cause: " + e);

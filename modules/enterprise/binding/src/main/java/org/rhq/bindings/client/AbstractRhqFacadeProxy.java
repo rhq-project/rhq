@@ -34,9 +34,9 @@ import org.rhq.core.domain.auth.Subject;
 public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements InvocationHandler {
 
     private T facade;
-    private RhqManagers manager;
+    private RhqManager manager;
     
-    protected AbstractRhqFacadeProxy(T facade, RhqManagers manager) {
+    protected AbstractRhqFacadeProxy(T facade, RhqManager manager) {
         this.facade = facade;
         this.manager = manager;
     }
@@ -45,7 +45,7 @@ public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements Inv
         return facade;
     }
     
-    protected RhqManagers getManager() {
+    protected RhqManager getManager() {
         return manager;
     }
     

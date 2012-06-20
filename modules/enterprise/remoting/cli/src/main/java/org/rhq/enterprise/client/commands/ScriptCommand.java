@@ -36,7 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
-import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.enterprise.client.ClientMain;
@@ -295,6 +295,6 @@ public class ScriptCommand implements ClientCommand {
 
     public String getDetailedHelp() {
         return "Execute a statement or a script. The following service managers are available: "
-            + Arrays.toString(RhqManagers.values());
+            + Arrays.toString(RhqManager.values());
     }
 }

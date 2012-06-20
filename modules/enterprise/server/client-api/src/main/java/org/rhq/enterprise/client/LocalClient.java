@@ -31,7 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.client.RhqFacade;
-import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.util.InterfaceSimplifier;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
@@ -416,7 +416,7 @@ public class LocalClient implements RhqFacade {
 
             managers = new HashMap<String, Object>();
 
-            for (RhqManagers manager : RhqManagers.values()) {
+            for (RhqManager manager : RhqManager.values()) {
                 try {
                     Method m = getClass().getMethod("get" + manager.name());
                     managers.put(manager.name(), m.invoke(this));
@@ -430,7 +430,7 @@ public class LocalClient implements RhqFacade {
     }
 
     private <T> T getProxy(Object slsb, Class<T> iface) {
-        RhqManagers manager = RhqManagers.forInterface(iface);
+        RhqManager manager = RhqManager.forInterface(iface);
 
         Class<?> simplified = null;
 

@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
  * @author Lukas Krejci
  * @author Greg Hinkle
  */
-public enum RhqManagers {
+public enum RhqManager {
     AlertManager(AlertManagerRemote.class, "${AlertManager}"), //
     AlertDefinitionManager(AlertDefinitionManagerRemote.class, "${AlertDefinitionManager}"), //
     AvailabilityManager(AvailabilityManagerRemote.class, "${AvailabilityManager}"), //
@@ -93,7 +93,7 @@ public enum RhqManagers {
     private String beanName;
     private boolean enabled;
 
-    private RhqManagers(Class<?> remote, String enable) {
+    private RhqManager(Class<?> remote, String enable) {
         this.remote = remote;
         this.beanName = this.name() + "Bean";
         this.remoteName = this.name() + "Remote";
@@ -105,8 +105,8 @@ public enum RhqManagers {
         }
     }
 
-    public static RhqManagers forInterface(Class<?> iface) {
-        for (RhqManagers m : values()) {
+    public static RhqManager forInterface(Class<?> iface) {
+        for (RhqManager m : values()) {
             if (m.remote().equals(iface)) {
                 return m;
             }

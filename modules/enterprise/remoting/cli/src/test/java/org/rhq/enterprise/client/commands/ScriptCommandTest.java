@@ -23,7 +23,7 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
-import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.core.domain.auth.Subject;
@@ -76,7 +76,7 @@ public class ScriptCommandTest {
         ScriptEngine scriptEngine = client.getScriptEngine();
         List<String> mgrsNotBound = new ArrayList<String>();
 
-        for (RhqManagers mgr : RhqManagers.values()) {
+        for (RhqManager mgr : RhqManager.values()) {
             if (!scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(mgr.name())) {
                 mgrsNotBound.add(mgr.remoteName());
             }

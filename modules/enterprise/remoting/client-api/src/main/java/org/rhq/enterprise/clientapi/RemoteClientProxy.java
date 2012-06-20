@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.bindings.client.AbstractRhqFacadeProxy;
-import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.util.InterfaceSimplifier;
 import org.rhq.core.domain.server.ExternalizableStrategy;
 
@@ -42,7 +42,7 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
 
     private static final Log LOG = LogFactory.getLog(RemoteClientProxy.class);
 
-    public RemoteClientProxy(RemoteClient client, RhqManagers manager) {
+    public RemoteClientProxy(RemoteClient client, RhqManager manager) {
         super(client, manager);
     }
 
@@ -51,7 +51,7 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T getProcessor(RemoteClient remoteClient, RhqManagers manager) {
+    public static <T> T getProcessor(RemoteClient remoteClient, RhqManager manager) {
         try {
             RemoteClientProxy gpc = new RemoteClientProxy(remoteClient, manager);
 

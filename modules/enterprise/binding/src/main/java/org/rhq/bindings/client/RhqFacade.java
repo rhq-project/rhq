@@ -129,7 +129,7 @@ public interface RhqFacade {
     SynchronizationManagerRemote getSynchronizationManager();
     
     /**
-     * This map is constructed using all the elements in the {@link RhqManagers} enum which are then proxied
+     * This map is constructed using all the elements in the {@link RhqManager} enum which are then proxied
      * using this instance.
      * 
      * @return a map of all available proxied managers keyed by their names.

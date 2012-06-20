@@ -28,7 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.client.AbstractRhqFacadeProxy;
-import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.client.RhqManager;
 
 /**
  * This is a proxy interface that simply calls given (de-simplified) method on a provided object.
@@ -42,7 +42,7 @@ public class LocalClientProxy extends AbstractRhqFacadeProxy<LocalClient> {
     
     private Object localSLSB;
     
-    public LocalClientProxy(Object localSLSB, LocalClient client, RhqManagers manager) {
+    public LocalClientProxy(Object localSLSB, LocalClient client, RhqManager manager) {
         super(client, manager);
         this.localSLSB = localSLSB;
     }

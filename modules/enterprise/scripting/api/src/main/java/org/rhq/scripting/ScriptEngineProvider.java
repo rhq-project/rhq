@@ -32,6 +32,8 @@ public interface ScriptEngineProvider {
 
     /**
      * @return the scripting language understood by this provider.
+     * This must return the same string as <code>ScriptEngine.getFactory().getParameter(ScriptEngine.NAME)</code>
+     * of the script engine that this provider provides (through the initializer).
      */
     @NotNull
     String getSupportedLanguage();

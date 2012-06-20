@@ -216,7 +216,9 @@ public class ScriptEngineFactory {
             return;
         }
 
-        ScriptEngineInitializer initializer = getInitializer(scriptEngine.getFactory().getLanguageName());
+        ScriptEngineInitializer initializer = getInitializer((String) scriptEngine.getFactory().getParameter(
+            ScriptEngine.NAME));
+
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass(), Object.class);
             MethodDescriptor[] methodDescriptors = beanInfo.getMethodDescriptors();

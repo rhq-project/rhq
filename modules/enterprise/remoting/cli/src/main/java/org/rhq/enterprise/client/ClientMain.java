@@ -40,9 +40,6 @@ import java.util.Map;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import jline.ArgumentCompletor;
 import jline.Completor;
 import jline.ConsoleReader;
@@ -56,7 +53,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
 import org.rhq.enterprise.client.script.CommandLineParseException;
+import org.rhq.enterprise.client.utility.CLIMetadataProvider;
+import org.rhq.enterprise.client.utility.CodeCompletionCompletorWrapper;
+import org.rhq.enterprise.client.utility.DummyCodeCompletion;
 import org.rhq.enterprise.clientapi.RemoteClient;
+import org.rhq.scripting.CodeCompletion;
 
 /**
  * @author Greg Hinkle
@@ -100,7 +101,7 @@ public class ClientMain {
     // The subject that will be used to carry out all requested actions
     private Subject subject;
     
-    private InteractiveJavascriptCompletor serviceCompletor;
+    private CodeCompletion codeCompletion;
 
     private boolean interactiveMode = true;
 
@@ -199,12 +200,9 @@ public class ClientMain {
         sc.initClient(this);        
     }
     
-    private void initServiceCompletor() {
-        this.serviceCompletor.setContext(getScriptEngine().getContext());
-
-        if (remoteClient != null) {
-            this.serviceCompletor.setServices(remoteClient.getScriptingAPI());
-        }
+    private void initCodeCompletion() {
+        this.codeCompletion.setScriptContext(getScriptEngine().getContext());
+        this.codeCompletion.setMetadataProvider(new CLIMetadataProvider());
     }
 
     public ClientMain() {
@@ -233,12 +231,19 @@ public class ClientMain {
             Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
                 new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
     
-            this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
-            consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
+            this.codeCompletion = ScriptEngineFactory.getCodeCompletion(getLanguage());
+            if (codeCompletion == null) {
+                //the language module for this language doesn't support code completion
+                //let's provide a dummy one.
+                codeCompletion = new DummyCodeCompletion();
+            }
+
+            initCodeCompletion();
+
+            consoleReader.addCompletor(new MultiCompletor(new Completor[] {
+                new CodeCompletionCompletorWrapper(codeCompletion, outputWriter), helpCompletor,
                 commandCompletor }));
                 
-            initServiceCompletor();
-    
             // enable pagination
             consoleReader.setUsePagination(true);
         }
@@ -375,7 +380,7 @@ public class ClientMain {
         } else {
             boolean result = commands.get("exec").execute(this, args);
             if (loggedIn()) {
-                this.serviceCompletor.setContext(getScriptEngine().getContext());
+                this.codeCompletion.setScriptContext(getScriptEngine().getContext());
             }
 
             return result;
@@ -595,7 +600,7 @@ public class ClientMain {
 
         initScriptCommand();
         if (isInteractiveMode()) {
-            initServiceCompletor();
+            initCodeCompletion();
         }
     }
 

@@ -38,6 +38,9 @@ import java.util.Set;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.scripting.CodeCompletion;
 import org.rhq.scripting.MetadataProvider;
 
@@ -50,7 +53,8 @@ import org.rhq.scripting.MetadataProvider;
  */
 public class JavascriptCompletor implements CodeCompletion {
 
-    private static final String SUBJECT_CLASS_NAME = "org.rhq.core.domain.auth.Subject";
+    private static final Log LOG = LogFactory.getLog(JavascriptCompletor.class);
+
     private ScriptContext context;
     private MetadataProvider metadataProvider;
 
@@ -473,26 +477,21 @@ public class JavascriptCompletor implements CodeCompletion {
                     && !desc.getName().startsWith("_d") && !IGNORED_METHODS.contains(desc.getName())) {
 
                     Method m = desc.getMethod();
-                    //TODO THIS IS SO WRONG - the methods are there but we just "forget" to
-                    //to mention them to the user.
-                    boolean isProxy = isProxyMethod(baseObject, m);
-                    Class<?>[] parameters = m.getParameterTypes();
-                    boolean startsWithSubject = ((parameters.length > 0) && isSubjectClass(parameters[0]));
-                    if ((isProxy && startsWithSubject) || !startsWithSubject) {
 
-                        List<Object> list = found.get(desc.getName());
-                        if (list == null) {
-                            list = new ArrayList<Object>();
-                            found.put(desc.getName(), list);
-                        }
-                        list.add(m);
+                    List<Object> list = found.get(desc.getName());
+                    if (list == null) {
+                        list = new ArrayList<Object>();
+                        found.put(desc.getName(), list);
                     }
+                    list.add(m);
                 }
             }
 
         } catch (Exception e) {
+            LOG.info("Failure during code completion", e);
             e.printStackTrace(output);
         }
+
         return found;
     }
 
@@ -529,26 +528,6 @@ public class JavascriptCompletor implements CodeCompletion {
         return buf.toString();
     }
 
-    private static boolean isProxyMethod(Object object, Method m) {
-        // TODO this has to be changed - we have the MetaDataProvider which should be able
-        // to provide enough info so that the completors don't have to go through these hoops.
-        return false;
-
-        //        boolean result = false;
-        //        if (object instanceof Proxy) {
-        //            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
-        //                try {
-        //                    m =
-        //                        ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
-        //                            .getDeclaredMethod(m.getName(), m.getParameterTypes());
-        //                } catch (NoSuchMethodException e) {
-        //                    result = true;
-        //                }
-        //            }
-        //        }
-        //        return result;
-    }
-
     @Override
     public void setScriptContext(ScriptContext context) {
         this.context = context;
@@ -562,17 +541,5 @@ public class JavascriptCompletor implements CodeCompletion {
         } finally {
             m.setAccessible(access);
         }
-    }
-
-    private boolean isSubjectClass(Class<?> cls) {
-        while (cls != null) {
-            if (SUBJECT_CLASS_NAME.equals(cls.getName())) {
-                return true;
-            }
-
-            cls = cls.getSuperclass();
-        }
-        
-        return false;
     }
 }

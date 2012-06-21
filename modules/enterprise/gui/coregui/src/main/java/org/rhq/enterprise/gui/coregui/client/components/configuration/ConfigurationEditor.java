@@ -1401,6 +1401,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         valueItem.setValue(value);
 
+        setValueAsTooltipIfAppropriate(valueItem, value);
+
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
         valueItem.setWidth(220);
 
@@ -1419,6 +1421,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
+    private void setValueAsTooltipIfAppropriate(FormItem formItem, String value) {
+        if (((formItem instanceof TextItem) && !(formItem instanceof PasswordItem)) ||
+                (formItem instanceof TextAreaItem)) {
+            formItem.setTooltip(value);
+        }
+    }
+
     protected boolean shouldFireEventOnPropertyValueChange(FormItem formItem,
         PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
         PropertyMap parentMap = propertySimple.getParentMap();
@@ -1429,6 +1438,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
         propertySimple.setValue(value);
+
+        String stringValue = (value != null) ? value.toString() : null;
+        setValueAsTooltipIfAppropriate(formItem, stringValue);
     }
 
     protected static PropertyDefinition getTopLevelPropertyDefinition(PropertyDefinition propertyDefinition) {

@@ -191,7 +191,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
 
     /**
-     * Used by resource components that want to perform asynchronous availability checking.
+     * Used by resource components that want to perform asynchronous availability checking
+     * and measurement collection.
      */
     private CollectorThreadPool collectors;
 
@@ -218,8 +219,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
 
-            //make sure the avail collectors are available before we instantiate any
-            //resource context - either from disk or from anywhere else.
+            // make sure the collectors thread pool is available before we instantiate any
+            // resource contexts - either from disk or from anywhere else.
             collectors = new CollectorThreadPool();
 
             if (configuration.isInsideAgent()) {
@@ -1783,7 +1784,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.collectors.getExecutor()), // for components that want to perform async avail checking
-            this.collectors.getExecutor(), // for components that want to perform async avail checking
+            this.collectors.getExecutor(), // for components that want to perform async measurement collection
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1803,7 +1804,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.collectors.getExecutor()), // for components that want avail manager access
-            this.collectors.getExecutor(), // for components that want to perform async avail checking
+            this.collectors.getExecutor(), // for components that want to perform async measurement collection
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 

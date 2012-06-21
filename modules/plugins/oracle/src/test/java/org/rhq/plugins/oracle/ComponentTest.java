@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -132,10 +133,12 @@ public abstract class ComponentTest {
 
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
             EventContext eventContext = new EventContextImpl(resource);
-            AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+            ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
+            AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-                eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
+                eventContext, operationContext, contentContext, availContext, collectorThreadPool,
+                pluginContainerDeployment);
             component.start(context);
 
             resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, parentResourceComponent, context,
@@ -168,10 +171,11 @@ public abstract class ComponentTest {
         log.debug("rdc=" + rdc);
 
         EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
         ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
             systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
-            contentContext, availContext, pluginContainerDeployment);
+            contentContext, availContext, collectorThreadPool, pluginContainerDeployment);
         ResourceDiscoveryContext resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, component,
             context, systemInfo, Collections.emptyList(), Collections.emptyList(), pluginContainerName,
             pluginContainerDeployment);
@@ -199,10 +203,12 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-            eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
+            eventContext, operationContext, contentContext, availContext, collectorThreadPool,
+            pluginContainerDeployment);
 
         component.start(context);
         components.put(component, cresource);

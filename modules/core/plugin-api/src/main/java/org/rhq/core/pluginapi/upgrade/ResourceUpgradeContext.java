@@ -23,7 +23,6 @@
 package org.rhq.core.pluginapi.upgrade;
 
 import java.io.File;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.rhq.core.domain.configuration.Configuration;

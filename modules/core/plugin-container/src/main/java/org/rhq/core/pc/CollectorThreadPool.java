@@ -63,7 +63,7 @@ public class CollectorThreadPool {
      * Shuts down all tasks.
      */
     public void shutdown() {
-        log.debug("Shutting down AvailabilityCollector thread pool...");
+        log.debug("Shutting down collector thread pool...");
         PluginContainer pluginContainer = PluginContainer.getInstance();
         pluginContainer.shutdownExecutorService(executor, true);
     }

@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
@@ -38,17 +39,17 @@ public class MeasurementCollectorRunnable implements Runnable {
     private static final Log log = LogFactory.getLog(MeasurementCollectorRunnable.class);
 
     /**
-     * The minimum interval allowed between availability checks, in milliseconds.
+     * The minimum interval allowed between collections, in milliseconds.
      */
     public static final long MIN_INTERVAL = 60000L;
 
     /**
-     * The thread pool to give this runnable a thread to run in when it needs to check availability.
+     * The thread pool to give this runnable a thread to run in when it needs to collect measurements.
      */
     private final ScheduledExecutorService threadPool;
 
     /**
-     * If <code>true</code>, this collector runnable should be actively polling the resource for availability status.
+     * If <code>true</code>, this collector runnable should be actively collection measurements.
      */
     private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -58,17 +59,17 @@ public class MeasurementCollectorRunnable implements Runnable {
     private Future<?> task = new FutureTask<Void>(this, null);
 
     /**
-     * The classloader to be used when checking availability.
+     * The classloader to be used when collecting measurements.
      */
     private final ClassLoader contextClassloader;
 
     /**
-     * The object that is used to check the availability for the managed resource.
+     * The object that is used to collect measurements from the managed resource.
      */
     private final MeasurementFacet measured;
 
     /**
-     * The time, in milliseconds, that this collector will pause in between availability checks.
+     * The time, in milliseconds, that this collector will pause in between collections.
      */
     private final long interval;
 
@@ -95,15 +96,15 @@ public class MeasurementCollectorRunnable implements Runnable {
      * A typically value should be something around 30 minutes.
      *
      * @param measured the object that is used to periodically check the managed resource (must not be <code>null</code>)
-     * @param interval the interval, in millis, between checking availabilities.
-     * @param contextClassloader the context classloader that will be used when checking availability
+     * @param interval the interval, in millis, between measurement collections
+     * @param contextClassloader the context classloader that will be used when collection measurements
      * @param threadPool the thread pool to be used to submit this runnable when it needs to start
      */
     public MeasurementCollectorRunnable(MeasurementFacet measured, long interval,
             ClassLoader contextClassloader, ScheduledExecutorService threadPool) {
 
         if (measured == null) {
-            throw new IllegalArgumentException("availabilityChecker is null");
+            throw new IllegalArgumentException("measurement facet is null");
         }
 
         if (threadPool == null) {
@@ -148,7 +149,7 @@ public class MeasurementCollectorRunnable implements Runnable {
         if (!isStarted) {
             task.cancel(true);
             task = threadPool.scheduleWithFixedDelay(this, 0, interval, TimeUnit.MILLISECONDS);
-            log.debug("submit " + this.facetId);
+            log.debug("measurement collector started: " + this.facetId);
         }
     }
 
@@ -161,7 +162,7 @@ public class MeasurementCollectorRunnable implements Runnable {
         this.started.set(false);
         this.task.cancel(true);
         this.requestedMetrics.clear();
-        log.debug("stop " + facetId);
+        log.debug("measurement collector stopped: " + facetId);
     }
 
     /**
@@ -170,17 +171,18 @@ public class MeasurementCollectorRunnable implements Runnable {
      * You should not be calling this method directly - use {@link #start()} instead.
      */
     public void run() {
-        log.debug("run " + facetId);
+        log.debug("measurement collector is collecting now: " + facetId);
 
         ClassLoader originalClassloader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(this.contextClassloader);
 
         try {
             this.measured.getValues(lastReport, requestedMetrics);
-            if (log.isDebugEnabled())
-                log.debug("last report " + lastReport);
+            if (log.isDebugEnabled()) {
+                log.debug("measurement collector last report: " + lastReport);
+            }
         } catch (Exception e) {
-            log.warn("Failed to get values", e);
+            log.warn("measurement collector failed to get values", e);
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassloader);
         }

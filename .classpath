@@ -106,6 +106,7 @@
 	<classpathentry kind="src" path="modules/plugins/postgres/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/mysql/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/oracle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/apache/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
@@ -115,6 +116,7 @@
 	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>

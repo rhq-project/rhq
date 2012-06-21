@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -61,6 +62,13 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         int definitionId, long beginTime, long endTime) {
         MetricsServerPluginFacet metricsServer = getServerPlugin();
         return metricsServer.findDataForContext(subject, context, definitionId, beginTime, endTime);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime) {
+        MetricsServerPluginFacet metricsServer = getServerPlugin();
+        return metricsServer.findRawData(subject, scheduleId, startTime, endTime);
     }
 
     @Override

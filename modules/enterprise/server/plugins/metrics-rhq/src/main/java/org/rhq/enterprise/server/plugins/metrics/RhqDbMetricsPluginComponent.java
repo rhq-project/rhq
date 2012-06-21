@@ -29,6 +29,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -73,6 +74,12 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
             return Collections.emptyList();
         }
         return data.get(0);
+    }
+
+    @Override
+    public List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime) {
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        return dataManager.findRawData(subject, scheduleId, startTime, endTime);
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginException;
@@ -60,7 +60,7 @@ public class RhqDBTestDelegate implements MetricsServerPluginTestDelegate {
     }
 
     @Override
-    public void insert1HourData(List<? extends MeasurementAggregate> data) {
+    public void insert1HourData(List<AggregateTestData> data) {
         Connection connection = getConnection();
 
         try {
@@ -68,7 +68,7 @@ public class RhqDBTestDelegate implements MetricsServerPluginTestDelegate {
             String sql = "insert into rhq_measurement_data_num_1h(time_stamp, schedule_id, value, minvalue, maxvalue) values(?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(sql);
 
-            for (MeasurementAggregate datum : data) {
+            for (AggregateTestData datum : data) {
                 statement.setLong(1, datum.getTimestamp());
                 statement.setInt(2, datum.getScheduleId());
                 statement.setDouble(3, datum.getAvg());

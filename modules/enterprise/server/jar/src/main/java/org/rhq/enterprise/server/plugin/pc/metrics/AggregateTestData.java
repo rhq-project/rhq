@@ -19,14 +19,14 @@
  *
  */
 
-package org.rhq.core.domain.measurement;
+package org.rhq.enterprise.server.plugin.pc.metrics;
 
 import java.io.Serializable;
 
 /**
  * @author John Sanda
  */
-public class MeasurementAggregateDTO implements MeasurementAggregate, Serializable {
+public class AggregateTestData implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,10 +40,10 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
 
     private Double min;
 
-    public MeasurementAggregateDTO() {
+    public AggregateTestData() {
     }
 
-    public MeasurementAggregateDTO(long timestamp, int scheduleId, Double avg, Double max, Double min) {
+    public AggregateTestData(long timestamp, int scheduleId, Double avg, Double max, Double min) {
         this.timestamp = timestamp;
         this.scheduleId = scheduleId;
         this.avg = avg;
@@ -51,7 +51,6 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
         this.min = min;
     }
 
-    @Override
     public long getTimestamp() {
         return timestamp;
     }
@@ -60,7 +59,6 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
         this.timestamp = timestamp;
     }
 
-    @Override
     public int getScheduleId() {
         return scheduleId;
     }
@@ -69,7 +67,6 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
         this.scheduleId = scheduleId;
     }
 
-    @Override
     public Double getAvg() {
         return avg;
     }
@@ -78,7 +75,6 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
         this.avg = avg;
     }
 
-    @Override
     public Double getMax() {
         return max;
     }
@@ -87,7 +83,6 @@ public class MeasurementAggregateDTO implements MeasurementAggregate, Serializab
         this.max = max;
     }
 
-    @Override
     public Double getMin() {
         return min;
     }

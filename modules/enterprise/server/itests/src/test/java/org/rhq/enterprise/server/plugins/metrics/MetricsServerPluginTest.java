@@ -42,9 +42,8 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementAggregate;
-import org.rhq.core.domain.measurement.MeasurementAggregateDTO;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -55,7 +54,6 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
@@ -251,8 +249,7 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
         metricsManager.mergeMeasurementReport(report);
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-        List<MeasurementDataNumeric> actual = dataManager.findRawData(overlord, dynamicSchedule.getId(),
+        List<MeasurementDataNumeric> actual = metricsManager.findRawData(overlord, dynamicSchedule.getId(),
             threeMinutesAgo.minusSeconds(1).getMillis(), now.getMillis());
 
         List<MeasurementDataNumeric> expected = asList(
@@ -312,17 +309,17 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         // results in an interval or bucket size of 4.4 hours
         Buckets buckets = new Buckets(beginTime, endTime);
 
-        List<? extends MeasurementAggregate> data = asList(
-            new MeasurementAggregateDTO(buckets.get(0), dynamicSchedule.getId(), 2.0, 3.0, 1.0),
-            new MeasurementAggregateDTO(buckets.get(0) + Hours.ONE.toStandardDuration().getMillis(),
+        List<AggregateTestData> data = asList(
+            new AggregateTestData(buckets.get(0), dynamicSchedule.getId(), 2.0, 3.0, 1.0),
+            new AggregateTestData(buckets.get(0) + Hours.ONE.toStandardDuration().getMillis(),
                 dynamicSchedule.getId(), 5.0, 6.0, 4.0),
-            new MeasurementAggregateDTO(buckets.get(0) + Hours.TWO.toStandardDuration().getMillis(),
+            new AggregateTestData(buckets.get(0) + Hours.TWO.toStandardDuration().getMillis(),
                 dynamicSchedule.getId(), 3.0, 3.0, 3.0),
 
-            new MeasurementAggregateDTO(buckets.get(59), dynamicSchedule.getId(), 5.0, 9.0, 2.0),
-            new MeasurementAggregateDTO(buckets.get(59) + Hours.ONE.toStandardDuration().getMillis(),
+            new AggregateTestData(buckets.get(59), dynamicSchedule.getId(), 5.0, 9.0, 2.0),
+            new AggregateTestData(buckets.get(59) + Hours.ONE.toStandardDuration().getMillis(),
                 dynamicSchedule.getId(), 5.0, 6.0, 4.0),
-            new MeasurementAggregateDTO(buckets.get(59) + Hours.TWO.toStandardDuration().getMillis(),
+            new AggregateTestData(buckets.get(59) + Hours.TWO.toStandardDuration().getMillis(),
                 dynamicSchedule.getId(), 3.0, 3.0, 3.0)
         );
 
@@ -374,12 +371,12 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 //    }
 
     private void insertDummyReport() {
+        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
         DateTime now = new DateTime();
         MeasurementReport dummyReport = new MeasurementReport();
         dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
 
         MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
-        // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240
         metricsManager.mergeMeasurementReport(dummyReport);
     }
 

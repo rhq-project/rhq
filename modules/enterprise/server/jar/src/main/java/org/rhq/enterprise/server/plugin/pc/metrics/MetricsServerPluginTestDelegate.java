@@ -23,7 +23,7 @@ package org.rhq.enterprise.server.plugin.pc.metrics;
 
 import java.util.List;
 
-import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 
 /**
  * @author John Sanda
@@ -38,6 +38,6 @@ public interface MetricsServerPluginTestDelegate {
 
     void purge24HourData();
 
-    void insert1HourData(List<? extends MeasurementAggregate> data);
+    void insert1HourData(List<AggregateTestData> data);
 
 }

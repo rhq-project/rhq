@@ -28,6 +28,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -41,6 +42,8 @@ public interface MetricsManagerLocal {
     void mergeMeasurementReport(MeasurementReport report);
 
     void compressPurgeAndTruncate();
+
+    List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 
     List<? extends TraitMeasurement> findResourceTraits(Subject subject, TraitMeasurementCriteria criteria);
 

@@ -38,7 +38,7 @@ import javax.persistence.Table;
 @Entity
 @NamedQueries( { @NamedQuery(name = MeasurementDataNumeric1H.GET_MAX_TIMESTAMP, query = "SELECT max(nmd.id.timestamp) FROM MeasurementDataNumeric1H nmd") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_1H")
-public class MeasurementDataNumeric1H extends MeasurementData implements MeasurementAggregate, Serializable {
+public class MeasurementDataNumeric1H extends MeasurementData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String GET_MAX_TIMESTAMP = "MeasurementDataNumeric1H.getMaxTimestamp";
@@ -58,11 +58,6 @@ public class MeasurementDataNumeric1H extends MeasurementData implements Measure
     @Override
     public Object getValue() {
         return this.value;
-    }
-
-    @Override
-    public Double getAvg() {
-        return value;
     }
 
     public Double getMin() {

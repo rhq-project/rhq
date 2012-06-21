@@ -23,15 +23,19 @@ package org.rhq.enterprise.server.plugin.pc.metrics;
 
 import static org.rhq.core.domain.common.composite.SystemSetting.ACTIVE_METRICS_PLUGIN;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.metrics.MetricsPluginDescriptorType;
 
 /**
  * @author John Sanda
@@ -39,6 +43,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class MetricsServerPluginManager extends ServerPluginManager {
 
     private final Log log = LogFactory.getLog(this.getClass());
+
+    private Map<String, Class<? extends MetricsServerPluginTestDelegate>> testDelegates =
+        new HashMap<String, Class<? extends MetricsServerPluginTestDelegate>>();
 
     public MetricsServerPluginManager(MetricsServerPluginContainer pc) {
         super(pc);
@@ -53,6 +60,30 @@ public class MetricsServerPluginManager extends ServerPluginManager {
         }
 
         return (MetricsServerPluginFacet) getServerPluginComponent(pluginName);
+    }
+
+    @Override
+    public void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
+        super.loadPlugin(env, enabled);
+        MetricsPluginDescriptorType descriptorType = (MetricsPluginDescriptorType) env.getPluginDescriptor();
+        String testDelegateClassName = descriptorType.getPluginTestDelegate().getClazz();
+        Class<? extends MetricsServerPluginTestDelegate> clazz =
+            (Class<? extends MetricsServerPluginTestDelegate>) loadPluginClass(env, testDelegateClassName, true);
+
+        testDelegates.put(env.getPluginKey().getPluginName(), clazz);
+    }
+
+    public MetricsServerPluginTestDelegate getTestDelegate(String plugin) {
+        Class<? extends MetricsServerPluginTestDelegate> clazz = testDelegates.get(plugin);
+        try {
+            return clazz.newInstance();
+        } catch (InstantiationException e) {
+            log.error("Failed to create instance of " + clazz.getName(), e);
+            throw new MetricsServerPluginException("Failed to create instance of " + clazz.getName(), e);
+        } catch (IllegalAccessException e) {
+            log.error("Failed to create instance of " + clazz.getName(), e);
+            throw new MetricsServerPluginException("Failed to create instance of " + clazz.getName(), e);
+        }
     }
 
     private Properties getSysConfig() {

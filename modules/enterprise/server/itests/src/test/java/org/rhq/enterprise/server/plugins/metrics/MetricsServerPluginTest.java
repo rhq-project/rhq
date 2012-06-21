@@ -29,24 +29,22 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Hours;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.jboss.ejb.plugins.cmp.jdbc.JDBCUtil;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.core.domain.measurement.MeasurementAggregateDTO;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -57,10 +55,12 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginTestDelegate;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.TransactionCallback;
@@ -104,9 +104,12 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
     private MetricsManagerLocal metricsManager;
 
+    private MetricsServerPluginTestDelegate testDelegate;
+
     @BeforeClass
     public void prepareMetricsServer() throws Exception {
         initMetricsServer();
+        testDelegate = getTestDelegate();
     }
 
     @BeforeMethod
@@ -117,11 +120,12 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         metricsManager = LookupUtil.getMetricsManager();
 
         createInventory();
+        insertDummyReport();
     }
 
     public void createInventory() throws Exception {
-        purgeRawTables();
-        purge1HourTable();
+        testDelegate.purgeRawData();
+        testDelegate.purge1HourData();
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -164,6 +168,23 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         });
     }
 
+    private MetricsServerPluginTestDelegate getTestDelegate() {
+        MasterServerPluginContainer masterPC = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (masterPC == null) {
+            throw new IllegalStateException(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+        }
+
+        MetricsServerPluginContainer pc = masterPC.getPluginContainerByClass(MetricsServerPluginContainer.class);
+        if (pc == null) {
+            throw new IllegalStateException(MetricsServerPluginContainer.class + " has not been loaded by the " +
+                masterPC.getClass() + " yet.");
+        }
+
+        MetricsServerPluginManager pluginMgr = (MetricsServerPluginManager) pc.getPluginManager();
+
+        return pluginMgr.getTestDelegate("metrics-rhq");
+    }
+
     private void deleteDynamicMeasurementDef(EntityManager em) {
         em.createQuery("delete from MeasurementDefinition " +
             "where dataType = :dataType and " +
@@ -199,43 +220,6 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         em.createQuery("delete from MeasurementSchedule").executeUpdate();
     }
 
-    private void purgeRawTables() throws SQLException {
-        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
-    }
-
-    private void purge1HourTable() throws SQLException {
-        purgeTables("rhq_measurement_data_num_1h");
-    }
-
-    private void purgeTables(String... tables) throws SQLException {
-        // This method was previous implemented using EntityManager.createNativeQuery
-        // and called from within a TransactionCallback. It was causing a
-        // TransactionRequiredException, and I am not clear why. I suspect it is a
-        // configuration issue in our testing environment, but I haven't figured it out
-        // yet. For now,  raw tables are purges in their own separate JDBC transaction.
-        //
-        // jsanda
-        Connection connection = getConnection();
-
-        try {
-            connection.setAutoCommit(false);
-            for (String table : tables) {
-                Statement statement = connection.createStatement();
-                try {
-                    statement.execute("delete from " + table);
-                } finally {
-                    JDBCUtil.safeClose(statement);
-                }
-            }
-            connection.commit();
-        } catch (SQLException e) {
-            connection.rollback();
-            throw e;
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
-    }
-
     private void initMetricsServer() throws IOException {
         metricsServerPluginService = new MetricsServerPluginService();
         prepareCustomServerPluginService(metricsServerPluginService);
@@ -265,8 +249,6 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
         report.setCollectionTime(now.getMillis());
 
-        insertDummyReport(now);
-
         metricsManager.mergeMeasurementReport(report);
 
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
@@ -287,23 +269,16 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         DateTime beginTime = now.minusHours(4);
         DateTime endTime = now;
 
-        int numDataPoints = 60;
-        long interval = (endTime.getMillis() - beginTime.getMillis()) / 60;
-        long[] buckets = new long[numDataPoints];
-        for (int i = 0; i < numDataPoints; ++i) {
-            buckets[i] = beginTime.getMillis() + (interval * i);
-        }
+        Buckets buckets = new Buckets(beginTime, endTime);
 
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(buckets[0] + 10, request, 1.1));
-        report.addData(new MeasurementDataNumeric(buckets[0] + 20, request, 2.2));
-        report.addData(new MeasurementDataNumeric(buckets[0] + 30, request, 3.3));
-        report.addData(new MeasurementDataNumeric(buckets[59] + 10, request, 4.4));
-        report.addData(new MeasurementDataNumeric(buckets[59] + 20, request, 5.5));
-        report.addData(new MeasurementDataNumeric(buckets[59] + 30, request, 6.6));
-
-        insertDummyReport(now);
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 10, request, 1.1));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 20, request, 2.2));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 30, request, 3.3));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 10, request, 4.4));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 20, request, 5.5));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
         metricsManager.mergeMeasurementReport(report);
 
@@ -311,54 +286,95 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
             EntityContext.forResource(resource.getId()), dynamicMeasuremenDef.getId(), beginTime.getMillis(),
             endTime.getMillis());
 
-        assertEquals("Expected to get back 60 data points.", numDataPoints, actualData.size());
+        assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
-        MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(buckets[0],
-            (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
-        MeasurementDataNumericHighLowComposite expectedBucket59 = new MeasurementDataNumericHighLowComposite(
-            buckets[59], (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
-        MeasurementDataNumericHighLowComposite expectedBucket29 = new MeasurementDataNumericHighLowComposite(
-            buckets[29], Double.NaN, Double.NaN, Double.NaN);
+        MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(0), (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
+        MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(59), (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
+        MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(29), Double.NaN, Double.NaN, Double.NaN);
 
-        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0,
+        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
             actualData.get(0));
-        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59,
+        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
             actualData.get(59));
-        assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29,
+        assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
             actualData.get(29));
     }
 
     @Test
-    public void calculateAggregates() {
-        DateTime now = new DateTime().hourOfDay().roundFloorCopy();
-        DateTime oneHourAgo = now.minusHours(1);
+    public void find1HourNumericData() throws Exception {
+        DateTime now = new DateTime();
+        DateTime beginTime = now.minusDays(11);
+        DateTime endTime = now;
 
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+        // results in an interval or bucket size of 4.4 hours
+        Buckets buckets = new Buckets(beginTime, endTime);
 
-        final MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(12).getMillis(), request, 3.2));
-        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(10).getMillis(), request, 3.9));
-        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(6).getMillis(), request, 2.6));
+        List<? extends MeasurementAggregate> data = asList(
+            new MeasurementAggregateDTO(buckets.get(0), dynamicSchedule.getId(), 2.0, 3.0, 1.0),
+            new MeasurementAggregateDTO(buckets.get(0) + Hours.ONE.toStandardDuration().getMillis(),
+                dynamicSchedule.getId(), 5.0, 6.0, 4.0),
+            new MeasurementAggregateDTO(buckets.get(0) + Hours.TWO.toStandardDuration().getMillis(),
+                dynamicSchedule.getId(), 3.0, 3.0, 3.0),
 
-        report.setCollectionTime(now.getMillis());
+            new MeasurementAggregateDTO(buckets.get(59), dynamicSchedule.getId(), 5.0, 9.0, 2.0),
+            new MeasurementAggregateDTO(buckets.get(59) + Hours.ONE.toStandardDuration().getMillis(),
+                dynamicSchedule.getId(), 5.0, 6.0, 4.0),
+            new MeasurementAggregateDTO(buckets.get(59) + Hours.TWO.toStandardDuration().getMillis(),
+                dynamicSchedule.getId(), 3.0, 3.0, 3.0)
+        );
 
-        insertDummyReport(now);
+        testDelegate.insert1HourData(data);
 
-        metricsManager.mergeMeasurementReport(report);
-        metricsManager.compressPurgeAndTruncate();
+        List<MeasurementDataNumericHighLowComposite> actualData = metricsManager.findDataForContext(overlord,
+            EntityContext.forResource(resource.getId()), dynamicMeasuremenDef.getId(), beginTime.getMillis(),
+            endTime.getMillis());
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
-        MeasurementAggregate aggregate = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
-            oneHourAgo.minusMinutes(30).getMillis(), now.getMillis());
+        MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(0), (2.0 + 5.0 + 3.0) / 3, 5.0, 2.0);
+        MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(59), (5.0 + 5.0 + 3.0) / 3, 5.0, 3.0);
 
-        assertNotNull(aggregate);
-        assertEquals("Failed to calculate the min", 2.6, aggregate.getMin());  Double d;
-        assertEquals("Failed to calculate the max", 3.9, aggregate.getMax());
-        assertEquals("Failed to calculate the average", (3.2 + 3.9 + 2.6) / 3.0, aggregate.getAvg());
+        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
+            actualData.get(0));
+        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
+            actualData.get(59));
     }
 
-    private void insertDummyReport(DateTime now) {
+//    @Test
+//    public void calculateAggregates() {
+//        DateTime now = new DateTime().hourOfDay().roundFloorCopy();
+//        DateTime oneHourAgo = now.minusHours(1);
+//
+//        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+//
+//        final MeasurementReport report = new MeasurementReport();
+//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(12).getMillis(), request, 3.2));
+//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(10).getMillis(), request, 3.9));
+//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(6).getMillis(), request, 2.6));
+//
+//        report.setCollectionTime(now.getMillis());
+//
+//        metricsManager.mergeMeasurementReport(report);
+//        metricsManager.compressPurgeAndTruncate();
+//
+//        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+//
+//        MeasurementAggregate aggregate = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
+//            oneHourAgo.minusMinutes(30).getMillis(), now.getMillis());
+//
+//        assertNotNull(aggregate);
+//        assertEquals("Failed to calculate the min", 2.6, aggregate.getMin());  Double d;
+//        assertEquals("Failed to calculate the max", 3.9, aggregate.getMax());
+//        assertEquals("Failed to calculate the average", (3.2 + 3.9 + 2.6) / 3.0, aggregate.getAvg());
+//    }
+
+    private void insertDummyReport() {
+        DateTime now = new DateTime();
         MeasurementReport dummyReport = new MeasurementReport();
         dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
 

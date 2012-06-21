@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 
+<!--
+  ~ /*
+  ~  * RHQ Management Platform
+  ~  * Copyright (C) 2005-2012 Red Hat, Inc.
+  ~  * All rights reserved.
+  ~  *
+  ~  * This program is free software; you can redistribute it and/or modify
+  ~  * it under the terms of the GNU General Public License as published by
+  ~  * the Free Software Foundation version 2 of the License.
+  ~  *
+  ~  * This program is distributed in the hope that it will be useful,
+  ~  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~  * GNU General Public License for more details.
+  ~  *
+  ~  * You should have received a copy of the GNU General Public License
+  ~  * along with this program; if not, write to the Free Software
+  ~  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  ~  */
+  -->
+
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
            xmlns:metrics="urn:xmlns:rhq-serverplugin.metrics"
@@ -9,38 +30,60 @@
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
            blockDefault="">
 
-    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+  <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd"/>
 
+  <xs:annotation>
+    <xs:documentation>
+      Schema for metrics server-side plugins.
+    </xs:documentation>
+    <xs:appinfo>
+      <jaxb:schemaBindings>
+        <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.metrics"/>
+      </jaxb:schemaBindings>
+    </xs:appinfo>
+  </xs:annotation>
+
+  <xs:element
+      name="metrics-plugin"
+      type="metrics:MetricsPluginDescriptorType"
+      substitutionGroup="serverplugin:server-plugin">
     <xs:annotation>
-        <xs:documentation>
-            Schema for metrics server-side plugins.
-        </xs:documentation>
-        <xs:appinfo>
-            <jaxb:schemaBindings>
-                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.metrics" />
-            </jaxb:schemaBindings>
-        </xs:appinfo>
+      <xs:documentation>
+        Defines a metrics plugin.
+      </xs:documentation>
+      <xs:appinfo>
+        <jaxb:class name="MetricsPluginElement"/>
+      </xs:appinfo>
     </xs:annotation>
+  </xs:element>
 
-    <xs:element
-            name="metrics-plugin"
-            type="metrics:MetricsPluginDescriptorType"
-            substitutionGroup="serverplugin:server-plugin">
-        <xs:annotation>
-            <xs:documentation>
-                Defines a metrics plugin.
-            </xs:documentation>
-            <xs:appinfo>
-                <jaxb:class name="MetricsPluginElement" />
-            </xs:appinfo>
-        </xs:annotation>
-    </xs:element>
+  <xs:complexType name="MetricsPluginDescriptorType">
+    <xs:complexContent>
+      <xs:extension base="serverplugin:ServerPluginDescriptorType">
+        <xs:sequence>
+          <xs:element name="plugin-test-delegate" type="metrics:PluginTestDelegateType" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
 
-    <xs:complexType name="MetricsPluginDescriptorType">
-        <xs:complexContent>
-            <xs:extension base="serverplugin:ServerPluginDescriptorType">
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
+  <xs:complexType name="PluginTestDelegateType">
+    <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          The class that will be instantiated.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="classNameType">
+    <xs:restriction base="xs:string">
+      <xs:whiteSpace value="collapse"/>
+      <xs:minLength value="1"/>
+      <xs:maxLength value="500"/>
+      <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*"/>
+    </xs:restriction>
+  </xs:simpleType>
 
 </xs:schema>

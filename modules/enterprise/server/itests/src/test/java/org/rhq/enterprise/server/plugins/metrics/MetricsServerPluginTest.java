@@ -42,7 +42,6 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -56,11 +55,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginTestDelegate;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 /**
@@ -342,33 +343,48 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
             actualData.get(59));
     }
 
-//    @Test
-//    public void calculateAggregates() {
-//        DateTime now = new DateTime().hourOfDay().roundFloorCopy();
-//        DateTime oneHourAgo = now.minusHours(1);
-//
-//        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
-//
-//        final MeasurementReport report = new MeasurementReport();
-//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(12).getMillis(), request, 3.2));
-//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(10).getMillis(), request, 3.9));
-//        report.addData(new MeasurementDataNumeric(oneHourAgo.minusMinutes(6).getMillis(), request, 2.6));
-//
-//        report.setCollectionTime(now.getMillis());
-//
-//        metricsManager.mergeMeasurementReport(report);
-//        metricsManager.compressPurgeAndTruncate();
-//
-//        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-//
-//        MeasurementAggregate aggregate = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
-//            oneHourAgo.minusMinutes(30).getMillis(), now.getMillis());
-//
-//        assertNotNull(aggregate);
-//        assertEquals("Failed to calculate the min", 2.6, aggregate.getMin());  Double d;
-//        assertEquals("Failed to calculate the max", 3.9, aggregate.getMax());
-//        assertEquals("Failed to calculate the average", (3.2 + 3.9 + 2.6) / 3.0, aggregate.getAvg());
-//    }
+    @Test
+    public void aggregateRawDataDuring9thHour() {
+        DateTime now = new DateTime();
+        DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime hour9 = hour0.plusHours(9);
+        DateTime hour8 = hour9.minusHours(1);
+
+        DateTime firstMetricTime = hour8.plusMinutes(5);
+        DateTime secondMetricTime = hour8.plusMinutes(10);
+        DateTime thirdMetricTime = hour8.plusMinutes(15);
+
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+
+        final MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(firstMetricTime.getMillis(), request, 3.2));
+        report.addData(new MeasurementDataNumeric(secondMetricTime.getMillis(), request, 3.9));
+        report.addData(new MeasurementDataNumeric(thirdMetricTime.getMillis(), request, 2.6));
+
+        report.setCollectionTime(now.getMillis());
+
+        metricsManager.mergeMeasurementReport(report);
+        metricsManager.compressPurgeAndTruncate();
+
+        List<AggregateTestData> data = testDelegate.find1HourData(overlord, dynamicSchedule.getId(),
+            hour8.getMillis(), hour9.getMillis());
+
+        List<AggregateTestData> expected = asList(new AggregateTestData(hour8.getMillis(), dynamicSchedule.getId(),
+            (3.2 + 3.9 + 2.6) / 3, 3.9, 2.6));
+
+        assertAggregateDataEquals(data, expected, "The values for 1 hour aggregate data are wrong.");
+    }
+
+    private void assertAggregateDataEquals(List<AggregateTestData> actual, List<AggregateTestData> expected,
+        String msg) {
+        assertEquals(msg + " - The number of aggregate data is wrong.", expected.size(), actual.size());
+        int i = 0;
+        for (AggregateTestData expectedData : expected) {
+            AggregateTestData actualData = actual.get(i++);
+            AssertUtils.assertPropertiesMatch(expectedData, actualData,
+                msg + " - aggregate data does not match expected values.");
+        }
+    }
 
     private void insertDummyReport() {
         // we insert the dummy report due to https://bugzilla.redhat.com/show_bug.cgi?id=822240

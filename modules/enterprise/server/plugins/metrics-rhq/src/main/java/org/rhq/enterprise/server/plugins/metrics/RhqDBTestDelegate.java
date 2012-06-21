@@ -25,19 +25,57 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
+import javax.persistence.EntityManager;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
+import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginException;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginTestDelegate;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.JPAUtils;
+import org.rhq.test.TransactionCallback;
 
 /**
  * @author John Sanda
  */
 public class RhqDBTestDelegate implements MetricsServerPluginTestDelegate {
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<AggregateTestData> find1HourData(Subject subject, final int scheduleId, final long startTime,
+        final long endTime) {
+        final List<AggregateTestData> aggregateData = new ArrayList<AggregateTestData>();
+        JPAUtils.executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = LookupUtil.getEntityManager();
+                List<MeasurementDataNumeric1H> data = em.createQuery("select d from MeasurementDataNumeric1H d " +
+                    "where d.schedule.id = :scheduleId and d.id.timestamp between :startTime and :endTime")
+                    .setParameter("scheduleId", scheduleId)
+                    .setParameter("startTime", startTime)
+                    .setParameter("endTime", endTime)
+                    .getResultList();
+
+                for (MeasurementDataNumeric1H datum : data) {
+                    AggregateTestData aggregates = new AggregateTestData();
+                    aggregates.setScheduleId(datum.getScheduleId());
+                    aggregates.setTimestamp(datum.getTimestamp());
+                    aggregates.setAvg((Double) datum.getValue());
+                    aggregates.setMin(datum.getMin());
+                    aggregates.setMax(datum.getMax());
+
+                    aggregateData.add(aggregates);
+                }
+            }
+        });
+        return aggregateData;
+    }
 
     @Override
     public void purgeRawData() {

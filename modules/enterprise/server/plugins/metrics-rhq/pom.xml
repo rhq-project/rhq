@@ -31,7 +31,6 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>metrics-rhq-serverplugin</artifactId>
-    <packaging>jar</packaging>
 
     <name>RHQ Metrics Server Plugin</name>
 
@@ -53,6 +52,13 @@
             <scope>provided</scope>
         </dependency>
 
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>test-utils</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+
         <!-- 3rd Party Deps -->
 
         <!-- TODO: This is a fix for the Javac bug requiring annotations to be
@@ -71,6 +77,11 @@
             <scope>provided</scope>
             <!-- needed for referenced domain entities that use Hibernate annotations -->
         </dependency>
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>test-utils</artifactId>
+        <version>4.5.0-SNAPSHOT</version>
+      </dependency>
 
     </dependencies>
 

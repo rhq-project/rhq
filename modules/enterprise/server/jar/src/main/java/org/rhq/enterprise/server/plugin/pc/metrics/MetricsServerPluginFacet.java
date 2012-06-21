@@ -46,7 +46,6 @@ public interface MetricsServerPluginFacet {
 
     List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 
-
     PageList<? extends TraitMeasurement> findTraitsByCriteria(Subject subject, TraitMeasurementCriteria criteria);
 
 }

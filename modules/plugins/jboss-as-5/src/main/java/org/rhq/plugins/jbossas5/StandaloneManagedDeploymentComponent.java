@@ -262,26 +262,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 + "' to '" + backupOfOriginalFile + "'.");
         }
 
-        // Now stop the original app.
-        try {
-            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
-            DeploymentUtils.run(progress);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
-        }
 
-        // And then remove it (this will delete the physical file/dir from the deploy dir).
-        try {
-            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
-            DeploymentUtils.run(progress);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
-        }
-
-        // Deploy away!
-        log.debug("Deploying '" + tempFile + "'...");
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
 
         // as crazy as it might sound, there is apparently no way for you to ask the profile service
@@ -315,6 +296,25 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 return failApplicationDeployment(errorMessage, packageDetails);
             }
         }
+
+        // Now stop the original app.
+        try {
+            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+            DeploymentUtils.run(progress);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
+        }
+
+        // And then remove it (this will delete the physical file/dir from the deploy dir).
+        try {
+            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
+            DeploymentUtils.run(progress);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
+        }
+
+        // Deploy away!
+        log.debug("Deploying '" + tempFile + "'...");
 
         try {
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);

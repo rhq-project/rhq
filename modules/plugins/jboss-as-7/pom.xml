@@ -305,9 +305,9 @@
                               location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
                     <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true"/>
                     <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
+                    <delete dir="${jboss7.home}" verbose="true"/>
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
-                          tofile="${java.io.tmpdir}/jboss-as-${as7.version}" failonerror="false"
-                          overwrite="false"/>
+                          tofile="${jboss7.home}" failonerror="false"/>
 
                     <chmod perm="u+rx">
                       <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
@@ -332,7 +332,7 @@
                 </goals>
                 <configuration>
                    <target>
-                      <delete dir="${jboss7.home}"/>
+                      <delete dir="${jboss7.home}" verbose="true"/>
                    </target>
                 </configuration>
               </execution>

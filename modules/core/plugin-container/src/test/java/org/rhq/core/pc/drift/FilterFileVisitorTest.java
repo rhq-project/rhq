@@ -89,7 +89,8 @@ public class FilterFileVisitorTest {
         // This call normalizes the basedir.
         Set<File> dirs = DriftDetector.getScanDirectories(basedir, includes);
         Assert.assertEquals(dirs.size(), 1, "Should just be the basedir");
-        forEachFile(dirs.iterator().next(), new FilterFileVisitor(basedir, includes, excludes, visitor));
+        File normalizedBaseDir = dirs.iterator().next();
+        forEachFile(normalizedBaseDir, new FilterFileVisitor(normalizedBaseDir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,
             "Filtering failed with multiple includes and no excludes");

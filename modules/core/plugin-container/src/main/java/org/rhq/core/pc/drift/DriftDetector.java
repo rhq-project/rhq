@@ -404,7 +404,8 @@ public class DriftDetector implements Runnable {
         }
     }
 
-    private Set<File> getScanDirectories(final File basedir, List<Filter> includes) {
+    // package-private for test accessibility
+    static Set<File> getScanDirectories(final File basedir, List<Filter> includes) {
 
         Set<File> directories = new HashSet<File>();
 

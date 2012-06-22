@@ -31,8 +31,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -71,6 +73,7 @@ public class FilterFileVisitorTest {
             visitor.visitedFiles, "Visitor should be called for every file when no filters specified");
     }
 
+    // This could be a DriftDetectorTest but fits well here. 
     @Test
     public void visitBaseDirFilesThatMatchFilters() throws Exception {
         File fooJar = touch(basedir, "foo.jar");
@@ -78,11 +81,15 @@ public class FilterFileVisitorTest {
         File myapp = touch(basedir, "myapp.war");
         touch(basedir, "bar.jar");
 
+        // These filter paths should all normalize to the same directory
         List<Filter> includes = asList(new Filter(".", "foo*"), new Filter("./", "*.war"), new Filter("/", "goo*"));
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
+        // This call normalizes the basedir.
+        Set<File> dirs = DriftDetector.getScanDirectories(basedir, includes);
+        Assert.assertEquals(dirs.size(), 1, "Should just be the basedir");
+        forEachFile(dirs.iterator().next(), new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,
             "Filtering failed with multiple includes and no excludes");

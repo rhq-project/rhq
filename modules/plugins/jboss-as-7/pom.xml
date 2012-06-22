@@ -331,10 +331,22 @@
                     <goal>run</goal>
                 </goals>
                 <configuration>
+              <tasks>
+                <taskdef resource="net/sf/antcontrib/antcontrib.properties"
+                  classpathref="maven.plugin.classpath" />
+                <if>
+                  <equals arg1="${itest.deleteRoot}" arg2="false" />
+                  <then>
+                    <echo message="*** By request not deleting the AS7 instances after 'integration-test' run." />
+                  </then>
+                  <else>
                    <target>
                       <delete dir="${jboss7.home}"/>
                    </target>
-                </configuration>
+                  </else>
+                </if>
+              </tasks>
+            </configuration>
               </execution>
             </executions>
           </plugin>

@@ -60,8 +60,8 @@ import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
-import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator.AuthorizationTokenType;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * @author Joseph Marques
@@ -519,7 +519,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
-        oldAlertDefinition.update(alertDefinition);
+        oldAlertDefinition.update(alertDefinition, resetMatching);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Updating: " + oldAlertDefinition);
             for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {

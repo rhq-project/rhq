@@ -62,7 +62,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( { //
+@NamedQueries({ //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL, query = "" //
         + "SELECT a " //
         + "  FROM AlertDefinition a " //
@@ -409,6 +409,16 @@ public class AlertDefinition implements Serializable {
     }
 
     public void update(AlertDefinition alertDef) {
+        update(alertDef, true);
+    }
+
+    /**
+     * @param alertDef
+     * @param updateConditions set to true if conditions are being updated.  This incurs overhead because the
+     * old AlertConditions get detached and replaced for no good reason, becoming a cleanup burden later on. Only
+     * set to false if you are sure the conditions are not being updated.  If false the conditions will not be updated.
+     */
+    public void update(AlertDefinition alertDef, boolean updateConditions) {
         /*
          * Don't copy the id, ctime, or mtime.
          */
@@ -440,15 +450,17 @@ public class AlertDefinition implements Serializable {
 
         this.recoveryId = alertDef.recoveryId;
 
-        // copy conditions
-        List<AlertCondition> copiedConditions = new ArrayList<AlertCondition>();
-        for (AlertCondition oldCondition : alertDef.getConditions()) {
-            AlertCondition newCondition = new AlertCondition(oldCondition);
-            newCondition.setAlertDefinition(this);
-            copiedConditions.add(newCondition);
+        // copy conditions if necessary
+        if (updateConditions) {
+            List<AlertCondition> copiedConditions = new ArrayList<AlertCondition>();
+            for (AlertCondition oldCondition : alertDef.getConditions()) {
+                AlertCondition newCondition = new AlertCondition(oldCondition);
+                newCondition.setAlertDefinition(this);
+                copiedConditions.add(newCondition);
+            }
+            this.removeAllConditions();
+            this.getConditions().addAll(copiedConditions);
         }
-        this.removeAllConditions();
-        this.getConditions().addAll(copiedConditions);
 
         // copy notifications
         List<AlertNotification> copiedNotifications = new ArrayList<AlertNotification>();

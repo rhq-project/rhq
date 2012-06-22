@@ -231,7 +231,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean purgeInternals)
+    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean resetMatching)
         throws InvalidAlertDefinitionException, AlertDefinitionUpdateException, AlertNotificationValidationException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("updateAlertTemplate: " + alertTemplate);
@@ -241,7 +241,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         AlertDefinition updated = null;
         try {
             updated = alertDefinitionManager.updateAlertDefinition(user, alertTemplate.getId(), alertTemplate,
-                purgeInternals); // do not allow direct undeletes of an alert definition
+                resetMatching); // do not allow direct undeletes of an alert definition
         } catch (Throwable t) {
             throw new AlertDefinitionUpdateException("Failed to update an AlertTemplate "
                 + alertTemplate.toSimpleString(), t);
@@ -260,7 +260,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
                 alertDefinitionManager
-                    .updateAlertDefinition(overlord, alertDefinitionId, alertTemplate, purgeInternals);
+                    .updateAlertDefinition(overlord, alertDefinitionId, alertTemplate, resetMatching);
             } catch (Throwable t) {
                 // continue on error, update as many as possible
                 if (firstThrowable == null) {

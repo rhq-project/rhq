@@ -240,16 +240,15 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         LocatableDynamicForm row = new LocatableDynamicForm(
                                                             recentMeasurementsContent.extendLocatorId(md.getName()));
                                                         row.setNumCols(3);
+                                                        row.setColWidths(65,"*","*");
                                                         row.setWidth100();
                                                         HTMLFlow graph = new HTMLFlow();
-                                                        //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
-                                                        //                            + commaDelimitedList + "</span>";
                                                         String contents = "<span id='sparkline_" + index
                                                             + "' class='dynamicsparkline' width='0' " + "values='"
                                                             + commaDelimitedList + "'>...</span>";
                                                         graph.setContents(contents);
                                                         graph.setContentsType(ContentsType.PAGE);
-                                                        //diable scrollbars on span
+                                                        //disable scrollbars on span
                                                         graph.setScrollbarSize(0);
 
                                                         CanvasItem graphContainer = new CanvasItem();

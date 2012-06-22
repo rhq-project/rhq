@@ -106,8 +106,10 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     public void compressPurgeAndTruncate() throws SQLException {
         loadPurgeDefaults();
 
+        DateTimeService dateTimeService = DateTimeService.getInstance();
         // current time rounded down to the start of this hour.
-        long now = TimingVoodoo.roundDownTime(System.currentTimeMillis(), HOUR);
+//        long now = TimingVoodoo.roundDownTime(System.currentTimeMillis(), HOUR);
+        long now = dateTimeService.getCurrentHour();
 
         // Compress hourly data
         long hourAgo = TimingVoodoo.roundDownTime(now - HOUR, HOUR);

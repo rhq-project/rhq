@@ -53,6 +53,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.measurement.DateTimeService;
 import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
@@ -125,6 +126,8 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
     public void createInventory() throws Exception {
         testDelegate.purgeRawData();
         testDelegate.purge1HourData();
+        testDelegate.purge6HourData();
+        testDelegate.purge24HourData();
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -375,6 +378,41 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         assertAggregateDataEquals(data, expected, "The values for 1 hour aggregate data are wrong.");
     }
 
+    @Test
+    public void aggregate1HourDataDuring12thHourWhenThereIsNo6HourData() {
+        DateTime now = new DateTime();
+        DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime hour12 = hour0.plusHours(12);
+        DateTime hour6 = hour0.plusHours(6);
+        DateTime hour11 = hour0.plusHours(11);
+        DateTime hour8 = hour0.plusHours(8);
+
+        int scheduleId = dynamicSchedule.getId();
+
+        TestDateTimeService dateTimeService = new TestDateTimeService();
+        dateTimeService.setCurrentHour(hour12);
+        DateTimeService.setInstance(dateTimeService);
+
+        double min1 = 1.1;
+        double avg1 = 2.2;
+        double max1 = 3.3;
+
+        List<AggregateTestData> oneHourData = asList(
+            new AggregateTestData(hour11.getMillis(), scheduleId, avg1, max1, min1)
+        );
+        testDelegate.insert1HourData(oneHourData);
+
+        metricsManager.compressPurgeAndTruncate();
+
+        List<AggregateTestData> data = testDelegate.find6HourData(overlord, scheduleId, hour6.getMillis(),
+            hour12.getMillis());
+
+        List<AggregateTestData> expected = asList(new AggregateTestData(hour8.getMillis(), scheduleId, avg1, max1,
+            min1));
+
+        assertAggregateDataEquals(data, expected, "The values for 6 hour aggregate data are wrong");
+    }
+
     private void assertAggregateDataEquals(List<AggregateTestData> actual, List<AggregateTestData> expected,
         String msg) {
         assertEquals(msg + " - The number of aggregate data is wrong.", expected.size(), actual.size());
@@ -394,6 +432,19 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
 
         MetricsManagerLocal metricsManager = LookupUtil.getMetricsManager();
         metricsManager.mergeMeasurementReport(dummyReport);
+    }
+
+    private static class TestDateTimeService extends DateTimeService {
+        private DateTime currentHour;
+
+        @Override
+        public long getCurrentHour() {
+            return currentHour.getMillis();
+        }
+
+        public void setCurrentHour(DateTime currentHour) {
+            this.currentHour = currentHour;
+        }
     }
 
 }

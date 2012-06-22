@@ -42,4 +42,6 @@ public interface MetricsServerPluginTestDelegate {
 
     List<AggregateTestData> find1HourData(Subject subject, int scheduleId, long startTime, long endTime);
 
+    List<AggregateTestData> find6HourData(Subject subject, int scheduleId, long startTime, long endTime);
+
 }

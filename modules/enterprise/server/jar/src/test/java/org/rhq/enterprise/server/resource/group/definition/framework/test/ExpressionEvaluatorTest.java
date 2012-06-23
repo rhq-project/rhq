@@ -25,6 +25,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
+import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.QueryUtility;
 
@@ -155,7 +156,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " }, };
     }
 
-    @Test(groups = "integration.session")
+//    @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {
 
         String[][] successTestCases = getSuccessTestCases();
@@ -212,7 +213,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(groups = "integration.session")
+//    @Test(groups = "integration.session")
     public void testTokenizer() {
 
         String[] input = { "resource.child.name", //
@@ -252,6 +253,26 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 System.out.println("Successfully tokenized (" + nextInput + ")");
             }
         }
+    }
+
+    @Test(expectedExceptions = InvalidExpressionException.class)
+    public void throwExceptionWhenMultipleResourceTraitsSpecified() throws Exception {
+        ExpressionEvaluator evaluator = new ExpressionEvaluator();
+        evaluator.addExpression("resource.trait[agentHomeDirectory] = /var/rhq-agent");
+        evaluator.addExpression("resource.trait[reasonForLastRestart] = OOMError");
+
+        evaluator.execute();
+        evaluator.iterator().next();
+    }
+
+    @Test(expectedExceptions = InvalidExpressionException.class)
+    public void throwExceptionWhenMultipleResourceParentTraitsSpecified() throws Exception {
+        ExpressionEvaluator evaluator = new ExpressionEvaluator();
+        evaluator.addExpression("resource.parent.trait[agentHomeDirectory] = /var/rhq-agent");
+        evaluator.addExpression("resource.parent.trait[reasonForLastRestart] = OOMError");
+
+        evaluator.execute();
+        evaluator.iterator().next();
     }
 
     private String cleanUp(String result) {

@@ -284,7 +284,7 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         metricsManager.mergeMeasurementReport(report);
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsManager.findDataForContext(overlord,
-            EntityContext.forResource(resource.getId()), dynamicMeasuremenDef.getId(), beginTime.getMillis(),
+            EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(),
             endTime.getMillis());
 
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
@@ -330,7 +330,7 @@ public class MetricsServerPluginTest extends AbstractEJB3Test {
         testDelegate.insert1HourData(data);
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsManager.findDataForContext(overlord,
-            EntityContext.forResource(resource.getId()), dynamicMeasuremenDef.getId(), beginTime.getMillis(),
+            EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(),
             endTime.getMillis());
 
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());

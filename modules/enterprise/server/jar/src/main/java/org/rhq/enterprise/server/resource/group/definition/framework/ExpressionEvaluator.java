@@ -496,6 +496,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 addJoinCondition(JoinCondition.AVAILABILITY);
                 populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);
             } else if (context == ParseContext.Trait) {
+                if (whereConditions.containsKey(TRAIT_ALIAS + ".value")) {
+                    throw new InvalidExpressionException("Cannot have multiple trait expressions.");
+                }
+
                 // SELECT res.id FROM Resource res JOIN res.schedules sched, sched.definition def, MeasurementDataTrait trait
                 // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
                 // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)

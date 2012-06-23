@@ -28,6 +28,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
@@ -42,7 +43,7 @@ public interface MetricsServerPluginFacet {
     void calculateAggregates();
 
     List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
-        int definitionId, long beginTime, long endTime);
+        MeasurementSchedule schedule, long beginTime, long endTime);
 
     List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 

@@ -30,6 +30,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
@@ -48,5 +49,5 @@ public interface MetricsManagerLocal {
     List<? extends TraitMeasurement> findResourceTraits(Subject subject, TraitMeasurementCriteria criteria);
 
     List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
-        int definitionId, long beginTime, long endTime);
+        MeasurementSchedule schedule, long beginTime, long endTime);
 }

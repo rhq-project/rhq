@@ -32,6 +32,7 @@ import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
@@ -65,10 +66,10 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
 
     @Override
     public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
-        int definitionId, long beginTime, long endTime) {
+        MeasurementSchedule schedule, long beginTime, long endTime) {
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         List<List<MeasurementDataNumericHighLowComposite>> data = dataManager.findDataForContext(subject, context,
-            definitionId, beginTime, endTime, 60);
+            schedule.getDefinition().getId(), beginTime, endTime, 60);
 
         if (data.isEmpty()) {
             return Collections.emptyList();

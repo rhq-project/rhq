@@ -152,14 +152,16 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
         List<MeasurementDataNumericHighLowComposite> dataPoints = null;
 
         int resourceId = -1;
+        MeasurementSchedule schedule = null;
+        // TODO what should we do if scheduleId is 0?
         if (scheduleId > 0) {
-            MeasurementSchedule schedule = scheduleManager.getScheduleById(subject, scheduleId);
+            schedule = scheduleManager.getScheduleById(subject, scheduleId);
             resourceId = schedule.getResource().getId();
             definitionId = schedule.getDefinition().getId();
         }
 
         EntityContext context = new EntityContext(resourceId, groupId, parentId, childTypeId);
-        dataPoints = metricsManager.findDataForContext(subject, context, definitionId, beginTime, endTime);
+        dataPoints = metricsManager.findDataForContext(subject, context, schedule, beginTime, endTime);
 
         List<HighLowMetricValue> chartDataPoints = new ArrayList<HighLowMetricValue>(dataPoints.size());
         for (MeasurementDataNumericHighLowComposite dataPoint : dataPoints) {

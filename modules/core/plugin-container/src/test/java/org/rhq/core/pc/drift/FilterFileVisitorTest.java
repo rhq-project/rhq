@@ -31,10 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -85,12 +83,7 @@ public class FilterFileVisitorTest {
         List<Filter> includes = asList(new Filter(".", "foo*"), new Filter("./", "*.war"), new Filter("/", "goo*"));
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
-
-        // This call normalizes the basedir.
-        Set<File> dirs = DriftDetector.getScanDirectories(basedir, includes);
-        Assert.assertEquals(dirs.size(), 1, "Should just be the basedir");
-        File normalizedBaseDir = dirs.iterator().next();
-        forEachFile(normalizedBaseDir, new FilterFileVisitor(normalizedBaseDir, includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,
             "Filtering failed with multiple includes and no excludes");

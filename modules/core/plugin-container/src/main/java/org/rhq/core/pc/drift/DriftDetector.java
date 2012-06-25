@@ -404,8 +404,7 @@ public class DriftDetector implements Runnable {
         }
     }
 
-    // package-private for test accessibility
-    static Set<File> getScanDirectories(final File basedir, List<Filter> includes) {
+    private static Set<File> getScanDirectories(final File basedir, List<Filter> includes) {
 
         Set<File> directories = new HashSet<File>();
 
@@ -414,8 +413,7 @@ public class DriftDetector implements Runnable {
         } else {
             for (Filter filter : includes) {
                 String path = filter.getPath();
-                // support various ways of expressing the base directory with relative paths  
-                if (".".equals(path) || "./".equals(path) || "/".equals(path)) {
+                if (".".equals(path)) {
                     directories.add(basedir);
                 } else {
                     directories.add(new File(basedir, path));

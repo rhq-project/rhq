@@ -124,22 +124,32 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
-        if (timeSinceComponentRefresh > availRefreshInterval) {
-            if (log.isDebugEnabled()) {
-                log.debug("The availability refresh interval for [resourceKey: "
-                    + getResourceContext().getResourceKey() + ", type: " + componentType + ", name: " + componentName
-                    + "] has been exceeded by " + (timeSinceComponentRefresh - availRefreshInterval)
-                    + " ms. Reloading managed component.");
-            }
+        if (lastComponentRefresh == 0) {
+            // The managed component has not been refreshed at all yet.
             getManagedComponent();
+        } else {
+            long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
+            if (timeSinceComponentRefresh > availRefreshInterval) {
+                if (log.isDebugEnabled()) {
+                    log.debug("The availability refresh interval for [resourceKey: "
+                        + getResourceContext().getResourceKey() + ", type: " + componentType + ", name: " + componentName
+                        + "] has been exceeded by " + (timeSinceComponentRefresh - availRefreshInterval)
+                        + " ms. Reloading managed component...");
+                }
+                getManagedComponent();
+            }
         }
 
+        return getAvailabilityForRunState(runState);
+    }
+
+    protected AvailabilityType getAvailabilityForRunState(RunState runState) {
         if (runState == RunState.RUNNING) {
             return AvailabilityType.UP;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(componentType + " component '" + componentName + "' was not running, state was : " + runState);
+                log.debug(componentType + " component '" + componentName + "' was not running - state was [" + runState
+                        + "].");
             }
             return AvailabilityType.DOWN;
         }

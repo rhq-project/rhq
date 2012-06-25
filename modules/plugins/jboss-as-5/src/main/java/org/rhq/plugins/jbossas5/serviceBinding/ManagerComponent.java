@@ -71,12 +71,12 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     private static final String RESOURCE_KEY_SEPARATOR = "!)@(#*";
 
     @Override
-    public AvailabilityType getAvailability() {
-        RunState runState = getManagedComponent().getRunState();
-        return (runState == RunState.RUNNING || runState == RunState.UNKNOWN) ? AvailabilityType.UP
-                    : AvailabilityType.DOWN;
+    protected AvailabilityType getAvailabilityForRunState(RunState runState) {
+        // This is a workaround for a bug where the binding manager MO will return a run state of UNKNOWN even when it's
+        // happily running.
+        return (runState == RunState.RUNNING || runState == RunState.UNKNOWN) ?
+               AvailabilityType.UP : AvailabilityType.DOWN;
     }
-
 
     // ConfigurationFacet -----------------------------
 

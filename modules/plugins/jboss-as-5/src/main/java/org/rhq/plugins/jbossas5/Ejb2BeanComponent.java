@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,9 @@ import java.util.Set;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.RunState;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 
 /**
@@ -37,6 +39,19 @@ import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
  */
 public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
     private static final ComponentType MDB_COMPONENT_TYPE = new ComponentType("EJB", "MDB");
+
+    @Override
+    protected AvailabilityType getAvailabilityForRunState(RunState runState) {
+        AvailabilityType avail;
+        if (MDB_COMPONENT_TYPE.equals(getComponentType())) {
+            // This is a workaround for if BZ 835113.
+            avail = (runState == RunState.RUNNING || runState == RunState.UNKNOWN) ?
+                    AvailabilityType.UP : AvailabilityType.DOWN;
+        } else {
+            avail = super.getAvailabilityForRunState(runState);
+        }
+        return avail;
+    }
 
     @Override
     protected ManagedComponent getManagedComponent() {

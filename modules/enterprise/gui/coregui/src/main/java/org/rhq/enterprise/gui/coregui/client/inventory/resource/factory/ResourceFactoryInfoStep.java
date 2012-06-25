@@ -37,6 +37,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -147,7 +148,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
             }
 
             if (null != templatePrompt) {
-                SelectItem templateSelect = new SelectItem("template", templatePrompt);
+                SelectItem templateSelect = new SortedSelectItem("template", templatePrompt);
                 templateSelect.setTitleOrientation(TitleOrientation.TOP);
                 templateSelect.setAlign(Alignment.LEFT);
                 templateSelect.setWidth(300);

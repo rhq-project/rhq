@@ -23,12 +23,26 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.form.fields.*;
-import com.smartgwt.client.widgets.form.fields.events.*;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+
 import org.rhq.core.domain.criteria.Criteria.Restriction;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
@@ -36,15 +50,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * A dialog window that lets you build custom dynagroup expressions.
@@ -121,7 +132,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.compareTypeItem = new SelectItem("compareType", MSG.view_dynagroup_exprBuilder_comparisonType());
+        this.compareTypeItem = new SortedSelectItem("compareType", MSG.view_dynagroup_exprBuilder_comparisonType());
         this.compareTypeItem.setTooltip(MSG.view_dynagroup_exprBuilder_comparisonType_tooltip());
         this.compareTypeItem.setHoverWidth(250);
         this.compareTypeItem.setRedrawOnChange(true);
@@ -166,7 +177,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.resourceTypeItem = new SelectItem("resourceType", MSG.view_dynagroup_exprBuilder_resourceType());
+        this.resourceTypeItem = new SortedSelectItem("resourceType", MSG.view_dynagroup_exprBuilder_resourceType());
         this.resourceTypeItem.setTooltip(MSG.view_dynagroup_exprBuilder_resourceType_tooltip());
         this.resourceTypeItem.setHoverWidth(250);
         this.resourceTypeItem.setRedrawOnChange(true);
@@ -180,7 +191,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.pluginItem = new SelectItem("plugin", MSG.view_dynagroup_exprBuilder_definingPlugin());
+        this.pluginItem = new SortedSelectItem("plugin", MSG.view_dynagroup_exprBuilder_definingPlugin());
         this.pluginItem.setTooltip(MSG.view_dynagroup_exprBuilder_definingPlugin_tooltip());
         this.pluginItem.setHoverWidth(250);
         this.pluginItem.setRedrawOnChange(true);
@@ -223,7 +234,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.expressionTypeItem = new SelectItem("expressionType", MSG.view_dynagroup_exprBuilder_expressionType());
+        this.expressionTypeItem = new SortedSelectItem("expressionType", MSG.view_dynagroup_exprBuilder_expressionType());
         this.expressionTypeItem.setTooltip(MSG.view_dynagroup_exprBuilder_expressionType_tooltip());
         this.expressionTypeItem.setHoverWidth(250);
         this.expressionTypeItem.setRedrawOnChange(true);
@@ -243,7 +254,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.resourceItem = new SelectItem("resource", MSG.view_dynagroup_exprBuilder_resource());
+        this.resourceItem = new SortedSelectItem("resource", MSG.view_dynagroup_exprBuilder_resource());
         this.resourceItem.setTooltip(MSG.view_dynagroup_exprBuilder_resource_tooltip());
         this.resourceItem.setHoverWidth(250);
         this.resourceItem.setRedrawOnChange(true);
@@ -430,7 +441,6 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
                             typeNames.add(type.getName());
                             resourceTypeIds.put(type.getName(), Integer.valueOf(type.getId()));
                         }
-                        Collections.sort(typeNames);
                         resourceTypeItem.setValueMap(typeNames.toArray(new String[typeNames.size()]));
                     } else {
                         resourceTypeItem.setValueMap(new String[0]);

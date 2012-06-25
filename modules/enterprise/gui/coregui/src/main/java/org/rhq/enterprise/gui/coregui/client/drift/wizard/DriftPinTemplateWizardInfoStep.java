@@ -38,8 +38,9 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -59,7 +60,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
     private AbstractDriftPinTemplateWizard wizard;
 
     private LocatableDynamicForm selectTemplateForm;
-    SelectItem selectTemplateItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
+    SelectItem selectTemplateItem = new SortedSelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
 
     public DriftPinTemplateWizardInfoStep(AbstractDriftPinTemplateWizard wizard) {
         this.wizard = wizard;

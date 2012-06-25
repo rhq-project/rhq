@@ -24,14 +24,12 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.smartgwt.client.types.Alignment;
@@ -62,6 +60,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -176,7 +175,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         setMargin(20);
 
-        conditionTypeSelectItem = new SelectItem("conditionType",
+        conditionTypeSelectItem = new SortedSelectItem("conditionType",
             MSG.view_alert_definition_condition_editor_option_label());
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
         condTypes.put(AlertConditionCategory.AVAILABILITY.name(),
@@ -761,7 +760,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
         }
 
-        SelectItem traitSelection = new SelectItem(TRAIT_METRIC_ITEMNAME,
+        SelectItem traitSelection = new SortedSelectItem(TRAIT_METRIC_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_trait_change_value());
         traitSelection.setValueMap(traitsMap);
         traitSelection.setDefaultValue(traitsMap.keySet().iterator().next()); // just use the first one
@@ -782,7 +781,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem selection = new SelectItem(AVAILABILITY_ITEMNAME,
+        SelectItem selection = new SortedSelectItem(AVAILABILITY_ITEMNAME,
             MSG.view_alert_definition_condition_editor_availability_value());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(),
@@ -815,7 +814,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("availabilityDurationHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem selection = new SelectItem(AVAILABILITY_DURATION_ITEMNAME,
+        SelectItem selection = new SortedSelectItem(AVAILABILITY_DURATION_ITEMNAME,
             MSG.view_alert_definition_condition_editor_availabilityDuration());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_DURATION_DOWN.name(),
@@ -856,7 +855,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             ops.put(opDef.getName(), opDef.getDisplayName());
         }
 
-        SelectItem opSelection = new SelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
+        SelectItem opSelection = new SortedSelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
         opSelection.setDefaultValue(ops.keySet().iterator().next()); // just use the first one
         opSelection.setWidth("*");
@@ -864,7 +863,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         opSelection.setShowIfCondition(ifFunc);
         formItems.add(opSelection);
 
-        SelectItem opResultsSelection = new SelectItem(OPERATION_RESULTS_ITEMNAME, MSG.common_title_status());
+        SelectItem opResultsSelection = new SortedSelectItem(OPERATION_RESULTS_ITEMNAME, MSG.common_title_status());
         LinkedHashMap<String, String> operationStatuses = new LinkedHashMap<String, String>(4);
         operationStatuses.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
         operationStatuses.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
@@ -969,15 +968,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
-        SortedSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
-            new Comparator<MeasurementDefinition>() {
-
-                @Override
-                public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                    return o1.getDisplayName().compareTo(o2.getDisplayName());
-                }
-            });
-        sortedDefs.addAll(this.resourceType.getMetricDefinitions());
+        Set<MeasurementDefinition> sortedDefs = new HashSet<MeasurementDefinition>(this.resourceType.getMetricDefinitions());
 
         for (MeasurementDefinition def : sortedDefs) {
             if (def.getDataType() == DataType.MEASUREMENT) {
@@ -994,7 +985,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             return null; // all metrics should be hidden
         }
 
-        SelectItem metricSelection = new SelectItem(itemName,
+        SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_threshold_name());
         metricSelection.setValueMap(metricsMap);
         metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
@@ -1013,7 +1004,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
         }
 
-        SelectItem metricSelection = new SelectItem(itemName,
+        SelectItem metricSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_name());
         metricSelection.setValueMap(metricsMap);
         metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
@@ -1033,7 +1024,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put(">", "> (" + MSG.view_alert_definition_condition_editor_metric_threshold_comparator_greater()
             + ")");
 
-        SelectItem comparatorSelection = new SelectItem(itemName,
+        SelectItem comparatorSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_threshold_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");
@@ -1051,7 +1042,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put("CH", MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator_changes());
         comparators.put("HI", MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator_grows());
 
-        SelectItem comparatorSelection = new SelectItem(itemName,
+        SelectItem comparatorSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("CH");
@@ -1070,7 +1061,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put("<=", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_inclusive());
         comparators.put(">=", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_inclusive());
 
-        SelectItem comparatorSelection = new SelectItem(itemName,
+        SelectItem comparatorSelection = new SortedSelectItem(itemName,
             MSG.view_alert_definition_condition_editor_metric_range_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");

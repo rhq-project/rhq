@@ -57,6 +57,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
@@ -786,10 +787,13 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(),
             MSG.view_alert_definition_condition_editor_operator_availability_goesDown());
-        avails.put(AlertConditionOperator.AVAIL_GOES_DISABLED.name(),
-            MSG.view_alert_definition_condition_editor_operator_availability_goesDisabled());
-        avails.put(AlertConditionOperator.AVAIL_GOES_UNKNOWN.name(),
-            MSG.view_alert_definition_condition_editor_operator_availability_goesUnknown());
+        // do not add 'Goes Disabled' and 'Goes Unknown' for platform
+        if (resourceType.getCategory() != ResourceCategory.PLATFORM) {
+            avails.put(AlertConditionOperator.AVAIL_GOES_DISABLED.name(),
+                MSG.view_alert_definition_condition_editor_operator_availability_goesDisabled());
+            avails.put(AlertConditionOperator.AVAIL_GOES_UNKNOWN.name(),
+                MSG.view_alert_definition_condition_editor_operator_availability_goesUnknown());
+        }
         avails.put(AlertConditionOperator.AVAIL_GOES_NOT_UP.name(),
             MSG.view_alert_definition_condition_editor_operator_availability_goesNotUp());
         avails.put(AlertConditionOperator.AVAIL_GOES_UP.name(),

@@ -77,6 +77,25 @@
          </plugin>
 
          <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>build-helper-maven-plugin</artifactId>
+           <executions>
+             <execution>
+               <id>add-xjc-source</id>
+               <phase>generate-sources</phase>
+               <goals>
+                 <goal>add-source</goal>
+               </goals>
+               <configuration>
+                 <sources>
+                   <source>${basedir}/target/generated-sources/xjc</source>
+                 </sources>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin>
+
+         <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <skip>true</skip>

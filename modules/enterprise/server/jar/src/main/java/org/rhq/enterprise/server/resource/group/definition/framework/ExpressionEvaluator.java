@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,6 +93,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private EntityManagerFacadeLocal entityManagerFacade;
 
+    private Set<String> resourceExpressions = new TreeSet<String>();
+
     public ExpressionEvaluator() {
         /*
          * used LinkedHashMap for whereConditions on purpose so that the iterator will return them in the same order
@@ -125,6 +128,56 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * initialization for special handling that all dynagroups should get
          */
         whereStatics.add("res.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED");
+
+        resourceExpressions.add("res.id");
+        resourceExpressions.add("child.id");
+        resourceExpressions.add("res.parentResource.id");
+        resourceExpressions.add("res.parentResource.parentResource.id");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.id");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.id");
+
+        resourceExpressions.add("res.name");
+        resourceExpressions.add("child.name");
+        resourceExpressions.add("res.parentResource.name");
+        resourceExpressions.add("res.parentResource.parentResource.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.name");
+
+        resourceExpressions.add("res.version");
+        resourceExpressions.add("child.version");
+        resourceExpressions.add("res.parentResource.version");
+        resourceExpressions.add("res.parentResource.parentResource.version");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.version");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.version");
+
+
+        resourceExpressions.add("res.resourceType.plugin");
+        resourceExpressions.add("res.resourceType.name");
+        resourceExpressions.add("child.resourceType.plugin");
+        resourceExpressions.add("child.resourceType.name");
+        resourceExpressions.add("res.parentResource.resourceType.plugin");
+        resourceExpressions.add("res.parentResource.resourceType.name");
+        resourceExpressions.add("res.parentResource.parentResource.resourceType.plugin");
+        resourceExpressions.add("res.parentResource.parentResource.resourceType.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.resourceType.plugin");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.resourceType.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.resourceType.plugin");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.resourceType.name");
+
+
+        resourceExpressions.add("res.resourceType.category");
+        resourceExpressions.add("child.resourceType.category");
+        resourceExpressions.add("res.parentResource.resourceType.category");
+        resourceExpressions.add("res.parentResource.parentResource.resourceType.category");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.resourceType.category");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.resourceType.category");
+
+        resourceExpressions.add("avail.availabilityType");
+        resourceExpressions.add("child.avail.availabilityType");
+        resourceExpressions.add("res.parentResource.avail.availabilityType");
+        resourceExpressions.add("res.parentResource.parentResource.avail.availabilityType");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.avail.availabilityType");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.avail.availabilityType");
     }
 
     public class Result {
@@ -714,6 +767,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             } else {
                 throw new InvalidExpressionException("Unknown or unsupported ComparisonType[" + comparisonType
                     + "] for predicate population");
+            }
+
+            if (resourceExpressions.contains(predicateName) && whereConditions.containsKey(predicateName)) {
+                throw new DuplicateExpressionTypeException(predicateName);
             }
 
             whereConditions.put(predicateName, argumentName);

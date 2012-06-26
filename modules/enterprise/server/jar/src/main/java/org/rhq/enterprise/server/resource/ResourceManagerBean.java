@@ -380,8 +380,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // The most likely reason for a failure, although unlikely in itself, is that newly discovered resources
                 // are currently being merged into the platform, and associated with the doomed agent.  In this case
                 // the user must wait until the merge is complete.  Make sure the caller knows about this possibility.
-                throw new IllegalStateException(
-                    "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.");
+                String msg = "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.";
+                throw new IllegalStateException(msg, (log.isDebugEnabled() ? e : null));
             }
 
             throw e;

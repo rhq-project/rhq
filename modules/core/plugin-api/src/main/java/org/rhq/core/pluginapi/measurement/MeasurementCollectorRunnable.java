@@ -74,6 +74,13 @@ public class MeasurementCollectorRunnable implements Runnable {
     private final long interval;
 
     /**
+     * The time, in milliseconds, that this collector wait before performing the first, initial collection.
+     * Once this initial delay expires, and the initial collection is performed, the {@link #interval} period
+     * must then expire before the next collection is performed.
+     */
+    private final long initialDelay;
+
+    /**
      * The last known measurements for the resource that this collector is monitoring.
      */
     private MeasurementReport lastReport = new MeasurementReport();
@@ -93,14 +100,15 @@ public class MeasurementCollectorRunnable implements Runnable {
      * Creates a collector instance that will perform measurement reporting for a particular managed resource.
      *
      * The interval is the time, in milliseconds, this collector will wait between reports.
-     * A typically value should be something around 30 minutes.
+     * A typically value should be something around 30 minutes, but its minium allowed value is 60 seconds.
      *
      * @param measured the object that is used to periodically check the managed resource (must not be <code>null</code>)
+     * @param interval the initial delay, in millis, before the first collection is performed.
      * @param interval the interval, in millis, between measurement collections
      * @param contextClassloader the context classloader that will be used when collection measurements
      * @param threadPool the thread pool to be used to submit this runnable when it needs to start
      */
-    public MeasurementCollectorRunnable(MeasurementFacet measured, long interval,
+    public MeasurementCollectorRunnable(MeasurementFacet measured, long initialDelay, long interval,
             ClassLoader contextClassloader, ScheduledExecutorService threadPool) {
 
         if (measured == null) {
@@ -122,6 +130,7 @@ public class MeasurementCollectorRunnable implements Runnable {
 
         this.measured = measured;
         this.contextClassloader = contextClassloader;
+        this.initialDelay = initialDelay;
         this.interval = interval;
         this.threadPool = threadPool;
         this.lastReport = new MeasurementReport();
@@ -148,7 +157,7 @@ public class MeasurementCollectorRunnable implements Runnable {
         boolean isStarted = this.started.getAndSet(true);
         if (!isStarted) {
             task.cancel(true);
-            task = threadPool.scheduleWithFixedDelay(this, 0, interval, TimeUnit.MILLISECONDS);
+            task = threadPool.scheduleWithFixedDelay(this, initialDelay, interval, TimeUnit.MILLISECONDS);
             log.debug("measurement collector started: " + this.facetId);
         }
     }

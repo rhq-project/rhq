@@ -25,18 +25,17 @@ package org.rhq.core.pc;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pc.CollectorThreadPool;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementCollectorRunnable;
@@ -92,9 +91,9 @@ public class CollectorThreadPoolTest {
     public void testMeasurement() throws Exception {
         log("testMeasurement");
         TestMeasumentFacet component = new TestMeasumentFacet();
-        MeasurementCollectorRunnable runnable = new MeasurementCollectorRunnable(component, 500L, null,
+        // 0L means do the initial collection immediately with no delay - so our test can run fast 
+        MeasurementCollectorRunnable runnable = new MeasurementCollectorRunnable(component, 0L, 500L, null,
                 this.threadPool.getExecutor());
-        runnable.start();
         Set<MeasurementScheduleRequest> metrics = new HashSet();
         metrics.add(new MeasurementScheduleRequest(0, "name", 0, true, DataType.TRAIT));
         MeasurementReport report = new MeasurementReport();
@@ -102,8 +101,10 @@ public class CollectorThreadPoolTest {
         assert 0 == report.getCollectionTime();
         assert report.getTraitData().isEmpty();
 
+        runnable.start();
+
         log("sleeping");
-        Thread.sleep(1000L);
+        Thread.sleep(1000L); // just give it some time to do its thing
 
         report = new MeasurementReport();
         runnable.getLastValues(report, metrics);

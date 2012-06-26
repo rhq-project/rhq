@@ -524,11 +524,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
 
     /**
      * Under certain circumstances, a resource component may want to perform asynchronous measurement reporting.
+     * Call this to obtain a runnable object that can be used to collect measurements asynchronously.
      *
      * @see #createAvailabilityCollectorRunnable(AvailabilityFacet, long)
      */
-    public MeasurementCollectorRunnable createMeasurementCollectorRunnable(MeasurementFacet facet, long interval) {
-        return new MeasurementCollectorRunnable(facet, interval, Thread.currentThread().getContextClassLoader(), this.collectionThreadPool);
+    public MeasurementCollectorRunnable createMeasurementCollectorRunnable(MeasurementFacet facet, long initialDelay,
+        long interval) {
+        return new MeasurementCollectorRunnable(facet, initialDelay, interval, Thread.currentThread()
+            .getContextClassLoader(), this.collectionThreadPool);
     }
 
     /**

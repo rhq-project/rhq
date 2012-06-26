@@ -23,6 +23,7 @@
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -141,12 +142,53 @@ public class MeasurementReport implements Serializable {
      * Adds measurement data from the given report and updates the collection time.
      * The assumption is the given report is newer than this instance.
      *
-     * @param report measurements to add
+     * @param report the report that contains the measurements to add
+     * @param metrics the metrics whose measurement data (if found in the given report) should be added to this report.
+     *                If null or empty, then all of the data in the given report will be added to this report.
      */
-    public synchronized void add(MeasurementReport report) {
-        measurementNumericData.addAll(report.measurementNumericData);
-        measurementTraitData.addAll(report.measurementTraitData);
-        callTimeData.addAll(report.callTimeData);
+    public synchronized void add(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            measurementNumericData.addAll(report.measurementNumericData);
+            measurementTraitData.addAll(report.measurementTraitData);
+            callTimeData.addAll(report.callTimeData);
+        } else {
+            // note that usually the metric set is very small (typically not more than around 5, probably normally around 1 or 2)
+            // so this loop isn't going to be performed with lots of iterations.
+            for (MeasurementScheduleRequest metric : metrics) {
+                switch (metric.getDataType()) {
+                case MEASUREMENT: {
+                    Iterator<MeasurementDataNumeric> i = report.measurementNumericData.iterator();
+                    while (i.hasNext()) {
+                        MeasurementDataNumeric data = i.next();
+                        if (data.getName().equals(metric.getName())) {
+                            measurementNumericData.add(data);
+                        }
+                    }
+                    break;
+                }
+                case TRAIT: {
+                    Iterator<MeasurementDataTrait> i = report.measurementTraitData.iterator();
+                    while (i.hasNext()) {
+                        MeasurementDataTrait data = i.next();
+                        if (data.getName().equals(metric.getName())) {
+                            measurementTraitData.add(data);
+                        }
+                    }
+                    break;
+                }
+                case CALLTIME: {
+                    // There is only ever one calltime metric per resource so if we are being asked to
+                    // add the calltime data, we can avoid doing any iterations and just use addAll API.
+                    callTimeData.addAll(report.callTimeData);
+                    break;
+                }
+                default: {
+                    // ignore any others, we only care about measurement type data
+                }
+                }
+            }
+        }
+
         setCollectionTime(report.collectionTime);
     }
 

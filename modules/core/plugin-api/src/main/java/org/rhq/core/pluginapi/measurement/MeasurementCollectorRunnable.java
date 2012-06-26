@@ -145,7 +145,7 @@ public class MeasurementCollectorRunnable implements Runnable {
      */
     public void getLastValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         this.requestedMetrics.addAll(metrics);
-        report.add(this.lastReport);
+        report.add(this.lastReport, metrics);
     }
 
     /**

@@ -121,16 +121,14 @@
             </property>
          </activation>
          <modules>
-            <!-- agent -->
             <module>core</module>
             <module>common/drift</module>            
             <module>enterprise/comm</module>
             <module>enterprise/agent</module>
             <module>enterprise/agentupdate</module>
-            <!-- coregui -->
             <module>enterprise/server/jar</module>
+            <module>enterprise/server/xml-schemas</module>
             <module>enterprise/gui/coregui</module>            
-            <!-- server plugin -->
             <module>enterprise/server/plugins/metrics-rhq</module>
          </modules>
        </profile>

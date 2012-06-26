@@ -775,6 +775,18 @@ Build-OS-Version=${os.version}
                         </sources>
                     </configuration>
                 </execution>
+                <execution>
+                    <id>add-antlr-sources</id>
+                    <phase>generate-sources</phase>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                            <source>${basedir}/target/generated-sources/antlr3</source>
+                        </sources>
+                    </configuration>
+                </execution>
             </executions>
          </plugin>
 

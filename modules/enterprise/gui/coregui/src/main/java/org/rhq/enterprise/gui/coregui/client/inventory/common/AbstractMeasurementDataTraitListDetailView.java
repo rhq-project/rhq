@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitListDetailView extends Table {
+public abstract class AbstractMeasurementDataTraitListDetailView extends Table<AbstractMeasurementDataTraitDataSource> {
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME };
 
     private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {

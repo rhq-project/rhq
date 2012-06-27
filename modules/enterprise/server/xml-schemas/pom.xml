@@ -1,82 +1,83 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-parent</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
-        <relativePath>../../../../pom.xml</relativePath>
-    </parent>
-
+  <parent>
     <groupId>org.rhq</groupId>
-    <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>rhq-parent</artifactId>
+    <version>4.5.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
 
-    <name>RHQ Server XML Schemas</name>
-    <description>Server side XML schemas and JAXB APIs used mailing to support the RHQ Server plugin container</description>
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+  <packaging>jar</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope> <!-- rhq.ear -->
-        </dependency>
+  <name>RHQ Server XML Schemas</name>
+  <description>Server side XML schemas and JAXB APIs used mailing to support the RHQ Server plugin container</description>
 
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-client-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope> <!-- rhq.ear -->
+    </dependency>
 
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-        </dependency>
+    </dependency>
 
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
             <!--<scope>test</scope>  not sure about this -->
-        </dependency>
+    </dependency>
 
         <!--
             TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent
             classes; it is fixed in JDK 6.
         -->
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>hibernate-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependency>
+      <groupId>jboss.jboss-embeddable-ejb3</groupId>
+      <artifactId>hibernate-all</artifactId>
+      <version>1.0.0.Alpha9</version>
+      <scope>provided</scope>
+    </dependency>
 
-    </dependencies>
+  </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>com.sun.tools.xjc.maven2</groupId>
-                <artifactId>maven-jaxb-plugin</artifactId>
-                <version>1.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <generateDirectory>${basedir}/target/generated-sources/xjc</generateDirectory>
-                    <schemaDirectory>${basedir}/target/classes</schemaDirectory>
-                    <includeSchemas>
-                        <includeSchema>*.xsd</includeSchema>
-                    </includeSchemas>
-                </configuration>
-            </plugin>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.sun.tools.xjc.maven2</groupId>
+        <artifactId>maven-jaxb-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <generateDirectory>${basedir}/target/generated-sources/xjc</generateDirectory>
+          <schemaDirectory>${basedir}/target/classes</schemaDirectory>
+          <includeSchemas>
+            <includeSchema>*.xsd</includeSchema>
+          </includeSchemas>
+        </configuration>
+      </plugin>
 
             <!--
                 Because the JAXB generator needs all .xsd's available and in one place so they can reference each other
@@ -90,211 +91,213 @@
                 we still have a duplicate copy of the .xsd in our jar, but this is OK because it is a true duplicate
                 so it doesn't really matter that we have one copy here and one copy in client-api jar.
             -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>Copy the schemas in one place, including rhq-configuration.xsd schema so we can reuse it</id>
-                        <phase>initialize</phase>
-                        <configuration>
-                            <target>
-                                <mkdir dir="${basedir}/target/classes" />
-                                <copy todir="${basedir}/target/classes">
-                                    <fileset dir="${basedir}/src/main/resources">
-                                        <include name="*.xsd" />
-                                    </fileset>
-                                    <fileset dir="${basedir}/../../../core/client-api/src/main/resources">
-                                        <include name="rhq-configuration.xsd" />
-                                    </fileset>
-                                </copy>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>purge duplicated JAXB-generated configuration schema classes</id>
-                        <phase>process-sources</phase>
-                        <configuration>
-                            <target>
-                                <delete dir="${basedir}/target/generated-sources/xjc/org/rhq/core" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Copy the schemas in one place, including rhq-configuration.xsd schema so we can reuse it</id>
+            <phase>initialize</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${basedir}/target/classes"/>
+                <copy todir="${basedir}/target/classes">
+                  <fileset dir="${basedir}/src/main/resources">
+                    <include name="*.xsd"/>
+                  </fileset>
+                  <fileset dir="${basedir}/../../../core/client-api/src/main/resources">
+                    <include name="rhq-configuration.xsd"/>
+                  </fileset>
+                </copy>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>purge duplicated JAXB-generated configuration schema classes</id>
+            <phase>process-sources</phase>
+            <configuration>
+              <target>
+                <delete dir="${basedir}/target/generated-sources/xjc/org/rhq/core"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>build-helper-maven-plugin</artifactId>
-              <executions>
-                <execution>
-                  <id>add-xjc-source</id>
-                  <phase>generate-sources</phase>
-                  <goals>
-                    <goal>add-source</goal>
-                  </goals>
-                  <configuration>
-                    <sources>
-                      <source>${basedir}/target/generated-sources/xjc</source>
-                    </sources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-xjc-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/target/generated-sources/xjc</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
                 <configuration>
-                    <source>1.5</source>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}"/>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                  </target>
                 </configuration>
-            </plugin>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
         </plugins>
-    </build>
-
-    <profiles>
-
-        <profile>
-            <id>dev</id>
-
-            <properties>
-                <rhq.rootDir>../../../..</rhq.rootDir>
-                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
-            </properties>
-
-            <build>
-                <plugins>
-
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-
-                            <execution>
-                                <id>deploy</id>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <target>
-                                        <mkdir dir="${rhq.deploymentDir}" />
-                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                                        <echo>*** Updating ${deployment.file}...</echo>
-                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-
-                            <execution>
-                                <id>undeploy</id>
-                                <phase>clean</phase>
-                                <configuration>
-                                    <target>
-                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                                        <echo>*** Deleting ${deployment.file}...</echo>
-                                        <delete file="${deployment.file}" />
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-
-                        </executions>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
-       <profile>
+      </build>
+    </profile>
+    <profile>
       <id>cobertura</id>
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>net.sourceforge.cobertura</groupId>
+                <artifactId>cobertura</artifactId>
+                <version>${cobertura.version}</version>
+              </dependency>
+            </dependencies>
+            <executions>
               <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <target>
+                <id>cobertura-instrument</id>
+                <phase>process-test-classes</phase>
+                <configuration>
+                  <target>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
+                    <mkdir dir="target/cobertura"/>
+                    <mkdir dir="target/cobertura/backup"/>
                    <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />
+                        <include name="**/*.class"/>
                       </fileset>
-                   </copy>
+                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                    <touch file="target/classes/cobertura.properties"/>
+                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties"/>
                    <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
+                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser"
+                      todir="${project.build.directory}/classes">
+                      <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class"/>
                       </fileset>
                     </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
               </execution>
               <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                <id>cobertura-report</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties"/>
                      <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
+                    <mkdir dir="target/cobertura"/>
+                    <mkdir dir="target/site/cobertura"/>
                      <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                    <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
+                        <include name="**/*.class"/>
                       </fileset>
-                     </copy>
+                    </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
+                    <delete dir="target/cobertura/backup"/>
                      <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                    <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser"
+                      destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
+                        <include name="**/*.java"/>
                       </fileset>
-                     </cobertura-report>
+                    </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
+                    <delete file="target/classes/cobertura.properties"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
             </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
-    </profiles>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

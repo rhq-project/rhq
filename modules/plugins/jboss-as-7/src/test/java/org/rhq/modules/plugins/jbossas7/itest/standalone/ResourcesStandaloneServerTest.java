@@ -84,7 +84,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredResources.add("Load Metric");
 
         //will revisit after BZ 826542 is resolved
-        ignoredResources.add("Authentication (Classic)");
+        //        ignoredResources.add("Authentication (Classic)");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,

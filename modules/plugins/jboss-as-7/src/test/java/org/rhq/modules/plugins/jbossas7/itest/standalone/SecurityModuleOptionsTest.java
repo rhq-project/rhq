@@ -21,9 +21,15 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
@@ -32,17 +38,24 @@ import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.DeleteResourceStatus;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
+import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
@@ -69,6 +82,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     private static String SECURITY_DOMAIN_RESOURCE_KEY = "security-domain";
     private static String AUTH_CLASSIC_RESOURCE_TYPE = "Authentication (Classic)";
     private static String AUTH_CLASSIC_RESOURCE_KEY = "authentication=classic";
+    private static String PROFILE = "profile=full-ha";
 
     protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
     protected static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
@@ -83,6 +97,9 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     public static final ResourceType RESOURCE_TYPE = new ResourceType(SECURITY_RESOURCE_TYPE, PLUGIN_NAME,
         ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = SECURITY_RESOURCE_KEY;
+    private static Resource testSecurityDomain = null;
+    private String testSecurityDomainKey = null;
+    private ConfigurationManager testConfigurationManager = null;
 
     //Define some shared and reusable content
     static HashMap<String, String> jsonMap = new HashMap<String, String>();
@@ -100,19 +117,194 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 "[{\"code\":\"Test\", \"type\":\"attribute\", \"module-options\":{\"mapping\":\"module\", \"mapping1\":\"module1\"}}]");
         jsonMap.put("provider-modules",
             "[{\"code\":\"Providers\", \"module-options\":{\"provider\":\"module\", \"provider1\":\"module1\"}}]");
+        jsonMap
+            .put("acl-modules",
+                "[{\"flag\":\"sufficient\", \"code\":\"ACL\", \"module-options\":{\"acl\":\"module\", \"acl1\":\"module1\"}}]");
+        jsonMap
+            .put("trust-modules",
+                "[{\"flag\":\"optional\", \"code\":\"TRUST\", \"module-options\":{\"trust\":\"module\", \"trust1\":\"module1\"}}]");
     }
 
-    @Test(priority = 10, groups = "discovery")
+    /** This method mass loads all the supported Module Option Types(Excluding authentication=jaspi, cannot co-exist with 
+     * authentication=classic) into a single SecurityDomain.  This is done as
+     * -i)creating all of the related hierarchy of types needed to exercise N Module Options Types and their associated 
+     *     Module Options instances would take too long to setup(N creates would signal N discovery runs before test could complete).
+     * -ii)setting the priority of this method lower than the discovery method means that we'll get all the same types in much 
+     *     less time.
+     *     
+     * @throws Exception
+     */
+    @Test(priority = 10)
+    public void testLoadStandardModuleOptionTypes() throws Exception {
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        //Adjust discovery depth to support deeper hierarchy depth of Module Option elements
+        setMaxDiscoveryDepthOverride(10);
+
+        //create new Security Domain
+        Address destination = new Address(PROFILE);
+        destination.addSegment(SECURITY_RESOURCE_KEY);
+        String securityDomainId = TEST_DOMAIN + "2";
+        destination.addSegment(SECURITY_DOMAIN_RESOURCE_KEY + "=" + securityDomainId);
+
+        ASConnection connection = getASConnection();
+        Result result = new Result();
+        //delete old one if present to setup clean slate
+        Operation op = new Operation("remove", destination);
+        result = connection.execute(op);
+
+        //build/rebuild hierarchy
+        op = new Operation("add", destination);
+        result = connection.execute(op);
+
+        //Ex. profile=standalone-ha,subsystem=security,security-domain
+        String addressPrefix = PROFILE + "," + SECURITY_RESOURCE_KEY + "," + SECURITY_DOMAIN_RESOURCE_KEY;
+
+        //loop over standard types and add base details for all of them to security domain
+        String address = "";
+        for (String attribute : jsonMap.keySet()) {
+            if (attribute.equals("policy-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",authorization=classic";
+            } else if (attribute.equals("acl-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",acl=classic";
+            } else if (attribute.equals("mapping-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",mapping=classic";
+            } else if (attribute.equals("trust-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",identity-trust=classic";
+            } else if (attribute.equals("provider-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",audit=classic";
+            } else if (attribute.equals("login-modules")) {
+                address = addressPrefix + "=" + securityDomainId + ",authentication=classic";
+            } else {
+                assert false : "An unknown attribute '" + attribute
+                    + "' was found. Is there a new type to be supported?";
+            }
+            //build the operation to add the component
+            ////Load json map into ModuleOptionType
+            List<Value> moduleTypeValue = new ArrayList<Value>();
+            try {
+                // loading jsonMap contents for Ex. 'login-module'
+                JsonNode node = mapper.readTree(jsonMap.get(attribute));
+                Object obj = mapper.treeToValue(node, Object.class);
+                result.setResult(obj);
+                result.setOutcome("success");
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //populate the Value component complete with module Options.
+            moduleTypeValue = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
+                ModuleOptionsComponent.loadModuleOptionType(attribute));
+            op = ModuleOptionsComponent.createAddModuleOptionTypeOperation(new Address(address), attribute,
+                moduleTypeValue);
+            //submit the command
+            result = connection.execute(op);
+        }
+    }
+
+    @Test(priority = 11, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void initialDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        Thread.sleep(20 * 1000L); // delay so that PC gets a chance to scan for resources
+        //Have thread sleep longer to discover deeper resource types. 
+        Thread.sleep(120 * 1000L); // delay so that PC gets a chance to scan for resources
     }
 
+    /** This test method exercises a number of things:
+     *  - that the security-domain children loaded have been created successfully
+     *  - that all of the supported Module Option Type children(excluding 'authentication=jaspi') have been 
+     *    discovered as AS7 types successfully.
+     *  - that the correct child attribute was specified for each type //Ex. acl=classic -> acl-modules
+     *  - 
+     * 
+     * @throws Exception
+     */
     @Test(priority = 12)
+    public void testDiscoveredSecurityNodes() throws Exception {
+        //lazy-load configurationManager
+        if (testConfigurationManager == null) {
+            testConfigurationManager = this.pluginContainer.getConfigurationManager();
+            testConfigurationManager = pluginContainer.getConfigurationManager();
+            testConfigurationManager.initialize();
+            Thread.sleep(20 * 1000L);
+        }
+        //iterate through list of nodes and make sure they've all been discovered
+        ////Ex. profile=full-ha,subsystem=security,security-domain=testDomain2,acl=classic
+        String attribute = null;
+        for (String jsonKey : jsonMap.keySet()) {
+            //Ex. policy-modules
+            attribute = jsonKey;
+            //spinder 6/26/12: Temporarily disable until figure out why NPE happens only for this type?
+            if (attribute.equals(ModuleOptionsComponent.ModuleOptionType.Authentication.getAttribute())) {
+                break;//
+            }
+            //Ex. name=acl-modules
+            //check the configuration for the Module Option Type Ex. 'Acl (Profile)' Resource. Should be able to verify components
+            Resource aclResource = getModuleOptionResourceResource(attribute);
+            //assert non-zero id returned
+            assert aclResource.getId() > 0 : "The resource was not properly initialized. Expected id >0 but got:"
+                + aclResource.getId();
+
+            //Now request the resource complete with resource config
+            Configuration loadedConfiguration = testConfigurationManager.loadResourceConfiguration(aclResource.getId());
+            String code = null;
+            String type = null;
+            String flag = null;
+            //populate the associated attributes if it's supported.
+            for (String key : loadedConfiguration.getAllProperties().keySet()) {
+                Property property = loadedConfiguration.getAllProperties().get(key);
+                if (key.equals("code")) {
+                    code = ((PropertySimple) property).getStringValue();
+                } else if (key.equals("flag")) {
+                    flag = ((PropertySimple) property).getStringValue();
+                } else {//Ex. type.
+                    type = ((PropertySimple) property).getStringValue();
+                }
+            }
+
+            //retrieve module options as well.
+            String jsonContent = jsonMap.get(attribute);
+            Result result = new Result();
+            try {
+                // loading jsonMap contents for Ex. 'login-module'
+                JsonNode node = mapper.readTree(jsonContent);
+                Object obj = mapper.treeToValue(node, Object.class);
+                result.setResult(obj);
+                result.setOutcome("success");
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                assert false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                assert false;
+            }
+
+            //populate the Value component complete with module Options.
+            List<Value> moduleTypeValue = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
+                ModuleOptionsComponent.loadModuleOptionType(attribute));
+            Value moduleOptionType = moduleTypeValue.get(0);
+            //Ex. retrieve the acl-modules component and assert values.
+            //always test 'code'
+            assert moduleOptionType.getCode().equals(code) : "Module Option 'code' value is not correct. Expected '"
+                + code + "' but was '" + moduleOptionType.getCode() + "'";
+            if (attribute.equals(ModuleOptionsComponent.ModuleOptionType.Mapping.getAttribute())) {
+                assert moduleOptionType.getType().equals(type) : "Mapping Module 'type' value is not correct. Expected '"
+                    + type + "' but was '" + moduleOptionType.getType() + "'";
+            } else if (!attribute.equals(ModuleOptionsComponent.ModuleOptionType.Audit.getAttribute())) {//Audit has no second parameter
+                assert moduleOptionType.getFlag().equals(flag) : "Provider Module 'flag' value is not correct. Expected '"
+                    + flag + "' but was '" + moduleOptionType.getFlag() + "'";
+            }
+        }
+        //TODO spinder 6-26-12: retrieve the Module Options and test them too.
+    }
+
+    @Test(priority = 13)
     public void testCreateSecurityDomain() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -140,7 +332,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
     }
 
-    @Test(priority = 13)
+    @Test(priority = 14)
     public void testAuthenticationClassic() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -179,7 +371,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
     }
 
-    @Test(priority = 14)
+    @Test(priority = 15)
     public void testDeleteSecurityDomain() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -210,6 +402,15 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
     }
 
+    //    public static void main(String[] args) {
+    //        SecurityModuleOptionsTest setup = new SecurityModuleOptionsTest();
+    //        try {
+    //            setup.testLoadStandardModuleOptionTypes();
+    //        } catch (Exception e) {
+    //            e.printStackTrace();
+    //        }
+    //    }
+
     private Resource getResource() {
 
         InventoryManager im = pluginContainer.getInventoryManager();
@@ -218,6 +419,82 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             StandaloneServerComponentTest.RESOURCE_KEY);
         Resource bindings = getResourceByTypeAndKey(server, RESOURCE_TYPE, RESOURCE_KEY);
         return bindings;
+    }
+
+    /** Automates
+     * 
+     * @param optionAttributeType
+     * @return
+     */
+    private Resource getModuleOptionResourceResource(String optionAttributeType) {
+        Resource moduleOptionResource = null;
+        String securityDomainId = SECURITY_DOMAIN_RESOURCE_KEY + "=" + TEST_DOMAIN + "2";
+        if (testSecurityDomain == null) {
+            InventoryManager im = pluginContainer.getInventoryManager();
+            Resource platform = im.getPlatform();
+            //host controller
+            ResourceType hostControllerType = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME,
+                ResourceCategory.SERVER, null);
+            Resource hostController = getResourceByTypeAndKey(platform, hostControllerType,
+                "/tmp/jboss-as-6.0.0.GA/domain");
+            //profile=full-ha
+            ResourceType profileType = new ResourceType("Profile", PLUGIN_NAME, ResourceCategory.SERVICE, null);
+            String key = PROFILE;
+            Resource profile = getResourceByTypeAndKey(hostController, profileType, key);
+
+            //Security (Profile)
+            ResourceType securityType = new ResourceType("Security (Profile)", PLUGIN_NAME, ResourceCategory.SERVICE,
+                null);
+            key += "," + SECURITY_RESOURCE_KEY;
+            Resource security = getResourceByTypeAndKey(profile, securityType, key);
+
+            //Security Domain (Profile)
+            ResourceType domainType = new ResourceType("Security Domain (Profile)", PLUGIN_NAME,
+                ResourceCategory.SERVICE, null);
+            key += "," + securityDomainId;
+            testSecurityDomainKey = key;
+            testSecurityDomain = getResourceByTypeAndKey(security, domainType, key);
+        }
+
+        //acl=classic
+        String descriptorName = "";
+        String moduleAttribute = "";
+        //acl
+        if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Acl.getAttribute())) {
+            descriptorName = "ACL (Profile)";
+            moduleAttribute = "acl=classic";
+        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Audit.getAttribute())) {
+            descriptorName = "Audit (Profile)";
+            moduleAttribute = "audit=classic";
+        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authentication.getAttribute())) {
+            descriptorName = "Authentication (Classic - Profile)";
+            moduleAttribute = "authentication=classic";
+        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authorization.getAttribute())) {
+            descriptorName = "Authorization (Profile)";
+            moduleAttribute = "authorization=classic";
+        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.IdentityTrust.getAttribute())) {
+            descriptorName = "Identity Trust (Profile)";
+            moduleAttribute = "identity-trust=classic";
+        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Mapping.getAttribute())) {
+            descriptorName = "Mapping (Profile)";
+            moduleAttribute = "mapping=classic";
+        }
+        //Build the right Module Option Type. Ex. ACL (Profile), etc.
+        ResourceType moduleOptionType = new ResourceType(descriptorName, PLUGIN_NAME, ResourceCategory.SERVICE, null);
+        ConfigurationDefinition cdef = new ConfigurationDefinition(descriptorName, null);
+        moduleOptionType.setResourceConfigurationDefinition(cdef);
+        //Ex. profile=full-ha,subsystem=security,security-domain=testDomain2,identity-trust=classic
+        String moduleOptionTypeKey = testSecurityDomainKey += "," + moduleAttribute;
+
+        if (!testSecurityDomainKey.endsWith(securityDomainId)) {
+            moduleOptionTypeKey = testSecurityDomainKey.substring(0, testSecurityDomainKey.indexOf(securityDomainId)
+                + securityDomainId.length())
+                + "," + moduleAttribute;
+        }
+
+        moduleOptionResource = getResourceByTypeAndKey(testSecurityDomain, moduleOptionType, moduleOptionTypeKey);
+
+        return moduleOptionResource;
     }
 
     private Resource getResource(Resource parentResource, String pluginDescriptorTypeName, String resourceKey) {

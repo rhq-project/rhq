@@ -7,6 +7,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -82,8 +83,10 @@ public class MeasurementCollectorRunnable implements Runnable {
 
     /**
      * The last known measurements for the resource that this collector is monitoring.
+     * You must synchronize access to this via the R/W lock.
      */
-    private MeasurementReport lastReport = new MeasurementReport();
+    private MeasurementReport cachedReport = new MeasurementReport();
+    private ReentrantLock cachedReportLock = new ReentrantLock();
 
     /**
      * Accumulated report.
@@ -133,7 +136,7 @@ public class MeasurementCollectorRunnable implements Runnable {
         this.initialDelay = initialDelay;
         this.interval = interval;
         this.threadPool = threadPool;
-        this.lastReport = new MeasurementReport();
+        this.cachedReport = new MeasurementReport();
         this.facetId = measured.toString();
     }
 
@@ -144,8 +147,16 @@ public class MeasurementCollectorRunnable implements Runnable {
      * their {@link MeasurementFacet#getValues()} method should simply be calling this method.
      */
     public void getLastValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        this.requestedMetrics.addAll(metrics);
-        report.add(this.lastReport, metrics);
+        requestedMetrics.addAll(metrics);
+        cachedReportLock.lock();
+        try {
+            // For all metrics being requested, take their cached values last collected and transfer them to the given report.
+            // Note that we only remove the metrics that were being requested, leaving any cached data intact so they can
+            // be retreived later when they are requested.
+            report.add(cachedReport, metrics, true);
+        } finally {
+            cachedReportLock.unlock();
+        }
     }
 
     /**
@@ -154,11 +165,11 @@ public class MeasurementCollectorRunnable implements Runnable {
      * to start the measurement checking that this object performs.
      */
     public void start() {
-        boolean isStarted = this.started.getAndSet(true);
+        boolean isStarted = started.getAndSet(true);
         if (!isStarted) {
             task.cancel(true);
             task = threadPool.scheduleWithFixedDelay(this, initialDelay, interval, TimeUnit.MILLISECONDS);
-            log.debug("measurement collector started: " + this.facetId);
+            log.debug("measurement collector started: " + facetId);
         }
     }
 
@@ -168,9 +179,18 @@ public class MeasurementCollectorRunnable implements Runnable {
      * to stop the measurement checking that this object performs.
      */
     public void stop() {
-        this.started.set(false);
-        this.task.cancel(true);
-        this.requestedMetrics.clear();
+        started.set(false);
+        task.cancel(true);
+
+        cachedReportLock.lock();
+        try {
+            cachedReport = new MeasurementReport();
+        } finally {
+            cachedReportLock.unlock();
+        }
+
+        requestedMetrics.clear();
+
         log.debug("measurement collector stopped: " + facetId);
     }
 
@@ -183,12 +203,22 @@ public class MeasurementCollectorRunnable implements Runnable {
         log.debug("measurement collector is collecting now: " + facetId);
 
         ClassLoader originalClassloader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(this.contextClassloader);
+        Thread.currentThread().setContextClassLoader(contextClassloader);
 
         try {
-            this.measured.getValues(lastReport, requestedMetrics);
+            // collect the new data for all metrics previous requested in the past
+            MeasurementReport newData = new MeasurementReport();
+            measured.getValues(newData, requestedMetrics);
             if (log.isDebugEnabled()) {
-                log.debug("measurement collector last report: " + lastReport);
+                log.debug("measurement collector latest data: " + newData);
+            }
+
+            // put the new data in our cached report (lastReport)
+            cachedReportLock.lock();
+            try {
+                cachedReport.add(newData, null, false);
+            } finally {
+                cachedReportLock.unlock();
             }
         } catch (Exception e) {
             log.warn("measurement collector failed to get values", e);

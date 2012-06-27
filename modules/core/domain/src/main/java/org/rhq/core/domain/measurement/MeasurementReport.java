@@ -145,12 +145,20 @@ public class MeasurementReport implements Serializable {
      * @param report the report that contains the measurements to add
      * @param metrics the metrics whose measurement data (if found in the given report) should be added to this report.
      *                If null or empty, then all of the data in the given report will be added to this report.
+     * @param removeSourceData if true, any data that was transferred from <code>report</code> to this object will be removed
+     *                         from the original <code>report</code> that was passed into this method.
      */
-    public synchronized void add(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
+    public synchronized void add(MeasurementReport report, Set<MeasurementScheduleRequest> metrics,
+        boolean removeSourceData) {
         if (metrics == null || metrics.isEmpty()) {
             measurementNumericData.addAll(report.measurementNumericData);
             measurementTraitData.addAll(report.measurementTraitData);
             callTimeData.addAll(report.callTimeData);
+            if (removeSourceData) {
+                report.measurementNumericData.clear();
+                report.measurementTraitData.clear();
+                report.callTimeData.clear();
+            }
         } else {
             // note that usually the metric set is very small (typically not more than around 5, probably normally around 1 or 2)
             // so this loop isn't going to be performed with lots of iterations.
@@ -162,6 +170,9 @@ public class MeasurementReport implements Serializable {
                         MeasurementDataNumeric data = i.next();
                         if (data.getName().equals(metric.getName())) {
                             measurementNumericData.add(data);
+                            if (removeSourceData) {
+                                i.remove();
+                            }
                         }
                     }
                     break;
@@ -172,6 +183,9 @@ public class MeasurementReport implements Serializable {
                         MeasurementDataTrait data = i.next();
                         if (data.getName().equals(metric.getName())) {
                             measurementTraitData.add(data);
+                            if (removeSourceData) {
+                                i.remove();
+                            }
                         }
                     }
                     break;
@@ -180,6 +194,10 @@ public class MeasurementReport implements Serializable {
                     // There is only ever one calltime metric per resource so if we are being asked to
                     // add the calltime data, we can avoid doing any iterations and just use addAll API.
                     callTimeData.addAll(report.callTimeData);
+                    if (removeSourceData) {
+                        report.callTimeData.clear();
+                    }
+
                     break;
                 }
                 default: {

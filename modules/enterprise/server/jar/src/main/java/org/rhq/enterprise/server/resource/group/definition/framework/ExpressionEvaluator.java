@@ -178,6 +178,20 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         resourceExpressions.add("res.parentResource.parentResource.avail.availabilityType");
         resourceExpressions.add("res.parentResource.parentResource.parentResource.avail.availabilityType");
         resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.avail.availabilityType");
+
+        resourceExpressions.add("trait.value");
+        resourceExpressions.add("child.trait.value");
+        resourceExpressions.add("res.parentResource.trait.value");
+        resourceExpressions.add("res.parentResource.parentResource.trait.value");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.trait.value");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.trait.value");
+
+        resourceExpressions.add("simple.name");
+        resourceExpressions.add("child.simple.name");
+        resourceExpressions.add("res.parentResource.simple.name");
+        resourceExpressions.add("res.parentResource.parentResource.simple.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.simple.name");
+        resourceExpressions.add("res.parentResource.parentResource.parentResource.parentResource.simple.name");
     }
 
     public class Result {
@@ -549,10 +563,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 addJoinCondition(JoinCondition.AVAILABILITY);
                 populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);
             } else if (context == ParseContext.Trait) {
-                if (whereConditions.containsKey(TRAIT_ALIAS + ".value")) {
-                    throw new InvalidExpressionException("Cannot have multiple trait expressions.");
-                }
-
                 // SELECT res.id FROM Resource res JOIN res.schedules sched, sched.definition def, MeasurementDataTrait trait
                 // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
                 // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)

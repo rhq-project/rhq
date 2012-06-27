@@ -29,7 +29,6 @@ import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionE
 import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.QueryUtility;
-import org.rhq.test.TransactionCallback;
 
 public class ExpressionEvaluatorTest extends AbstractEJB3Test {
 
@@ -158,7 +157,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " }, };
     }
 
-//    @Test(groups = "integration.session")
+    @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {
 
         String[][] successTestCases = getSuccessTestCases();
@@ -215,7 +214,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         }
     }
 
-//    @Test(groups = "integration.session")
+    @Test(groups = "integration.session")
     public void testTokenizer() {
 
         String[] input = { "resource.child.name", //
@@ -257,15 +256,6 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         }
     }
 
-    private void executeAndRollback(TransactionCallback callback) throws Exception {
-        try {
-            getTransactionManager().begin();
-            callback.execute();
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
     private static interface ExpressionGenerator {
         String[] getExpressions();
     }
@@ -284,34 +274,86 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(expectedExceptions = InvalidExpressionException.class,
-        expectedExceptionsMessageRegExp = ".*Cannot have multiple trait expressions.*")
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
     public void doNotAllowMultipleResourceTraitExpressions() throws Exception {
-        executeAndRollback(new TransactionCallback() {
+        evaluateExpressions(new ExpressionGenerator() {
             @Override
-            public void execute() throws Exception {
-                ExpressionEvaluator evaluator = new ExpressionEvaluator();
-                evaluator.addExpression("resource.trait[agentHomeDirectory] = /var/rhq-agent");
-                evaluator.addExpression("resource.trait[reasonForLastRestart] = OOMError");
-
-                evaluator.execute();
-                evaluator.iterator().next();
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.trait[reasonForLastRestart] = OOMError"
+                };
             }
         });
     }
 
-    @Test(expectedExceptions = InvalidExpressionException.class,
-        expectedExceptionsMessageRegExp = ".*Cannot have multiple trait expressions.*")
-    public void doNotAllowMultiplParentResourceTraitExpressions() throws Exception {
-        executeAndRollback(new TransactionCallback() {
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleChildResourceTraitExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
             @Override
-            public void execute() throws Exception {
-                ExpressionEvaluator evaluator = new ExpressionEvaluator();
-                evaluator.addExpression("resource.parent.trait[agentHomeDirectory] = /var/rhq-agent");
-                evaluator.addExpression("resource.parent.trait[reasonForLastRestart] = OOMError");
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.child.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.child.trait[reasonForLastRestart] = OOMError"
+                };
+            }
+        });
+    }
 
-                evaluator.execute();
-                evaluator.iterator().next();
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleParentResourceTraitExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.parent.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.parent.trait[reasonForLastRestart] = OOMError"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGrandParentResourceTraitExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.grandParent.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.grandParent.trait[reasonForLastRestart] = OOMError"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGrandParentResourceTraitExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.greatGrandParent.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.greatGrandParent.trait[reasonForLastRestart] = OOMError"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGreatGrandParentResourceTraitExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] {
+                    "resource.greatGreatGrandParent.trait[agentHomeDirectory] = /var/rhq-agent",
+                    "resource.greatGreatGrandParent.trait[reasonForLastRestart] = OOMError"
+                };
             }
         });
     }
@@ -743,6 +785,174 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 return new String[] {
                     "resource.greatGreatGrandParent.availability = UP",
                     "resource.greatGreatGrandParent.availability = UNKNOWN"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.pluginConfiguration[x] = 1",
+                    "resource.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleChildResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.child.pluginConfiguration[x] = 1",
+                    "resource.child.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleParentResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.parent.pluginConfiguration[x] = 1",
+                    "resource.parent.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGrandParentResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.grandParent.pluginConfiguration[x] = 1",
+                    "resource.grandParent.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGrandParentResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.greatGrandParent.pluginConfiguration[x] = 1",
+                    "resource.greatGrandParent.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGreatGrandParentResourcePluginConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.greatGreatGrandParent.pluginConfiguration[x] = 1",
+                    "resource.greatGreatGrandParent.pluginConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.resourceConfiguration[x] = 1",
+                    "resource.resourceConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleChildResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.child.resourceConfiguration[x] = 1",
+                    "resource.child.resourceConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleParentResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.parent.resourceConfiguration[x] = 1",
+                    "resource.parent.resourceConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGrandParentResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.grandParent.resourceConfiguration[x] = 1",
+                    "resource.grandParent.resourceConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGrandParentResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.greatGrandParent.resourceConfiguration[x] = 1",
+                    "resource.greatGrandParent.resourceConfiguration[y] = 2"
+                };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = DuplicateExpressionTypeException.class,
+        expectedExceptionsMessageRegExp = "You cannot specify multiple.*")
+    public void doNotAllowMultipleGreatGreatGrandParentResourceConfigExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[]{
+                    "resource.greatGreatGrandParent.resourceConfiguration[x] = 1",
+                    "resource.greatGreatGrandParent.resourceConfiguration[y] = 2"
                 };
             }
         });

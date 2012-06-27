@@ -115,7 +115,7 @@ public class MeasurementDataTraitCriteria extends Criteria implements TraitMeasu
 
     @Override
     public Integer getFilterResourceId() {
-        return filterGroupId;
+        return filterResourceId;
     }
 
     public void addFilterDefinitionId(Integer filterDefinitionId) {

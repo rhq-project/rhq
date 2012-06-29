@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.itest.standalone;
+package org.rhq.modules.plugins.jbossas7.itest.domain;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -57,6 +57,7 @@ import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
 import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
+import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -68,7 +69,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *      Identity-Trust]
  * @author Simeon Pinder
  */
-@Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
+@Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
     private static ASConnection con = null;

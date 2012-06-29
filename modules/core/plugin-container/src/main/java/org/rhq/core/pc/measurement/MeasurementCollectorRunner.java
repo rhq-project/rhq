@@ -87,7 +87,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                         }
                     }
 
-                    this.measurementManager.reschedule(requests);
+                    this.measurementManager.reschedule(requests, 31000L); // BZ 834019 - go to the next collection interval plus 31s to skew it
                     return report;
                 }
 

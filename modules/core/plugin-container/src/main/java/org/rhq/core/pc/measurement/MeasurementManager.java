@@ -516,11 +516,31 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return nextScheduledSet;
     }
 
+    /**
+     * Reschedules the given measurement schedules so the next collection occurs in the future.
+     * The next collection will be pushed out by the number of seconds of the schedule's collection
+     * interval.
+     *
+     * @param scheduledMeasurementInfos the schedules to reschedule
+     */
     public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
+        reschedule(scheduledMeasurementInfos, 0);
+    }
+
+    /**
+     * Reschedules the given measurement schedules so the next collection occurs in the future.
+     * The next collection will be pushed out by the number of seconds of the schedule's collection
+     * interval plus (or minus) the given adjustment (which is provided in milliseconds).
+     *
+     * @param scheduledMeasurementInfos the schedules to reschedule
+     * @param adjustment the number of milliseconds to adjust the next collection time. If 0, the
+     *                   next collection time will be the number of seconds in the future as indicated
+     *                   by the schedule's interval.
+     */
+    public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos, long adjustment) {
         for (ScheduledMeasurementInfo scheduledMeasurement : scheduledMeasurementInfos) {
-            // Iterate to next collection time
             scheduledMeasurement.setNextCollection(scheduledMeasurement.getNextCollection()
-                + scheduledMeasurement.getInterval());
+                + scheduledMeasurement.getInterval() + adjustment);
             this.scheduledRequests.offer(scheduledMeasurement);
         }
     }

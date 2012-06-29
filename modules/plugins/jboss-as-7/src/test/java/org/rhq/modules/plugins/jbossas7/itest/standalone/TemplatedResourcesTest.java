@@ -58,7 +58,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        Thread.sleep(20 * 1000L);
+        Thread.sleep(40 * 1000L);
     }
 
     @Test(priority = 11)

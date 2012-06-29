@@ -491,7 +491,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             ResourceType hostControllerType = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME,
                 ResourceCategory.SERVER, null);
             Resource hostController = getResourceByTypeAndKey(platform, hostControllerType,
-                "/tmp/jboss-as-6.0.0.GA/domain");
+                "/tmp/jboss-as-6.0.0/domain");
             //profile=full-ha
             ResourceType profileType = new ResourceType("Profile", PLUGIN_NAME, ResourceCategory.SERVICE, null);
             String key = PROFILE;

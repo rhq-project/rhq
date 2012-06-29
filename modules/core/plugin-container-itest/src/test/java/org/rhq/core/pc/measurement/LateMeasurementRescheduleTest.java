@@ -3,8 +3,8 @@ package org.rhq.core.pc.measurement;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -20,7 +20,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.plugins.test.SingleResourceDiscoveryComponent;
-import org.rhq.plugins.test.measurement.BZ821058ResourceComponent;
+import org.rhq.plugins.test.measurement.BZ834019ResourceComponent;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -31,17 +31,21 @@ import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
- * Test for BZ 821058
+ * Test for BZ 834019.
  */
 @RunDiscovery
-public class ReadOnlyScheduleSetTest extends Arquillian {
+public class LateMeasurementRescheduleTest extends Arquillian {
 
-    @Deployment(name = "bz821058Plugin")
+    @Deployment(name = "SingleMetricPlugin")
     @TargetsContainer("connected-pc-with-metric-collection")
     public static RhqAgentPluginArchive getTestPlugin() {
-        RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "bz821058-plugin-1.0.jar");
-        return pluginJar.setPluginDescriptor("bz821058-rhq-plugin.xml").addClasses(
-            SingleResourceDiscoveryComponent.class, BZ821058ResourceComponent.class);
+        RhqAgentPluginArchive pluginJar = ShrinkWrap
+            .create(RhqAgentPluginArchive.class, "single-metric-plugin-1.0.jar");
+        HashMap<String, String> replacements = new HashMap<String, String>();
+        replacements.put("@@@discovery@@@", SingleResourceDiscoveryComponent.class.getName());
+        replacements.put("@@@class@@@", BZ834019ResourceComponent.class.getName());
+        return pluginJar.setPluginDescriptorFromTemplate("single-metric-rhq-plugin.xml", replacements).addClasses(
+            SingleResourceDiscoveryComponent.class, BZ834019ResourceComponent.class);
     }
 
     @ArquillianResource
@@ -53,13 +57,13 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
     private FakeServerInventory fakeServerInventory;
     private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
-    @ResourceContainers(plugin = "bz821058Plugin", resourceType = "BZ821058Server")
+    @ResourceContainers(plugin = "SingleMetricPlugin", resourceType = "SingleMetricServer")
     private Set<ResourceContainer> containers;
 
-    @ResourceComponentInstances(plugin = "bz821058Plugin", resourceType = "BZ821058Server")
-    private Set<BZ821058ResourceComponent> components;
+    @ResourceComponentInstances(plugin = "SingleMetricPlugin", resourceType = "SingleMetricServer")
+    private Set<BZ834019ResourceComponent> components;
 
-    @BeforeDiscovery(testMethods = "testBZ821058")
+    @BeforeDiscovery(testMethods = "testBZ834019")
     public void resetServerServices() throws Exception {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
@@ -81,8 +85,8 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
         }
     }
 
-    @Test(groups = "pc.itest.bz821058", priority = 20)
-    public void testBZ821058() throws Exception {
+    @Test(groups = "pc.itest.bz834019", priority = 20)
+    public void testBZ834019() throws Exception {
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());
 
@@ -94,12 +98,8 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
 
         assert containers.iterator().next().getResource().getInventoryStatus() == InventoryStatus.COMMITTED;
 
-        BZ821058ResourceComponent server = this.components.iterator().next();
-        // collection interval is set to 30s, and our container "connected-pc-with-metric-collection"
-        // is configured to start collecting metrics after an initial delay of 10s (see arquillian.xml).
-        // So let's give the test some time so the measurement facet can be called.
-        server.getValuesLatch.await(45, TimeUnit.SECONDS);
+        BZ834019ResourceComponent server = this.components.iterator().next();
 
-        assert !server.errors.isEmpty() : "there should have been exceptions that occurred in the getValues method";
+        // TODO do things to test BZ 834019
     }
 }

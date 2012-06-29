@@ -7,6 +7,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
@@ -35,6 +36,21 @@ public interface RhqAgentPluginDescriptorContainer<T extends Archive<T>> {
      */
     ArchivePath getRequiredPluginsPath();
     
+    /**
+     * Sets the plugin descriptor using the plugin descriptor template resource, making
+     * a copy of that resource and replacing templatized variables in that file with
+     * replacement values that are passed into this method.
+     * The {@link ClassLoader} is used to obtain the plugin descriptor template resource, but
+     * it is assumed to be a file on the file system.
+     *
+     * @param resourceName the name of the plugin descriptor template resource as accessible by the class loader
+     * @param replacementValues map with keys of template replacement variable names with their replacement values 
+     * @return the archive itself
+     * @throws IllegalArgumentException if resourceName or replacementValues is null
+     */
+    T setPluginDescriptorFromTemplate(String resourceName, Map<String, String> replacementValues)
+        throws IllegalArgumentException;
+
     /**
      * Sets the plugin descriptor using the resource name. The {@link ClassLoader} is
      * used to obtain the resource.

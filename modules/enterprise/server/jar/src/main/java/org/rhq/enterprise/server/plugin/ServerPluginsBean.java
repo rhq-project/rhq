@@ -631,6 +631,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public ControlResults invokeServerPluginControl(Subject subject, PluginKey pluginKey, String controlName,
         Configuration params) throws Exception {
 

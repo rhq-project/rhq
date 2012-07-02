@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.server.resource.group.definition.framework;
+package org.rhq.core.domain.resource.group;
 
 /**
  * @author John Sanda

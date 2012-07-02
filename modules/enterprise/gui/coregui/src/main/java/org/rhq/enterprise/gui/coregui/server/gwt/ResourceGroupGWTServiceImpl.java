@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -146,20 +147,28 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void updateGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException {
+    public void updateGroupDefinition(GroupDefinition groupDefinition)
+        throws DuplicateExpressionTypeException, RuntimeException {
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
         } catch (Throwable t) {
+            if (t instanceof DuplicateExpressionTypeException) {
+                throw (DuplicateExpressionTypeException) t;
+            }
             throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void recalculateGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException {
+    public void recalculateGroupDefinitions(int[] groupDefinitionIds)
+        throws DuplicateExpressionTypeException, RuntimeException {
         try {
             for (int nextGroupDefinitionId : groupDefinitionIds) {
                 definitionManager.calculateGroupMembership(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
+            if (t instanceof DuplicateExpressionTypeException) {
+                throw (DuplicateExpressionTypeException) t;
+            }
             throw getExceptionToThrowToClient(t);
         }
     }

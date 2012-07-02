@@ -61,6 +61,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
@@ -239,7 +240,11 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(), caught);
+                    if (caught instanceof DuplicateExpressionTypeException) {
+                        CoreGUI.getMessageCenter().notify(new Message(caught.getMessage(), Message.Severity.Warning));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(), caught);
+                    }
                 }
 
                 @Override
@@ -487,6 +492,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_dynagroup_loadDefinitionFailure(String.valueOf(groupDefinitionId)), caught);
+
                         History.back();
                     }
 

@@ -545,7 +545,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (propertyMap instanceof Configuration) {
             this.topLevelPropertiesValuesManager.addMember(form);
         }
-        //form.setValidateOnExit(true);  // TODO: Remove this?
         form.setHiliteRequiredFields(true);
         form.setNumCols(4);
         form.setCellPadding(5);
@@ -1000,7 +999,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             removeField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                    Log.info("You want to delete: " + recordClickEvent.getRecordNum());
+                    Log.debug("You want to delete: " + recordClickEvent.getRecordNum());
                     SC.confirm(MSG.view_configEdit_confirm_2(), new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
@@ -1074,20 +1073,15 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private static boolean isAllReadOnly(List<PropertyDefinition> propertyDefinitions) {
-        // TODO (ips, 02/13/12): If we are going to do this correctly, we need to call isPropertyReadOnly() on each
-        //                       member property to determine whether that particular property is read-only or not,
-        //                       rather than relying solely on whether the member property definition is read-only; this
-        //                       is because, for a couple special cases, isPropertyReadOnly() returns false even when
-        //                       the prop def is read-only.
-        /*boolean allPropsDefsReadOnly = true;
+        boolean allPropsDefsReadOnly = true;
         for (PropertyDefinition subDef : propertyDefinitions) {
             if (!subDef.isReadOnly()) {
+                Log.debug("Found at least one non-readOnly property for: "+subDef.getName());
                 allPropsDefsReadOnly = false;
                 break;
             }
         }
-        return allPropsDefsReadOnly;*/
-        return false;
+        return allPropsDefsReadOnly;
     }
 
     private PropertyMapListGridRecord[] buildSummaryRecords(PropertyList propertyList,
@@ -1133,8 +1127,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             vLayout.addMember(footer);
 
             final IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"));
-            deleteButton.setIcon(Window.getImgURL("[SKIN]/actions/remove.png"));
-            deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
+            deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
+                    deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
             deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -1178,11 +1172,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
 
             final IButton newButton = new LocatableIButton(vLayout.extendLocatorId("New"), MSG.common_button_new());
-            newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
+            newButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             newButton.setTooltip(MSG.view_configEdit_tooltip_2());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    // TODO: selenium locators
                     final Window popup = new Window();
                     popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
@@ -1276,7 +1269,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return buildComplexPropertyField(vLayout);
     }
 
-    private LinkedHashMap<String, String> buildValueMap(PropertyList propertyList) {
+    private static LinkedHashMap<String, String> buildValueMap(PropertyList propertyList) {
         LinkedHashMap<String, String> memberValueToIndexMap = new LinkedHashMap<String, String>();
         List<Property> memberProperties = propertyList.getList();
         int index = 0;
@@ -1296,13 +1289,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
         final PropertySimple propertySimple) {
-        Log.debug("Building simple field for " + propertySimple + "...");
 
         FormItem valueItem = null;
 
         boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
+        Log.debug("Building simple field for " + propertySimple +"(read-only:"+propertyIsReadOnly+")...");
+
         // TODO (ips, 03/25/11): We eventually want to use StaticTextItems for read-only PASSWORD props too, but we have
-        //                       to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
+        // to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
         if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
             valueItem = new StaticTextItem();
         } else {

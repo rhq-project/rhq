@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -190,7 +191,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                             .view_configurationDetails_messageDetailed(version, resource.getName()),
                             Message.Severity.Info);
                     } else {
-                        // TODO: i18n
                         message = new Message(MSG.view_configurationDetails_configNotUpdatedDueToNoChange(),
                             Message.Severity.Warning);
                     }

@@ -198,7 +198,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getGroupAlertDefinitionService().createGroupAlertDefinitions(alertDefinition,
                 Integer.valueOf(this.group.getId()), new AsyncCallback<Integer>() {
@@ -216,7 +216,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         } else {
-            GWTServiceLookup.getGroupAlertDefinitionService().updateGroupAlertDefinitions(alertDefinition, true,
+            GWTServiceLookup.getGroupAlertDefinitionService().updateGroupAlertDefinitions(alertDefinition,
+                purgeInternals,
                 new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {

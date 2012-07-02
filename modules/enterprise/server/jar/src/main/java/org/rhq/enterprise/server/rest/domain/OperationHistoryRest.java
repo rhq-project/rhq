@@ -32,8 +32,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class OperationHistoryRest {
 
+    String operationName;
+    String resourceName;
+    long lastModified;
     String status;
     String errorMessage;
+    String jobId;
 
     Map<String,Object> result = new HashMap<String, Object>();
     List<Link> links = new ArrayList<Link>();
@@ -68,5 +72,37 @@ public class OperationHistoryRest {
 
     public void setLinks(List<Link> links) {
         this.links = links;
+    }
+
+    public String getOperationName() {
+        return operationName;
+    }
+
+    public void setOperationName(String operationName) {
+        this.operationName = operationName;
+    }
+
+    public String getResourceName() {
+        return resourceName;
+    }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
+    public long getLastModified() {
+        return lastModified;
+    }
+
+    public void lastModified(long date) {
+        this.lastModified = date;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
     }
 }

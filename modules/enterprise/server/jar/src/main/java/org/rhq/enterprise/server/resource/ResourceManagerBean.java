@@ -380,8 +380,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // The most likely reason for a failure, although unlikely in itself, is that newly discovered resources
                 // are currently being merged into the platform, and associated with the doomed agent.  In this case
                 // the user must wait until the merge is complete.  Make sure the caller knows about this possibility.
-                throw new IllegalStateException(
-                    "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.");
+                String msg = "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.";
+                throw new IllegalStateException(msg, (log.isDebugEnabled() ? e : null));
             }
 
             throw e;
@@ -511,13 +511,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
-            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
-            Alert.QUERY_DELETE_BY_RESOURCES, //                order
-            AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
-            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
-            AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
-            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //             Don't
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, // alter               
+            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //          the
+            Alert.QUERY_DELETE_BY_RESOURCES, //                         order
+            AlertCondition.QUERY_DELETE_BY_RESOURCES, //                of
+            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //           alert-
+            AlertNotification.QUERY_DELETE_BY_RESOURCES, //             related
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //               deletes
             JPADrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
             JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 

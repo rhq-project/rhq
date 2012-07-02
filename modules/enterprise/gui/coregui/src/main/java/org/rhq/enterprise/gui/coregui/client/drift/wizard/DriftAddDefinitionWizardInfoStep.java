@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -76,7 +77,7 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             SpacerItem spacerItem = new SpacerItem("Spacer");
             formItems.add(spacerItem);
 
-            SelectItem templateSelectItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
+            SelectItem templateSelectItem = new SortedSelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
             templateSelectItem.setTitleOrientation(TitleOrientation.TOP);
             templateSelectItem.setAlign(Alignment.LEFT);
             templateSelectItem.setWidth(300);

@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import static org.testng.Assert.assertNotNull;
+
 import java.util.Set;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -35,8 +37,6 @@ import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
 
-import static org.testng.Assert.assertNotNull;
-
 /**
  * The base class for all as7 plugin integration tests.
  *
@@ -50,6 +50,16 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     public static final String MANAGEMENT_PASSWORD = "admin";
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
+
+    private static int OVERRIDE_TYPE_HIERARCHY_DEPTH = -1;
+
+    public static int getMaxDiscoveryDepthOverride() {
+        return OVERRIDE_TYPE_HIERARCHY_DEPTH;
+    }
+
+    public static void setMaxDiscoveryDepthOverride(int overrideDepth) {
+        OVERRIDE_TYPE_HIERARCHY_DEPTH = overrideDepth;
+    }
 
     private static boolean createdManagementUsers;
 
@@ -115,6 +125,9 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
 
     @Override
     protected int getTypeHierarchyDepth() {
+        if (OVERRIDE_TYPE_HIERARCHY_DEPTH != -1) {
+            return OVERRIDE_TYPE_HIERARCHY_DEPTH;
+        }
         return TYPE_HIERARCHY_DEPTH;
     }
 

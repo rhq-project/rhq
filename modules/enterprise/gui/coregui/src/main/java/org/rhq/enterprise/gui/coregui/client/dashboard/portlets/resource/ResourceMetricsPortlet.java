@@ -100,6 +100,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack
+        column.setWidth100();
 
         //initialize to defaults
         end = System.currentTimeMillis();
@@ -239,16 +240,15 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         LocatableDynamicForm row = new LocatableDynamicForm(
                                                             recentMeasurementsContent.extendLocatorId(md.getName()));
                                                         row.setNumCols(3);
+                                                        row.setColWidths(65,"*","*");
                                                         row.setWidth100();
                                                         HTMLFlow graph = new HTMLFlow();
-                                                        //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
-                                                        //                            + commaDelimitedList + "</span>";
                                                         String contents = "<span id='sparkline_" + index
                                                             + "' class='dynamicsparkline' width='0' " + "values='"
                                                             + commaDelimitedList + "'>...</span>";
                                                         graph.setContents(contents);
                                                         graph.setContentsType(ContentsType.PAGE);
-                                                        //diable scrollbars on span
+                                                        //disable scrollbars on span
                                                         graph.setScrollbarSize(0);
 
                                                         CanvasItem graphContainer = new CanvasItem();
@@ -267,6 +267,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             destination);
                                                         link.setTitleVAlign(VerticalAlignment.TOP);
                                                         link.setAlign(Alignment.LEFT);
+                                                        link.setClipValue(false);
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -291,6 +292,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         value.setVAlign(VerticalAlignment.TOP);
 
                                                         row.setItems(graphContainer, link, value);
+                                                        row.setWidth100();
 
                                                         //if graph content returned
                                                         if ((md.getName().trim().indexOf("Trait.") == -1)

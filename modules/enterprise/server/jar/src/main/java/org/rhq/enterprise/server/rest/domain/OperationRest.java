@@ -16,7 +16,7 @@ public class OperationRest {
 
     int id;
     String name;
-    String state; // TODO Convert to enum
+    boolean readyToSubmit;
     int resourceId;
     int definitionId;
     Map<String,Object> params = new HashMap<String, Object>();
@@ -46,12 +46,12 @@ public class OperationRest {
         this.name = name;
     }
 
-    public String getState() {
-        return state;
+    public boolean isReadyToSubmit() {
+        return readyToSubmit;
     }
 
-    public void setState(String state) {
-        this.state = state;
+    public void setReadyToSubmit(boolean readyToSubmit) {
+        this.readyToSubmit = readyToSubmit;
     }
 
     public int getResourceId() {

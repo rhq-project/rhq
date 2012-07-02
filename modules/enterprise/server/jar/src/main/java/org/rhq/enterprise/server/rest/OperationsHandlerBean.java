@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,10 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -36,25 +40,32 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
+import org.rhq.enterprise.server.rest.domain.SimplePropDef;
 
 /**
  * Deal with operations
@@ -96,6 +107,8 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
             odr.setId(def.getId());
             odr.setName(def.getName());
 
+            copyParamsForDefinition(def, odr);
+
             builder=Response.ok(odr);
 
             // Add some links
@@ -115,8 +128,28 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
     }
 
+    private void copyParamsForDefinition(OperationDefinition def, OperationDefinitionRest odr) {
+        ConfigurationDefinition cd = def.getParametersConfigurationDefinition();
+        if (cd==null)
+            return;
+
+        for (Map.Entry<String,PropertyDefinition> entry : cd.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                SimplePropDef prop = new SimplePropDef();
+                prop.setName(pds.getName());
+                prop.setRequired(pds.isRequired());
+                prop.setType(pds.getType());
+                prop.setDefaultValue(pds.getDefaultValue());
+                odr.addParam(prop);
+            }
+            log.debug("copyParams: " + pd.getName() + " not yet supported");
+        }
+    }
+
     @Override
-    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request) {
+    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
 
         if (resourceId == null)
             throw new ParameterMissingException("resourceId");
@@ -139,6 +172,9 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
                 OperationDefinitionRest odr = new OperationDefinitionRest();
                 odr.setId(def.getId());
                 odr.setName(def.getName());
+
+                copyParamsForDefinition(def,odr);
+
                 UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
                 uriBuilder.path("/operation/definition/{id}");
                 uriBuilder.queryParam("resourceId",resourceId);
@@ -174,7 +210,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         }
         OperationRest operationRest = new OperationRest(resourceId,definitionId);
         operationRest.setId((int)System.currentTimeMillis()); // TODO better id (?)(we need one for pUT later on)
-        operationRest.setState("creating");
+        operationRest.setReadyToSubmit(false);
         operationRest.setName(opDef.getName());
         ConfigurationDefinition paramDefinition = opDef.getParametersConfigurationDefinition();
         if (paramDefinition != null) {
@@ -208,11 +244,11 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     @Override
     public Response updateOperation(int operationId, OperationRest operation, UriInfo uriInfo) {
 
-        if (operation.getState().equals("creating") && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
+        if (!operation.isReadyToSubmit() && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
             // TODO check all the required parameters for presence before allowing to submit
-            operation.setState("ready");
+            operation.setReadyToSubmit(true);
         }
-        if (operation.getState().equals("ready")) {
+        if (operation.isReadyToSubmit()) {
             // todo check params
 
             // submit
@@ -222,7 +258,7 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
                 parameters.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
             }
             ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,
-                    parameters,"TEst");
+                    parameters,"Test");
             JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/operation/history/{id}");
@@ -255,45 +291,121 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     }
 
     @Override
-    public Response outcome(String jobName, UriInfo uriInfo) {
+    public Response outcome(String jobName, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
 
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-        criteria.addFilterJobId(new JobId(jobName));
+        JobId jobId = new JobId(jobName);
+        criteria.addFilterJobId(jobId);
 
         ResourceOperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
         if (list==null || list.isEmpty()) {
-            log.info("No history with id " + new HistoryJobId(jobName) + " found");
-            throw new StuffNotFoundException("OperationHistory with id " + new HistoryJobId(jobName));
+            log.info("No history with id " + jobId + " found");
+            throw new StuffNotFoundException("OperationHistory with id " + jobId);
         }
 
         history = list.get(0);
+        OperationHistoryRest hist = historyToHistoryRest(history, uriInfo);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("operationHistory.ftl",hist));
+        } else {
+            builder = Response.ok(hist);
+        }
+        if (history.getStatus()== OperationRequestStatus.SUCCESS) {
+            // add a long time cache header
+            CacheControl cc = new CacheControl();
+            cc.setMaxAge(1200);
+            builder.cacheControl(cc);
+        }
+
+        return builder.build();
+
+    }
+
+    public Response listHistory(int resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        if (resourceId>0)
+            criteria.addFilterResourceIds(resourceId);
+
+        criteria.addSortEndTime(PageOrdering.DESC);
+
+        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+
+        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>(list.size());
+        for (ResourceOperationHistory roh : list) {
+            OperationHistoryRest historyRest = historyToHistoryRest(roh,uriInfo);
+            result.add(historyRest);
+        }
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listOperationHistory.ftl", result));
+        } else {
+            GenericEntity<List<OperationHistoryRest>> res = new GenericEntity<List<OperationHistoryRest>>(result) {};
+            builder = Response.ok(res);
+        }
+        return builder.build();
+    }
+
+    @Override
+    public Response deleteOperationHistoryItem(String jobName) {
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addFilterJobId(new JobId(jobName));
+        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+        if ((list != null && !list.isEmpty())) {
+
+            ResourceOperationHistory history = list.get(0);
+            opsManager.deleteOperationHistory(caller,history.getId(),false);
+        }
+        return Response.noContent().build();
+
+    }
+
+
+    private OperationHistoryRest historyToHistoryRest(ResourceOperationHistory history, UriInfo uriInfo) {
         String status;
         if (history.getStatus()==null)
-            status = " - no infomation yet -";
+            status = " - no information yet -";
         else
             status = history.getStatus().getDisplayName();
 
         OperationHistoryRest hist = new OperationHistoryRest();
         hist.setStatus(status);
+        if (history.getResource()!=null)
+            hist.setResourceName(history.getResource().getName());
+        hist.setOperationName(history.getOperationDefinition().getName());
+        hist.lastModified(history.getModifiedTime());
         if (history.getErrorMessage()!=null)
             hist.setErrorMessage(history.getErrorMessage());
         if (history.getResults()!=null) {
             Configuration results = history.getResults();
             for (Property p : results.getProperties()) {
-                hist.getResult().put(p.getName(),p.toString());
+                String val;
+                if (p instanceof PropertySimple)
+                    val = ((PropertySimple)p).getStringValue();
+                else
+                    val = p.toString();
+                hist.getResult().put(p.getName(),val);
             }
         }
 
+        String jobName = history.getJobName();
+        String jobGroup = history.getJobGroup();
+        JobId jobId = new JobId(jobName, jobGroup);
+        hist.setJobId(jobId.toString());
+
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/operation/history/{id}");
-        URI url = uriBuilder.build(new JobId(jobName));
+        URI url = uriBuilder.build(jobId);
         Link self = new Link("self",url.toString());
         hist.getLinks().add(self);
-
-
-        return Response.ok(hist).build();
-
+        return hist;
     }
+
 }

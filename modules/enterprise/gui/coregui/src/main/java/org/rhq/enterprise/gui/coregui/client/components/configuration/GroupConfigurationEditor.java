@@ -69,6 +69,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -755,12 +756,12 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 ((ComboBoxItem) editorItem).setAddUnknownValues(true);
             } else {
                 if (valueOptions.size() > 5) {
-                    editorItem = new SelectItem();
+                    editorItem = new SortedSelectItem();
                 } else {
                     // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when
                     //       our listgrid does not have the "unset" boolean field also present. If its just the value
                     //       field, the radio group editor won't show.
-                    editorItem = new SelectItem(); // new RadioGroupItem();
+                    editorItem = new SortedSelectItem(); // new RadioGroupItem();
                 }
             }
             editorItem.setValueMap(valueOptions);

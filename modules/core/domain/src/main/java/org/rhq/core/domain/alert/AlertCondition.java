@@ -290,7 +290,11 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
-        + "   WHERE ac.id = :alertConditionId ") })
+        + "   WHERE ac.id = :alertConditionId "),
+ @NamedQuery(name = AlertCondition.QUERY_DELETE_ORPHANED, query = "" //
+        + "  DELETE FROM AlertCondition ac " //
+        + "   WHERE ac.alertDefinition IS NULL " //
+        + "     AND NOT EXISTS ( SELECT acl FROM AlertConditionLog acl WHERE acl.condition.id = ac.id ) ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -313,6 +317,8 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
 
     public static final String QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID = "AlertCondition.findResourceStatus";
+
+    public static final String QUERY_DELETE_ORPHANED = "AlertCondition.deleteOrphaned";
 
     public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
         + " ( ad.recoveryId = 0 " //

@@ -45,6 +45,7 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -84,7 +85,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         senderCanvasItem.setShowTitle(false);
         senderCanvasItem.setColSpan(2);
 
-        notificationSenderSelectItem = new SelectItem("notificationSender", MSG
+        notificationSenderSelectItem = new SortedSelectItem("notificationSender", MSG
             .view_alert_definition_notification_editor_sender());
         notificationSenderSelectItem.setDefaultToFirstOption(true);
         notificationSenderSelectItem.setWrapTitle(false);

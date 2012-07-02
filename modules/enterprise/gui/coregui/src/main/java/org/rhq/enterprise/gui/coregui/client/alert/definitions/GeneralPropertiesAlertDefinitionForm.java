@@ -32,8 +32,8 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableTextAreaFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableTextAreaFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -197,6 +197,10 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
         markForRedraw();
     }
 
+    @Override
+    public boolean isResetMatching() {
+        return false;
+    }
     private void buildForm() {
         if (!formBuilt) {
             nameField = new SimpleEditableFormItem("name", MSG.common_title_name());

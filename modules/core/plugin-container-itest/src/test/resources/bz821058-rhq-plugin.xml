@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="bz821058Plugin"
+        displayName="Plugin to test BZ 821058"
+        description="This will help test that measurement facet is given a read-only schedule set."
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="BZ821058Server"
+           discovery="org.rhq.plugins.test.SingleResourceDiscoveryComponent"
+           class="org.rhq.plugins.test.measurement.BZ821058ResourceComponent">
+
+      <metric property="metric1"
+              dataType="measurement"
+              defaultOn="true"
+              displayType="summary"
+              defaultInterval="30000" />
+
+      <metric property="metric2"
+              dataType="measurement"
+              defaultOn="true"
+              displayType="summary"
+              defaultInterval="30000" />
+   </server>
+</plugin>
+        

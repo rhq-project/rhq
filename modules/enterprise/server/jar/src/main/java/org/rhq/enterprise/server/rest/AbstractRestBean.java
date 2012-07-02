@@ -327,13 +327,13 @@ public class AbstractRestBean {
         return true;
     }
 
-    public ResourceWithType fillRWT(org.rhq.core.domain.resource.Resource res, UriInfo uriInfo) {
+    public ResourceWithType fillRWT(Resource res, UriInfo uriInfo) {
         ResourceType resourceType = res.getResourceType();
         ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId());
         rwt.setTypeName(resourceType.getName());
         rwt.setTypeId(resourceType.getId());
         rwt.setPluginName(resourceType.getPlugin());
-        org.rhq.core.domain.resource.Resource parent = res.getParentResource();
+        Resource parent = res.getParentResource();
         if (parent!=null) {
             rwt.setParentId(parent.getId());
         }
@@ -382,6 +382,10 @@ public class AbstractRestBean {
 
     protected Resource fetchResource(int resourceId) {
         Resource res;
+        res = resMgr.getResource(caller, resourceId);
+        if (res==null)
+            throw new StuffNotFoundException("Resource with id " + resourceId);
+/*
         res = getFromCache(resourceId, Resource.class);
         if (res == null) {
             res = resMgr.getResource(caller, resourceId);
@@ -390,6 +394,7 @@ public class AbstractRestBean {
             else
                 throw new StuffNotFoundException("Resource with id " + resourceId);
         }
+*/
         return res;
     }
 }

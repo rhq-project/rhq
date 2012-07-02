@@ -124,8 +124,8 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
 
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
-        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getPackageVersion()
-            .getFileCreatedDate()), dateToString((old != null) ? old.getPackageVersion().getFileCreatedDate() : null)));
+        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
+            dateToString((old != null) ? old.getInstallationDate() : null)));
         //Comment for now. This field is not even in the list of InstalledPackage fields
         //results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
         //    : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));

@@ -59,9 +59,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceOperationNotificationInfo.ResourceSelectionMode;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -109,7 +110,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         operationArgumentsCanvasItem.setHeight(400);
         operationArgumentsCanvasItem.setWidth(500);
 
-        operationSelectItem = new SelectItem("operationSelectItem", MSG
+        operationSelectItem = new SortedSelectItem("operationSelectItem", MSG
             .view_alert_definition_notification_operation_editor_common_operation());
         operationSelectItem.setStartRow(true);
         operationSelectItem.setEndRow(true);
@@ -160,7 +161,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // for RELATIVE mode
 
-        ancestorTypeSelectItem = new SelectItem("ancestorTypeSelectItem", MSG
+        ancestorTypeSelectItem = new SortedSelectItem("ancestorTypeSelectItem", MSG
             .view_alert_definition_notification_operation_editor_relative_ancestor());
         ancestorTypeSelectItem.setStartRow(true);
         ancestorTypeSelectItem.setEndRow(true);
@@ -178,7 +179,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             }
         });
 
-        descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", MSG
+        descendantTypeSelectItem = new SortedSelectItem("descendantTypeSelectItem", MSG
             .view_alert_definition_notification_operation_editor_relative_descendant());
         descendantTypeSelectItem.setStartRow(true);
         descendantTypeSelectItem.setEndRow(false);
@@ -208,7 +209,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // the mode selector menu
 
-        modeSelectItem = new SelectItem("modeSelectItem", MSG
+        modeSelectItem = new SortedSelectItem("modeSelectItem", MSG
             .view_alert_definition_notification_operation_editor_mode_title());
         modeSelectItem.setStartRow(true);
         modeSelectItem.setEndRow(true);

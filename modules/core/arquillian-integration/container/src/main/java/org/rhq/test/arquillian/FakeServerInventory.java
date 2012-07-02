@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +44,12 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -61,7 +68,6 @@ import org.rhq.core.domain.resource.ResourceType;
  * 
  * @author Lukas Krejci
  */
-// TODO (ips): Why don't we just make this implement DiscoveryServerService and use it as the actual server service?
 public class FakeServerInventory {
 
     private static final Log LOG = LogFactory.getLog(FakeServerInventory.class);
@@ -143,6 +149,7 @@ public class FakeServerInventory {
     private Resource platform;
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
+    private AtomicInteger metricScheduleCounter = new AtomicInteger(1); // used when creating measurement schedules
     private boolean failing;
     private boolean failUpgrade;
 
@@ -362,6 +369,73 @@ public class FakeServerInventory {
                 }
             }
         };
+    }
+
+    // this expects the mock invocation to have two parameters - Set<Integer> resourceIds, Boolean getChildSchedules
+    public synchronized Answer<Set<ResourceMeasurementScheduleRequest>> getLatestSchedulesForResourceIds() {
+        return new Answer<Set<ResourceMeasurementScheduleRequest>>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public Set<ResourceMeasurementScheduleRequest> answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                Set<Integer> resourceIds = (Set<Integer>) args[0];
+                Boolean getChildSchedules = (Boolean) args[1];
+
+                Set<Resource> resources = getResources(resourceIds, getChildSchedules);
+                Set<ResourceMeasurementScheduleRequest> allSchedules = new HashSet<ResourceMeasurementScheduleRequest>();
+                for (Resource resource : resources) {
+                    ResourceMeasurementScheduleRequest resourceSchedules = getDefaultMeasurementSchedules(resource);
+                    if (resourceSchedules != null) {
+                        allSchedules.add(resourceSchedules);
+                    }
+                }
+                return allSchedules;
+            }
+        };
+    }
+
+    // this expects the mock invocation to have one parameter - Set<Integer> resourceIds
+    public synchronized Answer<Set<ResourceMeasurementScheduleRequest>> postProcessNewlyCommittedResources() {
+        return new Answer<Set<ResourceMeasurementScheduleRequest>>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public Set<ResourceMeasurementScheduleRequest> answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                Set<Integer> resourceIds = (Set<Integer>) args[0];
+
+                Set<Resource> resources = getResources(resourceIds, false);
+                Set<ResourceMeasurementScheduleRequest> allSchedules = new HashSet<ResourceMeasurementScheduleRequest>();
+                for (Resource resource : resources) {
+                    ResourceMeasurementScheduleRequest resourceSchedules = getDefaultMeasurementSchedules(resource);
+                    if (resourceSchedules != null) {
+                        allSchedules.add(resourceSchedules);
+                    }
+                }
+                return allSchedules;
+            }
+        };
+    }
+
+    private ResourceMeasurementScheduleRequest getDefaultMeasurementSchedules(Resource resource) {
+        ResourceType rt = resource.getResourceType();
+        Set<MeasurementDefinition> metrics = rt.getMetricDefinitions();
+        if (metrics == null || metrics.isEmpty()) {
+            return null;
+        }
+
+        ResourceMeasurementScheduleRequest resourceSchedules = new ResourceMeasurementScheduleRequest(resource.getId());
+        for (MeasurementDefinition metric : metrics) {
+            int id = this.metricScheduleCounter.getAndIncrement();
+            String name = metric.getName();
+            long interval = metric.getDefaultInterval();
+            boolean enabled = metric.isDefaultOn() || metric.getDisplayType() == DisplayType.SUMMARY;
+            DataType dataType = metric.getDataType();
+            NumericType nDataType = metric.getNumericType();
+            MeasurementScheduleRequest schedule = new MeasurementScheduleRequest(id, name, interval, enabled, dataType,
+                nDataType);
+            resourceSchedules.addMeasurementScheduleRequest(schedule);
+        }
+        return resourceSchedules;
     }
 
     public synchronized boolean isFailing() {

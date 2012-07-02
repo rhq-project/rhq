@@ -23,12 +23,12 @@ import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 /**
  * Provides a drop down menu that allows one to select a bundle type.
  */
-public class BundleTypeDropDownSelectItem extends SelectItem {
+public class BundleTypeDropDownSelectItem extends SortedSelectItem {
 
     private final HashMap<String, BundleType> knownBundleTypes = new HashMap<String, BundleType>();
     private BundleType selected = null;

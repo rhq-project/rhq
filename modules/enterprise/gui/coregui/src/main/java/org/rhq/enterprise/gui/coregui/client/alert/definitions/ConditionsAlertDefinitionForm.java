@@ -58,6 +58,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private StaticTextItem conditionExpressionStatic;
 
     private boolean formBuilt = false;
+    private boolean updated;
 
     public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType) {
         this(locatorId, resourceType, null);
@@ -67,6 +68,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
         super(locatorId);
         this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
+        this.updated = false;
     }
 
     @Override
@@ -83,6 +85,11 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     @Override
     public AlertDefinition getAlertDefinition() {
         return alertDefinition;
+    }
+
+    @Override
+    public boolean isResetMatching() {
+        return updated || conditionsEditor.isUpdated();
     }
 
     @Override
@@ -113,8 +120,12 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
     @Override
     public void makeViewOnly() {
+        updated = false;
+
         conditionExpression.hide();
         conditionsEditor.setEditable(false);
+        conditionsEditor.setUpdated(false);
+
         conditionExpressionStatic.show();
 
         markForRedraw();
@@ -122,11 +133,15 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
     @Override
     public void saveAlertDefinition() {
+        updated = false;
+
         String condExpr = conditionExpression.getValue().toString();
         alertDefinition.setConditionExpression(BooleanExpression.valueOf(condExpr));
 
         HashSet<AlertCondition> conditions = conditionsEditor.getConditions();
         alertDefinition.setConditions(conditions);
+
+        conditionsEditor.setUpdated(false);
     }
 
     @Override
@@ -167,6 +182,8 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             conditionExpression.addChangeHandler(new ChangeHandler() {
                 @Override
                 public void onChange(ChangeEvent event) {
+                    updated = true;
+
                     // Find out if this is using the ALL conjunction - if it is, we can't have more than one conditional use the same metric.
                     // If we do, immediately abort and warn the user. See BZ 737565
                     if ((BooleanExpression.ALL.name().equals(event.getValue().toString()))

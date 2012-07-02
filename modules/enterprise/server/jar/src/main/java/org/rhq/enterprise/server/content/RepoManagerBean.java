@@ -20,8 +20,6 @@ package org.rhq.enterprise.server.content;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,10 +76,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
@@ -150,7 +146,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         // remove any unused, orphaned package versions
-        contentSourceManager.purgeOrphanedPackageVersions(subject);
+        contentSourceManager.purgeOrphanedPackageVersions(subjectManager.getOverlord());
     }
 
     @RequiredPermission(Permission.MANAGE_REPOSITORIES)

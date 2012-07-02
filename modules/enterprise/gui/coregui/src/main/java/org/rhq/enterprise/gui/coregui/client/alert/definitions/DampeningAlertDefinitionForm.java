@@ -34,9 +34,9 @@ import com.smartgwt.client.widgets.form.fields.events.ItemHoverEvent;
 import com.smartgwt.client.widgets.form.fields.events.ItemHoverHandler;
 
 import org.rhq.core.domain.alert.AlertDampening;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -69,6 +69,8 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
     private SelectItem durationTimeUnitsSelection;
     private StaticTextItem durationTimeUnitsStatic;
 
+    private boolean updated;
+
     public DampeningAlertDefinitionForm(String locatorId) {
         this(locatorId, null);
     }
@@ -76,6 +78,7 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
     public DampeningAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
         super(locatorId);
         this.alertDefinition = alertDefinition;
+        this.updated = false;
     }
 
     @Override
@@ -237,6 +240,8 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
 
     @Override
     public void makeViewOnly() {
+        updated = false;
+
         dampeningRuleSelection.hide();
         dampeningRuleStatic.show();
 
@@ -318,6 +323,8 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
 
     @Override
     public void saveAlertDefinition() {
+        updated = false;
+
         AlertDampening.Category cat = AlertDampening.Category.valueOf(dampeningRuleSelection.getValue().toString());
         AlertDampening alertDampening = new AlertDampening(cat);
         switch (cat) {
@@ -381,6 +388,11 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
         markForRedraw();
     }
 
+    @Override
+    public boolean isResetMatching() {
+        return updated;
+    }
+
     private void buildForm() {
         if (!formBuilt) {
             dampeningRuleSelection = new SelectItem("dampeningRule", MSG.view_alert_common_tab_dampening());
@@ -413,8 +425,8 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             // nothing to do - the none category has no ui components to render
 
             //  CONSECUTIVE_COUNT
-            consecutiveOccurrencesSpinner = new SpinnerItem("consecutiveOccurrencesSpinner", MSG
-                .view_alert_common_tab_dampening_consecutive_occurrences_label());
+            consecutiveOccurrencesSpinner = new SpinnerItem("consecutiveOccurrencesSpinner",
+                MSG.view_alert_common_tab_dampening_consecutive_occurrences_label());
             consecutiveOccurrencesSpinner.setWrapTitle(false);
             consecutiveOccurrencesSpinner.setMin(1);
             consecutiveOccurrencesSpinner.setMax(999999);
@@ -423,13 +435,19 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             consecutiveOccurrencesSpinner.setHoverWidth(300);
             consecutiveOccurrencesSpinner.setTooltip(MSG
                 .view_alert_common_tab_dampening_consecutive_occurrences_label_tooltip());
-            consecutiveOccurrencesStatic = new StaticTextItem("consecutiveOccurrencesStatic", MSG
-                .view_alert_common_tab_dampening_consecutive_occurrences_label());
+            consecutiveOccurrencesStatic = new StaticTextItem("consecutiveOccurrencesStatic",
+                MSG.view_alert_common_tab_dampening_consecutive_occurrences_label());
             consecutiveOccurrencesStatic.setWrapTitle(false);
 
+            consecutiveOccurrencesSpinner.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
+
             //  PARTIAL_COUNT
-            partialOccurrencesSpinner = new SpinnerItem("partialOccurrencesSpinner", MSG
-                .view_alert_common_tab_dampening_partial_occurrences_label());
+            partialOccurrencesSpinner = new SpinnerItem("partialOccurrencesSpinner",
+                MSG.view_alert_common_tab_dampening_partial_occurrences_label());
             partialOccurrencesSpinner.setWrapTitle(false);
             partialOccurrencesSpinner.setMin(1);
             partialOccurrencesSpinner.setMax(999999);
@@ -438,12 +456,18 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             partialOccurrencesSpinner.setHoverWidth(300);
             partialOccurrencesSpinner.setTooltip(MSG
                 .view_alert_common_tab_dampening_partial_occurrences_label_tooltip());
-            partialOccurrencesStatic = new StaticTextItem("partialOccurrencesStatic", MSG
-                .view_alert_common_tab_dampening_partial_occurrences_label());
+            partialOccurrencesStatic = new StaticTextItem("partialOccurrencesStatic",
+                MSG.view_alert_common_tab_dampening_partial_occurrences_label());
             partialOccurrencesStatic.setWrapTitle(false);
 
-            partialEvaluationsSpinner = new SpinnerItem("partialEvaluationsSpinner", MSG
-                .view_alert_common_tab_dampening_partial_evalatuions_label());
+            partialOccurrencesSpinner.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
+
+            partialEvaluationsSpinner = new SpinnerItem("partialEvaluationsSpinner",
+                MSG.view_alert_common_tab_dampening_partial_evalatuions_label());
             partialEvaluationsSpinner.setWrapTitle(false);
             partialEvaluationsSpinner.setMin(1);
             partialEvaluationsSpinner.setMax(999999);
@@ -452,13 +476,19 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             partialEvaluationsSpinner.setHoverWidth(300);
             partialEvaluationsSpinner.setTooltip(MSG
                 .view_alert_common_tab_dampening_partial_evalatuions_label_tooltip());
-            partialEvaluationsStatic = new StaticTextItem("partialEvaluationStatic", MSG
-                .view_alert_common_tab_dampening_partial_evalatuions_label());
+            partialEvaluationsStatic = new StaticTextItem("partialEvaluationStatic",
+                MSG.view_alert_common_tab_dampening_partial_evalatuions_label());
             partialEvaluationsStatic.setWrapTitle(false);
 
+            partialEvaluationsSpinner.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
+
             //  DURATION_COUNT
-            durationOccurrencesSpinner = new SpinnerItem("durationOccurrencesSpinner", MSG
-                .view_alert_common_tab_dampening_duration_occurrences_label());
+            durationOccurrencesSpinner = new SpinnerItem("durationOccurrencesSpinner",
+                MSG.view_alert_common_tab_dampening_duration_occurrences_label());
             durationOccurrencesSpinner.setWrapTitle(false);
             durationOccurrencesSpinner.setMin(1);
             durationOccurrencesSpinner.setMax(999999);
@@ -467,12 +497,18 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             durationOccurrencesSpinner.setHoverWidth(300);
             durationOccurrencesSpinner.setTooltip(MSG
                 .view_alert_common_tab_dampening_duration_occurrences_label_tooltip());
-            durationOccurrencesStatic = new StaticTextItem("durationOccurrencesStatic", MSG
-                .view_alert_common_tab_dampening_duration_occurrences_label());
+            durationOccurrencesStatic = new StaticTextItem("durationOccurrencesStatic",
+                MSG.view_alert_common_tab_dampening_duration_occurrences_label());
             durationOccurrencesStatic.setWrapTitle(false);
 
-            durationTimePeriodSpinner = new SpinnerItem("durationTimePeriodSpinner", MSG
-                .view_alert_common_tab_dampening_duration_period_label());
+            durationOccurrencesSpinner.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
+
+            durationTimePeriodSpinner = new SpinnerItem("durationTimePeriodSpinner",
+                MSG.view_alert_common_tab_dampening_duration_period_label());
             durationTimePeriodSpinner.setWrapTitle(false);
             durationTimePeriodSpinner.setMin(1);
             durationTimePeriodSpinner.setMax(999999);
@@ -480,9 +516,15 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             durationTimePeriodSpinner.setDefaultValue(1);
             durationTimePeriodSpinner.setHoverWidth(300);
             durationTimePeriodSpinner.setTooltip(MSG.view_alert_common_tab_dampening_duration_period_label_tooltip());
-            durationTimePeriodStatic = new StaticTextItem("durationTimePeriodStatic", MSG
-                .view_alert_common_tab_dampening_duration_period_label());
+            durationTimePeriodStatic = new StaticTextItem("durationTimePeriodStatic",
+                MSG.view_alert_common_tab_dampening_duration_period_label());
             durationTimePeriodStatic.setWrapTitle(false);
+
+            durationTimePeriodSpinner.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
 
             durationTimeUnitsSelection = new SelectItem("durationTimeUnits", "");
             LinkedHashMap<String, String> units = new LinkedHashMap<String, String>(4);
@@ -494,9 +536,17 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             durationTimeUnitsSelection.setDefaultValue(AlertDampening.TimeUnits.MINUTES.name());
             durationTimeUnitsStatic = new StaticTextItem("durationTimeUnitsStatic", "");
 
+            durationTimeUnitsSelection.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updated = true;
+                }
+            });
+
             dampeningRuleSelection.addChangedHandler(new ChangedHandler() {
                 @Override
                 public void onChanged(ChangedEvent event) {
+                    updated = true;
+
                     Category cat = AlertDampening.Category.valueOf(event.getValue().toString());
                     switch (cat) {
                     case NONE: {
@@ -536,8 +586,8 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
                         break;
                     }
                     default: {
-                        throw new IllegalStateException(MSG
-                            .view_alert_common_tab_invalid_dampening_category(cat.name())); // should never happen
+                        throw new IllegalStateException(
+                            MSG.view_alert_common_tab_invalid_dampening_category(cat.name())); // should never happen
                     }
                     }
                     markForRedraw();

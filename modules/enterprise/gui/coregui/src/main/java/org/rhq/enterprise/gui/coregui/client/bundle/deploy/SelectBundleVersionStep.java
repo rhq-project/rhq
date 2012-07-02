@@ -34,6 +34,7 @@ import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -55,7 +56,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     private DynamicForm form;
 
     private RadioGroupItem radioGroupItem = new RadioGroupItem("options", "Deploy Options");
-    private SelectItem selectVersionItem = new SelectItem("selectVersion", "Deployment Version");
+    private SelectItem selectVersionItem = new SortedSelectItem("selectVersion", "Deployment Version");
     private LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
     private LinkedHashMap<String, String> selectVersionValues = new LinkedHashMap<String, String>();
     private PageList<BundleVersion> bundleVersions = null;

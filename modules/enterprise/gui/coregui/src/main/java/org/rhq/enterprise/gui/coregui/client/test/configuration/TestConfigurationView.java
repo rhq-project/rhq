@@ -28,6 +28,10 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -133,9 +137,37 @@ public class TestConfigurationView
     }
 
     private void save() {
-        CoreGUI.getMessageCenter().notify(
-            new Message("Configuration updated.", "Test configuration updated."));
+        StringBuilder str = new StringBuilder("=~pre~=");
+        Configuration c = editor.getConfiguration();
+        Map<String, Property> allProps = c.getAllProperties();
+        for (Property prop : allProps.values()) {
+            getPropertyStrings(prop, str, "");
+        }
+        str.append("=~/pre~=");
+        CoreGUI.getMessageCenter().notify(new Message("Configuration updated.", str.toString()));
         reloadConfiguration();
     }
 
+    private void getPropertyStrings(Property prop, StringBuilder str, String indent) {
+        if (prop instanceof PropertySimple) {
+            String value = ((PropertySimple) prop).getStringValue();
+            str.append(indent + prop.getName() + "=" + ((value != null) ? value : "~~VALUE WAS NULL~~"));
+            str.append("\n");
+        } else if (prop instanceof PropertyMap) {
+            str.append(indent + prop.getName() + " MAP:\n");
+            PropertyMap propMap = (PropertyMap) prop;
+            Map<String, Property> map = propMap.getMap();
+            for (Property val : map.values()) {
+                getPropertyStrings(val, str, indent + "   ");
+            }
+        } else if (prop instanceof PropertyList) {
+            str.append(indent + prop.getName() + " LIST:\n");
+            PropertyList propList = (PropertyList) prop;
+            for (Property val : propList.getList()) {
+                getPropertyStrings(val, str, indent + "   ");
+            }
+        } else {
+            str.append("unknown prop type: " + prop);
+        }
+    }
 }

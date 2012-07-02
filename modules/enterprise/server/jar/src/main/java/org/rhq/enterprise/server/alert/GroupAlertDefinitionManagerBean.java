@@ -216,7 +216,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertDefinition updateGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
-        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("updateGroupAlertDefinition: " + groupAlertDefinition);
         }
@@ -225,7 +225,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         AlertDefinition updated = null;
         try {
             updated = alertDefinitionManager.updateAlertDefinition(subject, groupAlertDefinition.getId(),
-                groupAlertDefinition, purgeInternals); // do not allow direct undeletes of an alert definition
+                groupAlertDefinition, resetMatching); // do not allow direct undeletes of an alert definition
         } catch (Throwable t) {
             throw new AlertDefinitionUpdateException("Failed to update a GroupAlertDefinition: "
                 + groupAlertDefinition.toSimpleString(), t);
@@ -244,7 +244,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
                 alertDefinitionManager.updateAlertDefinition(overlord, alertDefinitionId, groupAlertDefinition,
-                    purgeInternals);
+                    resetMatching);
             } catch (Throwable t) {
                 // continue on error, update as many as possible
                 if (firstThrowable == null) {

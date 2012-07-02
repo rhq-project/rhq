@@ -117,6 +117,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.IsLongValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -830,7 +831,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             LocatableDynamicForm deleteForm = new LocatableDynamicForm(deleteControlsLayout.extendLocatorId("Form"));
             deleteForm.setWidth100();
 
-            final SelectItem selectItem = new SelectItem();
+            final SelectItem selectItem = new SortedSelectItem();
             selectItem.setMultiple(true);
             selectItem.setMultipleAppearance(MultipleAppearance.GRID);
             selectItem.setTitle(MSG.common_button_delete());
@@ -1401,6 +1402,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         valueItem.setValue(value);
 
+        setValueAsTooltipIfAppropriate(valueItem, value);
+
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
         valueItem.setWidth(220);
 
@@ -1419,6 +1422,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
+    private void setValueAsTooltipIfAppropriate(FormItem formItem, String value) {
+        if (((formItem instanceof TextItem) && !(formItem instanceof PasswordItem)) ||
+                (formItem instanceof TextAreaItem)) {
+            formItem.setTooltip(value);
+        }
+    }
+
     protected boolean shouldFireEventOnPropertyValueChange(FormItem formItem,
         PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
         PropertyMap parentMap = propertySimple.getParentMap();
@@ -1429,6 +1439,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
         propertySimple.setValue(value);
+
+        String stringValue = (value != null) ? value.toString() : null;
+        setValueAsTooltipIfAppropriate(formItem, stringValue);
     }
 
     protected static PropertyDefinition getTopLevelPropertyDefinition(PropertyDefinition propertyDefinition) {

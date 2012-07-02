@@ -60,6 +60,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
     public Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId) {
         try {
             Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID);
@@ -77,6 +78,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
     public PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl) {
         if (authorizationManager.isOverlord(user) == false) {
@@ -151,6 +153,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
     public InventoryStatus getResourceStatusByConditionId(int alertConditionId) {
         try {
             Query query = entityManager.createNamedQuery(AlertCondition.QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID);
@@ -163,6 +166,12 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
             // the resource was already deleted asynchronously, tell the caller as much
             return InventoryStatus.UNINVENTORIED;
         }
+    }
+
+    @Override
+    public int purgeOrphanedAlertConditions() {
+        Query purgeQuery = entityManager.createNamedQuery(AlertCondition.QUERY_DELETE_ORPHANED);
+        return purgeQuery.executeUpdate();
     }
 
 }

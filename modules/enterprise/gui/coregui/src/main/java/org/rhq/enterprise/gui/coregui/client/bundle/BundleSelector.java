@@ -32,6 +32,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -54,7 +55,7 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
         availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
-        final SelectItem bundleTypeSelect = new SelectItem("bundleType", MSG.view_bundle_bundleType());
+        final SelectItem bundleTypeSelect = new SortedSelectItem("bundleType", MSG.view_bundle_bundleType());
         bundleService.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);

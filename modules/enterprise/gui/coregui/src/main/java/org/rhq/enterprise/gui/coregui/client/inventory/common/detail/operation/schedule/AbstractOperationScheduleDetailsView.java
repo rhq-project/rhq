@@ -60,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
@@ -188,7 +189,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
             items.add(idItem);
         }
 
-        SelectItem operationNameItem = new SelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+        SelectItem operationNameItem = new SortedSelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
         operationNameItem.setShowTitle(true);
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {

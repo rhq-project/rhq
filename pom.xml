@@ -88,7 +88,7 @@
     <log4j.version>1.2.16</log4j.version>
     <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
     <ems.version>1.3</ems.version>
-    <postgresql.version>9.1-901.jdbc4</postgresql.version>
+    <postgresql.version>9.1-902.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
@@ -110,7 +110,7 @@
     <resteasy.version>2.3.3.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
-    <arquillian.version>1.0.0.Final</arquillian.version>
+    <arquillian.version>1.0.1.Final</arquillian.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
 
@@ -179,7 +179,8 @@
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
-      <project.json.version>20080701</project.json.version>
+
+    <project.json.version>20080701</project.json.version>
   </properties>
 
 

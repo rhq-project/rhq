@@ -26,6 +26,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.String;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -232,7 +234,7 @@ public class PluginDescriptorGenerator
             if (metricDef.getCategory() != null)
                 metricDescriptor.setCategory(metricDef.getCategory().name().toLowerCase());
             metricDescriptor.setDataType(metricDef.getDataType().name().toLowerCase());
-            metricDescriptor.setDefaultInterval((int)metricDef.getDefaultInterval());
+            metricDescriptor.setDefaultInterval(new BigInteger(String.valueOf(metricDef.getDefaultInterval())));
             metricDescriptor.setDefaultOn(metricDef.isDefaultOn());
             metricDescriptor.setDescription(metricDef.getDescription());
             metricDescriptor.setDestinationType(metricDef.getDestinationType());
@@ -312,7 +314,7 @@ public class PluginDescriptorGenerator
         {
             PropertyDefinitionMap propDefMap = (PropertyDefinitionMap)propDef;
             MapProperty mapProp = new MapProperty();
-            for (PropertyDefinition itemPropDef : propDefMap.getPropertyDefinitions().values())
+            for (PropertyDefinition itemPropDef : propDefMap.getPropertyDefinitions())
             {
                 ConfigurationProperty itemConfigProp = convertPropertyDefinitionToConfigurationProperty(itemPropDef);
                 JAXBElement propElement = getJAXBElement(itemConfigProp);

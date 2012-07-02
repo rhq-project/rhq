@@ -21,17 +21,17 @@
 -->
 <#-- @ftlvariable name="var" type="java.util.List<org.rhq.enterprise.server.rest.domain.GroupDefinitionRest>" -->
 <html>
+<#if (var?size>0) >
 <ul>
-    <#-- the next looks odd, but the incoming var is a list -->
-    <#if (var?size>0) >
+<#-- the next looks odd, but the incoming var is a list -->
     <#list var as var>
     <li>
         <#include "groupDefinition.ftl"/>
     </li>
     </#list>
-    <#else>
-       <strong>No Definitions have been set up</strong>
-    </#if>
 
 </ul>
+<#else>
+   <strong>No Definitions have been set up</strong>
+</#if>
 <html>

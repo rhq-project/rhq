@@ -44,4 +44,6 @@ public interface AlertConditionManagerLocal {
 
     InventoryStatus getResourceStatusByConditionId(int alertConditionId);
 
+    int purgeOrphanedAlertConditions();
+
 }

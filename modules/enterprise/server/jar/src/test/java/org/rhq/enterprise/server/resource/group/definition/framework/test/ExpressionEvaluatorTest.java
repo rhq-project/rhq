@@ -24,9 +24,9 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.resource.group.definition.framework.DuplicateExpressionTypeException;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
-import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
+import org.rhq.core.domain.resource.group.InvalidExpressionException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.QueryUtility;
 

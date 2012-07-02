@@ -241,7 +241,7 @@ public class ClientMain {
             initCodeCompletion();
 
             consoleReader.addCompletor(new MultiCompletor(new Completor[] {
-                new CodeCompletionCompletorWrapper(codeCompletion, outputWriter), helpCompletor,
+                new CodeCompletionCompletorWrapper(codeCompletion, outputWriter, consoleReader), helpCompletor,
                 commandCompletor }));
                 
             // enable pagination

@@ -22,6 +22,7 @@ package org.rhq.enterprise.client.utility;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 
 import javax.jws.WebParam;
@@ -32,6 +33,26 @@ import org.rhq.scripting.MetadataProvider;
  * @author Lukas Krejci
  */
 public class CLIMetadataProvider implements MetadataProvider {
+
+    @Override
+    public Method getUnproxiedMethod(Method method) {
+        if (Proxy.isProxyClass(method.getDeclaringClass())) {
+            //ok, don't look at the proxy class but at the interface that is actually defining this method
+            for (Class<?> iface : method.getDeclaringClass().getInterfaces()) {
+                try {
+                    Method ifaceMethod = iface.getMethod(method.getName(), method.getParameterTypes());
+                    return ifaceMethod;
+                } catch (NoSuchMethodException e) {
+                    //well, never mind, let's try the next interface
+                } catch (SecurityException e) {
+                    //whoa
+                    throw new IllegalStateException("Current code doesn't have reflection permissions.", e);
+                }
+            }
+        }
+
+        return method;
+    }
 
     @Override
     public String getParameterName(Method method, int parameterIndex) {

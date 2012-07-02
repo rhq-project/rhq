@@ -276,6 +276,9 @@ public class JavascriptCompletor implements CodeCompletion {
                     maxReturnLength = sig[0].length();
             }
 
+            output.println();
+            output.println();
+
             for (String[] sig : signatures) {
                 for (i = 0; i < (maxReturnLength - sig[0].length()); i++) {
                     output.print(" ");
@@ -500,6 +503,7 @@ public class JavascriptCompletor implements CodeCompletion {
         StringBuilder buf = new StringBuilder();
         Type[] params = m.getGenericParameterTypes();
         int i = 0;
+        m = metadataProvider.getUnproxiedMethod(m);
 
         buf.append(metadataProvider.getTypeName(m.getGenericReturnType(), false));
         buf.append(" ");

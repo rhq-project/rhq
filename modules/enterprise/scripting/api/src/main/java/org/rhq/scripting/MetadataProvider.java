@@ -37,6 +37,21 @@ import java.lang.reflect.Type;
 public interface MetadataProvider {
 
     /**
+     * Many of the objects that RHQ exposes in the scripting environment are implemented
+     * using proxies. But proxies don't seem to maintain the generic types on them.
+     * <p>
+     * This method tries to find out if given method comes from a proxy class and if it is,
+     * it tries to find the method in one of the interfaces that the proxy implements that
+     * corresponds to it. That method is going to have all the metadata - i.e. annotations,
+     * generics, etc.
+     * 
+     * @param method the method to inspect
+     * @return the method from one of the interfaces implemented by the given method's declaring class
+     * or the given method itself if it is not proxied.
+     */
+    Method getUnproxiedMethod(Method method);
+
+    /**
      * Tries to determine the name of a parameter on a method.
      * 
      * @param method the method

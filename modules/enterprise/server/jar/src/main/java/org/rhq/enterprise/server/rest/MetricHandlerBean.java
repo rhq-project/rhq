@@ -60,8 +60,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
-
 import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;

@@ -26,7 +26,10 @@ import java.net.URI;
  * Scripts in RHQ can be stored in various locations or maybe not even in the filesystem.
  * Implementations of this interface can be used to provide the contents of the scripts
  * based on URIs. 
- *
+ * <p>
+ * Implementations of this interface can be located using the {@link ScriptSourceProviderFactory}
+ * if they are registered in META-INF/services.
+ * 
  * @author Lukas Krejci
  */
 public interface ScriptSourceProvider {

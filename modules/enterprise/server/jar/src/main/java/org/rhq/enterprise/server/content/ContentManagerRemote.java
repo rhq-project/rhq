@@ -292,5 +292,4 @@ public interface ContentManagerRemote {
     @WebMethod
     byte[] getPackageBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "resourceId") int resourceId,
         @WebParam(name = "installedPackageId") int installedPackageId);
-
 }

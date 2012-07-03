@@ -40,11 +40,14 @@ import javax.script.ScriptException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.client.RhqManager;
+import org.rhq.bindings.util.MultiScriptSourceProvider;
 import org.rhq.bindings.util.NoTopLevelIndirection;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.scripting.CodeCompletion;
 import org.rhq.scripting.ScriptEngineInitializer;
 import org.rhq.scripting.ScriptEngineProvider;
+import org.rhq.scripting.ScriptSourceProvider;
 
 /**
  * This is RHQ specific imitation of ScriptEngineFactory.
@@ -117,26 +120,26 @@ public class ScriptEngineFactory {
      * @param language the language of the script to instantiate
      * @param packageFinder the package finder to find the standard packages in user provided locations
      * @param bindings the initial standard bindings or null if none required
-     * @return the initialized engine or null if the engine for given language isn't known.
+     * 
+     * @return the initialized engine or null if a {@link ScriptEngineProvider} for given language isn't known.
      * 
      * @throws ScriptException on error during initialization of the script environment
      * @throws IOException if the package finder fails to find the packages
      */
-    public static ScriptEngine getScriptEngine(String language, PackageFinder packageFinder, StandardBindings bindings)
-        throws ScriptException, IOException {
-        
-        return getSecuredScriptEngine(language, packageFinder, bindings, null);         
+    public static ScriptEngine getScriptEngine(String language, PackageFinder packageFinder, StandardBindings bindings) throws ScriptException, IOException {
+
+        return getSecuredScriptEngine(language, packageFinder, bindings, null);
     }
 
     /**
-     * This method is similar to the {@link #getScriptEngine(String, PackageFinder, StandardBindings)} method
+     * This method is similar to the {@link #getScriptEngine(String, PackageFinder, StandardBindings, ScriptSourceProvider...)} method
      * but additionally applies a security wrapper on the returned script engine so that the scripts execute
      * with the provided java permissions.
      * 
-     * @see #getScriptEngine(String, PackageFinder, StandardBindings)
+     * @see #getScriptEngine(String, PackageFinder, StandardBindings, ScriptSourceProvider...)
      */
-    public static ScriptEngine getSecuredScriptEngine(final String language, final PackageFinder packageFinder,
-        final StandardBindings bindings, final PermissionCollection permissions) throws ScriptException, IOException {
+    public static ScriptEngine getSecuredScriptEngine(String language, PackageFinder packageFinder,
+        StandardBindings bindings, PermissionCollection permissions) throws ScriptException, IOException {
         
         ScriptEngineInitializer initializer = getInitializer(language);
 
@@ -144,9 +147,8 @@ public class ScriptEngineFactory {
             return null;
         }
 
-        //TODO change this so that we support supplying a custom module source provider so that callers
-        //have control over the location of the loadable scripts.
-        ScriptEngine engine = initializer.instantiate(packageFinder.findPackages("org.rhq.core.domain"), null, permissions);
+        ScriptEngine engine = initializer.instantiate(packageFinder.findPackages("org.rhq.core.domain"),
+            permissions);
 
         if (bindings != null) {
             injectStandardBindings(engine, bindings, true);
@@ -162,10 +164,15 @@ public class ScriptEngineFactory {
      * @param engine the engine
      * @param bindings the bindings
      * @param deleteExistingBindings true if the existing bindings should be replaced by the provided ones, false
-     * if the provided bindings should be added to the existing ones (possibly overwriting bindings with the same name).
+     *        if the provided bindings should be added to the existing ones (possibly overwriting bindings with the same name).
+     * @param scriptSourceProviders the list of script source providers to be used by the script engine to locate the scripts.
+     *        Note that the providers become associated with the script engine and its bindings and therefore should
+     *        not be used with any other script engine. If the providers implement the 
+     *        {@link StandardBindings.RhqFacadeChangeListener} interface, they will be automatically hooked up with the
+     *        <code>bindings</code> so that the providers will get notified whenever the rhq facade changes.
      */
     public static void injectStandardBindings(ScriptEngine engine, StandardBindings bindings,
-        boolean deleteExistingBindings) {
+        boolean deleteExistingBindings, ScriptSourceProvider... scriptSourceProviders) {
         bindings.preInject(engine);
 
         Bindings engineBindings = deleteExistingBindings ? engine.createBindings() : engine
@@ -173,6 +180,28 @@ public class ScriptEngineFactory {
 
         for (Map.Entry<String, Object> entry : bindings.entrySet()) {
             engineBindings.put(entry.getKey(), entry.getValue());
+        }
+
+        if (scriptSourceProviders != null) {
+            //first figure out which initializer to use with this script engine
+            String language = (String) engine.getFactory().getParameter(ScriptEngine.NAME);
+            ScriptEngineProvider engineProvider = KNOWN_PROVIDERS.get(language);
+            if (engineProvider == null) {
+                throw new IllegalArgumentException("The supplied script engine [" + engine + "] is not supported.");
+            }
+
+            ScriptEngineInitializer initializer = engineProvider.getInitializer();
+
+            ScriptSourceProvider provider = null;
+
+            for (ScriptSourceProvider p : scriptSourceProviders) {
+                if (p instanceof StandardBindings.RhqFacadeChangeListener) {
+                    bindings.addRhqFacadeChangeListener((StandardBindings.RhqFacadeChangeListener) p);
+                }
+            }
+            provider = new MultiScriptSourceProvider(scriptSourceProviders);
+
+            initializer.installScriptSourceProvider(engine, provider);
         }
 
         engine.setBindings(engineBindings, ScriptContext.ENGINE_SCOPE);
@@ -186,12 +215,12 @@ public class ScriptEngineFactory {
      * @param engine the engine
      * @param keySet the binding keys to be removed
      */
-    public static void removeBindings(ScriptEngine engine, Set<String> keySet) {
+    public static void removeBindings(ScriptEngine engine, Set<RhqManager> keySet) {
 
         Bindings engineBindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-        for (String key : keySet) {
-            engineBindings.remove(key);
+        for (RhqManager key : keySet) {
+            engineBindings.remove(key.name());
         }
 
         engine.setBindings(engineBindings, ScriptContext.ENGINE_SCOPE);

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -988,6 +990,35 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         entityManager.persist(repoRepoRelationship);
         repo.addRepoRelationship(repoRelationship);
+    }
+
+    @Override
+    public byte[] getPackageVersionBytes(Subject subject, int repoId, int packageVersionId) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot access a repo with id " + repoId);
+        }
+
+        //check that the provided package version actually belongs to the repo
+        Repo repo = entityManager.find(Repo.class, repoId);
+
+        PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+        if (pv == null || !pv.getRepos().contains(repo)) {
+            throw new IllegalArgumentException("The package version with id " + packageVersionId
+                + " does not belong to the repo with id " + repoId + " or does not exist.");
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        contentSourceManager.outputPackageVersionBits(pv, out);
+
+        byte[] ret = out.toByteArray();
+
+        try {
+            out.close();
+        } catch (IOException e) {
+            //this is not gonna happen with a byte array stream
+        }
+
+        return ret;
     }
 
     private void validateFields(Repo repo) throws RepoException {

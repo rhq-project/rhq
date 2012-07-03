@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.rhq.bindings.client.RhqFacade;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.core.domain.auth.Subject;
 
 public class FakeRhqFacade implements RhqFacade {
@@ -43,7 +44,7 @@ public class FakeRhqFacade implements RhqFacade {
         return false;
     }
     
-    public Map<String, Object> getScriptingAPI() {
+    public Map<RhqManager, Object> getScriptingAPI() {
         return Collections.emptyMap();
     }
 

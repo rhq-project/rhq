@@ -47,8 +47,18 @@ public interface ScriptEngineInitializer {
      * @return a newly instantiated script engine configured as above
      * @throws ScriptException
      */
-    ScriptEngine instantiate(Set<String> packages, ScriptSourceProvider scriptSourceProvider, PermissionCollection permissions) throws ScriptException;
+    ScriptEngine instantiate(Set<String> packages, PermissionCollection permissions) throws ScriptException;
     
+    /**
+     * Installs given script source provider into the script engine.
+     * 
+     * @param scriptEngine
+     * @param scriptSourceProvider
+     * 
+     * @throws IllegalArgumentException if the script engine is not supported by this initializer
+     */
+    void installScriptSourceProvider(ScriptEngine scriptEngine, ScriptSourceProvider scriptSourceProvider);
+
     /**
      * This function returns a definition string in the script engine's language
      * that provides an indirection to calling the method on the bound object.

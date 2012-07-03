@@ -25,7 +25,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This is the service interface for scripting language implementations for RHQ
  * (loaded using the META-INF/services mechanism).
- *
+ * <p>
+ * Note that the API module provides no factory class that would load the ScriptEngineProvider 
+ * implementations present on the classpath. That is because for the script engine to be
+ * usable by RHQ, it needs to be initialized with a couple of dependencies that are not
+ * appropriate for the API module.
+ * <p>
+ * The factory is located in the <code>rhq-script-bindings</code> module as 
+ * <code>org.rhq.bindings.ScriptEngineFactory</code>.
+ * 
  * @author Lukas Krejci
  */
 public interface ScriptEngineProvider {

@@ -62,7 +62,7 @@ public class RemoteClient implements RhqFacade {
     private final int port;
     private boolean loggedIn;
     private boolean connected;
-    private Map<String, Object> managers;
+    private Map<RhqManager, Object> managers;
     private Subject subject;
     private Client remotingClient;
     private String subsystem = null;
@@ -277,16 +277,16 @@ public class RemoteClient implements RhqFacade {
      *
      * @return Map K=manager name V=remote proxy
      */
-    public Map<String, Object> getScriptingAPI() {
+    public Map<RhqManager, Object> getScriptingAPI() {
         if (this.managers == null) {
 
-            this.managers = new HashMap<String, Object>();
+            this.managers = new HashMap<RhqManager, Object>();
 
             for (RhqManager manager : RhqManager.values()) {
                 if (manager.enabled()) {
                     try {
                         Object proxy = getProcessor(this, manager, true);
-                        this.managers.put(manager.name(), proxy);
+                        this.managers.put(manager, proxy);
                     } catch (Throwable e) {
                         LOG.error("Failed to load manager " + manager + " due to missing class.", e);
                     }

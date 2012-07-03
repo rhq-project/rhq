@@ -47,7 +47,7 @@ public interface RhqFacade {
      * 
      * @return a map of all available proxied managers keyed by their names.
      */
-    Map<String, Object> getScriptingAPI();
+    Map<RhqManager, Object> getScriptingAPI();
 
     /**
      * Unlike the {@link #getScriptingAPI()} method that returns objects with modified signatures

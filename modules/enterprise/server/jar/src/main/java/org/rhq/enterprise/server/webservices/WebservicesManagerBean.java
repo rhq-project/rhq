@@ -903,6 +903,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
 
+    public byte[] getPackageVersionBytes(Subject user, int repoId, int packageVersionId) {
+        return repoManager.getPackageVersionBytes(user, repoId, packageVersionId);
+    }
+
     //REPOMANAGER: END ----------------------------------
 
     //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------

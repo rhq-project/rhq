@@ -43,8 +43,7 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
     private ScriptEngineManager engineManager = new ScriptEngineManager();
 
     @Override
-    public ScriptEngine instantiate(Set<String> packages, ScriptSourceProvider scriptSourceProvider,
-        PermissionCollection permissions) throws ScriptException {
+    public ScriptEngine instantiate(Set<String> packages, PermissionCollection permissions) throws ScriptException {
 
         ScriptEngine eng = engineManager.getEngineByName("python");
 
@@ -52,10 +51,13 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
             eng.eval("from " + pkg + " import *\n");
         }
 
-        //TODO add support for script source providers... possibly using http://www.python.org/dev/peps/pep-0302/
-        
         //fingers crossed we can secure jython like this
         return new SandboxedScriptEngine(eng, permissions);
+    }
+
+    @Override
+    public void installScriptSourceProvider(ScriptEngine scriptEngine, ScriptSourceProvider provider) {
+        //TODO add support for script source providers... possibly using http://www.python.org/dev/peps/pep-0302/        
     }
 
     @Override
@@ -65,10 +67,10 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
         }
 
         Set<Integer> argCnts = new HashSet<Integer>();
-        for(Method m : overloadedMethods) {
+        for (Method m : overloadedMethods) {
             argCnts.add(m.getParameterTypes().length);
         }
-        
+
         String methodName = overloadedMethods.iterator().next().getName();
         StringBuilder functionBody = new StringBuilder();
 
@@ -76,18 +78,18 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
         functionBody.append("\t").append("if len(kwargs) > 0:\n");
         functionBody.append("\t\t").append("raise ValueError(\"Named arguments not supported for Java methods\")\n");
         functionBody.append("\t").append("argCnt = len(args)\n");
-                
-        for(Integer argCnt : argCnts) {
+
+        for (Integer argCnt : argCnts) {
             functionBody.append("\t").append("if argCnt == ").append(argCnt).append(":\n");
             functionBody.append("\t\treturn ").append(boundObjectName).append(".").append(methodName).append("(");
             int last = argCnt - 1;
-            for(int i = 0; i < argCnt; ++i) {
+            for (int i = 0; i < argCnt; ++i) {
                 functionBody.append("args[").append(i).append("]");
                 if (i < last) {
                     functionBody.append(", ");
                 }
             }
-            functionBody.append(")\n");            
+            functionBody.append(")\n");
         }
 
         return Collections.singleton(functionBody.toString());

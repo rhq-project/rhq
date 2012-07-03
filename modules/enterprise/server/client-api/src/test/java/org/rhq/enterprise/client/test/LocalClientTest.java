@@ -112,7 +112,7 @@ public class LocalClientTest extends JMockTest {
             LocalClient lc = new LocalClient(null);
             
             //this call creates the proxy and is theoretically prone to the context classloader
-            Object am = lc.getScriptingAPI().get("AlertManager");
+            Object am = lc.getScriptingAPI().get(RhqManager.AlertManager);
 
             //check that only the simplified method exists on the returned object
             try {

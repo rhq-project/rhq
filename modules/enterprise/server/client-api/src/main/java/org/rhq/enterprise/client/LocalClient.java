@@ -44,7 +44,7 @@ public class LocalClient implements RhqFacade {
     private static final Log LOG = LogFactory.getLog(LocalClient.class);
 
     private Subject subject;
-    private Map<String, Object> managers;
+    private Map<RhqManager, Object> managers;
 
     public LocalClient(Subject subject) {
         this.subject = subject;
@@ -70,10 +70,10 @@ public class LocalClient implements RhqFacade {
     }
 
     @Override
-    public Map<String, Object> getScriptingAPI() {
+    public Map<RhqManager, Object> getScriptingAPI() {
         if (managers == null) {
 
-            managers = new HashMap<String, Object>();
+            managers = new HashMap<RhqManager, Object>();
 
             for (final RhqManager manager : RhqManager.values()) {
                 if (manager.enabled()) {
@@ -85,7 +85,7 @@ public class LocalClient implements RhqFacade {
                             }
                         });
 
-                        managers.put(manager.name(), proxy);
+                        managers.put(manager, proxy);
                     } catch (Throwable e) {
                         LOG.error("Failed to load manager " + manager + " due to missing class.", e);
                     }

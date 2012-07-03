@@ -27,7 +27,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -38,7 +37,6 @@ import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
-import org.rhq.bindings.util.PackageFinder;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.proxy.ConfigurationEditor;
@@ -49,6 +47,8 @@ import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ScriptArg;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
+import org.rhq.scripting.ScriptSourceProvider;
+import org.rhq.scripting.ScriptSourceProviderFactory;
 
 /**
  * @author Greg Hinkle
@@ -185,7 +185,9 @@ public class ScriptCommand implements ClientCommand {
 
         ScriptEngine engine = client.getScriptEngine();
 
-        ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
+        ScriptSourceProvider[] sourceProviders = ScriptSourceProviderFactory.get(null);
+
+        ScriptEngineFactory.injectStandardBindings(engine, bindings, false, sourceProviders);
 
         ScriptEngineFactory.bindIndirectionMethods(engine, "configurationEditor");
         ScriptEngineFactory.bindIndirectionMethods(engine, "rhq");
@@ -206,7 +208,7 @@ public class ScriptCommand implements ClientCommand {
 
             // update the engine with the new client bindings. Keep the existing engine bindings as they
             // may contain bindings outside this standard set (like any var created by the script or command line user)
-            ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
+            ScriptEngineFactory.injectStandardBindings(engine, bindings, false, ScriptSourceProviderFactory.get(null));
         }
 
         return;

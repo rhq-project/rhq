@@ -61,6 +61,8 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderValidationResults;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.scripting.ScriptEngineInitializer;
+import org.rhq.scripting.ScriptSourceProvider;
+import org.rhq.scripting.ScriptSourceProviderFactory;
 
 /**
  * Uses CLI to perform the alert notification.
@@ -425,9 +427,10 @@ public class CliSender extends AlertSender<CliComponent> {
             if (engine == null) {
                 engine = ScriptEngineFactory.getSecuredScriptEngine(ENGINE_NAME,
                     new PackageFinder(Collections.<File> emptyList()), bindings, new StandardScriptPermissions());
-            } else {
-                ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
             }
+            //TODO is this OK, or should we use a different classloader than the context classloader?
+            ScriptSourceProvider[] providers = ScriptSourceProviderFactory.get(null);
+            ScriptEngineFactory.injectStandardBindings(engine, bindings, true, providers);
 
             ++ENGINES_IN_USE;
 

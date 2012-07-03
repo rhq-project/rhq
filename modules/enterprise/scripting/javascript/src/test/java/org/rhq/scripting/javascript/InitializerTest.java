@@ -89,7 +89,7 @@ public class InitializerTest {
         perms.add(new FilePermission("<<ALL FILES>>", "read"));
         perms.add(new PropertyPermission("*", "read"));
         
-        ScriptEngine eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), null, perms);
+        ScriptEngine eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), perms);
         
         try {
             eng.eval("java.lang.System.exit(1)");
@@ -103,7 +103,7 @@ public class InitializerTest {
         String script = "var m = require('rhq://test-module1.js'); m.func1();";
         
         //first let's try to find the scripts with the default source provider...
-        ScriptEngine eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), null, null);
+        ScriptEngine eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), null);
         try {
             eng.eval(script);
             fail("The module should not have been loaded using the default source provider.");
@@ -111,17 +111,18 @@ public class InitializerTest {
             //expected
         }
         
-        eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), new ScriptSourceProvider() {            
+        eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), null);
+        new JsEngineInitializer().installScriptSourceProvider(eng, new ScriptSourceProvider() {
             @Override
             public Reader getScriptSource(URI location) {
                 if (!"rhq".equals(location.getScheme())) {
                     return null;
                 }
                 String scriptName = location.getSchemeSpecificPart().substring(2); //remove the '//'
-                InputStream src =  getClass().getClassLoader().getResourceAsStream(scriptName);
+                InputStream src = getClass().getClassLoader().getResourceAsStream(scriptName);
                 return new InputStreamReader(src);
             }
-        }, null);
+        });
 
         try {
             eng.eval(script);
@@ -133,7 +134,7 @@ public class InitializerTest {
     public void indirectionMethodsValid() throws Exception {
         JsEngineInitializer initializer = new JsEngineInitializer();
         
-        ScriptEngine eng = initializer.instantiate(Collections.<String>emptySet(), null, null);
+        ScriptEngine eng = initializer.instantiate(Collections.<String>emptySet(), null);
         
         TestClass myObject = new TestClass();
                 

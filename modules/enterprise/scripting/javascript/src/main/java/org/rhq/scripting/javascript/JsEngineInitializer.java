@@ -52,11 +52,10 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
     private ScriptEngineManager engineManager = new ScriptEngineManager();
 
     @Override
-    public ScriptEngine instantiate(final Set<String> packages, final ScriptSourceProvider scriptSourceProvider,
-        PermissionCollection permissions) throws ScriptException {
+    public ScriptEngine instantiate(final Set<String> packages, PermissionCollection permissions) throws ScriptException {
         
         if (permissions == null) {
-            return instantiateUnsecured(packages, scriptSourceProvider);
+            return instantiateUnsecured(packages);
         } else {
             try {
                 CodeSource cs = new CodeSource(null, (Certificate[]) null);
@@ -67,7 +66,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
                 return AccessController.doPrivileged(new PrivilegedExceptionAction<ScriptEngine>() {
                     @Override
                     public ScriptEngine run() throws Exception {
-                        return instantiateUnsecured(packages, scriptSourceProvider);
+                        return instantiateUnsecured(packages);
                     }
                 }, acc);
             } catch (PrivilegedActionException e) {
@@ -77,6 +76,21 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
                     throw new ScriptException("Script execution failed.");
                 }
             }
+        }
+    }
+
+    @Override
+    public void installScriptSourceProvider(ScriptEngine scriptEngine, ScriptSourceProvider scriptSourceProvider) {
+        if (!(scriptEngine instanceof RhinoScriptEngine)) {
+            throw new IllegalArgumentException("Provided script engine cannot be handled by " + this.getClass()
+                + ". Expected " + RhinoScriptEngine.class + " but got "
+                + (scriptEngine == null ? "null" : scriptEngine.getClass().getName()));
+        }
+
+        RhinoScriptEngine eng = (RhinoScriptEngine) scriptEngine;
+
+        if (scriptSourceProvider != null) {
+            eng.setModuleSourceProvider(new ScriptSourceToModuleSourceProviderAdapter(scriptSourceProvider));
         }
     }
 
@@ -132,7 +146,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return errorMessage;
     }
 
-    private ScriptEngine instantiateUnsecured(Set<String> packages, ScriptSourceProvider scriptSourceProvider)
+    private ScriptEngine instantiateUnsecured(Set<String> packages)
         throws ScriptException {
         RhinoScriptEngine eng = (RhinoScriptEngine) engineManager.getEngineByName("rhino-nonjdk");
         
@@ -140,10 +154,6 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
             throw new IllegalStateException("Failed to instantiate the 'rhino-nonjdk' script engine. This means that either the required library is missing from the classpath or that there are some security issues preventing it from being instantiated.");
         }
         
-        if (scriptSourceProvider != null) {
-            eng.setModuleSourceProvider(new ScriptSourceToModuleSourceProviderAdapter(scriptSourceProvider));
-        }
-
         for (String pkg : packages) {
             eng.eval("importPackage(" + pkg + ")");
         }

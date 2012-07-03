@@ -80,6 +80,18 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     protected void onDraw() {
         super.onDraw();
 
+        //createButtonBar();
+
+        refresh();
+
+        if (!this.resourcePermission.isConfigureWrite()) {
+            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
+                .of(Message.Option.Transient, Message.Option.Sticky));
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    private ToolStrip createButtonBar() {
         this.buttonbar = new ToolStrip();
         buttonbar.setWidth100();
         buttonbar.setExtraSpace(10);
@@ -95,15 +107,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         buttonbar.addMember(saveButton);
         // The button bar will remain hidden until the configuration has been successfully loaded.
         buttonbar.setVisible(false);
-        addMember(buttonbar);
-
-        refresh();
-
-        if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
-                .of(Message.Option.Transient, Message.Option.Sticky));
-            CoreGUI.getMessageCenter().notify(message);
-        }
+        return buttonbar;
     }
 
     @Override
@@ -113,11 +117,12 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         }
 
         this.refreshing = true;
-        this.buttonbar.setVisible(false);
 
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
+            buttonbar.destroy();
+            removeMember(buttonbar);
         }
         
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
@@ -155,6 +160,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                                         editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
                                         editor.setReadOnly(!resourcePermission.isConfigureWrite());
                                         addMember(editor);
+                                        addMember(createButtonBar());
 
                                         saveButton.disable();
                                         buttonbar.setVisible(true);

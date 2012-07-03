@@ -16,12 +16,12 @@
               dataType="measurement"
               defaultOn="true"
               displayType="summary"
-              defaultInterval="30000" />
+              defaultInterval="@@@metric1.interval@@@" />
 
       <metric property="metric2"
               dataType="measurement"
               defaultOn="true"
               displayType="summary"
-              defaultInterval="30000" />
+              defaultInterval="@@@metric2.interval@@@" />
    </server>
 </plugin>

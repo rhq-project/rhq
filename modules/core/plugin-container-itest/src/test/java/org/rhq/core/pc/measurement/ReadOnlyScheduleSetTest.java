@@ -44,6 +44,8 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
         HashMap<String, String> replacements = new HashMap<String, String>();
         replacements.put("@@@discovery@@@", SingleResourceDiscoveryComponent.class.getName());
         replacements.put("@@@class@@@", BZ821058ResourceComponent.class.getName());
+        replacements.put("@@@metric1.interval@@@", "30000");
+        replacements.put("@@@metric2.interval@@@", "30000");
         return pluginJar.setPluginDescriptorFromTemplate("two-metric-rhq-plugin.xml", replacements).addClasses(
             SingleResourceDiscoveryComponent.class, BZ821058ResourceComponent.class);
     }

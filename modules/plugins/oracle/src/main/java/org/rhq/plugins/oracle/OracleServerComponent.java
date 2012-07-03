@@ -24,8 +24,10 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -128,7 +130,13 @@ public class OracleServerComponent implements DatabaseComponent, MeasurementFace
     }
 
     private static String buildUrl(Configuration configuration) {
-        return "jdbc:oracle:thin:@" + configuration.getSimpleValue("host", "localhost") + ":"
-            + configuration.getSimpleValue("port", "1521") + ":" + configuration.getSimpleValue("sid", "XE");
+        String connMethod = configuration.getSimpleValue("connectionMethod", "SID");
+        if (connMethod.equalsIgnoreCase("SID")) {
+            return "jdbc:oracle:thin:@" + configuration.getSimpleValue("host", "localhost") + ":"
+                + configuration.getSimpleValue("port", "1521") + ":" + configuration.getSimpleValue("sid", "XE");
+        } else {
+            return "jdbc:oracle:thin:@//" + configuration.getSimpleValue("host", "localhost") + ":"
+                + configuration.getSimpleValue("port", "1521") + "/" + configuration.getSimpleValue("sid", "XE");
+        }
     }
 }

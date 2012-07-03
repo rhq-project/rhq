@@ -693,7 +693,22 @@ public class PluginContainer {
     }
 
     public void notifyRebootRequestListener() {
-        rebootListener.reboot();
+        //BZ 828938: the thread needs to run as non-daemon so that it's allowed to complete cleanup in daemon mode
+        Thread rebootThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                rebootListener.reboot();
+            }
+        });
+        rebootThread.setDaemon(false);
+        rebootThread.start();
+        try {
+            rebootThread.join();
+        } catch (InterruptedException e) {
+            log.error("Interrupted while rebooting agent after one or more resource types "
+                + " have been marked for deletion. You man need to manually reboot the agent/plugin container to purge "
+                + "stale types.");
+        }
     }
 
     /**

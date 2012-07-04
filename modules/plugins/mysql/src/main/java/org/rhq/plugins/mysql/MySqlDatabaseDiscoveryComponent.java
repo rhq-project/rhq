@@ -61,7 +61,7 @@ public class MySqlDatabaseDiscoveryComponent implements ResourceDiscoveryCompone
 
                 while (resultSet.next()) {
                     String databaseName = resultSet.getString(1);
-                    Configuration config = new Configuration();
+                    Configuration config = context.getDefaultPluginConfiguration();
                     config.put(new PropertySimple("databaseName",databaseName));
                     DiscoveredResourceDetails details =
                             new DiscoveredResourceDetails(

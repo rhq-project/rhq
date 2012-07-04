@@ -97,19 +97,24 @@ public class LocalClient implements RhqFacade {
     }
 
     @Override
-    public <T> T getProxy(Class<T> remoteApiIface) {
-        RhqManager manager = RhqManager.forInterface(remoteApiIface);
+    public <T> T getProxy(final Class<T> remoteApiIface) {
+        final RhqManager manager = RhqManager.forInterface(remoteApiIface);
 
         if (manager == null) {
             throw new IllegalArgumentException("Unknown remote interface " + remoteApiIface);
         }
 
-        Object localSLSB = getLocalSLSB(manager);
+        return AccessController.doPrivileged(new PrivilegedAction<T>() {
+            @Override
+            public T run() {
+                Object localSLSB = getLocalSLSB(manager);
 
-        Object proxy = Proxy.newProxyInstance(remoteApiIface.getClassLoader(), new Class<?>[] { remoteApiIface },
-            new LocalClientProxy(localSLSB, this, manager));
+                Object proxy = Proxy.newProxyInstance(remoteApiIface.getClassLoader(),
+                    new Class<?>[] { remoteApiIface }, new LocalClientProxy(localSLSB, LocalClient.this, manager));
 
-        return remoteApiIface.cast(proxy);
+                return remoteApiIface.cast(proxy);
+            }
+        });
     }
 
     private Object getScriptingProxy(Object slsb, RhqManager manager) {

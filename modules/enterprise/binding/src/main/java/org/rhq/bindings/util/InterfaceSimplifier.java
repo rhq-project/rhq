@@ -229,15 +229,17 @@ public class InterfaceSimplifier {
 
         Annotation ret = new Annotation(annotation.getTypeName(), constPool);
 
-        for (Object m : annotation.getMemberNames()) {
-            final String memberName = (String) m;
+        if (annotation.getMemberNames() != null) {
+            for (Object m : annotation.getMemberNames()) {
+                final String memberName = (String) m;
 
-            MemberValue origValue = annotation.getMemberValue(memberName);
-            final MemberValue[] newValue = new MemberValue[1];
+                MemberValue origValue = annotation.getMemberValue(memberName);
+                final MemberValue[] newValue = new MemberValue[1];
 
-            origValue.accept(new ArrayIndexAssigningVisitor(newValue, 0, constPool));
+                origValue.accept(new ArrayIndexAssigningVisitor(newValue, 0, constPool));
 
-            ret.addMemberValue(memberName, newValue[0]);
+                ret.addMemberValue(memberName, newValue[0]);
+            }
         }
 
         return ret;

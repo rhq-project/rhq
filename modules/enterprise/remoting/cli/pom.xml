@@ -163,19 +163,6 @@
          </plugin>
 
          <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-               <includes>
-                  <include>org/rhq/**</include>
-                  <include>client-messages*</include>
-               </includes>
-               <archive>
-                  <index>true</index>
-               </archive>
-            </configuration>
-         </plugin>
-
-         <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <configuration>
                <descriptors>

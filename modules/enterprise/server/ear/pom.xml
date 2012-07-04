@@ -97,6 +97,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-scripting-javascript</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-server-client-api</artifactId>
         <version>${project.version}</version>

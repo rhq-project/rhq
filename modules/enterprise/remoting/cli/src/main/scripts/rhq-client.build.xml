@@ -70,7 +70,6 @@
 
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-api/${project.version}/rhq-scripting-api-${project.version}.jar" tofile="${lib.home}/rhq-scripting-api-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-javascript/${project.version}/rhq-scripting-javascript-${project.version}.jar" tofile="${lib.home}/rhq-scripting-javascript-${project.version}.jar" verbose="true" />
-   	  <copy file="${settings.localRepository}/org/mozilla/rhino/${rhino.version}/rhino-${rhino.version}.jar" tofile="${lib.home}/rhino-${rhino.version}.jar" verbose="true" />
    </target>
 
    <target name="prepare-samples-dir">

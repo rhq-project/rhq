@@ -71,7 +71,7 @@ import org.rhq.scripting.ScriptSourceProviderFactory;
  */
 public class CliSender extends AlertSender<CliComponent> {
 
-    private static final String ENGINE_NAME = "JavaScript";
+    private static final String ENGINE_NAME = "javascript";
 
     private static final int MAX_RESULT_SIZE = 4000;
 

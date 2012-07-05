@@ -700,13 +700,14 @@ public class PluginContainer {
                 rebootListener.reboot();
             }
         });
+        rebootThread.setName("Plugin Container Reboot Thread");
         rebootThread.setDaemon(false);
         rebootThread.start();
         try {
             rebootThread.join();
         } catch (InterruptedException e) {
             log.error("Interrupted while rebooting agent after one or more resource types "
-                + " have been marked for deletion. You man need to manually reboot the agent/plugin container to purge "
+                + " have been marked for deletion. You may need to manually reboot the agent/plugin container to purge "
                 + "stale types.");
         }
     }

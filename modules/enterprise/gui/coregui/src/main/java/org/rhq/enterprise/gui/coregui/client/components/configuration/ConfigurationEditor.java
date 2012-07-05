@@ -52,24 +52,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
-import com.smartgwt.client.widgets.form.fields.FloatItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.IntegerItem;
-import com.smartgwt.client.widgets.form.fields.PasswordItem;
-import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
-import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
+import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.events.*;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -134,6 +118,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import sun.net.www.content.image.png;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.
@@ -1031,13 +1016,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         toolStrip.setWidth100();
         if (!propertyReadOnly) {
             IButton addRowButton = new IButton();
-            addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
-            addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
-                        memberPropertyDefinitionMap, null, mapReadOnly);
-                }
-            });
+            addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
+                    addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
+                                    memberPropertyDefinitionMap, null, mapReadOnly);
+                        }
+                    });
             toolStrip.addMember(addRowButton);
         }
 
@@ -1341,15 +1326,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = radioGroupItem;
                     break;
                 case INTEGER:
-                    // Ideally, we'd use SpinnerItems for INTEGER props, but unfortunately, as of version 2.4, SmartGWT
-                    // has a nasty bug where it does not fire ValueChangedEvents or ItemChangedEvents when the value of
-                    // a SpinnerItem changes...
-                    /*SpinnerItem spinnerItem = new SpinnerItem();
+                    SpinnerItem spinnerItem = new SpinnerItem();
                     spinnerItem.setMin(Integer.MIN_VALUE);
                     spinnerItem.setMax(Integer.MAX_VALUE);
-                    // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
-                    valueItem = spinnerItem;*/
-                    valueItem = new IntegerItem();
+                    valueItem = spinnerItem;
                     break;
                 case FLOAT:
                 case DOUBLE:
@@ -1378,6 +1358,25 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     }
                 });
+                // Since spinnerItems only fire ChangedEvent once the spinner buttons are pushed
+                // we add blur handler to pick up any changes to that field when leaving
+                if(valueItem instanceof SpinnerItem){
+                    valueItem.addBlurHandler(new BlurHandler() {
+                        @Override
+                        public void onBlur(BlurEvent event) {
+                            updatePropertySimpleValue(event.getItem(), event.getItem().getValue(), propertySimple,
+                                    propertyDefinitionSimple);
+                            // Only fire a prop value change event if the prop's a top-level simple or a simple within a
+                            // top-level map.
+                            if (shouldFireEventOnPropertyValueChange(event.getItem(), propertyDefinitionSimple,
+                                    propertySimple)) {
+                                boolean isValid = event.getItem().validate();
+                                firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                            }
+
+                        }
+                    });
+                }
             }
         }
 

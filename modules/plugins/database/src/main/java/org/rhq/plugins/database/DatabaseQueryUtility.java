@@ -24,8 +24,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -34,11 +36,25 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
+ * Various database (JDBC) query functions.
+ *
  * @author Greg Hinkle
  */
 public class DatabaseQueryUtility {
+
     private static final Log LOG = LogFactory.getLog(DatabaseQueryUtility.class);
 
+    private DatabaseQueryUtility() {}
+
+    /**
+     * Executes a database update.
+     *
+     * @param databaseComponent
+     * @param query
+     * @param parameters
+     * @return
+     * @throws SQLException
+     */
     public static int executeUpdate(DatabaseComponent databaseComponent, String query, Object... parameters)
         throws SQLException {
         PreparedStatement statement = null;
@@ -55,6 +71,10 @@ public class DatabaseQueryUtility {
         }
     }
 
+    /**
+     * Returns the result of a query as a single Double value.
+     * Returns {@link Double#NaN} if the query fails.
+     */
     public static Double getSingleNumericQueryValue(DatabaseComponent databaseComponent, String query,
         Object... parameters) {
         PreparedStatement statement = null;
@@ -77,13 +97,15 @@ public class DatabaseQueryUtility {
     }
 
     /**
-     * Used to read a single row of columns into a map
+     * Executes a query, returning the results as a map where the keys
+     * are the column names and values are the value of that column.
+     * Note depending on the database, the column names may be uppercase (Oracle) or lowercase.
      *
      * @param  databaseComponent
-     * @param  query
-     * @param  parameters
+     * @param  query SQL query string
+     * @param  parameters optional bind parameters
      *
-     * @return
+     * @return a map of query results
      */
     public static Map<String, Double> getNumericQueryValues(DatabaseComponent databaseComponent, String query,
         Object... parameters) {
@@ -122,8 +144,48 @@ public class DatabaseQueryUtility {
     }
 
     /**
-     * Used to access a set of rows as key, value pairs where the key is the first column and is a string and the second
-     * is a value and is numeric
+     * Returns a list of values, one per row, containing a map of column names to values of that row.
+     * Note depending on the database, the column names may be uppercase (Oracle) or lowercase.
+     * @param databaseComponent database to query
+     * @param query SQL query
+     * @param parameters parameters to bind to the query
+     *
+     * @throws SQLException if query fails
+     */
+    public static List<Map<String, Object>> getGridValues(DatabaseComponent databaseComponent, String query,
+        Object... parameters) throws SQLException {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        List<Map<String, Object>> l = new ArrayList<Map<String, Object>>();
+        try {
+            statement = databaseComponent.getConnection().prepareStatement(query);
+            bindParameters(statement, parameters);
+
+            resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Map<String, Object> row = new HashMap<String, Object>();
+                l.add(row);
+
+                ResultSetMetaData md = resultSet.getMetaData();
+                String[] names = getColumns(md);
+
+                for (String name : names) {
+                    Object o = resultSet.getObject(name);
+                    row.put(name, o);
+                }
+            }
+
+        } finally {
+            close(statement, resultSet);
+        }
+        return l;
+
+    }
+
+    /**
+     * Returns a mapping of rows as key-value pairs where the key is the
+     * first column (a string) and the second column is a value numeric.
      *
      * @param  databaseComponent the component to execute on
      * @param  query             the sql query to run
@@ -166,6 +228,9 @@ public class DatabaseQueryUtility {
         return Collections.emptyMap();
     }
 
+    /**
+     * Binds arguments to a prepared statement.
+     */
     private static void bindParameters(PreparedStatement statement, Object... parameters) throws SQLException {
         int i = 1;
         for (Object p : parameters) {
@@ -179,6 +244,9 @@ public class DatabaseQueryUtility {
         }
     }
 
+    /**
+     * Returns an array of strings as upper-case column names.
+     */
     public static String[] getColumns(ResultSetMetaData rsmd) throws SQLException {
         String[] names = new String[rsmd.getColumnCount()];
         for (int i = 0; i < rsmd.getColumnCount(); i++) {
@@ -188,11 +256,9 @@ public class DatabaseQueryUtility {
         return names;
     }
 
-    public static class StatementParameter {
-        private String name;
-        private String value;
-    }
-
+    /**
+     * Closes statements and result sets.
+     */
     public static void close(Statement statement, ResultSet resultSet) {
         if (resultSet != null) {
             try {

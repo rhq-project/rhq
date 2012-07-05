@@ -24,7 +24,10 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
@@ -33,43 +36,59 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
- * Discovery for a generic component that can read data out of a table for monitoring purposes. Neccessary configuration
- * properties table - the name of the table to search for during inventory metricQuery - the query run to load metric
- * data name - the name of the resource description - the description of the resource
+ * Discovery for a generic component that can read data out of a table for
+ * monitoring purposes. Necessary configuration properties
+ * <li> table - the name of the table to search for during inventory. Note: If absent only
+ * supports manual adding.
+ * <li> metricQuery - the query run to load metric data
+ * <li> name - the name of the resource
+ * <li> description - the description of the resource
  *
  * @author Greg Hinkle
  */
 public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent<?>>,
     ResourceDiscoveryComponent<DatabaseComponent<?>> {
+
+    protected Log log = LogFactory.getLog(getClass());
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
+
+        Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        String table = config.getSimpleValue("table", "");
+        ResourceType rt = resourceDiscoveryContext.getResourceType();
+        String resourceName = config.getSimpleValue("name", rt.getName());
+        String resourceDescription = config.getSimpleValue("description", rt.getDescription());
+
+        if (table.isEmpty()) {
+            log.debug("'table' value not set, cannot discover " + resourceName);
+            return Collections.emptySet();
+        }
+
         Statement statement = null;
         try {
             Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
-
-            Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
-            String table = config.getSimpleValue("table", null);
-            String resourceName = config.getSimpleValue("name", table);
-            String resourceDescription = config.getSimpleValue("description", null);
+            if (conn == null)
+                throw new InvalidPluginConfigurationException("cannot obtain connection from parent");
 
             statement = conn.createStatement();
-            statement.executeQuery("SELECT COUNT(*) FROM " + table);
-
+            statement.setMaxRows(1);
+            statement.setFetchSize(1);
+            // This is more efficient than 'count(*)'
+            // unless the JDBC driver fails to support setMaxRows or doesn't stream results
+            statement.executeQuery("SELECT * FROM " + table).close();
             DiscoveredResourceDetails details = new DiscoveredResourceDetails(
                 resourceDiscoveryContext.getResourceType(), table + resourceName, resourceName, null,
                 resourceDescription, config, null);
 
+            log.debug("discovered " + details);
             return Collections.singleton(details);
         } catch (SQLException e) {
+            log.debug("discovery failed " + e + " for " + table);
             // table not found, don't inventory
         } finally {
             JDBCUtil.safeClose(statement);
-        }
-
-        if (!resourceDiscoveryContext.getPluginConfigurations().isEmpty()) {
-            return Collections.singleton(discoverResource(resourceDiscoveryContext.getPluginConfigurations().get(0),
-                resourceDiscoveryContext));
         }
 
         return Collections.emptySet();
@@ -79,13 +98,14 @@ public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseCom
         ResourceDiscoveryContext<DatabaseComponent<?>> discoveryContext) throws InvalidPluginConfigurationException {
 
         Configuration config = pluginConfiguration;
-
         String table = config.getSimpleValue("table", null);
         String resourceName = config.getSimpleValue("name", table);
-        String resourceDescription = config.getSimpleValue("description", null);
+        String resourceDescription = config.getSimpleValue("description",
+                discoveryContext.getResourceType().getDescription());
+        String resourceVersion = config.getSimpleValue("version", null);
 
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), table
-            + resourceName, resourceName, null, resourceDescription, config, null);
+            + resourceName, resourceName, resourceVersion, resourceDescription, config, null);
 
         return details;
     }

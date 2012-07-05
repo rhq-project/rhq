@@ -38,9 +38,12 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
- * Discovery for a generic component that can read data out of a table for monitoring purposes. Neccessary configuration
- * properties table - the name of the table to search for during inventory metricQuery - the query run to load metric
- * data name - the name of the resource description - the description of the resource
+ * Discovery for a generic component that can read data out of a table for
+ * monitoring purposes. Necessary configuration properties:
+ * <li> table - the name of the table to search for during inventory
+ * <li> keyColumn - the key of the table used to load metric data
+ * <li> name - the name of the resource
+ * <li> description - the description of the resource
  *
  * @author Greg Hinkle
  */

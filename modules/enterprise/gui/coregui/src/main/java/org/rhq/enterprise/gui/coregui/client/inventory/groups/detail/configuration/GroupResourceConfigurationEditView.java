@@ -56,6 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+import static java.util.EnumSet.*;
+
 /**
  * A view for editing a group's configuration.
  *
@@ -70,6 +72,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private ConfigurationDefinition configurationDefinition;
     private List<GroupMemberConfiguration> memberConfigurations;
 
+    private ToolStrip buttonbar;
     private ConfigurationEditor editor;
     private IButton saveButton;
 
@@ -86,30 +89,34 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     protected void onDraw() {
         super.onDraw();
 
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setWidth100();
-        toolStrip.setExtraSpace(10);
-        toolStrip.setMembersMargin(5);
-        toolStrip.setLayoutMargin(5);
+        refresh();
+
+        if (!this.resourcePermission.isConfigureWrite()) {
+            Message message = new Message(MSG.view_group_resConfig_edit_noperm(), Message.Severity.Info, of(
+                    Message.Option.Transient, Message.Option.Sticky));
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    private ToolStrip createButtonBar() {
+        this.buttonbar = new ToolStrip();
+        buttonbar.setWidth100();
+        buttonbar.setExtraSpace(10);
+        buttonbar.setMembersMargin(5);
+        buttonbar.setLayoutMargin(5);
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
-        this.saveButton.setTooltip(MSG.view_group_resConfig_edit_saveTooltip());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
             }
         });
-        toolStrip.addMember(saveButton);
-
-        addMember(toolStrip);
-        refresh();
-
-        if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message(MSG.view_group_resConfig_edit_noperm(), Message.Severity.Info, EnumSet.of(
-                Message.Option.Transient, Message.Option.Sticky));
-            CoreGUI.getMessageCenter().notify(message);
-        }
+        buttonbar.addMember(saveButton);
+        // The button bar will remain hidden until the configuration has been successfully loaded.
+        buttonbar.setVisible(false);
+        return buttonbar;
     }
+
 
     @Override
     public void refresh() {
@@ -122,6 +129,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
+            buttonbar.destroy();
+            removeMember(buttonbar);
         }
         // TODO (ips): If editor != null, use editor.reload() instead.
 
@@ -145,7 +154,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         if (this.configurationDefinition == null) {
             final ResourceType type = this.group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { type.getId() },
-                EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypesLoadedCallback() {
                     public void onTypesLoaded(Map<Integer, ResourceType> types) {
                         configurationDefinition = types.get(type.getId()).getResourceConfigurationDefinition();
@@ -188,6 +197,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                                             "The server did not return the configuration for one or more member resources.");
                                     }
                                     memberConfigurations.add(memberConfiguration);
+                                    addMember(createButtonBar());
                                 }
                                 initEditor();
                             }

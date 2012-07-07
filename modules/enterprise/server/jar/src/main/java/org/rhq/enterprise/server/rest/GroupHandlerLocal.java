@@ -24,6 +24,7 @@ import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.enterprise.server.rest.domain.GroupDefinitionRest;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.server.rest.domain.GroupRest;
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML, "application/yaml"})
 public interface GroupHandlerLocal {
 
+    @GZIP
     @GET
     @Path("/")
     @ApiOperation(value = "List all groups", multiValueResponse = true)
@@ -82,6 +84,7 @@ public interface GroupHandlerLocal {
                              @Context UriInfo uriInfo);
 
 
+    @GZIP
     @GET
     @Path("{id}/resources")
     @Cache(isPrivate = true,maxAge = 60)
@@ -114,12 +117,14 @@ public interface GroupHandlerLocal {
                              @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
+    @GZIP
     @GET
     @Path("/definitions")
     @ApiOperation(value="List all existing GroupDefinitions",multiValueResponse = true)
     public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo);
 
+    @GZIP
     @GET
     @Path("/definition/{id}")
     @Cache(isPrivate = true,maxAge = 60)

@@ -29,6 +29,8 @@ import javax.ws.rs.core.Response;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 
+import org.jboss.resteasy.annotations.GZIP;
+
 /**
  * Return some status information about the system
  * @author Heiko W. Rupp
@@ -39,6 +41,7 @@ import com.wordnik.swagger.annotations.ApiOperation;
 @Produces({"application/json","application/xml","text/html"})
 public interface StatusHandlerLocal {
 
+    @GZIP
     @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information",
     responseClass = "Map 'values' with map of key-value pairs describing the status")
     @GET

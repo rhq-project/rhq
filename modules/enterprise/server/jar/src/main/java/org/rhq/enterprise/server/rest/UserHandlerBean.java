@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.UserRest;
 
@@ -83,10 +84,18 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
         for (Integer id : favIds) {
-            Resource res = resourceManager.getResource(caller,id);
+            try {
+                Resource res = resourceManager.getResource(caller,id);
 
-            ResourceWithType rwt = fillRWT(res,uriInfo);
-            ret.add(rwt);
+                ResourceWithType rwt = fillRWT(res,uriInfo);
+                ret.add(rwt);
+            }
+            catch (Exception e) {
+                if (e.getCause()!=null && e.getCause() instanceof ResourceNotFoundException)
+                    log.debug("Favorite resource with id "+ id + " not found - not returning to the user");
+                else
+                    log.warn("Retrieving resource with id " + id + " failed: " + e.getLocalizedMessage());
+            }
         }
         Response.ResponseBuilder builder;
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {

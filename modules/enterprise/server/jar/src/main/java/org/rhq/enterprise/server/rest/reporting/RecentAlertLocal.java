@@ -11,12 +11,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/recentAlerts")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The recent alerts report")
 public interface RecentAlertLocal {
 
+    @GZIP
     @GET
     @Produces({"text/csv"})
     StreamingOutput recentAlerts(

@@ -20,6 +20,7 @@
 package org.rhq.scripting.javascript;
 
 import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.MethodDescriptor;
 import java.beans.PropertyDescriptor;
@@ -28,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +42,8 @@ import javax.script.ScriptContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.ScriptableObject;
 
 import org.rhq.scripting.CodeCompletion;
 import org.rhq.scripting.MetadataProvider;
@@ -231,8 +235,10 @@ public class JavascriptCompletor implements CodeCompletion {
             }
 
             if (matches.size() == 1 && matches.containsKey(call[0])) {
-                if (matches.get(call[0]).get(0) instanceof Method) {
-                    list.add("(" + (((Method) matches.get(call[0]).get(0)).getParameterTypes().length == 0 ? ")" : ""));
+                Object obj = matches.get(call[0]).get(0);
+                if (isMethod(obj)) {
+                    boolean close = obj instanceof Method && ((Method) obj).getParameterTypes().length == 0;
+                    list.add("(" + (close ? ")" : ""));
                 }
                 return call[0].length() + 1;
             }
@@ -446,53 +452,80 @@ public class JavascriptCompletor implements CodeCompletion {
         }
 
         try {
-            if (baseObjectClass.equals(Void.TYPE))
+            if (baseObjectClass.equals(Void.TYPE)) {
                 return found;
-
-            BeanInfo info = null;
-            if (baseObjectClass.isInterface() || baseObjectClass.equals(Object.class)) {
-                info = Introspector.getBeanInfo(baseObjectClass);
+            } else if (ScriptableObject.class.isAssignableFrom(baseObjectClass)) {
+                return findJavascriptContextMatches((ScriptableObject) baseObject, start);
             } else {
-                info = Introspector.getBeanInfo(baseObjectClass, Object.class);
-            }
-
-            Set<Method> methodsCovered = new HashSet<Method>();
-
-            PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
-            for (PropertyDescriptor desc : descriptors) {
-                if (desc.getName().startsWith(start) && (!IGNORED_METHODS.contains(desc.getName()))) {
-
-                    List<Object> list = found.get(desc.getName());
-                    if (list == null) {
-                        list = new ArrayList<Object>();
-                        found.put(desc.getName(), list);
-                    }
-                    list.add(desc);
-
-                    methodsCovered.add(desc.getReadMethod());
-                    methodsCovered.add(desc.getWriteMethod());
-                }
-            }
-
-            MethodDescriptor[] methods = info.getMethodDescriptors();
-            for (MethodDescriptor desc : methods) {
-                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod())
-                    && !desc.getName().startsWith("_d") && !IGNORED_METHODS.contains(desc.getName())) {
-
-                    Method m = desc.getMethod();
-
-                    List<Object> list = found.get(desc.getName());
-                    if (list == null) {
-                        list = new ArrayList<Object>();
-                        found.put(desc.getName(), list);
-                    }
-                    list.add(m);
-                }
+                return findJavaBeanContextMatches(baseObject, baseObjectClass, start);
             }
 
         } catch (Exception e) {
             LOG.info("Failure during code completion", e);
             e.printStackTrace(output);
+        }
+
+        return found;
+    }
+
+    private Map<String, List<Object>> findJavascriptContextMatches(ScriptableObject object, String start) {
+        HashMap<String, List<Object>> ret = new HashMap<String, List<Object>>();
+        for (Object o : object.getIds()) {
+            String key = o.toString();
+
+            if (start == null || start.isEmpty() || key.startsWith(start)) {
+                Object target = object.get(key);
+                ret.put(key, new ArrayList<Object>(Arrays.asList(target)));
+            }
+        }
+
+        return ret;
+    }
+
+    private Map<String, List<Object>> findJavaBeanContextMatches(Object baseObject, Class<?> baseObjectClass,
+        String start) throws IntrospectionException {
+
+        Map<String, List<Object>> found = new HashMap<String, List<Object>>();
+
+        BeanInfo info = null;
+        if (baseObjectClass.isInterface() || baseObjectClass.equals(Object.class)) {
+            info = Introspector.getBeanInfo(baseObjectClass);
+        } else {
+            info = Introspector.getBeanInfo(baseObjectClass, Object.class);
+        }
+
+        Set<Method> methodsCovered = new HashSet<Method>();
+
+        PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
+        for (PropertyDescriptor desc : descriptors) {
+            if (desc.getName().startsWith(start) && (!IGNORED_METHODS.contains(desc.getName()))) {
+
+                List<Object> list = found.get(desc.getName());
+                if (list == null) {
+                    list = new ArrayList<Object>();
+                    found.put(desc.getName(), list);
+                }
+                list.add(desc);
+
+                methodsCovered.add(desc.getReadMethod());
+                methodsCovered.add(desc.getWriteMethod());
+            }
+        }
+
+        MethodDescriptor[] methods = info.getMethodDescriptors();
+        for (MethodDescriptor desc : methods) {
+            if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod())
+                && !desc.getName().startsWith("_d") && !IGNORED_METHODS.contains(desc.getName())) {
+
+                Method m = desc.getMethod();
+
+                List<Object> list = found.get(desc.getName());
+                if (list == null) {
+                    list = new ArrayList<Object>();
+                    found.put(desc.getName(), list);
+                }
+                list.add(m);
+            }
         }
 
         return found;
@@ -545,5 +578,9 @@ public class JavascriptCompletor implements CodeCompletion {
         } finally {
             m.setAccessible(access);
         }
+    }
+
+    private static boolean isMethod(Object object) {
+        return object != null && object instanceof Method || object instanceof Function;
     }
 }

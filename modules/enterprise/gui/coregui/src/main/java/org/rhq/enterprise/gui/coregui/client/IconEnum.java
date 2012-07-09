@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+
 /**
  * Adding type information around Icons instead of having plain Strings.
  * Icons imply more than just a String type. There are attributes associated with icons
@@ -26,6 +27,7 @@ package org.rhq.enterprise.gui.coregui.client;
  * This provides more type safety than the ImageManager class that deals only with String type.
  * IDE's can quickly query on Icon Types and quickly see exactly where that image was used
  * and understand the full ramifications of changing an image.
+ * Helps provide consistency of images throughout the app.
  * By having the IconEnum represent the icon, we can defer the determination of the
  * size of the icon to the implementation while still defining an icon.
  * It is also very easy for a method signature to become ambiguous if the string is null.
@@ -58,6 +60,7 @@ public enum IconEnum {
     TAGS("global/Tag_16.png","global/Tag_24.png" ),
     REPORT("subsystems/report/Document_16.png","subsystems/report/Document_24.png" ),
     SUSPECT_METRICS("subsystems/monitor/Monitor_failed_16.png","subsystems/monitor/Monitor_failed_24.png","subsystems/monitor/Monitor_grey_16.png",null),
+    RECENT_MEASUREMENTS("subsystems/monitor/Monitor_16.png","subsystems/monitor/Monitor_24.png"),
     CONFIGURATION_HISTORY("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png","subsystems/configure/Configure_grey_16.png",null),
     RECENT_OPERATIONS("subsystems/control/Operation_16.png","subsystems/control/Operation_24.png", "subsystems/control/Operation_grey_16.png",null),
     RECENT_ALERTS("subsystems/alert/Alert_LOW_16.png"),

@@ -21,7 +21,16 @@
       <plugin-configuration>
          <c:simple-property name="host" default="localhost" displayName="Listen host" description="the hostname or IP address that the database is listening on"/>
          <c:simple-property name="port" default="1521" displayName="Listen port" description="the TCP port that the database is listening on"/>
-         <c:simple-property name="sid" default="XE" displayName="Database SID" description="the name of the database to connect to"/>
+
+         <c:simple-property name="connectionMethod" displayName="Connection Method" type="string" required="true" default="SID"
+                            description="The method used to connect to Oracle; defaults to 'SID'.">
+            <c:property-options>
+               <c:option value="SID"         name="SID"/>
+               <c:option value="SERVICENAME" name="Service name"/>
+            </c:property-options>
+         </c:simple-property>
+
+         <c:simple-property name="sid" default="XE" displayName="Database SID/Service name" description="SID or service name of the database to connect to"/>
 
          <c:simple-property name="driverClass" default="oracle.jdbc.driver.OracleDriver" displayName="JDBC driver class"
                             description="the fully-qualified classname of the JDBC driver class" required="false"/>

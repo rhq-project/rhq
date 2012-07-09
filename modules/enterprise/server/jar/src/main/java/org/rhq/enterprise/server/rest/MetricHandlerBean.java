@@ -60,8 +60,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
-
 import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -646,8 +644,13 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 PrintWriter pw = new PrintWriter(outputStream);
 
                 if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                    boolean needsComma = false;
                     pw.println("[");
                     while (rs.next()) {
+                        if (needsComma) {
+                            pw.print(",\n");
+                        }
+                        needsComma = true;
                         pw.print("{");
                         pw.print("\"scheduleId\":");
                         pw.print(scheduleId);
@@ -658,8 +661,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                         pw.print("\"value\":");
                         pw.print(rs.getDouble(2));
                         pw.print("}");
-                        if (!rs.isLast())
-                            pw.print(",\n");
                     }
                     pw.println("]");
                 }

@@ -35,6 +35,7 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
 
@@ -48,6 +49,7 @@ import org.jboss.resteasy.annotations.cache.Cache;
 @Api(value="Api that deals with user related stuff")
 public interface UserHandlerLocal {
 
+    @GZIP
     @GET
     @Path("favorites/resource")
     @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")

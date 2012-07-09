@@ -45,6 +45,8 @@ import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
+
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -65,6 +67,7 @@ public interface MetricHandlerLocal {
     static String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
     static String NO_SCHEDULE_FOR_ID = "No schedule with the passed id exists";
 
+    @GZIP
     @GET
     @Path("data/{scheduleId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
@@ -143,6 +146,7 @@ public interface MetricHandlerLocal {
      * @param headers Injected HttpHeaders
      * @return an encoded stream of numerical values
      */
+    @GZIP
     @ApiOperation(value = "Expose the raw metrics of a single schedule. This can only expose raw data, which means the start date may "
         + "not be older than 7 days.")
     @GET

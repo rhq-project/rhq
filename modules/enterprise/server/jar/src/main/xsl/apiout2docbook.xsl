@@ -97,6 +97,9 @@
         </emphasis>
       </simpara>
       <simpara><xsl:value-of select="@description"/></simpara>
+      <xsl:if test="not(@gzip = '')">
+        <simpara>Supports returning a gzip'ed Content-Encoding</simpara>
+      </xsl:if>
       <xsl:choose>
         <xsl:when test="param">
           <table>

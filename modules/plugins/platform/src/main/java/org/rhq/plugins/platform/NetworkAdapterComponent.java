@@ -26,6 +26,9 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -39,12 +42,16 @@ import org.rhq.core.system.NetworkAdapterInfo;
 import org.rhq.core.system.NetworkAdapterStats;
 
 public class NetworkAdapterComponent implements ResourceComponent<PlatformComponent>, MeasurementFacet {
-    //private final Log log = LogFactory.getLog(NetworkAdapterComponent.class);
+    private final Log log = LogFactory.getLog(NetworkAdapterComponent.class);
 
     private ResourceContext<PlatformComponent> context;
 
     public void start(ResourceContext<PlatformComponent> resourceContext) {
         this.context = resourceContext;
+        if (getInfo().getOperationalStatus()==NetworkAdapterInfo.OperationState.DOWN) {
+            context.getAvailabilityContext().disable();
+            log.info("Disabled " + context.getResourceKey() + " as it was down on start");
+        }
     }
 
     public void stop() {

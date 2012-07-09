@@ -72,6 +72,13 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic add icon.
+     */
+    public static String getAddIcon() {
+        return "[SKIN]/actions/add.png";
+    }
+
+    /**
      * Returns a generic approve (aka "ok") icon.
      */
     public static String getApproveIcon() {

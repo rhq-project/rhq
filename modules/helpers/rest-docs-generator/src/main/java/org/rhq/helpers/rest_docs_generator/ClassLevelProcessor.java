@@ -47,6 +47,8 @@ import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.jboss.resteasy.annotations.GZIP;
+
 /**
  * Processor for JAX-RS classes
  * @author Heiko W. Rupp
@@ -213,6 +215,10 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         Element methodElement = doc.createElement("method");
         methodElement.setAttribute("path",path);
+        GZIP gzip = td.getAnnotation(GZIP.class);
+        if (gzip!=null) {
+            methodElement.setAttribute("gzip","true");
+        }
         classElement.appendChild(methodElement);
         Name elementName = td.getSimpleName();
         methodElement.setAttribute("name", elementName.toString());

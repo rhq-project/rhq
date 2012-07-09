@@ -39,6 +39,7 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.enterprise.server.rest.domain.AlertRest;
@@ -54,6 +55,7 @@ import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
 @Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired. It does not offer to create/update AlertDefinitions (yet)")
 public interface AlertHandlerLocal {
 
+    @GZIP
     @GET
     @Path("/")
     @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest")
@@ -116,6 +118,7 @@ public interface AlertHandlerLocal {
     AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId);
 
 
+    @GZIP
     @GET
     @Path("/definition")
     @ApiOperation("List all Alert Definition")

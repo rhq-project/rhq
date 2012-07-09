@@ -24,6 +24,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
+ * Base class for database components.
  * @author Greg Hinkle
  */
 public abstract class AbstractDatabaseComponent<T extends DatabaseComponent<?>> implements DatabaseComponent {
@@ -45,5 +46,10 @@ public abstract class AbstractDatabaseComponent<T extends DatabaseComponent<?>> 
 
     public void removeConnection() {
         this.resourceContext.getParentResourceComponent().removeConnection();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getName() + " key=" + resourceContext.getResourceKey();
     }
 }

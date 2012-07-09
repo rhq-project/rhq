@@ -55,6 +55,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -172,7 +173,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
 
         //recentMetrics.xhtml
-        HLayout recentMetricsTitle = new TitleWithIcon("subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
+        HLayout recentMetricsTitle = new TitleWithIcon(IconEnum.RECENT_MEASUREMENTS.getIcon24x24Path(), RECENT_MEASUREMENTS);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(recentMetricsTitle);
             leftPane.addMember(recentMeasurementsContent);
@@ -180,12 +181,12 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             leftPane.addMember(divider1);
         }
         //recentAlerts.xhtml
-        HLayout recentAlertsTitle = new TitleWithIcon("subsystems/alert/Flag_blue_24.png", RECENT_ALERTS);
+        HLayout recentAlertsTitle = new TitleWithIcon(IconEnum.RECENT_ALERTS.getIcon24x24Path(), RECENT_ALERTS);
         leftPane.addMember(recentAlertsTitle);
         leftPane.addMember(recentAlertsContent);
         recentAlertsContent.setHeight(20);
         //recentOOBs.xhtml
-        HLayout recentOobsTitle = new TitleWithIcon("subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
+        HLayout recentOobsTitle = new TitleWithIcon(IconEnum.SUSPECT_METRICS.getIcon24x24Path(), RECENT_OOB);
         recentOobContent.setHeight(20);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(divider2);
@@ -199,7 +200,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         rightPane.setAutoHeight();
         firstRightPanePortletLoaded = false;
         //recentConfigUpdates.xhtml
-        HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
+        HLayout recentConfigUpdatesTitle = new TitleWithIcon(IconEnum.CONFIGURE.getIcon24x24Path(),
             RECENT_CONFIGURATIONS);
         recentConfigurationContent.setHeight(20);
         if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.CONFIGURATION)))
@@ -210,7 +211,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
 
         //recentOperations.xhtml
-        HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
+        HLayout recentOperationsTitle = new TitleWithIcon(IconEnum.RECENT_OPERATIONS.getIcon24x24Path(), RECENT_OPERATIONS);
         recentOperationsContent.setHeight(20);
         if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.OPERATION)))
             || (displayGroupOperations(groupCategory, facets))) {//resource
@@ -222,7 +223,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             firstRightPanePortletLoaded = true;
         }
         //recentEventCounts.xhtml
-        HLayout recentEventsTitle = new TitleWithIcon("subsystems/event/Events_24.png", RECENT_EVENTS);
+        HLayout recentEventsTitle = new TitleWithIcon(IconEnum.EVENTS.getIcon24x24Path(), RECENT_EVENTS);
         recentEventsContent.setHeight(20);
         if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.EVENT)))
             || displayGroupEvents(groupCategory, facets)) {//resource
@@ -234,7 +235,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             firstRightPanePortletLoaded = true;
         }
         //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Package_24.png", RECENT_PKG_HISTORY);
+        HLayout recentPkgHistoryTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(),RECENT_PKG_HISTORY);
         recentPkgHistoryContent.setHeight(20);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             if (firstRightPanePortletLoaded) {
@@ -245,7 +246,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
 
         //recent bundle deployments
-        recentBundleDeployTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_BUNDLE_DEPLOY);
+        recentBundleDeployTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(), RECENT_BUNDLE_DEPLOY);
         recentBundleDeployTitle.setHeight(20);
         deployBundleViewIfApplicable(resource, group);
 
@@ -513,7 +514,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
     /** Takes the current value of the widget and persists it into the configuration object passed in.
     *
-    * @param configUpdateStatusSelector
+    * @param configStatusSelector
     * @param portletConfig
     * returns populated configuration object.
     */

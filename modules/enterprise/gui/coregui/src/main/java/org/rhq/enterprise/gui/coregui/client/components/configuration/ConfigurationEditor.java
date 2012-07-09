@@ -52,24 +52,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
-import com.smartgwt.client.widgets.form.fields.FloatItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.IntegerItem;
-import com.smartgwt.client.widgets.form.fields.PasswordItem;
-import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
-import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
+import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.events.*;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -134,6 +118,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import sun.net.www.content.image.png;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.
@@ -545,7 +530,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (propertyMap instanceof Configuration) {
             this.topLevelPropertiesValuesManager.addMember(form);
         }
-        //form.setValidateOnExit(true);  // TODO: Remove this?
         form.setHiliteRequiredFields(true);
         form.setNumCols(4);
         form.setCellPadding(5);
@@ -1000,7 +984,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             removeField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                    Log.info("You want to delete: " + recordClickEvent.getRecordNum());
+                    Log.debug("You want to delete: " + recordClickEvent.getRecordNum());
                     SC.confirm(MSG.view_configEdit_confirm_2(), new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
@@ -1032,13 +1016,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         toolStrip.setWidth100();
         if (!propertyReadOnly) {
             IButton addRowButton = new IButton();
-            addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
-            addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
-                        memberPropertyDefinitionMap, null, mapReadOnly);
-                }
-            });
+            addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
+                    addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
+                                    memberPropertyDefinitionMap, null, mapReadOnly);
+                        }
+                    });
             toolStrip.addMember(addRowButton);
         }
 
@@ -1074,20 +1058,15 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private static boolean isAllReadOnly(List<PropertyDefinition> propertyDefinitions) {
-        // TODO (ips, 02/13/12): If we are going to do this correctly, we need to call isPropertyReadOnly() on each
-        //                       member property to determine whether that particular property is read-only or not,
-        //                       rather than relying solely on whether the member property definition is read-only; this
-        //                       is because, for a couple special cases, isPropertyReadOnly() returns false even when
-        //                       the prop def is read-only.
-        /*boolean allPropsDefsReadOnly = true;
+        boolean allPropsDefsReadOnly = true;
         for (PropertyDefinition subDef : propertyDefinitions) {
             if (!subDef.isReadOnly()) {
+                Log.debug("Found at least one non-readOnly property for: "+subDef.getName());
                 allPropsDefsReadOnly = false;
                 break;
             }
         }
-        return allPropsDefsReadOnly;*/
-        return false;
+        return allPropsDefsReadOnly;
     }
 
     private PropertyMapListGridRecord[] buildSummaryRecords(PropertyList propertyList,
@@ -1133,8 +1112,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             vLayout.addMember(footer);
 
             final IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"));
-            deleteButton.setIcon(Window.getImgURL("[SKIN]/actions/remove.png"));
-            deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
+            deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
+                    deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
             deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -1178,11 +1157,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
 
             final IButton newButton = new LocatableIButton(vLayout.extendLocatorId("New"), MSG.common_button_new());
-            newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
+            newButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             newButton.setTooltip(MSG.view_configEdit_tooltip_2());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    // TODO: selenium locators
                     final Window popup = new Window();
                     popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
@@ -1276,7 +1254,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return buildComplexPropertyField(vLayout);
     }
 
-    private LinkedHashMap<String, String> buildValueMap(PropertyList propertyList) {
+    private static LinkedHashMap<String, String> buildValueMap(PropertyList propertyList) {
         LinkedHashMap<String, String> memberValueToIndexMap = new LinkedHashMap<String, String>();
         List<Property> memberProperties = propertyList.getList();
         int index = 0;
@@ -1296,13 +1274,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
         final PropertySimple propertySimple) {
-        Log.debug("Building simple field for " + propertySimple + "...");
 
         FormItem valueItem = null;
 
         boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
+        Log.debug("Building simple field for " + propertySimple +"(read-only:"+propertyIsReadOnly+")...");
+
         // TODO (ips, 03/25/11): We eventually want to use StaticTextItems for read-only PASSWORD props too, but we have
-        //                       to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
+        // to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
         if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
             valueItem = new StaticTextItem();
         } else {
@@ -1347,15 +1326,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = radioGroupItem;
                     break;
                 case INTEGER:
-                    // Ideally, we'd use SpinnerItems for INTEGER props, but unfortunately, as of version 2.4, SmartGWT
-                    // has a nasty bug where it does not fire ValueChangedEvents or ItemChangedEvents when the value of
-                    // a SpinnerItem changes...
-                    /*SpinnerItem spinnerItem = new SpinnerItem();
+                    SpinnerItem spinnerItem = new SpinnerItem();
                     spinnerItem.setMin(Integer.MIN_VALUE);
                     spinnerItem.setMax(Integer.MAX_VALUE);
-                    // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
-                    valueItem = spinnerItem;*/
-                    valueItem = new IntegerItem();
+                    valueItem = spinnerItem;
                     break;
                 case FLOAT:
                 case DOUBLE:
@@ -1384,6 +1358,25 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     }
                 });
+                // Since spinnerItems only fire ChangedEvent once the spinner buttons are pushed
+                // we add blur handler to pick up any changes to that field when leaving
+                if(valueItem instanceof SpinnerItem){
+                    valueItem.addBlurHandler(new BlurHandler() {
+                        @Override
+                        public void onBlur(BlurEvent event) {
+                            updatePropertySimpleValue(event.getItem(), event.getItem().getValue(), propertySimple,
+                                    propertyDefinitionSimple);
+                            // Only fire a prop value change event if the prop's a top-level simple or a simple within a
+                            // top-level map.
+                            if (shouldFireEventOnPropertyValueChange(event.getItem(), propertyDefinitionSimple,
+                                    propertySimple)) {
+                                boolean isValid = event.getItem().validate();
+                                firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                            }
+
+                        }
+                    });
+                }
             }
         }
 

@@ -35,11 +35,12 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 
 /**
- *
+ * Discovers MySQL tables.
  * @author Steve Millidge (C2B2 Consulting Limited)
  */
 public class MySqlTableDiscoveryComponent implements ResourceDiscoveryComponent {
 
+    private static final String TABLE_DISCOVERY = "tableDiscovery";
     private Log log = LogFactory.getLog(this.getClass());
 
     @Override
@@ -47,6 +48,14 @@ public class MySqlTableDiscoveryComponent implements ResourceDiscoveryComponent 
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
         MySqlDatabaseComponent parent = (MySqlDatabaseComponent)rdc.getParentResourceComponent();
+        Configuration pconfig = rdc.getParentResourceContext().getPluginConfiguration();
+        // If the user has disabled table discovery on the parent, we don't autodiscover
+        // them, as we may hit temporary ones that go away any time soon again
+        // See BZ-797356
+        if (!Boolean.parseBoolean(pconfig.getSimpleValue(TABLE_DISCOVERY, "true"))) {
+            log.debug("table discovery disabled");
+            return set;
+        }
         Connection conn = parent.getConnection();
 
         if (conn != null) {

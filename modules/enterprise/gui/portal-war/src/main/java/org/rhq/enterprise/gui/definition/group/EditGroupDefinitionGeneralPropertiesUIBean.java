@@ -31,7 +31,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
-import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
+import org.rhq.core.domain.resource.group.InvalidExpressionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EditGroupDefinitionGeneralPropertiesUIBean {

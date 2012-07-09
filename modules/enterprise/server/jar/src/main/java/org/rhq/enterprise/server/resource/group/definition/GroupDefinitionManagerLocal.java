@@ -33,7 +33,7 @@ import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefini
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
-import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
+import org.rhq.core.domain.resource.group.InvalidExpressionException;
 
 @Local
 public interface GroupDefinitionManagerLocal {

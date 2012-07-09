@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.resource.group.definition.framework;
+package org.rhq.core.domain.resource.group;
 
 public class InvalidExpressionException extends Exception {
     private static final long serialVersionUID = 1L;

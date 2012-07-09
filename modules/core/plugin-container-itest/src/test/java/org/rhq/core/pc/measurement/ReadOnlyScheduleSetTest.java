@@ -3,6 +3,7 @@ package org.rhq.core.pc.measurement;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -36,11 +37,16 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 @RunDiscovery
 public class ReadOnlyScheduleSetTest extends Arquillian {
 
-    @Deployment(name = "bz821058Plugin")
+    @Deployment(name = "TwoMetricPlugin")
     @TargetsContainer("connected-pc-with-metric-collection")
     public static RhqAgentPluginArchive getTestPlugin() {
         RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "bz821058-plugin-1.0.jar");
-        return pluginJar.setPluginDescriptor("bz821058-rhq-plugin.xml").addClasses(
+        HashMap<String, String> replacements = new HashMap<String, String>();
+        replacements.put("@@@discovery@@@", SingleResourceDiscoveryComponent.class.getName());
+        replacements.put("@@@class@@@", BZ821058ResourceComponent.class.getName());
+        replacements.put("@@@metric1.interval@@@", "30000");
+        replacements.put("@@@metric2.interval@@@", "30000");
+        return pluginJar.setPluginDescriptorFromTemplate("two-metric-rhq-plugin.xml", replacements).addClasses(
             SingleResourceDiscoveryComponent.class, BZ821058ResourceComponent.class);
     }
 
@@ -53,10 +59,10 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
     private FakeServerInventory fakeServerInventory;
     private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
-    @ResourceContainers(plugin = "bz821058Plugin", resourceType = "BZ821058Server")
+    @ResourceContainers(plugin = "TwoMetricPlugin", resourceType = "TwoMetricServer")
     private Set<ResourceContainer> containers;
 
-    @ResourceComponentInstances(plugin = "bz821058Plugin", resourceType = "BZ821058Server")
+    @ResourceComponentInstances(plugin = "TwoMetricPlugin", resourceType = "TwoMetricServer")
     private Set<BZ821058ResourceComponent> components;
 
     @BeforeDiscovery(testMethods = "testBZ821058")

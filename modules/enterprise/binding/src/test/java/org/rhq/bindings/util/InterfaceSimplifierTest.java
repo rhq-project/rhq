@@ -243,7 +243,9 @@ public class InterfaceSimplifierTest {
         Class<?> iface = InterfaceSimplifier.simplify(Annotations.class);
 
         Annotation[] annotations = iface.getAnnotations();
-        Assert.assertEquals(annotations.length, 1, "UNexpected number of annotations on the 'Annotations' class.");
+        //we add the @SimplifiedClass annotation
+        Assert.assertEquals(annotations.length, Annotations.class.getAnnotations().length + 1,
+            "Unexpected number of annotations on the 'Annotations' class.");
         Annotation annotation = annotations[0];
         Assert.assertEquals(annotation.annotationType(), MyAnnotation.class,
             "Unexpected annotation type on the class 'Annotations");
@@ -284,8 +286,9 @@ public class InterfaceSimplifierTest {
 
         method = iface.getMethod("methodSimplified", int.class);
         annotations = method.getAnnotations();
+        //we add the @SimplifiedMethod on the method
         Assert
-            .assertEquals(annotations.length, 1, "Unexpected number of annotations on the 'methodSimplified' method.");
+            .assertEquals(annotations.length, 2, "Unexpected number of annotations on the 'methodSimplified' method.");
 
         annotation = annotations[0];
         Assert.assertEquals(annotation.annotationType(), MyAnnotation.class,
@@ -313,5 +316,36 @@ public class InterfaceSimplifierTest {
         Assert
             .assertEquals(((MyAnnotation) annotation).parameter(), "d",
                 "Unexpected value of the 'parameter' of the annotation on the parameter p of 'Annotations.methodSimplified(int)'.");
+    }
+
+    public void testOriginalMethodRetrieval() throws Exception {
+        Class<?> iface = InterfaceSimplifier.simplify(Generics.class);
+
+        Method simplifiedMethod = iface.getMethod("typeParametersSimplified", Type.class, int.class);
+        Method origMethod = InterfaceSimplifier.getOriginalMethod(simplifiedMethod);
+
+        Assert.assertTrue(InterfaceSimplifier.isSimplified(iface),
+            "Unable to determine that the simplified interface was simplified.");
+        Assert.assertTrue(InterfaceSimplifier.isSimplified(simplifiedMethod));
+        Assert.assertFalse(InterfaceSimplifier.isSimplified(String.class), "String class is NOT simplified.");
+        Assert.assertFalse(InterfaceSimplifier.isSimplified(Object.class.getMethod("toString")),
+            "Object.toString() is NOT simplified.");
+
+        Assert.assertEquals(origMethod.getDeclaringClass(), Generics.class,
+            "Unexpected declaring class of the original method.");
+        Assert.assertEquals(origMethod.getParameterTypes().length, simplifiedMethod.getParameterTypes().length + 1,
+            "Unexpected number of params on the original method.");
+        Assert.assertEquals(origMethod.getParameterTypes()[0], Subject.class,
+            "Unexpected first param of the original method.");
+
+        Method nonSimplifiedMethod = iface.getMethod("typeParameters", Type.class, int.class);
+        origMethod = InterfaceSimplifier.getOriginalMethod(nonSimplifiedMethod);
+
+        Assert.assertFalse(InterfaceSimplifier.isSimplified(nonSimplifiedMethod));
+
+        Assert.assertEquals(origMethod.getDeclaringClass(), Generics.class,
+            "Unexpected declaring class of the original method.");
+        Assert.assertEquals(origMethod.getParameterTypes(), nonSimplifiedMethod.getParameterTypes(),
+            "Unexpected params on the original method.");
     }
 }

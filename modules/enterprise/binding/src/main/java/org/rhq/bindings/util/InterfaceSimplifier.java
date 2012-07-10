@@ -18,6 +18,7 @@
  */
 package org.rhq.bindings.util;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +70,77 @@ public class InterfaceSimplifier {
 
     }
 
+    /**
+     * Returns the method on the original interface that the simplified interface with given method was generated from
+     * using the {@link #simplify(Class)} method (i.e. this method is kind of reverse to the {@link #simplify(Class)} 
+     * method).
+     * <p>
+     * The returned method may or may not have different signature from the supplied method - that depends on whether
+     * the {@link #simplify(Class)} simplified the method or not.
+     *  
+     * @param method the potentially simplified method
+     * @return null if the method doesn't come from a simplified class, otherwise a method on the original interface
+     * that the supplied method was generated from.
+     */
+    public static Method getOriginalMethod(Method method) {
+        SimplifiedClass simplifiedClass = method.getDeclaringClass().getAnnotation(SimplifiedClass.class);
+        if (simplifiedClass == null) {
+            return null;
+        } else {
+            SimplifiedMethod simplifiedMethod = method.getAnnotation(SimplifiedMethod.class);
+            Class<?> origClass = simplifiedClass.originalClass();
+
+            if (simplifiedMethod == null) {
+                try {
+                    return origClass.getMethod(method.getName(), method.getParameterTypes());
+                } catch (NoSuchMethodException e) {
+                    throw new IllegalStateException("Inconsisten interface simplification. The non-simplified method "
+                        + method + " should have had a counterpart with the exact signature on the interface "
+                        + origClass + " but it could not be found.", e);
+                }
+            } else {
+
+                Class<?>[] paramTypes = new Class<?>[method.getParameterTypes().length + 1];
+                paramTypes[0] = Subject.class;
+                System.arraycopy(method.getParameterTypes(), 0, paramTypes, 1, paramTypes.length - 1);
+
+                try {
+                    return origClass.getMethod(method.getName(), paramTypes);
+                } catch (NoSuchMethodException e) {
+                    throw new IllegalStateException("Inconsistent interface simplification. The simplified method "
+                        + method + " should have had a counterpart on the interface " + origClass
+                        + " but it couldn't be found.", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines whether given class is simplified or not. This method will return true for any class returned from 
+     * {@link #simplify(Class)}.
+     * 
+     * @param cls the class
+     * @return true if the class object was created by the {@link #simplify(Class)} method, false otherwise.
+     */
+    public static boolean isSimplified(Class<?> cls) {
+        return cls.getAnnotation(SimplifiedClass.class) != null;
+    }
+
+    /**
+     * Determines whether the method (declared on the simplified interface, i.e. 
+     * <code>isSimplified(method.getDeclaringClass()</code> returns true) has been "tampered with" by the simplifier or
+     * has been left intact.
+     * <p>
+     * If you want to get the original method that the supplied method corresponds to, use 
+     * the {@link #getOriginalMethod(Method)} method.
+     * 
+     * @param method the potentially simplified method present on a simplified class
+     * @return true if the method's signature has been modified by the simplifier, false otherwise.
+     */
+    public static boolean isSimplified(Method method) {
+        return method.getAnnotation(SimplifiedMethod.class) != null;
+    }
+
     public static Class<?> simplify(Class<?> intf) {
         try {
             ClassPool classPool = ClassPool.getDefault();
@@ -107,9 +179,10 @@ public class InterfaceSimplifier {
             AnnotationsAttribute annotations = (AnnotationsAttribute) originalClassFile
                 .getAttribute(AnnotationsAttribute.visibleTag);
             AnnotationsAttribute newAnnotations = copyAnnotations(annotations, constPool);
-            if (newAnnotations != null) {
-                newClassFile.addAttribute(newAnnotations);
-            }
+
+            //add our @Simplified annotation to the new class
+            newAnnotations = addSimplifiedClassAnnotation(originalClass.getName(), newAnnotations, constPool);
+            newClassFile.addAttribute(newAnnotations);
 
             //copy the generic signature of the class
             SignatureAttribute signature = (SignatureAttribute) originalClassFile.getAttribute(SignatureAttribute.tag);
@@ -160,6 +233,9 @@ public class InterfaceSimplifier {
                 annotations = copyAnnotations(annotations, constPool);
 
                 if (simplify) {
+                    //add the @SimplifiedMethod to the method annotations
+                    annotations = addSimplifiedMethodAnnotation(annotations, constPool);
+
                     if (signature != null) {
                         //fun, we need to modify the signature, too, because we have left out the parameter
                         MethodSignature sig = MethodSignature.parse(signature.getSignature());
@@ -474,5 +550,32 @@ public class InterfaceSimplifier {
 
             return bld.toString();
         }
+    }
+
+    private static AnnotationsAttribute addSimplifiedClassAnnotation(String originalClassName,
+        AnnotationsAttribute annotations, ConstPool constPool) {
+
+        if (annotations == null) {
+            annotations = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+        }
+
+        Annotation simplified = new Annotation(SimplifiedClass.class.getName(), constPool);
+        simplified.addMemberValue("originalClass", new ClassMemberValue(originalClassName, constPool));
+
+        annotations.addAnnotation(simplified);
+
+        return annotations;
+    }
+
+    private static AnnotationsAttribute addSimplifiedMethodAnnotation(AnnotationsAttribute annotations,
+        ConstPool constPool) {
+
+        if (annotations == null) {
+            annotations = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+        }
+
+        annotations.addAnnotation(new Annotation(SimplifiedMethod.class.getName(), constPool));
+
+        return annotations;
     }
 }

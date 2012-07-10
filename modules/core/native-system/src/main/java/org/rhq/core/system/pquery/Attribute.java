@@ -35,7 +35,7 @@ class Attribute {
         name, basename, pidfile, pid
     }
 
-    private String attributeValue;
+    private final String attributeValue;
 
     Attribute(String attributeValue, Category category) {
         validate(attributeValue, category);

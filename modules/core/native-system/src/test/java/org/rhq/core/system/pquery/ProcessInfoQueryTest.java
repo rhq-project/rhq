@@ -24,8 +24,11 @@ package org.rhq.core.system.pquery;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.rhq.core.system.ProcessInfo;
@@ -262,16 +265,13 @@ public class ProcessInfoQueryTest {
 
     /**
      * Test PID files.
-     *
-     * @throws Exception
      */
     public void testPIQLPidfile() throws Exception {
         File pidfile = File.createTempFile("test", ".pid");
         try {
-            FileOutputStream fos = new FileOutputStream(pidfile);
-            fos.write("3".getBytes());
-            fos.flush();
-            fos.close();
+            FileWriter fw = new FileWriter(pidfile);
+            fw.write("3");
+            fw.close();
 
             results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
             assert results.size() == 1 : results;
@@ -343,6 +343,30 @@ public class ProcessInfoQueryTest {
         } finally {
             pidfile.delete();
         }
+    }
+
+    /**
+     * Test PID files with whitespace or empty files.
+     */
+    public void testPIQLPidfileWhitespace() throws Exception {
+        File pidfile = File.createTempFile("test", ".pid");
+        try {
+            results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
+            assert results.size() == 0 : results;
+
+            FileWriter fw = new FileWriter(pidfile);
+            fw.write(" 3\r\n");
+            fw.close();
+
+            results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
+            assert results.size() == 1 : results;
+        } finally {
+            pidfile.delete();
+        }
+        results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
+        assert results.size() == 0 : results;
+        results = query.query("process|pidfile|match=" + UUID.randomUUID());
+        assert results.size() == 0 : results;
     }
 
     /**

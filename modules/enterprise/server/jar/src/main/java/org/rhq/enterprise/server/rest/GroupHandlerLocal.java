@@ -57,6 +57,14 @@ public interface GroupHandlerLocal {
                              @Context UriInfo uriInfo);
 
 
+    @GET
+    @GZIP
+    @Path("{id}/metricDefinitions")
+    @ApiOperation(value = "Get the metric definitions for the compatible group with the passed id")
+    public Response getMetricDefinitionsForGroup(@ApiParam(value = "Id of the group") @PathParam("id") int id,
+                                 @Context Request request, @Context HttpHeaders headers,
+                                 @Context UriInfo uriInfo);
+
     @POST
     @Path("/")
     @ApiOperation(value = "Create a new group")

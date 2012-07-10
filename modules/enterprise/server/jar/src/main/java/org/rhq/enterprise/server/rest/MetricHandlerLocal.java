@@ -77,7 +77,7 @@ public interface MetricHandlerLocal {
                            @ApiParam(value="Start time since epoch.", defaultValue = "End time - 8h") @QueryParam("startTime")  long startTime,
                            @ApiParam(value="End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
                            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
-                                  @QueryParam("hideEmpty") boolean hideEmpty,
+                           @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam("hideEmpty") boolean hideEmpty,
                                   @Context Request request,
                                   @Context HttpHeaders headers);
 
@@ -98,9 +98,32 @@ public interface MetricHandlerLocal {
     @ApiOperation("Retrieve a list of high/low/average/data aggregate for the resource")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     List<MetricAggregate> getAggregatesForResource(
-            @ApiParam("Resource to query") @PathParam("resourceId") int resourceId,
+            @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
             @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime);
+
+    @GET
+    @Path("data/group/{groupId}")
+    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the group")
+    List<MetricAggregate> getAggregatesForGroup(
+            @ApiParam("Id of the group to query") @PathParam("groupId") int groupId,
+            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
+            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime);
+
+    @GZIP
+    @GET
+    @Path("data/group/{groupId}/{definitionId}")
+    @ApiOperation(value = "Get the bucketized metric values for the metric definition of the group ")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    Response getMetricDataForGroupAndDefinition(
+            @ApiParam("Id of the group to query") @PathParam("groupId") int groupId,
+            @ApiParam("Id of the metric definition to retrieve") @PathParam("definitionId") int definitionId,
+            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
+            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+            @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam("hideEmpty") boolean hideEmpty,
+            @Context Request request,
+            @Context HttpHeaders headers);
+
 
     /**
      * Get information about the schedule
@@ -169,7 +192,7 @@ public interface MetricHandlerLocal {
      * @param point Datapoint of class NumericDataPoint
      * @param headers Injected HTTP headers
      * @param uriInfo Injected info about the uri
-     * @return
+     * @return Created response
      */
     @PUT
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})

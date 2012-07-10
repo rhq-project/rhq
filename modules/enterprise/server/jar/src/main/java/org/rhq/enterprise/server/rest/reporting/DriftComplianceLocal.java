@@ -28,12 +28,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/driftCompliance")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The drift compliance report")
 public interface DriftComplianceLocal {
 
+    @GZIP
     @GET
     @Produces({"text/csv", "application/xml"})
     StreamingOutput generateReport(

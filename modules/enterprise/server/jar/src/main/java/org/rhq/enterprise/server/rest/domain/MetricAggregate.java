@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * Raw data that could be used to draw a chart
+ * Metric data that could be used to draw a chart
  * @author Heiko W. Rupp
  */
 @XmlRootElement
@@ -39,6 +39,7 @@ public class MetricAggregate {
     List<DataPoint> dataPoints;
     long minTimeStamp;
     long maxTimeStamp;
+    boolean isGroup = false;
 
     public MetricAggregate() {
         dataPoints = new ArrayList<DataPoint>();
@@ -125,6 +126,14 @@ public class MetricAggregate {
 
     public void setMaxTimeStamp(long maxTimeStamp) {
         this.maxTimeStamp = maxTimeStamp;
+    }
+
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean group) {
+        isGroup = group;
     }
 
     public static class DataPoint {

@@ -30,12 +30,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/platformUtilization")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The platform utilization report")
 public interface PlatformUtilizationLocal {
 
+    @GZIP
     @GET
     @Produces({"text/csv"})
     StreamingOutput generateReport(@Context HttpServletRequest request);

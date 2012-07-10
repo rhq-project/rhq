@@ -28,6 +28,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/inventorySummary")
 @Local
@@ -45,6 +46,7 @@ public interface InventorySummaryLocal {
      * specified to generate the details version of the report.
      * @return An output stream that contains the CSV report.
      */
+    @GZIP
     @GET
     @Produces({"text/csv"})
     StreamingOutput generateReport(

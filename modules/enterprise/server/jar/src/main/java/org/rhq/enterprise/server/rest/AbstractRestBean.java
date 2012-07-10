@@ -55,7 +55,10 @@ import org.jboss.cache.TreeCacheMBean;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
@@ -78,6 +81,8 @@ public class AbstractRestBean {
     TreeCacheMBean treeCache;
     @EJB
     ResourceManagerLocal resMgr;
+    @EJB
+    ResourceGroupManagerLocal resourceGroupManager;
 
     /**
      * Renders the passed object with the help of a freemarker template into a string. Freemarket templates
@@ -396,5 +401,27 @@ public class AbstractRestBean {
         }
 */
         return res;
+    }
+
+    /**
+     * Fetch the group with the passed id
+     *
+     * @param groupId id of the resource group
+     * @param requireCompatible Does the group have to be a compatible group?
+     * @return the group object if found
+     * @throws org.rhq.enterprise.server.rest.StuffNotFoundException if the group is not found (or not accessible by the caller)
+     * @throws IllegalArgumentException if a compatible group is required, but the found one is not a compatible one
+     */
+    protected ResourceGroup fetchGroup(int groupId, boolean requireCompatible) {
+        ResourceGroup resourceGroup;
+        resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
+        if (resourceGroup == null)
+            throw new StuffNotFoundException("Group with id " + groupId);
+        if (requireCompatible) {
+            if (resourceGroup.getGroupCategory() != GroupCategory.COMPATIBLE) {
+                throw new IllegalArgumentException("Group with id " + groupId + " is no compatible group");
+            }
+        }
+        return resourceGroup;
     }
 }

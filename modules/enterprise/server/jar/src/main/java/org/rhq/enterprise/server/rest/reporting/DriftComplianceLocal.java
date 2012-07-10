@@ -28,6 +28,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/driftCompliance")
@@ -38,6 +39,7 @@ public interface DriftComplianceLocal {
     @GZIP
     @GET
     @Produces({"text/csv", "application/xml"})
+    @ApiOperation(value = "Export the drift compliance data")
     StreamingOutput generateReport(
         @Context HttpServletRequest request,
         @QueryParam("resourceTypeId") String resourceTypeId,

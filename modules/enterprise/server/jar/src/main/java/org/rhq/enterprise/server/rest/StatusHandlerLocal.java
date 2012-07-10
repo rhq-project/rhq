@@ -31,6 +31,8 @@ import com.wordnik.swagger.annotations.ApiOperation;
 
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.enterprise.server.rest.domain.StringValue;
+
 /**
  * Return some status information about the system
  * @author Heiko W. Rupp
@@ -42,9 +44,15 @@ import org.jboss.resteasy.annotations.GZIP;
 public interface StatusHandlerLocal {
 
     @GZIP
-    @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information",
+    @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information." +
+            "Caller must have MANAGE_SETTINGS to access this endpoint.",
     responseClass = "Map 'values' with map of key-value pairs describing the status")
     @GET
     @Path("/")
     Response getStatus(@Context HttpHeaders httpHeaders);
+
+    @GET
+    @Path("/server")
+    @ApiOperation(value = "Get the operation mode of this server")
+    StringValue serverState();
 }

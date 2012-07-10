@@ -193,12 +193,19 @@ public class RhinoScriptEngine  extends AbstractScriptEngine
                 }
             }
                         
+            protected Context makeContext() {
+                Context cx = super.makeContext();
+                cx.setOptimizationLevel(-1);
+                return cx;
+            }
+
             private Object superDoTopCall(final Callable callable,
                 final Context cx, final Scriptable scope,
                 final Scriptable thisObj, final Object[] args) {
                 
                 return super.doTopCall(callable, cx, scope, thisObj, args);
-            }            
+            }
+
         });
     }
     

@@ -266,7 +266,8 @@ public class RhinoScriptEngine  extends AbstractScriptEngine
             
             requireBuilder = new RequireBuilder();            
             setModuleSourceProvider(moduleSourceProvider);
-                        
+            requireBuilder.setSandboxed(false);
+
             new LazilyLoadedCtor(topLevel, "JSAdapter",
                 "org.rhq.scripting.javascript.engine.JSAdapter",
                 false);
@@ -484,7 +485,7 @@ public class RhinoScriptEngine  extends AbstractScriptEngine
         Context cx = enterContext();
         try {
             cx.evaluateString(newScope, printSource, "print", 1, null);
-            requireBuilder.createRequire(cx, topLevel).install(newScope);
+            requireBuilder.createRequire(cx, newScope).install(newScope);
         } finally {
             Context.exit();
         }

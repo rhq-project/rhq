@@ -274,6 +274,8 @@ public class CliSender extends AlertSender<CliComponent> {
         bindings.put("alert", alert);
 
         ScriptEngine engine = takeEngine(bindings);
+        engine.getContext().setWriter(output);
+        engine.getContext().setErrorWriter(output);
 
         return engine;
     }

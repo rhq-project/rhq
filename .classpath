@@ -49,6 +49,8 @@
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/gwt-installer-war/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/gwt-installer-war/target/generated-sources/gwt"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/base-perspective-jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/content_http-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/client-api/src/main/java"/>
@@ -284,6 +286,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/0.99/morphia-0.99.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.1.Final/jboss-servlet-api_3.0_spec-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.3.Final/resteasy-links-2.3.3.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.3.Final/resteasy-jaxrs-2.3.3.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.3.Final/resteasy-jackson-provider-2.3.3.Final.jar"/>

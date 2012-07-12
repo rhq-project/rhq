@@ -120,6 +120,7 @@ public interface MetricHandlerLocal {
             @ApiParam("Id of the metric definition to retrieve") @PathParam("definitionId") int definitionId,
             @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
             @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam("hideEmpty") boolean hideEmpty,
             @Context Request request,
             @Context HttpHeaders headers);

@@ -166,12 +166,15 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     }
 
     public Response getMetricDataForGroupAndDefinition(int groupId, int definitionId, long startTime, long endTime,
-            boolean hideEmpty, Request request, HttpHeaders headers) {
+                                                       int dataPoints,boolean hideEmpty, Request request, HttpHeaders headers) {
 
         if (startTime==0) {
             endTime = System.currentTimeMillis();
             startTime = endTime - EIGHT_HOURS;
         }
+
+        if (dataPoints<1)
+            throw new IllegalArgumentException("datapoints must be >=0");
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
@@ -187,7 +190,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         res.setGroup(true);
 
         List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForCompatibleGroup(caller,
-                groupId,definitionId,startTime,endTime,60); // TODO number of points
+                groupId,definitionId,startTime,endTime,dataPoints);
 
         if (listList.isEmpty()) {
             throw new StuffNotFoundException("Data for group with id " + groupId + " and definition " + definitionId);

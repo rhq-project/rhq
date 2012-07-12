@@ -80,13 +80,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     protected void onDraw() {
         super.onDraw();
 
-        //createButtonBar();
-
         refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
-                .of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info,
+                    EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }

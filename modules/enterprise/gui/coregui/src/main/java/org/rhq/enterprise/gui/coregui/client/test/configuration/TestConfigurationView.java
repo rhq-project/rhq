@@ -51,6 +51,7 @@ public class TestConfigurationView
 
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
+    private LocatableToolStrip buttonBar;
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
 
@@ -67,7 +68,16 @@ public class TestConfigurationView
     public void build() {
         setWidth100();
         setHeight100();
-        
+
+        buttonBar = createButtonBar();
+
+        this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
+        this.configuration = TestConfigurationFactory.createConfiguration();
+
+        reloadConfiguration();
+    }
+
+    private LocatableToolStrip createButtonBar() {
         LocatableToolStrip toolStrip = new LocatableToolStrip(extendLocatorId("ToolStrip"));
         toolStrip.setWidth100();
 
@@ -81,13 +91,8 @@ public class TestConfigurationView
         });
         this.saveButton.disable();
         toolStrip.addMember(this.saveButton);
-
-        addMember(toolStrip);
-
-        this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
-        this.configuration = TestConfigurationFactory.createConfiguration();
-
-        reloadConfiguration();
+        toolStrip.addSpacer(40);
+        return toolStrip;
     }
 
     @Override
@@ -120,10 +125,13 @@ public class TestConfigurationView
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
+            buttonBar.destroy();
+            removeMember(buttonBar);
         }
 
         editor = createConfigurationEditor();
         addMember(editor);
+        addMember(createButtonBar());
         markForRedraw();
     }
 

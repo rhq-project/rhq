@@ -53,6 +53,7 @@ public class TestGroupConfigurationView
 
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
+    private ToolStrip buttonBar;
     private ConfigurationDefinition configurationDefinition;
     private List<GroupMemberConfiguration> memberConfigurations;
 
@@ -67,22 +68,6 @@ public class TestGroupConfigurationView
         setWidth100();
         setHeight100();
 
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
-
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        this.saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                save();
-            }
-        });
-        this.saveButton.disable();
-        toolStrip.addMember(this.saveButton);
-
-        addMember(toolStrip);
-
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.memberConfigurations = new ArrayList<GroupMemberConfiguration>(GROUP_SIZE);
         for (int i = 0; i < GROUP_SIZE; i++) {
@@ -91,8 +76,24 @@ public class TestGroupConfigurationView
                 configuration);
             this.memberConfigurations.add(memberConfiguration);
         }
-
         reloadConfiguration();
+    }
+
+    private ToolStrip createButtonBar() {
+        buttonBar = new ToolStrip();
+        buttonBar.setWidth100();
+        buttonBar.addMember(new LayoutSpacer());
+
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                save();
+            }
+        });
+        this.saveButton.disable();
+        buttonBar.addMember(this.saveButton);
+        buttonBar.addSpacer(40);
+        return buttonBar;
     }
 
     @Override
@@ -120,14 +121,17 @@ public class TestGroupConfigurationView
     }
 
     private void reloadConfiguration() {
-        this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
+            buttonBar.destroy();
+            removeMember(buttonBar);
         }
 
         editor = createConfigurationEditor();
         addMember(editor);
+        addMember(createButtonBar());
+        markForRedraw();
     }
 
     protected GroupConfigurationEditor createConfigurationEditor() {

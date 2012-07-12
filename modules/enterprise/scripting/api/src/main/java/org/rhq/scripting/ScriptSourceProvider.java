@@ -34,5 +34,11 @@ import java.net.URI;
  */
 public interface ScriptSourceProvider {
 
+    /**
+     * Returns the reader of the source of the script specified by given location.
+     * 
+     * @param location the location of the script
+     * @return the reader of the script source or null if it could not be found
+     */
     Reader getScriptSource(URI location);
 }

@@ -23,11 +23,18 @@ import java.lang.reflect.Method;
 import java.security.PermissionCollection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.python.core.Py;
+import org.python.core.PySystemState;
+import org.python.util.PythonInterpreter;
 
 import org.rhq.scripting.ScriptEngineInitializer;
 import org.rhq.scripting.ScriptSourceProvider;
@@ -40,6 +47,16 @@ import org.rhq.scripting.util.SandboxedScriptEngine;
  */
 public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
 
+    private static final Log LOG = LogFactory.getLog(PythonScriptEngineInitializer.class);
+
+    static {
+        Properties props = new Properties();
+        props.put("python.packages.paths", "java.class.path,sun.boot.class.path");
+        props.put("python.packages.directories", "java.ext.dirs");
+        props.put("python.cachedir.skip", false);
+        PythonInterpreter.initialize(System.getProperties(), props, null);
+    }
+
     private ScriptEngineManager engineManager = new ScriptEngineManager();
 
     @Override
@@ -47,17 +64,29 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
 
         ScriptEngine eng = engineManager.getEngineByName("python");
 
+        //XXX this might not work perfectly in jython
+        //but we can't make it work perfectly either, so let's just
+        //keep our fingers crossed..
+        //http://www.jython.org/jythonbook/en/1.0/ModulesPackages.html#from-import-statements
         for (String pkg : packages) {
-            eng.eval("from " + pkg + " import *\n");
+            try {
+                eng.eval("from " + pkg + " import *\n");
+            } catch (ScriptException e) {
+                //well, let's just keep things going, this is not fatal...
+                LOG.info("Python script engine could not pre-import members of package '" + pkg + "'.");
+            }
         }
 
         //fingers crossed we can secure jython like this
-        return new SandboxedScriptEngine(eng, permissions);
+        return permissions == null ? eng : new SandboxedScriptEngine(eng, permissions);
     }
 
     @Override
     public void installScriptSourceProvider(ScriptEngine scriptEngine, ScriptSourceProvider provider) {
-        //TODO add support for script source providers... possibly using http://www.python.org/dev/peps/pep-0302/        
+        PySystemState sys = Py.getSystemState();
+        if (sys != null) {
+            sys.path_hooks.append(new PythonSourceProvider(provider));
+        }
     }
 
     @Override

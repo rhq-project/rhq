@@ -27,10 +27,39 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                </configuration>
+               <groupId>org.sonatype.plugins</groupId>
+               <artifactId>jarjar-maven-plugin</artifactId>
+               <version>1.5</version>
+               <executions>
+                  <execution>
+                     <phase>package</phase>
+                     <goals>
+                        <goal>jarjar</goal>
+                     </goals>
+                     <configuration>
+                        <includes>
+                           <include>org.python:jython-standalone</include>
+                        </includes>
+                        <rules>     
+                           <keep>
+                              <pattern>*.**</pattern>
+                           </keep>                          
+                        </rules>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
+            
+            <plugin>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <configuration>
+                  <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                  <argLine>-Djava.security.manager
+                     -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
+                  <!-- This is important, because some of the tests try to exit 
+                     the JVM. -->
+                  <failIfNoTests>true</failIfNoTests>
+               </configuration>
             </plugin>
         </plugins>
     </build>

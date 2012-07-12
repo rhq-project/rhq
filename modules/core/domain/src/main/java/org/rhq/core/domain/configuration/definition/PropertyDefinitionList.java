@@ -33,6 +33,8 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.Integer;
+
 /**
  * The definition of a list of properties where each member of the list has the same definition. The definition of the
  * entries may be null in the case of arbitrary lists.
@@ -46,17 +48,9 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyDefinitionList extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * See JBNADM-1595
-     */
-    @Transient
-    private int min;
+    private int min = 0;
 
-    /**
-     * See JBNADM-1595
-     */
-    @Transient
-    private int max;
+    private int max = Integer.MAX_VALUE;
 
     @JoinColumn(name = "parent_list_definition_id")
     @OneToOne(cascade = CascadeType.ALL)

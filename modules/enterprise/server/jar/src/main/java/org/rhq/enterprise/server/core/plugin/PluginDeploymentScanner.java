@@ -200,12 +200,12 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         if (listFiles == null || listFiles.length == 0) {
             return; // nothing to do
         }
-
         for (File file : listFiles) {
             File destinationDirectory;
-            if (file.getName().endsWith(".jar")) {
+            boolean isJarLess = file.getName().endsWith("-rhq-plugin.xml");
+            if (file.getName().endsWith(".jar") || isJarLess ) {
                 try {
-                    if (null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
+                    if (!isJarLess && null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
                         throw new NullPointerException("no xml descriptor found in jar");
                     }
                     destinationDirectory = getAgentPluginDir();
@@ -244,9 +244,17 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                                 log.error("Failed to set mtime to [" + new Date(file.lastModified()) + "] on file ["
                                     + realPluginFile + "].");
                             }
-                            log.info("Found plugin jar at [" + file.getAbsolutePath() + "] and placed it at ["
+                            String tmp;
+                            if (!isJarLess)
+                                tmp = "jar";
+                            else
+                                tmp = "descriptor";
+                            log.info("Found plugin " + tmp + " at [" + file.getAbsolutePath() + "] and placed it at ["
                                 + realPluginFile.getAbsolutePath() + "]");
                         }
+                    }
+                    else {
+                        log.info("Found a plugin at [" + file.getAbsolutePath() + "], which is the same as the existing one. It will be ignored");
                     }
                     boolean deleted = file.delete();
                     if (!deleted) {

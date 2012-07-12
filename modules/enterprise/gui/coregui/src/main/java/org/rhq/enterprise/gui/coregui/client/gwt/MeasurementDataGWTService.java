@@ -50,6 +50,8 @@ public interface MeasurementDataGWTService extends RemoteService {
         throws RuntimeException;
 
     Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) throws RuntimeException;
+    
+    Set<MeasurementData> findLiveDataForGroup(int groupId, int resourceId[], int[] definitionIds) throws RuntimeException;
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException;

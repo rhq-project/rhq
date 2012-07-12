@@ -252,7 +252,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
                     def.getUnits().getName(),def.getDisplayType().toString());
             if (def.getDataType()== DataType.MEASUREMENT) {
                 UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-                uriBuilder.path("/metric/data/group/{groupId}/{definitionId}?hideEmpty=true");
+                uriBuilder.path("/metric/data/group/{groupId}/{definitionId}");
                 URI uri = uriBuilder.build(id,def.getId());
                 Link link = new Link("metric",uri.toString());
                 schedule.addLink(link);

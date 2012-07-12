@@ -62,6 +62,10 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_REMOVE_SERVER_REFERENCE, query = "UPDATE Agent a SET a.server.id = NULL WHERE a.server.id = :serverId "),
     @NamedQuery(name = Agent.QUERY_COUNT_ALL, query = "SELECT count(a.id) FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_FOR_AGENT, query = "SELECT r.id FROM Resource r WHERE r.agent.id = :agentId"),
+    @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite(r.id, r.agent) " //
+        + "  FROM Resource r " //
+        + " WHERE r.id IN (:resourceIds)"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite "
         + "       ( "
         + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityPing,a.backFilled "
@@ -150,6 +154,7 @@ public class Agent implements Serializable {
     public static final String QUERY_FIND_BY_SERVER = "Agent.findByServer";
     public static final String QUERY_COUNT_ALL = "Agent.countAll";
     public static final String QUERY_FIND_RESOURCE_IDS_FOR_AGENT = "Agent.findResourceIdsForAgent";
+    public static final String QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS = "Agent.findResourceIdsWithAgentsByResourceIds";
     public static final String QUERY_FIND_ALL_SUSPECT_AGENTS = "Agent.findAllSuspectAgents";
     public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Agent.findByAffinityGroup";
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Agent.findWithoutAffinityGroup";

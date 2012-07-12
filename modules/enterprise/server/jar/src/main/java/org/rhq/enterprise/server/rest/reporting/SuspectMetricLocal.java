@@ -9,6 +9,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/suspectMetrics")
@@ -19,6 +20,7 @@ public interface SuspectMetricLocal {
     @GZIP
     @GET
     @Produces("text/csv")
+    @ApiOperation(value = "Export the Suspect Metrics data as CSV")
     StreamingOutput suspectMetrics(@Context HttpServletRequest request);
 
 }

@@ -52,8 +52,26 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.form.fields.*;
-import com.smartgwt.client.widgets.form.fields.events.*;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.FloatItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
+import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -118,7 +136,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-import sun.net.www.content.image.png;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.

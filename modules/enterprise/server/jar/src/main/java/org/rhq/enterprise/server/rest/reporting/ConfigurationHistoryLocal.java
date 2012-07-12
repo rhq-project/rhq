@@ -9,6 +9,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/configurationHistory")
@@ -19,5 +20,6 @@ public interface ConfigurationHistoryLocal {
     @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Configuration History data as CSV")
     StreamingOutput configurationHistory(@Context HttpServletRequest request);
 }

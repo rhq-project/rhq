@@ -11,6 +11,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/recentAlerts")
@@ -21,6 +22,7 @@ public interface RecentAlertLocal {
     @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Recent Alert data as CSV")
     StreamingOutput recentAlerts(
             @QueryParam("alertPriority") @DefaultValue("high,medium,low") String alertPriority,
             @QueryParam("startTime") Long startTime,

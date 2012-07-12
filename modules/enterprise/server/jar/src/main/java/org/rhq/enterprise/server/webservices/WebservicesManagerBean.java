@@ -666,6 +666,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
         return measurementDataManager.findLiveData(subject, resourceId, definitionIds);
     }
+    
+    public Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceId, int[] definitionIds) {
+        return measurementDataManager.findLiveDataForGroup(subject, groupId, resourceId, definitionIds);
+    }
 
     public List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId) {
         return measurementDataManager.findTraits(subject, resourceId, definitionId);

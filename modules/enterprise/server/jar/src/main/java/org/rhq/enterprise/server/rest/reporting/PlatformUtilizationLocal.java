@@ -30,6 +30,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/platformUtilization")
@@ -40,6 +41,7 @@ public interface PlatformUtilizationLocal {
     @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Platform utilization data as CSV")
     StreamingOutput generateReport(@Context HttpServletRequest request);
 
 }

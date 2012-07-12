@@ -17,7 +17,7 @@ public interface AlertDefinitionLocal {
     @GZIP
     @GET
     @Produces({"text/csv"})
-    @ApiOperation(value = "Export the AlertDefinitions in the system")
+    @ApiOperation(value = "Export the AlertDefinitions as CSV")
     StreamingOutput alertDefinitions(@Context HttpServletRequest request);
 
 }

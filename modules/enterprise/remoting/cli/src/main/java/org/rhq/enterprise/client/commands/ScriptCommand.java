@@ -151,9 +151,7 @@ public class ScriptCommand implements ClientCommand {
             }
         } catch (ScriptException e) {
 
-            String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            message = message.replace("sun.org.mozilla.javascript.internal.EcmaError: ", "");
-            message = message.replace("(<Unknown source>#1) in <Unknown source> at line number 1", "");
+            String message = client.getUsefulErrorMessage(e);
 
             client.getPrintWriter().println(message);
             client.getPrintWriter().println(script);

@@ -58,6 +58,7 @@ import org.rhq.enterprise.client.utility.CodeCompletionCompletorWrapper;
 import org.rhq.enterprise.client.utility.DummyCodeCompletion;
 import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.scripting.CodeCompletion;
+import org.rhq.scripting.ScriptEngineInitializer;
 
 /**
  * @author Greg Hinkle
@@ -108,6 +109,7 @@ public class ClientMain {
     private Recorder recorder = new NoOpRecorder();
 
     private ScriptEngine engine;
+    private ScriptEngineInitializer scriptEngineInitializer;
     
     private class StartupConfiguration {
         public boolean askForPassword;
@@ -675,6 +677,12 @@ public class ClientMain {
             try {
                 engine = ScriptEngineFactory.getScriptEngine(getLanguage(),
                     new PackageFinder(Arrays.asList(getLibDir())), null);
+
+                if (engine == null) {
+                    throw new IllegalStateException("The scripting language '" + getLanguage()
+                        + "' could not be loaded.");
+                }
+                scriptEngineInitializer = ScriptEngineFactory.getInitializer(getLanguage());
             } catch (ScriptException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -685,6 +693,10 @@ public class ClientMain {
         return engine;
     }
     
+    public String getUsefulErrorMessage(ScriptException e) {
+        return scriptEngineInitializer.extractUserFriendlyErrorMessage(e);
+    }
+
     public Map<String, ClientCommand> getCommands() {
         return commands;
     }

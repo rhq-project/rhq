@@ -51,8 +51,8 @@ public class PythonScriptEngineInitializer implements ScriptEngineInitializer {
 
     static {
         Properties props = new Properties();
-        props.put("python.packages.paths", "java.class.path,sun.boot.class.path");
-        props.put("python.packages.directories", "java.ext.dirs");
+        props.put("python.packages.paths", "rhq.python.additional.classpath,java.class.path,sun.boot.class.path");
+        props.put("python.packages.directories", "rhq.python.additional.package.dirs,java.ext.dirs");
         props.put("python.cachedir.skip", false);
         PythonInterpreter.initialize(System.getProperties(), props, null);
     }

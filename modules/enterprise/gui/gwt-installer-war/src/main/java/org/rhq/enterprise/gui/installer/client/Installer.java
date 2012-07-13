@@ -45,7 +45,7 @@ public class Installer implements EntryPoint {
         button.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 InstallerGWTServiceAsync rpc = InstallerGWTServiceAsync.Util.getInstance();
-                rpc.testMe(new AsyncCallback<String>() {
+                rpc.getAppServerVersion(new AsyncCallback<String>() {
 
                     @Override
                     public void onSuccess(String result) {

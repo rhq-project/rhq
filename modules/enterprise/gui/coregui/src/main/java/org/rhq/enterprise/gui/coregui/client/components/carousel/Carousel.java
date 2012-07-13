@@ -18,15 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.carousel;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -34,19 +25,11 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.*;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpinnerItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.*;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
@@ -56,20 +39,14 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
+
+import java.util.*;
 
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
@@ -193,8 +170,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
         } else {
             if (!this.hideSearchBar) {
-                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                    getSearchSubsystem(), getInitialSearchBarSearchText());
+                final EnhancedSearchBarItem searchFilter = new EnhancedSearchBarItem("search",  getSearchSubsystem(), getInitialSearchBarSearchText());
                 setFilterFormItems(searchFilter);
             }
         }
@@ -877,7 +853,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         com.google.gwt.event.dom.client.KeyPressHandler {
 
         private Carousel carousel;
-        private SearchBarItem searchBarItem;
+        private EnhancedSearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
         public CarouselFilter(Carousel carousel) {
@@ -898,13 +874,13 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                     nextFormItem.addKeyPressHandler(this);
                 } else if (nextFormItem instanceof SelectItem) {
                     nextFormItem.addChangedHandler(this);
-                } else if (nextFormItem instanceof SearchBarItem) {
-                    searchBarItem = (SearchBarItem) nextFormItem;
-                    searchBarItem.getSearchBar().addKeyPressHandler(this);
+                } else if (nextFormItem instanceof EnhancedSearchBarItem) {
+                    //searchBarItem = (SearchBarItem) nextFormItem;
+                    //searchBarItem.getSearchBar().addKeyPressHandler(this);
                     String name = searchBarItem.getName();
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
-                    hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+                    //hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
                 }
             }
 
@@ -943,7 +919,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                 return;
             }
             // TODO: figure out why this event is being sent twice
-            hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+            //hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
             fetchFilteredCarouselData();
         }
     }
@@ -1103,7 +1079,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
          * Execute the action with the currently selected record(s) as the target(s).
          *
          * @param selection the currently selected record(s)
-         * @param actionValue a value optionally supplied by the action (for example, a menuItem action's selection) 
+         * @param actionValue a value optionally supplied by the action (for example, a menuItem action's selection)
          */
         void executeAction(Object actionValue); //TODO add arg
     }

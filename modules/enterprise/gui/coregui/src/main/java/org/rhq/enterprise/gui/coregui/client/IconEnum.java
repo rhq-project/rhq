@@ -88,6 +88,16 @@ public enum IconEnum {
     BUNDLE_REVERT("subsystems/bundle/BundleAction_Revert_16.png", "subsystems/bundle/BundleAction_Revert_24.png"),
 
     /////////////////////////////
+    // Search
+    /////////////////////////////
+    STAR_OFF("search/star1.png"),
+    STAR_ACTIVE("search/star2.png"),
+    STAR_ON("search/star3.png"),
+    ARROW_WHITE("search/menu_arrow.png"),
+    ARROW_GRAY("search/menu_arrow_down.png"),
+    TRASH("search/trash.png"),
+
+    /////////////////////////////
     //  Administration Tab
     /////////////////////////////
     ADMIN("global/Admin_16.png", "global/Admin_24.png"),

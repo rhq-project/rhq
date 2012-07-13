@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,30 +20,36 @@ package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 
-import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.search.FlexSearchBar;
-
 /**
- * @author Joseph Marques
+ * Image Button Item is a convenience class to use ImgButton in a DynamicForm.
+ *
+ * @author Mike Thompson
  */
-public class SearchBarItem extends CanvasItem {
+public class ImgButtonItem extends CanvasItem{
 
     private Canvas canvas = new Canvas();
-    private FlexSearchBar searchBar;
+    private ImgButton imageButton;
 
-    public SearchBarItem(String name, String title, SearchSubsystem subsystem) {
-        this(name, title, subsystem, null);
+    public ImgButtonItem(){
+        construct(null);
     }
 
-    public SearchBarItem(String name, String title, SearchSubsystem subsystem, String initialSearchText) {
-        super(name, title);
+    public ImgButtonItem(String imagePath) {
+        construct(imagePath);
+    }
 
-        searchBar = new FlexSearchBar(subsystem, initialSearchText);
+    private void construct(String imagePath) {
+        imageButton = new ImgButton();
 
-        searchBar.setHeight("30px");
-        canvas.addChild(searchBar);
+        if(null != imagePath){
+           imageButton.setIcon(imagePath);
+        }
+        imageButton.setHeight("30px");
+        canvas.addChild(imageButton);
+        setShowTitle(false);
 
         setCanvas(canvas);
         setHeight(30);
@@ -55,8 +61,7 @@ public class SearchBarItem extends CanvasItem {
         return canvas;
     }
 
-    public FlexSearchBar getSearchBar() {
-        return searchBar;
+    public ImgButton getImageButton() {
+        return imageButton;
     }
-
 }

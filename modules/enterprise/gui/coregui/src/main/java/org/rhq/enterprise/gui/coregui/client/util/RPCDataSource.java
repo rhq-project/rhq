@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.*;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -595,7 +594,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         Map<String, Object> criteriaMap = criteria.getValues();
 
         for (Map.Entry<String, Object> nextEntry : criteriaMap.entrySet()) {
-            Window.alert(nextEntry.getKey() + ":" + nextEntry.getValue());
+            Log.debug("Request Criteria: "+nextEntry.getKey() + ":" + nextEntry.getValue());
         }
     }
 
@@ -628,9 +627,9 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             }
         }
 
-        if (Log.isDebugEnabled() && result != null) {
+        //if (Log.isDebugEnabled() && result != null) {
             Log.debug("Filter: " + paramName + "=[" + result + "]");
-        }
+        //}
 
         return result;
     }

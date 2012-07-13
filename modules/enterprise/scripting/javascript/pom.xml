@@ -86,7 +86,7 @@
 
                      <execution>
                         <id>deploy</id>
-                        <phase>compile</phase>
+                        <phase>install</phase>
                         <configuration>
                            <tasks>
                               <mkdir dir="${rhq.deploymentDir}" />
@@ -94,8 +94,7 @@
                                  location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                               <echo>*** Updating
                                  ${deployment.file}...</echo>
-                              <jar destfile="${deployment.file}"
-                                 basedir="${project.build.outputDirectory}" />
+                              <copy tofile="${deployment.file}" file="${project.build.directory}/${project.build.finalName}.jar" />
                            </tasks>
                         </configuration>
                         <goals>

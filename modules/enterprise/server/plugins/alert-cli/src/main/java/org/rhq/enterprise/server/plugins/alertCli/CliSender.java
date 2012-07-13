@@ -30,8 +30,11 @@ import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import javax.script.ScriptEngine;
@@ -71,8 +74,6 @@ import org.rhq.scripting.ScriptSourceProviderFactory;
  */
 public class CliSender extends AlertSender<CliComponent> {
 
-    private static final String ENGINE_NAME = "javascript";
-
     private static final int MAX_RESULT_SIZE = 4000;
 
     public static final String PROP_PACKAGE_ID = "packageId";
@@ -91,7 +92,7 @@ public class CliSender extends AlertSender<CliComponent> {
     //no more than 10 concurrently running CLI notifications..
     //is that enough?
     private static final int MAX_SCRIPT_ENGINES = 10;
-    private static Queue<ScriptEngine> SCRIPT_ENGINES = new ArrayDeque<ScriptEngine>(MAX_SCRIPT_ENGINES);
+    private static Map<String, Queue<ScriptEngine>> SCRIPT_ENGINES = new HashMap<String, Queue<ScriptEngine>>();
     private static int ENGINES_IN_USE = 0;
 
     /**
@@ -108,12 +109,18 @@ public class CliSender extends AlertSender<CliComponent> {
         public Throwable throwable;
     }
 
+    private static class BitsAndFileExtension {
+        InputStream packageBits;
+        String scriptFileExtension;
+    }
+
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
         ScriptEngine engine = null;
         Subject subjectWithSession = null;
         final SessionManager sessionManager = SessionManager.getInstance();
+        String language = null;
 
         try {
             final Config config = getConfig();
@@ -127,9 +134,25 @@ public class CliSender extends AlertSender<CliComponent> {
             ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
             PrintWriter scriptOut = new PrintWriter(scriptOutputStream);
 
-            engine = getScriptEngine(alert, scriptOut, config);
+            BitsAndFileExtension packageData = getPackageBits(config.packageId, config.repoId);
 
-            InputStream packageBits = getPackageBits(config.packageId, config.repoId);
+            InputStream packageBits = packageData.packageBits;
+            String scriptFileExtension = packageData.scriptFileExtension;
+            language = ScriptEngineFactory.getLanguageByScriptFileExtension(scriptFileExtension);
+
+            if (language == null) {
+                ArrayList<String> supportedExtensions = new ArrayList<String>();
+                for (String lang : ScriptEngineFactory.getSupportedLanguages()) {
+                    supportedExtensions.add(ScriptEngineFactory.getFileExtensionForLanguage(lang));
+                }
+
+                throw new IllegalArgumentException(
+                    "Could not determine the script engine to use based on the script file extension '"
+                        + scriptFileExtension + "'. Only the following extensions are currently supported: "
+                        + supportedExtensions);
+            }
+
+            engine = getScriptEngine(alert, scriptOut, config, language);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
@@ -166,7 +189,7 @@ public class CliSender extends AlertSender<CliComponent> {
                     exceptionHolder.scriptException);
 
                 //make things pretty for the UI
-                ScriptEngineInitializer initializer = ScriptEngineFactory.getInitializer(ENGINE_NAME);
+                ScriptEngineInitializer initializer = ScriptEngineFactory.getInitializer(language);
                 String message = initializer.extractUserFriendlyErrorMessage(exceptionHolder.scriptException);
                 int col = exceptionHolder.scriptException.getColumnNumber();
                 int line = exceptionHolder.scriptException.getLineNumber();
@@ -203,7 +226,7 @@ public class CliSender extends AlertSender<CliComponent> {
                 sessionManager.invalidate(subjectWithSession.getSessionId());
             }
             if (engine != null) {
-                returnEngine(engine);
+                returnEngine(engine, language);
             }
 
             if (reader != null) {
@@ -264,7 +287,8 @@ public class CliSender extends AlertSender<CliComponent> {
         return results;
     }
 
-    private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config) throws ScriptException,
+    private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config, String language)
+        throws ScriptException,
         IOException, InterruptedException {
         Subject user = config.subject;
 
@@ -273,14 +297,14 @@ public class CliSender extends AlertSender<CliComponent> {
         StandardBindings bindings = new StandardBindings(output, client);
         bindings.put("alert", alert);
 
-        ScriptEngine engine = takeEngine(bindings);
+        ScriptEngine engine = takeEngine(bindings, language);
         engine.getContext().setWriter(output);
         engine.getContext().setErrorWriter(output);
 
         return engine;
     }
 
-    private static InputStream getPackageBits(int packageId, int repoId) throws IOException {
+    private static BitsAndFileExtension getPackageBits(int packageId, int repoId) throws IOException {
         final ContentSourceManagerLocal csm = LookupUtil.getContentSourceManager();
         RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
         final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(),
@@ -293,8 +317,8 @@ public class CliSender extends AlertSender<CliComponent> {
                     + " either doesn't exist at all or doesn't have any version. Can't execute a CLI script without a script to run.");
         }
 
-        PipedInputStream ret = new PipedInputStream();
-        final PipedOutputStream out = new PipedOutputStream(ret);
+        PipedInputStream bits = new PipedInputStream();
+        final PipedOutputStream out = new PipedOutputStream(bits);
 
         Thread reader = new Thread(new Runnable() {
             public void run() {
@@ -319,6 +343,20 @@ public class CliSender extends AlertSender<CliComponent> {
         reader.setName("CLI Alert download thread for package version " + versionToUse);
         reader.setDaemon(true);
         reader.start();
+
+        BitsAndFileExtension ret = new BitsAndFileExtension();
+        ret.packageBits = bits;
+        String fileName = versionToUse.getFileName();
+        String extension = "";
+
+        if (fileName != null) {
+            int dotIdx = fileName.lastIndexOf('.');
+            if (dotIdx >= 0) {
+                extension = fileName.substring(dotIdx + 1);
+            }
+        }
+
+        ret.scriptFileExtension = extension;
 
         return ret;
     }
@@ -417,17 +455,24 @@ public class CliSender extends AlertSender<CliComponent> {
         }
     }
 
-    private static ScriptEngine takeEngine(StandardBindings bindings) throws InterruptedException, ScriptException,
+    private static ScriptEngine takeEngine(StandardBindings bindings, String language) throws InterruptedException,
+        ScriptException,
         IOException {
         synchronized (SCRIPT_ENGINES) {
             if (ENGINES_IN_USE >= MAX_SCRIPT_ENGINES) {
                 SCRIPT_ENGINES.wait();
             }
 
-            ScriptEngine engine = SCRIPT_ENGINES.poll();
+            Queue<ScriptEngine> q = SCRIPT_ENGINES.get(language);
+            if (q == null) {
+                q = new ArrayDeque<ScriptEngine>();
+                SCRIPT_ENGINES.put(language, q);
+            }
+
+            ScriptEngine engine = q.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getSecuredScriptEngine(ENGINE_NAME,
+                engine = ScriptEngineFactory.getSecuredScriptEngine(language,
                     new PackageFinder(Collections.<File> emptyList()), bindings, new StandardScriptPermissions());
             }
             //TODO is this OK, or should we use a different classloader than the context classloader?
@@ -440,9 +485,16 @@ public class CliSender extends AlertSender<CliComponent> {
         }
     }
 
-    private static void returnEngine(ScriptEngine engine) {
+    private static void returnEngine(ScriptEngine engine, String language) {
         synchronized (SCRIPT_ENGINES) {
-            SCRIPT_ENGINES.offer(engine);
+            Queue<ScriptEngine> q = SCRIPT_ENGINES.get(language);
+            if (q == null) {
+                //hmm... this is very strange and should not happen, because we should have initied the queue in the 
+                //takeEngine() method...
+                q = new ArrayDeque<ScriptEngine>();
+                SCRIPT_ENGINES.put(language, q);
+            }
+            q.offer(engine);
             --ENGINES_IN_USE;
             SCRIPT_ENGINES.notify();
         }

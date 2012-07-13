@@ -36,6 +36,11 @@ public class PythonScriptEngineProvider implements ScriptEngineProvider {
     }
 
     @Override
+    public String getScriptFileExtension() {
+        return "py";
+    }
+
+    @Override
     public ScriptEngineInitializer getInitializer() {
         return new PythonScriptEngineInitializer();
     }

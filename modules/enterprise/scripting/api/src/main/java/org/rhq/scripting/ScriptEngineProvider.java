@@ -47,6 +47,12 @@ public interface ScriptEngineProvider {
     String getSupportedLanguage();
 
     /**
+     * @return the file extension of files written in the language supported by this provider.
+     * The returned string is the extension without the leading dot.
+     */
+    String getScriptFileExtension();
+
+    /**
      * @return an implementation of {@link ScriptEngineInitializer} that can instantiate
      * and initialize a script engine for the supported language for use with RHQ. 
      */

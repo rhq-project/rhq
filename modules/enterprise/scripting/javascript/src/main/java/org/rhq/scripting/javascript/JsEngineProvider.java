@@ -36,6 +36,11 @@ public class JsEngineProvider implements ScriptEngineProvider {
     }
 
     @Override
+    public String getScriptFileExtension() {
+        return "js";
+    }
+
+    @Override
     public ScriptEngineInitializer getInitializer() {
         return new JsEngineInitializer();
     }

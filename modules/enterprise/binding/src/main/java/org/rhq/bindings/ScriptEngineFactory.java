@@ -114,6 +114,25 @@ public class ScriptEngineFactory {
         return new HashSet<String>(KNOWN_PROVIDERS.keySet());       
     }
     
+    public static String getLanguageByScriptFileExtension(String fileExtension) {
+        for (ScriptEngineProvider p : KNOWN_PROVIDERS.values()) {
+            if (fileExtension.equals(p.getScriptFileExtension())) {
+                return p.getSupportedLanguage();
+            }
+        }
+
+        return null;
+    }
+
+    public static String getFileExtensionForLanguage(String language) {
+        ScriptEngineProvider provider = KNOWN_PROVIDERS.get(language);
+        if (provider == null) {
+            return null;
+        }
+
+        return provider.getScriptFileExtension();
+    }
+
     /**
      * Initializes the script engine for given language.
      * 

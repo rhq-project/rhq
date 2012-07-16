@@ -4006,6 +4006,12 @@
             <schemaSpec version="2.121">
               <schema-javaTask className="ContentSourceConfigurationObfuscationUpgradeTask" />
             </schemaSpec>
+
+             <schemaSpec version="2.122">
+               <schema-alterColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN" columnType="INTEGER"/>
+               <schema-alterColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX" columnType="INTEGER"/>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

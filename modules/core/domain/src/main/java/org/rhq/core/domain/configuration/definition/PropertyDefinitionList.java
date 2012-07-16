@@ -48,10 +48,8 @@ import java.lang.Integer;
 public class PropertyDefinitionList extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
-    @Transient
     private int min = 0;
 
-    @Transient
     private int max = Integer.MAX_VALUE;
 
     @JoinColumn(name = "parent_list_definition_id")

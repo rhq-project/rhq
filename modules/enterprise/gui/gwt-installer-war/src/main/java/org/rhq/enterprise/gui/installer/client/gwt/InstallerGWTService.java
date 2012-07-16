@@ -27,4 +27,5 @@ public interface InstallerGWTService extends RemoteService {
 
     String getAppServerVersion();
 
+    String getOperatingSystem();
 }

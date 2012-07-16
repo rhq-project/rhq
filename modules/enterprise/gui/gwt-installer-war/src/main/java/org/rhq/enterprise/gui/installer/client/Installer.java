@@ -27,6 +27,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTServiceAsync;
 
@@ -41,8 +42,8 @@ public class Installer implements EntryPoint {
     private static final Messages MSG = GWT.create(Messages.class);
 
     public void onModuleLoad() {
-        IButton button = new IButton(MSG.hello_msg());
-        button.addClickHandler(new ClickHandler() {
+        IButton button1 = new IButton(MSG.hello_msg());
+        button1.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 InstallerGWTServiceAsync rpc = InstallerGWTServiceAsync.Util.getInstance();
                 rpc.getAppServerVersion(new AsyncCallback<String>() {
@@ -59,7 +60,30 @@ public class Installer implements EntryPoint {
                 });
             }
         });
-        button.draw();
+
+        IButton button2 = new IButton(MSG.hello_msg());
+        button2.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                InstallerGWTServiceAsync rpc = InstallerGWTServiceAsync.Util.getInstance();
+                rpc.getOperatingSystem(new AsyncCallback<String>() {
+
+                    @Override
+                    public void onSuccess(String result) {
+                        SC.say("SUCCESS: " + result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        SC.say("FAILURE: " + caught);
+                    }
+                });
+            }
+        });
+
+        VLayout layout = new VLayout(10);
+        layout.addMember(button1);
+        layout.addMember(button2);
+        layout.draw();
 
         // Remove loading image in case we don't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");

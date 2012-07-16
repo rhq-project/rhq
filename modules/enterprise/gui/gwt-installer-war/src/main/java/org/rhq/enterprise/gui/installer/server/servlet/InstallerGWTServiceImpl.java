@@ -39,6 +39,8 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     @Override
     public String getAppServerVersion() {
         ModelControllerClient client = ManagementService.getClient();
+
+        // create the read operation we want to invoke on the root AS resource
         ModelNode op = new ModelNode();
         op.get("operation").set("read-attribute");
         op.get("name").set("release-version");
@@ -54,6 +56,33 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         }
 
         return versionString;
+    }
+
+    @Override
+    public String getOperatingSystem() {
+        ModelControllerClient client = ManagementService.getClient();
+
+        // create the read operation we want to invoke on the platform MBean operating system resource
+        ModelNode op = new ModelNode();
+        op.get("operation").set("read-attribute");
+        op.get("name").set("name");
+
+        // provide the target address to the platform MBean operating system resource via ModelNode list
+        ModelNode address = op.get("address");
+        address.add("core-service", "platform-mbean");
+        address.add("type", "operating-system");
+
+        String osName;
+
+        try {
+            ModelNode results = client.execute(op);
+            ModelNode version = results.get("result");
+            osName = version.asString();
+        } catch (Exception e) {
+            osName = e.toString();
+        }
+
+        return osName;
     }
 
 }

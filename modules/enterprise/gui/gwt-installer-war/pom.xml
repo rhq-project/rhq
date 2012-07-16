@@ -223,7 +223,7 @@
                         </manifest>
                         <manifestEntries>
                             <Build-Number>${buildNumber}</Build-Number>
-                            <Dependencies>org.jboss.msc,org.jboss.dmr,org.jboss.as.controller-client,org.jboss.as.controller,org.jboss.as.server,org.jboss.as.naming</Dependencies>
+                            <Dependencies>org.jboss.msc,org.jboss.as.controller-client,org.jboss.as.controller,org.jboss.as.server</Dependencies>
                         </manifestEntries>
                     </archive>
                     <webResources>

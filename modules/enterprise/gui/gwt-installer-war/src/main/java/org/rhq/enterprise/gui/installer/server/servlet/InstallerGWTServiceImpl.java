@@ -41,6 +41,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         ModelControllerClient client = ManagementService.getClient();
         ModelNode op = new ModelNode();
         op.get("operation").set("read-attribute");
+        op.get("name").set("release-version");
 
         String versionString;
 

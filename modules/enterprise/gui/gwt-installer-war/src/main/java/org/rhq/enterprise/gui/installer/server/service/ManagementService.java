@@ -47,7 +47,7 @@ import org.jboss.msc.value.InjectedValue;
 public class ManagementService implements ServiceActivator {
 
     private static volatile ModelController controller;
-    private static volatile ExecutorService executor = Executors.newFixedThreadPool(1);
+    private static volatile ExecutorService executor;
 
     public static ModelControllerClient getClient() {
         return controller.createClient(executor);
@@ -73,6 +73,7 @@ public class ManagementService implements ServiceActivator {
 
         @Override
         public void start(StartContext context) throws StartException {
+            ManagementService.executor = Executors.newFixedThreadPool(1);
             ManagementService.controller = modelControllerValue.getValue();
         }
 

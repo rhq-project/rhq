@@ -38,6 +38,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
@@ -219,6 +220,16 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
             String originalUrl = method.getURI().getURI();
 
             int status = client.executeMethod(method);
+
+            //BZ840512: check for issue deobfuscating the password:
+            if (status == 401 || status == 403) {
+                password = Obfuscator.decode(password);//in case de/unobfuscation failed.
+                UsernamePasswordCredentials upc = new UsernamePasswordCredentials(username, password);
+                client.getState().setCredentials("users", method.getHostConfiguration().getHost(), upc);
+                log.warn("You have either input bad Content Source credentials or"
+                    + " there is a problem retrieving obfuscated passwords. Retrying...");
+                status = client.executeMethod(method);
+            }
 
             //Check to see if redirection has occurred
             String currentUrl = method.getURI().getURI();

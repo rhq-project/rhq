@@ -1793,7 +1793,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="DLQ">
+                    <c:simple-property required="false" name="DLQ" default="jboss.messaging.destination:service=Queue,name=DLQ">
                         <c:description>
                             The JMX ObjectName of the dead letter queue (DLQ) for this queue (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
@@ -1804,7 +1804,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="expiryQueue">
+                    <c:simple-property required="false" name="expiryQueue" default="jboss.messaging.destination:service=Queue,name=ExpiryQueue">
                         <c:description>
                             The JMX ObjectName of the expiry queue for this queue (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
@@ -1815,7 +1815,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="serverPeer">
+                    <c:simple-property required="false" name="serverPeer" default="jboss.messaging:service=ServerPeer">
                         <c:description>
                             The JMX ObjectName of the server peer this queue was deployed on (e.g.
                             "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
@@ -2130,7 +2130,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="DLQ">
+                    <c:simple-property required="false" name="DLQ" default="jboss.messaging.destination:service=Queue,name=DLQ">
                         <c:description>
                             The JMX ObjectName of the dead letter queue (DLQ) for this topic (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
@@ -2141,7 +2141,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="expiryQueue">
+                    <c:simple-property required="false" name="expiryQueue" default="jboss.messaging.destination:service=Queue,name=ExpiryQueue">
                         <c:description>
                             The JMX ObjectName of the expiry queue for this topic (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
@@ -2152,7 +2152,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="serverPeer">
+                    <c:simple-property required="false" name="serverPeer" default="jboss.messaging:service=ServerPeer">
                         <c:description>
                             The JMX ObjectName of the server peer this topic was deployed on (e.g.
                             "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until

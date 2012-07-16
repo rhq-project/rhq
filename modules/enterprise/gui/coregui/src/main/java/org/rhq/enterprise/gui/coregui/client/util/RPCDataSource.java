@@ -18,8 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gwt.core.client.JavaScriptObject;
-import com.smartgwt.client.data.*;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -30,6 +47,7 @@ import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -46,8 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.*;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -594,7 +610,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         Map<String, Object> criteriaMap = criteria.getValues();
 
         for (Map.Entry<String, Object> nextEntry : criteriaMap.entrySet()) {
-            Log.debug("Request Criteria: "+nextEntry.getKey() + ":" + nextEntry.getValue());
+            Log.debug("Request Criteria: " + nextEntry.getKey() + ":" + nextEntry.getValue());
         }
     }
 
@@ -628,12 +644,11 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         }
 
         //if (Log.isDebugEnabled() && result != null) {
-            Log.debug("Filter: " + paramName + "=[" + result + "]");
+        Log.debug("Filter: " + paramName + "=[" + result + "]");
         //}
 
         return result;
     }
-
 
     protected static DataSourceTextField createTextField(String name, String title, Integer minLength,
         Integer maxLength, Boolean required) {

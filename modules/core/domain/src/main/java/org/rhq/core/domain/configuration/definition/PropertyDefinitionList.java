@@ -22,6 +22,8 @@
  */
 package org.rhq.core.domain.configuration.definition;
 
+import java.lang.Integer;
+
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -33,7 +35,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.Integer;
 
 /**
  * The definition of a list of properties where each member of the list has the same definition. The definition of the

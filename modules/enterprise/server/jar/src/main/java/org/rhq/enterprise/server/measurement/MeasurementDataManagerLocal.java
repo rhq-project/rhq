@@ -181,7 +181,7 @@ public interface MeasurementDataManagerLocal {
      *
      * @return MeasurementData for this Schedule
      */
-    Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceId, int[] definitionIds);
+    Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceIds, int[] definitionIds);
 
     /**
      * Returns a list of numeric data point lists for the given compatible group - one per specified measurement

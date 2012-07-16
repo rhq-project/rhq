@@ -76,7 +76,7 @@ public interface MeasurementDataManagerRemote {
     Set<MeasurementData> findLiveDataForGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "resourceId") int[] resourceId, //
+        @WebParam(name = "resourceId") int[] resourceIds, //
         @WebParam(name = "definitionIds") int[] definitionIds);
 
     @WebMethod

@@ -104,19 +104,21 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      */
     private static final long AVAIL_REFRESH_INTERVAL = 1000 * 60 * 15; // 15 minutes
 
+    private long availRefreshInterval = AVAIL_REFRESH_INTERVAL;
+
     /**
      * The ManagedComponent is fetched from the server in {@link #getManagedComponent} throughout
      * the life cycle of this resource component. For example during metrics collections
-     * when getValues is invoked, getManagedComponent is called. Any time getManagedComponent
+     * when getValues() is invoked, getManagedComponent() is called. Any time getManagedComponent()
      * is called the lastComponentRefresh timestamp is updated. This timestamp is used in
      * {@link #getAvailability} to determine whether or not a component is needed to
      * perform an availability check.
      */
     private long lastComponentRefresh = 0L;
 
-    private long availRefreshInterval = AVAIL_REFRESH_INTERVAL;
-
-    private RunState runState = RunState.UNKNOWN;
+    // The last known runState for the component.  This is used to determine the result of getAvailability(). We
+    // do *not* cache the entire ManagedComponent because it is potentially a huge object that would eat too much memory.
+    private RunState runState;
 
     private String componentName;
     private ComponentType componentType;
@@ -125,22 +127,30 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public AvailabilityType getAvailability() {
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
-        if (timeSinceComponentRefresh > availRefreshInterval) {
-            if (log.isDebugEnabled()) {
+        boolean refresh = timeSinceComponentRefresh > availRefreshInterval;
+
+        if (refresh) {
+            if (lastComponentRefresh > 0L && log.isDebugEnabled()) {
                 log.debug("The availability refresh interval for [resourceKey: "
                     + getResourceContext().getResourceKey() + ", type: " + componentType + ", name: " + componentName
                     + "] has been exceeded by " + (timeSinceComponentRefresh - availRefreshInterval)
-                    + " ms. Reloading managed component.");
+                    + " ms. Reloading managed component...");
             }
-            getManagedComponent();
+
+            ManagedComponent managedComponent = getManagedComponent();
+            runState = managedComponent.getRunState();
         }
 
         if (runState == RunState.RUNNING) {
             return AvailabilityType.UP;
+
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(componentType + " component '" + componentName + "' was not running, state was : " + runState);
+                log.debug("Returning DOWN avail for " + componentType + " component '" + componentName
+                    + "' with runState [" + runState
+                    + "].");
             }
+
             return AvailabilityType.DOWN;
         }
     }
@@ -428,27 +438,56 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         return componentName;
     }
 
+    /**
+     * This method should most likely not be overridden. Instead, override {@link #getManagedComponent(ManagementView)}.
+     * <br/><br/>
+     * IMPORTANT!!! The returned ManagedComponent SHOULD NOT be cached in the instance. It is potentially a memory hog.
+     * 
+     * @return The ManagedComponent
+     * @throws RuntimeException if fetching the ManagementView or getting the component fails
+     * @throws IllegalStateException if the managedComponent is null/not found
+     */
+    @NotNull
     protected ManagedComponent getManagedComponent() {
         ManagedComponent managedComponent;
+
         try {
             ManagementView managementView = getConnection().getManagementView();
-            managedComponent = managementView.getComponent(this.componentName, this.componentType);
+            managedComponent = getManagedComponent(managementView);
         } catch (Exception e) {
-            runState = RunState.UNKNOWN;
             throw new RuntimeException("Failed to load [" + this.componentType + "] ManagedComponent ["
                 + this.componentName + "].", e);
         }
+
+        // Even if not found, update the refresh time. It will avoid too many costly, and potentially fruitless, fetches 
+        lastComponentRefresh = System.currentTimeMillis();
+
         if (managedComponent == null) {
-            runState = RunState.UNKNOWN;
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
                 + this.componentName + "].");
         }
+
         if (log.isTraceEnabled()) {
             log.trace("Retrieved " + toString(managedComponent) + ".");
         }
-        lastComponentRefresh = System.currentTimeMillis();
-        runState = managedComponent.getRunState();
+
         return managedComponent;
+    }
+
+    /**
+     * This is an override point. When actually fetching the managed component, this entry point should not be
+     * used. Instead, access should be via {@link #getManagedComponent()}. 
+     *
+     * @param managementView
+     * @return the ManagedComponent. Null if not found.
+     * @Throws Exception if there is a problem getting the component.
+     */
+    protected ManagedComponent getManagedComponent(ManagementView managementView) throws Exception {
+        if (null == managementView) {
+            throw new IllegalArgumentException("managementView can not be null");
+        }
+
+        return managementView.getComponent(this.componentName, this.componentType);
     }
 
     @NotNull

@@ -242,8 +242,13 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                 int ceil = (int) Math.ceil(div);
                 int floor = (int) Math.floor(div);
                 // as we get deeper be more lenient. We haven't come up with any sort of genius algorithm, it's
-                // just ok, if it balances well for the primary through tertiary levels that's pretty good.
-                if (level > 3) {
+                // just ok, if it balances well for the primary and secondary that's good.  Allow a skew of 1 for
+                // level 3-5 and a skew of 2 for levels past that
+                if (level > 2) {
+                    ++ceil;
+                    --floor;
+                }
+                if (level > 5) {
                     ++ceil;
                     --floor;
                 }

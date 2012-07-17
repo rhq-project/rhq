@@ -25,6 +25,7 @@ package org.rhq.core.domain.configuration.definition;
 import java.lang.Integer;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -49,8 +50,10 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyDefinitionList extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
+    @Column(name = "MIN_ENTRIES")
     private int min = 0;
 
+    @Column(name = "MAX_ENTRIES")
     private int max = Integer.MAX_VALUE;
 
     @JoinColumn(name = "parent_list_definition_id")

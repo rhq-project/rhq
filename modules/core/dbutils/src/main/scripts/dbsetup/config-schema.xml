@@ -27,8 +27,8 @@
         <column name="NAME" type="VARCHAR2" required="false" size="255"/>
         <column name="DISPLAY_NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="1000"/>
-        <column name="MIN" type="INTEGER" required="false"  />
-        <column name="MAX" type="INTEGER" required="false"  />
+        <column name="MIN_ENTRIES" type="INTEGER" required="false"  />
+        <column name="MAX_ENTRIES" type="INTEGER" required="false"  />
         <column name="DEFAULT_VALUE" type="VARCHAR2" required="false" size="2000"/>
         <column name="REQUIRED" type="BOOLEAN" required="false"/>
         <column name="READONLY" type="BOOLEAN" required="false"/>

@@ -4008,8 +4008,8 @@
             </schemaSpec>
 
              <schemaSpec version="2.122">
-               <schema-alterColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN" columnType="INTEGER"/>
-               <schema-alterColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX" columnType="INTEGER"/>
+               <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN_ENTRIES" columnType="INTEGER"/>
+               <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
             </schemaSpec>
 
         </dbupgrade>

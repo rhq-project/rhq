@@ -81,7 +81,6 @@ public class FilterFileVisitorTest {
         List<Filter> includes = asList(new Filter(".", "foo*"), new Filter("./", "*.war"), new Filter("/", "goo*"));
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
-
         forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,

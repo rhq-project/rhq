@@ -519,7 +519,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system directory path that is relative to (a sub-directory of) the base directory of the drift definition. The default is '.', the base directory itself.";
+        String description = "A file system directory path that is relative to (a sub-directory of) the base directory of the drift definition. The default is '.', the base directory itself.  Note that '/' and './' will be normalized to '.' for consistent handling.";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -592,7 +592,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createExcludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
+        String description = "A file system directory path that is relative to (a sub-directory of) the base directory of the drift definition. The default is '.', the base directory itself.  Note that '/' and './' will be normalized to '.' for consistent handling.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 

@@ -42,7 +42,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -189,6 +188,8 @@ public class MeasurementTestBean implements MeasurementTestLocal {
     }
 
     public Map<String, Long> snapshotMeasurementTables() {
+        String qTrue = this.databaseType.getBooleanValue(true);
+
         String snapshotQuery = "" //
             + "select" //
             + "(select count(*) from rhq_meas_data_num_r00) as r00," //
@@ -217,17 +218,17 @@ public class MeasurementTestBean implements MeasurementTestLocal {
             + "(select count(*) from rhq_calltime_data_value) as calldata," //
             + "(select count(ms.id) from rhq_measurement_sched ms" //
             + "   join rhq_measurement_def md on ms.definition = md.id" //
-            + "  where ms.enabLed = true and md.data_type=0) as enabledMetricSchedules," //
+            + "  where ms.enabled = " + qTrue + " and md.data_type=0) as enabledMetricSchedules," //
             + "(select count(ms.id) from rhq_measurement_sched ms" //
             + "   join rhq_measurement_def md on ms.definition = md.id" //
-            + "  where ms.enabLed = true and md.data_type=1) as enabledTraitSchedules," //
+            + "  where ms.enabled = " + qTrue + " and md.data_type=1) as enabledTraitSchedules," //
             + "(select count(ms.id) from rhq_measurement_sched ms" //
             + "   join rhq_measurement_def md on ms.definition = md.id" //
-            + "  where ms.enabLed = true and md.data_type=3) as enabledCalltimeSchedules";
+            + "  where ms.enabled = " + qTrue + " and md.data_type=3) as enabledCalltimeSchedules";
 
         String querySuffix = ";";
-        if (databaseType instanceof OracleDatabaseType) {
-            querySuffix = "from dual;";
+        if (DatabaseTypeFactory.isOracle(this.databaseType)) {
+            querySuffix = " from dual";
         }
 
         Map<String, Long> results = new LinkedHashMap<String, Long>();

@@ -26,7 +26,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -136,7 +135,7 @@ public class DownloadsView extends LocatableVLayout {
                 md5Item.setWrapTitle(false);
 
                 StaticTextItem linkItem = new StaticTextItem("agentLink");
-                linkItem.setTitle(MSG.view_admin_downloads_agent_link_label());
+                linkItem.setTitle(MSG.common_label_link());
                 linkItem.setValue("<a href=\"/agentupdate/download\">"
                     + MSG.view_admin_downloads_agent_link_value(version, build) + "</a>");
 
@@ -187,7 +186,7 @@ public class DownloadsView extends LocatableVLayout {
                 md5Item.setWrapTitle(false);
 
                 StaticTextItem linkItem = new StaticTextItem("cliLink");
-                linkItem.setTitle(MSG.view_admin_downloads_cli_link_label());
+                linkItem.setTitle(MSG.common_label_link());
                 linkItem.setValue("<a href=\"/client/download\">"
                     + MSG.view_admin_downloads_cli_link_value(version, build) + "</a>");
 
@@ -226,7 +225,7 @@ public class DownloadsView extends LocatableVLayout {
                 String url = result.values().iterator().next();
 
                 StaticTextItem linkItem = new StaticTextItem("bundleLink");
-                linkItem.setTitle(MSG.view_admin_downloads_bundle_link_label());
+                linkItem.setTitle(MSG.common_label_link());
                 linkItem.setValue("<a href=\"" + url + "\">" + MSG.view_admin_downloads_bundle_link_value(name)
                     + "</a>");
 
@@ -263,24 +262,25 @@ public class DownloadsView extends LocatableVLayout {
 
                 if (result != null && !result.isEmpty()) {
                     int i = 0;
-                    FormItem[] items = new FormItem[result.size() + 1];
+                    FormItem[] items = new FormItem[result.size() + 2];
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        StaticTextItem linkItem = new StaticTextItem("link" + i);
+                        linkItem.setTitle(MSG.common_label_link());
+                        linkItem.setValue("<a href=\"" + entry.getValue() + "\">" + entry.getKey() + "</a>");
+                        items[i++] = linkItem;
+                    }
+
+                    SpacerItem spacerItem = new SpacerItem("spacer");
+                    spacerItem.setHeight(5);
+                    items[i++] = spacerItem;
 
                     StaticTextItem helpText = new StaticTextItem("connectorHelp");
                     helpText.setColSpan(2);
                     helpText.setShowTitle(false);
                     helpText.setValue(MSG.view_admin_downloads_connectors_help(productInfo.getShortName()));
-                    items[i] = helpText;
-                    i++;
+                    items[i++] = helpText;
 
-                    for (Map.Entry<String, String> entry : result.entrySet()) {
-                        LinkItem linkItem = new LinkItem("connectorLink" + i);
-                        linkItem.setColSpan(2);
-                        linkItem.setShowTitle(false);
-                        linkItem.setLinkTitle(entry.getKey());
-                        linkItem.setValue(entry.getValue());
-                        items[i] = linkItem;
-                        i++;
-                    }
                     form.setItems(items);
                 } else {
                     StaticTextItem item = new StaticTextItem("noConnectors");
@@ -313,24 +313,25 @@ public class DownloadsView extends LocatableVLayout {
 
                 if (result != null && !result.isEmpty()) {
                     int i = 0;
-                    FormItem[] items = new FormItem[result.size() + 1];
+                    FormItem[] items = new FormItem[result.size() + 2];
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        StaticTextItem linkItem = new StaticTextItem("link" + i);
+                        linkItem.setTitle(MSG.common_label_link());
+                        linkItem.setValue("<a href=\"" + entry.getValue() + "\">" + entry.getKey() + "</a>");
+                        items[i++] = linkItem;
+                    }
+
+                    SpacerItem spacerItem = new SpacerItem("spacer");
+                    spacerItem.setHeight(5);
+                    items[i++] = spacerItem;
 
                     StaticTextItem helpText = new StaticTextItem("cliAlertScriptsHelp");
                     helpText.setColSpan(2);
                     helpText.setShowTitle(false);
                     helpText.setValue(MSG.view_admin_downloads_cliAlertScripts_help());
-                    items[i] = helpText;
-                    i++;
+                    items[i++] = helpText;
 
-                    for (Map.Entry<String, String> entry : result.entrySet()) {
-                        LinkItem linkItem = new LinkItem("cliAlertScriptLink" + i);
-                        linkItem.setColSpan(2);
-                        linkItem.setShowTitle(false);
-                        linkItem.setLinkTitle(entry.getKey());
-                        linkItem.setValue(entry.getValue());
-                        items[i] = linkItem;
-                        i++;
-                    }
                     form.setItems(items);
                 } else {
                     StaticTextItem item = new StaticTextItem("noCliAlertScripts");

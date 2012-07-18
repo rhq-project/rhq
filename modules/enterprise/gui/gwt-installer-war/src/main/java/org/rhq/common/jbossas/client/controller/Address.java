@@ -27,7 +27,7 @@ import org.jboss.dmr.ModelNode;
  *
  * @author John Mazzitelli
  */
-public class Address {
+public class Address implements Cloneable {
     private ModelNode addressNode;
 
     public static Address root() {
@@ -66,5 +66,17 @@ public class Address {
     public Address add(String type, String name) {
         addressNode.add(type, name);
         return this;
+    }
+
+    @Override
+    public Address clone() throws CloneNotSupportedException {
+        Address clone = new Address();
+        clone.addressNode = addressNode.clone();
+        return clone;
+    }
+
+    @Override
+    public String toString() {
+        return addressNode.asString();
     }
 }

@@ -26,6 +26,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
+import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTService;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 
@@ -37,31 +38,37 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     private static final long serialVersionUID = 1L;
 
+    private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+
+    @Override
+    public void createDatasourceSecurityDomain(String username, String password) throws Exception {
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(getClient());
+        final String securityDomain = RHQ_SECURITY_DOMAIN;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, username, password);
+            log("Security domain [" + securityDomain + "] created");
+        } else {
+            log("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+        }
+    }
+
     @Override
     public String getAppServerVersion() throws Exception {
-        try {
-            String version = getClient().getStringAttribute("release-version", Address.root());
+        JBossASClient client = new JBossASClient(getClient());
+        String version = client.getStringAttribute("release-version", Address.root());
         return version;
-        } catch (Exception t) {
-            t.printStackTrace();
-            throw t;
-        }
     }
 
     @Override
     public String getOperatingSystem() throws Exception {
-        try {
+        JBossASClient client = new JBossASClient(getClient());
         String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
-            String osName = getClient().getStringAttribute("name", Address.root().add(address));
+        String osName = client.getStringAttribute("name", Address.root().add(address));
         return osName;
-        } catch (Exception t) {
-            t.printStackTrace();
-            throw t;
-        }
     }
 
-    private JBossASClient getClient() {
+    private ModelControllerClient getClient() {
         ModelControllerClient client = ManagementService.getClient();
-        return new JBossASClient(client);
+        return client;
     }
 }

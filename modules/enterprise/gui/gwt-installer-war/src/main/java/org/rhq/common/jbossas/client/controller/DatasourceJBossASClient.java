@@ -16,18 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.installer.client.gwt;
+package org.rhq.common.jbossas.client.controller;
 
-import com.google.gwt.user.client.rpc.RemoteService;
+import org.jboss.as.controller.client.ModelControllerClient;
 
 /**
+ * Provides convienence methods associated with datasource management.
+ * 
  * @author John Mazzitelli
  */
-public interface InstallerGWTService extends RemoteService {
+public class DatasourceJBossASClient extends JBossASClient {
 
-    void createDatasourceSecurityDomain(String username, String password) throws Exception;
+    public DatasourceJBossASClient(ModelControllerClient client) {
+        super(client);
+    }
 
-    String getAppServerVersion() throws Exception;
-
-    String getOperatingSystem() throws Exception;
 }

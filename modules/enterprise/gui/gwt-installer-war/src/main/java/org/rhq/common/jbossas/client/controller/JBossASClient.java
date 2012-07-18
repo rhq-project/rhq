@@ -22,7 +22,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -32,25 +36,62 @@ import org.jboss.dmr.ModelNode;
  */
 public class JBossASClient {
 
-    private static final String BATCH = "composite";
-    private static final String BATCH_STEPS = "steps";
-    private static final String OPERATION = "operation";
-    private static final String ADDRESS = "address";
-    private static final String RESULT = "result";
-    private static final String OUTCOME = "outcome";
-    private static final String OUTCOME_SUCCESS = "success";
-    private static final String FAILURE_DESCRIPTION = "failure-description";
-    private static final String NAME = "name";
-    private static final String READ_ATTRIBUTE = "read-attribute";
+    // protected to allow subclasses to have a logger, too, without explicitly declaring one themselves
+    protected final Log log = LogFactory.getLog(this.getClass());
+
+    public static final String BATCH = "composite";
+    public static final String BATCH_STEPS = "steps";
+    public static final String OPERATION = "operation";
+    public static final String ADDRESS = "address";
+    public static final String RESULT = "result";
+    public static final String OUTCOME = "outcome";
+    public static final String OUTCOME_SUCCESS = "success";
+    public static final String SUBSYSTEM = "subsystem";
+    public static final String FAILURE_DESCRIPTION = "failure-description";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String READ_ATTRIBUTE = "read-attribute";
+    public static final String READ_RESOURCE = "read-resource";
+    public static final String WRITE_ATTRIBUTE = "write-attribute";
+    public static final String ADD = "add";
 
     private ModelControllerClient client;
-    
+
     public JBossASClient(ModelControllerClient client) {
         this.client = client;
     }
 
-    public ModelControllerClient getModelControllerClient() {
-        return client;
+    /////////////////////////////////////////////////////////////////
+    // Some static methods useful for convienence
+
+    /**
+     * Convienence method that allows you to create request that reads a single attribute
+     * value to a resource.
+     * 
+     * @param attributeName the name of the attribute whose value is to be read
+     * @param address identifies the resource
+     * @return the request
+     */
+    public static ModelNode createReadAttributeRequest(String attributeName, Address address) {
+        ModelNode op = createRequest(READ_ATTRIBUTE, address);
+        op.get(NAME).set(attributeName);
+        return op;
+    }
+
+    /**
+     * Convienence method that allows you to create request that writes a single attribute's
+     * string value to a resource.
+     * 
+     * @param attributeName the name of the attribute whose value is to be written
+     * @param attributeValue the attribute value that is to be written
+     * @param address identifies the resource
+     * @return the request
+     */
+    public static ModelNode createWriteAttributeRequest(String attributeName, String attributeValue, Address address) {
+        ModelNode op = createRequest(WRITE_ATTRIBUTE, address);
+        op.get(NAME).set(attributeName);
+        op.get(VALUE).set(attributeValue);
+        return op;
     }
 
     /**
@@ -60,7 +101,7 @@ public class JBossASClient {
      * @param address identifies the target resource
      * @return the partial operation request node - caller should fill this in further to complete the node
      */
-    public ModelNode createRequest(String operation, Address address) {
+    public static ModelNode createRequest(String operation, Address address) {
         final ModelNode request = new ModelNode();
         request.get(OPERATION).set(operation);
         request.get(ADDRESS).set(address.getAddressNode());
@@ -74,7 +115,7 @@ public class JBossASClient {
      * 
      * @return the batch operation node
      */
-    public ModelNode createBatchRequest(ModelNode... steps) {
+    public static ModelNode createBatchRequest(ModelNode... steps) {
         final ModelNode composite = new ModelNode();
         composite.get(OPERATION).set(BATCH);
         composite.get(ADDRESS).setEmptyList();
@@ -92,7 +133,7 @@ public class JBossASClient {
      * @param operationResult the node to examine
      * @return the result list as Strings if there is a list, empty otherwise
      */
-    public List<String> getResultList(ModelNode operationResult) {
+    public static List<String> getResultListAsStrings(ModelNode operationResult) {
         if (!operationResult.hasDefined(RESULT)) {
             return Collections.emptyList();
         }
@@ -111,13 +152,28 @@ public class JBossASClient {
     }
 
     /**
+     * If the given node has results, those results are returned in a ModelNode.
+     * Otherwise, an empty node is returned.
+     * 
+     * @param operationResult the node to examine
+     * @return the results as a ModelNode
+     */
+    public static ModelNode getResults(ModelNode operationResult) {
+        if (!operationResult.hasDefined(RESULT)) {
+            return new ModelNode();
+        }
+
+        return operationResult.get(RESULT);
+    }
+
+    /**
      * Examines the given node's result list and if the item is found, returns true.
      * 
      * @param operationResult the node to examine
      * @param item the item to look for in the node's result list
      * @return true if the node has a result list and it contains the item; false otherwise
      */
-    public boolean listContains(ModelNode operationResult, String item) {
+    public static boolean listContains(ModelNode operationResult, String item) {
         if (!operationResult.hasDefined(RESULT)) {
             return false;
         }
@@ -142,7 +198,7 @@ public class JBossASClient {
      * @param operationResult the operation result to test
      * @return the success or failure flag of the result
      */
-    public boolean isSuccess(ModelNode operationResult) {
+    public static boolean isSuccess(ModelNode operationResult) {
         if (operationResult != null) {
             return operationResult.hasDefined(OUTCOME)
                 && operationResult.get(OUTCOME).asString().equals(OUTCOME_SUCCESS);
@@ -158,7 +214,7 @@ public class JBossASClient {
      * @param operationResult the operation whose failure description is to be returned
      * @return the failure description of <code>null</code> if the operation was a success
      */
-    public String getFailureDescription(ModelNode operationResult) {
+    public static String getFailureDescription(ModelNode operationResult) {
         if (isSuccess(operationResult)) {
             return null;
         }
@@ -169,6 +225,29 @@ public class JBossASClient {
             }
         }
         return "Unknown failure";
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // Non-static methods that need the client
+
+    public ModelControllerClient getModelControllerClient() {
+        return client;
+    }
+
+    /**
+     * Convienence method that executes the request.
+     * 
+     * @param request
+     * @return results
+     * @throws Exception
+     */
+    public ModelNode execute(ModelNode request) throws Exception {
+        try {
+            return getModelControllerClient().execute(request, OperationMessageHandler.logging);
+        } catch (Exception e) {
+            log.error("Failed to execute request", e);
+            throw e;
+        }
     }
 
     /**
@@ -182,15 +261,15 @@ public class JBossASClient {
      * @throws Exception if failed to obtain the attribute value
      */
     public String getStringAttribute(String attributeName, Address address) throws Exception {
-        ModelNode op = createRequest(READ_ATTRIBUTE, address);
-        op.get(NAME).set(attributeName);
-        ModelNode results = getModelControllerClient().execute(op);
+        ModelNode op = createReadAttributeRequest(attributeName, address);
+        ModelNode results = execute(op);
         if (isSuccess(results)) {
-            ModelNode version = results.get(RESULT);
+            ModelNode version = getResults(results);
             String attributeValue = version.asString();
             return attributeValue;
         } else {
-            throw new RuntimeException(getFailureDescription(results));
+            throw new FailureException(results, "Failed to get attribute [" + attributeName + "] from [" + address
+                + "]");
         }
     }
 }

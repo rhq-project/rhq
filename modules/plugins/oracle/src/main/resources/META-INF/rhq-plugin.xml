@@ -593,8 +593,29 @@
             <c:simple-property name="description" default="Oracle User"/>
          </plugin-configuration>
 
-          <metric property="connections" displayName="Total Connections" displayType="summary"/>
-          <metric property="active" displayName="Active Connections" displayType="summary"/>
+         <metric property="connections" displayName="Total Connections" displayType="summary"/>
+         <metric property="active" displayName="Active Connections" displayType="summary"/>
+
+      </service>
+
+      <service name="Oracle Tablespaces"
+         discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+         class="org.rhq.plugins.oracle.OracleTablespaceComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="table" default="DBA_TABLESPACES"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM DBA_TABLESPACES"/>
+            <c:simple-property name="keyColumn" default="tablespace_name"/>
+            <c:simple-property name="name" default="{key}"/>
+            <c:simple-property name="description" default="Oracle Tablespace"/>
+         </plugin-configuration>
+
+         <!-- Space used in the tablespace (database blocks) -->
+         <metric property="usedSpace" displayName="Used Space" description="Space used in the tablespace (database blocks)" displayType="summary"/>
+         <!-- Total size of the tablespace (database blocks) -->
+         <metric property="totalSize" displayName="Total Size" description="Total size of the tablespace (database blocks)" displayType="summary"/>
+         <!-- Percentage of the tablespace used -->
+         <metric property="usedPercent" displayName="Used Percent" description="Percentage of the tablespace used" displayType="summary" units="percentage"/>
 
       </service>
 

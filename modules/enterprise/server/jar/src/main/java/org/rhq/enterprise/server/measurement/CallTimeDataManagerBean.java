@@ -62,7 +62,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
@@ -113,9 +112,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
-
-    @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
@@ -408,9 +404,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 insertedRowCount += results[i] == -2 ? 1 : results[i]; // If Oracle returns -2, just count 1 row;
             }
 
-            notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
-                .toArray(new CallTimeData[callTimeDataSet.size()]));
-
             if (insertedRowCount > 0) {
                 MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);
 
@@ -425,12 +418,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             JDBCUtil.safeClose(conn, ps, null);
         }
 
-    }
-
-    private void notifyAlertConditionCacheManager(String callingMethod, CallTimeData... data) {
-        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
-
-        log.debug(callingMethod + ": " + stats.toString());
     }
 
     private void logSQLException(String message, SQLException e) {

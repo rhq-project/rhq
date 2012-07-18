@@ -34,11 +34,15 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
+import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginContainer;
@@ -56,6 +60,9 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @EJB
     private MeasurementScheduleManagerLocal scheduleManager;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -85,7 +92,23 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         MetricsServerPluginFacet metricsServer = getServerPlugin();
         long start = System.currentTimeMillis();
 
-        metricsServer.insertMetrics(report);
+        if (report.getNumericData() != null && report.getNumericData().isEmpty()) {
+            metricsServer.addNumericData(report.getNumericData());
+            notifyAlertConditionCacheManager("addNumericData", report.getNumericData().toArray(
+                new MeasurementData[report.getNumericData().size()]));
+        }
+
+        if (report.getTraitData() != null && !report.getTraitData().isEmpty()) {
+            metricsServer.addTraitData(report.getTraitData());
+            notifyAlertConditionCacheManager("addTraitData", report.getTraitData().toArray(
+                new MeasurementData[report.getTraitData().size()]));
+        }
+
+        if (report.getCallTimeData() != null && !report.getCallTimeData().isEmpty()) {
+            metricsServer.addCallTimeData(report.getCallTimeData());
+            notifyAlertConditionCacheManager("addCallTimeData", report.getCallTimeData().toArray(
+                new CallTimeData[report.getCallTimeData().size()]));
+        }
 
         long time = System.currentTimeMillis() - start;
         MeasurementMonitor.getMBean().incrementMeasurementInsertTime(time);
@@ -94,6 +117,18 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         if (log.isDebugEnabled()) {
             log.debug("Measurement storage for [" + report.getDataCount() + "] took " + time + "ms");
         }
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
+
+        log.debug(callingMethod + ": " + stats.toString());
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, CallTimeData... data) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
+
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     @Override

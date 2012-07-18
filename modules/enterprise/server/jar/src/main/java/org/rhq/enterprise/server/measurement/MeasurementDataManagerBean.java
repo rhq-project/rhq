@@ -85,8 +85,6 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -133,8 +131,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
-    @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
     private AlertManagerLocal alertManager;
     @EJB
@@ -278,8 +274,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             if (count != expectedCount) {
                 throw new MeasurementStorageException("Failure to store measurement data.");
             }
-
-            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
         } catch (SQLException e) {
             log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
         } catch (Exception e) {
@@ -324,8 +318,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 throw new MeasurementStorageException("Failure to store measurement trait data.");
                 // It is expected that some of these batch updates didn't update anything as the previous value was the same
             }
-
-            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
         } catch (SQLException e) {
             log.warn("Failure saving measurement trait data:\n" + ThrowableUtil.getAllMessages(e));
         } catch (Exception e) {
@@ -616,12 +608,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
         return getConnectedUtilityInstance().getLatestValueForSchedule(scheduleId);
-    }
-
-    private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {
-        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
-
-        log.debug(callingMethod + ": " + stats.toString());
     }
 
     public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {

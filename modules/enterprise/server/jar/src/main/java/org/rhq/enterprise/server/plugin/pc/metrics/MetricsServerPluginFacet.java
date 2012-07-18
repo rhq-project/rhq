@@ -22,14 +22,16 @@
 package org.rhq.enterprise.server.plugin.pc.metrics;
 
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.TraitMeasurement;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 
@@ -38,7 +40,11 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface MetricsServerPluginFacet {
 
-    void insertMetrics(MeasurementReport report);
+    void addNumericData(Set<MeasurementDataNumeric> data);
+
+    void addTraitData(Set<MeasurementDataTrait> data);
+
+    void addCallTimeData(Set<CallTimeData> data);
 
     void calculateAggregates();
 

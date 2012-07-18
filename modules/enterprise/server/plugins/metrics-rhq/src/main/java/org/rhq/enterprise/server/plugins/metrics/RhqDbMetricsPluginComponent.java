@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.plugins.metrics;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
@@ -31,10 +32,11 @@ import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.TraitMeasurementCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -90,9 +92,21 @@ public class RhqDbMetricsPluginComponent implements MetricsServerPluginFacet, Se
     }
 
     @Override
-    public void insertMetrics(MeasurementReport report) {
-        MeasurementDataManagerLocal dataMgr = LookupUtil.getMeasurementDataManager();
-        dataMgr.mergeMeasurementReport(report);
+    public void addNumericData(Set<MeasurementDataNumeric> data) {
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        dataManager.addNumericData(data);
+    }
+
+    @Override
+    public void addTraitData(Set<MeasurementDataTrait> data) {
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        dataManager.addTraitData(data);
+    }
+
+    @Override
+    public void addCallTimeData(Set<CallTimeData> data) {
+        CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
+        callTimeDataManager.addCallTimeData(data);
     }
 
     @Override

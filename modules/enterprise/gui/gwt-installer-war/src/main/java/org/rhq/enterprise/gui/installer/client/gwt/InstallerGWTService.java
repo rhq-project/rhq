@@ -25,7 +25,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
  */
 public interface InstallerGWTService extends RemoteService {
 
-    String getAppServerVersion();
+    String getAppServerVersion() throws Exception;
 
-    String getOperatingSystem();
+    String getOperatingSystem() throws Exception;
 }

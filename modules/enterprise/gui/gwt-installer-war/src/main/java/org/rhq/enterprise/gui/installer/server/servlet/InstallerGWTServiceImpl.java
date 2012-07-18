@@ -23,8 +23,9 @@ import javax.servlet.annotation.WebServlet;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.dmr.ModelNode;
 
+import org.rhq.common.jbossas.client.controller.Address;
+import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTService;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 
@@ -37,52 +38,30 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String getAppServerVersion() {
-        ModelControllerClient client = ManagementService.getClient();
-
-        // create the read operation we want to invoke on the root AS resource
-        ModelNode op = new ModelNode();
-        op.get("operation").set("read-attribute");
-        op.get("name").set("release-version");
-
-        String versionString;
-
+    public String getAppServerVersion() throws Exception {
         try {
-            ModelNode results = client.execute(op);
-            ModelNode version = results.get("result");
-            versionString = version.asString();
-        } catch (Exception e) {
-            versionString = e.toString();
+            String version = getClient().getStringAttribute("release-version", Address.root());
+        return version;
+        } catch (Exception t) {
+            t.printStackTrace();
+            throw t;
         }
-
-        return versionString;
     }
 
     @Override
-    public String getOperatingSystem() {
-        ModelControllerClient client = ManagementService.getClient();
-
-        // create the read operation we want to invoke on the platform MBean operating system resource
-        ModelNode op = new ModelNode();
-        op.get("operation").set("read-attribute");
-        op.get("name").set("name");
-
-        // provide the target address to the platform MBean operating system resource via ModelNode list
-        ModelNode address = op.get("address");
-        address.add("core-service", "platform-mbean");
-        address.add("type", "operating-system");
-
-        String osName;
-
+    public String getOperatingSystem() throws Exception {
         try {
-            ModelNode results = client.execute(op);
-            ModelNode version = results.get("result");
-            osName = version.asString();
-        } catch (Exception e) {
-            osName = e.toString();
-        }
-
+        String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
+            String osName = getClient().getStringAttribute("name", Address.root().add(address));
         return osName;
+        } catch (Exception t) {
+            t.printStackTrace();
+            throw t;
+        }
     }
 
+    private JBossASClient getClient() {
+        ModelControllerClient client = ManagementService.getClient();
+        return new JBossASClient(client);
+    }
 }

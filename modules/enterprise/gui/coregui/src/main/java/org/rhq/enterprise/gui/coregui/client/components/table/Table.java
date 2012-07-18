@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -372,14 +373,47 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return SelectionStyle.MULTIPLE;
     }
 
+    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then 
+    // lays down the canvas.  This gives subclasses a chance to perform initialization (including async calls)
+    // required to support the overrides (like configureTable()) they may have provided and that are called in 
+    // doOnDraw().
     @Override
     protected void onDraw() {
-        try {
-            super.onDraw();
+        super.onDraw();
 
+        if (isInitialized()) {
+            doOnDraw();
+
+        } else {
+            new Timer() {
+                final long startTime = System.currentTimeMillis();
+
+                public void run() {
+                    if (isInitialized()) {
+                        doOnDraw();
+                        cancel();
+
+                    } else {
+                        // if after 10s we still aren't initialized just keep going, else try again
+                        long elapsedMillis = System.currentTimeMillis() - startTime;
+                        if (elapsedMillis < 10000L) {
+                            schedule(100); // Reschedule the timer.
+
+                        } else {
+                            doOnDraw();
+                            cancel();
+                        }
+                    }
+                }
+            }.run(); // fire the timer immediately    
+        }
+    }
+
+    protected void doOnDraw() {
+        try {
             // I'm not sure this is necessary as I'm not sure it's the case that draw()/onDraw() will get called
             // multiple times. But if it did/does, this protects us by removing the current members before they
-            // get set below.  Note that by having this here we *can non* add members in onInit, because they will
+            // get set below.  Note that by having this here we *can not* add members in onInit, because they will
             // immediately get removed. -jshaughn
             for (Canvas child : contents.getMembers()) {
                 contents.removeChild(child);
@@ -463,6 +497,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
+
+        markForRedraw();
     }
 
     private void refreshRowCount() {

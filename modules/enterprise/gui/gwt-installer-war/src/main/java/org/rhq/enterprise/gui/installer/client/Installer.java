@@ -18,17 +18,32 @@
  */
 package org.rhq.enterprise.gui.installer.client;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.EditCompleteEvent;
+import com.smartgwt.client.widgets.grid.events.EditCompleteHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -46,11 +61,19 @@ public class Installer implements EntryPoint {
     // This must come first to ensure proper I18N class loading for dev mode
     private static final Messages MSG = GWT.create(Messages.class);
 
+    private static final String PROPERTY_NAME = "propertyName";
+    private static final String PROPERTY_VALUE = "propertyValue";
+
     private InstallerGWTServiceAsync installerService = InstallerGWTServiceAsync.Util.getInstance();
+    private HashMap<String, String> serverProperties = new HashMap<String, String>();
+    private HashMap<String, String> originalProperties = new HashMap<String, String>();
+
+    private ListGrid advancedPropertyItemGrid;
 
     public void onModuleLoad() {
         Canvas header = createHeader();
-        TabSet tabSet = createTabSet();
+        Canvas installButton = createMainInstallButton();
+        Canvas tabSet = createTabSet();
 
         VLayout layout = new VLayout();
         layout.setWidth100();
@@ -59,12 +82,54 @@ public class Installer implements EntryPoint {
         layout.setMembersMargin(5);
         layout.setDefaultLayoutAlign(Alignment.CENTER);
         layout.addMember(header);
+        layout.addMember(installButton);
         layout.addMember(tabSet);
         layout.draw();
 
         // Remove loading image in case we don't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
+
+        // get the server properties from the server
+        loadServerProperties();
+
+    }
+
+    private void loadServerProperties() {
+        // load the initial server properties
+        installerService.getServerProperties(new AsyncCallback<HashMap<String, String>>() {
+            public void onSuccess(HashMap<String, String> result) {
+                if (result.size() == 0) {
+                    SC.say("Initial server properties are missing.");
+                }
+                serverProperties.clear();
+                serverProperties.putAll(result);
+
+                // remember these original properties in case the user wants to reset them back
+                originalProperties.clear();
+                originalProperties.putAll(result);
+
+                // refresh the advanced view with the new data
+                refreshAdvancedView();
+            }
+
+            public void onFailure(Throwable caught) {
+                SC.say("Cannot load properties: " + caught);
+            }
+        });
+    }
+
+    private void refreshAdvancedView() {
+        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
+            ListGridRecord record = new ListGridRecord();
+            record.setAttribute(PROPERTY_NAME, entry.getKey());
+            record.setAttribute(PROPERTY_VALUE, entry.getValue());
+            records.add(record);
+        }
+        advancedPropertyItemGrid.setData(records.toArray(new ListGridRecord[records.size()]));
+        advancedPropertyItemGrid.markForRedraw();
+        return;
     }
 
     private Canvas createHeader() {
@@ -81,6 +146,19 @@ public class Installer implements EntryPoint {
         title.setContents("<span style=\"font-size:16pt;font-weight:bold;\">" + MSG.welcome_title() + "</span>");
         strip.addMember(title);
         return strip;
+    }
+
+    private Canvas createMainInstallButton() {
+        Button installButton = new Button(MSG.start_installation_label());
+        installButton.setWrap(false);
+        installButton.setAutoFit(true);
+        installButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                SC.say("TODO: this should start the install");
+            }
+        });
+
+        return installButton;
     }
 
     private TabSet createTabSet() {
@@ -102,11 +180,77 @@ public class Installer implements EntryPoint {
         DynamicForm systemSettingsForm = createSystemSettingsForm();
         systemSettingsTab.setPane(systemSettingsForm);
 
+        final Tab advancedViewTab = new Tab(MSG.tab_advancedView());
+        Canvas advancedView = createAdvancedView();
+        advancedViewTab.setPane(advancedView);
+
         topTabSet.addTab(welcomeTab);
         topTabSet.addTab(databaseTab);
         topTabSet.addTab(systemSettingsTab);
+        topTabSet.addTab(advancedViewTab);
 
         return topTabSet;
+    }
+
+    private Canvas createAdvancedView() {
+        VLayout layout = new VLayout();
+
+        ToolStrip strip = new ToolStrip();
+        strip.setWidth100();
+
+        IButton saveButton = new IButton(MSG.save_label());
+        saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                installerService.saveServerProperties(serverProperties, new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        originalProperties.clear();
+                        originalProperties.putAll(serverProperties);
+                        SC.say("Properties saved to server");
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        SC.say("Failed to save properties to server");
+                    }
+                });
+            }
+        });
+        IButton resetButton = new IButton(MSG.reset_label());
+        resetButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                serverProperties.clear();
+                serverProperties.putAll(originalProperties);
+                refreshAdvancedView();
+            }
+        });
+        strip.addMember(saveButton);
+        strip.addMember(resetButton);
+        layout.addMember(strip);
+
+        advancedPropertyItemGrid = new ListGrid();
+        advancedPropertyItemGrid.setWidth100();
+        advancedPropertyItemGrid.setHeight100();
+        advancedPropertyItemGrid.setData(new ListGridRecord[0]);
+
+        ListGridField nameField = new ListGridField(PROPERTY_NAME, MSG.property_name_label());
+        nameField.setCanEdit(false);
+
+        ListGridField valueField = new ListGridField(PROPERTY_VALUE, MSG.property_value_label());
+        valueField.setCanEdit(true);
+
+        advancedPropertyItemGrid.setFields(nameField, valueField);
+        advancedPropertyItemGrid.setSortField(PROPERTY_NAME);
+
+        advancedPropertyItemGrid.addEditCompleteHandler(new EditCompleteHandler() {
+            public void onEditComplete(EditCompleteEvent event) {
+                String newValue = (String) event.getNewValues().values().iterator().next().toString();
+                String changedProperty = event.getOldRecord().getAttribute(PROPERTY_NAME);
+                serverProperties.put(changedProperty, newValue);
+            }
+        });
+
+        layout.addMember(advancedPropertyItemGrid);
+
+        return layout;
     }
 
     private DynamicForm createSystemSettingsForm() {

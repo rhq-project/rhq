@@ -73,7 +73,21 @@ public class JBossASClient {
      * @return the request
      */
     public static ModelNode createReadAttributeRequest(String attributeName, Address address) {
+        return createReadAttributeRequest(false, attributeName, address);
+    }
+
+    /**
+     * Convienence method that allows you to create request that reads a single attribute
+     * value to a resource.
+     *
+     * @param runtime if <code>true</code>, the attribute is a runtime attribute
+     * @param attributeName the name of the attribute whose value is to be read
+     * @param address identifies the resource
+     * @return the request
+     */
+    public static ModelNode createReadAttributeRequest(boolean runtime, String attributeName, Address address) {
         ModelNode op = createRequest(READ_ATTRIBUTE, address);
+        op.get("include-runtime").set(runtime);
         op.get(NAME).set(attributeName);
         return op;
     }
@@ -261,7 +275,22 @@ public class JBossASClient {
      * @throws Exception if failed to obtain the attribute value
      */
     public String getStringAttribute(String attributeName, Address address) throws Exception {
-        ModelNode op = createReadAttributeRequest(attributeName, address);
+        return getStringAttribute(false, attributeName, address);
+    }
+
+    /**
+     * Convienence method that allows you to obtain a single attribute's string value from
+     * a resource.
+     *
+     * @param runtime if <code>true</code>, the attribute to be retrieved is a runtime attribute
+     * @param attributeName the attribute whose value is to be returned
+     * @param address identifies the resource
+     * @return the attribute value
+     * 
+     * @throws Exception if failed to obtain the attribute value
+     */
+    public String getStringAttribute(boolean runtime, String attributeName, Address address) throws Exception {
+        ModelNode op = createReadAttributeRequest(runtime, attributeName, address);
         ModelNode results = execute(op);
         if (isSuccess(results)) {
             ModelNode version = getResults(results);

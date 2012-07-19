@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.installer.client.gwt;
 
+import java.util.HashMap;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 /**
@@ -25,9 +27,15 @@ import com.google.gwt.user.client.rpc.RemoteService;
  */
 public interface InstallerGWTService extends RemoteService {
 
+    HashMap<String, String> getServerProperties() throws Exception;
+
+    void saveServerProperties(HashMap<String, String> serverProperties) throws Exception;
+
     void createDatasourceSecurityDomain(String username, String password) throws Exception;
 
     String getAppServerVersion() throws Exception;
+
+    String getAppServerHomeDir() throws Exception;
 
     String getOperatingSystem() throws Exception;
 }

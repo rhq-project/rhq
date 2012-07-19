@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.installer.server.servlet;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
 import javax.servlet.annotation.WebServlet;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -27,6 +32,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTService;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 
@@ -39,6 +45,38 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private static final long serialVersionUID = 1L;
 
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+
+    @Override
+    public HashMap<String, String> getServerProperties() throws Exception {
+        File appServerHomeDir = new File(getAppServerHomeDir());
+        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
+        Properties props = propsFile.loadExistingProperties();
+
+        // GWT can't handle Properties - convert to HashMap
+        HashMap<String, String> map = new HashMap<String, String>(props.size());
+        for (Object property : props.keySet()) {
+            map.put(property.toString(), props.getProperty(property.toString()));
+        }
+        return map;
+    }
+
+    @Override
+    public void saveServerProperties(HashMap<String, String> serverProperties) throws Exception {
+        File appServerHomeDir = new File(getAppServerHomeDir());
+        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
+
+        // GWT can't handle Properties - convert from HashMap
+        Properties props = new Properties();
+        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
+            props.setProperty(entry.getKey(), entry.getValue());
+        }
+
+        propsFile.update(props);
+
+        return;
+    }
 
     @Override
     public void createDatasourceSecurityDomain(String username, String password) throws Exception {
@@ -57,6 +95,14 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         JBossASClient client = new JBossASClient(getClient());
         String version = client.getStringAttribute("release-version", Address.root());
         return version;
+    }
+
+    @Override
+    public String getAppServerHomeDir() throws Exception {
+        JBossASClient client = new JBossASClient(getClient());
+        String[] address = { "core-service", "server-environment" };
+        String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
+        return dir;
     }
 
     @Override

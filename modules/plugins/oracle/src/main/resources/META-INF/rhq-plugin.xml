@@ -610,12 +610,29 @@
             <c:simple-property name="description" default="Oracle Tablespace"/>
          </plugin-configuration>
 
-         <!-- Space used in the tablespace (database blocks) -->
          <metric property="usedSpace" displayName="Used Space" description="Space used in the tablespace (database blocks)" displayType="summary"/>
-         <!-- Total size of the tablespace (database blocks) -->
          <metric property="totalSize" displayName="Total Size" description="Total size of the tablespace (database blocks)" displayType="summary"/>
-         <!-- Percentage of the tablespace used -->
          <metric property="usedPercent" displayName="Used Percent" description="Percentage of the tablespace used" displayType="summary" units="percentage"/>
+
+      </service>
+      
+      <service name="Oracle Flash Recovery Areas"
+         discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+         class="org.rhq.plugins.oracle.OracleFlashRecoveryAreaComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="table" default="V$RECOVERY_FILE_DEST"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM V$RECOVERY_FILE_DEST"/>
+            <c:simple-property name="keyColumn" default="name"/>
+            <c:simple-property name="name" default="{key}"/>
+            <c:simple-property name="description" default="Oracle Flash Recovery Areas"/>
+         </plugin-configuration>
+
+         <metric property="spaceLimit" displayName="Space Limit" description="Flash Recovery Area space limit (database blocks)" displayType="summary"/>
+         <metric property="spaceUsed" displayName="Space Used" description="Space used in the Flash Recovery Area (database blocks)" displayType="summary"/>
+         <metric property="spaceReclaimable" displayName="Space Reclaimable" description="Space reclaimable in the Flash Recovery Area (database blocks)" displayType="summary"/>
+         <metric property="numberOfFiles" displayName="Number Of Files" description="Number of files in the Flash Recovery Area" displayType="summary"/>
+         <metric property="usedPercent" displayName="Used Percent" description="Percentage of the Flash Recovery Area used" displayType="summary" units="percentage"/>
 
       </service>
 

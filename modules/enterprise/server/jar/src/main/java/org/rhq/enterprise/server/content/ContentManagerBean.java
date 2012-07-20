@@ -848,7 +848,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             return bits.getBlob().getBits();
         } catch (Exception e) {
             throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId + " and package: "
-                + installedPackageId + " before timeout.");
+                + installedPackageId + ".", e);
 
         }
     }

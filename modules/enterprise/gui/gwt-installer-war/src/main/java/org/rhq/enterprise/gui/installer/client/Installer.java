@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.installer.client;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -38,7 +39,12 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -50,6 +56,7 @@ import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTServiceAsync;
+import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ Installer GUI.
@@ -59,7 +66,8 @@ import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTServiceAsync;
 public class Installer implements EntryPoint {
 
     // This must come first to ensure proper I18N class loading for dev mode
-    private static final Messages MSG = GWT.create(Messages.class);
+    public static final Messages MSG = GWT.create(Messages.class);
+    public static final ServerPropertiesMessages PROPS_MSG = GWT.create(ServerPropertiesMessages.class);
 
     private static final String PROPERTY_NAME = "propertyName";
     private static final String PROPERTY_VALUE = "propertyValue";
@@ -69,10 +77,17 @@ public class Installer implements EntryPoint {
     private HashMap<String, String> originalProperties = new HashMap<String, String>();
 
     private ListGrid advancedPropertyItemGrid;
+    private Button mainInstallButton;
+    private TextItem dbConnectionUrl;
+    private TextItem dbUsername;
+    private PasswordItem dbPassword;
+    private SelectItem dbExistingSchemaOption;
+    private ButtonItem testConnectionButton;
+    private SelectItem dbType;
 
     public void onModuleLoad() {
         Canvas header = createHeader();
-        Canvas installButton = createMainInstallButton();
+        mainInstallButton = createMainInstallButton();
         Canvas tabSet = createTabSet();
 
         VLayout layout = new VLayout();
@@ -82,7 +97,7 @@ public class Installer implements EntryPoint {
         layout.setMembersMargin(5);
         layout.setDefaultLayoutAlign(Alignment.CENTER);
         layout.addMember(header);
-        layout.addMember(installButton);
+        layout.addMember(mainInstallButton);
         layout.addMember(tabSet);
         layout.draw();
 
@@ -93,6 +108,11 @@ public class Installer implements EntryPoint {
         // get the server properties from the server
         loadServerProperties();
 
+    }
+
+    private void updateServerProperty(String name, Object value) {
+        serverProperties.put(name, value == null ? "" : value.toString());
+        refreshAdvancedView();
     }
 
     private void loadServerProperties() {
@@ -109,6 +129,9 @@ public class Installer implements EntryPoint {
                 originalProperties.clear();
                 originalProperties.putAll(result);
 
+                // refresh the simple view with the new data
+                refreshSimpleView();
+
                 // refresh the advanced view with the new data
                 refreshAdvancedView();
             }
@@ -117,6 +140,13 @@ public class Installer implements EntryPoint {
                 SC.say("Cannot load properties: " + caught);
             }
         });
+    }
+
+    private void refreshSimpleView() {
+        dbType.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_TYPE));
+        dbConnectionUrl.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL));
+        dbUsername.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME));
+        // do not prefill the database password - force the user to know it and type it in for security purposes
     }
 
     private void refreshAdvancedView() {
@@ -148,10 +178,11 @@ public class Installer implements EntryPoint {
         return strip;
     }
 
-    private Canvas createMainInstallButton() {
-        Button installButton = new Button(MSG.start_installation_label());
+    private Button createMainInstallButton() {
+        Button installButton = new Button(MSG.button_startInstallation());
         installButton.setWrap(false);
         installButton.setAutoFit(true);
+        installButton.setDisabled(true); // we can't allow the user to install yet
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 SC.say("TODO: this should start the install");
@@ -172,13 +203,9 @@ public class Installer implements EntryPoint {
         Label welcomeLabel = new Label(MSG.tab_welcome_content());
         welcomeTab.setPane(welcomeLabel);
 
-        final Tab databaseTab = new Tab(MSG.tab_database());
-        DynamicForm databaseForm = createDatabaseForm();
+        final Tab databaseTab = new Tab(MSG.tab_simple());
+        DynamicForm databaseForm = createSimpleForm();
         databaseTab.setPane(databaseForm);
-
-        final Tab systemSettingsTab = new Tab(MSG.tab_systemSettings());
-        DynamicForm systemSettingsForm = createSystemSettingsForm();
-        systemSettingsTab.setPane(systemSettingsForm);
 
         final Tab advancedViewTab = new Tab(MSG.tab_advancedView());
         Canvas advancedView = createAdvancedView();
@@ -186,7 +213,6 @@ public class Installer implements EntryPoint {
 
         topTabSet.addTab(welcomeTab);
         topTabSet.addTab(databaseTab);
-        topTabSet.addTab(systemSettingsTab);
         topTabSet.addTab(advancedViewTab);
 
         return topTabSet;
@@ -198,7 +224,7 @@ public class Installer implements EntryPoint {
         ToolStrip strip = new ToolStrip();
         strip.setWidth100();
 
-        IButton saveButton = new IButton(MSG.save_label());
+        IButton saveButton = new IButton(MSG.button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 installerService.saveServerProperties(serverProperties, new AsyncCallback<Void>() {
@@ -214,7 +240,7 @@ public class Installer implements EntryPoint {
                 });
             }
         });
-        IButton resetButton = new IButton(MSG.reset_label());
+        IButton resetButton = new IButton(MSG.button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 serverProperties.clear();
@@ -253,19 +279,139 @@ public class Installer implements EntryPoint {
         return layout;
     }
 
-    private DynamicForm createSystemSettingsForm() {
-        DynamicForm systemSettingsForm = new DynamicForm();
-        TextItem nameTextItem = new TextItem();
-        nameTextItem.setTitle("Your Name");
-        systemSettingsForm.setFields(nameTextItem);
-        return systemSettingsForm;
-    }
+    private DynamicForm createSimpleForm() {
+        final DynamicForm simpleForm = new DynamicForm();
 
-    private DynamicForm createDatabaseForm() {
-        DynamicForm databaseForm = new DynamicForm();
-        TextItem dbUsernameTextItem = new TextItem();
-        dbUsernameTextItem.setTitle("Database User");
-        databaseForm.setFields(dbUsernameTextItem);
-        return databaseForm;
+        dbConnectionUrl = new TextItem(ServerProperties.PROP_DATABASE_CONNECTION_URL,
+            PROPS_MSG.rhq_server_database_connection_url());
+        dbConnectionUrl.setWrapTitle(false);
+        dbConnectionUrl.setWidth(300);
+        dbConnectionUrl.setValue("jdbc:postgresql://127.0.0.1:5432/rhq");
+        dbConnectionUrl.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_DATABASE_CONNECTION_URL, String.valueOf(event.getValue()));
+            }
+        });
+
+        dbUsername = new TextItem(ServerProperties.PROP_DATABASE_USERNAME,
+            PROPS_MSG.rhq_server_database_user_name());
+        dbUsername.setWrapTitle(false);
+        dbUsername.setWidth(200);
+        dbUsername.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_DATABASE_USERNAME, String.valueOf(event.getValue()));
+            }
+        });
+
+        dbPassword = new PasswordItem(ServerProperties.PROP_DATABASE_PASSWORD,
+            PROPS_MSG.rhq_server_database_password());
+        dbPassword.setWrapTitle(false);
+        dbPassword.setWidth(200);
+        dbPassword.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_DATABASE_PASSWORD, String.valueOf(event.getValue()));
+            }
+        });
+
+        dbExistingSchemaOption = new SelectItem("existingSchemaOption", MSG.schema_update_question());
+        final LinkedHashMap<String, String> schemaOpt = new LinkedHashMap<String, String>();
+        schemaOpt.put("keep", MSG.schema_update_keep());
+        schemaOpt.put("overwrite", MSG.schema_update_overwrite());
+        schemaOpt.put("skip", MSG.schema_update_skip());
+        dbExistingSchemaOption.setValueMap(schemaOpt);
+        dbExistingSchemaOption.setDefaultToFirstOption(true);
+        dbExistingSchemaOption.setVisible(false);
+        dbExistingSchemaOption.setWidth(200);
+
+        testConnectionButton = new ButtonItem("testDbConnectionButton", MSG.button_testConnection());
+        testConnectionButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
+                final String connectionUrl = dbConnectionUrl.getValueAsString();
+                final String username = dbUsername.getValueAsString();
+                final String password = dbPassword.getValueAsString();
+
+                installerService.testConnection(connectionUrl, username, password, new AsyncCallback<String>() {
+                    public void onSuccess(String result) {
+                        if (result != null) {
+                            SC.say("Could not connect to the database: " + result);
+                            testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
+                            mainInstallButton.disable();
+                            dbExistingSchemaOption.hide();
+                        } else {
+                            testConnectionButton.setIcon("[SKIN]/actions/ok.png");
+                            installerService.isDatabaseSchemaExist(connectionUrl, username, password,
+                                new AsyncCallback<Boolean>() {
+                                    public void onSuccess(Boolean schemaExists) {
+                                        if (schemaExists) {
+                                            dbExistingSchemaOption.show();
+                                        } else {
+                                            dbExistingSchemaOption.hide();
+                                        }
+                                        mainInstallButton.enable();
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        SC.say("Cannot determine the status of the database schema: " + caught);
+                                    }
+                                });
+                        }
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        SC.say("Failed to test connection: " + caught.toString());
+                        testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
+                        mainInstallButton.disable();
+                        dbExistingSchemaOption.hide();
+                    }
+                });
+
+            }
+        });
+
+        dbType = new SelectItem(ServerProperties.PROP_DATABASE_TYPE,
+            PROPS_MSG.rhq_server_database_type_mapping());
+        final LinkedHashMap<String, String> dbs = new LinkedHashMap<String, String>();
+        dbs.put("PostgreSQL", "PostgreSQL");
+        dbs.put("Oracle", "Oracle");
+        dbType.setValueMap(dbs);
+        dbType.setDefaultToFirstOption(true);
+        dbType.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                // force the user to re-test the connection
+                mainInstallButton.disable();
+                testConnectionButton.setIcon(null);
+                dbExistingSchemaOption.setVisible(false);
+
+                String newDBType = (String) event.getValue();
+                String newURL = "";
+                String dialect = "";
+                String quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.StdJDBCDelegate";
+                String quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE";
+                String quartzLockHandlerClass = "org.quartz.impl.jdbcjobstore.StdRowLockSemaphore";
+
+                if ("PostgreSQL".equalsIgnoreCase(newDBType)) {
+                    newURL = "jdbc:postgresql://127.0.0.1:5432/rhq";
+                    dialect = "org.hibernate.dialect.PostgreSQLDialect";
+                    quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate";
+                } else if ("Oracle".equalsIgnoreCase(newDBType)) {
+                    newURL = "jdbc:oracle:thin:@127.0.0.1:1521:rhq";
+                    dialect = "org.hibernate.dialect.Oracle10gDialect";
+                    quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.oracle.OracleDelegate";
+                }
+                dbConnectionUrl.setValue(newURL);
+
+                serverProperties.put(ServerProperties.PROP_DATABASE_CONNECTION_URL, newURL);
+                serverProperties.put(ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT, dialect);
+                serverProperties.put(ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS, quartzDriverDelegateClass);
+                serverProperties.put(ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL, quartzSelectWithLockSQL);
+                serverProperties.put(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS, quartzLockHandlerClass);
+                updateServerProperty(ServerProperties.PROP_DATABASE_TYPE, newDBType); // this refreshes the advanced view, too
+            }
+        });
+
+        simpleForm.setFields(dbType, dbConnectionUrl, dbUsername, dbPassword, testConnectionButton,
+            dbExistingSchemaOption);
+
+        return simpleForm;
     }
 }

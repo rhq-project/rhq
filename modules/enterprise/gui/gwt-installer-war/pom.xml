@@ -62,7 +62,7 @@
     <dependencies>
         <dependency>
             <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-util</artifactId>
+            <artifactId>rhq-core-dbutils</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -189,6 +189,7 @@
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.installer.client.Messages</i18nMessagesBundle>
+                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.installer.client.ServerPropertiesMessages</i18nConstantsWithLookupBundle>
                     <style>${gwt.style}</style>
                     <strict>true</strict>
                     <!-- compiles gwt artifacts like symbolMap outside of war so it doesnt
@@ -359,7 +360,7 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
                             <includes>
-                                <include>org/rhq/enterprise/gui/installer/client/Messages*.java</include>
+                                <include>org/rhq/enterprise/gui/installer/client/*Messages.java</include>
                             </includes>
                         </configuration>
                     </plugin>

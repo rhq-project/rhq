@@ -47,9 +47,24 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
 
     @Override
+    public boolean isDatabaseSchemaExist(String connectionUrl, String username, String password) throws Exception {
+        try {
+            return ServerInstallUtil.isDatabaseSchemaExist(connectionUrl, username, password);
+        } catch (Exception e) {
+            log("Could not determine database existence", e);
+            return false;
+        }
+    }
+
+    @Override
+    public String testConnection(String connectionUrl, String username, String password) throws Exception {
+        String results = ServerInstallUtil.testConnection(connectionUrl, username, password);
+        return results;
+    }
+
+    @Override
     public HashMap<String, String> getServerProperties() throws Exception {
-        File appServerHomeDir = new File(getAppServerHomeDir());
-        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        File serverPropertiesFile = getServerPropertiesFile();
         PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
         Properties props = propsFile.loadExistingProperties();
 
@@ -63,8 +78,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public void saveServerProperties(HashMap<String, String> serverProperties) throws Exception {
-        File appServerHomeDir = new File(getAppServerHomeDir());
-        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        File serverPropertiesFile = getServerPropertiesFile();
         PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
 
         // GWT can't handle Properties - convert from HashMap
@@ -91,13 +105,6 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     }
 
     @Override
-    public String getAppServerVersion() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String version = client.getStringAttribute("release-version", Address.root());
-        return version;
-    }
-
-    @Override
     public String getAppServerHomeDir() throws Exception {
         JBossASClient client = new JBossASClient(getClient());
         String[] address = { "core-service", "server-environment" };
@@ -106,11 +113,24 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     }
 
     @Override
+    public String getAppServerVersion() throws Exception {
+        JBossASClient client = new JBossASClient(getClient());
+        String version = client.getStringAttribute("release-version", Address.root());
+        return version;
+    }
+
+    @Override
     public String getOperatingSystem() throws Exception {
         JBossASClient client = new JBossASClient(getClient());
         String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
         String osName = client.getStringAttribute("name", Address.root().add(address));
         return osName;
+    }
+
+    private File getServerPropertiesFile() throws Exception {
+        File appServerHomeDir = new File(getAppServerHomeDir());
+        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        return serverPropertiesFile;
     }
 
     private ModelControllerClient getClient() {

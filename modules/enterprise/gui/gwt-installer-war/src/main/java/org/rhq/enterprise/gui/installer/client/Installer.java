@@ -475,7 +475,7 @@ public class Installer implements EntryPoint {
         });
 
         serverSettingWebSecureHttpPort = new SpinnerItem(ServerProperties.PROP_WEB_HTTPS_PORT,
-            PROPS_MSG.rhq_server_startup_web_http_port());
+            PROPS_MSG.rhq_server_startup_web_https_port());
         serverSettingWebSecureHttpPort.setWidth(fieldWidth);
         serverSettingWebSecureHttpPort.setMin(1);
         serverSettingWebSecureHttpPort.setMax(65535);

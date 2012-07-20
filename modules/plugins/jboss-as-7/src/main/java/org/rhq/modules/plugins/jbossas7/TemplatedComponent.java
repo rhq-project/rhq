@@ -48,7 +48,7 @@ public class TemplatedComponent extends BaseComponent<ResourceComponent<?>> {
             //manually load type based on the resource path
             PropertySimple pathProperty = (PropertySimple) context.getPluginConfiguration().get("path");
             String type = pathProperty.getStringValue();
-            type = type.substring(path.lastIndexOf(',') + 1, type.lastIndexOf('='));
+            type = type.substring(type.lastIndexOf(',') + 1, type.lastIndexOf('='));
             configuration.put(new PropertySimple(TYPE_CONFIGURATION, type));
 
             return configuration;

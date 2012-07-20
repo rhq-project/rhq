@@ -30,27 +30,43 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * @author Stefan Negrea
  *
  */
-public class ThreadsComponent extends BaseComponent<ResourceComponent<?>> {
+public class TemplatedSubResourcesComponent extends BaseComponent<ResourceComponent<?>> {
+
+    private final static String TYPE_CONFIGURATION = "__type";
+    private final static String NAME_CONFIGURATION = "__name";
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
-        if (report.getResourceType().getName().equals("ThreadPool")) {
-            //Need to munge the report and configuration definition for ThreadPools:
+        if (report.getResourceConfiguration().get(TYPE_CONFIGURATION) != null) {
+            //Need to munge the report and configuration definition for with type in configuration:
             //1) Remove type from the properties and configuration.
-            //2) Update path to the selected thread pool type.
+            //2) Update path to the selected type.
             ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
-            configDef.getPropertyDefinitions().remove("type");
+            configDef.getPropertyDefinitions().remove(TYPE_CONFIGURATION);
             CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, getASConnection(), address);
 
             Configuration configuration = report.getResourceConfiguration();
-            PropertySimple threadPoolType = (PropertySimple) configuration.get("type");
-            configuration.remove("type");
-            report.getPluginConfiguration().put(new PropertySimple("path", threadPoolType.getStringValue()));
+            PropertySimple typeProperty = (PropertySimple) configuration.get(TYPE_CONFIGURATION);
+            configuration.remove(TYPE_CONFIGURATION);
+            report.getPluginConfiguration().put(new PropertySimple("path", typeProperty.getStringValue()));
+
+            return delegate.createResource(report);
+        } else if (report.getResourceConfiguration().get(NAME_CONFIGURATION) != null) {
+            //Need to munge the report and configuration definition for with name in configuration:
+            //1) Remove name from the properties and configuration.
+            //2) Update user specified name to the implicitly selected name.
+            ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
+            configDef.getPropertyDefinitions().remove(NAME_CONFIGURATION);
+            CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, getASConnection(), address);
+
+            Configuration configuration = report.getResourceConfiguration();
+            PropertySimple nameProperty = (PropertySimple) configuration.get(NAME_CONFIGURATION);
+            configuration.remove(NAME_CONFIGURATION);
+            report.setUserSpecifiedResourceName(nameProperty.getStringValue());
 
             return delegate.createResource(report);
         } else {
             return super.createResource(report);
         }
     }
-
 }

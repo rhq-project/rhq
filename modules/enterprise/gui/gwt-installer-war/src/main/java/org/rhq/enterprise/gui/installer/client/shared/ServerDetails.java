@@ -16,13 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.installer.server.servlet;
+package org.rhq.enterprise.gui.installer.client.shared;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.Serializable;
 
-public class ServerDetails {
-    private final Log LOG = LogFactory.getLog(ServerDetails.class);
+public class ServerDetails implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     public static final String DEFAULT_AFFINITY_GROUP = "";
     public static final int DEFAULT_ENDPOINT_PORT = 7080;
@@ -33,6 +32,10 @@ public class ServerDetails {
     private int endpointPort;
     private int endpointSecurePort;
     private String affinityGroup;
+
+    protected ServerDetails() {
+        // for GWT
+    }
 
     public ServerDetails(String name, String endpointAddress, int port, int securePort, String affinityGroup) {
         this.name = name;
@@ -71,15 +74,11 @@ public class ServerDetails {
     }
 
     public String getEndpointPortString() {
-        return (String.valueOf(this.endpointPort));
+        return (String.valueOf(endpointPort));
     }
 
     public void setEndpointPortString(String endpointPort) {
-        try {
-            this.endpointPort = Integer.valueOf(endpointPort).intValue();
-        } catch (NumberFormatException e) {
-            LOG.debug("Failed to set port with invalid number: " + endpointPort);
-        }
+        this.endpointPort = Integer.valueOf(endpointPort).intValue();
     }
 
     public int getEndpointSecurePort() {
@@ -91,15 +90,11 @@ public class ServerDetails {
     }
 
     public String getEndpointSecurePortString() {
-        return (String.valueOf(this.endpointSecurePort));
+        return (String.valueOf(endpointSecurePort));
     }
 
     public void setEndpointSecurePortString(String endpointSecurePort) {
-        try {
-            this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
-        } catch (NumberFormatException e) {
-            LOG.debug("Failed to set secure port with invalid number: " + endpointSecurePort);
-        }
+        this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
     }
 
     public String getAffinityGroup() {

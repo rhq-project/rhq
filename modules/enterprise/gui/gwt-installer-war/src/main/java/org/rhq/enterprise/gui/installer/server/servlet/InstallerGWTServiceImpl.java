@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.installer.server.servlet;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -34,6 +35,7 @@ import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTService;
+import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 
 /**
@@ -45,6 +47,27 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private static final long serialVersionUID = 1L;
 
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+
+    @Override
+    public ArrayList<String> getServerNames(String connectionUrl, String username, String password) throws Exception {
+        try {
+            return ServerInstallUtil.getServerNames(connectionUrl, username, password);
+        } catch (Exception e) {
+            log("Could not get the list of registered server names", e);
+            return null;
+        }
+    }
+
+    @Override
+    public ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName)
+        throws Exception {
+        try {
+            return ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
+        } catch (Exception e) {
+            log("Could not get server details for [" + serverName + "]", e);
+            return null;
+        }
+    }
 
     @Override
     public boolean isDatabaseSchemaExist(String connectionUrl, String username, String password) throws Exception {
@@ -93,26 +116,6 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     }
 
     @Override
-    public void createDatasourceSecurityDomain(String username, String password) throws Exception {
-        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(getClient());
-        final String securityDomain = RHQ_SECURITY_DOMAIN;
-        if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, username, password);
-            log("Security domain [" + securityDomain + "] created");
-        } else {
-            log("Security domain [" + securityDomain + "] already exists, skipping the creation request");
-        }
-    }
-
-    @Override
-    public String getAppServerHomeDir() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String[] address = { "core-service", "server-environment" };
-        String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
-        return dir;
-    }
-
-    @Override
     public String getAppServerVersion() throws Exception {
         JBossASClient client = new JBossASClient(getClient());
         String version = client.getStringAttribute("release-version", Address.root());
@@ -127,6 +130,13 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         return osName;
     }
 
+    private String getAppServerHomeDir() throws Exception {
+        JBossASClient client = new JBossASClient(getClient());
+        String[] address = { "core-service", "server-environment" };
+        String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
+        return dir;
+    }
+
     private File getServerPropertiesFile() throws Exception {
         File appServerHomeDir = new File(getAppServerHomeDir());
         File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
@@ -136,5 +146,16 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private ModelControllerClient getClient() {
         ModelControllerClient client = ManagementService.getClient();
         return client;
+    }
+
+    private void createDatasourceSecurityDomain(String username, String password) throws Exception {
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(getClient());
+        final String securityDomain = RHQ_SECURITY_DOMAIN;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, username, password);
+            log("Security domain [" + securityDomain + "] created");
+        } else {
+            log("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+        }
     }
 }

@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,6 +32,7 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 
 /**
  * Provides utility methods necessary to complete the server installation.
@@ -87,12 +87,13 @@ public class ServerInstallUtil {
      *
      * @throws Exception if failed to communicate with the database
      */
-    public List<String> getServerNames(String connectionUrl, String username, String password) throws Exception {
+    public static ArrayList<String> getServerNames(String connectionUrl, String username, String password)
+        throws Exception {
         DatabaseType db = null;
         Connection conn = null;
         Statement stm = null;
         ResultSet rs = null;
-        List<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<String>();
 
         try {
             conn = getDatabaseConnection(connectionUrl, username, password);

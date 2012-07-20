@@ -18,14 +18,41 @@
  */
 package org.rhq.enterprise.gui.installer.client.gwt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+
+import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 
 /**
  * @author John Mazzitelli
  */
 public interface InstallerGWTService extends RemoteService {
+
+    /**
+     * Returns a list of all registered servers in the database.
+     *
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @return list of all existing servers registered in the database.
+     * @throws Exception
+     */
+    ArrayList<String> getServerNames(String connectionUrl, String username, String password) throws Exception;
+
+    /**
+     * Returns details on a specific server that is registered in the database.
+     * 
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @param serverName the name of the server whose details are to be retrieved
+     * @return the details of the server or null if the server does not exist
+     * @throws Exception
+     */
+    ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName)
+        throws Exception;
 
     /**
      * Tests to see if there is already a schema installed.
@@ -61,22 +88,6 @@ public interface InstallerGWTService extends RemoteService {
      * @throws Exception
      */
     void saveServerProperties(HashMap<String, String> serverProperties) throws Exception;
-
-    /**
-     * Creates a security domain in the app server for use by the datasources.
-     * @param username username the security domain will use to connect to the database
-     * @param password password the security domain will use to connect to the database 
-     * @throws Exception
-     */
-    void createDatasourceSecurityDomain(String username, String password) throws Exception;
-
-    /**
-     * Returns the directory name where the app server is installed (e.g. the root install directory
-     * of the app server).
-     * @return app server install dir
-     * @throws Exception
-     */
-    String getAppServerHomeDir() throws Exception;
 
     /**
      * Returns the version string for the app server itself (e.g. "7.1.2.Final").

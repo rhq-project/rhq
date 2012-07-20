@@ -40,6 +40,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -47,9 +49,10 @@ import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.EditCompleteEvent;
 import com.smartgwt.client.widgets.grid.events.EditCompleteHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -58,6 +61,7 @@ import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTServiceAsync;
+import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 
 /**
@@ -71,12 +75,12 @@ public class Installer implements EntryPoint {
     public static final Messages MSG = GWT.create(Messages.class);
     public static final ServerPropertiesMessages PROPS_MSG = GWT.create(ServerPropertiesMessages.class);
 
-    private static final String PROPERTY_NAME = "propertyName";
-    private static final String PROPERTY_VALUE = "propertyValue";
+    private static final String NEW_SERVER_TO_REGISTER = "*new*";
 
-    private InstallerGWTServiceAsync installerService = InstallerGWTServiceAsync.Util.getInstance();
-    private HashMap<String, String> serverProperties = new HashMap<String, String>();
-    private HashMap<String, String> originalProperties = new HashMap<String, String>();
+    private final InstallerGWTServiceAsync installerService = InstallerGWTServiceAsync.Util.getInstance();
+    private final ServerPropertyRecordList serverProperties = new ServerPropertyRecordList();
+    private final HashMap<String, String> originalProperties = new HashMap<String, String>();
+    private final LinkedHashMap<String, String> registeredServerNames = new LinkedHashMap<String, String>();
 
     private ListGrid advancedPropertyItemGrid;
     private Button mainInstallButton;
@@ -120,7 +124,7 @@ public class Installer implements EntryPoint {
     }
 
     private void updateServerProperty(String name, Object value) {
-        serverProperties.put(name, value == null ? "" : value.toString());
+        serverProperties.putServerProperty(name, value == null ? "" : value.toString());
         refreshAdvancedView();
     }
 
@@ -131,8 +135,7 @@ public class Installer implements EntryPoint {
                 if (result.size() == 0) {
                     SC.say("Initial server properties are missing.");
                 }
-                serverProperties.clear();
-                serverProperties.putAll(result);
+                serverProperties.replaceServerProperties(result);
 
                 // remember these original properties in case the user wants to reset them back
                 originalProperties.clear();
@@ -152,34 +155,26 @@ public class Installer implements EntryPoint {
     }
 
     private void refreshSimpleView() {
+        Map<String, String> props = serverProperties.getMap();
+
         // DB SETTINGS
-        dbType.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_TYPE));
-        dbConnectionUrl.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL));
-        dbUsername.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME));
+        dbType.setValue(props.get(ServerProperties.PROP_DATABASE_TYPE));
+        dbConnectionUrl.setValue(props.get(ServerProperties.PROP_DATABASE_CONNECTION_URL));
+        dbUsername.setValue(props.get(ServerProperties.PROP_DATABASE_USERNAME));
         // do not prefill the database password - force the user to know it and type it in for security purposes
 
         // SERVER SETTINGS
-        serverSettingServerName.setValue(serverProperties.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME));
-        serverSettingWebHttpPort.setValue(serverProperties.get(ServerProperties.PROP_WEB_HTTP_PORT));
-        serverSettingWebSecureHttpPort.setValue(serverProperties.get(ServerProperties.PROP_WEB_HTTPS_PORT));
-        serverSettingEmailSMTPHostname.setValue(serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST));
-        serverSettingEmailFromAddress.setValue(serverProperties.get(ServerProperties.PROP_EMAIL_FROM_ADDRESS));
+        serverSettingServerName.setValue(props.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME));
+        serverSettingWebHttpPort.setValue(props.get(ServerProperties.PROP_WEB_HTTP_PORT));
+        serverSettingWebSecureHttpPort.setValue(props.get(ServerProperties.PROP_WEB_HTTPS_PORT));
+        serverSettingEmailSMTPHostname.setValue(props.get(ServerProperties.PROP_EMAIL_SMTP_HOST));
+        serverSettingEmailFromAddress.setValue(props.get(ServerProperties.PROP_EMAIL_FROM_ADDRESS));
 
-        dbExistingSchemaOption.hide();
-        testConnectionButton.setIcon(null);
+        forceAnotherTestConnection();
     }
 
     private void refreshAdvancedView() {
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
-        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
-            ListGridRecord record = new ListGridRecord();
-            record.setAttribute(PROPERTY_NAME, entry.getKey());
-            record.setAttribute(PROPERTY_VALUE, entry.getValue());
-            records.add(record);
-        }
-        advancedPropertyItemGrid.setData(records.toArray(new ListGridRecord[records.size()]));
         advancedPropertyItemGrid.markForRedraw();
-        return;
     }
 
     private Canvas createHeader() {
@@ -216,23 +211,22 @@ public class Installer implements EntryPoint {
         final TabSet topTabSet = new TabSet();
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setTabBarAlign(Side.LEFT);
-        topTabSet.setWidth("80%");
-        topTabSet.setHeight("75%");
+        topTabSet.setWidth("90%");
 
         final Tab welcomeTab = new Tab(MSG.tab_welcome());
         Label welcomeLabel = new Label(MSG.tab_welcome_content());
         welcomeTab.setPane(welcomeLabel);
 
-        final Tab databaseTab = new Tab(MSG.tab_simpleView());
-        Canvas databaseForm = createSimpleForm();
-        databaseTab.setPane(databaseForm);
+        final Tab simpleViewTab = new Tab(MSG.tab_simpleView());
+        Canvas simpleForm = createSimpleForm();
+        simpleViewTab.setPane(simpleForm);
 
         final Tab advancedViewTab = new Tab(MSG.tab_advancedView());
         Canvas advancedView = createAdvancedView();
         advancedViewTab.setPane(advancedView);
 
         topTabSet.addTab(welcomeTab);
-        topTabSet.addTab(databaseTab);
+        topTabSet.addTab(simpleViewTab);
         topTabSet.addTab(advancedViewTab);
 
         return topTabSet;
@@ -247,10 +241,10 @@ public class Installer implements EntryPoint {
         IButton saveButton = new IButton(MSG.button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                installerService.saveServerProperties(serverProperties, new AsyncCallback<Void>() {
+                installerService.saveServerProperties(serverProperties.getMap(), new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
                         originalProperties.clear();
-                        originalProperties.putAll(serverProperties);
+                        originalProperties.putAll(serverProperties.getMap());
                         SC.say("Properties saved to server");
                     }
 
@@ -263,8 +257,7 @@ public class Installer implements EntryPoint {
         IButton resetButton = new IButton(MSG.button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                serverProperties.clear();
-                serverProperties.putAll(originalProperties);
+                serverProperties.replaceServerProperties(originalProperties);
                 refreshAdvancedView();
             }
         });
@@ -275,22 +268,23 @@ public class Installer implements EntryPoint {
         advancedPropertyItemGrid = new ListGrid();
         advancedPropertyItemGrid.setWidth100();
         advancedPropertyItemGrid.setHeight100();
-        advancedPropertyItemGrid.setData(new ListGridRecord[0]);
+        advancedPropertyItemGrid.setData(serverProperties);
 
-        ListGridField nameField = new ListGridField(PROPERTY_NAME, MSG.property_name_label());
+        ListGridField nameField = new ListGridField(ServerPropertyRecordList.PROPERTY_NAME, MSG.property_name_label());
         nameField.setCanEdit(false);
 
-        ListGridField valueField = new ListGridField(PROPERTY_VALUE, MSG.property_value_label());
+        ListGridField valueField = new ListGridField(ServerPropertyRecordList.PROPERTY_VALUE,
+            MSG.property_value_label());
         valueField.setCanEdit(true);
 
         advancedPropertyItemGrid.setFields(nameField, valueField);
-        advancedPropertyItemGrid.setSortField(PROPERTY_NAME);
+        advancedPropertyItemGrid.setSortField(ServerPropertyRecordList.PROPERTY_NAME);
 
         advancedPropertyItemGrid.addEditCompleteHandler(new EditCompleteHandler() {
             public void onEditComplete(EditCompleteEvent event) {
                 String newValue = (String) event.getNewValues().values().iterator().next().toString();
-                String changedProperty = event.getOldRecord().getAttribute(PROPERTY_NAME);
-                serverProperties.put(changedProperty, newValue);
+                String changedProperty = event.getOldRecord().getAttribute(ServerPropertyRecordList.PROPERTY_NAME);
+                serverProperties.getMap().put(changedProperty, newValue); // we need this to be reflected in the internal map
                 refreshSimpleView();
             }
         });
@@ -302,7 +296,7 @@ public class Installer implements EntryPoint {
 
     private Canvas createSimpleForm() {
 
-        final int fieldWidth = 250;
+        final int fieldWidth = 300;
 
         ////////////////////////////////////////////////////////
         // The Database form
@@ -322,6 +316,7 @@ public class Installer implements EntryPoint {
         dbConnectionUrl.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_DATABASE_CONNECTION_URL, String.valueOf(event.getValue()));
+                forceAnotherTestConnection();
             }
         });
 
@@ -331,6 +326,7 @@ public class Installer implements EntryPoint {
         dbUsername.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_DATABASE_USERNAME, String.valueOf(event.getValue()));
+                forceAnotherTestConnection();
             }
         });
 
@@ -340,6 +336,7 @@ public class Installer implements EntryPoint {
         dbPassword.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_DATABASE_PASSWORD, String.valueOf(event.getValue()));
+                forceAnotherTestConnection();
             }
         });
 
@@ -353,48 +350,42 @@ public class Installer implements EntryPoint {
         dbExistingSchemaOption.setVisible(false);
         dbExistingSchemaOption.setWidth(fieldWidth);
         dbExistingSchemaOption.setWrapTitle(true);
+        dbExistingSchemaOption.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                if (registeredServersSelection != null) {
+                    String selected = event.getValue().toString();
+                    if ("overwrite".equals(selected)) {
+                        registeredServersSelection.setValue((String) null);
+                        registeredServersSelection.disable();
+                    } else {
+                        registeredServersSelection.enable();
+                    }
+                }
+            }
+        });
 
         testConnectionButton = new ButtonItem("testConnectionButton", MSG.button_testConnection());
         testConnectionButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
-                final String connectionUrl = dbConnectionUrl.getValueAsString();
-                final String username = dbUsername.getValueAsString();
-                final String password = dbPassword.getValueAsString();
-
-                installerService.testConnection(connectionUrl, username, password, new AsyncCallback<String>() {
-                    public void onSuccess(String result) {
-                        if (result != null) {
-                            SC.say("Could not connect to the database: " + result);
-                            testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
-                            mainInstallButton.disable();
-                            dbExistingSchemaOption.hide();
-                        } else {
-                            testConnectionButton.setIcon("[SKIN]/actions/ok.png");
-                            installerService.isDatabaseSchemaExist(connectionUrl, username, password,
-                                new AsyncCallback<Boolean>() {
-                                    public void onSuccess(Boolean schemaExists) {
-                                        if (schemaExists) {
-                                            dbExistingSchemaOption.show();
-                                        } else {
-                                            dbExistingSchemaOption.hide();
-                                        }
-                                        mainInstallButton.enable();
-                                    }
-
-                                    public void onFailure(Throwable caught) {
-                                        SC.say("Cannot determine the status of the database schema: " + caught);
-                                    }
-                                });
+                final Conn conn = new Conn();
+                installerService.testConnection(conn.url(), conn.username(), conn.password(),
+                    new AsyncCallback<String>() {
+                        public void onSuccess(String result) {
+                            if (result != null) {
+                                forceAnotherTestConnection();
+                                testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
+                                SC.say("Could not connect to the database: " + result);
+                            } else {
+                                connectedToDatabase();
+                            }
                         }
-                    }
 
-                    public void onFailure(Throwable caught) {
-                        SC.say("Failed to test connection: " + caught.toString());
-                        testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
-                        mainInstallButton.disable();
-                        dbExistingSchemaOption.hide();
-                    }
-                });
+                        public void onFailure(Throwable caught) {
+                            forceAnotherTestConnection();
+                            testConnectionButton.setIcon("[SKIN]/actions/exclamation.png");
+                            SC.say("Failed to test connection: " + caught.toString());
+                        }
+                    });
 
             }
         });
@@ -408,10 +399,7 @@ public class Installer implements EntryPoint {
         dbType.setDefaultToFirstOption(true);
         dbType.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                // force the user to re-test the connection
-                mainInstallButton.disable();
-                testConnectionButton.setIcon(null);
-                dbExistingSchemaOption.setVisible(false);
+                forceAnotherTestConnection();
 
                 String newDBType = (String) event.getValue();
                 String newURL = "";
@@ -431,11 +419,11 @@ public class Installer implements EntryPoint {
                 }
                 dbConnectionUrl.setValue(newURL);
 
-                serverProperties.put(ServerProperties.PROP_DATABASE_CONNECTION_URL, newURL);
-                serverProperties.put(ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT, dialect);
-                serverProperties.put(ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS, quartzDriverDelegateClass);
-                serverProperties.put(ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL, quartzSelectWithLockSQL);
-                serverProperties.put(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS, quartzLockHandlerClass);
+                updateServerProperty(ServerProperties.PROP_DATABASE_CONNECTION_URL, newURL);
+                updateServerProperty(ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT, dialect);
+                updateServerProperty(ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS, quartzDriverDelegateClass);
+                updateServerProperty(ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL, quartzSelectWithLockSQL);
+                updateServerProperty(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS, quartzLockHandlerClass);
                 updateServerProperty(ServerProperties.PROP_DATABASE_TYPE, newDBType); // this refreshes the advanced view, too
             }
         });
@@ -465,6 +453,9 @@ public class Installer implements EntryPoint {
         serverSettingServerName.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, String.valueOf(event.getValue()));
+                if (registeredServersSelection != null) {
+                    registeredServersSelection.setValue((String) null); // flip it back to *new* since the server name changed
+                }
             }
         });
 
@@ -496,20 +487,40 @@ public class Installer implements EntryPoint {
 
         registeredServersSelection = new SelectItem("registeredServersSelectItem",
             MSG.tab_simpleView_serverSettings_registeredServers());
-        final LinkedHashMap<String, String> registeredServers = new LinkedHashMap<String, String>();
-        registeredServers.put("*new*", MSG.tab_simpleView_serverSettings_registeredServers_newServer());
-        registeredServers.put("blah", "blah");
-        registeredServersSelection.setValueMap(registeredServers);
+        registeredServersSelection.setWidth(fieldWidth);
+        addContextualHelp(registeredServersSelection, MSG.help_registeredServers());
+        registeredServerNames.put(NEW_SERVER_TO_REGISTER,
+            MSG.tab_simpleView_serverSettings_registeredServers_newServer());
+        registeredServersSelection.setValueMap(registeredServerNames);
         registeredServersSelection.setDefaultToFirstOption(true);
         registeredServersSelection.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String selectedServerName = String.valueOf(event.getValue());
-                boolean newServer = "*new*".equals(selectedServerName);
+                final String selectedServerName = String.valueOf(event.getValue());
+                final boolean newServer = NEW_SERVER_TO_REGISTER.equals(selectedServerName);
                 if (newServer) {
                     serverSettingServerName.setValue("");
                     serverSettingPublicAddress.setValue("");
+                    updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, "");
                 } else {
-                    serverSettingServerName.setValue(selectedServerName);
+                    final Conn conn = new Conn();
+                    installerService.getServerDetails(conn.url(), conn.username(), conn.password(), selectedServerName,
+                        new AsyncCallback<ServerDetails>() {
+                            public void onSuccess(ServerDetails details) {
+                                serverSettingServerName.setValue(details.getName());
+                                serverSettingPublicAddress.setValue(details.getEndpointAddress());
+                                serverSettingWebHttpPort.setValue(details.getEndpointPortString());
+                                serverSettingWebSecureHttpPort.setValue(details.getEndpointSecurePortString());
+                                updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, details.getName());
+                                updateServerProperty(ServerProperties.PROP_WEB_HTTP_PORT,
+                                    details.getEndpointPortString());
+                                updateServerProperty(ServerProperties.PROP_WEB_HTTPS_PORT,
+                                    details.getEndpointSecurePortString());
+                            }
+
+                            public void onFailure(Throwable caught) {
+                                SC.say("Failed to get details on selected server [" + selectedServerName + "]");
+                            }
+                        });
                 }
             }
         });
@@ -549,5 +560,92 @@ public class Installer implements EntryPoint {
         simpleForm.addMember(serverSettingsForm);
 
         return simpleForm;
+    }
+
+    private void connectedToDatabase() {
+        final Conn conn = new Conn();
+        testConnectionButton.setIcon("[SKIN]/actions/ok.png");
+        installerService.isDatabaseSchemaExist(conn.url(), conn.username(), conn.password(),
+            new AsyncCallback<Boolean>() {
+                public void onSuccess(Boolean schemaExists) {
+                    if (schemaExists) {
+                        dbExistingSchemaOption.show();
+                        registeredServersSelection.enable();
+
+                        installerService.getServerNames(conn.url(), conn.username(), conn.password(),
+                            new AsyncCallback<ArrayList<String>>() {
+                                public void onSuccess(ArrayList<String> servers) {
+                                    registeredServerNames.clear();
+                                    registeredServerNames.put(NEW_SERVER_TO_REGISTER,
+                                        MSG.tab_simpleView_serverSettings_registeredServers_newServer());
+                                    for (String server : servers) {
+                                        registeredServerNames.put(server, server);
+                                    }
+                                    registeredServersSelection.setValueMap(registeredServerNames);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    SC.say("Cannot get the registered server names");
+                                }
+                            });
+                    } else {
+                        dbExistingSchemaOption.hide();
+                        registeredServersSelection.setValue((String) null);
+                        registeredServersSelection.disable();
+                    }
+                    mainInstallButton.enable();
+                }
+
+                public void onFailure(Throwable caught) {
+                    SC.say("Cannot determine the status of the database schema: " + caught);
+                }
+            });
+    }
+
+    private void addContextualHelp(final FormItem item, final String helpText) {
+        final FormItemIcon helpIcon = new FormItemIcon();
+        helpIcon.setSrc("[SKIN]/actions/help.png");
+        helpIcon.setNeverDisable(true);
+        item.setIcons(helpIcon);
+
+        item.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                if (event.getIcon().equals(helpIcon)) {
+                    SC.say(helpText);
+                }
+            }
+        });
+    }
+
+    /**
+     * Call this when the user changed something (like connection URL or password) that renders
+     * the old connection test invalid. This will ensure the user is forced to re-test the connection.
+     */
+    private void forceAnotherTestConnection() {
+        mainInstallButton.disable();
+        testConnectionButton.setIcon(null);
+        dbExistingSchemaOption.hide();
+
+        if (registeredServerNames.size() > 1) {
+            registeredServerNames.clear();
+            registeredServerNames.put(NEW_SERVER_TO_REGISTER, MSG.tab_simpleView_serverSettings_registeredServers_newServer());
+        }
+        registeredServersSelection.setValue((String) null);
+        registeredServersSelection.setValueMap(registeredServerNames);
+    }
+
+    // for convienence, so we can get the conn url, user, pass in one object
+    private class Conn {
+        public String url() {
+            return Installer.this.dbConnectionUrl.getValueAsString();
+        }
+
+        public String username() {
+            return Installer.this.dbUsername.getValueAsString();
+        }
+
+        public String password() {
+            return Installer.this.dbPassword.getValueAsString();
+        }
     }
 }

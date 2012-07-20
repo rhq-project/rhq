@@ -291,6 +291,61 @@ public class ProcessInfoQueryTest {
     }
 
     /**
+     * Test PID files.
+     *
+     * @throws Exception
+     */
+    public void testPIQLPidfileNL() throws Exception {
+        File pidfile = File.createTempFile("test", ".pid");
+        try {
+            FileOutputStream fos = new FileOutputStream(pidfile);
+            fos.write("3\n".getBytes());
+            fos.flush();
+            fos.close();
+
+            results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
+            assert results.size() == 1 : results;
+            assertPidExists(3, results, "pidfile had pid #3 in it and should have matched pid 3");
+
+            results = query.query("process|pidfile|nomatch=" + pidfile.getCanonicalPath());
+            assert results.size() == (query.getProcesses().size() - 1) : "should match all but pid 3:" + results;
+            assertPidDoesNotExist(3, results, "pidfile had pid #3 in it so .ne should not have matched pid 3");
+
+            results = query.query("process|pidfile|match|parent=" + pidfile.getCanonicalPath());
+            assert results.size() == 2 : "there are two child procs of parent process found in pidfile:" + results;
+            assertPidExists(4, results, "");
+            assertPidExists(5, results, "");
+        } finally {
+            pidfile.delete();
+        }
+    }
+
+    public void testPIQLPidfileNLLF() throws Exception {
+        File pidfile = File.createTempFile("test", ".pid");
+        try {
+            FileOutputStream fos = new FileOutputStream(pidfile);
+            fos.write("3\r\n".getBytes());
+            fos.flush();
+            fos.close();
+
+            results = query.query("process|pidfile|match=" + pidfile.getCanonicalPath());
+            assert results.size() == 1 : results;
+            assertPidExists(3, results, "pidfile had pid #3 in it and should have matched pid 3");
+
+            results = query.query("process|pidfile|nomatch=" + pidfile.getCanonicalPath());
+            assert results.size() == (query.getProcesses().size() - 1) : "should match all but pid 3:" + results;
+            assertPidDoesNotExist(3, results, "pidfile had pid #3 in it so .ne should not have matched pid 3");
+
+            results = query.query("process|pidfile|match|parent=" + pidfile.getCanonicalPath());
+            assert results.size() == 2 : "there are two child procs of parent process found in pidfile:" + results;
+            assertPidExists(4, results, "");
+            assertPidExists(5, results, "");
+        } finally {
+            pidfile.delete();
+        }
+    }
+
+    /**
      * Test regular expressions.
      */
     public void testPIQLProcessNameRegularExpression() {

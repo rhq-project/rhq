@@ -520,6 +520,18 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
         PropertyDefinition memberDef = propertyDefinition.getMemberDefinition();
         List<Property> embeddedProps = property.getList();
+
+
+        String propertyName = property.getName();
+
+        if (propertyName.endsWith(":nullable")) {
+            propertyName = propertyName.substring(0, propertyName.indexOf(":nullable"));
+
+            if (embeddedProps.isEmpty()) {
+                return new SimpleEntry<String, List<Object>>(propertyName, null);
+            }
+        }
+
         List<Object> values = new ArrayList<Object>();
         for (Property inner : embeddedProps) {
             if (memberDef instanceof PropertyDefinitionSimple) {
@@ -539,9 +551,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         }
 
-        String name = stripNumberIdentifier(property.getName());
+        propertyName = stripNumberIdentifier(property.getName());
 
-        return new SimpleEntry<String, List<Object>>(name, values);
+        return new SimpleEntry<String, List<Object>>(propertyName, values);
     }
 
 

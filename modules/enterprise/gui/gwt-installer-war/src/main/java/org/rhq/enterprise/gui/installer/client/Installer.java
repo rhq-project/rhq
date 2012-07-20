@@ -42,6 +42,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -84,6 +86,13 @@ public class Installer implements EntryPoint {
     private SelectItem dbExistingSchemaOption;
     private ButtonItem testConnectionButton;
     private SelectItem dbType;
+    private TextItem serverSettingServerName;
+    private TextItem serverSettingPublicAddress;
+    private SpinnerItem serverSettingWebHttpPort;
+    private SpinnerItem serverSettingWebSecureHttpPort;
+    private SelectItem registeredServersSelection;
+    private TextItem serverSettingEmailSMTPHostname;
+    private TextItem serverSettingEmailFromAddress;
 
     public void onModuleLoad() {
         Canvas header = createHeader();
@@ -143,10 +152,21 @@ public class Installer implements EntryPoint {
     }
 
     private void refreshSimpleView() {
+        // DB SETTINGS
         dbType.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_TYPE));
         dbConnectionUrl.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL));
         dbUsername.setValue(serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME));
         // do not prefill the database password - force the user to know it and type it in for security purposes
+
+        // SERVER SETTINGS
+        serverSettingServerName.setValue(serverProperties.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME));
+        serverSettingWebHttpPort.setValue(serverProperties.get(ServerProperties.PROP_WEB_HTTP_PORT));
+        serverSettingWebSecureHttpPort.setValue(serverProperties.get(ServerProperties.PROP_WEB_HTTPS_PORT));
+        serverSettingEmailSMTPHostname.setValue(serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST));
+        serverSettingEmailFromAddress.setValue(serverProperties.get(ServerProperties.PROP_EMAIL_FROM_ADDRESS));
+
+        dbExistingSchemaOption.hide();
+        testConnectionButton.setIcon(null);
     }
 
     private void refreshAdvancedView() {
@@ -203,8 +223,8 @@ public class Installer implements EntryPoint {
         Label welcomeLabel = new Label(MSG.tab_welcome_content());
         welcomeTab.setPane(welcomeLabel);
 
-        final Tab databaseTab = new Tab(MSG.tab_simple());
-        DynamicForm databaseForm = createSimpleForm();
+        final Tab databaseTab = new Tab(MSG.tab_simpleView());
+        Canvas databaseForm = createSimpleForm();
         databaseTab.setPane(databaseForm);
 
         final Tab advancedViewTab = new Tab(MSG.tab_advancedView());
@@ -271,6 +291,7 @@ public class Installer implements EntryPoint {
                 String newValue = (String) event.getNewValues().values().iterator().next().toString();
                 String changedProperty = event.getOldRecord().getAttribute(PROPERTY_NAME);
                 serverProperties.put(changedProperty, newValue);
+                refreshSimpleView();
             }
         });
 
@@ -279,13 +300,24 @@ public class Installer implements EntryPoint {
         return layout;
     }
 
-    private DynamicForm createSimpleForm() {
-        final DynamicForm simpleForm = new DynamicForm();
+    private Canvas createSimpleForm() {
+
+        final int fieldWidth = 250;
+
+        ////////////////////////////////////////////////////////
+        // The Database form
+
+        final DynamicForm databaseForm = new DynamicForm();
+        databaseForm.setAutoWidth();
+        databaseForm.setPadding(5);
+        databaseForm.setCellPadding(5);
+        databaseForm.setWrapItemTitles(false);
+        databaseForm.setIsGroup(true);
+        databaseForm.setGroupTitle(MSG.tab_simpleView_database());
 
         dbConnectionUrl = new TextItem(ServerProperties.PROP_DATABASE_CONNECTION_URL,
             PROPS_MSG.rhq_server_database_connection_url());
-        dbConnectionUrl.setWrapTitle(false);
-        dbConnectionUrl.setWidth(300);
+        dbConnectionUrl.setWidth(fieldWidth);
         dbConnectionUrl.setValue("jdbc:postgresql://127.0.0.1:5432/rhq");
         dbConnectionUrl.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -295,8 +327,7 @@ public class Installer implements EntryPoint {
 
         dbUsername = new TextItem(ServerProperties.PROP_DATABASE_USERNAME,
             PROPS_MSG.rhq_server_database_user_name());
-        dbUsername.setWrapTitle(false);
-        dbUsername.setWidth(200);
+        dbUsername.setWidth(fieldWidth);
         dbUsername.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_DATABASE_USERNAME, String.valueOf(event.getValue()));
@@ -305,8 +336,7 @@ public class Installer implements EntryPoint {
 
         dbPassword = new PasswordItem(ServerProperties.PROP_DATABASE_PASSWORD,
             PROPS_MSG.rhq_server_database_password());
-        dbPassword.setWrapTitle(false);
-        dbPassword.setWidth(200);
+        dbPassword.setWidth(fieldWidth);
         dbPassword.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_DATABASE_PASSWORD, String.valueOf(event.getValue()));
@@ -321,9 +351,10 @@ public class Installer implements EntryPoint {
         dbExistingSchemaOption.setValueMap(schemaOpt);
         dbExistingSchemaOption.setDefaultToFirstOption(true);
         dbExistingSchemaOption.setVisible(false);
-        dbExistingSchemaOption.setWidth(200);
+        dbExistingSchemaOption.setWidth(fieldWidth);
+        dbExistingSchemaOption.setWrapTitle(true);
 
-        testConnectionButton = new ButtonItem("testDbConnectionButton", MSG.button_testConnection());
+        testConnectionButton = new ButtonItem("testConnectionButton", MSG.button_testConnection());
         testConnectionButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 final String connectionUrl = dbConnectionUrl.getValueAsString();
@@ -409,8 +440,113 @@ public class Installer implements EntryPoint {
             }
         });
 
-        simpleForm.setFields(dbType, dbConnectionUrl, dbUsername, dbPassword, testConnectionButton,
+        // use this to move the button over to the second column - it looks better this way
+        SpacerItem buttonSpacer = new SpacerItem();
+        buttonSpacer.setEndRow(false);
+        testConnectionButton.setStartRow(false);
+
+        databaseForm.setFields(dbType, dbConnectionUrl, dbUsername, dbPassword, buttonSpacer, testConnectionButton,
             dbExistingSchemaOption);
+
+        ////////////////////////////////////////////////////////
+        // The Server Settings form
+
+        final DynamicForm serverSettingsForm = new DynamicForm();
+        serverSettingsForm.setPadding(5);
+        serverSettingsForm.setCellPadding(5);
+        serverSettingsForm.setAutoWidth();
+        serverSettingsForm.setIsGroup(true);
+        serverSettingsForm.setWrapItemTitles(false);
+        serverSettingsForm.setGroupTitle(MSG.tab_simpleView_serverSettings());
+
+        serverSettingServerName = new TextItem(ServerProperties.PROP_HIGH_AVAILABILITY_NAME,
+            PROPS_MSG.rhq_server_high_availability_name());
+        serverSettingServerName.setWidth(fieldWidth);
+        serverSettingServerName.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, String.valueOf(event.getValue()));
+            }
+        });
+
+        serverSettingPublicAddress = new TextItem("serverPublicAddress",
+            MSG.tab_simpleView_serverSettings_publicAddress());
+        serverSettingPublicAddress.setWidth(fieldWidth);
+
+        serverSettingWebHttpPort = new SpinnerItem(ServerProperties.PROP_WEB_HTTP_PORT,
+            PROPS_MSG.rhq_server_startup_web_http_port());
+        serverSettingWebHttpPort.setWidth(fieldWidth);
+        serverSettingWebHttpPort.setMin(1);
+        serverSettingWebHttpPort.setMax(65535);
+        serverSettingWebHttpPort.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_WEB_HTTP_PORT, String.valueOf(event.getValue()));
+            }
+        });
+
+        serverSettingWebSecureHttpPort = new SpinnerItem(ServerProperties.PROP_WEB_HTTPS_PORT,
+            PROPS_MSG.rhq_server_startup_web_http_port());
+        serverSettingWebSecureHttpPort.setWidth(fieldWidth);
+        serverSettingWebSecureHttpPort.setMin(1);
+        serverSettingWebSecureHttpPort.setMax(65535);
+        serverSettingWebSecureHttpPort.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_WEB_HTTPS_PORT, String.valueOf(event.getValue()));
+            }
+        });
+
+        registeredServersSelection = new SelectItem("registeredServersSelectItem",
+            MSG.tab_simpleView_serverSettings_registeredServers());
+        final LinkedHashMap<String, String> registeredServers = new LinkedHashMap<String, String>();
+        registeredServers.put("*new*", MSG.tab_simpleView_serverSettings_registeredServers_newServer());
+        registeredServers.put("blah", "blah");
+        registeredServersSelection.setValueMap(registeredServers);
+        registeredServersSelection.setDefaultToFirstOption(true);
+        registeredServersSelection.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                String selectedServerName = String.valueOf(event.getValue());
+                boolean newServer = "*new*".equals(selectedServerName);
+                if (newServer) {
+                    serverSettingServerName.setValue("");
+                    serverSettingPublicAddress.setValue("");
+                } else {
+                    serverSettingServerName.setValue(selectedServerName);
+                }
+            }
+        });
+
+        serverSettingEmailSMTPHostname = new TextItem(ServerProperties.PROP_EMAIL_SMTP_HOST,
+            PROPS_MSG.rhq_server_email_smtp_host());
+        serverSettingEmailSMTPHostname.setWidth(fieldWidth);
+        serverSettingEmailSMTPHostname.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_EMAIL_SMTP_HOST, String.valueOf(event.getValue()));
+            }
+        });
+
+        serverSettingEmailFromAddress = new TextItem(ServerProperties.PROP_EMAIL_FROM_ADDRESS,
+            PROPS_MSG.rhq_server_email_from_address());
+        serverSettingEmailFromAddress.setWidth(fieldWidth);
+        serverSettingEmailFromAddress.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_EMAIL_FROM_ADDRESS, String.valueOf(event.getValue()));
+            }
+        });
+
+        serverSettingsForm.setItems(registeredServersSelection, serverSettingServerName, serverSettingPublicAddress,
+            serverSettingWebHttpPort, serverSettingWebSecureHttpPort, serverSettingEmailSMTPHostname,
+            serverSettingEmailFromAddress);
+
+        ////////////////////////////////////////////////////////
+        // The layout holding the forms in the simple view tab
+
+        VLayout simpleForm = new VLayout();
+        simpleForm.setLayoutMargin(5);
+        simpleForm.setMembersMargin(5);
+        simpleForm.setWidth100();
+        simpleForm.setHeight100();
+        simpleForm.setDefaultLayoutAlign(Alignment.CENTER);
+        simpleForm.addMember(databaseForm);
+        simpleForm.addMember(serverSettingsForm);
 
         return simpleForm;
     }

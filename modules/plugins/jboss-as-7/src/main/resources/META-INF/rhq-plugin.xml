@@ -6974,8 +6974,98 @@
       </resource-configuration>
     </service>
 
-  </service>
+    <service name="Garbage Collector"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="Parent resource for the resources providing the management interface for the garbage collection of the Java virtual machine."
+             singleton="true">
 
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="type=garbage-collector"/>
+      </plugin-configuration>
+
+      <service name="Garbage Collector Resource"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="The management interface for one of the garbage collectors in the Java virtual machine.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="name"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <metric property="collection-count" description="The total number of collections that have occurred."/>
+        <metric property="collection-time" description="The approximate accumulated collection elapsed time in milliseconds."/>
+        <metric property="name" dataType="trait" description="The name representing this garbage collector"/>
+        <metric property="valid" dataType="trait" description="Whether this this memory manager is valid in the Java virtual machine."/>
+
+        <resource-configuration>
+          <c:list-property name="memory-pool-names" required="true" description="The name of memory pools that this garbage collector manages." >
+            <c:simple-property name="memory-pool-names" readOnly="true"/>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+    </service>
+
+    <service name="Memory Pool"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+             description="Parent resource for the resources providing the management interface for the Java virtual machine's memory pools."
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="type=memory-pool"/>
+      </plugin-configuration>
+
+      <service name="Memory Pool Resource"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               description="The management interface for a memory pool. A memory pool represents the memory resource managed by the Java virtual machine and is managed by one or more memory managers.">
+
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="name"/>
+          <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:reset-peak-usage" displayName="Reset Peak Usage" description="Resets the peak memory usage statistic of this memory pool to the current memory usage.">
+          <results>
+            <c:simple-property name="operationResult" description="Resets the peak memory usage statistic of this memory pool to the current memory usage." />
+          </results>
+        </operation>
+
+        <metric property="collection-usage:init" displayName="Collection Usage - Init" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
+        <metric property="collection-usage:used" displayName="Collection Usage - Used" description="The amount of used memory in bytes."/>
+        <metric property="collection-usage:committed" displayName="Collection Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
+        <metric property="collection-usage:max" displayName="Collection Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/> 
+        <metric property="collection-usage-threshold-count" description="The number of times that the Java virtual machine has detected that the memory usage has reached or exceeded the collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="collection-usage-threshold-exceeded" description="Whether the memory usage of this memory pool after the most recent collection on which the Java virtual machine has expended effort has reached or exceeded its collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="collection-usage-threshold-supported" dataType="trait" description="Whether this memory pool supports a collection usage threshold."/>
+        <metric property="name" dataType="trait" description="The name representing this memory pool."/>
+        <metric property="peak-usage:init" displayName="Peak Usage - Init" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
+        <metric property="peak-usage:used" displayName="Peak Usage - Used" description="The amount of used memory in bytes."/>
+        <metric property="peak-usage:committed" displayName="Peak Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
+        <metric property="peak-usage:max" displayName="Peak Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/>
+        <metric property="type" dataType="trait" description="The type of this memory pool."/>
+        <metric property="usage:init" displayName="Usage - Init" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
+        <metric property="usage:used" displayName="Usage - Used" description="The amount of used memory in bytes."/>
+        <metric property="usage:committed" displayName="Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
+        <metric property="usage:max" displayName="Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/>
+        <metric property="usage-threshold-count" description="The number of times that the memory usage has crossed the usage threshold. A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="usage-threshold-exceeded" description="Whether the memory usage of this memory pool reaches or exceeds its usage threshold value.  A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="usage-threshold-supported" dataType="trait" description="Whether this memory pool supports usage threshold."/>
+        <metric property="valid" dataType="trait" description="Whether this memory pool is valid in the Java virtual machine. A memory pool becomes invalid once the Java virtual machine removes it from the memory system."/>
+
+        <resource-configuration>
+          <c:simple-property name="collection-usage-threshold" required="false" type="long" readOnly="false" description="The collection usage threshold value of this memory pool in bytes. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+          <c:list-property name="memory-manager-names" required="true" readOnly="true" description="The names of the memory managers that manage this memory pool." >
+              <c:simple-property name="memory-manager-names" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="usage-threshold" required="false" type="long" readOnly="false" description="The usage threshold value of this memory pool in bytes. A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        </resource-configuration>
+      </service>
+    </service>
+
+  </service>
 
 
   <service name="JBossWeb"

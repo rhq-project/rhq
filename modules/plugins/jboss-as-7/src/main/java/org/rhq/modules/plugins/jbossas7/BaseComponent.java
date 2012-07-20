@@ -404,11 +404,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             return report;
         }
 
-        String fileName = details.getFileName();
-
-        if (fileName.startsWith("C:\\fakepath\\")) { // TODO this is a hack as the server adds the fake path somehow
-            fileName = fileName.substring("C:\\fakepath\\".length());
-        }
+        // Key is available from UI and CLI
+        String fileName =  details.getKey().getName();
 
         String runtimeName = report.getPackageDetails().getDeploymentTimeConfiguration().getSimpleValue("runtimeName");
         if (runtimeName == null || runtimeName.isEmpty()) {

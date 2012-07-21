@@ -55,7 +55,7 @@ public class PropertySimple extends Property implements Serializable {
      * clients from being able to view the current value of PASSWORD properties. The value is made obscure enough to
      * make the chances of it being the same as the property's unmasked value next to nil.
      */
-    private static final String MASKED_VALUE = "_._._[MaSKeD]_._._";
+    public static final String MASKED_VALUE = "_._._[MaSKeD]_._._";
 
     @Column(name = "string_value", length = MAX_VALUE_LENGTH)
     private String stringValue;

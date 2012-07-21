@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.plugins.jboss.software;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import churchillobjects.rss4j.RssDocument;

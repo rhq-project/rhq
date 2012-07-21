@@ -26,10 +26,6 @@ import java.io.ObjectOutputStream;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -43,6 +39,9 @@ import org.rhq.core.util.obfuscation.Obfuscator;
  * This is a specialization of {@link PropertySimple} that provides password obfuscation
  * methods.
  *
+ * In memory, the value is always kept in clear text. It is only at persisting or
+ * serialization time that the value is stored in its obfuscated form.
+ * 
  * @author Lukas Krejci
  */
 @DiscriminatorValue("obfuscated")
@@ -51,9 +50,14 @@ import org.rhq.core.util.obfuscation.Obfuscator;
 @XmlRootElement
 public class ObfuscatedPropertySimple extends PropertySimple {
 
+    //note that while there were changes since RHQ 4.4.0.GA (or JON 3.1.0.GA) version of this class
+    //the serialization has NOT changed. The over-the-wire format of this class remained the same.
+    //Hence, serializationVersionUID is still at 1.
     private static final long serialVersionUID = 1L;
 
     private static final Log LOG = LogFactory.getLog(ObfuscatedPropertySimple.class);
+    
+    private transient String clearTextValue;
     
     public ObfuscatedPropertySimple() {
     }
@@ -74,6 +78,16 @@ public class ObfuscatedPropertySimple extends PropertySimple {
      */
     protected ObfuscatedPropertySimple(PropertySimple original, boolean keepId) {
         super(original, keepId);
+        setValue(original.getStringValue());
+    }
+
+    /**
+     * @param original
+     * @param keepId
+     */
+    protected ObfuscatedPropertySimple(ObfuscatedPropertySimple original, boolean keepId) {
+        super(original, keepId);
+        this.clearTextValue = original.clearTextValue;
     }
 
     /**
@@ -81,7 +95,8 @@ public class ObfuscatedPropertySimple extends PropertySimple {
      * @param value
      */
     public ObfuscatedPropertySimple(String name, Object value) {
-        super(name, value);
+        super(name, null);
+        setValue(value);
     }
 
     @Override
@@ -89,50 +104,132 @@ public class ObfuscatedPropertySimple extends PropertySimple {
         return new ObfuscatedPropertySimple(this, keepId);
     }
     
-    /**
-     * We deobfuscate right after the entity has been loaded from the database or right
-     * after we persist or update the value.
-     * 
-     * Because we change the value before persist or update, we have to swap the value back
-     * as soon as those DB changes are done, so that we only use the raw value in memory.
-     */
     @PostLoad
-    @PostPersist
-    @PostUpdate
-    protected void deobfuscate() {
-        String value = getStringValue();
-        if (value != null) {
-            try {
-                setStringValue(Obfuscator.decode(getStringValue()));
-            } catch (Exception e) {
-                LOG.error("Failed to deobfuscate property value: [" + value + "]", e);
-            }
+    protected void initClearTextValue() {
+        clearTextValue = deobfuscate(getObfuscatedStringValue());
+    }
+       
+    /**
+     * @return the value as being stored in the database
+     */
+    public String getObfuscatedStringValue() {
+        return super.getStringValue();
+    }
+    
+    /**
+     * The value of this property as string. Note that this is always in "clear text". I.e. the value
+     * you get from this method is NOT obfuscated (but it gets stored in the database obfuscated).
+     */
+    @Override
+    public String getStringValue() {
+        return clearTextValue;
+    }
+    
+    /**
+     * Sets the value of this property. You should pass the "clear text" value - the obfuscation of
+     * the value in the database is done for you behind the scenes.
+     */
+    @Override
+    public void setValue(Object value) {
+        //just use the logic in the superclass to set the value
+        super.setValue(value);
+        //and obtain the result
+        this.clearTextValue = super.getStringValue();
+        
+        //now set the underlying value to the obfuscated one
+        super.setValue(obfuscate(clearTextValue));
+        
+        //now we have the clear text string representation of the value in "clearTextValue",
+        //the stringValue in the superclass contains the corresponding obfuscated string.
+    }
+    
+    
+    @Override
+    public Boolean getBooleanValue() {
+        String val = getStringValue();
+        return val == null ? null : Boolean.valueOf(val);
+    }
+
+    @Override
+    public Long getLongValue() {
+        String val = getStringValue();
+        return val == null ? null : Long.valueOf(val);
+    }
+
+    @Override
+    public Integer getIntegerValue() {
+        String val = getStringValue();
+        return val == null ? null : Integer.valueOf(val);
+    }
+
+    @Override
+    public Float getFloatValue() {
+        String val = getStringValue();
+        return val == null ? null : Float.valueOf(val);
+    }
+
+    @Override
+    public Double getDoubleValue() {
+        String val = getStringValue();
+        return val == null ? null : Double.valueOf(val);
+    }
+
+    @Override
+    public boolean isMasked() {
+        return MASKED_VALUE.equals(getStringValue());
+    }
+
+    @Override
+    public void mask() {
+        if (getStringValue() != null) {
+            setValue(MASKED_VALUE);
+        }
+    }
+
+    protected String deobfuscate(String value) {
+        try {
+            return value == null ? null : Obfuscator.decode(value);
+        } catch (NumberFormatException nfe) {//detect unobfuscated properties from before patch
+            //Assuming that this was in incorrect state from BZ840512
+            //logging that we found an unobfuscated value and if it's not part of patch/upgrade contact administrator
+            LOG.error("Failed to deobfuscate property value: [" + value + "]. If this is not part of a patch/upgrade "
+                + "then you should contact System Administrator to have the property details reset.");
+            //Returning plain value to prevent Content Source load failure. On save should be correctly obfuscated
+            return value;
+        } catch (Exception e) {
+            LOG.error("Failed to deobfuscate property value: [" + value + "]", e);
+            throw new IllegalArgumentException("Failed to deobfuscate property value: [" + value + "]", e);
         }
     }
     
     /**
      * Obfuscate the value right before it gets pushed down to the database.
      */
-    @PrePersist
-    @PreUpdate
-    protected void obfuscate() {
-        String value = getStringValue();
-        if (value != null) {
-            try {
-                setStringValue(Obfuscator.encode(value));
-            } catch (Exception e) {
-                LOG.error("Failed to obfuscate property value: [" + value + "]", e);
-            }
+    protected String obfuscate(String value) {
+        try {
+            return value == null ? null : Obfuscator.encode(value);
+        } catch (Exception e) {
+            LOG.error("Failed to obfuscate property value: [" + value + "]", e);
+            throw new IllegalArgumentException("Failed to obfuscate property value: [" + value + "]", e);
         }
     }
     
+    /**
+     * Overriden to not leak the unobfuscated value in the toString() method, output of which
+     * might end up in logs, etc.
+     */
+    @Override
+    protected void appendToStringInternals(StringBuilder str) {
+        str.append(", obfuscated-value=").append(getObfuscatedStringValue());
+        str.append(", override=").append(getOverride());
+    };
+
     private void writeObject(ObjectOutputStream str) throws IOException {
-        obfuscate();
         str.defaultWriteObject();        
     }
     
     private void readObject(ObjectInputStream str) throws IOException, ClassNotFoundException {
         str.defaultReadObject();
-        deobfuscate();
+        initClearTextValue();
     }
 }

@@ -58,7 +58,7 @@ public interface AlertHandlerLocal {
     @GZIP
     @GET
     @Path("/")
-    @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest")
+    @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest>")
     Response listAlerts(
             @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
             @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,

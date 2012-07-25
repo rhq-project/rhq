@@ -8,6 +8,9 @@ alternatively copy an existing agent directory
 Copy the standalone.(sh|bat) script to this agent directory in bin/ next to the
 existing rhq-agent.(sh|bat) scripts
 
+AS OF RHQ 4.5 the scripts are already installed as standalone-pc.(sh|bat) in the
+bin/ directory of the agent.
+
 If you have no plugins in the plugin/ directory, then copy at least the rhq-platform-*.jar
 to plugins/ (e.g. from the rhq.ear/rhq-ownloads/rhq-plugins) directory of the server.
 

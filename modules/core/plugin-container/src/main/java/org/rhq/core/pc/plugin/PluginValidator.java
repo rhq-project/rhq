@@ -54,15 +54,19 @@ import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 public class PluginValidator {
     private static final Log LOG = LogFactory.getLog(PluginValidator.class);
     private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
+    static boolean interactive = false;
 
     /**
      * If no args are passed in, the current thread's classloader will be used to find the plugins to validate.
      * If one or more argument strings are provided, they will be assumed to be paths to the plugin jars to validate
      * (in which case the thread's classloader will be ignored and not searched for plugins).
      *
+     * If one argument is '-i'. Warnings and Errors will also be printed to stdout and stderr, which helps developers
+     * to find issues when they run the Plugin validator as a standalone tool.
+     *
      * The last line this will output will be "!OK!" and exit with an exit code of 0 if everything is OK.
      * The last line this will output will be "!FAILURE!" and exit with an exit code of 1 if one or more plugins failed validation.
-     * 
+     *
      * @param args 0 or more plugin jar file paths
      */
     public static void main(String[] args) {
@@ -72,6 +76,11 @@ public class PluginValidator {
             if (args.length > 0) {
                 finder = new SimplePluginFinder();
                 for (String arg : args) {
+                    if (arg.equals("-i")) {
+                        interactive = true;
+                        continue;
+                    }
+
                     URL jarUrl = new File(arg).toURI().toURL();
                     finder.addUrl(jarUrl);
                     LOG.info("Plugin jar: " + jarUrl);
@@ -109,7 +118,7 @@ public class PluginValidator {
             boolean sizesMatch = (manager.getPlugins().size() == finder.findPlugins().size());
             if (!sizesMatch) {
                 success = false;
-                LOG.error("Only [" + manager.getPlugins().size() + "] out of [" + finder.findPlugins().size()
+                errorLog("Only [" + manager.getPlugins().size() + "] out of [" + finder.findPlugins().size()
                     + "] plugin descriptors are valid.");
             } else {
                 LOG.info("All [" + finder.findPlugins().size() + "] plugin descriptors are valid.");
@@ -147,47 +156,47 @@ public class PluginValidator {
         String componentClass = metadataManager.getComponentClass(resourceType);
         if (componentClass == null) {
             success = false;
-            LOG.error("Missing component class in resource type [" + resourceType.getName() + "] from plugin ["
+            errorLog("Missing component class in resource type [" + resourceType.getName() + "] from plugin ["
                 + resourceType.getPlugin() + "]");
         } else {
             try {
                 Class componentClazz = Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
                 if (!ResourceComponent.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin() + "] does not implement "
                         + ResourceComponent.class);
                 }
                 if (!resourceType.getMetricDefinitions().isEmpty()
                     && !MeasurementFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the measurement collection facet but defines metrics.");
                 }
                 if (!resourceType.getOperationDefinitions().isEmpty()
                     && !OperationFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the operations facet but defines operations.");
                 }
                 if (resourceType.getBundleType() != null && !BundleFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the bundle facet but defines a bundle type.");
                 }
                 if (!resourceType.getPackageTypes().isEmpty() && !ContentFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the content management facet but defines package types.");
                 }
                 if (resourceType.getResourceConfigurationDefinition() != null
                     && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the configuration facet but defines resource configuration.");
                 }
@@ -200,19 +209,19 @@ public class PluginValidator {
                 }
                 if (hasCreatableChild && !CreateChildResourceFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support the child creation facet but has metadata saying it can.");
                 }
                 if (resourceType.isDeletable() && !DeleteResourceFacet.class.isAssignableFrom(componentClazz)) {
                     success = false;
-                    LOG.error("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Component class [" + componentClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin()
                         + "] does not support delete resource facet but has metadata saying it can delete children.");
                 }
             } catch (Exception e) {
                 success = false;
-                LOG.error("Cannot find component class [" + componentClass + "] for resource type ["
+                errorLog("Cannot find component class [" + componentClass + "] for resource type ["
                     + resourceType.getName() + "] from plugin [" + resourceType.getPlugin() + "].");
             }
         }
@@ -228,18 +237,18 @@ public class PluginValidator {
                 Class discoveryClazz = Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
                 if (!ResourceDiscoveryComponent.class.isAssignableFrom(discoveryClazz)) {
                     success = false;
-                    LOG.error("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
+                    errorLog("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin() + "] does not implement "
                         + ResourceDiscoveryComponent.class);
                 }
                 if (resourceType.isSupportsManualAdd() && !ManualAddFacet.class.isAssignableFrom(discoveryClazz)) {
-                    LOG.warn("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
+                    warnLog("Discovery class [" + discoveryClass + "] for resource type [" + resourceType.getName()
                         + "] from plugin [" + resourceType.getPlugin() + "] does not implement " + ManualAddFacet.class
                         + " - implementing manual-add in discoverResources() is deprecated.");
                 }
             } catch (Exception e) {
                 success = false;
-                LOG.error("Cannot find discovery class [" + discoveryClass + "] for resource type ["
+                errorLog("Cannot find discovery class [" + discoveryClass + "] for resource type ["
                     + resourceType.getName() + "] from plugin [" + resourceType.getPlugin() + "].");
             }
         }
@@ -255,12 +264,12 @@ public class PluginValidator {
                 Class overseerClazz = Class.forName(overseerClass, false, pluginEnvironment.getPluginClassLoader());
                 if (!PluginLifecycleListener.class.isAssignableFrom(overseerClazz)) {
                     success = false;
-                    LOG.error("Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
+                    errorLog("Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
                         + resourceType.getPlugin() + "] does not implement " + PluginLifecycleListener.class);
                 }
             } catch (Exception e) {
                 success = false;
-                LOG.error("Cannot find Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
+                errorLog("Cannot find Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
                     + resourceType.getPlugin() + "].");
             }
         }
@@ -279,10 +288,22 @@ public class PluginValidator {
                 pluginFinder.addUrl(jarUrl);
                 LOG.info("Found plugin jar: " + jarUrl);
             } else {
-                LOG.warn("Found a plugin descriptor outside of a jar, skipping: " + descriptorUrl);
+                warnLog("Found a plugin descriptor outside of a jar, skipping: " + descriptorUrl);
             }
         }
 
         return pluginFinder;
+    }
+
+    private static void errorLog(String errorMessage) {
+        LOG.error(errorMessage);
+        if (interactive)
+            System.err.println(errorMessage);
+    }
+
+    private static void warnLog(String warningMessage) {
+        LOG.warn(warningMessage);
+        if (interactive)
+            System.out.println(warningMessage);
     }
 }

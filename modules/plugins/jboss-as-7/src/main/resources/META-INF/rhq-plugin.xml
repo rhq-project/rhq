@@ -769,7 +769,6 @@
       </resource-configuration>
 '>
 
-=======
     <!ENTITY loginModuleResourceConfig '
       <resource-configuration>
              <c:simple-property name="code" required="true" type="string" readOnly="true"

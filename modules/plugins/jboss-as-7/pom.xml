@@ -306,9 +306,9 @@
                     <get src="${as7.url}" dest="${as7.zipfile}"
                          usetimestamp="true" verbose="true"/>
                     <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
+                    <delete dir="${jboss7.home}" verbose="true"/>
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
-                          tofile="${java.io.tmpdir}/jboss-as-${as7.version}" failonerror="false"
-                          overwrite="false"/>
+                          tofile="${jboss7.home}" failonerror="false"/>
 
                     <chmod perm="u+rx">
                       <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
@@ -323,6 +323,18 @@
                              includes="domain/configuration/host.xml"
                              token=' group="main-server-group"' value=' group="other-server-group"'/>-->
                   </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>delete</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                   <target>
+                     <delete dir="${jboss7.home}" verbose="true"/>
+                   </target>
                 </configuration>
               </execution>
             </executions>

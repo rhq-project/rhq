@@ -153,7 +153,7 @@
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>
-    <classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>  
+	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-test-util/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>

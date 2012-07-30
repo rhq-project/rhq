@@ -1732,7 +1732,7 @@
 
     <service name="Webservices (Managed Server)"
              discovery="SubsystemDiscovery"
-             class="WebservicesComponent"
+             class="BaseComponent"
              singleton="true">
 
       <plugin-configuration>
@@ -3215,7 +3215,7 @@
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="login-modules" />
       </plugin-configuration>
-      
+
             &loginModuleResourceConfig;
 
       <service name="Module Options (Classic - Managed Server)" discovery="ModuleOptionsDiscoveryComponent"
@@ -6049,7 +6049,7 @@
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="login-modules" />
       </plugin-configuration>
-      
+
             &loginModuleResourceConfig;
 
       <service name="Module Options (Classic - Profile)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
@@ -8125,9 +8125,9 @@
   </service>
 
   <service name="Webservices"
-          discovery="SubsystemDiscovery"
-          class="WebservicesComponent"
-          singleton="true">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -10604,7 +10604,7 @@
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="policy-modules" />
       </plugin-configuration>
-		     
+
                       &flagModuleResourceConfig;
 
       <service name="Module Options (Authorization)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"

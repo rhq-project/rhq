@@ -19,26 +19,41 @@
 
 package org.rhq.test.arquillian.impl;
 
-import java.lang.annotation.Annotation;
-
 import org.jboss.arquillian.test.spi.event.suite.TestEvent;
 
-import org.rhq.test.arquillian.RunDiscovery;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.test.arquillian.ServerServicesSetup;
+import org.rhq.test.arquillian.spi.PluginContainerPreparator;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public abstract class AbstractAroundDiscoveryExecutor<T extends Annotation> extends AbstractAnnotatedMethodExecutor<T> {
+public class ServerServicesPreparator extends AbstractAnnotatedMethodExecutor<ServerServicesSetup> implements PluginContainerPreparator {
 
-    protected AbstractAroundDiscoveryExecutor(Class<T> annotationClass) {
-        super(annotationClass);
+    /**
+     * @param annotationClass
+     */
+    public ServerServicesPreparator() {
+        super(ServerServicesSetup.class);
+    }
+
+    @Override
+    public void prepare(PluginContainer pluginContainer, TestEvent testEvent) {
+        process(pluginContainer, testEvent);
+    }
+
+    @Override
+    protected ApplicableTestMethodsAndOrder
+        getApplicableTestMethodsAndOrder(ServerServicesSetup annotation) {
+        
+        return new ApplicableTestMethodsAndOrder(annotation.testMethods(), annotation.order());
     }
 
     @Override
     protected boolean isApplicableToTest(TestEvent testEvent) {
-        RunDiscovery runDiscovery = RunDiscoveryExecutor.getRunDiscoveryForTest(testEvent);
-        return runDiscovery != null && (runDiscovery.discoverServers() || runDiscovery.discoverServices());
+        return true;
     }
+
 }

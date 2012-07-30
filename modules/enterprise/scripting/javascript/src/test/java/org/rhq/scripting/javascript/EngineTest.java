@@ -78,6 +78,32 @@ public class EngineTest {
         assertEquals(captureScriptOutput(script), output, "Unexpected functions found in modules");
     }
 
+    public void stringHandlingConsistent() throws Exception {
+        String script = "var a = \"str\"\n"
+            + "var b = \"str\"\n"
+            + "var test1 = a + b\n"
+            + "var test2 = \"strstr\"\n"
+            + "var test3 = new java.lang.String(\"strstr\")\n";
+        
+        ScriptEngine engine = new ScriptEngineManager().getEngineByName("javascript");
+        
+        engine.eval(script);
+        
+        //now do the tests with the initialized context
+        
+        Object ret = engine.eval("test1 == test2");        
+        assertEquals(ret, Boolean.TRUE, "Unexpected concatenated and javascript string comparison.");        
+        
+        ret = engine.eval("test1 == test3");        
+        assertEquals(ret, Boolean.TRUE, "Unexpected concatenated and java string comparison.");
+        
+        ret = engine.eval("test2 == test3");        
+        assertEquals(ret, Boolean.TRUE, "Unexpected javascript and java string comparison.");
+                
+        ret = engine.eval("java.lang.Integer.parseInt('1' + '2');");
+        assertEquals(ret, 12, "Engine failed to pass a concatenated string as a string parameter.");
+    }
+    
     private ScriptEngine getScriptEngine() {
         ScriptEngineManager manager = new ScriptEngineManager();
         return manager.getEngineByName("rhino-nonjdk");               

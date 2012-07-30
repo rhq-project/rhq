@@ -78,6 +78,7 @@ import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
@@ -90,6 +91,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Synchronizer;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.WrapFactory;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
 import org.mozilla.javascript.commonjs.module.provider.ModuleSourceProvider;
@@ -123,6 +125,8 @@ import org.rhq.scripting.javascript.engine.util.InterfaceImplementor;
  * Modified to include the "require()" function by default.
  * Modified to tighten the security of the script execution by running it in an
  * AccessControlContext active at the time of the script engine creation.
+ * Modified to allow correct interoperability between Java and javascript string even
+ * if represented by the custom ConsString instance.
  * 
  * @author Lukas Krejci
  */
@@ -167,7 +171,30 @@ public class RhinoScriptEngine  extends AbstractScriptEngine
     //LK - added support for CommonJS modules
     private RequireBuilder requireBuilder;
     
+    //LK - custom wrap factory to overcome the difficulties comparing java strings with ConsString instances
+    //     introduced by Rhino 1.7R4.
+    private static class CustomWrapFactory extends WrapFactory {
+
+        /**
+         * This behaves exactly the same as the super class' method except the fact that
+         * the ConsString is considered "primitive" and is not wrapped in any manner.
+         * <p>
+         * This is then consistent with the rest of Rhino that expects ConsString as a possible
+         * implementation of the string.
+         */
+        @Override
+        public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+            if (obj instanceof ConsString) {
+                return obj;
+            }
+            
+            return super.wrap(cx, scope, obj, staticType);
+        }
+    }
+    
+
     //LK - make all the scripts run in an access control context
+    //LK - use a custom wrap factory to overcome the ConsString being mishandled when transferring from java to js and back
     static {
         ContextFactory.initGlobal(new ContextFactory() {
             @Override
@@ -193,9 +220,11 @@ public class RhinoScriptEngine  extends AbstractScriptEngine
                 }
             }
                         
+            @Override
             protected Context makeContext() {
                 Context cx = super.makeContext();
                 cx.setOptimizationLevel(-1);
+                cx.setWrapFactory(new CustomWrapFactory());
                 return cx;
             }
 

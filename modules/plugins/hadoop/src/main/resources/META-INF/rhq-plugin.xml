@@ -5,9 +5,8 @@
   <depends plugin="JMX" useClasses="true"/>
 
   <!-- NameNode (http://wiki.apache.org/hadoop/NameNode) -->
-  <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent" subCategory="Hadoop">
-    <process-scan name="NameNode"
-      query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.namenode.NameNode|match=.*"/>
+  <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <process-scan name="NameNode" query="process|basename|match=^java.*,arg|*|match=.*proc_namenode.*"/>
 
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo|NameDirStatuses" displayName="NameNode Storage"
       dataType="trait" displayType="summary"/>
@@ -39,15 +38,13 @@
       units="none" measurementType="trendsup"/>
   </server>
 
-  <server name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent" subCategory="Hadoop">
-    <process-scan name="SecondaryNameNode"
-      query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode|match=.*"/>
+  <server name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <process-scan name="SecondaryNameNode" query="process|basename|match=^java.*,arg|*|match=.*proc_secondarynamenode.*"/>
   </server>
 
   <!-- DataNode (http://wiki.apache.org/hadoop/DataNode) -->
   <server name="DataNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
-    <process-scan name="DataNode"
-      query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.datanode.DataNode|match=.*"/>
+    <process-scan name="DataNode" query="process|basename|match=^java.*,arg|*|match=.*proc_datanode.*"/>
     <metric property="Hadoop:service=DataNode,name=DataNode*|bytes_written" displayName="Bytes Writter"
       measurementType="trendsup"/>
     <metric property="Hadoop:service=DataNode,name=FSDatasetState*|Remaining" displayName="Remaining" units="bytes"/>
@@ -57,15 +54,15 @@
   </server>
 
   <!-- JobTracker (http://wiki.apache.org/hadoop/JobTracker) -->
-  <server name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent" subCategory="Hadoop">
+  <server name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
       <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
     </plugin-configuration>
-    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|org.apache.hadoop.mapred.JobTracker|match=.*"/>
+    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_jobtracker.*"/>
   </server>
 
   <!-- TaskTracker (http://wiki.apache.org/hadoop/TaskTracker) -->
-  <server name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent" subCategory="Hadoop">
-    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|org.apache.hadoop.mapred.TaskTracker|match=.*"/>
+  <server name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_tasktracker.*"/>
   </server>
 </plugin>

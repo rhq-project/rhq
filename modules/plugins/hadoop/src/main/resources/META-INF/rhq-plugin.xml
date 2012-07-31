@@ -7,7 +7,7 @@
   <!-- NameNode (http://wiki.apache.org/hadoop/NameNode) -->
   <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
-       <c:simple-property name="hadoop.home.dir" displayName="Home Directory" readOnly="true" />
+       <c:simple-property name="hadoop.home.dir" displayName="Home Directory" />
        <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.NameNode" />
     </plugin-configuration>
 

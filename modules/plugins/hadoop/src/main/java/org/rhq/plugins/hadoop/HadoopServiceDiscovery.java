@@ -52,7 +52,7 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
     private static final String HADOOP_VERSION_MATCH = "hadoop-core-([0-9\\.]+)\\.jar";
     private static final Pattern HADOOP_VERSION_PATTERN = Pattern.compile(HADOOP_VERSION_MATCH);
     private static final String MAIN_CLASS_PROPERTY = "_mainClass";
-    private static final String HOME_DIR_PROPERTY = "hadoop.home.dir";
+    public static final String HOME_DIR_PROPERTY = "hadoop.home.dir";
     private static final String HOME_DIR_OPTION = "-Dhadoop.home.dir";    
     
     public Set<DiscoveredResourceDetails> discoverResources(

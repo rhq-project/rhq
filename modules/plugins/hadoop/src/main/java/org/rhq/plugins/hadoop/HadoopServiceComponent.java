@@ -19,7 +19,17 @@
 
 package org.rhq.plugins.hadoop;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,10 +38,16 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -40,10 +56,16 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
 public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent<?>> implements
-    JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet {
+    JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet, ConfigurationFacet {
     
     private static final Log LOG = LogFactory.getLog(HadoopServiceComponent.class);
 
+    private static final XMLInputFactory XML_INPUT_FACTORY = XMLInputFactory.newInstance();
+    
+    private static final String PROPERTY_TAG_NAME = "property";
+    private static final String NAME_TAG_NAME = "name";
+    private static final String VALUE_TAG_NAME = "value";
+    
     /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -55,7 +77,7 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
 
     @Override
     public EmsConnection getEmsConnection() {
-        EmsConnection conn = super.getEmsConnection(); // TODO: Customise this generated block
+        EmsConnection conn = super.getEmsConnection();
         if (LOG.isTraceEnabled()) {
             LOG.trace("EmsConnection is " + conn.toString());
         }
@@ -90,6 +112,35 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
+    public Configuration loadResourceConfiguration() throws Exception {
+        ConfigurationDefinition definition = getResourceContext().getResourceType().getResourceConfigurationDefinition();
+        Configuration config = new Configuration();
+        
+        File homeDir = new File(getResourceContext().getPluginConfiguration().getSimpleValue(HadoopServiceDiscovery.HOME_DIR_PROPERTY));
+        
+        if (!homeDir.exists()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance (" + homeDir.getAbsolutePath() + ") no longer exists.");
+        }
+        
+        if (!homeDir.isDirectory()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance (" + homeDir.getAbsolutePath() + ") is not a directory.");
+        }
+        
+        if (!homeDir.canRead()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance (" + homeDir.getAbsolutePath() + ") is not readable.");
+        }
+        
+        fillResourceConfiguration(homeDir, config, definition);
+        
+        return config;
+    }
+    
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // TODO Auto-generated method stub
+        
+    }
+
     /**
      * Invokes the passed operation on the managed resource
      * @param name Name of the operation
@@ -106,5 +157,89 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
         }
         return res;
     }
-
+    
+    public static void fillResourceConfiguration(File homeDir, Configuration config, ConfigurationDefinition definition) throws XMLStreamException, IOException {
+        //the config is just a bunch of simples, so this is rather easy.. no cumbersome traversal of property maps and lists
+        
+        Map<String, PropertySimple> propertiesToFind = new HashMap<String, PropertySimple>();
+        Set<File> configFilesToParse = new HashSet<File>();
+        
+        for(PropertyDefinition pd : definition.getPropertyDefinitions().values()) {
+            if (!(pd instanceof PropertyDefinitionSimple)) {
+                //hmm... well, someone thought it's enough to change the config and the code would be clever.
+                //it's not ;)
+                continue;
+            }
+            
+            String propertyName = pd.getName();
+            String[] parts = propertyName.split(":");
+            String fileName = parts[0];
+            String configName = parts[1];
+            
+            File configFile = new File(homeDir, fileName);
+            
+            if (!configFile.exists()) {
+                throw new IllegalArgumentException("The expected configuration file (" + configFile.getAbsolutePath() + ") doesn't exist.");
+            }
+            
+            configFilesToParse.add(configFile);
+            
+            PropertySimple prop = new PropertySimple();
+            prop.setName(propertyName);
+            config.put(prop);
+            
+            propertiesToFind.put(configName, prop);
+        }
+        
+        for(File configFile : configFilesToParse) {
+            parseAndAssignProps(configFile, propertiesToFind);
+        }
+    }
+    
+    private static void parseAndAssignProps(File configFile, Map<String, PropertySimple> props) throws XMLStreamException, IOException {
+        FileInputStream in = new FileInputStream(configFile);
+        XMLStreamReader rdr = XML_INPUT_FACTORY.createXMLStreamReader(in);
+        try {
+            boolean inProperty = false;
+            String propertyName = null;
+            String propertyValue = null;
+            
+            while(rdr.hasNext()) {
+                int event = rdr.next();
+                
+                String tag = null;
+                
+                switch(event) {
+                case XMLStreamReader.START_ELEMENT:
+                    tag = rdr.getName().getLocalPart();
+                    if (PROPERTY_TAG_NAME.equals(tag)) {
+                        inProperty = true;
+                    } else if (inProperty && NAME_TAG_NAME.equals(tag)) {
+                        propertyName = rdr.getElementText();
+                    } else if (inProperty && VALUE_TAG_NAME.equals(tag)) {
+                        propertyValue = rdr.getElementText();
+                    }
+                    break;
+                case XMLStreamReader.END_ELEMENT:
+                    tag = rdr.getName().getLocalPart();
+                    if (PROPERTY_TAG_NAME.equals(tag)) {
+                        inProperty = false;
+                        
+                        PropertySimple prop = props.get(propertyName);
+                        if (prop != null) {
+                            prop.setValue(propertyValue);
+                        }
+                        
+                        propertyName = null;
+                        propertyValue = null;
+                    }
+                    break;
+                }
+            }
+        } finally {
+            rdr.close();
+            in.close();
+        }
+    }
+    
 }

@@ -163,7 +163,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                     .getValueAsString().length());
         } else {
             Log.debug("Empty Search expression");
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, "", 0);
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
         }
     }
 
@@ -175,7 +175,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
         int caretPosition) {
 
-        if (expression.equals(lastExpression)) {
+        if (null != expression && expression.equals(lastExpression)) {
             // short-circuit if we dont really need to do a search
             Log.debug("search tab aware Suggestions: ignoring duplicate search for: " + expression);
             return;
@@ -193,7 +193,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                     ComboBoxItem comboBox = searchBar.getSearchComboboxItem();
 
                     // If the value has already changed assume a subsequent search is what they want
-                    if (!expression.equals(comboBox.getValueAsString())) {
+                    if (null != expression && !expression.equals(comboBox.getValueAsString())) {
                         Log.debug("search tab aware Suggestions: ignoring obsolete results for: " + expression);
                         return;
                     }

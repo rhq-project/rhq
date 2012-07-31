@@ -19,6 +19,11 @@
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -29,6 +34,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
@@ -40,8 +46,6 @@ import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -93,7 +97,7 @@ public class InventoryManagerTest extends Arquillian {
     }
 
     /**
-     * Tests that Resources are properly synchronized after the plugin container is restarted with a clean data
+     * Tests that Resources are properly synchronized after the inventory manager is restarted with a clean data
      * directory.
      *
      * @throws Exception if an error occurs
@@ -154,6 +158,25 @@ public class InventoryManagerTest extends Arquillian {
 
         // Check that inventory is back to what it was before we uninventoried the server.
         validatePluginContainerInventory();
+    }
+
+    /**
+     * Tests that discovery was only run once per ResourceType.
+     *
+     * @throws Exception if an error occurs
+     */
+    @Test(groups = "pc.itest.inventorymanager", dependsOnMethods = "testSyncUnknownResources")
+    public void testDiscoveryRunsOnlyOncePerType() throws Exception {
+        Map<ResourceType,Integer> executionCountsByResourceType = TestResourceDiscoveryComponent.getExecutionCountsByResourceType();
+        Map<ResourceType,Integer> flaggedExecutionCountsByResourceType = new HashMap<ResourceType, Integer>();
+        for (ResourceType resourceType : executionCountsByResourceType.keySet()) {
+            Integer count = executionCountsByResourceType.get(resourceType);
+            if (count > 1) {
+                flaggedExecutionCountsByResourceType.put(resourceType, count);
+            }
+        }
+        Assert.assertTrue(flaggedExecutionCountsByResourceType.isEmpty(),
+                "Discovery was executed more than once for the following types: " + flaggedExecutionCountsByResourceType);
     }
 
     private void validatePluginContainerInventory() {

@@ -73,7 +73,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
 
-        Thread.sleep(20 * 1000L);
+        Thread.sleep(60 * 1000L);
 
         for (ResourceData resourceData : testResourceData) {
             ResourceType resourceType = new ResourceType(resourceData.resourceTypeName, PLUGIN_NAME,

@@ -7,8 +7,9 @@
   <!-- NameNode (http://wiki.apache.org/hadoop/NameNode) -->
   <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
-       <c:simple-property name="hadoop.home.dir" displayName="Home Directory" />
-       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.NameNode" />
+      <c:simple-property name="hadoop.home.dir" displayName="Home Directory"/>
+      <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
+        default="org.apache.hadoop.hdfs.server.namenode.NameNode"/>
     </plugin-configuration>
 
     <process-scan name="NameNode" query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
@@ -40,8 +41,6 @@
     <metric property="Hadoop:service=NameNode,name=FSNamesystemState:FilesTotal" displayName="FilesTotal" units="none"/>
     <metric property="Hadoop:service=NameNode,name=FSNamesystemState:PendingReplicationBlocks" displayName="Pending Replication Blocks"
       units="none"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeActivity:FilesCreated" displayName="Files Created"
-      units="none" measurementType="trendsup"/>
 
     <resource-configuration>
       <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI"/>
@@ -88,7 +87,7 @@
         default="org.apache.hadoop.mapred.JobTracker"/>
     </plugin-configuration>
 
-    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|-Dproc_jobtracker|match=*"/>
+    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|-Dproc_jobtracker|match=.*"/>
 
     <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_completed" displayName="Jobs Completed"
       displayType="summary"/>
@@ -130,6 +129,19 @@
         default="org.apache.hadoop.mapred.TaskTracker"/>
     </plugin-configuration>
 
-    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|-Dproc_tasktracker|match=*"/>
+    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|-Dproc_tasktracker|match=.*"/>
+
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerMetrics:mapTaskSlots" displayName="Map Task Slots"/>
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerMetrics:reduceTaskSlots" displayName="Reduce Task Slots"/>
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerMetrics:maps_running" displayName="Running Map Tasks"/>
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerMetrics:reduces_running" displayName="Running Reduce Tasks"/>
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerMetrics:tasks_completed" displayName="Tasks Completed"
+      displayType="summary"/>
+    <metric property="Hadoop:service=TaskTracker,name=RpcDetailedActivityForPort*:done_avg_time" displayName="Task Done Avg. Time"
+      displayType="summary"/>
+
+    <metric property="Hadoop:service=TaskTracker,name=TaskTrackerInfo:JobTrackerUrl" displayName="Tasks Completed"
+      dataType="trait"/>
+
   </server>
 </plugin>

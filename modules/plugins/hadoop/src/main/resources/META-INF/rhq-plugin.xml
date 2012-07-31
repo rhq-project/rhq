@@ -11,68 +11,72 @@
        <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.NameNode" />
     </plugin-configuration>
 
-    <process-scan name="NameNode"
-      query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
+    <process-scan name="NameNode" query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
 
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|NameDirStatuses" displayName="NameNode Storage"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:NameDirStatuses" displayName="NameNode Storage"
       dataType="trait" displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|Version" displayName="Version" dataType="trait"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Version" displayName="Version" dataType="trait"
       displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|DeadNodes" displayName="Dead Nodes" dataType="trait"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:DeadNodes" displayName="Dead Nodes" dataType="trait"
       displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|DecomNodes" displayName="Decommissioning Nodes"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:DecomNodes" displayName="Decommissioning Nodes"
       dataType="trait" displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|LiveNodes" displayName="Live Nodes" dataType="trait"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:LiveNodes" displayName="Live Nodes" dataType="trait"
       displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|Total" displayName="Capacity Total" units="bytes"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Total" displayName="Capacity Total" units="bytes"
       description="DFS Configured capacitiy"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|Used" displayName="DFS Used" units="bytes"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Used" displayName="DFS Used" units="bytes"
       description="DFS used" displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|PercentUsed" displayName="DFS Used %" units="percentage"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:PercentUsed" displayName="DFS Used %"
       description="DFS Used %" displayType="summary"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|NonDfsUsedSpace" displayName="Non DFS Used"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:NonDfsUsedSpace" displayName="Non DFS Used"
       units="bytes" description="Non DFS used"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|Free" displayName="DFS Capacity Remaining" units="bytes"
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Free" displayName="DFS Capacity Remaining" units="bytes"
       description="DFS remaining"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|PercentRemaining" displayName="DFS Capacity Remaining %"
-      units="percentage" description="DFS remaining"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeInfo|TotalBlocks" displayName="Blocks Total" units="none"/>
-    <metric property="Hadoop:service=NameNode,name=FSNamesystemState|FilesTotal" displayName="FilesTotal" units="none"/>
-    <metric property="Hadoop:service=NameNode,name=FSNamesystemState|PendingReplicationBlocks" displayName="Pending Replication Blocks"
+    <!-- jmx returns number from interval (0,100) not from (0,1)  units="percentage" -->
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:PercentRemaining" displayName="DFS Capacity Remaining %"
+      description="DFS remaining"/>
+    <metric property="Hadoop:service=NameNode,name=NameNodeInfo:TotalBlocks" displayName="Blocks Total" units="none"/>
+    <metric property="Hadoop:service=NameNode,name=FSNamesystemState:FilesTotal" displayName="FilesTotal" units="none"/>
+    <metric property="Hadoop:service=NameNode,name=FSNamesystemState:PendingReplicationBlocks" displayName="Pending Replication Blocks"
       units="none"/>
-    <metric property="Hadoop:service=NameNode,name=NameNodeActivity|FilesCreated" displayName="Files Created"
+    <metric property="Hadoop:service=NameNode,name=NameNodeActivity:FilesCreated" displayName="Files Created"
       units="none" measurementType="trendsup"/>
 
     <resource-configuration>
-        <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI" />
-        <c:simple-property name="conf/hdfs-site.xml:dfs.name.dir" displayName="Local Namespace and Logs Storage Directory" description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently."/>
+      <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI"/>
+      <c:simple-property name="conf/hdfs-site.xml:dfs.name.dir" displayName="Local Namespace and Logs Storage Directory"
+        description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently."/>
     </resource-configuration>
   </server>
 
   <server name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
-       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode" />
+      <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
+        default="org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode"/>
     </plugin-configuration>
-    <process-scan name="SecondaryNameNode" query="process|basename|match=^java.*,arg|*|match=.*proc_secondarynamenode.*"/>
+    <process-scan name="SecondaryNameNode" query="process|basename|match=^java.*,arg|-Dproc_secondarynamenode|match=.*"/>
   </server>
 
   <!-- DataNode (http://wiki.apache.org/hadoop/DataNode) -->
   <server name="DataNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
-       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.datanode.DataNode" />
+      <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
+        default="org.apache.hadoop.hdfs.server.datanode.DataNode"/>
     </plugin-configuration>
 
     <process-scan name="DataNode" query="process|basename|match=^java.*,arg|*|match=.*proc_datanode.*"/>
 
-    <metric property="Hadoop:service=DataNode,name=DataNode*|bytes_written" displayName="Bytes Writter"
+    <metric property="Hadoop:service=DataNode,name=DataNode*:bytes_written" displayName="Bytes Writter"
       measurementType="trendsup"/>
-    <metric property="Hadoop:service=DataNode,name=FSDatasetState*|Remaining" displayName="Remaining" units="bytes"/>
-    <metric property="Hadoop:service=DataNode,name=FSDatasetState*|Capacity" displayName="Capacity" units="bytes"/>
-    <metric property="Hadoop:service=DataNode,name=FSDatasetState*|StorageInfo" dataType="trait" displayType="summary"/>
-    <metric property="Hadoop:service=DataNode,name=RpcActivitForPort*|NumOpenConnections" displayName="Number of Open Connections"/>
-    
+    <metric property="Hadoop:service=DataNode,name=FSDatasetState*:Remaining" displayName="Remaining" units="bytes"/>
+    <metric property="Hadoop:service=DataNode,name=FSDatasetState*:Capacity" displayName="Capacity" units="bytes"/>
+    <metric property="Hadoop:service=DataNode,name=FSDatasetState*:StorageInfo" dataType="trait" displayType="summary"/>
+    <metric property="Hadoop:service=DataNode,name=RpcActivitForPort*:NumOpenConnections" displayName="Number of Open Connections"/>
+
     <resource-configuration>
-        <c:simple-property name="conf/hdfs-site.xml:dfs.data.dir" displayName="Storage Directory" description="Comma separated list of paths on the local filesystem of a DataNode where it should store its blocks."/>
+      <c:simple-property name="conf/hdfs-site.xml:dfs.data.dir" displayName="Storage Directory"
+        description="Comma separated list of paths on the local filesystem of a DataNode where it should store its blocks."/>
     </resource-configuration>
   </server>
 
@@ -80,17 +84,52 @@
   <server name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
       <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
-       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.mapred.JobTracker" />
+      <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
+        default="org.apache.hadoop.mapred.JobTracker"/>
     </plugin-configuration>
-    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_jobtracker.*"/>
+
+    <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|-Dproc_jobtracker|match=*"/>
+
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_completed" displayName="Jobs Completed"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_running" displayName="Jobs Running"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_preparing" displayName="Jobs Preparing"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_killed" displayName="Jobs Killed"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_failed" displayName="Jobs Failed"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:running_maps" displayName="Running Map Tasks"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:running_reduces" displayName="Running Reduce Tasks"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:jobs_submitted" displayName="Total Submissions"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers" displayName="Nodes" displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:occupied_map_slots" displayName="Occupied Map Slots"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:occupied_reduce_slots" displayName="Occupied Reduce Slots"
+      description="DFS Configured capacitiy"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:reserved_map_slots" displayName="Reserved Map Slots"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:reserved_reduce_slots" displayName="Reserved Reduce Slots"
+      displayType="summary"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:map_slots" displayName="Map Task Capacity"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:reduce_slots" displayName="Reduce Task Capacity"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_blacklisted" displayName="Blacklisted Nodes"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_graylisted" displayName="Graylisted Nodes"/>
+    <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_decommissioned" displayName="Excluded Nodes"/>
+
   </server>
 
   <!-- TaskTracker (http://wiki.apache.org/hadoop/TaskTracker) -->
   <server name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
-       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.mapred.TaskTracker" />
+      <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
+        default="org.apache.hadoop.mapred.TaskTracker"/>
     </plugin-configuration>
 
-    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_tasktracker.*"/>
+    <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|-Dproc_tasktracker|match=*"/>
   </server>
 </plugin>

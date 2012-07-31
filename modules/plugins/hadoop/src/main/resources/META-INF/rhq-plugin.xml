@@ -6,7 +6,13 @@
 
   <!-- NameNode (http://wiki.apache.org/hadoop/NameNode) -->
   <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
-    <process-scan name="NameNode" query="process|basename|match=^java.*,arg|*|match=.*proc_namenode.*"/>
+    <plugin-configuration>
+       <c:simple-property name="hadoop.home.dir" displayName="Home Directory" readOnly="true" />
+       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.NameNode" />
+    </plugin-configuration>
+
+    <process-scan name="NameNode"
+      query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
 
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo|NameDirStatuses" displayName="NameNode Storage"
       dataType="trait" displayType="summary"/>
@@ -36,33 +42,55 @@
       units="none"/>
     <metric property="Hadoop:service=NameNode,name=NameNodeActivity|FilesCreated" displayName="Files Created"
       units="none" measurementType="trendsup"/>
+
+    <resource-configuration>
+        <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI" />
+        <c:simple-property name="conf/hdfs-site.xml:dfs.name.dir" displayName="Local Namespace and Logs Storage Directory" description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently."/>
+    </resource-configuration>
   </server>
 
   <server name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <plugin-configuration>
+       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode" />
+    </plugin-configuration>
     <process-scan name="SecondaryNameNode" query="process|basename|match=^java.*,arg|*|match=.*proc_secondarynamenode.*"/>
   </server>
 
   <!-- DataNode (http://wiki.apache.org/hadoop/DataNode) -->
   <server name="DataNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <plugin-configuration>
+       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.hdfs.server.datanode.DataNode" />
+    </plugin-configuration>
+
     <process-scan name="DataNode" query="process|basename|match=^java.*,arg|*|match=.*proc_datanode.*"/>
+
     <metric property="Hadoop:service=DataNode,name=DataNode*|bytes_written" displayName="Bytes Writter"
       measurementType="trendsup"/>
     <metric property="Hadoop:service=DataNode,name=FSDatasetState*|Remaining" displayName="Remaining" units="bytes"/>
     <metric property="Hadoop:service=DataNode,name=FSDatasetState*|Capacity" displayName="Capacity" units="bytes"/>
     <metric property="Hadoop:service=DataNode,name=FSDatasetState*|StorageInfo" dataType="trait" displayType="summary"/>
     <metric property="Hadoop:service=DataNode,name=RpcActivitForPort*|NumOpenConnections" displayName="Number of Open Connections"/>
+    
+    <resource-configuration>
+        <c:simple-property name="conf/hdfs-site.xml:dfs.data.dir" displayName="Storage Directory" description="Comma separated list of paths on the local filesystem of a DataNode where it should store its blocks."/>
+    </resource-configuration>
   </server>
 
   <!-- JobTracker (http://wiki.apache.org/hadoop/JobTracker) -->
   <server name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
     <plugin-configuration>
       <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
+       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.mapred.JobTracker" />
     </plugin-configuration>
     <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_jobtracker.*"/>
   </server>
 
   <!-- TaskTracker (http://wiki.apache.org/hadoop/TaskTracker) -->
   <server name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+    <plugin-configuration>
+       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true" default="org.apache.hadoop.mapred.TaskTracker" />
+    </plugin-configuration>
+
     <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|*|match=.*proc_tasktracker.*"/>
   </server>
 </plugin>

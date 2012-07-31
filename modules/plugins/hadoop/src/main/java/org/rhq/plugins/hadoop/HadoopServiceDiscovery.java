@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.hadoop;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,8 +28,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
-import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
@@ -44,19 +45,19 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  * Discover individual hadoop processes
  * @author Heiko W. Rupp
  */
-public class HadoopServiceDiscovery implements ResourceDiscoveryComponent {
+public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<ResourceComponent<?>> {
 
     private final Log log = LogFactory.getLog(HadoopServiceDiscovery.class);
-    private static final String HADOOP_VERSION_MATCH = ".*hadoop-([0-9\\.]+)-core.jar.*";
-    private Pattern hadoopPattern = Pattern.compile(HADOOP_VERSION_MATCH);
-
+    private static final String HADOOP_VERSION_MATCH = "hadoop-core-([0-9\\.]+)\\.jar";
+    private static final Pattern HADOOP_VERSION_PATTERN = Pattern.compile(HADOOP_VERSION_MATCH);
+    private static final String MAIN_CLASS_PROPERTY = "_mainClass";
+    
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+            ResourceDiscoveryContext<ResourceComponent<?>> resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
-        @SuppressWarnings("unchecked")
-        List<ProcessScanResult> parentProcessScans = resourceDiscoveryContext.getParentResourceContext().getNativeProcessesForType();
+        List<ProcessScanResult> parentProcessScans = resourceDiscoveryContext.getAutoDiscoveredProcesses();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         String rtName = resourceType.getName();
 
@@ -65,17 +66,17 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent {
 
             if (psr.getProcessScan().getName().equals(rtName)) {
 
-                String[] commandLineArgs = psr.getProcessInfo().getCommandLine();
-                String version = getVersion(commandLineArgs);
-                String javaClazz = getClazzFromCommandLine(commandLineArgs);
+                String cwd = psr.getProcessInfo().getCurrentWorkingDirectory();
+                
+                String version = getVersion(cwd);
 
                 Configuration pluginConfiguration = resourceDiscoveryContext.getDefaultPluginConfiguration();
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                         resourceType, // ResourceType
-                        rtName+":"+psr.getProcessInfo().getCurrentWorkingDirectory(), // ResourceKey
+                        rtName+":"+cwd, // ResourceKey
                         rtName, // resource name
                         version, // Version
-                        "Hadoop " + rtName + " ( "+  psr.getProcessInfo().getCurrentWorkingDirectory() +" )", // description
+                        "Hadoop " + rtName + " ( "+  cwd +" )", // description
                         pluginConfiguration,
                         psr.getProcessInfo() // process info
                 );
@@ -87,11 +88,12 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent {
                  * anyway.
                  */
                 pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY,
-                        javaClazz));
+                        pluginConfiguration.getSimpleValue(MAIN_CLASS_PROPERTY, null)));
                 pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                     LocalVMTypeDescriptor.class.getName()));
 
-                log.info("Discovered " + detail);
+                log.debug("Discovered " + detail);
+                
                 details.add(detail);
             }
         }
@@ -100,35 +102,34 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Get the full class name of the java class that 'jps -l' would list
-     * @param commandLineArgs Command line args for the java executable
-     * @return full class name for the server class
-     */
-    private String getClazzFromCommandLine(String[] commandLineArgs) {
-        for (String line : commandLineArgs) {
-            if (line.startsWith("org.apache.hadoop."))
-                return line;
-        }
-        return "-not found-";
-    }
-
-    /**
      * Get hadoop version
      * from command line by looking at haoop-core-xx-core.jar
      * @param commandLine Command line args for the java executable
      * @return hdoop version string or null if it can not be determined
      */
-    private String getVersion(String[] commandLine) {
+    private String getVersion(String hadoopHomeDir) {
 
-        for (String line : commandLine) {
-            Matcher m = hadoopPattern.matcher(line);
-            if (m.matches()) {
-                String result = m.group(1);
-                return result;
+        File homeDir =new File(hadoopHomeDir);
+        if (homeDir.isDirectory() && homeDir.canRead()) {
+            String[] foundCoreJars = homeDir.list(new FilenameFilter() {                
+                public boolean accept(File dir, String name) {
+                    return HADOOP_VERSION_PATTERN.matcher(name).matches();
+                }
+            });
+
+            if (foundCoreJars == null || foundCoreJars.length == 0) {
+                return null;
             }
+            
+            Matcher matcher = HADOOP_VERSION_PATTERN.matcher(foundCoreJars[0]);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
-
-        return null;
     }
 
 

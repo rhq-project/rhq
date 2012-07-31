@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 package org.rhq.plugins.hadoop;
 
@@ -10,68 +28,37 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
-public class HadoopServiceComponent extends JMXServerComponent implements JMXComponent,  ResourceComponent
-, MeasurementFacet
-, OperationFacet
-{
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    private ResourceContext context;
-
-
-
+public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent<?>> implements
+    JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet {
+    
+    private static final Log LOG = LogFactory.getLog(HadoopServiceComponent.class);
 
     /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
+    @Override
     public AvailabilityType getAvailability() {
-        return AvailabilityType.UP; // Return UP until we know why context has no process info TODO
-        //return context.getNativeProcess().isRunning() ? AvailabilityType.UP: AvailabilityType.DOWN;
-    }
-
-
-    /**
-     * Start the resource connection
-     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
-     */
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
-
-        Configuration conf = context.getPluginConfiguration();
-        this.context = context;
-        super.start(context);
-        log.info("Started " + context.getResourceKey());
-
-    }
-
-
-    /**
-     * Tear down the resource connection
-     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
-     */
-    public void stop() {
-        super.stop();
-
+        return getResourceContext().getNativeProcess().isRunning() ? AvailabilityType.UP: AvailabilityType.DOWN;
     }
 
     @Override
     public EmsConnection getEmsConnection() {
-        EmsConnection conn =  super.getEmsConnection();    // TODO: Customise this generated block
-        log.info("EmsConnection is " + conn.toString());
+        EmsConnection conn = super.getEmsConnection(); // TODO: Customise this generated block
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("EmsConnection is " + conn.toString());
+        }
         return conn;
 
     }
@@ -80,37 +67,28 @@ public class HadoopServiceComponent extends JMXServerComponent implements JMXCom
      * Gather measurement data
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
-    public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-         for (MeasurementScheduleRequest req : metrics) {
-             String property=req.getName();
-             String props[] = property.split("\\|");
+        for (MeasurementScheduleRequest req : metrics) {
+            String property = req.getName();
+            String props[] = property.split("\\|");
 
-             EmsConnection conn = getEmsConnection();
-             EmsBean bean = conn.getBean(props[0]);
-             if (bean != null) {
-                 bean.refreshAttributes();
-                 EmsAttribute att = bean.getAttribute(props[1]);
-                 if (att!=null) {
-                     Long val = (Long) att.getValue(); // TODO check for real type
+            EmsConnection conn = getEmsConnection();
+            EmsBean bean = conn.getBean(props[0]);
+            if (bean != null) {
+                bean.refreshAttributes();
+                EmsAttribute att = bean.getAttribute(props[1]);
+                if (att != null) {
+                    Long val = (Long) att.getValue(); // TODO check for real type
 
-                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
-                     report.addData(res);
-                 }
-                 else
-                     log.warn("Attribute " + props[1] + " not found");
-             }
-             else
-                 log.warn("MBean " + props[0] +" not found");
-         }
+                    MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
+                    report.addData(res);
+                } else
+                    LOG.warn("Attribute " + props[1] + " not found");
+            } else
+                LOG.warn("MBean " + props[0] + " not found");
+        }
     }
-
-
-
-    public void startOperationFacet(OperationContext context) {
-
-    }
-
 
     /**
      * Invokes the passed operation on the managed resource
@@ -128,9 +106,5 @@ public class HadoopServiceComponent extends JMXServerComponent implements JMXCom
         }
         return res;
     }
-
-
-
-
 
 }

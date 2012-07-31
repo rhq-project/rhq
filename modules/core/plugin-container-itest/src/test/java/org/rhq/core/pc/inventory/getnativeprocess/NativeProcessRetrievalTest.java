@@ -84,7 +84,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         }
     }
 
-    @Test(groups = "pc.itest.native")
+    @Test(groups = "pc.itest.native", priority = 30)
     public void testProcessInfoAccurateAfterProcessRestart() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
@@ -107,7 +107,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         Assert.assertNotEquals(beforePid, afterPid, "The process info should have refreshed");
     }
     
-    @Test(groups = "pc.itest.native")
+    @Test(groups = "pc.itest.native", priority = 30)
     public void testProcessInfoAccurateWhenProcessStopped() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
@@ -131,7 +131,7 @@ public class NativeProcessRetrievalTest extends Arquillian {
         startTestProcess();
     }
     
-    @Test(groups = "pc.itest.native")
+    @Test(groups = "pc.itest.native", priority = 30)
     public void testProcessInfoAccurateAfterProcessStarted() throws Exception {
         Assert.assertEquals(components.size(), 1, "There should be exactly 1 resource discovered");
         
@@ -161,4 +161,5 @@ public class NativeProcessRetrievalTest extends Arquillian {
         Assert.assertEquals(afterDiscoveryCallCount, beforeDiscoveryCallCount + 1, "Exactly 1 discovery call should have been made to refresh the process info after the process started again.");
         Assert.assertNotEquals(afterPid, 0, "The process info should have refreshed");  
     }
+
 }

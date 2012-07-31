@@ -71,10 +71,10 @@ public class EnhancedSearchBar extends ToolStrip {
 
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
-    private static final List IGNORED_KEYS;
+    private static final List<String> IGNORED_KEYS;
 
     static {
-        IGNORED_KEYS = new ArrayList(2);
+        IGNORED_KEYS = new ArrayList<String>(2);
         IGNORED_KEYS.add("Arrow_Down");
         IGNORED_KEYS.add("Arrow_Up");
     }
@@ -253,13 +253,13 @@ public class EnhancedSearchBar extends ToolStrip {
             @Override
             public void onSuccess(Integer newSavedSearchId) {
                 currentSearchId = newSavedSearchId;
-                Message message = new Message("Successfully Saved Search: " + name, Message.Severity.Info);
+                Message message = new Message(MSG.search_successfully_saved_search(name),  Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                Message message = new Message("Failure to Save Search " + name, Message.Severity.Error);
+                Message message = new Message(MSG.search_failed_to_save_search(name), Message.Severity.Error);
                 CoreGUI.getMessageCenter().notify(message);
             }
         });

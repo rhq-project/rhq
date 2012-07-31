@@ -138,32 +138,33 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     public void searchFocusHandler(FocusEvent event) {
         Log.debug("focus in BasicSearchStrategy");
         String searchExpression = searchBar.getSearchComboboxItem().getValueAsString();
-        if (null != searchExpression && searchExpression.length() > 0) {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE,
-                searchBar.getSearchComboboxItem().getValueAsString(), searchBar.getSearchComboboxItem()
-                    .getValueAsString().length());
-        } else {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, "", 0);
-        }
+        doSearch(searchExpression);
     }
+
+
 
     @Override
     public void searchKeyUpHandler(KeyUpEvent keyUpEvent) {
         Log.debug("Keyup in BasicSearchStrategy: " + keyUpEvent.getKeyName());
         String searchExpression = searchBar.getSearchComboboxItem().getValueAsString();
-        if (null != searchExpression && searchExpression.length() > 0) {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE,
-                searchBar.getSearchComboboxItem().getValueAsString(), searchBar.getSearchComboboxItem()
-                    .getValueAsString().length());
-        } else {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, "", 0);
-        }
+        doSearch(searchExpression);
 
     }
 
     @Override
     public void searchReturnKeyHandler(KeyUpEvent keyUpEvent) {
-        // Do nothing here; standard Table.TableFilter will handle normally
+        doSearch((String)keyUpEvent.getItem().getValue());
+    }
+
+    private void doSearch(String searchExpression) {
+        if (null != searchExpression && searchExpression.length() > 0) {
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE,
+                    searchBar.getSearchComboboxItem().getValueAsString(), searchBar.getSearchComboboxItem()
+                    .getValueAsString().length());
+        } else {
+            Log.debug("Empty Search expression");
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, "", 0);
+        }
     }
 
     @Override
@@ -171,10 +172,11 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         return 25;
     }
 
-    private void getTabAwareSearchSuggestions(SearchSubsystem searchSubsystem, final String expression,
+    private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
         int caretPosition) {
 
         if (expression.equals(lastExpression)) {
+            // short-circuit if we dont really need to do a search
             Log.debug("search tab aware Suggestions: ignoring duplicate search for: " + expression);
             return;
         }
@@ -182,9 +184,11 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
         final long suggestStart = System.currentTimeMillis();
 
+        Log.debug("Searching for: "+expression);
         searchService.getTabAwareSuggestions(searchSubsystem, expression, caretPosition, null,
             new AsyncCallback<List<SearchSuggestion>>() {
 
+                @Override
                 public void onSuccess(List<SearchSuggestion> results) {
                     ComboBoxItem comboBox = searchBar.getSearchComboboxItem();
 
@@ -235,8 +239,9 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                     Log.debug(results.size() + " suggestions searches fetched in: " + suggestFetchTime + "ms");
                 }
 
+                @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to retrieve search suggestion", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.search_failed_to_retrieve_search_suggestion(), caught);
                 }
 
             });

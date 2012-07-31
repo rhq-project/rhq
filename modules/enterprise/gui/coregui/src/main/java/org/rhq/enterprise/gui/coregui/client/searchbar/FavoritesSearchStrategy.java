@@ -102,16 +102,18 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
         Subject subject = UserSessionManager.getSessionSubject();
         savedSearchCriteria.addFilterSubjectId(subject.getId());
         savedSearchCriteria.setStrict(true);
-        final long start = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
 
         searchService.findSavedSearchesByCriteria(savedSearchCriteria, new AsyncCallback<List<SavedSearch>>() {
 
+            @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.search_failed_to_retrieve_saved_search(), caught);
             }
 
+            @Override
             public void onSuccess(List<SavedSearch> result) {
-                long fetchTime = System.currentTimeMillis() - start;
+                long fetchTime = System.currentTimeMillis() - startTime;
                 Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
 
                 DataSource dataSource = new DataSource();

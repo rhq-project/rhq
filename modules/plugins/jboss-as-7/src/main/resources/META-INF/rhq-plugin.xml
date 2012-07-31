@@ -7017,8 +7017,7 @@
 
     <service name="Threading"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
-        >
+             class="ThreadingComponent">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="type=threading"/>
@@ -7114,6 +7113,16 @@
         </results>
       </operation>
 
+      <operation name="get-all-thread-ids"
+                 description="Get all live thread IDs. If a security manager is installed and the caller does not have ManagementPermission('monitor'), the result will be undefined."
+                 displayName="Get All thread ids">
+
+        <results>
+          <c:simple-property name="operationResult"
+                             description="List of thread ids"/>
+        </results>
+      </operation>
+
       <metric property="thread-count" description="The current number of live threads including both daemon and non-daemon threads."/>
       <metric property="peak-thread-count" description="The peak live thread count since the Java virtual machine started or peak was reset."/>
       <metric property="total-started-thread-count" description="The total number of threads created and also started since the Java virtual machine started."/>
@@ -7123,9 +7132,6 @@
       <resource-configuration>
         <c:simple-property name="thread-contention-monitoring-enabled" required="false" type="boolean" readOnly="false" description="Whether thread contention monitoring is enabled."/>
         <c:simple-property name="thread-cpu-time-enabled" required="false" type="boolean" readOnly="false" description="Whether thread CPU time measurement is enabled."/>
-        <c:list-property name="all-thread-ids" description="All live thread IDs. If a security manager is installed and the caller does not have ManagementPermission('monitor'), the result will be undefined." readOnly="true">
-          <c:simple-property name="all-thread-ids" readOnly="true"/>
-        </c:list-property>
         <c:simple-property name="thread-contention-monitoring-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports thread contention monitoring."/>
         <c:simple-property name="thread-cpu-time-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine implementation supports CPU time measurement for any thread."/>
         <c:simple-property name="current-thread-cpu-time-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports CPU time measurement for the current thread."/>

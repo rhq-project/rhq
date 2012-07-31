@@ -52,7 +52,9 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
     private static final String HADOOP_VERSION_MATCH = "hadoop-core-([0-9\\.]+)\\.jar";
     private static final Pattern HADOOP_VERSION_PATTERN = Pattern.compile(HADOOP_VERSION_MATCH);
     private static final String MAIN_CLASS_PROPERTY = "_mainClass";
-
+    private static final String HOME_DIR_PROPERTY = "hadoop.home.dir";
+    private static final String HOME_DIR_OPTION = "-Dhadoop.home.dir";    
+    
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ResourceComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
@@ -72,6 +74,9 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
                 String version = getVersion(cwd);
 
                 Configuration pluginConfiguration = resourceDiscoveryContext.getDefaultPluginConfiguration();
+
+                //TODO is it ok to base the resource key on the current working directory as opposed to
+                //the configured hadoop.home.dir? How do they differ?
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, // ResourceType
                     rtName + ":" + cwd, // ResourceKey
                     rtName, // resource name
@@ -89,7 +94,14 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
                     pluginConfiguration.getSimpleValue(MAIN_CLASS_PROPERTY, null)));
                 pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                     LocalVMTypeDescriptor.class.getName()));
-
+                
+                String homeDir = getHadoopHomeDirIfAvailable(psr.getProcessInfo().getCommandLine());
+                if (homeDir == null) {
+                    homeDir = cwd;                    
+                }
+                
+                pluginConfiguration.put(new PropertySimple(HOME_DIR_PROPERTY, homeDir));
+                
                 log.debug("Discovered " + detail);
 
                 details.add(detail);
@@ -130,4 +142,17 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
         }
     }
 
+    private String getHadoopHomeDirIfAvailable(String[] cmdline) {
+        for(int i = 0; i < cmdline.length; ++i) {
+            String cmd = cmdline[i];
+            if (cmd.startsWith(HOME_DIR_OPTION)) {
+                int eqPos = cmd.indexOf('=');
+                if (eqPos > 0) {
+                    return cmd.substring(eqPos + 1); 
+                }
+            }
+        }
+        
+        return null;
+    }
 }

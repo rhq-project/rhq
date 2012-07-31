@@ -87,7 +87,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         // Set deployment directory, which only exists for standalone servers
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         if (baseDir != null) {
-            File deployDir = new File(baseDir, "deployment");
+            File deployDir = new File(baseDir, "deployments");
             pluginConfig.put(new PropertySimple("deployDir", deployDir.getPath()));
         }
 

@@ -60,12 +60,6 @@
         </dependency>
 
         <dependency>
-            <groupId>jgroups</groupId>
-            <artifactId>jgroups-all</artifactId>
-            <version>2.2.9.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.opensymphony.quartz</groupId>
             <artifactId>quartz</artifactId>
             <!-- NOTE: version defined in root pom dependencyManagement section -->
@@ -159,8 +153,6 @@
 
                                     <!-- dev DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                                     <property name="rhq.dev.ds.connection-url"          value="${rhq.dev.ds.connection-url}" />
-                                    <property name="rhq.dev.ds.driver-class"            value="${rhq.dev.ds.driver-class}" />
-                                    <property name="rhq.dev.ds.xa-datasource-class"     value="${rhq.dev.ds.xa-datasource-class}" />
                                     <property name="rhq.dev.ds.user-name"               value="${rhq.dev.ds.user-name}" />
                                     <property name="rhq.dev.ds.password.encrypted"      value="${rhq.dev.ds.password.encrypted}" />
                                     <property name="rhq.dev.ds.type-mapping"            value="${rhq.dev.ds.type-mapping}" />
@@ -205,7 +197,7 @@
                                     <property name="developer"          value="${developer}" />
                                     <property name="rhq.earName"        value="${rhq.earName}" />
 
-                                    <!-- dev/test DB type (needed to init rhq-ds.xml) -->
+                                    <!-- dev/test DB type (TODO: do we still need this?) -->
                                     <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                                     <property name="rhq.dev.ds.type-mapping"  value="${rhq.dev.ds.type-mapping}" />
                                 </ant>

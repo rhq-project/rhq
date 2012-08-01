@@ -199,6 +199,11 @@
         <delete dir="${jboss.home}/standalone/tmp" />
         <delete dir="${jboss.home}/standalone/work" /> <!-- TODO: does AS7 still have this? -->
 
+        <echo>Delete unused configurations</echo>
+        <delete file="${jboss.home}/standalone/configuration/standalone-ha.xml" />
+        <delete file="${jboss.home}/standalone/configuration/standalone-full.xml" />
+        <delete file="${jboss.home}/standalone/configuration/standalone-full-ha.xml" />
+
         <!-- TODO: we need to put Quartz in the ear and deploy a scheduler sar -->
         <!--
         <echo>Upgrading Quartz to v${quartz.version} ...</echo>

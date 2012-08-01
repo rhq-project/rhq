@@ -237,10 +237,10 @@
         <touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
 
         <echo>Deploying installer webapp ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-gwt-installer-war.war" />
-        <unwar src="${settings.localRepository}/org/rhq/rhq-gwt-installer-war/${rhq.version}/rhq-gwt-installer-war-${rhq.version}.war"
-               dest="${jboss.deploy.dir}/rhq-gwt-installer-war.war" />
-        <touch file="${jboss.deploy.dir}/rhq-gwt-installer-war.war.dodeploy" />
+        <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
+        <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
+               dest="${jboss.deploy.dir}/rhq-installer.war" />
+        <touch file="${jboss.deploy.dir}/rhq-installer.war.dodeploy" />
 
         <!-- TODO: deploy embedded agent sar -->
         <!--

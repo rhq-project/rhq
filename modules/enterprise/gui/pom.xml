@@ -28,7 +28,7 @@
       </activation>
       <modules>
         <module>portal-war</module>
-        <module>installer-war</module>
+        <module>installer</module>
         <module>base-perspective-jar</module>
         <module>base-perspective-war</module>
         <!--<module>webdav-war</module>-->

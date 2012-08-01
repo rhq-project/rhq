@@ -13,6 +13,8 @@
     </plugin-configuration>
 
     <process-scan name="NameNode" query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
+    
+    <operation name="format" displayName="Format dfs" description="Format a new distributed-filesystem."/>
 
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:NameDirStatuses" displayName="NameNode Storage"
       dataType="trait" displayType="summary"/>

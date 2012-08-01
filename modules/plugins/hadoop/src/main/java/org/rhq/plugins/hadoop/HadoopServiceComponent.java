@@ -50,6 +50,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -66,6 +67,8 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
     private static final String PROPERTY_TAG_NAME = "property";
     private static final String NAME_TAG_NAME = "name";
     private static final String VALUE_TAG_NAME = "value";
+    
+    private HadoopOperationsDelegate operationsDelegate;
 
     /**
      * Return availability of this resource
@@ -86,6 +89,13 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
 
     }
 
+    @Override
+    public void start(ResourceContext context) throws Exception {
+        super.start(context);
+        this.operationsDelegate = new HadoopOperationsDelegate(context);
+    }
+    
+    
     /**
      * Gather measurement data
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
@@ -163,13 +173,8 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
      * @see org.rhq.core.pluginapi.operation.OperationFacet
      */
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
-
-        OperationResult res = new OperationResult();
-        if ("dummyOperation".equals(name)) {
-            // TODO implement me
-
-        }
-        return res;
+        HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name); 
+        return operationsDelegate.invoke(operation, params);
     }
 
     public static void fillResourceConfiguration(File homeDir, Configuration config, ConfigurationDefinition definition)

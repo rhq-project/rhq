@@ -19,6 +19,7 @@
 
 package org.rhq.plugins.hadoop;
 
+import java.io.File;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -36,6 +37,9 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.log.Log4JLogEntryProcessor;
+import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -48,7 +52,10 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
     JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet, ConfigurationFacet {
 
     private static final Log LOG = LogFactory.getLog(HadoopServiceComponent.class);
-
+    
+    private static final String LOG_EVENT_TYPE = "logEntry";
+    private static final String LOG_POLLING_INTERVAL_PROPERTY = "logPollingInterval";
+    
     private HadoopServerConfigurationDelegate configurationDelegate;
     
     private HadoopOperationsDelegate operationsDelegate;
@@ -59,6 +66,22 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
         super.start(context);
         configurationDelegate = new HadoopServerConfigurationDelegate(context);
         this.operationsDelegate = new HadoopOperationsDelegate(context);
+
+        EventContext events = context.getEventContext();
+        if (events != null) {
+            File logFile = determineLogFile();
+            int interval = Integer.parseInt(context.getPluginConfiguration().getSimpleValue(LOG_POLLING_INTERVAL_PROPERTY, "60"));                        
+            events.registerEventPoller(new LogFileEventPoller(events, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile)), interval);
+        }
+    }
+    
+    @Override
+    public void stop() {
+        EventContext events = getResourceContext().getEventContext();
+        if (events != null) {
+            events.unregisterEventPoller(LOG_EVENT_TYPE);
+        }
+        super.stop();
     }
     
     /**
@@ -142,4 +165,45 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
         HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name); 
         return operationsDelegate.invoke(operation, params);
     }
+    
+    private File determineLogFile() {
+        String username = getResourceContext().getNativeProcess().getCredentialsName().getUser();
+        String hostname = getResourceContext().getSystemInformation().getHostname();
+        
+        String serverType = getServerType();
+        
+        String name = "hadoop-" + username + "-" + serverType + "-" + hostname + ".log";
+                        
+        return new File(new File(getHomeDir(), "logs"), name);
+    }
+    
+    private String getServerType() {
+        String mainClass = getResourceContext().getPluginConfiguration().getSimpleValue("_mainClass");
+        int dot = mainClass.lastIndexOf('.');
+        String className = mainClass.substring(dot + 1);
+        
+        return className.toLowerCase();
+    }
+    
+    private File getHomeDir() {
+        File homeDir =
+            new File(getResourceContext().getPluginConfiguration().getSimpleValue(HadoopServiceDiscovery.HOME_DIR_PROPERTY));
+
+        if (!homeDir.exists()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance ("
+                + homeDir.getAbsolutePath() + ") no longer exists.");
+        }
+
+        if (!homeDir.isDirectory()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance ("
+                + homeDir.getAbsolutePath() + ") is not a directory.");
+        }
+
+        if (!homeDir.canRead()) {
+            throw new IllegalArgumentException("The configured home directory of this Hadoop instance ("
+                + homeDir.getAbsolutePath() + ") is not readable.");
+        }
+
+        return homeDir;
+    }    
 }

@@ -199,10 +199,27 @@
         <delete dir="${jboss.home}/standalone/tmp" />
         <delete dir="${jboss.home}/standalone/work" /> <!-- TODO: does AS7 still have this? -->
 
-        <echo>Delete unused configurations</echo>
-        <delete file="${jboss.home}/standalone/configuration/standalone-ha.xml" />
-        <delete file="${jboss.home}/standalone/configuration/standalone-full.xml" />
-        <delete file="${jboss.home}/standalone/configuration/standalone-full-ha.xml" />
+        <echo>Delete unused configurations and other files</echo>
+        <delete>
+            <fileset dir="${jboss.home}/standalone/configuration">
+                <include name="standalone-ha.xml" />
+                <include name="standalone-full.xml" />
+                <include name="standalone-full-ha.xml" />
+            </fileset>
+        </delete>
+        <delete>
+            <fileset dir="${jboss.home}/bin/">
+                <include name="add-user.*" />
+                <include name="appclient.*" />
+                <include name="domain.*" />
+                <include name="jconsole.*" />
+                <include name="run.*" />
+                <include name="vault.*" />
+                <include name="wsconsume.*" />
+                <include name="wsprovide.*" />
+            </fileset>
+        </delete>
+        <delete dir="${jboss.home}/bin/init.d" />
 
         <!-- TODO: we need to put Quartz in the ear and deploy a scheduler sar -->
         <!--
@@ -217,11 +234,13 @@
         <mkdir dir="${jboss.deploy.dir}/${rhq.earName}" />
         <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
                dest="${jboss.deploy.dir}/${rhq.earName}" />
+        <touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
 
         <echo>Deploying installer webapp ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
-        <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
-               dest="${jboss.deploy.dir}/rhq-installer.war" />
+        <mkdir dir="${jboss.deploy.dir}/rhq-gwt-installer-war.war" />
+        <unwar src="${settings.localRepository}/org/rhq/rhq-gwt-installer-war/${rhq.version}/rhq-gwt-installer-war-${rhq.version}.war"
+               dest="${jboss.deploy.dir}/rhq-gwt-installer-war.war" />
+        <touch file="${jboss.deploy.dir}/rhq-gwt-installer-war.war.dodeploy" />
 
         <!-- TODO: deploy embedded agent sar -->
         <!--
@@ -556,6 +575,8 @@ rhq.autoinstall.public-endpoint-address=
 
     <target name="developer-release-message" if="predeploy">
         <echo>!!THIS IS A DEVELOPER CONTAINER BUILD - PRE-DEPLOYING RHQ SERVER!!</echo>
+        <!-- TODO I don't think we can skip the installer stage - but we can turn on auto-installation -->
+        <!-- So in here we should set rhq.autoinstall.enabled=true in rhq-server.properties --> 
     </target>
 
     <!-- TODO: when we ship with an embedded agent -->

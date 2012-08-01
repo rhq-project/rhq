@@ -162,7 +162,7 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
      * @see org.rhq.core.pluginapi.operation.OperationFacet
      */
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
-        HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name); 
+        HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name.toUpperCase());
         return operationsDelegate.invoke(operation, params);
     }
     

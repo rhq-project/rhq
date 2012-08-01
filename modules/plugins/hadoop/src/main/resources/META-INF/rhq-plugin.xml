@@ -15,7 +15,15 @@
 
     <process-scan name="NameNode" query="process|basename|match=^java.*,arg|-Dproc_namenode|match=.*"/>
     
-    <operation name="format" displayName="Format dfs" description="Format a new distributed-filesystem."/>
+    <operation name="format" displayName="Format dfs" description="Format a new distributed-filesystem.">
+      <results><c:simple-property name="operationResult" description="Outcome of formatting the dfs."/></results>
+    </operation>
+    <operation name="fsck" displayName="Check dfs" description="Runs a HDFS filesystem checking utility.">
+      <results><c:simple-property name="operationResult" description="Outcome of checking the dfs."/></results>
+    </operation>
+    <operation name="ls" displayName="Lists dfs" description="Lists the content of the distributed-filesystem.">
+      <results><c:simple-property name="operationResult" description="Outcome of listing the dfs."/></results>
+    </operation>
 
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:NameDirStatuses" displayName="NameNode Storage"
       dataType="trait" displayType="summary"/>

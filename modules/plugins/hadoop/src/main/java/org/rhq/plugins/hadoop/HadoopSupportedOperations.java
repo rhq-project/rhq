@@ -24,6 +24,24 @@ package org.rhq.plugins.hadoop;
  * @author Jirka Kremser
  */
 public enum HadoopSupportedOperations {
-    FORMAT
+    FORMAT("/bin/hadoop", "namenode -format"),
+    FSCK("/bin/hadoop", "fsck /"),
+    LS("/bin/hadoop", "fs -ls");
 
+    private final String relativePathToExecutable;
+
+    private final String args;
+
+    private HadoopSupportedOperations(String relativePathToExecutable, String args) {
+        this.relativePathToExecutable = relativePathToExecutable;
+        this.args = args;
+    }
+
+    public String getRelativePathToExecutable() {
+        return relativePathToExecutable;
+    }
+
+    public String getArgs() {
+        return args;
+    }
 }

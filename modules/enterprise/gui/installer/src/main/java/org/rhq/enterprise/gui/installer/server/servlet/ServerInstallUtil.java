@@ -270,6 +270,7 @@ public class ServerInstallUtil {
      */
     public static Connection getDatabaseConnection(String connectionUrl, String userName, String password)
         throws SQLException {
+        System.out.println(deobfuscatePassword(obfuscatePassword("helloworld!")));
         return DbUtil.getConnection(connectionUrl, userName, password);
     }
 
@@ -290,10 +291,35 @@ public class ServerInstallUtil {
             Object object = clazz.newInstance();
             Method method = clazz.getDeclaredMethod("encode", String.class);
             method.setAccessible(true);
-            String res = method.invoke(object, password).toString();
-            return res;
+            String result = method.invoke(object, password).toString();
+            return result;
         } catch (Exception e) {
-            throw new RuntimeException("Encoding db password failed: ", e);
+            throw new RuntimeException("obfuscating db password failed: ", e);
+        }
+    }
+
+    /**
+     * Use the internal JBossAS mechanism to de-obfuscate a password back to its
+     * clear text form. This is not true encryption.
+     *
+     * @param obfuscatedPasswordd the obfuscated password
+     * @return the clear-text password
+     */
+    private static String deobfuscatePassword(String obfuscatedPassword) {
+
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+
+        try {
+            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
+            Class<?> clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            Method method = clazz.getDeclaredMethod("decode", String.class);
+            method.setAccessible(true);
+            char[] result = (char[]) method.invoke(object, obfuscatedPassword);
+            return new String(result);
+        } catch (Exception e) {
+            throw new RuntimeException("de-obfuscating db password failed: ", e);
         }
     }
 }

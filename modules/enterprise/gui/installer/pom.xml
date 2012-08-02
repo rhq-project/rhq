@@ -272,7 +272,7 @@
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.deploymentName}</rhq.deploymentDir>
             </properties>
 
             <build>
@@ -292,6 +292,8 @@
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                             <fileset dir="${basedir}/src/main/webapp" />
                                         </copy>
+                                        <!-- TODO: do we want to deploy the installer even if dev mode? -->
+                                        <touch file="${deployment.dir}/../${rhq.deploymentName}.dodeploy" />
                                     </target>
                                 </configuration>
                                 <goals>

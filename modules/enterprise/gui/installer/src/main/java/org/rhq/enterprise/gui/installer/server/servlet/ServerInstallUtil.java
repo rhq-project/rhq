@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.installer.server.servlet;
 
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -270,5 +271,29 @@ public class ServerInstallUtil {
     public static Connection getDatabaseConnection(String connectionUrl, String userName, String password)
         throws SQLException {
         return DbUtil.getConnection(connectionUrl, userName, password);
+    }
+
+    /**
+     * Use the internal JBossAS mechanism to obfuscate a password. This is not true encryption.
+     *
+     * @param password the clear text of the password to obfuscate
+     * @return the obfuscated password
+     */
+    private static String obfuscatePassword(String password) {
+
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+
+        try {
+            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
+            Class<?> clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            Method method = clazz.getDeclaredMethod("encode", String.class);
+            method.setAccessible(true);
+            String res = method.invoke(object, password).toString();
+            return res;
+        } catch (Exception e) {
+            throw new RuntimeException("Encoding db password failed: ", e);
+        }
     }
 }

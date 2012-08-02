@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<plugin name="hadoop" displayName="hadoopPlugin" description="Monitor Hadoop Clusters" package="org.rhq.plugins.hadoop"
+<plugin name="hadoop" displayName="Hadoop" description="Monitor Hadoop Clusters" package="org.rhq.plugins.hadoop"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin" xmlns:c="urn:xmlns:rhq-configuration">
 
   <depends plugin="JMX" useClasses="true"/>

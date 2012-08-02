@@ -121,7 +121,7 @@
                 </artifactItem>
 
               </artifactItems>
-              <outputDirectory>${project.build.outputDirectory}/jbossas/server/default/deploy/rhq.ear.rej/rhq-downloads/rhq-plugins</outputDirectory>
+              <outputDirectory>${project.build.outputDirectory}/jbossas/standalone/deployments/rhq.ear.rej/rhq-downloads/rhq-plugins</outputDirectory>
             </configuration>
           </execution>
 
@@ -142,7 +142,7 @@
                 </artifactItem>
 
               </artifactItems>
-              <outputDirectory>${project.build.outputDirectory}/jbossas/server/default/deploy/rhq.ear.rej/rhq-serverplugins</outputDirectory>
+              <outputDirectory>${project.build.outputDirectory}/jbossas/standalone/deployments/rhq.ear.rej/rhq-serverplugins</outputDirectory>
             </configuration>
           </execution>
           <!-- -->

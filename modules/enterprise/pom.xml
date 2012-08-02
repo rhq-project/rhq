@@ -74,7 +74,7 @@
             <module>server/plugins</module>
             <module>server/ear</module>
             <module>server/container-lib</module>
-            <module>server/container</module>
+            <module>server/appserver</module>
             <module>server/client-api</module>
             <module>server/itests</module>
          </modules>

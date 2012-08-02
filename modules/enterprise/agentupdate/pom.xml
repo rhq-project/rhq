@@ -150,7 +150,7 @@ rhq-agent.latest.build-number=${buildNumber}
           <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
           <rhq.projectJar>${project.build.finalName}.jar</rhq.projectJar>
           <rhq.deploymentJar>rhq-enterprise-agent-${project.version}.jar</rhq.deploymentJar>
-          <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-agent</rhq.deploymentDir>
+          <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-agent</rhq.deploymentDir>
         </properties>
 
         <build>

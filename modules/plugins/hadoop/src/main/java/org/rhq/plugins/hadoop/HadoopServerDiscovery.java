@@ -46,15 +46,15 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  * @author Heiko W. Rupp
  * @author Lukas Krejci
  */
-public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<ResourceComponent<?>> {
+public class HadoopServerDiscovery implements ResourceDiscoveryComponent<ResourceComponent<?>> {
 
-    private final Log log = LogFactory.getLog(HadoopServiceDiscovery.class);
+    private final Log log = LogFactory.getLog(HadoopServerDiscovery.class);
     private static final String HADOOP_VERSION_MATCH = "hadoop-core-([0-9\\.]+)\\.jar";
     private static final Pattern HADOOP_VERSION_PATTERN = Pattern.compile(HADOOP_VERSION_MATCH);
     private static final String MAIN_CLASS_PROPERTY = "_mainClass";
     public static final String HOME_DIR_PROPERTY = "hadoop.home.dir";
-    private static final String HOME_DIR_OPTION = "-Dhadoop.home.dir";    
-    
+    private static final String HOME_DIR_OPTION = "-Dhadoop.home.dir";
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ResourceComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
@@ -67,45 +67,40 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
 
         for (ProcessScanResult psr : processScans) {
 
-            if (psr.getProcessScan().getName().equals(rtName)) {
+            String cwd = psr.getProcessInfo().getCurrentWorkingDirectory();
 
-                String cwd = psr.getProcessInfo().getCurrentWorkingDirectory();
-
-                String version = getVersion(cwd);
-
-                Configuration pluginConfiguration = resourceDiscoveryContext.getDefaultPluginConfiguration();
-
-                //TODO is it ok to base the resource key on the current working directory as opposed to
-                //the configured hadoop.home.dir? How do they differ?
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, // ResourceType
-                    rtName + ":" + cwd, // ResourceKey
-                    rtName, // resource name
-                    version, // Version
-                    "Hadoop " + rtName + " ( " + cwd + " )", // description
-                    pluginConfiguration, psr.getProcessInfo() // process info
-                    );
-
-                /*
-                 * We'll connect to the discovered VM on the local host, so set the jmx connection
-                 * properties accordingly. This may only work on JDK6+, but then JDK5 is deprecated
-                 * anyway.
-                 */
-                pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY,
-                    pluginConfiguration.getSimpleValue(MAIN_CLASS_PROPERTY, null)));
-                pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-                    LocalVMTypeDescriptor.class.getName()));
-                
-                String homeDir = getHadoopHomeDirIfAvailable(psr.getProcessInfo().getCommandLine());
-                if (homeDir == null) {
-                    homeDir = cwd;                    
-                }
-                
-                pluginConfiguration.put(new PropertySimple(HOME_DIR_PROPERTY, homeDir));
-                
-                log.debug("Discovered " + detail);
-
-                details.add(detail);
+            String homeDir = getHadoopHomeDirIfAvailable(psr.getProcessInfo().getCommandLine());
+            if (homeDir == null) {
+                homeDir = cwd;
             }
+
+            String version = getVersion(homeDir);
+
+            Configuration pluginConfiguration = resourceDiscoveryContext.getDefaultPluginConfiguration();
+
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, // ResourceType
+                homeDir, // ResourceKey
+                rtName, // resource name
+                version, // Version
+                rtName + " ( " + cwd + " )", // description
+                pluginConfiguration, psr.getProcessInfo() // process info
+                );
+
+            /*
+             * We'll connect to the discovered VM on the local host, so set the jmx connection
+             * properties accordingly. This may only work on JDK6+, but then JDK5 is deprecated
+             * anyway.
+             */
+            pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY,
+                pluginConfiguration.getSimpleValue(MAIN_CLASS_PROPERTY, null)));
+            pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+                LocalVMTypeDescriptor.class.getName()));
+
+            pluginConfiguration.put(new PropertySimple(HOME_DIR_PROPERTY, homeDir));
+
+            log.debug("Discovered " + detail);
+
+            details.add(detail);
         }
 
         return details;
@@ -143,16 +138,16 @@ public class HadoopServiceDiscovery implements ResourceDiscoveryComponent<Resour
     }
 
     private String getHadoopHomeDirIfAvailable(String[] cmdline) {
-        for(int i = 0; i < cmdline.length; ++i) {
+        for (int i = 0; i < cmdline.length; ++i) {
             String cmd = cmdline[i];
             if (cmd.startsWith(HOME_DIR_OPTION)) {
                 int eqPos = cmd.indexOf('=');
                 if (eqPos > 0) {
-                    return cmd.substring(eqPos + 1); 
+                    return cmd.substring(eqPos + 1);
                 }
             }
         }
-        
+
         return null;
     }
 }

@@ -48,10 +48,10 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
-public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent<?>> implements
+public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<?>> implements
     JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet, ConfigurationFacet {
 
-    private static final Log LOG = LogFactory.getLog(HadoopServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(HadoopServerComponent.class);
     
     private static final String LOG_EVENT_TYPE = "logEntry";
     private static final String LOG_POLLING_INTERVAL_PROPERTY = "logPollingInterval";
@@ -187,7 +187,7 @@ public class HadoopServiceComponent extends JMXServerComponent<ResourceComponent
     
     private File getHomeDir() {
         File homeDir =
-            new File(getResourceContext().getPluginConfiguration().getSimpleValue(HadoopServiceDiscovery.HOME_DIR_PROPERTY));
+            new File(getResourceContext().getPluginConfiguration().getSimpleValue(HadoopServerDiscovery.HOME_DIR_PROPERTY));
 
         if (!homeDir.exists()) {
             throw new IllegalArgumentException("The configured home directory of this Hadoop instance ("

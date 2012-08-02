@@ -170,7 +170,7 @@ public class HadoopServerConfigurationDelegate {
 
     private File getHomeDir() {
         File homeDir =
-            new File(componentContext.getPluginConfiguration().getSimpleValue(HadoopServiceDiscovery.HOME_DIR_PROPERTY));
+            new File(componentContext.getPluginConfiguration().getSimpleValue(HadoopServerDiscovery.HOME_DIR_PROPERTY));
 
         if (!homeDir.exists()) {
             throw new IllegalArgumentException("The configured home directory of this Hadoop instance ("

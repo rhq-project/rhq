@@ -41,9 +41,9 @@ public class HadoopOperationsDelegate {
     private static final long MAX_WAIT = 1000 * 60 * 5;
     private static final int MAX_OUTPUT = 2048;
 
-    private ResourceContext<HadoopServiceComponent> resourceContext;
+    private ResourceContext<HadoopServerComponent> resourceContext;
 
-    public HadoopOperationsDelegate(ResourceContext<HadoopServiceComponent> resourceContext) {
+    public HadoopOperationsDelegate(ResourceContext<HadoopServerComponent> resourceContext) {
         this.resourceContext = resourceContext;
     }
 
@@ -147,7 +147,7 @@ public class HadoopOperationsDelegate {
 
     private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation) {
         String hadoopHome = resourceContext.getPluginConfiguration()
-            .getSimple(HadoopServiceDiscovery.HOME_DIR_PROPERTY).getStringValue();
+            .getSimple(HadoopServerDiscovery.HOME_DIR_PROPERTY).getStringValue();
         String executable = hadoopHome + operation.getRelativePathToExecutable();
 
         ProcessExecutionResults results = executeExecutable(resourceContext.getSystemInformation(), executable,

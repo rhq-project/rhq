@@ -5,7 +5,7 @@
   <depends plugin="JMX" useClasses="true"/>
 
   <!-- NameNode (http://wiki.apache.org/hadoop/NameNode) -->
-  <server name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+  <server name="Hadoop NameNode" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
     <plugin-configuration>
       <c:simple-property name="hadoop.home.dir" displayName="Home Directory"/>
       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
@@ -56,15 +56,15 @@
     <event name="logEntry" description="an entry in a log file"/>
 
     <resource-configuration>
-      <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI"/>
+      <c:simple-property name="conf/core-site.xml:fs.default.name" displayName="Namenode URI" required="false"/>
       <c:simple-property name="conf/hdfs-site.xml:dfs.name.dir" displayName="Local Namespace and Logs Storage Directory"
-        description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently."/>
+        description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently." required="false"/>
       <c:simple-property name="conf/hdfs-site.xml:dfs.block.size" displayName="HDFS Block Size"
-        description="Path on the local filesystem where the NameNode stores the namespace and transactions logs persistently. The value is in bytes."/>
+        description="The default block size for new files. The value is in bytes." required="false"/>
     </resource-configuration>
   </server>
 
-  <server name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+  <server name="Hadoop SecondaryNameNode" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
     <plugin-configuration>
       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
         default="org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode"/>
@@ -73,7 +73,7 @@
   </server>
 
   <!-- DataNode (http://wiki.apache.org/hadoop/DataNode) -->
-  <server name="DataNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+  <server name="DataNode" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
     <plugin-configuration>
       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
         default="org.apache.hadoop.hdfs.server.datanode.DataNode"/>
@@ -90,12 +90,12 @@
 
     <resource-configuration>
       <c:simple-property name="conf/hdfs-site.xml:dfs.data.dir" displayName="Storage Directory"
-        description="Comma separated list of paths on the local filesystem of a DataNode where it should store its blocks."/>
+        description="Comma separated list of paths on the local filesystem of a DataNode where it should store its blocks." required="false"/>
     </resource-configuration>
   </server>
 
   <!-- JobTracker (http://wiki.apache.org/hadoop/JobTracker) -->
-  <server name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+  <server name="Hadoop JobTracker" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
     <plugin-configuration>
       <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
@@ -136,17 +136,17 @@
     <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_decommissioned" displayName="Excluded Nodes"/>
 
     <resource-configuration>
-        <c:simple-property name="conf/mapred-site.xml:mapred.job.tracker" displayName="Host And Port" description="Host or IP and port of JobTracker. host:port pair."/>
-        <c:simple-property name="conf/mapred-site.xml:mapred.system.dir" displayName="System Files Location" description="Path on the HDFS where where the MapReduce framework stores system files e.g. /hadoop/mapred/system/. This is in the default filesystem (HDFS) and must be accessible from both the server and client machines."/>
-        <c:simple-property name="conf/mapred-site.xml:mapred.local.dir" displayName="Data Files Location" description="Comma-separated list of paths on the local filesystem where temporary MapReduce data is written. Multiple paths help spread disk i/o."/>
-        <c:simple-property name="conf/mapred-site.xml:mapred.tasktracker.map.tasks.maximum" displayName="Maximum Map Tasks" description="The maximum number of Map tasks, which are run simultaneously on a given TaskTracker, individually. Defaults to 2 (2 maps and 2 reduces), but vary it depending on your hardware."/>
-        <c:simple-property name="conf/mapred-site.xml:mapred.tasktracker.reduce.tasks.maximum" displayName="Maximum Reduce Tasks" description="The maximum number of Reduce tasks, which are run simultaneously on a given TaskTracker, individually. Defaults to 2 (2 maps and 2 reduces), but vary it depending on your hardware."/>
-        <c:simple-property name="conf/mapred-site.xml:mapred.queue.names" displayName="Job Queues" description="Comma separated list of queues to which jobs can be submitted. The MapReduce system always supports atleast one queue with the name as default. Hence, this parameter's value should always contain the string default. Some job schedulers supported in Hadoop, like the Capacity Scheduler, support multiple queues. If such a scheduler is being used, the list of configured queue names must be specified here. Once queues are defined, users can submit jobs to a queue using the property name mapred.job.queue.name in the job configuration. There could be a separate configuration file for configuring properties of these queues that is managed by the scheduler. Refer to the documentation of the scheduler for information on the same."/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.job.tracker" displayName="Host And Port" description="Host or IP and port of JobTracker. host:port pair." required="false"/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.system.dir" displayName="System Files Location" description="Path on the HDFS where where the MapReduce framework stores system files e.g. /hadoop/mapred/system/. This is in the default filesystem (HDFS) and must be accessible from both the server and client machines." required="false"/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.local.dir" displayName="Data Files Location" description="Comma-separated list of paths on the local filesystem where temporary MapReduce data is written. Multiple paths help spread disk i/o." required="false"/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.tasktracker.map.tasks.maximum" displayName="Maximum Map Tasks" description="The maximum number of Map tasks, which are run simultaneously on a given TaskTracker, individually. Defaults to 2 (2 maps and 2 reduces), but vary it depending on your hardware." required="false"/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.tasktracker.reduce.tasks.maximum" displayName="Maximum Reduce Tasks" description="The maximum number of Reduce tasks, which are run simultaneously on a given TaskTracker, individually. Defaults to 2 (2 maps and 2 reduces), but vary it depending on your hardware." required="false"/>
+        <c:simple-property name="conf/mapred-site.xml:mapred.queue.names" displayName="Job Queues" description="Comma separated list of queues to which jobs can be submitted. The MapReduce system always supports atleast one queue with the name as default. Hence, this parameter's value should always contain the string default. Some job schedulers supported in Hadoop, like the Capacity Scheduler, support multiple queues. If such a scheduler is being used, the list of configured queue names must be specified here. Once queues are defined, users can submit jobs to a queue using the property name mapred.job.queue.name in the job configuration. There could be a separate configuration file for configuring properties of these queues that is managed by the scheduler. Refer to the documentation of the scheduler for information on the same." required="false"/>
     </resource-configuration>
   </server>
 
   <!-- TaskTracker (http://wiki.apache.org/hadoop/TaskTracker) -->
-  <server name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+  <server name="Hadoop TaskTracker" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
     <plugin-configuration>
       <c:simple-property name="_mainClass" displayName="Main Class" readOnly="true"
         default="org.apache.hadoop.mapred.TaskTracker"/>

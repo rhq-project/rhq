@@ -21,6 +21,11 @@
         <c:simple-property name="operationResult" description="Outcome of formatting the dfs."/>
       </results>
     </operation>
+        <operation name="rebalance_dfs" displayName="Rebalance dfs" description="Rebalance the data blocks across all DataNodes.">
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of the rebalancing."/>
+      </results>
+    </operation>
     <operation name="fsck" displayName="Check dfs" description="Runs a HDFS filesystem checking utility.">
       <results>
         <c:simple-property name="operationResult" description="Outcome of checking the dfs."/>
@@ -57,14 +62,13 @@
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Used" displayName="DFS Used" units="bytes"
       description="DFS used" displayType="summary"/>
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:PercentUsed" displayName="DFS Used %"
-      description="DFS Used %" displayType="summary"/>
+      description="DFS Used %" displayType="summary" units="percentage"/>
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:NonDfsUsedSpace" displayName="Non DFS Used"
       units="bytes" description="Non DFS used"/>
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:Free" displayName="DFS Capacity Remaining" units="bytes"
-      description="DFS remaining"/>
-    <!-- jmx returns number from interval (0,100) not from (0,1)  units="percentage" -->
+      description="DFS remaining" />
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:PercentRemaining" displayName="DFS Capacity Remaining %"
-      description="DFS remaining"/>
+      description="DFS remaining" units="percentage"/>
     <metric property="Hadoop:service=NameNode,name=NameNodeInfo:TotalBlocks" displayName="Blocks Total" units="none"/>
     <metric property="Hadoop:service=NameNode,name=FSNamesystemState:FilesTotal" displayName="FilesTotal" units="none"/>
     <metric property="Hadoop:service=NameNode,name=FSNamesystemState:PendingReplicationBlocks" displayName="Pending Replication Blocks"
@@ -163,7 +167,12 @@
         <c:simple-property name="operationResult" description="Outcome of stopping the JobTracker"/>
       </results>
     </operation>
-        <operation name="queue_list" displayName="Lists job queue" description="Lists the content of the job queue.">
+    <operation name="job_list" displayName="Lists Running Jobs" description="Lists the currently running jobs.">
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of listing the running jobs"/>
+      </results>
+    </operation>
+    <operation name="queue_list" displayName="Lists Job Queue" description="Lists the content of the job queue.">
       <results>
         <c:simple-property name="operationResult" description="Outcome of listing the job queue"/>
       </results>

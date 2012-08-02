@@ -72,6 +72,12 @@ public class HadoopOperationsDelegate {
         case QUEUE_LIST:
             results = queueList(operation);
             break;
+        case JOB_LIST:
+            results = invokeGeneralOperation(operation);
+            break;
+        case REBALANCE_DFS:
+            results = invokeGeneralOperation(operation);
+            break;    
         default:
             throw new UnsupportedOperationException(operation.toString());
         }

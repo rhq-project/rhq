@@ -29,7 +29,9 @@ public enum HadoopSupportedOperations {
     LS("/bin/hadoop", "fs -ls"),
     START("/bin/hadoop-daemon.sh", "start "),
     STOP("/bin/hadoop-daemon.sh", "stop "),
-    QUEUE_LIST("/bin/hadoop", "queue -list");
+    QUEUE_LIST("/bin/hadoop", "queue -list"),
+    JOB_LIST("/bin/hadoop", "job -list"),
+    REBALANCE_DFS("/bin/hadoop", "balancer");
 
     private final String relativePathToExecutable;
 

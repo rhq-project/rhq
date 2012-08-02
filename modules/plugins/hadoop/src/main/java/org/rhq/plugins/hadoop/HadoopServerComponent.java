@@ -20,6 +20,8 @@
 package org.rhq.plugins.hadoop;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -33,8 +35,10 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -53,9 +57,10 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
     JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet, ConfigurationFacet {
 
     private static final Log LOG = LogFactory.getLog(HadoopServerComponent.class);
-    
     private static final String LOG_EVENT_TYPE = "logEntry";
     private static final String LOG_POLLING_INTERVAL_PROPERTY = "logPollingInterval";
+    
+    private Map<String, Boolean> percentageMeasurements;
     
     private HadoopServerConfigurationDelegate configurationDelegate;
     
@@ -69,6 +74,20 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
         super.start(context);
         configurationDelegate = new HadoopServerConfigurationDelegate(context);
         this.operationsDelegate = new HadoopOperationsDelegate(context);
+
+        EventContext events = context.getEventContext();
+        if (events != null) {
+            File logFile = determineLogFile();
+            int interval = Integer.parseInt(context.getPluginConfiguration().getSimpleValue(LOG_POLLING_INTERVAL_PROPERTY, "60"));                        
+            events.registerEventPoller(new LogFileEventPoller(events, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile)), interval);
+        }
+        
+        // percentage metrics obtained from Hadoop JMX api are from interval (0,100) and RHQ expects interval (0,1)
+        Set<MeasurementDefinition> measDefinitions = context.getResourceType().getMetricDefinitions();
+        percentageMeasurements = new HashMap<String, Boolean>(measDefinitions.size());
+        for (MeasurementDefinition measDefinition : measDefinitions) {
+            percentageMeasurements.put(measDefinition.getName(), MeasurementUnits.PERCENTAGE.equals(measDefinition.getUnits()));
+        }
     }
     
     @Override
@@ -139,7 +158,12 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
                         Object valueObject = attribute.refresh();
                         if (valueObject instanceof Number) {
                             Number value = (Number) valueObject;
-                            report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                            if (percentageMeasurements.get(name)) {
+                                report.addData(new MeasurementDataNumeric(request, value.doubleValue() / 100));
+                            } else {
+                                report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                            }
+                            
                         } else {
                             report.addData(new MeasurementDataTrait(request, valueObject.toString()));
                         }

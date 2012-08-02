@@ -26,7 +26,10 @@ package org.rhq.plugins.hadoop;
 public enum HadoopSupportedOperations {
     FORMAT("/bin/hadoop", "namenode -format"),
     FSCK("/bin/hadoop", "fsck /"),
-    LS("/bin/hadoop", "fs -ls");
+    LS("/bin/hadoop", "fs -ls"),
+    START("/bin/hadoop-daemon.sh", "start "),
+    STOP("/bin/hadoop-daemon.sh", "stop "),
+    QUEUE_LIST("/bin/hadoop", "queue -list");
 
     private final String relativePathToExecutable;
 

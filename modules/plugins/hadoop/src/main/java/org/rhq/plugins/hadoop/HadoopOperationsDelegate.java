@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessExecution;
@@ -41,14 +42,14 @@ public class HadoopOperationsDelegate {
     private static final long MAX_WAIT = 1000 * 60 * 5;
     private static final int MAX_OUTPUT = 2048;
 
-    private ResourceContext<HadoopServerComponent> resourceContext;
+    private ResourceContext<? extends ResourceComponent<?>> resourceContext;
 
-    public HadoopOperationsDelegate(ResourceContext<HadoopServerComponent> resourceContext) {
+    public HadoopOperationsDelegate(ResourceContext<? extends ResourceComponent<?>> resourceContext) {
         this.resourceContext = resourceContext;
     }
 
     public OperationResult invoke(@NotNull
-    HadoopSupportedOperations operation, Configuration parameters) throws InterruptedException {
+    HadoopSupportedOperations operation, Configuration parameters, String serverType) throws InterruptedException {
 
         ProcessExecutionResults results = null;
         switch (operation) {
@@ -61,6 +62,15 @@ public class HadoopOperationsDelegate {
             break;
         case LS:
             results = ls(operation);
+            break;
+        case START:
+            results = start(operation, serverType);
+            break;
+        case STOP:
+            results = stop(operation, serverType);
+            break;
+        case QUEUE_LIST:
+            results = queueList(operation);
             break;
         default:
             throw new UnsupportedOperationException(operation.toString());
@@ -77,26 +87,52 @@ public class HadoopOperationsDelegate {
     }
 
     /**
+     * @param operation supported Hadoop operation @see HadoopSupportedOperations
+     * @return the object encapsulating the exit code, err output and std output
+     */
+    private ProcessExecutionResults queueList(HadoopSupportedOperations operation) {
+        return invokeGeneralOperation(operation);
+    }
+
+    /**
+     * @param operation supported Hadoop operation @see HadoopSupportedOperations
+     * @param serverType {Name|Data|SecondaryName}Node / {Job|Task}Tracker
+     * @return the object encapsulating the exit code, err output and std output
+     */
+    private ProcessExecutionResults stop(HadoopSupportedOperations operation, String serverType) {
+        return invokeGeneralOperation(operation, serverType);
+    }
+
+    /**
+     * @param operation supported Hadoop operation @see HadoopSupportedOperations
+     * @param serverType {Name|Data|SecondaryName}Node / {Job|Task}Tracker
+     * @return the object encapsulating the exit code, err output and std output
+     */
+    private ProcessExecutionResults start(HadoopSupportedOperations operation, String serverType) {
+        return invokeGeneralOperation(operation, serverType);
+    }
+
+    /**
      * Format a new distributed filesystem
      * by running $bin/hadoop namenode -format
      * 
-     * @return message
+     * @return the object encapsulating the exit code, err output and std output
      */
     private ProcessExecutionResults format(HadoopSupportedOperations operation) {
         return invokeGeneralOperation(operation);
     }
 
     /**
-     * @param operation
-     * @return
+     * @param operation supported Hadoop operation @see HadoopSupportedOperations
+     * @return the object encapsulating the exit code, err output and std output
      */
     private ProcessExecutionResults ls(HadoopSupportedOperations operation) {
         return invokeGeneralOperation(operation);
     }
 
     /**
-     * @param operation
-     * @return
+     * @param operation supported Hadoop operation @see HadoopSupportedOperations
+     * @return the object encapsulating the exit code, err output and std output
      */
     private ProcessExecutionResults fsck(HadoopSupportedOperations operation) {
         return invokeGeneralOperation(operation);
@@ -146,12 +182,17 @@ public class HadoopOperationsDelegate {
     }
 
     private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation) {
+        return invokeGeneralOperation(operation, null);
+    }
+
+    private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation, String serverType) {
         String hadoopHome = resourceContext.getPluginConfiguration()
             .getSimple(HadoopServerDiscovery.HOME_DIR_PROPERTY).getStringValue();
         String executable = hadoopHome + operation.getRelativePathToExecutable();
+        String args = operation.getArgs() + (serverType == null ? "" : serverType.toLowerCase());
 
-        ProcessExecutionResults results = executeExecutable(resourceContext.getSystemInformation(), executable,
-            operation.getArgs(), MAX_WAIT, true, true);
+        ProcessExecutionResults results = executeExecutable(resourceContext.getSystemInformation(), executable, args,
+            MAX_WAIT, true, true);
         return results;
     }
 }

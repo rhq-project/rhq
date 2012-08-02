@@ -163,7 +163,12 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
      */
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name.toUpperCase());
-        return operationsDelegate.invoke(operation, params);
+        String serverType = getServerType();
+        OperationResult result = operationsDelegate.invoke(operation, params, serverType);
+        if (operation.equals(HadoopSupportedOperations.START) || operation.equals(HadoopSupportedOperations.STOP)) {
+            getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
+        }
+        return result;
     }
     
     private File determineLogFile() {

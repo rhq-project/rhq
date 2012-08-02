@@ -175,6 +175,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     private String editorTitle = null;
     private boolean readOnly = false;
     private boolean allPropertiesWritable = false;
+    private boolean preserveTextFormatting = false;
     private Map<String, String> invalidPropertyNameToDisplayNameMap = new HashMap<String, String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
 
@@ -251,6 +252,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void setAllPropertiesWritable(boolean allPropertiesWritable) {
         this.allPropertiesWritable = allPropertiesWritable;
+    }
+    
+    public boolean isPreserveTextFormatting() {
+        return preserveTextFormatting;
+    }
+
+    public void setPreserveTextFormatting(boolean preserveFormatting) {
+        this.preserveTextFormatting = preserveFormatting;
     }
 
     public String getEditorTitle() {
@@ -1410,6 +1419,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (valueItem instanceof StaticTextItem) {
             // Property values are user-editable, so escape HTML when displayed as static text, to prevent XSS attacks.
             value = StringUtility.escapeHtml(value);
+        }
+        if (preserveTextFormatting) {
+            value = "<pre>" + value + "</pre>";
         }
         valueItem.setValue(value);
 

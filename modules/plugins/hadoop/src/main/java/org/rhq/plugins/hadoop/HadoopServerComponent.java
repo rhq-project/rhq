@@ -45,6 +45,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
@@ -60,25 +61,21 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
     
     private HadoopOperationsDelegate operationsDelegate;
 
+    private boolean eventsRegistered;
+    
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void start(ResourceContext context) throws Exception {
         super.start(context);
         configurationDelegate = new HadoopServerConfigurationDelegate(context);
         this.operationsDelegate = new HadoopOperationsDelegate(context);
-
-        EventContext events = context.getEventContext();
-        if (events != null) {
-            File logFile = determineLogFile();
-            int interval = Integer.parseInt(context.getPluginConfiguration().getSimpleValue(LOG_POLLING_INTERVAL_PROPERTY, "60"));                        
-            events.registerEventPoller(new LogFileEventPoller(events, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile)), interval);
-        }
     }
     
     @Override
     public void stop() {
         EventContext events = getResourceContext().getEventContext();
-        if (events != null) {
+        if (events != null && eventsRegistered) {
+            eventsRegistered = false;
             events.unregisterEventPoller(LOG_EVENT_TYPE);
         }
         super.stop();
@@ -90,7 +87,26 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
      */
     @Override
     public AvailabilityType getAvailability() {
-        return getResourceContext().getNativeProcess().isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
+        ProcessInfo process = getResourceContext().getNativeProcess();
+        
+        AvailabilityType ret = process == null ? AvailabilityType.DOWN : (process.isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN);
+        
+        EventContext events = getResourceContext().getEventContext();
+        if (events != null) {
+            if (ret == AvailabilityType.UP) {
+                if (!eventsRegistered) {
+                    File logFile = determineLogFile();
+                    int interval = Integer.parseInt(getResourceContext().getPluginConfiguration().getSimpleValue(LOG_POLLING_INTERVAL_PROPERTY, "60"));                        
+                    events.registerEventPoller(new LogFileEventPoller(events, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile)), interval);
+                    eventsRegistered = true;
+                }
+            } else if (eventsRegistered) {
+                eventsRegistered = false;
+                events.unregisterEventPoller(LOG_EVENT_TYPE);
+            }
+        }
+        
+        return ret;
     }
 
     @Override

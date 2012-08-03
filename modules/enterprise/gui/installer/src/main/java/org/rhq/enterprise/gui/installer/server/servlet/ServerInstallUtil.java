@@ -270,7 +270,6 @@ public class ServerInstallUtil {
      */
     public static Connection getDatabaseConnection(String connectionUrl, String userName, String password)
         throws SQLException {
-        System.out.println(deobfuscatePassword(obfuscatePassword("helloworld!")));
         return DbUtil.getConnection(connectionUrl, userName, password);
     }
 

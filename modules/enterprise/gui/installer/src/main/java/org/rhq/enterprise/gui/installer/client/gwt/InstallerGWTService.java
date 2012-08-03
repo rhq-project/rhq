@@ -26,9 +26,20 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 
 /**
+ * Remote RPC API for the GWT Installer.
+ *
  * @author John Mazzitelli
  */
 public interface InstallerGWTService extends RemoteService {
+
+    /**
+     * Starts the installation process. Once complete, the installer has nothing more it needs to do.
+     *
+     * @param serverProperties the server's settings to use. These will be persisted to
+     *                         the server's .properties file.
+     * @throws Exception
+     */
+    void install(HashMap<String, String> serverProperties) throws Exception;
 
     /**
      * Returns a list of all registered servers in the database.
@@ -81,13 +92,6 @@ public interface InstallerGWTService extends RemoteService {
      * @throws Exception
      */
     HashMap<String, String> getServerProperties() throws Exception;
-
-    /**
-     * Saves the rhq-server.properties with the given values.
-     * @param serverProperties
-     * @throws Exception
-     */
-    void saveServerProperties(HashMap<String, String> serverProperties) throws Exception;
 
     /**
      * Returns the version string for the app server itself (e.g. "7.1.2.Final").

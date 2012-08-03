@@ -55,6 +55,8 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.EditCompleteEvent;
 import com.smartgwt.client.widgets.grid.events.EditCompleteHandler;
+import com.smartgwt.client.widgets.grid.events.EditorExitEvent;
+import com.smartgwt.client.widgets.grid.events.EditorExitHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -200,7 +202,17 @@ public class Installer implements EntryPoint {
         installButton.setDisabled(true); // we can't allow the user to install yet
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                SC.say("TODO: this should start the install");
+                installerService.install(serverProperties.getMap(), new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        SC.say("TODO: the installer should do something");
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        SC.say("The installation failed - " + caught.toString());
+                    }
+                });
             }
         });
 
@@ -238,22 +250,6 @@ public class Installer implements EntryPoint {
         ToolStrip strip = new ToolStrip();
         strip.setWidth100();
 
-        IButton saveButton = new IButton(MSG.button_save());
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                installerService.saveServerProperties(serverProperties.getMap(), new AsyncCallback<Void>() {
-                    public void onSuccess(Void result) {
-                        originalProperties.clear();
-                        originalProperties.putAll(serverProperties.getMap());
-                        SC.say("Properties saved to server");
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        SC.say("Failed to save properties to server");
-                    }
-                });
-            }
-        });
         IButton resetButton = new IButton(MSG.button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -263,7 +259,6 @@ public class Installer implements EntryPoint {
                 forceAnotherTestConnection();
             }
         });
-        strip.addMember(saveButton);
         strip.addMember(resetButton);
         layout.addMember(strip);
 
@@ -281,10 +276,31 @@ public class Installer implements EntryPoint {
 
         advancedPropertyItemGrid.setFields(nameField, valueField);
         advancedPropertyItemGrid.setSortField(ServerPropertyRecordList.PROPERTY_NAME);
-
+        advancedPropertyItemGrid.addEditorExitHandler(new EditorExitHandler() {
+            public void onEditorExit(EditorExitEvent event) {
+                String changedProperty = event.getRecord().getAttribute(ServerPropertyRecordList.PROPERTY_NAME);
+                if (ServerProperties.BOOLEAN_PROPERTIES.contains(changedProperty)) {
+                    String newValue = event.getNewValue().toString();
+                    if (!(newValue.equals("true") || newValue.equals("false"))) {
+                        event.cancel();
+                        advancedPropertyItemGrid.setFieldError(event.getRowNum(),
+                            ServerPropertyRecordList.PROPERTY_VALUE, MSG.message_notValidBoolean());
+                    }
+                } else if (ServerProperties.INTEGER_PROPERTIES.contains(changedProperty)) {
+                    String newValue = event.getNewValue().toString();
+                    try {
+                        Integer.parseInt(newValue);
+                    } catch (NumberFormatException e) {
+                        event.cancel();
+                        advancedPropertyItemGrid.setFieldError(event.getRowNum(),
+                            ServerPropertyRecordList.PROPERTY_VALUE, MSG.message_notValidInteger());
+                    }
+                }
+            }
+        });
         advancedPropertyItemGrid.addEditCompleteHandler(new EditCompleteHandler() {
             public void onEditComplete(EditCompleteEvent event) {
-                String newValue = (String) event.getNewValues().values().iterator().next().toString();
+                String newValue = event.getNewValues().values().iterator().next().toString();
                 String changedProperty = event.getOldRecord().getAttribute(ServerPropertyRecordList.PROPERTY_NAME);
                 serverProperties.getMap().put(changedProperty, newValue); // so this is reflected in the internal map
                 refreshSimpleView();
@@ -426,7 +442,7 @@ public class Installer implements EntryPoint {
                 updateServerProperty(ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS, quartzDriverDelegateClass);
                 updateServerProperty(ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL, quartzSelectWithLockSQL);
                 updateServerProperty(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS, quartzLockHandlerClass);
-                updateServerProperty(ServerProperties.PROP_DATABASE_TYPE, newDBType); // this refreshes the advanced view, too
+                updateServerProperty(ServerProperties.PROP_DATABASE_TYPE, newDBType);
             }
         });
 

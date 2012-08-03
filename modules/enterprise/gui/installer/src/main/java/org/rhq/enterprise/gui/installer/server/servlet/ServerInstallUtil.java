@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +35,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
+import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 
 /**
  * Provides utility methods necessary to complete the server installation.
@@ -46,6 +48,14 @@ public class ServerInstallUtil {
     public enum ExistingSchemaOption {
         OVERWRITE, KEEP, SKIP
     };
+
+    public static boolean isAutoinstallEnabled(HashMap<String, String> serverProperties) {
+        String enableProp = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_ENABLE);
+        if (enableProp != null) {
+            return Boolean.parseBoolean(enableProp);
+        }
+        return false;
+    }
 
     public static boolean isKeepExistingSchema(ExistingSchemaOption existingSchemaOption) {
         return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption)
@@ -279,7 +289,7 @@ public class ServerInstallUtil {
      * @param password the clear text of the password to obfuscate
      * @return the obfuscated password
      */
-    private static String obfuscatePassword(String password) {
+    public static String obfuscatePassword(String password) {
 
         // We need to do some mumbo jumbo, as the interesting method is private
         // in SecureIdentityLoginModule
@@ -304,7 +314,7 @@ public class ServerInstallUtil {
      * @param obfuscatedPasswordd the obfuscated password
      * @return the clear-text password
      */
-    private static String deobfuscatePassword(String obfuscatedPassword) {
+    public static String deobfuscatePassword(String obfuscatedPassword) {
 
         // We need to do some mumbo jumbo, as the interesting method is private
         // in SecureIdentityLoginModule

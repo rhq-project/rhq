@@ -20,6 +20,12 @@ package org.rhq.enterprise.gui.installer.client.shared;
 
 import java.io.Serializable;
 
+/**
+ * Provides details about the server if it is already a known one (by "known" meaning it is
+ * in the database already).
+ * 
+ * @author John Mazzitelli
+ */
 public class ServerDetails implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -109,7 +115,7 @@ public class ServerDetails implements Serializable {
 
     @Override
     public String toString() {
-        return "[name=" + name + " address=" + endpointAddress + " port=" + endpointPort + " secureport="
-            + endpointSecurePort + " affinitygroup=" + affinityGroup + "]";
+        return "[name=" + name + ", address=" + endpointAddress + ", port=" + endpointPort + ", secureport="
+            + endpointSecurePort + ", affinitygroup=" + affinityGroup + "]";
     }
 }

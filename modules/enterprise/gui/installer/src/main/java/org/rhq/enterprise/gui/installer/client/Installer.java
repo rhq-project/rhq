@@ -258,7 +258,9 @@ public class Installer implements EntryPoint {
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 serverProperties.replaceServerProperties(originalProperties);
+                refreshSimpleView();
                 refreshAdvancedView();
+                forceAnotherTestConnection();
             }
         });
         strip.addMember(saveButton);
@@ -284,7 +286,7 @@ public class Installer implements EntryPoint {
             public void onEditComplete(EditCompleteEvent event) {
                 String newValue = (String) event.getNewValues().values().iterator().next().toString();
                 String changedProperty = event.getOldRecord().getAttribute(ServerPropertyRecordList.PROPERTY_NAME);
-                serverProperties.getMap().put(changedProperty, newValue); // we need this to be reflected in the internal map
+                serverProperties.getMap().put(changedProperty, newValue); // so this is reflected in the internal map
                 refreshSimpleView();
             }
         });

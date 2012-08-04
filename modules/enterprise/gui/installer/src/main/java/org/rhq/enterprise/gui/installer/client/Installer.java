@@ -87,6 +87,8 @@ public class Installer implements EntryPoint {
     private final HashMap<String, String> originalProperties = new HashMap<String, String>();
     private final LinkedHashMap<String, String> registeredServerNames = new LinkedHashMap<String, String>();
 
+    private VLayout mainCanvas;
+
     private ListGrid advancedPropertyItemGrid;
     private Button mainInstallButton;
 
@@ -111,16 +113,16 @@ public class Installer implements EntryPoint {
         mainInstallButton = createMainInstallButton();
         Canvas tabSet = createTabSet();
 
-        VLayout layout = new VLayout();
-        layout.setWidth100();
-        layout.setHeight100();
-        layout.setLayoutMargin(10);
-        layout.setMembersMargin(5);
-        layout.setDefaultLayoutAlign(Alignment.CENTER);
-        layout.addMember(header);
-        layout.addMember(mainInstallButton);
-        layout.addMember(tabSet);
-        layout.draw();
+        mainCanvas = new VLayout();
+        mainCanvas.setWidth100();
+        mainCanvas.setHeight100();
+        mainCanvas.setLayoutMargin(10);
+        mainCanvas.setMembersMargin(5);
+        mainCanvas.setDefaultLayoutAlign(Alignment.CENTER);
+        mainCanvas.addMember(header);
+        mainCanvas.addMember(mainInstallButton);
+        mainCanvas.addMember(tabSet);
+        mainCanvas.draw();
 
         // Remove loading image in case we don't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");
@@ -218,17 +220,22 @@ public class Installer implements EntryPoint {
                 int httpsPort = Integer.parseInt(serverSettingWebSecureHttpPort.getValueAsString());
                 String existingSchemaOption = dbExistingSchemaOption.getValueAsString();
 
+                SC.say(MSG.message_install_started());
+                mainCanvas.disable();
+
                 HashMap<String, String> propMap = serverProperties.getMap();
                 ServerDetails svrDetails = new ServerDetails(highAvailabilityName, publicEndpoint, httpPort, httpsPort);
                 installerService.install(propMap, svrDetails, existingSchemaOption, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
-                        SC.say(MSG.message_installDone());
+                        mainCanvas.enable();
+                        SC.say(MSG.message_install_done());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        SC.say(MSG.message_installFailed() + " - " + caught.toString());
+                        mainCanvas.enable();
+                        SC.say(MSG.message_install_failed() + " - " + caught.toString());
                     }
                 });
             }

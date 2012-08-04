@@ -18,7 +18,15 @@
  */
 package org.rhq.enterprise.gui.installer.server.servlet;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,14 +34,20 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
+import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 
@@ -49,17 +63,22 @@ public class ServerInstallUtil {
         OVERWRITE, KEEP, SKIP
     };
 
+    /**
+     * Determines if we are in auto-install mode. This means the properties file is
+     * fully configured and the installation can begin without asking the user
+     * for more input.
+     *
+     * @param serverProperties the full set of server properties
+     *
+     * @return true if we are in auto-install mode; false if the user must give us more
+     *         information before we can complete the installation.
+     */
     public static boolean isAutoinstallEnabled(HashMap<String, String> serverProperties) {
         String enableProp = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_ENABLE);
         if (enableProp != null) {
             return Boolean.parseBoolean(enableProp);
         }
         return false;
-    }
-
-    public static boolean isKeepExistingSchema(ExistingSchemaOption existingSchemaOption) {
-        return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption)
-            || ExistingSchemaOption.SKIP.name().equals(existingSchemaOption);
     }
 
     /**
@@ -176,19 +195,18 @@ public class ServerInstallUtil {
 
         try {
             stm = conn.prepareStatement("" //
-                + "SELECT s.address, s.port, s.secure_port, ag.name " //
-                + "  FROM rhq_server s LEFT JOIN rhq_affinity_group ag ON ag.id = s.affinity_group_id " //
+                + "SELECT s.address, s.port, s.secure_port " //
+                + "  FROM rhq_server s " //
                 + " WHERE s.name = ?");
             stm.setString(1, serverName.trim());
 
             rs = stm.executeQuery();
 
             if (rs.next()) {
-                result = new ServerDetails(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getString(4));
+                result = new ServerDetails(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3));
             }
-
         } catch (SQLException e) {
-            LOG.info("Unable to get affinity group name for server: " + e.getMessage());
+            LOG.info("Unable to get server details for server [" + serverName + "]: " + e.getMessage());
         } finally {
             if (null != db) {
                 db.closeResultSet(rs);
@@ -329,6 +347,223 @@ public class ServerInstallUtil {
             return new String(result);
         } catch (Exception e) {
             throw new RuntimeException("de-obfuscating db password failed: ", e);
+        }
+    }
+
+    /**
+     * This will create the database schema in the database. <code>props</code> define the connection to the database -
+     *
+     * <p>Note that if the {@link #isDatabaseSchemaExist(Properties) schema already exists}, it will be purged of all
+     * data/tables and recreated.</p>
+     *
+     * @param props the full set of server properties
+     * @param serverDetails additional information about the server being installed
+     * @param password the database password in clear text
+     * @param logDir a directory where the db schema upgrade logs can be written
+     *
+     * @throws Exception if failed to create the new schema for some reason
+     */
+    public static void createNewDatabaseSchema(HashMap<String, String> props, ServerDetails serverDetails,
+        String password, String logDir)
+        throws Exception {
+        String dbUrl = props.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        String userName = props.get(ServerProperties.PROP_DATABASE_USERNAME);
+
+        try {
+            // extract the dbsetup files which are located in the dbutils jar
+            String dbsetupSchemaXmlFile = extractDatabaseXmlFile("db-schema-combined.xml", props, serverDetails, logDir);
+            String dbsetupDataXmlFile = extractDatabaseXmlFile("db-data-combined.xml", props, serverDetails, logDir);
+
+            // first uninstall any old existing schema, then create the tables then insert the data
+            DBSetup dbsetup = new DBSetup(dbUrl, userName, password);
+            dbsetup.uninstall(dbsetupSchemaXmlFile);
+            dbsetup.setup(dbsetupSchemaXmlFile);
+            dbsetup.setup(dbsetupDataXmlFile, null, true, false);
+        } catch (Exception e) {
+            LOG.fatal("Cannot install the database schema - the server will not run properly.", e);
+            throw e;
+        }
+
+        return;
+    }
+
+    /**
+     * This will update an existing database schema so it can be upgraded to the latest schema version.
+     *
+     * <p>Note that if the {@link #isDatabaseSchemaExist(Properties) schema does not already exist}, errors will
+     * occur.</p>
+     *
+     * @param props the full set of server properties
+     * @param serverDetails additional information about the server being installed
+     * @param password the database password in clear text
+     * @param logDir a directory where the db schema upgrade logs can be written
+     *
+     * @throws Exception if the upgrade failed for some reason
+     */
+    public static void upgradeExistingDatabaseSchema(HashMap<String, String> props, ServerDetails serverDetails,
+        String password, String logDir)
+        throws Exception {
+        String dbUrl = props.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        String userName = props.get(ServerProperties.PROP_DATABASE_USERNAME);
+
+        File logfile = new File(logDir, "rhq-installer-dbupgrade.log");
+
+        logfile.delete(); // do not keep logs from previous dbupgrade runs
+
+        try {
+            // extract the dbupgrade ANT script which is located in the dbutils jar
+            String dbupgradeXmlFile = extractDatabaseXmlFile("db-upgrade.xml", props, serverDetails, logDir);
+
+            Properties antProps = new Properties();
+            antProps.setProperty("jdbc.url", dbUrl);
+            antProps.setProperty("jdbc.user", userName);
+            antProps.setProperty("jdbc.password", password);
+            antProps.setProperty("target.schema.version", "LATEST");
+
+            startAnt(new File(dbupgradeXmlFile), "db-ant-tasks.properties", antProps, logfile);
+        } catch (Exception e) {
+            LOG.fatal("Cannot upgrade the database schema - the server will not run properly.", e);
+            throw e;
+        }
+
+        return;
+    }
+
+    /**
+     * Given a server property value string, returns true if it is not specified.
+     *
+     * @param s the property string value
+     *
+     * @return true if it is null or empty
+     */
+    public static boolean isEmpty(String s) {
+        return s == null || s.trim().length() == 0;
+    }
+
+    /**
+     * Takes the named XML file from the classloader and writes the file to the log directory. This is meant to extract
+     * the schema/data xml files from the dbutils jar file. It can also be used to extract the db upgrade XML file.
+     *
+     * @param xmlFileName the name of the XML file, as found in the classloader
+     * @param props properties whose values are used to replace the replacement strings found in the XML file
+     * @param serverDetails additional information about the server being installed
+     * @param logDir a directory where the db schema upgrade logs can be written
+     *
+     * @return the absolute path to the extracted file
+     *
+     * @throws IOException if failed to extract the file to the log directory
+     */
+    private static String extractDatabaseXmlFile(String xmlFileName, HashMap<String, String> props,
+        ServerDetails serverDetails, String logDir)
+        throws IOException {
+
+        // first slurp the file contents in memory
+        InputStream resourceInStream = ServerInstallUtil.class.getClassLoader().getResourceAsStream(xmlFileName);
+        ByteArrayOutputStream contentOutStream = new ByteArrayOutputStream();
+        StreamUtil.copy(resourceInStream, contentOutStream);
+
+        // now replace their replacement strings with values from the properties
+        String emailFromAddress = props.get(ServerProperties.PROP_EMAIL_FROM_ADDRESS);
+        if (isEmpty(emailFromAddress)) {
+            emailFromAddress = "rhqadmin@localhost";
+        }
+
+        String httpPort = props.get(ServerProperties.PROP_WEB_HTTP_PORT);
+        if (isEmpty(httpPort)) {
+            httpPort = String.valueOf(ServerDetails.DEFAULT_ENDPOINT_PORT);
+        }
+
+        String publicEndpoint = serverDetails.getEndpointAddress();
+        if (isEmpty(publicEndpoint)) {
+            try {
+                publicEndpoint = props.get(ServerProperties.PROP_JBOSS_BIND_ADDRESS);
+                if (isEmpty(publicEndpoint) || ("0.0.0.0".equals(publicEndpoint))) {
+                    publicEndpoint = InetAddress.getLocalHost().getHostAddress();
+                }
+            } catch (Exception e) {
+                publicEndpoint = "127.0.0.1";
+            }
+        }
+
+        String content = contentOutStream.toString();
+        content = content.replaceAll("@@@LARGE_TABLESPACE_FOR_DATA@@@", "DEFAULT");
+        content = content.replaceAll("@@@LARGE_TABLESPACE_FOR_INDEX@@@", "DEFAULT");
+        content = content.replaceAll("@@@ADMINUSERNAME@@@", "rhqadmin");
+        content = content.replaceAll("@@@ADMINPASSWORD@@@", "x1XwrxKuPvYUILiOnOZTLg=="); // rhqadmin
+        content = content.replaceAll("@@@ADMINEMAIL@@@", emailFromAddress);
+        content = content.replaceAll("@@@BASEURL@@@", "http://" + publicEndpoint + ":" + httpPort + "/");
+        content = content.replaceAll("@@@JAASPROVIDER@@@", "JDBC");
+        content = content.replaceAll("@@@LDAPURL@@@", "ldap://localhost/");
+        content = content.replaceAll("@@@LDAPPROTOCOL@@@", "");
+        content = content.replaceAll("@@@LDAPLOGINPROP@@@", "cn");
+        content = content.replaceAll("@@@LDAPBASEDN@@@", "o=JBoss,c=US");
+        content = content.replaceAll("@@@LDAPSEARCHFILTER@@@", "");
+        content = content.replaceAll("@@@LDAPBINDDN@@@", "");
+        content = content.replaceAll("@@@LDAPBINDPW@@@", "");
+        content = content.replaceAll("@@@MULTICAST_ADDR@@@", "");
+        content = content.replaceAll("@@@MULTICAST_PORT@@@", "");
+
+        // we now have the finished XML content - write out the file to the log directory
+        File xmlFile = new File(logDir, xmlFileName);
+        FileOutputStream xmlFileOutStream = new FileOutputStream(xmlFile);
+        ByteArrayInputStream contentInStream = new ByteArrayInputStream(content.getBytes());
+        StreamUtil.copy(contentInStream, xmlFileOutStream);
+
+        return xmlFile.getAbsolutePath();
+    }
+
+    /**
+     * Launches ANT and runs the default target in the given build file.
+     *
+     * @param  buildFile      the build file that ANT will run
+     * @param  customTaskDefs the properties file found in classloader that contains all the taskdef definitions
+     * @param  properties     set of properties to set for the ANT task to access
+     * @param  logFile        where ANT messages will be logged (in addition to the app server's log file)
+     *
+     * @throws RuntimeException
+     */
+    private static void startAnt(File buildFile, String customTaskDefs, Properties properties, File logFile) {
+        PrintWriter logFileOutput = null;
+
+        try {
+            logFileOutput = new PrintWriter(new FileOutputStream(logFile));
+
+            ClassLoader classLoader = ServerInstallUtil.class.getClassLoader();
+
+            Properties taskDefs = new Properties();
+            InputStream taskDefsStream = classLoader.getResourceAsStream(customTaskDefs);
+            try {
+                taskDefs.load(taskDefsStream);
+            } finally {
+                taskDefsStream.close();
+            }
+
+            Project project = new Project();
+            project.setCoreLoader(classLoader);
+            project.init();
+
+            for (Map.Entry<Object, Object> property : properties.entrySet()) {
+                project.setProperty(property.getKey().toString(), property.getValue().toString());
+            }
+
+            // notice we add our listener after we set the properties - we do not want the password to be in the log file
+            // our dbupgrade script will echo the property settings, so we can still get the other values
+            project.addBuildListener(new LoggerAntBuildListener(logFileOutput));
+
+            for (Map.Entry<Object, Object> taskDef : taskDefs.entrySet()) {
+                project.addTaskDefinition(taskDef.getKey().toString(),
+                    Class.forName(taskDef.getValue().toString(), true, classLoader));
+            }
+
+            new ProjectHelper2().parse(project, buildFile);
+            project.executeTarget(project.getDefaultTarget());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot run ANT on script [" + buildFile + "]. Cause: " + e, e);
+        } finally {
+            if (logFileOutput != null) {
+                logFileOutput.close();
+            }
         }
     }
 }

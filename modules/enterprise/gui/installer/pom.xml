@@ -66,6 +66,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- dbutils has transitive dep on ant-launcher but with test scope - installer needs it for real -->
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+            <version>1.6.5</version>
+        </dependency>
+
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>

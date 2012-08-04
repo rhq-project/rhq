@@ -37,18 +37,16 @@ public class ServerDetails implements Serializable {
     private String endpointAddress;
     private int endpointPort;
     private int endpointSecurePort;
-    private String affinityGroup;
 
     protected ServerDetails() {
         // for GWT
     }
 
-    public ServerDetails(String name, String endpointAddress, int port, int securePort, String affinityGroup) {
+    public ServerDetails(String name, String endpointAddress, int port, int securePort) {
         this.name = name;
         this.endpointAddress = endpointAddress;
         this.endpointPort = port;
         this.endpointSecurePort = securePort;
-        this.affinityGroup = affinityGroup;
     }
 
     public String getName() {
@@ -103,19 +101,9 @@ public class ServerDetails implements Serializable {
         this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
     }
 
-    public String getAffinityGroup() {
-        return affinityGroup;
-    }
-
-    public void setAffinityGroup(String affinityGroup) {
-        if ((null != affinityGroup) && (!"".equals(affinityGroup.trim()))) {
-            this.affinityGroup = affinityGroup;
-        }
-    }
-
     @Override
     public String toString() {
         return "[name=" + name + ", address=" + endpointAddress + ", port=" + endpointPort + ", secureport="
-            + endpointSecurePort + ", affinitygroup=" + affinityGroup + "]";
+            + endpointSecurePort + "]";
     }
 }

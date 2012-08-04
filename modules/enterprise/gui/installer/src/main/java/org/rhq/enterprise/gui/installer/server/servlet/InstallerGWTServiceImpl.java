@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.installer.server.servlet;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.installer.client.gwt.InstallerGWTService;
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
+import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.ExistingSchemaOption;
 
 /**
  * Remote RPC API implementation for the GWT Installer.
@@ -56,13 +58,45 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
 
     @Override
-    public void install(HashMap<String, String> serverProperties) throws Exception {
+    public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption) throws Exception {
+        // make sure the data is at least in the correct format (booleans are true/false, integers are valid numbers)
+        StringBuilder dataErrors = new StringBuilder();
+        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
+            String name = entry.getKey();
+            if (ServerProperties.BOOLEAN_PROPERTIES.contains(name)) {
+                String newValue = entry.getValue();
+                if (!(newValue.equals("true") || newValue.equals("false"))) {
+                    dataErrors.append("[" + name + "] must be 'true' or 'false' : [" + newValue + "]\n");
+                }
+            } else if (ServerProperties.INTEGER_PROPERTIES.contains(name)) {
+                String newValue = entry.getValue();
+                try {
+                    Integer.parseInt(newValue);
+                } catch (NumberFormatException e) {
+                    if (ServerInstallUtil.isEmpty(newValue) && name.equals(ServerProperties.PROP_CONNECTOR_BIND_PORT)) {
+                        // this is a special setting and is allowed to be empty
+                    } else {
+                        dataErrors.append("[" + name + "] must be a number : [" + newValue + "]\n");
+                    }
+                }
+            }
+        }
+        if (dataErrors.length() > 0) {
+            throw new Exception("Cannot install due to data errors:\n" + dataErrors.toString());
+        }
+
+        // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
+        boolean autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
+        if (autoInstallMode) {
+            serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
+        }
+
         // its possible the JDBC URL was changed, clear the factory cache in case the DB version is different now
         DatabaseTypeFactory.clearDatabaseTypeCache();
 
         // determine the type of database to connect to
         String databaseType = serverProperties.get(ServerProperties.PROP_DATABASE_TYPE);
-        if (databaseType == null || databaseType.length() == 0) {
+        if (ServerInstallUtil.isEmpty(databaseType)) {
             throw new Exception("Please indicate the type of database to connect to");
         }
 
@@ -131,18 +165,54 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
         // test the connection to make sure everything is OK - note that if we are in auto-install mode,
         // the password will have been obfuscated, so we need to de-obfucate it in order to use it.
-        String url = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
-        String user = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
-        String pw = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-        if (ServerInstallUtil.isAutoinstallEnabled(serverProperties)) {
-            pw = ServerInstallUtil.deobfuscatePassword(pw);
+        String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        String dbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        if (autoInstallMode) {
+            dbPassword = ServerInstallUtil.deobfuscatePassword(dbPassword);
         }
-        String testConnectionErrorMessage = testConnection(url, user, pw);
+        String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, dbPassword);
         if (testConnectionErrorMessage != null) {
             throw new Exception("Cannot connect to the database: " + testConnectionErrorMessage);
         }
 
-        // TODO: CONTINUE WITH CONFIGURATION BEAN LINE 712
+        // write the new properties to the rhq-server.properties file
+        saveServerProperties(serverProperties);
+
+        // Prepare the db schema.
+        // existingSchemaOption is either overwrite, keep or skip.
+        // If in auto-install mode, we can be told to overwrite, skip or auto (meaning "keep" if schema exists)
+        ServerInstallUtil.ExistingSchemaOption existingSchemaOptionEnum;
+        if (autoInstallMode) {
+            String s = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_DATABASE);
+            if (s == null || s.equalsIgnoreCase("auto")) {
+                existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.KEEP;
+            } else {
+                existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.valueOf(s);
+            }
+        } else {
+            if (existingSchemaOption == null) {
+                throw new Exception("Don't know what to do with the database schema");
+            }
+            existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.valueOf(existingSchemaOption);
+        }
+
+        if (ServerInstallUtil.ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+            if (isDatabaseSchemaExist(dbUrl, dbUsername, dbPassword)) {
+                if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                    ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, dbPassword, getLogDir());
+                } else {
+                    ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails, dbPassword,
+                        getLogDir());
+                }
+            } else {
+                ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, dbPassword, getLogDir());
+            }
+        }
+
+        // TODO: CONTINUE WITH CONFIGURATION BEAN LINE 777
+        if (true)
+            throw new IllegalArgumentException("testing");
         return;
     }
 
@@ -227,6 +297,12 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
         propsFile.update(props);
 
+        // we need to put them as system properties now so when we hot deploy,
+        // the replacement variables in the config files pick up the new values
+        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
+            System.setProperty(entry.getKey(), entry.getValue());
+        }
+
         return;
     }
 
@@ -252,10 +328,102 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         return dir;
     }
 
+    private String getLogDir() throws Exception {
+        File asHomeDir = new File(getAppServerHomeDir());
+        File logDir = new File(asHomeDir, "../logs"); // this is RHQ's log dir, not JBossAS's log dir
+        logDir.mkdirs(); // create it in case it doesn't yet exist
+        return logDir.getAbsolutePath();
+    }
+
     private File getServerPropertiesFile() throws Exception {
         File appServerHomeDir = new File(getAppServerHomeDir());
         File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
         return serverPropertiesFile;
+    }
+
+    /**
+     * Returns server details based on information found solely in the given server properties.
+     * It does not rely on any database access.
+     *
+     * This is used by the auto-installation process.
+     *
+     * @param serverProperties the server properties
+     * @throws Exception
+     */
+    public ServerDetails getServerDetailsFromPropertiesOnly(HashMap<String, String> serverProperties) throws Exception {
+
+        String highAvailabilityName = serverProperties.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
+        String publicEndpoint = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_PUBLIC_ADDR);
+        int port;
+        int securePort;
+
+        if (ServerInstallUtil.isEmpty(highAvailabilityName)) {
+            try {
+                highAvailabilityName = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (Exception e) {
+                log("Could not determine default server name: ", e);
+                throw new Exception("Server name is not preconfigured and could not be determined automatically");
+            }
+        }
+
+        // the public endpoint address is one that can be preconfigured in the special autoinstall property.
+        // if that is not specified, then we use either the connector's bind address or the server bind address.
+        // if nothing was specified, we'll default to the canonical host name.
+        if (ServerInstallUtil.isEmpty(publicEndpoint)) {
+            String connBindAddress = serverProperties.get(ServerProperties.PROP_CONNECTOR_BIND_ADDRESS);
+            if ((!ServerInstallUtil.isEmpty(connBindAddress)) && (!"0.0.0.0".equals(connBindAddress.trim()))) {
+                // the server-side connector bind address is explicitly set, use that
+                publicEndpoint = connBindAddress.trim();
+            } else {
+                String serverBindAddress = serverProperties.get(ServerProperties.PROP_JBOSS_BIND_ADDRESS);
+                if ((!ServerInstallUtil.isEmpty(serverBindAddress)) && (!"0.0.0.0".equals(serverBindAddress.trim()))) {
+                    // the main JBossAS server bind address is set and it isn't 0.0.0.0, use that
+                    publicEndpoint = serverBindAddress.trim();
+                } else {
+                    try {
+                        publicEndpoint = InetAddress.getLocalHost().getCanonicalHostName();
+                    } catch (Exception e) {
+                        log("Could not determine default public endpoint address: ", e);
+                        throw new Exception(
+                            "Public endpoint address not preconfigured and could not be determined automatically");
+                    }
+                }
+            }
+        }
+
+        // define the public endpoint ports.
+        // note that if using a different transport other than (ssl)servlet, we'll
+        // take the connector's bind port and use it for both ports. This is to support a special deployment
+        // use-case - 99% of the time, the agents will go through the web/tomcat connector and thus we'll use
+        // the http/https ports for the public endpoints.
+        String connectorTransport = serverProperties.get(ServerProperties.PROP_CONNECTOR_TRANSPORT);
+        if (connectorTransport != null && connectorTransport.contains("socket")) {
+            // we aren't using the (ssl)servlet protocol, take the connector bind port and use it for the public endpoint ports
+            String connectorBindPort = serverProperties.get(ServerProperties.PROP_CONNECTOR_BIND_PORT);
+            if (ServerInstallUtil.isEmpty(connectorBindPort) || "0".equals(connectorBindPort.trim())) {
+                throw new Exception("Using non-servlet transport [" + connectorTransport + "] but didn't define a port");
+            }
+            port = Integer.parseInt(connectorBindPort);
+            securePort = Integer.parseInt(connectorBindPort);
+        } else {
+            // this is the typical use-case - the transport is probably (ssl)servlet so use the web http/https ports
+            try {
+                port = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTP_PORT));
+            } catch (Exception e) {
+                log("Could not determine port, will use default: " + e);
+                port = ServerDetails.DEFAULT_ENDPOINT_PORT;
+            }
+            try {
+                securePort = Integer.parseInt(serverProperties.get(ServerProperties.PROP_WEB_HTTPS_PORT));
+            } catch (Exception e) {
+                log("Could not determine secure port, will use default: " + e);
+                securePort = ServerDetails.DEFAULT_ENDPOINT_SECURE_PORT;
+            }
+        }
+
+        // everything looks good
+        ServerDetails serverDetails = new ServerDetails(highAvailabilityName, publicEndpoint, port, securePort);
+        return serverDetails;
     }
 
     private ModelControllerClient getClient() {

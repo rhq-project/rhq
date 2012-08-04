@@ -202,7 +202,15 @@ public class Installer implements EntryPoint {
         installButton.setDisabled(true); // we can't allow the user to install yet
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                installerService.install(serverProperties.getMap(), new AsyncCallback<Void>() {
+                String highAvailabilityName = serverSettingServerName.getValueAsString();
+                String publicEndpoint = serverSettingPublicAddress.getValueAsString();
+                int httpPort = Integer.parseInt(serverSettingWebHttpPort.getValueAsString());
+                int httpsPort = Integer.parseInt(serverSettingWebSecureHttpPort.getValueAsString());
+                String existingSchemaOption = dbExistingSchemaOption.getValueAsString();
+
+                HashMap<String, String> propMap = serverProperties.getMap();
+                ServerDetails svrDetails = new ServerDetails(highAvailabilityName, publicEndpoint, httpPort, httpsPort);
+                installerService.install(propMap, svrDetails, existingSchemaOption, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
                         SC.say("TODO: the installer should do something");
@@ -359,10 +367,11 @@ public class Installer implements EntryPoint {
         });
 
         dbExistingSchemaOption = new SelectItem("existingSchemaOption", MSG.schema_update_question());
+        // keys must match ServerInstallUtil.ExistingSchemaOption enum names
         final LinkedHashMap<String, String> schemaOpt = new LinkedHashMap<String, String>();
-        schemaOpt.put("keep", MSG.schema_update_keep());
-        schemaOpt.put("overwrite", MSG.schema_update_overwrite());
-        schemaOpt.put("skip", MSG.schema_update_skip());
+        schemaOpt.put("KEEP", MSG.schema_update_keep());
+        schemaOpt.put("OVERWRITE", MSG.schema_update_overwrite());
+        schemaOpt.put("SKIP", MSG.schema_update_skip());
         dbExistingSchemaOption.setValueMap(schemaOpt);
         dbExistingSchemaOption.setDefaultToFirstOption(true);
         dbExistingSchemaOption.setVisible(false);
@@ -486,6 +495,7 @@ public class Installer implements EntryPoint {
         serverSettingWebHttpPort.setWidth(fieldWidth);
         serverSettingWebHttpPort.setMin(1);
         serverSettingWebHttpPort.setMax(65535);
+        serverSettingWebHttpPort.setDefaultValue(ServerDetails.DEFAULT_ENDPOINT_PORT);
         serverSettingWebHttpPort.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_WEB_HTTP_PORT, String.valueOf(event.getValue()));
@@ -497,6 +507,7 @@ public class Installer implements EntryPoint {
         serverSettingWebSecureHttpPort.setWidth(fieldWidth);
         serverSettingWebSecureHttpPort.setMin(1);
         serverSettingWebSecureHttpPort.setMax(65535);
+        serverSettingWebSecureHttpPort.setDefaultValue(ServerDetails.DEFAULT_ENDPOINT_SECURE_PORT);
         serverSettingWebSecureHttpPort.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_WEB_HTTPS_PORT, String.valueOf(event.getValue()));

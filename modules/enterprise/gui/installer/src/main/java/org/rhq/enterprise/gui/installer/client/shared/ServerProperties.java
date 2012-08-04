@@ -113,6 +113,7 @@ public class ServerProperties {
     public static final String PROP_CONCURRENCY_LIMIT_MEAS_REPORT = "rhq.server.concurrency-limit.measurement-report";
     public static final String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ = "rhq.server.concurrency-limit.measurement-schedule-request";
 
+    public static final String PROP_JBOSS_BIND_ADDRESS = "jboss.bind.address";
     public static final String PROP_HIGH_AVAILABILITY_NAME = "rhq.server.high-availability.name";
     public static final String PROP_MM_AT_START = "rhq.server.maintenance-mode-at-startup";
     public static final String PROP_OPERATION_TIMEOUT = "rhq.server.operation-timeout";

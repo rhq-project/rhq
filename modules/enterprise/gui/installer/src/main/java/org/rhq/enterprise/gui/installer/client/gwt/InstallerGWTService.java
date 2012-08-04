@@ -24,6 +24,7 @@ import java.util.HashMap;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
+import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil;
 
 /**
  * Remote RPC API for the GWT Installer.
@@ -37,9 +38,16 @@ public interface InstallerGWTService extends RemoteService {
      *
      * @param serverProperties the server's settings to use. These will be persisted to
      *                         the server's .properties file.
+     * @param serverDetails details on the server being installed.
+     *                      If in auto-install mode, this value is ignored and can be anything.
+     * @param existingSchemaOption if not in auto-install mode, this tells the installer what to do with any
+     *                             existing schema. Must be one of the names of the
+     *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
+     *                             If in auto-install mode, this value is ignored and can be anything.
      * @throws Exception
      */
-    void install(HashMap<String, String> serverProperties) throws Exception;
+    void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption)
+        throws Exception;
 
     /**
      * Returns a list of all registered servers in the database.

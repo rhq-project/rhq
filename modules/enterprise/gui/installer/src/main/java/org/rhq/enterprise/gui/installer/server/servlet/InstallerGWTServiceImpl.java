@@ -86,9 +86,21 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         }
 
         // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
+        // if not in auto-install mode, make sure user gave us the server details that we will need
         boolean autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
         if (autoInstallMode) {
             serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
+        } else {
+            if (ServerInstallUtil.isEmpty(serverDetails.getName())) {
+                throw new Exception("Please enter a server name");
+            }
+            if (ServerInstallUtil.isEmpty(serverDetails.getEndpointAddress())) {
+                try {
+                    serverDetails.setEndpointAddress(InetAddress.getLocalHost().getCanonicalHostName());
+                } catch (Exception e) {
+                    throw new Exception("Could not assign a server public address automatically - please specify one.");
+                }
+            }
         }
 
         // its possible the JDBC URL was changed, clear the factory cache in case the DB version is different now
@@ -165,11 +177,15 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
         // test the connection to make sure everything is OK - note that if we are in auto-install mode,
         // the password will have been obfuscated, so we need to de-obfucate it in order to use it.
+        // make sure the server properties map itself has an obfuscated password
         String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         String dbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         if (autoInstallMode) {
             dbPassword = ServerInstallUtil.deobfuscatePassword(dbPassword);
+        } else {
+            serverProperties.put(ServerProperties.PROP_DATABASE_PASSWORD,
+                ServerInstallUtil.obfuscatePassword(dbPassword));
         }
         String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, dbPassword);
         if (testConnectionErrorMessage != null) {
@@ -210,9 +226,14 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             }
         }
 
-        // TODO: CONTINUE WITH CONFIGURATION BEAN LINE 777
-        if (true)
-            throw new IllegalArgumentException("testing");
+        // ensure the server info is up to date and stored in the DB
+        ServerInstallUtil.storeServerDetails(serverProperties, dbPassword, serverDetails);
+
+        // create a keystore whose cert has a CN of this server's public endpoint address
+        ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
+
+        // now create our deployment services and our main EAR
+        // TODO: finish this
         return;
     }
 
@@ -230,7 +251,22 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     public ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName)
         throws Exception {
         try {
-            return ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
+            ServerDetails sd = ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
+            if (ServerInstallUtil.isEmpty(sd.getName())) {
+                try {
+                    sd.setEndpointAddress(InetAddress.getLocalHost().getCanonicalHostName());
+                } catch (Exception ignore) {
+                    // oh well.. we'll have to expect the user to set the name they want to use
+                }
+            }
+            if (ServerInstallUtil.isEmpty(sd.getEndpointAddress())) {
+                try {
+                    sd.setEndpointAddress(InetAddress.getLocalHost().getHostAddress());
+                } catch (Exception ignore) {
+                    // oh well.. we'll have to expect the user to set the address they want to use
+                }
+            }
+            return sd;
         } catch (Exception e) {
             log("Could not get server details for [" + serverName + "]", e);
             return null;
@@ -325,6 +361,13 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         JBossASClient client = new JBossASClient(getClient());
         String[] address = { "core-service", "server-environment" };
         String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
+        return dir;
+    }
+
+    private String getAppServerConfigDir() throws Exception {
+        JBossASClient client = new JBossASClient(getClient());
+        String[] address = { "core-service", "server-environment" };
+        String dir = client.getStringAttribute(true, "config-dir", Address.root().add(address));
         return dir;
     }
 

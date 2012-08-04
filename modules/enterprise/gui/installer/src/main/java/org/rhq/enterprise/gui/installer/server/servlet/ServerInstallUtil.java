@@ -45,9 +45,12 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 
@@ -351,6 +354,86 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Stores the server details (such as the public endpoint) in the database. If the server definition already
+     * exists, it will be updated; otherwise, a new server will be added to the HA cloud.
+     *
+     * @param serverProperties the server properties
+     * @param password clear text password to connect to the database
+     * @param serverDetails the details of the server to put into the database
+     * @throws Exception
+     */
+    public static void storeServerDetails(HashMap<String, String> serverProperties, String password,
+        ServerDetails serverDetails) throws Exception {
+
+        DatabaseType db = null;
+        Connection conn = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            conn = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            updateOrInsertServer(db, conn, serverDetails);
+
+        } catch (SQLException e) {
+            LOG.info("Unable to store server entry in the database: " + ThrowableUtil.getAllMessages(e));
+        } finally {
+            if (null != db) {
+                db.closeConnection(conn);
+            }
+        }
+    }
+
+    private static void updateOrInsertServer(DatabaseType db, Connection conn, ServerDetails serverDetails) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+
+        if (null == serverDetails || isEmpty(serverDetails.getName())) {
+            return;
+        }
+
+        try {
+            stm = conn.prepareStatement("UPDATE rhq_server SET address=?, port=?, secure_port=? WHERE name=?");
+            stm.setString(1, serverDetails.getEndpointAddress());
+            stm.setInt(2, serverDetails.getEndpointPort());
+            stm.setInt(3, serverDetails.getEndpointSecurePort());
+            stm.setString(4, serverDetails.getName());
+            if (0 == stm.executeUpdate()) {
+                stm.close();
+
+                // set all new servers to operation_mode=INSTALLED
+                int i = 1;
+                if (db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType) {
+                    stm = conn.prepareStatement("INSERT INTO rhq_server " //
+                        + " ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) " //
+                        + "VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
+                    stm.setInt(i++, db.getNextSequenceValue(conn, "rhq_server", "id"));
+                } else {
+                    throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+                }
+
+                stm.setString(i++, serverDetails.getName());
+                stm.setString(i++, serverDetails.getEndpointAddress());
+                stm.setInt(i++, serverDetails.getEndpointPort());
+                stm.setInt(i++, serverDetails.getEndpointSecurePort());
+                long now = System.currentTimeMillis();
+                stm.setLong(i++, now);
+                stm.setLong(i++, now);
+                stm.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            LOG.info("Unable to put the server details in the database: " + ThrowableUtil.getAllMessages(e));
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+    }
+
+    /**
      * This will create the database schema in the database. <code>props</code> define the connection to the database -
      *
      * <p>Note that if the {@link #isDatabaseSchemaExist(Properties) schema already exists}, it will be purged of all
@@ -563,6 +646,48 @@ public class ServerInstallUtil {
         } finally {
             if (logFileOutput != null) {
                 logFileOutput.close();
+            }
+        }
+    }
+
+    /**
+     * Creates a keystore whose cert has a CN of this server's public endpoint address.
+     * 
+     * @param serverDetails details of the server being installed
+     * @param configDirStr location of a configuration directory where the keystore is to be stored
+     */
+    public static void createKeystore(ServerDetails serverDetails, String configDirStr) {
+        File confDir = new File(configDirStr);
+        File keystore = new File(confDir, "rhq.keystore");
+        File keystoreBackup = new File(confDir, "rhq.keystore.backup");
+
+        // if there is one out-of-box, we want to remove it and create one with our proper CN
+        if (keystore.exists()) {
+            keystoreBackup.delete();
+            if (!keystore.renameTo(keystoreBackup)) {
+                LOG.warn("Cannot backup existing keystore - cannot generate a new cert with a proper domain name. ["
+                    + keystore + "] will be the keystore used by this server");
+                return;
+            }
+        }
+
+        try {
+            String keystorePath = keystore.getAbsolutePath();
+            String keyAlias = "RHQ";
+            String domainName = "CN=" + serverDetails.getEndpointAddress() + ", OU=RHQ, O=rhq-project.org, C=US";
+            String keystorePassword = "RHQManagement";
+            String keyPassword = keystorePassword;
+            String keyAlgorithm = "rsa";
+            int validity = 7300;
+            SecurityUtil.createKeyStore(keystorePath, keyAlias, domainName, keystorePassword, keyPassword,
+                keyAlgorithm, validity);
+            LOG.info("New keystore created [" + keystorePath + "] with cert domain name of [" + domainName + "]");
+        } catch (Exception e) {
+            LOG.warn("Could not generate a new cert with a proper domain name, will use the original keystore");
+            keystore.delete();
+            if (!keystoreBackup.renameTo(keystore)) {
+                LOG.warn("Failed to restore the original keystore from backup - please rename [" + keystoreBackup
+                    + "] to [" + keystore + "]");
             }
         }
     }

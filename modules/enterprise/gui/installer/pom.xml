@@ -66,6 +66,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <!-- need this solely for SecurityUtils -->
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-comm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- dbutils has transitive dep on ant-launcher but with test scope - installer needs it for real -->
         <dependency>
             <groupId>ant</groupId>

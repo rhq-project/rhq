@@ -51,6 +51,9 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+import com.smartgwt.client.widgets.form.validator.RequiredIfFunction;
+import com.smartgwt.client.widgets.form.validator.RequiredIfValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.EditCompleteEvent;
@@ -86,12 +89,15 @@ public class Installer implements EntryPoint {
 
     private ListGrid advancedPropertyItemGrid;
     private Button mainInstallButton;
+
     private TextItem dbConnectionUrl;
     private TextItem dbUsername;
     private PasswordItem dbPassword;
     private SelectItem dbExistingSchemaOption;
     private ButtonItem testConnectionButton;
     private SelectItem dbType;
+
+    private DynamicForm serverSettingsForm;
     private TextItem serverSettingServerName;
     private TextItem serverSettingPublicAddress;
     private SpinnerItem serverSettingWebHttpPort;
@@ -202,6 +208,10 @@ public class Installer implements EntryPoint {
         installButton.setDisabled(true); // we can't allow the user to install yet
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
+                if (!serverSettingsForm.validate()) {
+                    SC.say(MSG.message_formDidNotValidate());
+                    return;
+                }
                 String highAvailabilityName = serverSettingServerName.getValueAsString();
                 String publicEndpoint = serverSettingPublicAddress.getValueAsString();
                 int httpPort = Integer.parseInt(serverSettingWebHttpPort.getValueAsString());
@@ -213,12 +223,12 @@ public class Installer implements EntryPoint {
                 installerService.install(propMap, svrDetails, existingSchemaOption, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
-                        SC.say("TODO: the installer should do something");
+                        SC.say(MSG.message_installDone());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        SC.say("The installation failed - " + caught.toString());
+                        SC.say(MSG.message_installFailed() + " - " + caught.toString());
                     }
                 });
             }
@@ -381,7 +391,7 @@ public class Installer implements EntryPoint {
             public void onChanged(ChangedEvent event) {
                 if (registeredServersSelection != null) {
                     String selected = event.getValue().toString();
-                    if ("overwrite".equals(selected)) {
+                    if ("OVERWRITE".equals(selected)) {
                         registeredServersSelection.setValue((String) null);
                         registeredServersSelection.disable();
                     } else {
@@ -466,17 +476,30 @@ public class Installer implements EntryPoint {
         ////////////////////////////////////////////////////////
         // The Server Settings form
 
-        final DynamicForm serverSettingsForm = new DynamicForm();
+        RequiredIfValidator notEmptyValidator = new RequiredIfValidator();
+        notEmptyValidator.setExpression(new RequiredIfFunction() {
+            public boolean execute(FormItem formItem, Object value) {
+                return true;
+            }
+        });
+
+        IntegerRangeValidator portValidator = new IntegerRangeValidator();
+        portValidator.setMin(1);
+        portValidator.setMax(65535);
+
+        serverSettingsForm = new DynamicForm();
         serverSettingsForm.setPadding(5);
         serverSettingsForm.setCellPadding(5);
         serverSettingsForm.setAutoWidth();
         serverSettingsForm.setIsGroup(true);
+        serverSettingsForm.setValidateOnChange(true);
         serverSettingsForm.setWrapItemTitles(false);
         serverSettingsForm.setGroupTitle(MSG.tab_simpleView_serverSettings());
 
         serverSettingServerName = new TextItem(ServerProperties.PROP_HIGH_AVAILABILITY_NAME,
             PROPS_MSG.rhq_server_high_availability_name());
         serverSettingServerName.setWidth(fieldWidth);
+        serverSettingServerName.setValidators(notEmptyValidator);
         serverSettingServerName.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, String.valueOf(event.getValue()));
@@ -496,6 +519,7 @@ public class Installer implements EntryPoint {
         serverSettingWebHttpPort.setMin(1);
         serverSettingWebHttpPort.setMax(65535);
         serverSettingWebHttpPort.setDefaultValue(ServerDetails.DEFAULT_ENDPOINT_PORT);
+        serverSettingWebHttpPort.setValidators(portValidator);
         serverSettingWebHttpPort.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_WEB_HTTP_PORT, String.valueOf(event.getValue()));
@@ -508,6 +532,7 @@ public class Installer implements EntryPoint {
         serverSettingWebSecureHttpPort.setMin(1);
         serverSettingWebSecureHttpPort.setMax(65535);
         serverSettingWebSecureHttpPort.setDefaultValue(ServerDetails.DEFAULT_ENDPOINT_SECURE_PORT);
+        serverSettingWebSecureHttpPort.setValidators(portValidator);
         serverSettingWebSecureHttpPort.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 updateServerProperty(ServerProperties.PROP_WEB_HTTPS_PORT, String.valueOf(event.getValue()));
@@ -530,6 +555,7 @@ public class Installer implements EntryPoint {
                     serverSettingServerName.setValue("");
                     serverSettingPublicAddress.setValue("");
                     updateServerProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME, "");
+                    serverSettingsForm.validate();
                 } else {
                     final Conn conn = new Conn();
                     installerService.getServerDetails(conn.url(), conn.username(), conn.password(), selectedServerName,
@@ -544,6 +570,7 @@ public class Installer implements EntryPoint {
                                     details.getEndpointPortString());
                                 updateServerProperty(ServerProperties.PROP_WEB_HTTPS_PORT,
                                     details.getEndpointSecurePortString());
+                                serverSettingsForm.validate();
                             }
 
                             public void onFailure(Throwable caught) {

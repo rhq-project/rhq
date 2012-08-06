@@ -477,6 +477,14 @@ public class Installer implements EntryPoint {
         buttonSpacer.setEndRow(false);
         testConnectionButton.setStartRow(false);
 
+        // add contextual help for users
+        addContextualHelp(dbType, MSG.help_dbType());
+        addContextualHelp(dbConnectionUrl, MSG.help_dbConnectionUrl());
+        addContextualHelp(dbUsername, MSG.help_dbUsername());
+        addContextualHelp(dbPassword, MSG.help_dbPassword());
+        addContextualHelp(testConnectionButton, MSG.help_testConnectionButton());
+        addContextualHelp(dbExistingSchemaOption, MSG.help_dbExistingSchemaOption());
+
         databaseForm.setFields(dbType, dbConnectionUrl, dbUsername, dbPassword, buttonSpacer, testConnectionButton,
             dbExistingSchemaOption);
 
@@ -549,7 +557,6 @@ public class Installer implements EntryPoint {
         registeredServersSelection = new SelectItem("registeredServersSelectItem",
             MSG.tab_simpleView_serverSettings_registeredServers());
         registeredServersSelection.setWidth(fieldWidth);
-        addContextualHelp(registeredServersSelection, MSG.help_registeredServers());
         registeredServerNames.put(NEW_SERVER_TO_REGISTER,
             MSG.tab_simpleView_serverSettings_registeredServers_newServer());
         registeredServersSelection.setValueMap(registeredServerNames);
@@ -605,6 +612,15 @@ public class Installer implements EntryPoint {
                 updateServerProperty(ServerProperties.PROP_EMAIL_FROM_ADDRESS, String.valueOf(event.getValue()));
             }
         });
+
+        // add contextual help for users
+        addContextualHelp(registeredServersSelection, MSG.help_registeredServers());
+        addContextualHelp(serverSettingServerName, MSG.help_ssServerName());
+        addContextualHelp(serverSettingPublicAddress, MSG.help_ssPublicAddress());
+        addContextualHelp(serverSettingWebHttpPort, MSG.help_ssHttpPort());
+        addContextualHelp(serverSettingWebSecureHttpPort, MSG.help_ssHttpsPort());
+        addContextualHelp(serverSettingEmailSMTPHostname, MSG.help_ssEmailHostname());
+        addContextualHelp(serverSettingEmailFromAddress, MSG.help_ssEmailFromAddress());
 
         serverSettingsForm.setItems(registeredServersSelection, serverSettingServerName, serverSettingPublicAddress,
             serverSettingWebHttpPort, serverSettingWebSecureHttpPort, serverSettingEmailSMTPHostname,

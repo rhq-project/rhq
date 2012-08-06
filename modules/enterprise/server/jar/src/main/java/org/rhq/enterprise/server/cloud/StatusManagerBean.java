@@ -95,13 +95,28 @@ public class StatusManagerBean implements StatusManagerLocal {
         List<Integer> agentIds = selectQuery.getResultList();
 
         if (agentIds.size() > 0) {
-            /* 
-             * note: not worried about size of the in clause, because the number of
-             * agents per server will be reasonable, say, 50-150
-             */
-            Query updateQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_CLEAR_STATUS_BY_IDS);
-            updateQuery.setParameter("agentIds", agentIds);
-            updateQuery.executeUpdate();
+
+            // handle the oracle 1000 member IN clause issue
+            final int ORACLE_BATCH_SIZE = 1000;
+
+            int numAgents = agentIds.size();
+            int batches = (numAgents / ORACLE_BATCH_SIZE) + 1;
+
+            // iterate over the agent ids when we have more than 1000 of them
+            for (int batch = 0; batch < batches; ++batch) {
+                int fromIndex = batch * ORACLE_BATCH_SIZE;
+                int toIndex = fromIndex + ORACLE_BATCH_SIZE;
+                if (toIndex > numAgents) // don't run over the end of the list
+                    toIndex = numAgents;
+                List<Integer> agentIdBatch = agentIds.subList(fromIndex, toIndex);
+
+                if (fromIndex == toIndex)
+                    continue;
+
+                Query updateQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_CLEAR_STATUS_BY_IDS);
+                updateQuery.setParameter("agentIds", agentIdBatch);
+                int numUpdated = updateQuery.executeUpdate();
+            }
         }
 
         return agentIds;

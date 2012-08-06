@@ -24,9 +24,12 @@ package org.rhq.core.pc.event;
 
 import java.util.Set;
 
-import org.rhq.core.pluginapi.event.EventPoller;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pluginapi.event.EventPoller;
 
 /**
  * A thread for running an {@link EventPoller} to check for new {@link Event}s of a certain type from a particular
@@ -35,6 +38,9 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  */
 public class EventPollerRunner implements Runnable {    
+
+    private static final Log LOG = LogFactory.getLog(EventPollerRunner.class);
+    
     private EventPoller eventPoller;
     private Resource resource;
     private EventManager eventManager;
@@ -46,9 +52,19 @@ public class EventPollerRunner implements Runnable {
     }
 
     public void run() {
-        Set<Event> events = this.eventPoller.poll();
-        if (events != null) {
-            this.eventManager.publishEvents(events, this.resource);
+        try {
+            Set<Event> events = this.eventPoller.poll();
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Gathered " + (events == null ? "no" : events.size()) + " events on resource " + resource + " using the poller " + eventPoller);
+            }
+            if (events != null) {
+                this.eventManager.publishEvents(events, this.resource);
+            }
+        } catch (RuntimeException e) {
+            LOG.error("Event poller for resource " + resource + 
+                " failed with a unhandled exception. No future events will be reported for the resource until the plugin container is restarted. "
+                + "This is an error and should not have happened. Please report this as a bug.", e);
+            throw e;
         }
     }
 }

@@ -147,20 +147,20 @@ public class ConfigurationBean {
 
     public void initConfiguration() {
         if (configuration == null) {
-            Properties properties = serverInfo.getServerProperties();            
+            Properties properties = serverInfo.getServerProperties();
             List<PropertyItem> itemDefs = new ServerProperties().getPropertyItems();
-            
-            if ((serverInfo.getProduct() == ServerInformation.Product.JON) && 
-                !serverInfo.isUnsupportedJonFeaturesEnabled()) {
+
+            if ((serverInfo.getProduct() == ServerInformation.Product.JON)
+                && !serverInfo.isUnsupportedJonFeaturesEnabled()) {
                 LOG.debug("Hiding the embedded agent props and the unsupported DB types...");
                 for (PropertyItem itemDef : itemDefs) {
                     if (itemDef.getPropertyName().startsWith(ServerProperties.PREFIX_PROP_EMBEDDED_AGENT)) {
                         itemDef.setHidden(true);
                     }
-                    
+
                     if (itemDef.getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
                         List<SelectItem> options = itemDef.getOptions();
-                        for (Iterator<SelectItem> iterator = options.iterator(); iterator.hasNext(); ) {
+                        for (Iterator<SelectItem> iterator = options.iterator(); iterator.hasNext();) {
                             SelectItem option = iterator.next();
                             String databaseType = (String) option.getValue();
                             if (!JON_SUPPORTED_DATABASE_TYPES.contains(databaseType)) {
@@ -170,7 +170,7 @@ public class ConfigurationBean {
                     }
                 }
             }
-                        
+
             configuration = new ArrayList<PropertyItemWithValue>();
 
             for (PropertyItem itemDef : itemDefs) {
@@ -570,7 +570,10 @@ public class ConfigurationBean {
     }
 
     public StartPageResults save() {
-        LOG.info("Installer raw values: " + configuration);
+        // log the raw values but don't write out the potentially unobfuscated db password
+        Properties props = getConfigurationAsProperties(configuration);
+        props.remove(ServerProperties.PROP_DATABASE_PASSWORD);
+        LOG.info("Installer: raw values (these may be updated by the installer, see submitted values below): " + props);
 
         // if auto-install is enabled, the db password will be encrypted - decrypt it internally and we'll re-encrypt later
         if (isAutoinstallEnabled()) {
@@ -708,8 +711,8 @@ public class ConfigurationBean {
 
         // Ensure server info has been set
         if ((null == haServer) || (null == haServer.getName()) || "".equals(haServer.getName().trim())) {
-            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_STRING, I18Nmsg
-                .getMsg(InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME));
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_STRING,
+                I18Nmsg.getMsg(InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME));
             return StartPageResults.ERROR;
         }
 
@@ -720,8 +723,8 @@ public class ConfigurationBean {
                 } catch (Exception e) {
                     // there is one special property - the connector bind port - that is allowed to be empty
                     // ignore this error if we are looking at that property and its empty; otherwise, this is an error
-                    if (!(newValue.getItemDefinition().getPropertyName().equals(
-                        ServerProperties.PROP_CONNECTOR_BIND_PORT) && newValue.getValue().length() == 0)) {
+                    if (!(newValue.getItemDefinition().getPropertyName()
+                        .equals(ServerProperties.PROP_CONNECTOR_BIND_PORT) && newValue.getValue().length() == 0)) {
                         lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue
                             .getItemDefinition().getPropertyLabel(), newValue.getValue());
                         return StartPageResults.ERROR;

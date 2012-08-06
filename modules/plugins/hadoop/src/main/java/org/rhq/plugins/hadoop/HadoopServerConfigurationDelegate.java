@@ -216,7 +216,7 @@ public class HadoopServerConfigurationDelegate {
         }
     }
 
-    private static void parseAndAssignProps(File configFile, Map<String, PropertySimple> props)
+    public static void parseAndAssignProps(File configFile, Map<String, PropertySimple> props)
         throws XMLStreamException, IOException {
         FileInputStream in = new FileInputStream(configFile);
         XMLStreamReader rdr = XML_INPUT_FACTORY.createXMLStreamReader(in);

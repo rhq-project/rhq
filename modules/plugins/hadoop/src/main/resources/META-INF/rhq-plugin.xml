@@ -146,7 +146,7 @@
   </server>
 
   <!-- JobTracker (http://wiki.apache.org/hadoop/JobTracker) -->
-  <server name="Hadoop JobTracker" discovery="HadoopServerDiscovery" class="HadoopServerComponent">
+  <server name="Hadoop JobTracker" discovery="HadoopServerDiscovery" class="JobTrackerServerComponent">
     <plugin-configuration>
       <c:simple-property name="hadoop.home.dir" displayName="Home Directory" default="*** SHOULD HAVE BEEN AUTODETECTED ***"/>
       <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
@@ -209,6 +209,12 @@
     <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_graylisted" displayName="Graylisted Nodes"/>
     <metric property="Hadoop:service=JobTracker,name=JobTrackerMetrics:trackers_decommissioned" displayName="Excluded Nodes"/>
 
+    <metric property="_synthetic_jobDuration" displayName="Job Duration" dataType="calltime" destinationType="Job Name" units="milliseconds"/>
+    <!-- Seems like RHQ cannot correctly handle more than 1 calltime metric per resource type? 
+    <metric property="_synthetic_jobPreStartDelay" displayName="Submit To Start Duration" dataType="calltime" destinationType="Job Name" units="milliseconds"/>
+    <metric property="_synthetic_jobSuccessRate" displayName="Job Success Rate" dataType="calltime" destinationType="Job Name" units="milliseconds" />
+    -->
+    
     <event name="logEntry" description="an entry in a log file"/>
 
     <resource-configuration>

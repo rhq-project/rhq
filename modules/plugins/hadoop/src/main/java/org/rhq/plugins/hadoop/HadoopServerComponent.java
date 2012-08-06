@@ -33,6 +33,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -42,6 +43,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.Log4JLogEntryProcessor;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -50,6 +52,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.hadoop.calltime.HadoopEventAndCalltimeDelegate;
+import org.rhq.plugins.hadoop.calltime.JobSummary;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
@@ -57,8 +61,9 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
     JMXComponent<ResourceComponent<?>>, MeasurementFacet, OperationFacet, ConfigurationFacet {
 
     private static final Log LOG = LogFactory.getLog(HadoopServerComponent.class);
-    private static final String LOG_EVENT_TYPE = "logEntry";
-    private static final String LOG_POLLING_INTERVAL_PROPERTY = "logPollingInterval";
+    
+    public static final String LOG_EVENT_TYPE = "logEntry";
+    public static final String LOG_POLLING_INTERVAL_PROPERTY = "logPollingInterval";
     
     private Map<String, Boolean> percentageMeasurements;
     
@@ -89,6 +94,7 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
         if (events != null && eventsRegistered) {
             eventsRegistered = false;
             events.unregisterEventPoller(LOG_EVENT_TYPE);
+            discardPoller();
         }
         super.stop();
     }
@@ -109,12 +115,13 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
                 if (!eventsRegistered) {
                     File logFile = determineLogFile();
                     int interval = Integer.parseInt(getResourceContext().getPluginConfiguration().getSimpleValue(LOG_POLLING_INTERVAL_PROPERTY, "60"));                        
-                    events.registerEventPoller(new LogFileEventPoller(events, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile)), interval);
+                    events.registerEventPoller(createNewEventPoller(events, logFile), interval);
                     eventsRegistered = true;
                 }
             } else if (eventsRegistered) {
                 eventsRegistered = false;
                 events.unregisterEventPoller(LOG_EVENT_TYPE);
+                discardPoller();
             }
         }
         
@@ -135,47 +142,54 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
      * Gather measurement data
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         for (MeasurementScheduleRequest request : metrics) {
-            String name = request.getName();
-            int delimIndex = name.lastIndexOf(':');
-            String beanName = name.substring(0, delimIndex);
-            String attributeName = name.substring(delimIndex + 1);
-            try {
-                EmsConnection emsConnection = getEmsConnection();
-                EmsBean bean = emsConnection.getBean(beanName);
-                if (bean != null) {
-                    bean.refreshAttributes();
-                    EmsAttribute attribute = bean.getAttribute(attributeName);
-                    if (attribute != null) {
-                        Object valueObject = attribute.refresh();
-                        if (valueObject instanceof Number) {
-                            Number value = (Number) valueObject;
-                            if (percentageMeasurements.get(name)) {
-                                report.addData(new MeasurementDataNumeric(request, value.doubleValue() / 100));
-                            } else {
-                                report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
-                            }
-                            
-                        } else {
-                            report.addData(new MeasurementDataTrait(request, valueObject.toString()));
-                        }
-                    } else {
-                        LOG.warn("Attribute " + attributeName + " not found");
-                    }
-                } else {
-                    LOG.warn("MBean " + beanName + " not found");
-                }
-            } catch (Exception e) {
-                LOG.error("Failed to obtain measurement [" + name + "]", e);
-            }
+            handleMetric(report, request);
         }
     }
-
+    
+    protected void handleMetric(MeasurementReport report, MeasurementScheduleRequest request) throws Exception {
+        String name = request.getName();
+        int delimIndex = name.lastIndexOf(':');
+        String beanName = name.substring(0, delimIndex);
+        String attributeName = name.substring(delimIndex + 1);
+        try {
+            EmsConnection emsConnection = getEmsConnection();
+            EmsBean bean = emsConnection.getBean(beanName);
+            if (bean != null) {
+                bean.refreshAttributes();
+                EmsAttribute attribute = bean.getAttribute(attributeName);
+                if (attribute != null) {
+                    Object valueObject = attribute.refresh();
+                    if (valueObject instanceof Number) {
+                        Number value = (Number) valueObject;
+                        if (percentageMeasurements.get(name)) {
+                            report.addData(new MeasurementDataNumeric(request, value.doubleValue() / 100));
+                        } else {
+                            report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                        }
+                        
+                    } else {
+                        report.addData(new MeasurementDataTrait(request, valueObject.toString()));
+                    }
+                } else {
+                    LOG.warn("Attribute " + attributeName + " not found");
+                }
+            } else {
+                LOG.warn("MBean " + beanName + " not found");
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to obtain measurement [" + name + "]", e);
+        }
+    }
+    
+    @Override
     public Configuration loadResourceConfiguration() throws Exception {
         return configurationDelegate.loadConfiguration();
     }
 
+    @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {    
         try {
             Configuration updatedConfiguration = report.getConfiguration();
@@ -194,6 +208,7 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
      * @return An operation result
      * @see org.rhq.core.pluginapi.operation.OperationFacet
      */
+    @Override
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         HadoopSupportedOperations operation = HadoopSupportedOperations.valueOf(name.toUpperCase());
         String serverType = getServerType();
@@ -202,6 +217,14 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
             getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
         }
         return result;
+    }
+    
+    protected EventPoller createNewEventPoller(EventContext eventContext, File logFile) {
+        return new LogFileEventPoller(eventContext, LOG_EVENT_TYPE, logFile, new Log4JLogEntryProcessor(LOG_EVENT_TYPE, logFile));
+    }
+    
+    protected void discardPoller() {
+        
     }
     
     private File determineLogFile() {
@@ -243,5 +266,5 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
         }
 
         return homeDir;
-    }    
+    }     
 }

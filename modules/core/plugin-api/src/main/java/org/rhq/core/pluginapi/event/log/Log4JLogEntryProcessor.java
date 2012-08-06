@@ -53,12 +53,16 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
     private static final String REGEX;
     private static final Pattern PATTERN;
 
+    //note that the DateFormat instances are INTENTIONALLY instance fields.
+    //DateFormats are not thread safe and because we can have multiple log processors
+    //each processing its log file in a separate thread, we'd get formatting errors
+    //where there weren't any...
     private static final String ISO8601_DATE_PATTERN = "yyyy-MM-dd kk:mm:ss,SSS";
-    private static final DateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat(ISO8601_DATE_PATTERN);
+    private final DateFormat iso8601DateFormat = new SimpleDateFormat(ISO8601_DATE_PATTERN);
     private static final String ABSOLUTE_DATE_PATTERN = "kk:mm:ss,SSS";
-    private static final DateFormat ABSOLUTE_DATE_FORMAT = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
+    private final DateFormat absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
     private static final String DATE_DATE_PATTERN = "dd MMM yyyy kk:mm:ss,SSS";
-    private static final DateFormat DATE_DATE_FORMAT = new SimpleDateFormat(DATE_DATE_PATTERN);
+    private final DateFormat dateDateFormat = new SimpleDateFormat(DATE_DATE_PATTERN);
 
     private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new LinkedHashMap<Priority, EventSeverity>();
 
@@ -101,7 +105,7 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
     }
 
     protected DateFormat getDefaultDateFormat() {
-        return ISO8601_DATE_FORMAT;
+        return iso8601DateFormat;
     }
 
     protected Date parseDateString(String dateString) throws ParseException {
@@ -110,10 +114,10 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
             timestamp = super.parseDateString(dateString);
         } catch (ParseException e) {
             try {
-                timestamp = DATE_DATE_FORMAT.parse(dateString);
+                timestamp = dateDateFormat.parse(dateString);
             } catch (java.text.ParseException e1) {
                 try {
-                    timestamp = ABSOLUTE_DATE_FORMAT.parse(dateString);
+                    timestamp = absoluteDateFormat.parse(dateString);
                 } catch (java.text.ParseException e2) {
                     throw new ParseException("Unable to parse date '" + dateString
                         + "' using either ISO8601, DATE, or ABSOLUTE date formats. Please specify a date format.");

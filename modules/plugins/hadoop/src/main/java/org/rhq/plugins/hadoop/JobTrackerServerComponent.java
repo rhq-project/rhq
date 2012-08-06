@@ -83,6 +83,7 @@ public class JobTrackerServerComponent extends HadoopServerComponent {
                 updateUnprocessedMeasurements();
                 Map<String, Set<JobSummary>> pendingJobs = unprocessedCalltimeMeasurements.get(request.getName());
                 report.addData(createCalltimeData(request, pendingJobs));
+                pendingJobs.clear();
             }
         } else {
             super.handleMetric(report, request);

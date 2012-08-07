@@ -253,7 +253,7 @@ public class ServerInstallUtil {
             "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
             RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
             "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-        noTxDsRequest.remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
 
         props.clear();
         props.put("ServerName", "${rhq.server.database.server-name:127.0.0.1}");
@@ -264,7 +264,7 @@ public class ServerInstallUtil {
             JDBC_DRIVER_POSTGRES, "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5,
             50, 75, RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
             "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-        xaDsRequest.remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        xaDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
 
         ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
         ModelNode results = client.execute(batch);

@@ -316,15 +316,6 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         return map;
     }
 
-    @Override
-    public void setSystemProperty(String name, String value) throws Exception {
-        try {
-            new JBossASClient(getClient()).setSystemProperty(name, value);
-        } catch (Exception e) {
-            throw new Exception(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
     /**
      * Save the given properties to the server's .properties file.
      *
@@ -350,7 +341,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // we need to put them as system properties now so when we hot deploy,
         // the replacement variables in the config files pick up the new values
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
-            setSystemProperty(entry.getKey(), entry.getValue());
+            System.setProperty(entry.getKey(), entry.getValue());
         }
 
         return;

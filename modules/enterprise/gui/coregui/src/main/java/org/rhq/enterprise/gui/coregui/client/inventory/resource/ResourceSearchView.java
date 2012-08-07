@@ -18,13 +18,38 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.*;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -34,7 +59,15 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.*;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
@@ -45,15 +78,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
-
 /**
- * The list view for {@link Resource}s.
+ * The list view for {@link Resource}s. If not specified a default title is assigned.  If not specified the list will
+ * be initially sorted by resource name, ascending. 
  *
  * @author Jay Shaughnessy
  * @author Greg Hinkle
@@ -62,6 +89,8 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.common_title_resources();
+    private static final SortSpecifier[] DEFAULT_SORT_SPECIFIER = new SortSpecifier[] { new SortSpecifier("name",
+        SortDirection.ASCENDING) };
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
@@ -71,23 +100,21 @@ public class ResourceSearchView extends Table {
      * A list of all Resources in the system.
      */
     public ResourceSearchView(String locatorId) {
-        this(locatorId, null);
-    }
-
-    public ResourceSearchView(String locatorId, String title, String[] excludeFields) {
-        this(locatorId, null, title, null, excludeFields);
+        this(locatorId, null, null, null, null, false);
     }
 
     /**
      * A Resource list filtered by a given criteria.
      */
     public ResourceSearchView(String locatorId, Criteria criteria) {
-        this(locatorId, criteria, DEFAULT_TITLE);
+        this(locatorId, criteria, null, null, null, false);
     }
 
+    /**
+     * A Resource list filtered by a given criteria and optionally exportable
+     */
     public ResourceSearchView(String locatorId, Criteria criteria, boolean exportable) {
-        this(locatorId, criteria);
-        this.exportable = exportable;
+        this(locatorId, criteria, null, null, null, exportable);
     }
 
     /**
@@ -96,7 +123,7 @@ public class ResourceSearchView extends Table {
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
-        this(locatorId, criteria, title, null, null, headerIcons);
+        this(locatorId, criteria, title, null, null, false, headerIcons);
     }
 
     /**
@@ -106,7 +133,22 @@ public class ResourceSearchView extends Table {
      */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {
-        super(locatorId, title, criteria, sortSpecifier, excludeFields);
+
+        this(locatorId, criteria, title, sortSpecifier, excludeFields, false, headerIcons);
+    }
+
+    /**
+     * A Resource list filtered by a given criteria with the given title and optionally exportable.
+     *
+     * @param headerIcons 24x24 icon(s) to be displayed in the header
+     */
+    public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
+        String[] excludeFields, boolean exportable, String... headerIcons) {
+
+        super(locatorId, (null == title) ? DEFAULT_TITLE : title, criteria,
+            (null == sortSpecifier) ? DEFAULT_SORT_SPECIFIER : sortSpecifier, excludeFields);
+
+        this.exportable = exportable;
 
         for (String headerIcon : headerIcons) {
             addHeaderIcon(headerIcon);
@@ -309,7 +351,7 @@ public class ResourceSearchView extends Table {
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new TableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return true;

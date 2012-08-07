@@ -110,7 +110,9 @@ public class ServerInstallUtil {
             "remote-destination-outbound-socket-binding", "mail-smtp");
         ModelNode writeHost = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
         writeHost.get(JBossASClient.NAME).set("host");
-        writeHost.get(JBossASClient.VALUE).setExpression(smtpHostExpr);
+        // TODO: see https://issues.jboss.org/browse/AS7-5321 - that must be fixed before supporting expressions
+        //writeHost.get(JBossASClient.VALUE).setExpression(smtpHostExpr);
+        writeHost.get(JBossASClient.VALUE).set(serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST)); // remove when AS7-5321 is fixed
 
         // now the SMTP port
         addr = Address.root().add("socket-binding-group", "standard-sockets",

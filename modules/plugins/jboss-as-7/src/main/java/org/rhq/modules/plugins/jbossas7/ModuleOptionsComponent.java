@@ -474,7 +474,7 @@ public class ModuleOptionsComponent extends BaseComponent implements Configurati
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         //determine the component
         ResourceType resourceType = context.getResourceType();
-        ConfigurationDefinition configDef = resourceType.getPluginConfigurationDefinition();
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         Set<ResourceType> nodeParentTypes = context.getResourceType().getParentResourceTypes();
         ResourceType parentType = (ResourceType) nodeParentTypes.toArray()[0];
         ResourceType grandParentType = (ResourceType) parentType.getParentResourceTypes().toArray()[0];

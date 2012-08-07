@@ -34,11 +34,12 @@ import org.rhq.core.domain.measurement.TraitMeasurement;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * @author John Sanda
  */
-public interface MetricsServerPluginFacet {
+public interface MetricsServerPluginFacet extends ServerPluginComponent {
 
     void addNumericData(Set<MeasurementDataNumeric> data);
 

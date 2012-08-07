@@ -521,14 +521,20 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     private void deployServices(HashMap<String, String> serverProperties) throws Exception {
         try {
+            ModelControllerClient client = getClient();
+
             // create the security domain needed by the datasources
-            ServerInstallUtil.createDatasourceSecurityDomain(getClient(), serverProperties);
+            ServerInstallUtil.createDatasourceSecurityDomain(client, serverProperties);
 
             // create the JDBC driver configurations for use by datasources
-            ServerInstallUtil.createNewJdbcDrivers(getClient(), serverProperties);
+            ServerInstallUtil.createNewJdbcDrivers(client, serverProperties);
 
             // create the datasources
-            ServerInstallUtil.createNewDatasources(getClient(), serverProperties);
+            ServerInstallUtil.createNewDatasources(client, serverProperties);
+
+            // setup the email service
+            ServerInstallUtil.setupMailService(client, serverProperties);
+
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));

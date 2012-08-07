@@ -45,6 +45,7 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
+import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.FailureException;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
@@ -82,6 +83,50 @@ public class ServerInstallUtil {
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
     private static final String JDBC_DRIVER_POSTGRES = "postgres";
     private static final String JDBC_DRIVER_ORACLE = "oracle";
+
+    /**
+     * Prepares the mail service by configuring the SMTP settings.
+     * 
+     * @param mcc JBossAS management client
+     * @param serverProperties the server's properties
+     */
+    public static void setupMailService(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        String fromAddressExpr = "${" + ServerProperties.PROP_EMAIL_FROM_ADDRESS + ":rhqadmin@localhost.com}";
+        String smtpHostExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_HOST + ":localhost}";
+        String smtpPortExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_PORT + ":25}";
+
+        // Tweek the mail configuration that comes out of box. Setup a batch request to write the proper attributes.
+
+        // First, the from address (TODO: there is also a "ssl", "username" and "password" attribute we could set for authz)
+        Address addr = Address.root().add(JBossASClient.SUBSYSTEM, "mail", "mail-session", "java:jboss/mail/Default");
+        ModelNode writeFromAddr = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
+        writeFromAddr.get(JBossASClient.NAME).set("from");
+        writeFromAddr.get(JBossASClient.VALUE).setExpression(fromAddressExpr);
+
+        // now the SMTP host
+        addr = Address.root().add("socket-binding-group", "standard-sockets",
+            "remote-destination-outbound-socket-binding", "mail-smtp");
+        ModelNode writeHost = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
+        writeHost.get(JBossASClient.NAME).set("host");
+        writeHost.get(JBossASClient.VALUE).setExpression(smtpHostExpr);
+
+        // now the SMTP port
+        addr = Address.root().add("socket-binding-group", "standard-sockets",
+            "remote-destination-outbound-socket-binding", "mail-smtp");
+        ModelNode writePort = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
+        writePort.get(JBossASClient.NAME).set("port");
+        writePort.get(JBossASClient.VALUE).setExpression(smtpPortExpr);
+
+        ModelNode batch = JBossASClient.createBatchRequest(writeFromAddr, writeHost, writePort);
+        JBossASClient client = new JBossASClient(mcc);
+        ModelNode response = client.execute(batch);
+        if (!JBossASClient.isSuccess(response)) {
+            throw new FailureException(response, "Failed to setup mail service");
+        }
+        return;
+    }
 
     /**
      * Give the server properties, this returns the type of database that will be connected to.

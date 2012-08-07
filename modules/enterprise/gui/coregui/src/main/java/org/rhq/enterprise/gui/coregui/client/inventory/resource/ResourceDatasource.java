@@ -52,6 +52,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -249,6 +250,11 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** ResourceCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
+
+        // filter out unsortable fields (i.e. fields sorted client-side only)
+        PageControl pageControl = getPageControl(request);
+        pageControl.removeOrderingField(AncestryUtil.RESOURCE_ANCESTRY);
+        criteria.setPageControl(pageControl);
 
         return criteria;
     }

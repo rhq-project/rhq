@@ -66,6 +66,8 @@ public abstract class AncestryUtil {
         ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
         ancestryField.setAlign(Alignment.LEFT);
         ancestryField.setCellAlign(Alignment.LEFT);
+        // sorting on the encoded db value is not useful, limit to client sorting when we have all of the values
+        ancestryField.setCanSortClientOnly(true);
         setupAncestryListGridFieldCellFormatter(ancestryField);
         setupAncestryListGridFieldHover(ancestryField);
         return ancestryField;

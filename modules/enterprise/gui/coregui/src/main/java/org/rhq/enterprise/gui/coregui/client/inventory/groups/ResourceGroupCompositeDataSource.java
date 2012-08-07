@@ -47,6 +47,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -56,6 +57,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  */
 public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGroupComposite, ResourceGroupCriteria> {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public static final String FILTER_GROUP_IDS = "resourceGroupIds";
 
@@ -112,7 +115,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
                     if (caught.getMessage().contains("SearchExpressionException")) {
-                        Message message = new Message("Invalid search expression.", Message.Severity.Error);
+                        Message message = new Message(MSG.search_invalid_search_expression(), Message.Severity.Error);
                         CoreGUI.getMessageCenter().notify(message);
                     } else {
                         CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);

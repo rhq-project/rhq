@@ -199,22 +199,22 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // Prepare the db schema.
         // existingSchemaOption is either overwrite, keep or skip.
         // If in auto-install mode, we can be told to overwrite, skip or auto (meaning "keep" if schema exists)
-        ServerInstallUtil.ExistingSchemaOption existingSchemaOptionEnum;
+        ExistingSchemaOption existingSchemaOptionEnum;
         if (autoInstallMode) {
             final String s = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_DATABASE);
             if (s == null || s.equalsIgnoreCase("auto")) {
-                existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.KEEP;
+                existingSchemaOptionEnum = ExistingSchemaOption.KEEP;
             } else {
-                existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.valueOf(s);
+                existingSchemaOptionEnum = ExistingSchemaOption.valueOf(s);
             }
         } else {
             if (existingSchemaOption == null) {
                 throw new Exception("Don't know what to do with the database schema");
             }
-            existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.valueOf(existingSchemaOption);
+            existingSchemaOptionEnum = ExistingSchemaOption.valueOf(existingSchemaOption);
         }
 
-        if (ServerInstallUtil.ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+        if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
             if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
                     ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
@@ -398,7 +398,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
      * @param serverProperties the server properties
      * @throws Exception
      */
-    public ServerDetails getServerDetailsFromPropertiesOnly(HashMap<String, String> serverProperties) throws Exception {
+    private ServerDetails getServerDetailsFromPropertiesOnly(HashMap<String, String> serverProperties) throws Exception {
 
         String highAvailabilityName = serverProperties.get(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
         String publicEndpoint = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_PUBLIC_ADDR);

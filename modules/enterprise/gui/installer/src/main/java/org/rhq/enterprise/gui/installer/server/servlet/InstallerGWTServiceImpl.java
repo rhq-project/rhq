@@ -27,6 +27,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -50,10 +51,44 @@ import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.Support
  *
  * @author John Mazzitelli
  */
-@WebServlet(value = "/org.rhq.enterprise.gui.installer.Installer/InstallerGWTService")
+@WebServlet(value = "/org.rhq.enterprise.gui.installer.Installer/InstallerGWTService", loadOnStartup = 1)
 public class InstallerGWTServiceImpl extends RemoteServiceServlet implements InstallerGWTService {
 
     private static final long serialVersionUID = 1L;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+
+        // our installer is ready - let's see if we are in auto-install mode - if so, begin the install immediately
+        final boolean autoInstallMode;
+        final HashMap<String, String> serverProperties;
+
+        try {
+            serverProperties = getServerProperties();
+            autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
+        } catch (Throwable t) {
+            log("Cannot determine if in auto-install mode; using manual mode but installer may not work properly.", t);
+            return;
+        }
+
+        if (autoInstallMode) {
+            Runnable asyncAutoInstall = new Runnable() {
+                public void run() {
+                    try {
+                        log("The server is preconfigured - performing auto-install immediately...");
+                        install(serverProperties, null, null);
+                        log("The server has been auto-installed and should be ready shortly.");
+                    } catch (Throwable t) {
+                        log("The server was preconfigured but it failed to auto-install!", t);
+                    }
+                }
+            };
+            new Thread(asyncAutoInstall, "RHQ Server Auto-Install Thread").start();
+        } else {
+            log("In manual-install mode, user must complete the installation via the Installer GUI");
+        }
+    }
 
     @Override
     public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails,
@@ -205,7 +240,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             if (s == null || s.equalsIgnoreCase("auto")) {
                 existingSchemaOptionEnum = ExistingSchemaOption.KEEP;
             } else {
-                existingSchemaOptionEnum = ExistingSchemaOption.valueOf(s);
+                existingSchemaOptionEnum = ExistingSchemaOption.valueOf(s.toUpperCase());
             }
         } else {
             if (existingSchemaOption == null) {
@@ -217,16 +252,21 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
             if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                    log("Database schema exists but installer was told to overwrite it - a new schema will be created now.");
                     ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
                         getLogDir());
                 } else {
+                    log("Database schema exists - it will now be updated.");
                     ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
                         clearTextDbPassword, getLogDir());
                 }
             } else {
+                log("Database schema does not yet exist - it will now be created.");
                 ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
                     getLogDir());
             }
+        } else {
+            log("Ignoring database schema - installer will assume it exists and is already up-to-date.");
         }
 
         // ensure the server info is up to date and stored in the DB

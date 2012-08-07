@@ -167,14 +167,27 @@
         <c:simple-property name="operationResult" description="Outcome of stopping the JobTracker"/>
       </results>
     </operation>
-    <operation name="job_list" displayName="Lists Running Jobs" description="Lists the currently running jobs.">
+    <operation name="job_list_running" displayName="Lists Running Jobs" description="Lists the currently running jobs.">
       <results>
         <c:simple-property name="operationResult" description="Outcome of listing the running jobs"/>
+      </results>
+    </operation>
+    <operation name="job_list_all" displayName="Lists All Jobs" description="Lists all jobs.">
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of listing the all jobs"/>
       </results>
     </operation>
     <operation name="queue_list" displayName="Lists Job Queue" description="Lists the content of the job queue.">
       <results>
         <c:simple-property name="operationResult" description="Outcome of listing the job queue"/>
+      </results>
+    </operation>
+    <operation name="kill" displayName="Kill Running Job" description="Kills the specified running job.">
+      <parameters>
+      <c:simple-property name="pid"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of killing the job"/>
       </results>
     </operation>
 

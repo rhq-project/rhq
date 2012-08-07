@@ -72,12 +72,18 @@ public class HadoopOperationsDelegate {
         case QUEUE_LIST:
             results = queueList(operation);
             break;
-        case JOB_LIST:
+        case JOB_LIST_RUNNING:
+            results = invokeGeneralOperation(operation);
+            break;
+        case JOB_LIST_ALL:
             results = invokeGeneralOperation(operation);
             break;
         case REBALANCE_DFS:
             results = invokeGeneralOperation(operation);
-            break;    
+            break;
+        case KILL:
+            results = invokeGeneralOperation(operation, parameters, null);
+            break;
         default:
             throw new UnsupportedOperationException(operation.toString());
         }
@@ -106,7 +112,7 @@ public class HadoopOperationsDelegate {
      * @return the object encapsulating the exit code, err output and std output
      */
     private ProcessExecutionResults stop(HadoopSupportedOperations operation, String serverType) {
-        return invokeGeneralOperation(operation, serverType);
+        return invokeGeneralOperation(operation, null, serverType);
     }
 
     /**
@@ -115,7 +121,7 @@ public class HadoopOperationsDelegate {
      * @return the object encapsulating the exit code, err output and std output
      */
     private ProcessExecutionResults start(HadoopSupportedOperations operation, String serverType) {
-        return invokeGeneralOperation(operation, serverType);
+        return invokeGeneralOperation(operation, null, serverType);
     }
 
     /**
@@ -188,14 +194,19 @@ public class HadoopOperationsDelegate {
     }
 
     private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation) {
-        return invokeGeneralOperation(operation, null);
+        return invokeGeneralOperation(operation, null, null);
     }
 
-    private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation, String serverType) {
+    private ProcessExecutionResults invokeGeneralOperation(HadoopSupportedOperations operation, Configuration parameters, String serverType) {
         String hadoopHome = resourceContext.getPluginConfiguration()
             .getSimple(HadoopServerDiscovery.HOME_DIR_PROPERTY).getStringValue();
         String executable = hadoopHome + operation.getRelativePathToExecutable();
         String args = operation.getArgs() + (serverType == null ? "" : serverType.toLowerCase());
+        if (operation.getClass() != null) {
+            for (String paramName : operation.getParamsNames()) {
+                args += " " + parameters.getSimpleValue(paramName);
+            }
+        }
 
         ProcessExecutionResults results = executeExecutable(resourceContext.getSystemInformation(), executable, args,
             MAX_WAIT, true, true);

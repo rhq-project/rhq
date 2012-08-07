@@ -30,16 +30,21 @@ public enum HadoopSupportedOperations {
     START("/bin/hadoop-daemon.sh", "start "),
     STOP("/bin/hadoop-daemon.sh", "stop "),
     QUEUE_LIST("/bin/hadoop", "queue -list"),
-    JOB_LIST("/bin/hadoop", "job -list"),
-    REBALANCE_DFS("/bin/hadoop", "balancer");
+    JOB_LIST_RUNNING("/bin/hadoop", "job -list"),
+    JOB_LIST_ALL("/bin/hadoop", "job -list all"),
+    REBALANCE_DFS("/bin/hadoop", "balancer"),
+    KILL("/bin/hadoop", "job -kill", "pid");
 
     private final String relativePathToExecutable;
 
     private final String args;
+    
+    private final String[] paramNames;
 
-    private HadoopSupportedOperations(String relativePathToExecutable, String args) {
+    private HadoopSupportedOperations(String relativePathToExecutable, String args, String... paramNames) {
         this.relativePathToExecutable = relativePathToExecutable;
         this.args = args;
+        this.paramNames = paramNames;
     }
 
     public String getRelativePathToExecutable() {
@@ -48,5 +53,9 @@ public enum HadoopSupportedOperations {
 
     public String getArgs() {
         return args;
+    }
+
+    public String[] getParamsNames() {
+        return paramNames;
     }
 }

@@ -735,7 +735,7 @@
                   <exclusion>
                      <scope>test</scope>
                   </exclusion>
-                  <!--<exclusion> 
+                  <!--<exclusion>
                      <scope>provided</scope>
                   </exclusion>-->
                </exclusions>
@@ -1568,6 +1568,10 @@
         <contributor>
             <name>Torben Jäger</name>
             <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Richard Hensman</name>
+            <timezone>0</timezone>
         </contributor>
         <contributor>
             <name>Rafael Chies</name>

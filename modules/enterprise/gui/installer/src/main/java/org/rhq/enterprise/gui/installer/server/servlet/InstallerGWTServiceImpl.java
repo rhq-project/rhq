@@ -35,7 +35,6 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
-import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -44,6 +43,7 @@ import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.ExistingSchemaOption;
+import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.SupportedDatabaseType;
 
 /**
  * Remote RPC API implementation for the GWT Installer.
@@ -55,21 +55,21 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     private static final long serialVersionUID = 1L;
 
-    private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
-
     @Override
-    public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption) throws Exception {
+    public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails,
+        String existingSchemaOption) throws Exception {
+
         // make sure the data is at least in the correct format (booleans are true/false, integers are valid numbers)
-        StringBuilder dataErrors = new StringBuilder();
+        final StringBuilder dataErrors = new StringBuilder();
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
-            String name = entry.getKey();
+            final String name = entry.getKey();
             if (ServerProperties.BOOLEAN_PROPERTIES.contains(name)) {
-                String newValue = entry.getValue();
+                final String newValue = entry.getValue();
                 if (!(newValue.equals("true") || newValue.equals("false"))) {
                     dataErrors.append("[" + name + "] must be 'true' or 'false' : [" + newValue + "]\n");
                 }
             } else if (ServerProperties.INTEGER_PROPERTIES.contains(name)) {
-                String newValue = entry.getValue();
+                final String newValue = entry.getValue();
                 try {
                     Integer.parseInt(newValue);
                 } catch (NumberFormatException e) {
@@ -87,7 +87,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
         // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
         // if not in auto-install mode, make sure user gave us the server details that we will need
-        boolean autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
+        final boolean autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
         if (autoInstallMode) {
             serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
         } else {
@@ -107,35 +107,33 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         DatabaseTypeFactory.clearDatabaseTypeCache();
 
         // determine the type of database to connect to
-        String databaseType = serverProperties.get(ServerProperties.PROP_DATABASE_TYPE);
+        final String databaseType = serverProperties.get(ServerProperties.PROP_DATABASE_TYPE);
         if (ServerInstallUtil.isEmpty(databaseType)) {
             throw new Exception("Please indicate the type of database to connect to");
         }
 
-        boolean isPostgres = databaseType.toLowerCase().indexOf("postgres") > -1;
-        boolean isOracle = databaseType.toLowerCase().indexOf("oracle") > -1;
-
-        if (isPostgres == false && isOracle == false) {
+        SupportedDatabaseType supportedDbType = ServerInstallUtil.getSupportedDatabaseType(databaseType);
+        if (supportedDbType == null) {
             throw new IllegalArgumentException("Invalid database type: " + databaseType);
         }
 
         // parse the database connection URL to extract the servername/port/dbname; this is needed for the XA datasource
         try {
-            String url = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            final String url = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
             Pattern pattern = null;
-            if (isPostgres) {
+            if (supportedDbType == SupportedDatabaseType.POSTGRES) {
                 pattern = Pattern.compile(".*://(.*):([0123456789]+)/(.*)"); // jdbc:postgresql://host.name:5432/rhq
-            } else if (isOracle) {
+            } else if (supportedDbType == SupportedDatabaseType.ORACLE) {
                 // if we ever find that we'll need these props set, uncomment below and it should all work
                 //pattern = Pattern.compile(".*@(.*):([0123456789]+)[:/](.*)"); // jdbc:oracle:thin:@host.name:1521:rhq (or /rhq)
             }
 
             if (pattern != null) {
-                Matcher match = pattern.matcher(url);
+                final Matcher match = pattern.matcher(url);
                 if (match.find() && (match.groupCount() == 3)) {
-                    String serverName = match.group(1);
-                    String port = match.group(2);
-                    String dbName = match.group(3);
+                    final String serverName = match.group(1);
+                    final String port = match.group(2);
+                    final String dbName = match.group(3);
                     serverProperties.put(ServerProperties.PROP_DATABASE_SERVER_NAME, serverName);
                     serverProperties.put(ServerProperties.PROP_DATABASE_PORT, port);
                     serverProperties.put(ServerProperties.PROP_DATABASE_DB_NAME, dbName);
@@ -158,10 +156,10 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             String quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE";
             String quartzLockHandlerClass = "org.quartz.impl.jdbcjobstore.StdRowLockSemaphore";
 
-            if (isPostgres) {
+            if (supportedDbType == SupportedDatabaseType.POSTGRES) {
                 dialect = "org.hibernate.dialect.PostgreSQLDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate";
-            } else if (isOracle) {
+            } else if (supportedDbType == SupportedDatabaseType.ORACLE) {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.oracle.OracleDelegate";
             }
@@ -178,16 +176,19 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // test the connection to make sure everything is OK - note that if we are in auto-install mode,
         // the password will have been obfuscated, so we need to de-obfucate it in order to use it.
         // make sure the server properties map itself has an obfuscated password
-        String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
-        String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
-        String dbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        String clearTextDbPassword;
+        String obfuscatedDbPassword;
         if (autoInstallMode) {
-            dbPassword = ServerInstallUtil.deobfuscatePassword(dbPassword);
+            obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+            clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
         } else {
-            serverProperties.put(ServerProperties.PROP_DATABASE_PASSWORD,
-                ServerInstallUtil.obfuscatePassword(dbPassword));
+            clearTextDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+            obfuscatedDbPassword = ServerInstallUtil.obfuscatePassword(clearTextDbPassword);
+            serverProperties.put(ServerProperties.PROP_DATABASE_PASSWORD, obfuscatedDbPassword);
         }
-        String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, dbPassword);
+        final String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, clearTextDbPassword);
         if (testConnectionErrorMessage != null) {
             throw new Exception("Cannot connect to the database: " + testConnectionErrorMessage);
         }
@@ -200,7 +201,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // If in auto-install mode, we can be told to overwrite, skip or auto (meaning "keep" if schema exists)
         ServerInstallUtil.ExistingSchemaOption existingSchemaOptionEnum;
         if (autoInstallMode) {
-            String s = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_DATABASE);
+            final String s = serverProperties.get(ServerProperties.PROP_AUTOINSTALL_DATABASE);
             if (s == null || s.equalsIgnoreCase("auto")) {
                 existingSchemaOptionEnum = ServerInstallUtil.ExistingSchemaOption.KEEP;
             } else {
@@ -214,26 +215,30 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         }
 
         if (ServerInstallUtil.ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
-            if (isDatabaseSchemaExist(dbUrl, dbUsername, dbPassword)) {
+            if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                    ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, dbPassword, getLogDir());
-                } else {
-                    ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails, dbPassword,
+                    ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
                         getLogDir());
+                } else {
+                    ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
+                        clearTextDbPassword, getLogDir());
                 }
             } else {
-                ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, dbPassword, getLogDir());
+                ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
+                    getLogDir());
             }
         }
 
         // ensure the server info is up to date and stored in the DB
-        ServerInstallUtil.storeServerDetails(serverProperties, dbPassword, serverDetails);
+        ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
 
         // create a keystore whose cert has a CN of this server's public endpoint address
         ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
 
         // now create our deployment services and our main EAR
-        // TODO: finish this
+        deployServices(serverProperties);
+
+        // TODO: deploy the EAR
         return;
     }
 
@@ -251,7 +256,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     public ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName)
         throws Exception {
         try {
-            ServerDetails sd = ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
+            final ServerDetails sd = ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
             if (ServerInstallUtil.isEmpty(sd.getName())) {
                 try {
                     sd.setEndpointAddress(InetAddress.getLocalHost().getCanonicalHostName());
@@ -285,18 +290,18 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public String testConnection(String connectionUrl, String username, String password) throws Exception {
-        String results = ServerInstallUtil.testConnection(connectionUrl, username, password);
+        final String results = ServerInstallUtil.testConnection(connectionUrl, username, password);
         return results;
     }
 
     @Override
     public HashMap<String, String> getServerProperties() throws Exception {
-        File serverPropertiesFile = getServerPropertiesFile();
-        PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
-        Properties props = propsFile.loadExistingProperties();
+        final File serverPropertiesFile = getServerPropertiesFile();
+        final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
+        final Properties props = propsFile.loadExistingProperties();
 
         // force some hardcoded defaults for IBM JVMs that must have specific values
-        boolean isIBM = System.getProperty("java.vendor", "").contains("IBM");
+        final boolean isIBM = System.getProperty("java.vendor", "").contains("IBM");
         if (isIBM) {
             for (String algPropName : ServerProperties.IBM_ALGOROTHM_SETTINGS) {
                 props.setProperty(algPropName, "IbmX509");
@@ -304,11 +309,20 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         }
 
         // GWT can't handle Properties - convert to HashMap
-        HashMap<String, String> map = new HashMap<String, String>(props.size());
+        final HashMap<String, String> map = new HashMap<String, String>(props.size());
         for (Object property : props.keySet()) {
             map.put(property.toString(), props.getProperty(property.toString()));
         }
         return map;
+    }
+
+    @Override
+    public void setSystemProperty(String name, String value) throws Exception {
+        try {
+            new JBossASClient(getClient()).setSystemProperty(name, value);
+        } catch (Exception e) {
+            throw new Exception(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     /**
@@ -322,11 +336,11 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
      * @throws Exception if failed to save the properties to the .properties file
      */
     private void saveServerProperties(HashMap<String, String> serverProperties) throws Exception {
-        File serverPropertiesFile = getServerPropertiesFile();
-        PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
+        final File serverPropertiesFile = getServerPropertiesFile();
+        final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
 
         // GWT can't handle Properties - so we use HashMap but convert to Properties internally
-        Properties props = new Properties();
+        final Properties props = new Properties();
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
             props.setProperty(entry.getKey(), entry.getValue());
         }
@@ -336,7 +350,7 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // we need to put them as system properties now so when we hot deploy,
         // the replacement variables in the config files pick up the new values
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
-            System.setProperty(entry.getKey(), entry.getValue());
+            setSystemProperty(entry.getKey(), entry.getValue());
         }
 
         return;
@@ -344,43 +358,43 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public String getAppServerVersion() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String version = client.getStringAttribute("release-version", Address.root());
+        final JBossASClient client = new JBossASClient(getClient());
+        final String version = client.getStringAttribute("release-version", Address.root());
         return version;
     }
 
     @Override
     public String getOperatingSystem() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
-        String osName = client.getStringAttribute("name", Address.root().add(address));
+        final JBossASClient client = new JBossASClient(getClient());
+        final String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
+        final String osName = client.getStringAttribute("name", Address.root().add(address));
         return osName;
     }
 
     private String getAppServerHomeDir() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String[] address = { "core-service", "server-environment" };
-        String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
+        final JBossASClient client = new JBossASClient(getClient());
+        final String[] address = { "core-service", "server-environment" };
+        final String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
         return dir;
     }
 
     private String getAppServerConfigDir() throws Exception {
-        JBossASClient client = new JBossASClient(getClient());
-        String[] address = { "core-service", "server-environment" };
-        String dir = client.getStringAttribute(true, "config-dir", Address.root().add(address));
+        final JBossASClient client = new JBossASClient(getClient());
+        final String[] address = { "core-service", "server-environment" };
+        final String dir = client.getStringAttribute(true, "config-dir", Address.root().add(address));
         return dir;
     }
 
     private String getLogDir() throws Exception {
-        File asHomeDir = new File(getAppServerHomeDir());
-        File logDir = new File(asHomeDir, "../logs"); // this is RHQ's log dir, not JBossAS's log dir
+        final File asHomeDir = new File(getAppServerHomeDir());
+        final File logDir = new File(asHomeDir, "../logs"); // this is RHQ's log dir, not JBossAS's log dir
         logDir.mkdirs(); // create it in case it doesn't yet exist
         return logDir.getAbsolutePath();
     }
 
     private File getServerPropertiesFile() throws Exception {
-        File appServerHomeDir = new File(getAppServerHomeDir());
-        File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
+        final File appServerHomeDir = new File(getAppServerHomeDir());
+        final File serverPropertiesFile = new File(appServerHomeDir, "../bin/rhq-server.properties");
         return serverPropertiesFile;
     }
 
@@ -470,18 +484,23 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     }
 
     private ModelControllerClient getClient() {
-        ModelControllerClient client = ManagementService.getClient();
+        final ModelControllerClient client = ManagementService.getClient();
         return client;
     }
 
-    private void createDatasourceSecurityDomain(String username, String password) throws Exception {
-        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(getClient());
-        final String securityDomain = RHQ_SECURITY_DOMAIN;
-        if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, username, password);
-            log("Security domain [" + securityDomain + "] created");
-        } else {
-            log("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+    private void deployServices(HashMap<String, String> serverProperties) throws Exception {
+        try {
+            // create the security domain needed by the datasources
+            ServerInstallUtil.createDatasourceSecurityDomain(getClient(), serverProperties);
+
+            // create the JDBC driver configurations for use by datasources
+            ServerInstallUtil.createNewJdbcDrivers(getClient(), serverProperties);
+
+            // create the datasources
+            ServerInstallUtil.createNewDatasources(getClient(), serverProperties);
+        } catch (Exception e) {
+            log("deployServices failed", e);
+            throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
         }
     }
 }

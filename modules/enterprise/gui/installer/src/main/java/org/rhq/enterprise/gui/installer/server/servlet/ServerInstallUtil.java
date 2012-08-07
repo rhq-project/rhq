@@ -42,6 +42,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.helper.ProjectHelper2;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.dmr.ModelNode;
+
+import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
+import org.rhq.common.jbossas.client.controller.FailureException;
+import org.rhq.common.jbossas.client.controller.JBossASClient;
+import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
@@ -65,6 +72,236 @@ public class ServerInstallUtil {
     public enum ExistingSchemaOption {
         OVERWRITE, KEEP, SKIP
     };
+
+    public enum SupportedDatabaseType {
+        POSTGRES, ORACLE
+    };
+
+    private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
+    private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
+    private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String JDBC_DRIVER_POSTGRES = "postgres";
+    private static final String JDBC_DRIVER_ORACLE = "oracle";
+
+    /**
+     * Give the server properties, this returns the type of database that will be connected to.
+     * 
+     * @param serverProperties
+     * @return the type of DB
+     */
+    public static SupportedDatabaseType getSupportedDatabaseType(HashMap<String, String> serverProperties) {
+        return getSupportedDatabaseType(serverProperties.get(ServerProperties.PROP_DATABASE_TYPE));
+    }
+
+    /**
+     * Give the database type string, this returns the type of database that it refers to.
+     * 
+     * @param dbType the database type string
+     * @return the type of DB
+     */
+    public static SupportedDatabaseType getSupportedDatabaseType(String dbType) {
+        if (dbType == null) {
+            return null;
+        }
+        if (dbType.toLowerCase().indexOf("postgres") > -1) {
+            return SupportedDatabaseType.POSTGRES;
+        } else if (dbType.toLowerCase().indexOf("oracle") > -1) {
+            return SupportedDatabaseType.ORACLE;
+        }
+        return null;
+    }
+
+    /**
+     * Creates the security domain for the datasources. This is needed to support
+     * obfuscation of the password in the configuration file.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password to store in the security domain
+     * @throws Exception
+     */
+    public static void createDatasourceSecurityDomain(ModelControllerClient mcc,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        final String obfuscatedPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final String securityDomain = RHQ_SECURITY_DOMAIN;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Security domain [" + securityDomain + "] created");
+        } else {
+            LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+        }
+    }
+
+    /**
+     * Creates JDBC driver configurations so the datasources can properly connect to the backend databases.
+     * This will attempt to create drivers for all supported databases, not just for the database type that
+     * is currently configured.
+     *
+     * @param mcc
+     * @param serverProperties
+     * @throws Exception
+     */
+    public static void createNewJdbcDrivers(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
+
+        final ModelNode postgresDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_POSTGRES,
+            "org.rhq.postgres", "org.postgresql.xa.PGXADataSource");
+        final ModelNode oracleDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_ORACLE, "org.rhq.oracle",
+            "oracle.jdbc.xa.client.OracleXADataSource");
+
+        // if we are to use Oracle, we throw an exception if we can't create the Oracle datasource. We also try to
+        // create the Postgres datasource but because it isn't needed, we don't throw exceptions if that fails, we
+        // just log a warning.
+        // The reverse is true if we are to use Postgres (that is, we ensure Postgres driver is created, but not Oracle).
+        ModelNode results;
+        final SupportedDatabaseType supportedDbType = getSupportedDatabaseType(serverProperties);
+        switch (supportedDbType) {
+        case POSTGRES: {
+            if (client.isJDBCDriver(JDBC_DRIVER_POSTGRES)) {
+                LOG.info("Postgres JDBC driver is already deployed");
+            } else {
+                results = client.execute(postgresDriverRequest);
+                if (!DatasourceJBossASClient.isSuccess(results)) {
+                    throw new FailureException(results, "Failed to create postgres database driver");
+                } else {
+                    LOG.info("Deployed Postgres JDBC driver");
+                }
+            }
+
+            if (client.isJDBCDriver(JDBC_DRIVER_ORACLE)) {
+                LOG.info("Oracle JDBC driver is already deployed");
+            } else {
+                results = client.execute(oracleDriverRequest);
+                if (!DatasourceJBossASClient.isSuccess(results)) {
+                    LOG.warn("Could not create Oracle JDBC Driver - you will not be able to switch to an Oracle DB later: "
+                        + JBossASClient.getFailureDescription(results));
+                } else {
+                    LOG.info("Deployed Oracle JDBC driver for future use");
+                }
+            }
+            break;
+        }
+        case ORACLE: {
+            if (client.isJDBCDriver(JDBC_DRIVER_ORACLE)) {
+                LOG.info("Oracle JDBC driver is already deployed");
+            } else {
+                results = client.execute(oracleDriverRequest);
+                if (!DatasourceJBossASClient.isSuccess(results)) {
+                    throw new FailureException(results, "Failed to create oracle database driver");
+                } else {
+                    LOG.info("Deployed Oracle JDBC driver");
+                }
+            }
+            if (client.isJDBCDriver(JDBC_DRIVER_POSTGRES)) {
+                LOG.info("Postgres JDBC driver is already deployed");
+            } else {
+                results = client.execute(postgresDriverRequest);
+                if (!DatasourceJBossASClient.isSuccess(results)) {
+                    LOG.warn("Could not create Postgres JDBC Driver - you will not be able to switch to a Postgres DB later: "
+                        + JBossASClient.getFailureDescription(results));
+                } else {
+                    LOG.info("Deployed Postgres JDBC driver for future use");
+                }
+            }
+            break;
+        }
+        default:
+            throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
+        }
+
+    }
+
+    /**
+     * Creates the datasources needed by the RHQ Server.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties properties to help determine the properties of the datasources to be created
+     * @throws Exception
+     */
+    public static void createNewDatasources(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final SupportedDatabaseType supportedDbType = getSupportedDatabaseType(serverProperties);
+        switch (supportedDbType) {
+        case POSTGRES: {
+            createNewDatasources_Postgres(mcc);
+            break;
+        }
+        case ORACLE: {
+            createNewDatasources_Oracle(mcc);
+            break;
+        }
+        default:
+            throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
+        }
+
+        LOG.info("Created datasources");
+    }
+
+    private static void createNewDatasources_Postgres(ModelControllerClient mcc) throws Exception {
+        final HashMap<String, String> props = new HashMap<String, String>(4);
+        final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
+
+        props.put("char.encoding", "UTF-8");
+
+        ModelNode noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
+            "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
+            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
+            RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
+        noTxDsRequest.remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+
+        props.clear();
+        props.put("ServerName", "${rhq.server.database.server-name:127.0.0.1}");
+        props.put("PortNumber", "${rhq.server.database.port:5432}");
+        props.put("DatabaseName", "${rhq.server.database.db-name:rhq}");
+
+        ModelNode xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000,
+            JDBC_DRIVER_POSTGRES, "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5,
+            50, 75, RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
+        xaDsRequest.remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+
+        ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
+        ModelNode results = client.execute(batch);
+        if (!DatasourceJBossASClient.isSuccess(results)) {
+            throw new FailureException(results, "Failed to create Postgres datasources");
+        }
+    }
+
+    private static void createNewDatasources_Oracle(ModelControllerClient mcc) throws Exception {
+        final HashMap<String, String> props = new HashMap<String, String>(2);
+        final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
+
+        props.put("char.encoding", "UTF-8");
+        props.put("SetBigStringTryClob", "true");
+
+        ModelNode noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
+            "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
+            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
+            RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+            "TRANSACTION_READ_COMMITTED", "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker",
+            props);
+
+        props.clear();
+        props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
+        props.put("ConnectionProperties", "SetBigStringTryClob=true");
+
+        ModelNode xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
+            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, 75, RHQ_SECURITY_DOMAIN,
+            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker", "TRANSACTION_READ_COMMITTED",
+            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
+
+        ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
+        ModelNode results = client.execute(batch);
+        if (!DatasourceJBossASClient.isSuccess(results)) {
+            throw new FailureException(results, "Failed to create Oracle datasources");
+        }
+    }
 
     /**
      * Determines if we are in auto-install mode. This means the properties file is
@@ -377,6 +614,7 @@ public class ServerInstallUtil {
             updateOrInsertServer(db, conn, serverDetails);
 
         } catch (SQLException e) {
+            // TODO: should we throw an exception here? This would abort the rest of the installation
             LOG.info("Unable to store server entry in the database: " + ThrowableUtil.getAllMessages(e));
         } finally {
             if (null != db) {

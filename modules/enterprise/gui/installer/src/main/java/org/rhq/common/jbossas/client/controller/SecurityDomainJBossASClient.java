@@ -95,6 +95,9 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         loginModule.get(FLAG).set("required");
         ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
         moduleOptions.setEmptyList();
+        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
+        // for username and password so rhq-server.properties can be used to set these.
+        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
         moduleOptions.add(USERNAME, username);
         moduleOptions.add(PASSWORD, password);
         loginModulesNode.add(loginModule);

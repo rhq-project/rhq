@@ -102,6 +102,15 @@ public interface InstallerGWTService extends RemoteService {
     HashMap<String, String> getServerProperties() throws Exception;
 
     /**
+     * Allows the installer to set runtime system properties in the JBossAS app server container.
+     *
+     * @param name the name of the sysprop to set
+     * @param value the value of the sysprop to set
+     * @throws Exception
+     */
+    void setSystemProperty(String name, String value) throws Exception;
+
+    /**
      * Returns the version string for the app server itself (e.g. "7.1.2.Final").
      * @return version string of app server
      * @throws Exception

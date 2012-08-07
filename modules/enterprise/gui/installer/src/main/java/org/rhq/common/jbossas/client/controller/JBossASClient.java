@@ -54,6 +54,7 @@ public class JBossASClient {
     public static final String READ_RESOURCE = "read-resource";
     public static final String WRITE_ATTRIBUTE = "write-attribute";
     public static final String ADD = "add";
+    public static final String SYSTEM_PROPERTY = "system-property";
 
     private ModelControllerClient client;
 
@@ -299,6 +300,22 @@ public class JBossASClient {
         } else {
             throw new FailureException(results, "Failed to get attribute [" + attributeName + "] from [" + address
                 + "]");
+        }
+    }
+
+    /**
+     * Can set a runtime system property in the JVM.
+     *
+     * @param name
+     * @param value
+     * @throws Exception
+     */
+    public void setSystemProperty(String name, String value) throws Exception {
+        ModelNode request = createRequest(ADD, Address.root().add(SYSTEM_PROPERTY, name));
+        request.get(VALUE).set(value);
+        ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response, "Failed to set system property [" + name + "]");
         }
     }
 }

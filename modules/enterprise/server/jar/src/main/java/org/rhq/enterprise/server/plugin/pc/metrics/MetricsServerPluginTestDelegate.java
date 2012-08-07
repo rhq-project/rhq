@@ -24,11 +24,14 @@ package org.rhq.enterprise.server.plugin.pc.metrics;
 import java.util.List;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 
 /**
  * @author John Sanda
  */
 public interface MetricsServerPluginTestDelegate {
+
+    ServerPluginContext createTestContext();
 
     void purgeRawData();
 

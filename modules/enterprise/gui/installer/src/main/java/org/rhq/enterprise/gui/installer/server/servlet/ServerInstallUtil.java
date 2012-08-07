@@ -125,6 +125,7 @@ public class ServerInstallUtil {
         if (!JBossASClient.isSuccess(response)) {
             throw new FailureException(response, "Failed to setup mail service");
         }
+        LOG.info("Mail service has been configured.");
         return;
     }
 

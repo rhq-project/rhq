@@ -23,25 +23,14 @@ import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
-import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Status;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.enterprise.server.system.SystemInfoManagerLocal;
 
 /**
@@ -55,11 +44,13 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
 
     @EJB
     SystemInfoManagerLocal infoMgr;
+    @EJB
+    ServerManagerLocal serverManager;
 
     @Override
     public Response getStatus(HttpHeaders httpHeaders) {
 
-        Map<String,String> statusMap = infoMgr.getSystemInformation (caller);
+        Map<String,String> statusMap = infoMgr.getSystemInformation(caller);
         Status status = new Status();
         status.setValues(statusMap);
 
@@ -73,5 +64,12 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
         }
 
         return builder.build();
+    }
+
+    @Override
+    public StringValue serverState() {
+        Server server = serverManager.getServer();
+        StringValue sv = new StringValue(server.getOperationMode().name());
+        return sv;
     }
 }

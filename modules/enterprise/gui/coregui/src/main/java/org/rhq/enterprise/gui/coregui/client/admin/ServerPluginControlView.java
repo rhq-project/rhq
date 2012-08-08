@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -100,7 +101,7 @@ public class ServerPluginControlView extends LocatableVStack {
         executeButton.setSrc(ImageManager.getOperationIcon());
         executeButton.setPrompt(MSG.common_button_execute());
 
-        final SelectItem controlNamesItem = new SelectItem("controlMenu", MSG.view_admin_plugins_serverControls_name());
+        final SelectItem controlNamesItem = new SortedSelectItem("controlMenu", MSG.view_admin_plugins_serverControls_name());
         LinkedHashMap<String, String> controlNames = new LinkedHashMap<String, String>();
         for (ServerPluginControlDefinition def : controlDefinitions) {
             controlNames.put(def.getName(), def.getDisplayName());

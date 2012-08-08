@@ -41,11 +41,11 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
-    public AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean purgeInternals)
+    public AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean resetMatching)
         throws RuntimeException {
         try {
             AlertDefinition results = alertTemplateManager.updateAlertTemplate(getSessionSubject(), alertDefinition,
-                purgeInternals);
+                resetMatching);
             return SerialUtility.prepare(results, "AlertTemplateService.updateAlertTemplate");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

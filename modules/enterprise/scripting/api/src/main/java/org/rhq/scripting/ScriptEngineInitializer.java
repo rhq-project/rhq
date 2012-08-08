@@ -1,0 +1,104 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+package org.rhq.scripting;
+
+import java.lang.reflect.Method;
+import java.security.PermissionCollection;
+import java.util.Set;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
+/**
+ * Is able to instantiate a script engine and import packages into the context
+ * of the engine. 
+ *
+ * @author Lukas Krejci
+ */
+public interface ScriptEngineInitializer {
+
+    /**
+     * Instantiates a new script engine, makes the provided java packages "imported" into the context
+     * (i.e. classes from those packages can be instantiated without providing the full class name)
+     * and makes the script engine use the scriptSourceProvider to locate scripts.
+     * 
+     * @param packages the list of java packages to be imported in the context
+     * @param scriptSourceProvider the provider of the sources of scripts - can be null to use no
+     * script source provider and depend on the default module loading mechanisms of the script language
+     * @param permissions the security permissions the script engine should execute the script with, can be null
+     * in which case the script engine is unsecured
+     * @return a newly instantiated script engine configured as above
+     * @throws ScriptException
+     */
+    ScriptEngine instantiate(Set<String> packages, PermissionCollection permissions) throws ScriptException;
+    
+    /**
+     * Installs given script source provider into the script engine.
+     * 
+     * @param scriptEngine
+     * @param scriptSourceProvider
+     * 
+     * @throws IllegalArgumentException if the script engine is not supported by this initializer
+     */
+    void installScriptSourceProvider(ScriptEngine scriptEngine, ScriptSourceProvider scriptSourceProvider);
+
+    /**
+     * This function returns a definition string in the script engine's language
+     * that provides an indirection to calling the method on the bound object.
+     * 
+     * for example for parameters:
+     * <ul>
+     * <li> <code>boundObjectName = foo</code>
+     * <li> <code> method = &lt;int bar(int)&gt;</code>
+     * </ul>
+     * The method would generate this javascript:<br/>
+     * <code>
+     * function bar(arg) { return foo.bar(arg); }
+     * </code>
+     * <p>
+     * This method gets passed all the overloaded versions of a method on the object (i.e.
+     * all the methods with the same name) and is free to return any number of functions
+     * that will map all the possible overloaded versions.
+     * <p>
+     * This is because different scripting languages have different support for function
+     * overloading and different ways of handling varying number of arguments of a function.
+     *  
+     * @param boundObjectName
+     * @param overloadedMethods
+     * @return a set of strings with top-level function definitions in the scripting language
+     */
+    Set<String> generateIndirectionMethods(String boundObjectName, Set<Method> overloadedMethods);
+    
+    /**
+     * At least the Rhino script engine for java script generates exceptions
+     * whose error messages contain just "too much" information to be easily
+     * decipherable by the end users.
+     * <p>
+     * This method extracts messages from the exception such that they are
+     * presentable to the end user.
+     * <p>
+     * The returned string should only contain the error message. The filename, line
+     * and column information should be stripped from it if at all possible.
+     * 
+     * @param e
+     * @return
+     */
+    String extractUserFriendlyErrorMessage(ScriptException e);
+}

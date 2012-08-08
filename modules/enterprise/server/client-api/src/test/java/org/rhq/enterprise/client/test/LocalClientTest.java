@@ -31,14 +31,15 @@ import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
 import org.jmock.Expectations;
+import org.jmock.api.Invocation;
+import org.jmock.lib.action.CustomAction;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.test.JMockTest;
 
 /**
@@ -65,17 +66,39 @@ public class LocalClientTest extends JMockTest {
     @Test
     public void testResilienceAgainstContextClassloaders() throws Exception {
         CONTEXT_MOCK_FOR_TEST = context.mock(Context.class);
-        final AlertManagerRemote alertManagerMock = (AlertManagerRemote) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { AlertManagerRemote.class, AlertManagerLocal.class }, new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return null;
-            }
-            
-        });
         
         context.checking(new Expectations() {{
             allowing(CONTEXT_MOCK_FOR_TEST).lookup(with(any(String.class)));
-            will(returnValue(alertManagerMock));
+                will(new CustomAction("Fake JNDI lookup") {
+
+                    @Override
+                    public Object invoke(Invocation invocation) throws Throwable {
+                        //the JNDI name is "rhq/<BEAN_NAME>/local"
+                        String jndiName = (String) invocation.getParameter(0);
+
+                        String beanName = jndiName.substring(jndiName.indexOf('/') + 1, jndiName.lastIndexOf('/'));
+
+                        String managerName = beanName.substring(0, beanName.length() - "Bean".length());
+
+                        //we basically need to define a mock implementation of both the local and remote
+                        //interface here - as if it were a proper SLSB.
+                        RhqManager manager = Enum.valueOf(RhqManager.class, managerName);
+                        Class<?> remoteIface = manager.remote();
+
+                        String localIfaceName = remoteIface.getName().substring(0,
+                            remoteIface.getName().length() - "Remote".length())
+                            + "Local";
+                        Class<?> localIface = Class.forName(localIfaceName);
+
+                        return Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { localIface,
+                            remoteIface }, new InvocationHandler() {
+                            @Override
+                            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                                return null;
+                            }
+                        });
+                    }
+                });
             
             allowing(CONTEXT_MOCK_FOR_TEST).close();
         }});
@@ -89,10 +112,16 @@ public class LocalClientTest extends JMockTest {
             LocalClient lc = new LocalClient(null);
             
             //this call creates the proxy and is theoretically prone to the context classloader
-            AlertManagerRemote am = lc.getAlertManager();
+            Object am = lc.getScriptingAPI().get(RhqManager.AlertManager);
 
-            //check that both the original and simplified methods exist on the returned object
-            am.getClass().getMethod("deleteAlerts", new Class<?>[] { Subject.class, int[].class });            
+            //check that only the simplified method exists on the returned object
+            try {
+                am.getClass().getMethod("deleteAlerts", new Class<?>[] { Subject.class, int[].class });
+                Assert.fail("The original remote interface method should not be available on the scripting API proxy.");
+            } catch (NoSuchMethodException e) {
+                //expected
+            }
+
             am.getClass().getMethod("deleteAlerts", new Class<?>[] { int[].class });
         } finally {
             Thread.currentThread().setContextClassLoader(origCl);

@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2010 Red Hat, Inc.
+* Copyright (C) 2005-2012 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,11 @@ import java.util.jar.Attributes;
  * @author Ian Springer
  */
 public enum JBossProductType {
-    AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
-    EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
-    EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"), // the customer offering    
-    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "default"); // the customer SOA platform
+    AS("JBoss AS", "JBoss Application Server", "default"),
+    EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"),
+    EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"),
+    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "default"),
+    BRMS("JBoss BRMS", "JBoss Business Rules Management System", "default");
 
     public final String NAME;
     public final String DESCRIPTION;
@@ -43,6 +44,7 @@ public enum JBossProductType {
     private static final String EAP_IMPLEMENTATION_TITLE = "JBoss [EAP]";
     private static final String EWP_IMPLEMENTATION_TITLE = "JBoss [EWP]";
     private static final String SOA_IMPLEMENTATION_TITLE = "JBoss [SOA]";
+    private static final String BRMS_IMPLEMENTATION_TITLE = "JBoss [BRMS]";
 
     JBossProductType(String name, String description, String defaultConfigName) {
         this.NAME = name;
@@ -68,6 +70,8 @@ public enum JBossProductType {
                 result = JBossProductType.EWP;
             } else if (implementationTitle.equalsIgnoreCase(SOA_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.SOA;
+            } else if (implementationTitle.equalsIgnoreCase(BRMS_IMPLEMENTATION_TITLE)) {
+                result = JBossProductType.BRMS;
             }
         }
         return result;

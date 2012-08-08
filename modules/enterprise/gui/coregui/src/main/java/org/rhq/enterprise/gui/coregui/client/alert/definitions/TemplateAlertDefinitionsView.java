@@ -206,7 +206,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertTemplateService().createAlertTemplate(alertDefinition,
                 Integer.valueOf(this.resourceType.getId()), new AsyncCallback<Integer>() {
@@ -224,7 +224,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         } else {
-            GWTServiceLookup.getAlertTemplateService().updateAlertTemplate(alertDefinition, true,
+            GWTServiceLookup.getAlertTemplateService().updateAlertTemplate(alertDefinition, resetMatching,
                 new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {

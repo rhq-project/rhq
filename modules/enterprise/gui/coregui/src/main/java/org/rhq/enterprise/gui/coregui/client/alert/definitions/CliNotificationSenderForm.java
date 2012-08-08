@@ -59,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
@@ -226,7 +227,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     SectionItem userSection = new SectionItem("userSection");
                     userSection.setDefaultValue(MSG.view_alert_definition_notification_cliScript_editor_whichUser());
 
-                    repoSelector = new SelectItem(extendLocatorId("repoSelector"), MSG
+                    repoSelector = new SortedSelectItem(extendLocatorId("repoSelector"), MSG
                         .view_alert_definition_notification_cliScript_editor_selectRepo());
                     repoSelector.setDefaultToFirstOption(true);
                     repoSelector.setWrapTitle(false);
@@ -557,7 +558,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private DynamicForm createExistingPackageForm() {
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("existingPackageForm"));
         form.setTitleOrientation(TitleOrientation.TOP);
-        existingPackageSelector = new SelectItem(extendLocatorId("existingPackageSelector"), "");
+        existingPackageSelector = new SortedSelectItem(extendLocatorId("existingPackageSelector"), "");
         existingPackageSelector.setDefaultToFirstOption(true);
         existingPackageSelector.setWrapTitle(false);
         existingPackageSelector.setRedrawOnChange(true);

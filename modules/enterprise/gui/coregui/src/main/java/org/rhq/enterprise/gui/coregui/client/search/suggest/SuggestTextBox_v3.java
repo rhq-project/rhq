@@ -18,47 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search.suggest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
-import com.google.gwt.event.dom.client.HasAllFocusHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.TextBoxBase;
-
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -68,7 +38,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+@Deprecated
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
+
     HasSelectionHandlers<Suggestion> {
 
     private static final Messages MSG = CoreGUI.getMessages();
@@ -648,6 +625,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     }
 
+    @Deprecated
     class SearchSuggestOracle extends SuggestOracle {
         private SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
@@ -738,6 +716,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     }
 
+    @Deprecated
     class SearchSuggestionRequest extends SuggestOracle.Request {
         private int cursorPosition;
 

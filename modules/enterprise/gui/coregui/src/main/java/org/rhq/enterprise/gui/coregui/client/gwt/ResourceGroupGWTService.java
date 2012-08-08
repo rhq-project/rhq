@@ -27,6 +27,7 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 
 /**
  * @author Greg Hinkle
@@ -64,9 +65,11 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     void setAssignedResources(int groupId, int[] resourceIds, boolean setType) throws RuntimeException;
 
-    void recalculateGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException;
+    void recalculateGroupDefinitions(int[] groupDefinitionIds)
+        throws DuplicateExpressionTypeException, RuntimeException;
 
-    void updateGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException;
+    void updateGroupDefinition(GroupDefinition groupDefinition)
+        throws DuplicateExpressionTypeException, RuntimeException;
 
     void updateResourceGroup(ResourceGroup group) throws RuntimeException;
 

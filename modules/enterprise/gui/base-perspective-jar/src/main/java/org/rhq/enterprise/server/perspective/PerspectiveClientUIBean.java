@@ -87,7 +87,7 @@ public class PerspectiveClientUIBean {
         if (subject == null) {
             RemoteClient remoteClient = getRemoteClient();
             // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
-            SubjectManagerRemote subjectManager = remoteClient.getSubjectManager();
+            SubjectManagerRemote subjectManager = remoteClient.getProxy(SubjectManagerRemote.class);
             if (this.rhqSessionId != null) {
                 log.info("Retrieving subject for user [" + getUsername() + "] and sessionId [" + this.rhqSessionId
                     + "]...");

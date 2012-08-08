@@ -210,7 +210,8 @@
                                             document.getElementById('propForm:haendpointport').value = '';
                                             document.getElementById('propForm:haendpointsecureport').value = '';
                                             if (document.getElementById('propForm:haaffinitygroup') != null) {
-                                               document.getElementById('propForm:haaffinitygroup').value = ''; }
+                                               document.getElementById('propForm:haaffinitygroup').value = ''; 
+                                            }
                                             submit(); }" >
                   <f:selectItems value="#{configurationBean.registeredServerNames}" />
                </h:selectOneMenu>
@@ -233,7 +234,7 @@
                <h:outputText value="#{bundle.propertyHighAvailabilityName}" />
             </h:outputLink>
             <h:inputText id="haservername" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
-                         value="#{configurationBean.haServerName}" >
+                         value="#{configurationBean.haServerName}" readonly="#{not configurationBean.installationSettingsConfigurable}">
             </h:inputText>
             <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />
             <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />

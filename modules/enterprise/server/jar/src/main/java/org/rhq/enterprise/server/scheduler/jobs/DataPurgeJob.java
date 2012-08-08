@@ -32,6 +32,7 @@ import org.quartz.StatefulJob;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -56,7 +57,6 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
     private static long HOUR = 60 * 60 * 1000L;
-    private static long DAY = 24L * HOUR;
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
@@ -118,6 +118,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeEventData(LookupUtil.getEventManager(), systemConfig);
         purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
+        purgeOrphanedAlertConditions(LookupUtil.getAlertConditionManager());
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
@@ -236,6 +237,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Alert definitions purged [" + alertDefinitionsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeOrphanedAlertConditions(AlertConditionManagerLocal alertConditionManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Alert condition orphan purge starting at " + new Date(timeStart));
+        int orphansPurged = 0;
+
+        try {
+            orphansPurged = alertConditionManager.purgeOrphanedAlertConditions();
+        } catch (Exception e) {
+            LOG.error("Failed to purge alert condition data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Purged [" + orphansPurged + "] orphan alert conditions - completed in [" + duration + "]ms");
         }
     }
 

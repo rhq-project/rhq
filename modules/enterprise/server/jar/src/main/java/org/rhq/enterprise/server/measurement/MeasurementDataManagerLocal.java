@@ -164,11 +164,24 @@ public interface MeasurementDataManagerLocal {
     /**
      * Get live metrics for a given MeasurementSchedule
      *
-     * @param  sched MeasurementSchedule to obtain the data for
+     * @param subject the user that is requesting the data
+     * @param resourceId the id of the resource
+     * @param definitionIds the array of ids of schedule definitions
      *
      * @return MeasurementData for this Schedule
      */
     Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
+    
+    /**
+     * Get live metrics for a given MeasurementSchedule
+     *
+     * @param subject the user that is requesting the data
+     * @param resourceId the array of ids of the resources
+     * @param definitionIds the array of ids of schedule definitions
+     *
+     * @return MeasurementData for this Schedule
+     */
+    Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceIds, int[] definitionIds);
 
     /**
      * Returns a list of numeric data point lists for the given compatible group - one per specified measurement

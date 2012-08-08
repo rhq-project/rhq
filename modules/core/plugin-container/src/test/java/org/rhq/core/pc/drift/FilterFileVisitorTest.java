@@ -71,6 +71,7 @@ public class FilterFileVisitorTest {
             visitor.visitedFiles, "Visitor should be called for every file when no filters specified");
     }
 
+    // This could be a DriftDetectorTest but fits well here. 
     @Test
     public void visitBaseDirFilesThatMatchFilters() throws Exception {
         File fooJar = touch(basedir, "foo.jar");
@@ -78,10 +79,10 @@ public class FilterFileVisitorTest {
         File myapp = touch(basedir, "myapp.war");
         touch(basedir, "bar.jar");
 
+        // These filter paths should all normalize to the same directory
         List<Filter> includes = asList(new Filter(".", "foo*"), new Filter("./", "*.war"), new Filter("/", "goo*"));
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
-
         forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, gooJar, myapp), visitor.visitedFiles,

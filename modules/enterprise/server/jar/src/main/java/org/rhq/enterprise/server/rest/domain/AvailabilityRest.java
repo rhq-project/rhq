@@ -35,6 +35,7 @@ public class AvailabilityRest {
 
     long since;
     String type;
+    Long until;
 
     int resourceId;
 
@@ -79,5 +80,13 @@ public class AvailabilityRest {
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public Long getUntil() {
+        return until;
+    }
+
+    public void setUntil(Long until) {
+        this.until = until;
     }
 }

@@ -284,6 +284,12 @@ if $JAVA -version 2>&1 | grep "IBM J9" >/dev/null 2>&1; then
    fi
 fi
 
+#-----------------------------------------------------------------------
+# Setup the Python package scanning in case we have Python scripting available
+#-----------------------------------------------------------------------
+JYTHON_CACHE_DIR="$RHQ_SERVER_HOME/jbossas/server/default/data/jython.cachedir"
+PYTHON_ADDITIONAL_CLASSPATH="$RHQ_SERVER_HOME/jbossas/server/default/deploy/rhq.ear/rhq-core-domain-ejb3.jar/./"
+
 # ----------------------------------------------------------------------
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
@@ -293,7 +299,7 @@ if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
 fi
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
 # Note that the double equals for the policy file specification IS INTENTIONAL
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.util.logging.config.file=$RHQ_SERVER_HOME/jbossas/server/default/conf/logging.properties -Djava.security.manager -Djava.security.policy==$RHQ_SERVER_HOME/bin/rhq-server.security-policy"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.util.logging.config.file=$RHQ_SERVER_HOME/jbossas/server/default/conf/logging.properties -Djava.security.manager -Djava.security.policy==$RHQ_SERVER_HOME/bin/rhq-server.security-policy -Dpython.cachedir=$JYTHON_CACHE_DIR -Drhq.python.additional.classpath=$PYTHON_ADDITIONAL_CLASSPATH"
 
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"

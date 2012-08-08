@@ -1,44 +1,32 @@
 package org.rhq.enterprise.client.commands;
 
-import static java.util.Collections.*;
 import static java.util.Arrays.asList;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
-import java.util.Map;
-import java.util.Collections;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 
 import org.testng.annotations.Test;
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.enterprise.clientapi.RemoteClient;
-import org.rhq.enterprise.server.alert.AlertManagerRemote;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.RepoManagerRemote;
-import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.authz.RoleManagerRemote;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
-import org.rhq.enterprise.server.auth.SubjectManagerRemote;
-import org.rhq.bindings.client.RhqManagers;
+
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.core.domain.auth.Subject;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptContext;
-import javax.script.Bindings;
+import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.clientapi.RemoteClient;
 
 public class ScriptCommandTest {
 
     ScriptCommand cmd;
+    ClientMain client;
     
     @Test(enabled=false)
     public void executeShouldSetDefaultBindings() throws Exception {
-        ClientMain client = createClient();
+        client = createClient();
         cmd = new ScriptCommand();
         String script = "exec var x = 1;";
         String[] args = asList(script).toArray(new String[] {});
@@ -61,7 +49,7 @@ public class ScriptCommandTest {
     }
 
     void assertSubjectBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object subject = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("subject");
 
         assertNotNull(subject, "Expected variable 'subject' to be bound to script in global scope");
@@ -72,10 +60,10 @@ public class ScriptCommandTest {
     }
 
     void assertManagersBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         List<String> mgrsNotBound = new ArrayList<String>();
 
-        for (RhqManagers mgr : RhqManagers.values()) {
+        for (RhqManager mgr : RhqManager.values()) {
             if (!scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(mgr.name())) {
                 mgrsNotBound.add(mgr.remoteName());
             }
@@ -88,7 +76,7 @@ public class ScriptCommandTest {
     }
 
     void assertPrettyWriterBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object writer = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("pretty");
 
         assertNotNull(writer, "Expected variable 'pretty' to be bound to script in global scope");
@@ -99,7 +87,7 @@ public class ScriptCommandTest {
     }
 
     void assertScriptUtilsBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object scriptUtil = scriptEngine.get("scriptUtil");
 
         assertNotNull(scriptUtil, "Expected variable 'scriptUtil' to be bound to script in engine scope");
@@ -110,7 +98,7 @@ public class ScriptCommandTest {
     }
 
     void assertIsDefinedFunctionBoundToScript() {
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        ScriptEngine scriptEngine = client.getScriptEngine();
         Object function = scriptEngine.get("isDefined");
 
         assertNotNull(function, "Expected function 'isDefined' to be bound to script in engine scope");
@@ -120,56 +108,6 @@ public class ScriptCommandTest {
 
         public RemoteClientStub(String host, int port) {
             super(host, port);
-        }
-
-        @Override
-        public AlertManagerRemote getAlertManager() {
-            return null;
-        }
-
-        @Override
-        public AlertDefinitionManagerRemote getAlertDefinitionManager() {
-            return null;
-        }
-
-        @Override
-        public ConfigurationManagerRemote getConfigurationManager() {
-            return null;
-        }
-
-        @Override
-        public RepoManagerRemote getRepoManager() {
-            return null;
-        }
-
-        @Override
-        public ContentManagerRemote getContentManager() {
-            return null;
-        }
-
-        @Override
-        public OperationManagerRemote getOperationManager() {
-            return null;
-        }
-
-        @Override
-        public RoleManagerRemote getRoleManager() {
-            return null;
-        }
-
-        @Override
-        public ResourceManagerRemote getResourceManager() {
-            return null;
-        }
-
-        @Override
-        public ResourceGroupManagerRemote getResourceGroupManager() {
-            return null;
-        }
-
-        @Override
-        public SubjectManagerRemote getSubjectManager() {
-            return null;
         }
     }
 

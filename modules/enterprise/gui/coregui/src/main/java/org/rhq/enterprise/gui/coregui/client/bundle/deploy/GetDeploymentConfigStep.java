@@ -19,13 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -58,8 +59,11 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 // This has started behaving badly. Instead of moving ahead let's give them a message
                 // and a chance to go back to the previous screen. 
                 // this.wizard.getView().incrementStep();
-                HeaderLabel label = new HeaderLabel(MSG.view_bundle_deployWizard_getConfigSkip());
+                HTMLFlow label = new HTMLFlow(MSG.view_bundle_deployWizard_getConfigSkip());
                 label.setWidth100();
+                label.setHeight(50);
+                label.setStylePrimaryName("HeaderLabel");
+                label.setStyleName("HeaderLabel");
                 editor = new VLayout();
                 editor.addMember(label);
             } else {
@@ -100,9 +104,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
             config = new Configuration();
         } else {
             config = config.deepCopy(false);
-            //TODO: get access to this method, may need to add slsb call
-            //      also, may need to enhance this drop unnecessary config (maybe it can just stay around) 
-            //ConfigurationUtility.normalizeConfiguration(config, configDef);
+            ConfigurationUtility.normalizeConfiguration(config, configDef, true, false);
         }
 
         return config;

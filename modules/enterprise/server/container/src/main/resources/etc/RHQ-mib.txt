@@ -13,12 +13,12 @@ IMPORTS
 rhqMIB MODULE-IDENTITY
     LAST-UPDATED    "201112200000Z"
     ORGANIZATION    "RHQ-Project"
-    CONTACT-INFO    "http://www.rhq-project.org/"
+    CONTACT-INFO    "http://www.jboss.org/rhq"
     DESCRIPTION
         "The MIB module for RHQ alerts.
 
         This file is part of the RHQ management platform
-        Copyright (C) 2005-2011 Red Hat, Inc.
+        Copyright (C) 2005-2012 Red Hat, Inc.
         All rights reserved.
     "
 

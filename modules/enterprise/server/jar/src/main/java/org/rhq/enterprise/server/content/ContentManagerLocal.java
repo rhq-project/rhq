@@ -421,7 +421,7 @@ public interface ContentManagerLocal {
     InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
 
     /**
-     * @see {@link ContentManagerRemote#getPackageBytes(Subject, int, int)
+     * @see {@link ContentManagerRemote#getPackageBytes(Subject, int, int)}
      */
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
 

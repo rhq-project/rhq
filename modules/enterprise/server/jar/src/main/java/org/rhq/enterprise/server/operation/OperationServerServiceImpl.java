@@ -39,6 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * <ul>
  *   <li>an operation successfully completed</li>
  *   <li>an operation was invoked but failed</li>
+ *   <li>an operation was invoked but canceled</li>
  *   <li>an operation was invoked but timed out before completing</li>
  * </ul>
  *
@@ -46,6 +47,48 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class OperationServerServiceImpl implements OperationServerService {
     private static final Log LOG = LogFactory.getLog(OperationServerServiceImpl.class);
+
+    public void operationCanceled(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+        long completionTime) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Operation invocation [" + jobId + "] was canceled [" + error + "] "
+                + getFromStartToEndTimestampString(invocationTime, completionTime));
+        }
+
+        try {
+            Subject superuser = LookupUtil.getSubjectManager().getOverlord();
+            OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+            ResourceOperationHistory history = null;
+
+            history = (ResourceOperationHistory) operationManager.getOperationHistoryByJobId(superuser, jobId);
+
+            // I think this will only ever occur if the server-side timed this out but the long running
+            // operation finally got back to us afterwards. We will still go ahead and
+            // persist the failure data because, obviously, the operation really didn't time out.
+            // I think, in reality, this condition will never occur (since the server-side will only ever
+            // timeout ridiculously long-lived operations, which is typically only when an agent shutdown occurred).
+            if (history.getStatus() != OperationRequestStatus.INPROGRESS) {
+                LOG.debug("Was told an operation was canceled but, curiously, it was not in progress: " + "job-id=["
+                    + jobId + "], op-history=[" + history + "]");
+            }
+
+            if (error != null) {
+                history.setErrorMessage(error.getStackTraceString());
+            } else {
+                history.setErrorMessage("Operation was canceled at " + new Date(completionTime));
+            }
+
+            history.setResults(result);
+            history.setStatus(OperationRequestStatus.CANCELED);
+
+            operationManager.updateOperationHistory(superuser, history);
+            operationManager.checkForCompletedGroupOperation(history.getId());
+        } catch (Exception e) {
+            LOG.error("Failed to update history from canceled operation, jobId=[" + jobId + "]. Cause: " + e, e);
+            LOG.error("The canceled operation [" + jobId + "] had an error of: "
+                + ((error != null) ? error.getStackTraceString() : "?"));
+        }
+    }
 
     public void operationFailed(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
         long completionTime) {

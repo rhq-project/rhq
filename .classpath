@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/scripting/api/src/main/java"/>
 	<classpathentry kind="src" path="modules/cli-tests/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/jeeGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/bundleGen/src/main/java"/>
@@ -106,6 +107,7 @@
 	<classpathentry kind="src" path="modules/plugins/postgres/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/mysql/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/oracle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/apache/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
@@ -115,6 +117,7 @@
 	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>
@@ -153,7 +156,7 @@
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>
-    <classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>  
+	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-test-util/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
@@ -308,7 +311,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.0.Final/arquillian-container-spi-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.0.Final/arquillian-container-test-api-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.0.Final/arquillian-testng-core-1.0.0.Final.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>    
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

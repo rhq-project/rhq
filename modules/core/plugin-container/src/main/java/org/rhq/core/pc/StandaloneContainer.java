@@ -347,6 +347,8 @@ public class StandaloneContainer {
             System.err.println("Failure executing the operation: \n" + res.getErrorStackTrace());
         } else if (res.getResultCode() == OperationServicesResultCode.TIMED_OUT) {
             System.err.println("Operation timed out ");
+        } else if (res.getResultCode() == OperationServicesResultCode.CANCELED) {
+            System.err.println("Operation was canceled ");
         } else {
             Configuration result = res.getComplexResults();
             if (result == null)

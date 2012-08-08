@@ -51,6 +51,10 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeasurement, GenericTraitMeasurementCriteria>
     extends RPCDataSource <T, MeasurementDataTraitCriteria> {
 
+    public static final String FIELD_METRIC_SCHED_ID = "id";
+    public static final String FIELD_METRIC_NAME = "name";
+    public static final String FIELD_METRIC_DISPLAY_NAME = "displayName";
+
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected MetricsGWTServiceAsync metricsService = GWTServiceLookup.getMetricsService();
@@ -71,9 +75,13 @@ public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeas
         primaryKeyField.setHidden(true);
         fields.add(primaryKeyField);
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.dataSource_traits_field_definitionID());
+        DataSourceIntegerField idField = new DataSourceIntegerField(FIELD_METRIC_SCHED_ID, MSG.dataSource_traits_field_definitionID());
         idField.setHidden(true);
         fields.add(idField);
+        
+        DataSourceIntegerField nameField = new DataSourceIntegerField(FIELD_METRIC_NAME, MSG.common_title_name());
+        nameField.setHidden(true);
+        fields.add(nameField);
 
         return fields;
     }
@@ -214,11 +222,13 @@ public abstract class AbstractMeasurementDataTraitDataSource<T extends TraitMeas
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
-        record.setAttribute("id", from.getDefinitionId());
+        record.setAttribute(FIELD_METRIC_SCHED_ID, from.getDefinitionId());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
             new Date(from.getTimestamp()));
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());
+        record.setAttribute(FIELD_METRIC_NAME, from.getName());
+        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getResourceId());
 
         return record;
     }

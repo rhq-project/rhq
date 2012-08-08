@@ -20,12 +20,14 @@
 package org.rhq.enterprise.server.alert.test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.transaction.TransactionManager;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -70,7 +72,7 @@ import org.rhq.test.TransactionCallbackWithContext;
 
 @Test
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
-    private static final boolean ENABLED = false;
+    private static final boolean ENABLED = true;
 
     // this must match the constant found in ServerManagerBean
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
@@ -343,10 +345,84 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         }
     }
 
+    @Test(enabled = ENABLED)
+    public void testBZ830463_updateDef() throws Exception {
+        // create our resource with alert definition
+        MeasurementDefinition metricDef = createResourceWithMetricSchedule();
+        AlertDefinition alertDef = createAlertDefinitionWithOneInsideRangeCondition(metricDef, resource.getId());
+
+        assert alertDef.getConditions().size() == 1 : "1 alertDef condition should exist";
+        AlertCondition condition = alertDef.getConditions().iterator().next();
+        int conditionId = condition.getId();
+
+        // re-load the resource so we get the measurement schedule
+        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
+        MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
+
+        // simulate a measurement report coming from the agent - one values that fits in our range, so 1 alert is fired
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, Double.valueOf(50.0))); // 50 < 60 AND 50 > 40
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        dataManager.mergeMeasurementReport(report);
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(5000);
+
+        // make sure one alert was triggered
+        List<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+        Alert alert = alerts.get(0);
+
+        assert alert.getConditionLogs().size() == 1 : "1 condition log should exist";
+        AlertConditionLog conditionLog = alert.getConditionLogs().iterator().next();
+        Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
+            "original condition should have been associated with the alert");
+
+        // update a non-condition aspect of the def and then update the def
+        String updatedDesc = "Updated Description";
+        alertDef.setDescription(updatedDesc);
+        AlertDefinition updatedAlertDef = LookupUtil.getAlertDefinitionManager().updateAlertDefinition(getOverlord(),
+            alertDef.getId(), alertDef, false); // note that resetMatching is false
+        assert updatedDesc.equals(updatedAlertDef.getDescription()) : "Description should be updated";
+        assert updatedAlertDef.getConditions().size() == 1 : "1 alertDef condition should exist after the update";
+        assert updatedAlertDef.getConditions().iterator().next().getId() == condition.getId() : "condition should not be updated";
+
+        // get the alert again, and make sure it still has a log with the same condition
+        alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+        alert = alerts.get(0);
+
+        assert alert.getConditionLogs().size() == 1 : "1 condition log should exist after the update";
+        conditionLog = alert.getConditionLogs().iterator().next();
+        Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
+            "original condition should still have been associated with the alert");
+
+        // update the condition on the def and then update the def
+        condition.setThreshold(Double.valueOf(41.0));
+        updatedAlertDef = LookupUtil.getAlertDefinitionManager().updateAlertDefinition(getOverlord(), alertDef.getId(),
+            alertDef, true); // note that resetMatching is true
+        assert updatedAlertDef.getConditions().size() == 1 : "1 alertDef condition should exist after the update";
+        assert updatedAlertDef.getConditions().iterator().next().getId() != condition.getId() : "condition should be updated";
+
+        // get the alert again, and make sure it still has a log with the same condition
+        alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+        alert = alerts.get(0);
+
+        assert alert.getConditionLogs().size() == 1 : "1 condition log should exist after the update";
+        conditionLog = alert.getConditionLogs().iterator().next();
+        Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
+            "original condition should still have been associated with the alert");
+
+        return;
+    }
+
     private PageList<Alert> getAlerts(int resourceId) {
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         AlertCriteria alertCriteria = new AlertCriteria();
         alertCriteria.addFilterResourceIds(resourceId);
+        alertCriteria.fetchConditionLogs(true);
         PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
         return alerts;
     }

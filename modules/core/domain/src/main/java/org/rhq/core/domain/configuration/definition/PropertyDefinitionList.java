@@ -22,7 +22,10 @@
  */
 package org.rhq.core.domain.configuration.definition;
 
+import java.lang.Integer;
+
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -32,6 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
+
 
 /**
  * The definition of a list of properties where each member of the list has the same definition. The definition of the
@@ -46,17 +50,11 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyDefinitionList extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * See JBNADM-1595
-     */
-    @Transient
-    private int min;
+    @Column(name = "MIN_ENTRIES")
+    private int min = 0;
 
-    /**
-     * See JBNADM-1595
-     */
-    @Transient
-    private int max;
+    @Column(name = "MAX_ENTRIES")
+    private int max = Integer.MAX_VALUE;
 
     @JoinColumn(name = "parent_list_definition_id")
     @OneToOne(cascade = CascadeType.ALL)

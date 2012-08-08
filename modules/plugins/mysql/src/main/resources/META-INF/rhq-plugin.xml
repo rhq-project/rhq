@@ -335,6 +335,7 @@
       <service name="Database" class="MySqlDatabaseComponent" discovery="MySqlDatabaseDiscoveryComponent">
          <plugin-configuration>
             <c:simple-property name="databaseName" displayName="Database Name" readOnly="true" />
+            <c:simple-property name="tableDiscovery" displayName="Table Discovery" readOnly="false" type="boolean" default="true"/>
          </plugin-configuration>
 
           <operation name="invokeSql" description="Execute arbitrary SQL">

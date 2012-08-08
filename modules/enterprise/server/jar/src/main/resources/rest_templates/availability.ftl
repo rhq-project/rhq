@@ -22,5 +22,9 @@
 <#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.AvailabilityRest" -->
 
 State: ${var.type}<br/>
-Since: ${var.since?number_to_time}
+Since: ${var.since?number_to_datetime}
+<#if var.until?has_content>
+ until ${var.until?number_to_datetime}
+</#if>
+<br/>
 <a href="/rest/1/resource/${var.resourceId?c}.html">Back to Resource</a>

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import java.util.Date;
+import java.util.Set;
+
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -26,20 +29,23 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.*;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-
-import java.util.Date;
-import java.util.Set;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 
 /**
  * @author Greg Hinkle
@@ -156,7 +162,12 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
 
                 resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailureSelection(), caught);
+                        if (caught instanceof DuplicateExpressionTypeException) {
+                            CoreGUI.getMessageCenter().notify(new Message(caught.getMessage(),
+                                Message.Severity.Warning));
+                        } else {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailureSelection(), caught);
+                        }
                     }
 
                     public void onSuccess(Void result) {

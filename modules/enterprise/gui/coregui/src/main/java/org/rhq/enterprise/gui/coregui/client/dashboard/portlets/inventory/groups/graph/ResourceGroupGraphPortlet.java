@@ -35,6 +35,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -125,7 +126,7 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         //rec.setAttribute("name", "current");
         //resourceGroupSelector.setAssigned(new ListGridRecord[] { rec });
 
-        final SelectItem metric = new SelectItem(CFG_DEFINITION_ID, MSG.common_title_metric()) {
+        final SelectItem metric = new SortedSelectItem(CFG_DEFINITION_ID, MSG.common_title_metric()) {
             @Override
             protected Criteria getPickListFilterCriteria() {
                 Criteria criteria = new Criteria();

@@ -42,7 +42,7 @@ import javax.persistence.Table;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID, //
     query = "SELECT acl " //
         + "    FROM AlertConditionLog AS acl " //
@@ -63,16 +63,27 @@ import javax.persistence.Table;
         + "                       FROM Alert a " //
         + "                       JOIN a.conditionLogs ac" // 
         + "                      WHERE a.id IN ( :alertIds ) )"),
-    // deletes condition logs via the alert def, not alerts, because not every condition log may not
-    // yet be associated with an alert. Also, avoids joining with the potentially large alert table
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //
+    // This query removes condition logs via the alert def, not alerts, because not every condition log may 
+    // yet be associated with an alert. This is required by Resource bulk delete to pick up the condition logs missed
+    // by QUERY_DELETE_BY_RESOURCES.  It will not get the logs for AlertConditions detached from the AlertDefinition.  
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, //
     query = "DELETE AlertConditionLog acl " //
         + "   WHERE acl.condition.id IN ( SELECT ac.id " //
         + "                             FROM AlertCondition ac " //
         + "                             JOIN ac.alertDefinition ad " //
         + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
+    // This query will remove condition logs for conditions that are associated with alerts, regardless of whether
+    // the AlertCondition has been detached from the AlertDef. This is what you want if you are deleting alerts for
+    // a resource.  It does not fully satisfy Resource bulk delete. 
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM AlertDefinition alertDef " //
+        + "                             JOIN alertDef.alerts alert " //
+        + "                            WHERE alertDef.resource.id IN ( :resourceIds ) ))"),
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE, // 
-    query = "DELETE AlertConditionLog log " + "  WHERE  log.alert.id IN (SELECT alert.id "
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.alert.id IN (SELECT alert.id "
         + "                          FROM   AlertDefinition alertDef "
         + "                          JOIN   alertDef.alerts alert "
         + "                          WHERE  alertDef.resourceType.id = :resourceTypeId)"),
@@ -104,6 +115,7 @@ public class AlertConditionLog implements Serializable {
     public static final String QUERY_DELETE_ALL = "AlertConditionLog.deleteByAll";
     public static final String QUERY_DELETE_BY_ALERT_IDS = "AlertConditionLog.deleteByAlertIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertConditionLog.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES_BULK_DELETE = "AlertConditionLog.deleteByResourcesBulkDelete";
     public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "AlertConditionLog.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertConditionLog.deleteByResourceGroups";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";

@@ -138,6 +138,8 @@ public abstract class TestConfigurationFactory {
             "a list of Integer simples", true, new PropertyDefinitionSimple("integer", "an integer", false,
                 PropertySimpleType.INTEGER));
         listOfSimplesPropDef.setDisplayName(listOfSimplesPropDef.getName());
+        listOfSimplesPropDef.setMax(listOfSimplesPropDef.getMax());
+        listOfSimplesPropDef.setMin(listOfSimplesPropDef.getMin());
         addPropertyDefinition(configDef, listOfSimplesPropDef, orderIndex++);
 
         PropertyDefinitionMap mapInListPropDef =

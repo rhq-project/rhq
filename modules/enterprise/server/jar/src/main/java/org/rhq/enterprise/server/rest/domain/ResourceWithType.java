@@ -140,4 +140,17 @@ public class ResourceWithType {
     public String getAncestry() {
         return ancestry;
     }
+
+    @Override
+    public String toString() {
+        return "ResourceWithType{" +
+                "resourceName='" + resourceName + '\'' +
+                ", resourceId=" + resourceId +
+                ", typeName='" + typeName + '\'' +
+                ", typeId=" + typeId +
+                ", pluginName='" + pluginName + '\'' +
+                ", parentId=" + parentId +
+                ", ancestry='" + ancestry + '\'' +
+                '}';
+    }
 }

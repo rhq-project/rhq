@@ -75,6 +75,7 @@ public class GroupCreateStep extends AbstractWizardStep {
             TextItem name = new TextItem("name", MSG.common_title_name());
             name.setRequired(true);
             name.setWidth(300);
+            name.setLength(100);
             name.addChangedHandler(new ChangedHandler() {
                 @Override
                 public void onChanged(ChangedEvent changedEvent) {

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -75,7 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -285,7 +286,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * </pre>
      * This is called from onInit() and guarantees grid not null.
      * 
-     * @param ListGrid grid
+     * @param grid
      */
     protected void configureListGrid(ListGrid grid) {
         listGrid.setWidth100();
@@ -309,8 +310,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             configureTableFilters();
         } else {
             if (!this.hideSearchBar) {
-                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                    getSearchSubsystem(), getInitialSearchBarSearchText());
+                final EnhancedSearchBarItem searchFilter = new EnhancedSearchBarItem("search", getSearchSubsystem(),
+                    getInitialSearchBarSearchText());
                 setFilterFormItems(searchFilter);
             }
         }
@@ -372,14 +373,47 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return SelectionStyle.MULTIPLE;
     }
 
+    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then 
+    // lays down the canvas.  This gives subclasses a chance to perform initialization (including async calls)
+    // required to support the overrides (like configureTable()) they may have provided and that are called in 
+    // doOnDraw().
     @Override
     protected void onDraw() {
-        try {
-            super.onDraw();
+        super.onDraw();
 
+        if (isInitialized()) {
+            doOnDraw();
+
+        } else {
+            new Timer() {
+                final long startTime = System.currentTimeMillis();
+
+                public void run() {
+                    if (isInitialized()) {
+                        doOnDraw();
+                        cancel();
+
+                    } else {
+                        // if after 10s we still aren't initialized just keep going, else try again
+                        long elapsedMillis = System.currentTimeMillis() - startTime;
+                        if (elapsedMillis < 10000L) {
+                            schedule(100); // Reschedule the timer.
+
+                        } else {
+                            doOnDraw();
+                            cancel();
+                        }
+                    }
+                }
+            }.run(); // fire the timer immediately    
+        }
+    }
+
+    protected void doOnDraw() {
+        try {
             // I'm not sure this is necessary as I'm not sure it's the case that draw()/onDraw() will get called
             // multiple times. But if it did/does, this protects us by removing the current members before they
-            // get set below.  Note that by having this here we *can non* add members in onInit, because they will
+            // get set below.  Note that by having this here we *can not* add members in onInit, because they will
             // immediately get removed. -jshaughn
             for (Canvas child : contents.getMembers()) {
                 contents.removeChild(child);
@@ -463,6 +497,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
+
+        markForRedraw();
     }
 
     private void refreshRowCount() {
@@ -735,10 +771,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         final ListGrid listGrid = getListGrid();
 
         Criteria criteria = getCurrentCriteria();
-        if (Log.isDebugEnabled()) {
-            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria)
-                + "]...");
-        }
+        Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
         listGrid.setCriteria(criteria);
 
         if (resetPaging) {
@@ -1075,10 +1108,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     }
                     if (deletedRecordNames.size() == selectedRecordCount) {
                         // all selected schedules were successfully deleted.
-                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(
-                            String.valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
-                            .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
-                                getDataTypeNamePlural(), deletedRecordNames.toString()));
+                        String deletedMessage = getDeletedMessage(deletedRecordNames.size());
+                        String deletedMessageDetail = deletedMessage + ": [" + deletedRecordNames.toString() + "]";
+                        Message message = new Message(deletedMessage, deletedMessageDetail);
                         CoreGUI.getMessageCenter().notify(message);
                         refresh();
                     }
@@ -1088,20 +1120,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }, requestProperties);
     }
 
-    protected String getDataTypeName() {
-        return "item";
-    }
-
-    protected String getDataTypeNamePlural() {
-        return "items";
-    }
-
     protected String getTitleFieldName() {
         return FIELD_NAME;
     }
 
+    protected String getDeletedMessage(int numDeleted) {
+        String num = String.valueOf(numDeleted);
+        String thing = (1 == numDeleted) ? MSG.common_label_item() : MSG.common_label_items();
+        return MSG.common_msg_deleted(num, thing);
+    }
+
     protected String getDeleteConfirmMessage() {
-        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
+        return MSG.common_msg_deleteConfirm(MSG.common_label_items());
     }
 
     protected void hideField(ListGridField field) {
@@ -1117,11 +1147,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
-        com.google.gwt.event.dom.client.KeyPressHandler {
+    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler {
 
         private Table<?> table;
-        private SearchBarItem searchBarItem;
+        private EnhancedSearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
         public TableFilter(Table<?> table) {
@@ -1142,21 +1171,28 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof DateFilterItem) {
                     nextFormItem.addChangedHandler(this);
-                } else if (nextFormItem instanceof SearchBarItem) {
-                    searchBarItem = (SearchBarItem) nextFormItem;
-                    searchBarItem.getSearchBar().addKeyPressHandler(this);
+                } else if (nextFormItem instanceof EnhancedSearchBarItem) {
+                    searchBarItem = (EnhancedSearchBarItem) nextFormItem;
+                    searchBarItem.getSearchBar().getSearchComboboxItem().addKeyPressHandler(this);
                     String name = searchBarItem.getName();
+                    // postfix the name of the item so it is not processed by the filters and that the
+                    // hidden item is used instead.
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
-                    hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchComboboxItem().getValueAsString());
                 }
             }
 
             if (hiddenItem != null) {
+                Log.debug("Found hidden items");
+                // Add the hidden item if it exists
                 FormItem[] tmpItems = new FormItem[items.length + 1];
                 System.arraycopy(items, 0, tmpItems, 0, items.length);
                 tmpItems[items.length] = hiddenItem;
                 items = tmpItems;
+            }
+            for (FormItem item : items) {
+                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
             }
 
             super.setItems(items);
@@ -1170,7 +1206,22 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         public void onKeyPress(KeyPressEvent event) {
             if (event.getKeyName().equals("Enter")) {
                 Log.debug("Table.TableFilter Pressed Enter key");
-                fetchFilteredTableData();
+
+                if (null != searchBarItem) {
+                    ComboBoxItem comboBoxItem = searchBarItem.getSearchBar().getSearchComboboxItem();
+                    String searchBarValue = comboBoxItem.getValueAsString();
+                    String hiddenValue = (String) hiddenItem.getValue();
+                    Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
+
+                    // Only send a fetch request if the user actually changed the search expression.
+                    if (!equals(searchBarValue, hiddenValue)) {
+                        hiddenItem.setValue(searchBarValue);
+                        Log.debug("Table.TableFilter fetchFilteredTableData");
+                        fetchFilteredTableData();
+                    }
+                } else {
+                    fetchFilteredTableData();
+                }
             }
         }
 
@@ -1181,25 +1232,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         public boolean hasContent() {
             return super.getFields().length != 0;
-        }
-
-        @Override
-        public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
-                // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
-                //                       since the if check below will prevent the 2nd event from triggering a redundant
-                //                       fetch request.
-                Log.debug("Table.TableFilter Pressed Enter key2");
-                String searchBarValue = searchBarItem.getSearchBar().getValue();
-                String hiddenValue = (String) hiddenItem.getValue();
-                Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
-                // Only send a fetch request if the user actually changed the search expression.
-                if (!equals(searchBarValue, hiddenValue)) {
-                    hiddenItem.setValue(searchBarValue);
-                    Log.debug("Table.TableFilter fetchFilteredTableData");
-                    fetchFilteredTableData();
-                }
-            }
         }
 
         private static boolean equals(String string1, String string2) {

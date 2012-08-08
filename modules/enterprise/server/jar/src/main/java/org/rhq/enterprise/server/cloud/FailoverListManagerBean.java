@@ -44,8 +44,8 @@ import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
-import org.rhq.core.domain.cloud.composite.FailoverListDetailsComposite;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
+import org.rhq.core.domain.cloud.composite.FailoverListDetailsComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -210,32 +210,44 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             agentServerListMap.put(next, new ArrayList<ServerBucket>(servers.size()));
         }
 
-        // assign server lists level by level: primary, then secondary, the tertiary, etc        
+        // assign server lists level by level: primary, then secondary, then tertiary, etc        
         for (int level = 0; (level < servers.size()); ++level) {
 
             // Initialize the bucket loads for the next round
             initBuckets(buckets, existingLoads, level);
 
-            // assign a server for this level to each agent, balancing as we go
-            for (Agent next : agents) {
+            // assign a server for this level to each agent, balancing as we go            
 
+            // keep track of the how many agents have been assignd on this pass
+            int agentsAssigned = 0;
+            // introduce more list disparity by changing the bucket iteration direction on each level  
+            int rotate = (((level % 2) == 0) ? -1 : 1);
+
+            for (Agent next : agents) {
                 List<ServerBucket> serverList = agentServerListMap.get(next);
 
                 // When assigning primary (i.e. level 0), supply the current primary as the preferred server.
-                // This should reduce connection churn by letting most agents stay put (but affects balancing, we'll deal with
-                // that below)
+                // This should reduce connection churn by letting most agents stay put (but affects balancing, we'll 
+                // deal with that below)
                 ServerBucket bestBucket = null;
-
-                // Rotate the list (makes the last entry the first entry) on each iteration. This
-                // enhances bucket distribution amongst the levels and ensures that we don't starve
-                // buckets at the end of the list.
-                Collections.rotate(buckets, 1);
 
                 if ((0 == level) && (null != next.getServer())) {
                     bestBucket = ServerBucket.getBestBucket(buckets, serverList, next.getAffinityGroup(), next
                         .getServer().getName());
                 } else {
                     bestBucket = ServerBucket.getBestBucket(buckets, serverList, next.getAffinityGroup(), null);
+                }
+
+                // Rotate the list on each iteration. This enhances bucket distribution amongst the levels and ensures
+                // that we don't starve buckets at the end of the list.  Also, we alternate the rotation direction on
+                // each level which seems to help.
+                Collections.rotate(buckets, rotate);
+
+                // Reverse the buckets completely each time we have assigned an agent to each server.  This avoids
+                // duplicating failover lists completely by not repeating the same server sequence over and over on the
+                // same level.
+                if ((++agentsAssigned % buckets.size() == 0)) {
+                    Collections.reverse(buckets);
                 }
 
                 if (null == bestBucket) {

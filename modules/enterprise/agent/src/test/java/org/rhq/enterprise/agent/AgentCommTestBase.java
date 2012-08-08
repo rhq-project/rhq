@@ -30,7 +30,6 @@ import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
 
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -41,7 +40,6 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  *
  * @author John Mazzitelli
  */
-@Listeners(AgentCommTestBase.class)
 public class AgentCommTestBase implements IInvokedMethodListener {
     protected static final int LARGE_STRING_SIZE = 100000;
     protected static final String LARGE_STRING;

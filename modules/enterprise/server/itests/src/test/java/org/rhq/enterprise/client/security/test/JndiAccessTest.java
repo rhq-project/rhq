@@ -196,7 +196,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         PermissionCollection perms = new StandardScriptPermissions();
         
-        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), bindings, perms);
+        return ScriptEngineFactory.getSecuredScriptEngine("javascript",
+            new PackageFinder(Collections.<File> emptyList()), bindings, perms);
     }
     
     private static void checkIsDesiredSecurityException(ScriptException e) {

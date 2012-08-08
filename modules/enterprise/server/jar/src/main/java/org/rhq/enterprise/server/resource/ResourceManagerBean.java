@@ -276,101 +276,116 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
-        // if the resource has no parent, its a top root resource and its agent should be purged too
-        // test code does not always follow this rule, so catch and continue.
+        // if the resource has no parent, its a platform resource and its agent should be purged too
         Agent doomedAgent = null;
-        if (resource.getParentResource() == null) {
-            try {
+        try {
+            if (resource.getParentResource() == null) {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
                 doomedAgent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
-            } catch (Exception e) {
-                doomedAgent = null;
-                log.warn("This warning should occur in TEST code only! " + e);
+
+                // note - test code does not always provide the agent, if not found, just warn
+                if (doomedAgent == null) {
+                    log.warn("Platform resource had no associated agent. This warning should occur in TEST code only!");
+                }
             }
-        }
 
-        AgentClient agentClient = null;
-        try {
-            // The test code does not always generate agents for the resources. Catch and log any problem but continue
-            agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-        } catch (Throwable t) {
-            log.warn("No AgentClient found for resource [" + resource
-                + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
-        }
-
-        // since we delete the resource asynchronously now, we need to make sure we remove things that would cause
-        // system side effects after markForDeletion completed but before the resource was actually removed from the DB
-        Subject overlord = subjectManager.getOverlord();
-
-        // delete the resource and all its children
-        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous uninventory");
-
-        // set agent references null
-        // foobar the resourceKeys
-        // update the inventory status to UNINVENTORY
-        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
-        toBeDeletedQuery.setParameter("resourceId", resourceId);
-        List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
-
-        int i = 0;
-        log.debug("== total size : " + toBeDeletedResourceIds.size());
-
-        while (i < toBeDeletedResourceIds.size()) {
-            int j = i + 1000;
-            if (j > toBeDeletedResourceIds.size())
-                j = toBeDeletedResourceIds.size();
-            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
-            log.debug("== Bounds " + i + ", " + j);
-
-            boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
-            if (hasErrors) {
-                throw new IllegalArgumentException("Could not remove resources from their containing groups");
-            }
-            i = j;
-        }
-
-        // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
-        // But luckily we have already (through such a recursive query above) determined the doomed resources
-        //        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-        //        markDeletedQuery.setParameter("resourceId", resourceId);
-        //        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-        //        int resourcesDeleted = markDeletedQuery.executeUpdate();
-
-        i = 0;
-        int resourcesDeleted = 0;
-        while (i < toBeDeletedResourceIds.size()) {
-            int j = i + 1000;
-            if (j > toBeDeletedResourceIds.size())
-                j = toBeDeletedResourceIds.size();
-            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
-
-            Query markDeletedQuery = entityManager
-                .createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
-            markDeletedQuery.setParameter("resourceIds", idsToDelete);
-            markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-            resourcesDeleted += markDeletedQuery.executeUpdate();
-            i = j;
-        }
-
-        if (resourcesDeleted != toBeDeletedResourceIds.size()) {
-            log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
-                + " resources, but actually uninventoried " + resourcesDeleted);
-        }
-
-        // still need to tell the agent about the removed resources so it stops avail reports
-        if (agentClient != null) {
+            AgentClient agentClient = null;
             try {
-                agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
-            } catch (Exception e) {
-                log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                // The test code does not always generate agents for the resources. Catch and log any problem but continue
+                agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            } catch (Throwable t) {
+                log.warn("No AgentClient found for resource [" + resource
+                    + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
             }
-        }
 
-        if (doomedAgent != null) {
-            agentManager.deleteAgent(doomedAgent);
-        }
+            // since we delete the resource asynchronously now, we need to make sure we remove things that would cause
+            // system side effects after markForDeletion completed but before the resource was actually removed from the DB
+            Subject overlord = subjectManager.getOverlord();
 
-        return toBeDeletedResourceIds;
+            // delete the resource and all its children
+            log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous uninventory");
+
+            // set agent references null
+            // foobar the resourceKeys
+            // update the inventory status to UNINVENTORY
+            Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
+            toBeDeletedQuery.setParameter("resourceId", resourceId);
+            List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
+
+            int i = 0;
+            log.debug("== total size : " + toBeDeletedResourceIds.size());
+
+            while (i < toBeDeletedResourceIds.size()) {
+                int j = i + 1000;
+                if (j > toBeDeletedResourceIds.size())
+                    j = toBeDeletedResourceIds.size();
+                List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+                log.debug("== Bounds " + i + ", " + j);
+
+                boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
+                if (hasErrors) {
+                    throw new IllegalArgumentException("Could not remove resources from their containing groups");
+                }
+                i = j;
+            }
+
+            // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
+            // But luckily we have already (through such a recursive query above) determined the doomed resources
+            //        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+            //        markDeletedQuery.setParameter("resourceId", resourceId);
+            //        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+            //        int resourcesDeleted = markDeletedQuery.executeUpdate();
+
+            i = 0;
+            int resourcesDeleted = 0;
+            while (i < toBeDeletedResourceIds.size()) {
+                int j = i + 1000;
+                if (j > toBeDeletedResourceIds.size())
+                    j = toBeDeletedResourceIds.size();
+                List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+
+                Query markDeletedQuery = entityManager
+                    .createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+                markDeletedQuery.setParameter("resourceIds", idsToDelete);
+                markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+                resourcesDeleted += markDeletedQuery.executeUpdate();
+                i = j;
+            }
+
+            if (resourcesDeleted != toBeDeletedResourceIds.size()) {
+                log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
+                    + " resources, but actually uninventoried " + resourcesDeleted);
+            }
+
+            // still need to tell the agent about the removed resources so it stops avail reports
+            if (agentClient != null) {
+                try {
+                    agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                } catch (Exception e) {
+                    log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                }
+            }
+
+            // now remove the dommed agent. Call flush() to force out any problems with agent removal
+            // so that we can catch them and report a better exception. 
+            if (doomedAgent != null) {
+                agentManager.deleteAgent(doomedAgent);
+                entityManager.flush();
+            }
+
+            return toBeDeletedResourceIds;
+
+        } catch (RuntimeException e) {
+            if (doomedAgent != null) {
+                // The most likely reason for a failure, although unlikely in itself, is that newly discovered resources
+                // are currently being merged into the platform, and associated with the doomed agent.  In this case
+                // the user must wait until the merge is complete.  Make sure the caller knows about this possibility.
+                String msg = "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.";
+                throw new IllegalStateException(msg, (log.isDebugEnabled() ? e : null));
+            }
+
+            throw e;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -496,13 +511,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
-            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
-            Alert.QUERY_DELETE_BY_RESOURCES, //                order
-            AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
-            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
-            AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
-            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //             Don't
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, // alter               
+            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //          the
+            Alert.QUERY_DELETE_BY_RESOURCES, //                         order
+            AlertCondition.QUERY_DELETE_BY_RESOURCES, //                of
+            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //           alert-
+            AlertNotification.QUERY_DELETE_BY_RESOURCES, //             related
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //               deletes
             JPADrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
             JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 

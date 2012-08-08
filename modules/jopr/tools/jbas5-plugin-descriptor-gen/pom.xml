@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.5.0-SNAPSHOT</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
@@ -313,43 +313,33 @@ t section. -->
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.5</source>
-                </configuration>
-            </plugin>
             
           <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>copy-dependencies</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>copy-dependencies</goal>
-                </goals>
-                <configuration>              
-                  <includeScope>runtime</includeScope>
-                  <excludeTransitive>true</excludeTransitive>
-                  <outputDirectory>target/lib</outputDirectory>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-      
-          <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.3</version>
             <configuration>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
               <archive>
                 <manifest>
                   <mainClass>org.jboss.jopr.tool.jbas5.PluginDescriptorGenerator</mainClass>
-                  <addClasspath>true</addClasspath>
-                  <classpathPrefix>lib</classpathPrefix>
                 </manifest>
               </archive>
             </configuration>
-          </plugin>                
+            <executions>
+              <execution>
+                <id>make-assembly</id>
+                <!-- this is used for inheritance merges -->
+                <phase>package</phase>
+                <!-- bind to the packaging phase -->
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
         </plugins>
     </build>
 

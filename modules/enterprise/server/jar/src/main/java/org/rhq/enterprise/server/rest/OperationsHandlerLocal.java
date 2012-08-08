@@ -38,6 +38,7 @@ import javax.ws.rs.core.UriInfo;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.enterprise.server.rest.domain.OperationRest;
@@ -63,6 +64,7 @@ public interface OperationsHandlerLocal {
                @Context Request request,
                @Context HttpHeaders httpHeaders);
 
+    @GZIP
     @GET
     @Path("definitions")
     @Cache(maxAge = 1200)
@@ -70,7 +72,8 @@ public interface OperationsHandlerLocal {
     public Response getOperationDefinitions(
             @ApiParam(value = "Id of the resource",required = true) @QueryParam("resourceId") Integer resourceId,
                                             @Context UriInfo uriInfo,
-                                            @Context Request request
+                                            @Context Request request,
+                                            @Context HttpHeaders httpHeaders
     );
 
     @POST
@@ -101,10 +104,32 @@ public interface OperationsHandlerLocal {
     public Response cancelOperation(
             @ApiParam("Id of the operation to remove") @PathParam("id") int operationId);
 
+    @GZIP
     @GET
     @Path("history/{id}")
     @ApiOperation("Return the outcome of the scheduled operation")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     public Response outcome(
             @ApiParam("Name of the submitted job.") @PathParam("id") String jobName,
-            @Context UriInfo uriInfo);
+            @Context UriInfo uriInfo,
+            @Context Request request,
+            @Context HttpHeaders httpHeaders);
+
+    @GZIP
+    @GET
+    @Path("history")
+    @ApiOperation("Return the outcome of the executed operations for a resource")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    public Response listHistory(
+            @ApiParam("Id of a resource to limit to") @QueryParam("resourceId") int resourceId,
+            @Context UriInfo uriInfo,
+            @Context Request request,
+            @Context HttpHeaders httpHeaders);
+
+
+    @DELETE
+    @Path("history/{id}")
+    @ApiOperation(value = "Delete the operation history item with the passed id")
+    public Response deleteOperationHistoryItem(
+            @ApiParam("Name fo the submitted job") @PathParam("id") String jobId);
 }

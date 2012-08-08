@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.content;
 
-import java.util.Comparator;
 import java.util.List;
 
 import javax.ejb.Remote;
@@ -260,4 +259,17 @@ public interface RepoManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoIds") int[] repoIds) //
         throws Exception;
+
+    /**
+     * This method allows for downloading the bytes of an arbitrary package version. This call can be dangerous with 
+     * large packages because it will attempt to load the whole package in memory.
+     * 
+     * @param user
+     * @param repoId
+     * @param packageVersionId
+     * @return the bytes of the package version
+     */
+    @WebMethod
+    byte[] getPackageVersionBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "repoId") int repoId,
+        @WebParam(name = "packageVersionId") int packageVersionId);
 }

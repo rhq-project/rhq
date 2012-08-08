@@ -137,11 +137,8 @@ public class CoreServerServiceImpl implements CoreServerService {
                 if (agentByName != null) {
                     // the agent request provided a name that already is in use by an agent. However, the request
                     // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
-                    String msg = "The agent asking for registration under the name ["
-                        + request.getName()
-                        + "] provided an invalid security token. This request will fail. "
-                        + "Please consult an administrator to obtain the agent's proper security token "
-                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
+                    String msg = "The agent asking for registration under the name [" + request.getName()
+                        + "] provided an invalid security token. This request will fail. " + securityTokenMessage();
                     throw new AgentRegistrationException(msg);
                 }
                 Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
@@ -176,11 +173,8 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + " and same security token.";
                     throw new AgentRegistrationException(msg);
                 } else {
-                    String msg = "The agent ["
-                        + request.getName()
-                        + "] is attempting to re-register without a security token. "
-                        + "Please consult an administrator to obtain the agent's proper security token "
-                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
+                    String msg = "The agent [" + request.getName()
+                        + "] is attempting to re-register without a security token. " + securityTokenMessage();
                     throw new AgentRegistrationException(msg);
 
                 }
@@ -192,8 +186,7 @@ public class CoreServerServiceImpl implements CoreServerService {
                     String msg = "An agent is trying to register with an existing agent name ["
                         + request.getName()
                         + "] without providing a valid security token. If you are attempting to re-register this agent, "
-                        + "please consult an administrator to obtain the agent's proper security token "
-                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
+                        + "you will need the agent's security token. " + securityTokenMessage();
                     throw new AgentRegistrationException(msg);
                 }
             }
@@ -272,6 +265,15 @@ public class CoreServerServiceImpl implements CoreServerService {
         results.setFailoverList(failoverList);
 
         return results;
+    }
+
+    private String securityTokenMessage() {
+        return "Please consult an administrator to obtain the agent's proper security token "
+            + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\". "
+            + "An administrator can find the agent's security token by navigating to the GUI page "
+            + "\"Administration (Topology) > Agents\" and drilling down to this specific agent. "
+            + "You will see the long security token string there. For more information, read: "
+            + "https://docs.jboss.org/author/display/RHQ/Agent+Registration";
     }
 
     /**

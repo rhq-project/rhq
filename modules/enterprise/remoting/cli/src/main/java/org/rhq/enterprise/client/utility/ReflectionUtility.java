@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.client.utility;
 
-import java.lang.reflect.Type;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.TypeVariable;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
 /**
@@ -32,6 +32,10 @@ public class ReflectionUtility {
 
 
     public static String getSimpleTypeString(Type type) {
+        return getTypeString(type, false);
+    }
+
+    public static String getTypeString(Type type, boolean fullNames) {
         if (type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) type;
             Type[] typeArguments = pType.getActualTypeArguments();
@@ -43,26 +47,29 @@ public class ReflectionUtility {
                     typeArgString += ",";
                 }
 
-                typeArgString += getSimpleTypeString(typeArgument);
+                typeArgString += getTypeString(typeArgument, fullNames);
             }
-            return getSimpleTypeString(pType.getRawType()) + "<" + typeArgString + ">";
-
+            return getTypeString(pType.getRawType(), fullNames) + "<" + typeArgString + ">";
 
         } else if (type instanceof TypeVariable) {
-            TypeVariable vType = (TypeVariable) type;
-            return vType.getClass().getSimpleName();
+            TypeVariable<?> vType = (TypeVariable<?>) type;
+            return getName(vType.getClass(), fullNames);
         } else if (type instanceof GenericArrayType) {
             GenericArrayType aType = (GenericArrayType) type;
-            return aType.getClass().getSimpleName() + "[" + getSimpleTypeString(aType.getGenericComponentType()) + "]";
+            return getName(aType.getClass(), fullNames) + "["
+                + getTypeString(aType.getGenericComponentType(), fullNames) + "]";
         } else if (type instanceof WildcardType) {
-            return ((WildcardType)type).toString();
+            return ((WildcardType) type).toString();
         } else {
             if (type == null) {
                 return "";
             } else {
-                return ((Class)type).getSimpleName();
+                return getName((Class<?>) type, fullNames);
             }
         }
     }
 
+    private static String getName(Class<?> cls, boolean fullName) {
+        return fullName ? cls.getName() : cls.getSimpleName();
+    }
 }

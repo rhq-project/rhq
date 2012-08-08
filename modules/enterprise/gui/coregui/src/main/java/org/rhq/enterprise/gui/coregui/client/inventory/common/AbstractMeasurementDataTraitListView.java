@@ -19,16 +19,23 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,
@@ -36,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitListView extends TableSection {
+public abstract class AbstractMeasurementDataTraitListView extends TableSection<AbstractMeasurementDataTraitDataSource> {
     private static final String TITLE = MSG.view_metric_traits();
     private static final String[] EXCLUDED_FIELD_NAMES = new String[0];
 
@@ -70,11 +77,45 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
         // Set widths and cell formatters on the fields.
         ListGridField displayNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
         displayNameField.setWidth("20%");
+
+        addTableAction(extendLocatorId("liveValue"), MSG.view_measureTable_getLive(), getLiveValueAction());
     }
+    
+    protected abstract TableAction getLiveValueAction();
+    
+    protected abstract LocatableListGrid decorateLiveDataGrid(List<ListGridRecord> records);
 
     @Override
     protected String getDetailsLinkColumnName() {
         return MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME;
+    }
+    
+    public void showLiveData(List<ListGridRecord> records) {
+        final LocatableWindow liveDataWindow = new LocatableWindow(extendLocatorId("liveDataWindow"));
+        liveDataWindow.setTitle(MSG.view_measureTable_live_title());
+        liveDataWindow.setShowModalMask(true);
+        liveDataWindow.setShowMinimizeButton(false);
+        liveDataWindow.setShowMaximizeButton(true);
+        liveDataWindow.setShowCloseButton(true);
+        liveDataWindow.setShowResizer(true);
+        liveDataWindow.setCanDragResize(true);
+        liveDataWindow.setDismissOnEscape(true);
+        liveDataWindow.setIsModal(true);
+        liveDataWindow.setWidth(700);
+        liveDataWindow.setHeight(425);
+        liveDataWindow.setAutoCenter(true);
+        liveDataWindow.centerInPage();
+        liveDataWindow.addCloseClickHandler(new CloseClickHandler() {
+            @Override
+            public void onCloseClick(CloseClickEvent event) {
+                liveDataWindow.destroy();
+                refreshTableInfo();
+            }
+        });
+
+        LocatableListGrid liveDataGrid = decorateLiveDataGrid(records); 
+        liveDataWindow.addItem(liveDataGrid);
+        liveDataWindow.show();
     }
 
 }

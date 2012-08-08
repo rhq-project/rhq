@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,14 +38,15 @@ import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
     private static final ComponentType MDB_COMPONENT_TYPE = new ComponentType("EJB", "MDB");
 
+
     @Override
-    protected ManagedComponent getManagedComponent() {
+    protected ManagedComponent getManagedComponent(ManagementView mv) throws Exception {
+        if (null == mv) {
+            throw new IllegalArgumentException("managementView can not be null");
+        }
+
         if (MDB_COMPONENT_TYPE.equals(getComponentType())) {
             try {
-                //we need to reload the management view here, because the MDBs might have changed since
-                //the last call, because the @object-id is part of their names.
-                ManagementView mv = getConnection().getManagementView();
-
                 Set<ManagedComponent> mdbs = mv.getComponentsForType(MDB_COMPONENT_TYPE);
 
                 for (ManagedComponent mdb : mdbs) {
@@ -58,7 +59,7 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
                 throw new IllegalStateException(e);
             }
         } else {
-            return super.getManagedComponent();
+            return super.getManagedComponent(mv);
         }
 
         return null;

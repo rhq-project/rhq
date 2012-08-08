@@ -28,10 +28,13 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/inventorySummary")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The inventory summary report")
+
 public interface InventorySummaryLocal {
 
     /**
@@ -45,8 +48,10 @@ public interface InventorySummaryLocal {
      * specified to generate the details version of the report.
      * @return An output stream that contains the CSV report.
      */
+    @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Inventory Summary data as CSV")
     StreamingOutput generateReport(
         @Context HttpServletRequest request,
         @QueryParam("resourceTypeId") String resourceTypeId,

@@ -470,6 +470,6 @@ public class ProcessInfoQuery {
             contents = "";
         }
 
-        return contents;
+        return contents.trim();
     }
 }

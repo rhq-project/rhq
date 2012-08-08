@@ -30,6 +30,7 @@ public class TraitMeasurementDTO implements TraitMeasurement{
 
     private long timestamp;
     private String value;
+    private String name;
     private int resourceId;
     private int scheduleId;
     private int definitionId;
@@ -53,6 +54,15 @@ public class TraitMeasurementDTO implements TraitMeasurement{
     @Override
     public void setValue(String value) {
         this.value = value;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

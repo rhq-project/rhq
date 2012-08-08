@@ -11,7 +11,7 @@
 
   <name>RHQ</name>
   <description>RHQ is a server management and monitoring suite primarily targeted at JBoss software.</description>
-  <url>http://rhq-project.org/</url>
+  <url>http://www.jboss.org/rhq/</url>
   <inceptionYear>2008</inceptionYear>
 
   <organization>
@@ -47,12 +47,12 @@
     <product.shortName>RHQ</product.shortName>
     <product.name>RHQ</product.name>
     <product.fullName>RHQ</product.fullName>
-    <product.url>http://www.rhq-project.org/</product.url>
-    <product.urlDomain>rhq-project.org</product.urlDomain>
+    <product.url>http://www.jboss.org/rhq</product.url>
+    <product.urlDomain>jboss.org</product.urlDomain>
     <product.salesEmail>rhq-users@lists.fedorahosted.org</product.salesEmail>
     <product.supportEmail>rhq-users@lists.fedorahosted.org</product.supportEmail>
     <product.version>${project.version}</product.version>
-    <product.helpDocRoot>http://www.rhq-project.org/display/JOPR2/</product.helpDocRoot>
+    <product.helpDocRoot>https://docs.jboss.org/author/display/RHQ/User+Documentation</product.helpDocRoot>
     <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
     <doUpdate>false</doUpdate>
@@ -88,7 +88,7 @@
     <log4j.version>1.2.16</log4j.version>
     <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
     <ems.version>1.3</ems.version>
-    <postgresql.version>9.1-901.jdbc4</postgresql.version>
+    <postgresql.version>9.1-902.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
@@ -107,10 +107,10 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.3.3.Final</resteasy.version>
+    <resteasy.version>2.3.4.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
-    <arquillian.version>1.0.0.Final</arquillian.version>
+    <arquillian.version>1.0.1.Final</arquillian.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
 
@@ -179,7 +179,8 @@
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
-      <project.json.version>20080701</project.json.version>
+
+    <project.json.version>20080701</project.json.version>
   </properties>
 
 
@@ -719,6 +720,26 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>animal-sniffer-maven-plugin</artifactId>
             <version>${animal.sniffer.version}</version>
+         </plugin>
+      	 <plugin>
+            <groupId>com.googlecode.maven-overview-plugin</groupId>
+            <artifactId>maven-overview-plugin</artifactId>
+            <version>RELEASE</version>
+            <configuration>
+               <width>4096</width>
+               <height>4096</height>
+               <maxDepth>0</maxDepth>
+               <suppressedScopes>provided, test</suppressedScopes>
+               <includes>${rhq.groupId}</includes>
+               <exclusions>
+                  <exclusion>
+                     <scope>test</scope>
+                  </exclusion>
+                  <!--<exclusion>
+                     <scope>provided</scope>
+                  </exclusion>-->
+               </exclusions>
+            </configuration>
          </plugin>
        </plugins>
      </pluginManagement>
@@ -1293,6 +1314,11 @@
 
     <reporting>
         <plugins>
+            <plugin>
+                <groupId>com.googlecode.maven-overview-plugin</groupId>
+                <artifactId>maven-overview-plugin</artifactId>
+            </plugin>
+
 <!--
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -1437,6 +1463,12 @@
             <timezone>+1</timezone>
         </developer>
         <developer>
+            <name>Jirka Kremser</name>
+            <email>jkremser@redhat.com</email>
+            <timezone>+1</timezone>
+            <url>http://serviceasaservice.wordpress.com/</url>
+        </developer>
+        <developer>
             <name>Joseph Marques</name>
             <url>http://josephmarques.wordpress.com/</url>
             <timezone>-5</timezone>
@@ -1536,6 +1568,10 @@
         <contributor>
             <name>Torben Jäger</name>
             <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Richard Hensman</name>
+            <timezone>0</timezone>
         </contributor>
         <contributor>
             <name>Rafael Chies</name>

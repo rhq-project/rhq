@@ -13,6 +13,28 @@
 
   <name>RHQ IRC Bot</name>
   <description>an IRC bot for doing helpful stuff on the Freenode #rhq channel</description>
+  <url>http://www.jboss.org/rhq/</url>
+
+  <scm>
+    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>GPL</name>
+      <url>http://www.gnu.org/licenses/gpl.html</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Ian Springer</name>
+      <timezone>-5</timezone>
+      <url>http://freshjava.blogspot.com/</url>
+    </developer>
+  </developers>
 
   <dependencies>
 
@@ -72,10 +94,37 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
 
-
   </build>
+
+  <distributionManagement>
+
+    <snapshotRepository>
+      <id>jboss-snapshots-repository</id>
+      <name>JBoss Snapshots Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+
+    <repository>
+      <id>jboss-releases-repository</id>
+      <name>JBoss Releases Repository</name>
+      <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+    </repository>
+
+  </distributionManagement>
 
 </project>
 

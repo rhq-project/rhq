@@ -1,33 +1,34 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-parent</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
-        <relativePath>../../../../pom.xml</relativePath>
-    </parent>
-
+  <parent>
     <groupId>org.rhq</groupId>
-    <artifactId>rhq-coregui</artifactId>
-    <packaging>war</packaging>
+    <artifactId>rhq-parent</artifactId>
+    <version>4.5.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
 
-    <name>RHQ Enterprise Core GUI</name>
-    <description>the RHQ Enterprise Core GUI webapp</description>
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-coregui</artifactId>
+  <packaging>war</packaging>
 
-    <properties>
+  <name>RHQ Enterprise Core GUI</name>
+  <description>the RHQ Enterprise Core GUI webapp</description>
+
+  <properties>
         <!-- dependency versions -->
-        <gwt.version>2.4.0</gwt.version>
-        <smartgwt.version>3.0</smartgwt.version>
+    <gwt.version>2.4.0</gwt.version>
+    <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
-        <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
-        <gwt-plugin.localWorkers>4</gwt-plugin.localWorkers>
+    <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
+    <gwt-plugin.localWorkers>4</gwt-plugin.localWorkers>
 
-        <coreGuiParams />
-        <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
+    <coreGuiParams/>
+    <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
 
         <!--
          This property is substituted, by the resource plugin during the resources phase, as the
@@ -52,201 +53,201 @@
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-        <gwt.userAgent>ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
+    <gwt.userAgent>ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->
-        <gwt.draftCompile>false</gwt.draftCompile>
+    <gwt.draftCompile>false</gwt.draftCompile>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to generate report -->
-        <gwt.soyc>false</gwt.soyc>
+    <gwt.soyc>false</gwt.soyc>
 
         <!-- Change this to "DETAILED" via the mvn command line or your ~/.m2/settings.xml to
              make sure GWT-generated JavaScript code is not obfuscated. -->
-        <gwt.style>PRETTY</gwt.style>
+    <gwt.style>PRETTY</gwt.style>
 
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
-        <gwt.locale>en,de,ja,pt,zh,ru,cs</gwt.locale>
+    <gwt.locale>en,de,ja,pt,zh,ru,cs</gwt.locale>
 
         <!-- The locale that GWT should fallback to if the user specified an unsupported locale via the 'locale' query
              string parameter. -->
-        <gwt.fallback.locale>en</gwt.fallback.locale>
- 
-        <enable.tags>true</enable.tags>
-    </properties>
+    <gwt.fallback.locale>en</gwt.fallback.locale>
 
-    <dependencies>
+    <enable.tags>true</enable.tags>
+  </properties>
+
+  <dependencies>
 
         <!-- ============= Internal Deps ============= -->
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
             <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
+    </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
             <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
+    </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-util</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
             <!-- by rhq.ear -->
-        </dependency>
+    </dependency>
 
 
         <!-- =============== 3rd Party Deps =============== -->
 
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
-            <version>${gwt.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>${gwt.version}</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-servlet</artifactId>
+      <version>${gwt.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-user</artifactId>
+      <version>${gwt.version}</version>
+      <scope>provided</scope>
+    </dependency>
         <!-- This is so we can compile custom GWT Generators to be called during gwt compilation.
              Is is not needed at runtime and so is not included in the WAR. -->
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <version>${gwt.version}</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <version>${gwt.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
 
-        <dependency>
-            <groupId>com.smartgwt</groupId>
-            <artifactId>smartgwt</artifactId>
-            <version>${smartgwt.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>com.smartgwt</groupId>
+      <artifactId>smartgwt</artifactId>
+      <version>${smartgwt.version}</version>
+    </dependency>
 
 
         <!-- the GWT graphing library (note, this provides jquery 1.3.2. If we get rid of GFlot we will need
              to provide jquery explcitly for jquery.sparkline support. See CoreGUI.gwt.xml for the jquery.sparkline
              declaration and coregui/webapp/js for the lib inclusion.) -->
-        <dependency>
-            <groupId>ca.nanometrics</groupId>
-            <artifactId>gflot</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+    <dependency>
+      <groupId>ca.nanometrics</groupId>
+      <artifactId>gflot</artifactId>
+      <version>1.0.0</version>
+    </dependency>
 
 
         <!-- for file uploads -->
-        <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.2</version>
-        </dependency>
+    <dependency>
+      <groupId>commons-fileupload</groupId>
+      <artifactId>commons-fileupload</artifactId>
+      <version>1.2</version>
+    </dependency>
 
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>1.3.1</version>
-        </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.3.1</version>
+    </dependency>
 
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.0.4</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.0.4</version>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
-        <dependency>
-            <groupId>org.opensymphony.quartz</groupId>
-            <artifactId>quartz</artifactId>
+    <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope>
+      <scope>provided</scope>
             <!-- by JBossAS itself, which the container buildNodes has packaged with 1.6.5 -->
-        </dependency>
+    </dependency>
 
         <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
+    <dependency>
+      <groupId>hibernate-annotations</groupId>
+      <artifactId>hibernate-annotations</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
         <!-- transitive dependency needed for JspC -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.4</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.4</version>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
         <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
         <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-ejb3x</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-ejb3x</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
         <!-- Needed due to JDK 1.5 bug. -->
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-annotations-ejb3</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-annotations-ejb3</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope>
+      <scope>provided</scope>
             <!-- by JBossAS -->
-        </dependency>
+    </dependency>
 
-        <dependency>
-           <groupId>jboss.jbossws</groupId>
-           <artifactId>jboss-jaxws</artifactId>
-           <version>3.0.1-native-2.0.4.GA</version>
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
+    <dependency>
+      <groupId>jboss.jbossws</groupId>
+      <artifactId>jboss-jaxws</artifactId>
+      <version>3.0.1-native-2.0.4.GA</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
-            <version>${resteasy.version}</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
-    </dependencies>
+  </dependencies>
 
 
-    <build>
-        <finalName>coregui</finalName>
+  <build>
+    <finalName>coregui</finalName>
 
-        <resources>
-            <resource>
-                <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+    <resources>
+      <resource>
+        <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
                 <!-- 
                   Do NOT include java files here, because otherwise the java files from
                   resources would end up in WEB-INF/classes which definitely not something
@@ -259,89 +260,110 @@
                   need to replace the ${...} place-holders with the build-provided values
                   in there.
                 -->
-                <includes>
-                  <include>**/*.gwt.xml</include>
-                  <include>**/*.properties</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/java</directory>
-                <includes>
-                    <include>**/*.java</include>
-                </includes>
-            </resource>
-        </resources>
+        <includes>
+          <include>**/*.gwt.xml</include>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/java</directory>
+        <includes>
+          <include>**/*.java</include>
+        </includes>
+      </resource>
+    </resources>
 
 
-        <plugins>
+    <plugins>
 
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
-                <configuration>
-                    <noServer>true</noServer>
-                    <inplace>false</inplace>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>gwt-maven-plugin</artifactId>
+        <version>2.4.0</version>
+        <configuration>
+          <noServer>true</noServer>
+          <inplace>false</inplace>
                     <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
-                    <logLevel>INFO</logLevel>
-                    <runTarget>${coreGuiRunTarget}</runTarget>
-                    <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
-                    <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
-                    <draftCompile>${gwt.draftCompile}</draftCompile>
-                    <soyc>${gwt.soyc}</soyc>                    
-                    <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-                    <hostedWebapp>target/hostedWar</hostedWebapp>
-                    <debugSuspend>false</debugSuspend>
-                    <servicePattern>**/gwt/*GWTService.java</servicePattern>
-                    <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
-                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
-                    <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
-                    <style>${gwt.style}</style>
-                    <strict>true</strict>
-                </configuration>
+          <logLevel>INFO</logLevel>
+          <runTarget>${coreGuiRunTarget}</runTarget>
+          <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
+          <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
+          <draftCompile>${gwt.draftCompile}</draftCompile>
+          <soyc>${gwt.soyc}</soyc>
+          <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
+          <hostedWebapp>target/hostedWar</hostedWebapp>
+          <debugSuspend>false</debugSuspend>
+          <servicePattern>**/gwt/*GWTService.java</servicePattern>
+          <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
+          <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
+          <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
+          <style>${gwt.style}</style>
+          <strict>true</strict>
+                    <!-- compiles gwt artifacts like symbolMap outside of war so it doesnt get packaged -->
+          <deploy>${project.build.directory}/gwt-deploy</deploy>
+        </configuration>
 
-                <executions>
-                    <execution>
-                        <id>gwt-goals</id>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>generateAsync</goal>
-                            <goal>i18n</goal>
-                        </goals>
-                    </execution>
-                    <execution>
+        <executions>
+          <execution>
+            <id>gwt-goals</id>
+            <goals>
+              <goal>compile</goal>
+              <goal>generateAsync</goal>
+              <goal>i18n</goal>
+            </goals>
+          </execution>
+          <execution>
                         <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
-                        <id>default-cli</id>
-                        <goals>
-                            <goal>debug</goal>
-                        </goals>
-                        <configuration>
-                            <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <id>default-cli</id>
+            <goals>
+              <goal>debug</goal>
+            </goals>
+            <configuration>
+              <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Build-Number>${buildNumber}</Build-Number>
-                        </manifestEntries>
-                    </archive>
-                    <webResources>
-                        <resource>
-                            <filtering>false</filtering>
-                            <directory>${basedir}/src/main/webapp</directory>
-                        </resource>
-                    </webResources>
-                </configuration>
-            </plugin>
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+              <Build-Number>${buildNumber}</Build-Number>
+            </manifestEntries>
+          </archive>
+          <webResources>
+            <resource>
+              <filtering>false</filtering>
+              <directory>${basedir}/src/main/webapp</directory>
+            </resource>
+          </webResources>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-gwt-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/target/generated-sources/gwt</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
             <!--
                <plugin>
@@ -385,36 +407,36 @@
                   </executions>
                </plugin>
             -->
-        </plugins>
+    </plugins>
 
-    </build>
+  </build>
 
 
-    <profiles>
-        <profile>
-            <id>dev</id>
+  <profiles>
+    <profile>
+      <id>dev</id>
 
-            <properties>
-                <rhq.rootDir>../../../..</rhq.rootDir>
-                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-                <rhq.deploymentDir>
-                    ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+        <rhq.deploymentDir>
+          ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}
                 </rhq.deploymentDir>
-            </properties>
+      </properties>
 
-            <build>
-                <plugins>
+      <build>
+        <plugins>
 
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
 
-                            <execution>
-                                <id>deploy-classes</id>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <target>
+              <execution>
+                <id>deploy-classes</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
                                         <!--
                                         <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
                                         <echo>*** Copying updated files from target/${project.buildNodes.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
@@ -422,126 +444,126 @@
                                            <fileset dir="war/WEB-INF/classes" />
                                         </copy>
                                         -->
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                                        <echo>*** Copying updated files from
-                                            src${file.separator}main${file.separator}webapp${file.separator} to
-                                            ${deployment.dir}${file.separator}...
+                    <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                    <echo>*** Copying updated files from
+                      src${file.separator}main${file.separator}webapp${file.separator} to
+                      ${deployment.dir}${file.separator}...
                                         </echo>
-                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                                            <fileset dir="${basedir}/src/main/webapp" />
-                                        </copy>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
+                    <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                      <fileset dir="${basedir}/src/main/webapp"/>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                            <execution>
-                                <id>deploy</id>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                                        <echo>*** Copying updated files from
-                                            target${file.separator}${project.build.finalName}${file.separator} to
-                                            ${deployment.dir}${file.separator}...
+              <execution>
+                <id>deploy</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                    <echo>*** Copying updated files from
+                      target${file.separator}${project.build.finalName}${file.separator} to
+                      ${deployment.dir}${file.separator}...
                                         </echo>
-                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                                            <fileset dir="${basedir}/target/${project.build.finalName}" />
-                                        </copy>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
+                    <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                      <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                            <execution>
-                                <id>undeploy</id>
-                                <phase>clean</phase>
-                                <configuration>
-                                    <target>
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                                        <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                                        <delete dir="${deployment.dir}" />
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                    <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                    <delete dir="${deployment.dir}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                        </executions>
-                    </plugin>
+            </executions>
+          </plugin>
 
-                </plugins>
-            </build>
-        </profile>
+        </plugins>
+      </build>
+    </profile>
 
         <!--  Change the runTarget to not have single quotes. The quotes work for linux but not win -->
-        <profile>
-            <id>windows</id>
-            <activation>
-               <os>
-                  <family>Windows</family>
-               </os>
-            </activation>
-            <properties>
-               <coreGuiRunTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</coreGuiRunTarget>
-            </properties>
-        </profile>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+      <properties>
+        <coreGuiRunTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</coreGuiRunTarget>
+      </properties>
+    </profile>
 
-        <profile>
-            <id>msg</id>
-            <build>
-                <plugins>
-                  <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                       <includes>
-                           <include>org/rhq/enterprise/gui/coregui/client/Messages*.java</include>
-                       </includes>
-                    </configuration>
-                  </plugin>
-                </plugins>
-              </build>
-        </profile>
+    <profile>
+      <id>msg</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <includes>
+                <include>org/rhq/enterprise/gui/coregui/client/Messages*.java</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
-      <profile>
-        <id>disable-tags</id>
-        <activation>       
-          <property>
-            <name>brew</name>            
-          </property>
-        </activation>       
-        <properties>
-          <enable.tags>false</enable.tags>
-        </properties>
-      </profile>
+    <profile>
+      <id>disable-tags</id>
+      <activation>
+        <property>
+          <name>brew</name>
+        </property>
+      </activation>
+      <properties>
+        <enable.tags>false</enable.tags>
+      </properties>
+    </profile>
 
-    </profiles>
+  </profiles>
 
 
-    <repositories>
-        <repository>
-            <id>smartgwt</id>
-            <name>SmartGWT Releases</name>
-            <url>http://www.smartclient.com/maven2/</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-        </repository>
+  <repositories>
+    <repository>
+      <id>smartgwt</id>
+      <name>SmartGWT Releases</name>
+      <url>http://www.smartclient.com/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
 
-        <repository>
-            <id>codehaus</id>
-            <name>Codehaus Releases</name>
-            <url>http://repository.codehaus.org/</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-        </repository>
+    <repository>
+      <id>codehaus</id>
+      <name>Codehaus Releases</name>
+      <url>http://repository.codehaus.org/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
 
-    </repositories>
+  </repositories>
 
 </project>

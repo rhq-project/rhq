@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,10 +78,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
@@ -150,7 +148,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         // remove any unused, orphaned package versions
-        contentSourceManager.purgeOrphanedPackageVersions(subject);
+        contentSourceManager.purgeOrphanedPackageVersions(subjectManager.getOverlord());
     }
 
     @RequiredPermission(Permission.MANAGE_REPOSITORIES)
@@ -992,6 +990,35 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         entityManager.persist(repoRepoRelationship);
         repo.addRepoRelationship(repoRelationship);
+    }
+
+    @Override
+    public byte[] getPackageVersionBytes(Subject subject, int repoId, int packageVersionId) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot access a repo with id " + repoId);
+        }
+
+        //check that the provided package version actually belongs to the repo
+        Repo repo = entityManager.find(Repo.class, repoId);
+
+        PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+        if (pv == null || !pv.getRepos().contains(repo)) {
+            throw new IllegalArgumentException("The package version with id " + packageVersionId
+                + " does not belong to the repo with id " + repoId + " or does not exist.");
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        contentSourceManager.outputPackageVersionBits(pv, out);
+
+        byte[] ret = out.toByteArray();
+
+        try {
+            out.close();
+        } catch (IOException e) {
+            //this is not gonna happen with a byte array stream
+        }
+
+        return ret;
     }
 
     private void validateFields(Repo repo) throws RepoException {

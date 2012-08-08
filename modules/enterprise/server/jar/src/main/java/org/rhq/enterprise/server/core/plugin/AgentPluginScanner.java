@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
@@ -34,6 +35,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
@@ -94,8 +97,14 @@ public class AgentPluginScanner {
     void registerAgentPlugins() throws Exception {
         try {
             for (DeploymentInfo di : this.scanned) {
-                log.debug("Hot deploying agent plugin [" + di.url + "]...");
-                this.agentPluginDeployer.pluginDetected(di);
+                if (di.url.getFile().endsWith("-rhq-plugin.xml")) {
+                    // Create a plugin jar and deploy next time
+                    createPluginJarFromDescriptorFile(di.url.getFile());
+                }
+                else {
+                    log.debug("Hot deploying agent plugin [" + di.url + "]...");
+                    this.agentPluginDeployer.pluginDetected(di);
+                }
             }
 
             // Register all the new plugins.
@@ -104,6 +113,53 @@ public class AgentPluginScanner {
             this.agentPluginDeployer.registerPlugins();
         } finally {
             scanned.clear();
+        }
+    }
+
+    /**
+     * We take a plugin descriptor and wrap it into a jar file. The original file is
+     * deleted if the wrapping succeeds.
+     * @param fileName Full path of the file to wrap.
+     */
+    private void createPluginJarFromDescriptorFile(String fileName) throws Exception {
+        if (!fileName.endsWith("-rhq-plugin.xml")) {
+            log.warn("The passed file does not end in -rhq-plugin.xml, will not process it");
+            return;
+        }
+
+        log.info("Found a plugin-descriptor at [" + fileName + "], creating a jar from it to be deployed at the next scan");
+        File descriptor = new File(fileName);
+        String name = descriptor.getName();
+        int pos = name.lastIndexOf(".xml");
+        name = name.substring(0,pos) + ".jar"; // TODO special name for those plugins?
+        String parent = descriptor.getParent();
+        JarOutputStream jos = null;
+        FileInputStream fis = null;
+        boolean success = false;
+        try {
+            jos = new JarOutputStream(new FileOutputStream(new File(parent,name)));
+            JarEntry jarEntry = new JarEntry("META-INF");
+            jos.putNextEntry(jarEntry);
+            jarEntry = new JarEntry("META-INF/rhq-plugin.xml");
+            jos.putNextEntry(jarEntry);
+            fis = new FileInputStream(descriptor);
+            int i;
+            while ((i= fis.read())>0) {
+                jos.write(i);
+            }
+            jos.flush();
+            success = true;
+        } catch (IOException e) {
+            log.error("Failed creating the plugin jar from the descriptor: " + e.getMessage());
+            throw e;
+        }
+        finally {
+            JDBCUtil.safeClose(jos);
+            JDBCUtil.safeClose(fis);
+        }
+        if (success) {
+            boolean deleted = descriptor.delete();
+            log.info("Deleted the now obsolete plugin descriptor: " + deleted);
         }
     }
 
@@ -136,7 +192,7 @@ public class AgentPluginScanner {
     /**
      * Scans the plugin directory and updates our cache of known plugin files.
      * This will purge any old plugins that are deemed obsolete.
-     * 
+     *
      * @return a list of files that appear to be new or updated and should be deployed
      */
     List<File> agentPluginScanFilesystem() {
@@ -145,7 +201,7 @@ public class AgentPluginScanner {
         // get the current list of plugins deployed on the filesystem
         File[] pluginJars = this.agentPluginDeployer.getPluginDir().listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.endsWith(".jar");
+                return name.endsWith(".jar") || name.endsWith("-rhq-plugin.xml");
             }
         });
 
@@ -384,10 +440,10 @@ public class AgentPluginScanner {
                                 log.debug(message);
                             }
                         } else {
-                            //inform on the info level so that it's clear from the logs that the new file 
+                            //inform on the info level so that it's clear from the logs that the new file
                             //is going to be used.
                             log.info(message);
-                        }                
+                        }
                     }
                 } else {
                     log.info("Found agent plugin in the DB that we do not yet have: " + name);

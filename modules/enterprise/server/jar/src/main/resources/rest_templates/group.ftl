@@ -31,7 +31,7 @@
             <td>Name</td><td>${var.name}</td>
         </tr>
         <tr>
-            <td>Id</td><td>${var.id}</td>
+            <td>Id</td><td>${var.id?c}</td>
         </tr>
         <tr>
             <td>Category</td><td>${var.category}</td>
@@ -44,6 +44,23 @@
         <tr>
             <td>Recursive</td><td>${var.recursive?string("Yes","No")}</td>
         </tr>
+        <tr>
+            <td>DynaGroup</td><td>${(var.dynaGroupDefinitionId > 0)?string("Yes","No")}</td>
+        </tr>
+        <tr>
+            <td>Resource Count</td>
+            <td>${var.explicitCount}
+                <#if var.recursive>
+            ( Implicit: ${var.implicitCount} )
+                </#if>
+            </td>
+        </tr>
     </table>
     <a href="/rest/1/group/${var.id?c}/resources.html">Resources</a><br/>
+    <#if (var.category?contains("compatible"))>
+        <a href="/rest/1/group/${var.id?c}/metricDefinitions.html">Metric Definitions</a><br/>
+    </#if>
+    <#if (var.dynaGroupDefinitionId >0)>
+        <a href="/rest/1/group/definition/${var.dynaGroupDefinitionId?c}.html">DynaGroup definition</a>
+    </#if>
 </html>

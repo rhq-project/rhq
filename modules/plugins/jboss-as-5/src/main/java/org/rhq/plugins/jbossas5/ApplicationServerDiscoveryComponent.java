@@ -576,11 +576,16 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         ComparableVersion version = new ComparableVersion(installInfo.getVersion());
         JBossProductType productType = installInfo.getProductType();
         ComparableVersion minimumVersion = MINIMUM_PRODUCT_VERSIONS.get(productType);
-        // The product is supported if the version is greater than or equal to the minimum version.
-        boolean supported = (version.compareTo(minimumVersion) >= 0);
-        if (!supported) {
-            log.debug(productType + " version " + version + " is not supported by this plugin (minimum " + productType
-                + " version is " + minimumVersion + ") - skipping...");
+        boolean supported;
+        if (minimumVersion != null) {
+            // The product is supported if the version is greater than or equal to the minimum version.
+            supported = (version.compareTo(minimumVersion) >= 0);
+            if (!supported) {
+                log.debug(productType + " version " + version + " is not supported by this plugin (minimum " + productType
+                    + " version is " + minimumVersion + ") - skipping...");
+            }
+        } else {
+            supported = true;
         }
         return supported;
     }

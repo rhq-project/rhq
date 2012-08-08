@@ -18,10 +18,19 @@
  */
 package org.rhq.enterprise.server.measurement.test;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -30,10 +39,14 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataPK;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -46,11 +59,13 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
@@ -68,10 +83,12 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     private Subject overlord;
 
     private Resource resource1, resource2;
-    private MeasurementDefinition definitionCt1;
-    private MeasurementDefinition definitionCt2;
+    private ResourceGroup group;
+    private MeasurementDefinition definitionCt1, definitionCt2, definitionCt3;
+    private MeasurementSchedule schedule1, schedule2, schedule3;
     private ResourceType theResourceType;
     private Agent theAgent;
+    private Set<MeasurementData> expectedResult1, expectedResult2, expectedResult3;
 
     @BeforeMethod
     public void beforeMethod() {
@@ -79,6 +96,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             this.measurementDataManager = LookupUtil.getMeasurementDataManager();
             this.callTimeDataManager = LookupUtil.getCallTimeDataManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
+
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -95,6 +113,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             callTimeDataManager.purgeCallTimeData(new Date());
 
             EntityManager em = beginTx();
+
             // delete keys
             List<Integer> resourceIds = new ArrayList<Integer>();
             resourceIds.add(resource1.getId());
@@ -119,9 +138,19 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             em.remove(definitionCt1);
             definitionCt2 = em.merge(definitionCt2);
             em.remove(definitionCt2);
+            if (definitionCt3 != null) {
+                definitionCt3 = em.merge(definitionCt3);
+                em.remove(definitionCt3);
+            }
 
             theResourceType = em.merge(theResourceType);
             em.remove(theResourceType);
+
+            // delete group (if exist)
+            if (group != null) {
+                group = em.merge(group);
+                em.remove(group);
+            }
 
             theAgent = em.merge(theAgent);
             em.remove(theAgent);
@@ -140,16 +169,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             EntityManager em = beginTx();
 
             setupResources(em);
-
-            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
-            em.persist(schedule1);
-            definitionCt1.addSchedule(schedule1);
-            resource1.addSchedule(schedule1);
-
-            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt1, resource2);
-            em.persist(schedule2);
-            definitionCt1.addSchedule(schedule2);
-            resource2.addSchedule(schedule2);
 
             em.flush();
             long now = System.currentTimeMillis();
@@ -199,16 +218,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             EntityManager em = beginTx();
 
             setupResources(em);
-
-            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
-            em.persist(schedule1);
-            definitionCt1.addSchedule(schedule1);
-            resource1.addSchedule(schedule1);
-
-            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt2, resource1);
-            em.persist(schedule2);
-            definitionCt1.addSchedule(schedule2);
-            resource2.addSchedule(schedule2);
 
             em.flush();
             long now = System.currentTimeMillis();
@@ -282,6 +291,195 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         resource2.setUuid("" + new Random().nextInt());
         resource2.setAgent(theAgent);
         em.persist(resource2);
+
+        schedule1 = new MeasurementSchedule(definitionCt1, resource1);
+        em.persist(schedule1);
+        definitionCt1.addSchedule(schedule1);
+        resource1.addSchedule(schedule1);
+
+        schedule2 = new MeasurementSchedule(definitionCt2, resource1);
+        em.persist(schedule2);
+        definitionCt1.addSchedule(schedule2);
+        resource2.addSchedule(schedule2);
+    }
+
+    /**
+     * Just set up the group of two resources plus measurement definitions
+     *
+     * @param  em The EntityManager to use
+     *
+     */
+    private void setupGroupOfResources(EntityManager em) {
+        theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
+        em.persist(theAgent);
+
+        theResourceType = new ResourceType("test-plat", "test-plugin", ResourceCategory.PLATFORM, null);
+        em.persist(theResourceType);
+
+        definitionCt1 = new MeasurementDefinition("CT-Def1", MeasurementCategory.PERFORMANCE,
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 60000, DisplayType.SUMMARY);
+        definitionCt1.setResourceType(theResourceType);
+        em.persist(definitionCt1);
+
+        definitionCt2 = new MeasurementDefinition("CT-Def2", MeasurementCategory.PERFORMANCE,
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 60000, DisplayType.SUMMARY);
+        definitionCt2.setResourceType(theResourceType);
+        em.persist(definitionCt2);
+
+        definitionCt3 = new MeasurementDefinition("CT-Def3", MeasurementCategory.PERFORMANCE,
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 60000, DisplayType.SUMMARY);
+        definitionCt3.setResourceType(theResourceType);
+        em.persist(definitionCt3);
+
+        resource1 = new Resource("test-platform-key1", "test-platform-name", theResourceType);
+        resource1.setUuid("" + new Random().nextInt());
+        resource1.setAgent(theAgent);
+        em.persist(resource1);
+
+        resource2 = new Resource("test-platform-key2", "test-platform-name", theResourceType);
+        resource2.setUuid("" + new Random().nextInt());
+        resource2.setAgent(theAgent);
+        em.persist(resource2);
+
+        schedule1 = new MeasurementSchedule(definitionCt1, resource1);
+        em.persist(schedule1);
+        definitionCt1.addSchedule(schedule1);
+        resource1.addSchedule(schedule1);
+
+        schedule2 = new MeasurementSchedule(definitionCt2, resource2);
+        em.persist(schedule2);
+        definitionCt2.addSchedule(schedule2);
+        resource2.addSchedule(schedule2);
+
+        schedule3 = new MeasurementSchedule(definitionCt3, resource2);
+        em.persist(schedule3);
+        definitionCt3.addSchedule(schedule3);
+        resource2.addSchedule(schedule3);
+
+        group = new ResourceGroup("test-group", theResourceType);
+        em.persist(group);
+
+        // prepare return values and expected values
+        long time1 = System.currentTimeMillis();
+        long time2 = time1 + 1;
+        long time3 = time2 + 1;
+        String name1 = "a";
+        String name2 = "b";
+        String name3 = "c";
+        String value1 = "test-value1";
+        String value2 = "test-value2";
+        String value3 = "test-value3";
+
+        // method findLiveDataForGroup adds prefix with resource id which is part of equals
+        MeasurementData expectedData1 = makeMeasurement(time1, schedule1.getId(), value1, name1);
+        expectedData1.setName(resource1.getId() + ":" + name1);
+        MeasurementData expectedData2 = makeMeasurement(time2, schedule2.getId(), value2, name2);
+        expectedData2.setName(resource2.getId() + ":" + name2);
+        MeasurementData expectedData3 = makeMeasurement(time3, schedule3.getId(), value3, name3);
+        expectedData3.setName(resource2.getId() + ":" + name3);
+
+        expectedResult1 = new HashSet<MeasurementData>(1);
+        expectedResult1.add(expectedData1);
+        expectedResult2 = new HashSet<MeasurementData>(2);
+        expectedResult2.add(expectedData2);
+        expectedResult2.add(expectedData3);
+        expectedResult3 = new HashSet<MeasurementData>(3);
+        expectedResult3.addAll(expectedResult1);
+        expectedResult3.addAll(expectedResult2);
+
+        // mock the MeasurementAgentService
+        MeasurementAgentService mockedMeasurementService = mock(MeasurementAgentService.class);
+        when(mockedMeasurementService.getRealTimeMeasurementValue(eq(resource1.getId()), any(Set.class))).thenReturn(
+            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time1, schedule1.getId(), value1, name1))));
+        when(mockedMeasurementService.getRealTimeMeasurementValue(eq(resource2.getId()), any(Set.class))).thenReturn(
+            new HashSet<MeasurementData>(Arrays.asList(makeMeasurement(time2, schedule2.getId(), value2, name2),
+                makeMeasurement(time3, schedule3.getId(), value3, name3))));
+        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.measurementService = mockedMeasurementService;
+    }
+
+    @Test
+    public void testFindLiveDataForGroup1() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
+                new int[] { resource1.getId() }, new int[] { definitionCt1.getId() });
+
+            Set<MeasurementData> actualResultWithNewHashCodes = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult1, actualResultWithNewHashCodes);
+
+            actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
+                new int[] { resource2.getId() }, new int[] { definitionCt2.getId(), definitionCt3.getId() });
+            actualResultWithNewHashCodes = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult2, actualResultWithNewHashCodes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testFindLiveDataForGroup2() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
+                new int[] { resource1.getId(), resource2.getId() },
+                new int[] { definitionCt1.getId(), definitionCt2.getId(), definitionCt3.getId() });
+            Set<MeasurementData> actualResultWithNewHashCodes = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult3, actualResultWithNewHashCodes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testFindLiveDataForGroup3() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+
+            Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
+                null, new int[] { definitionCt1.getId() });
+            assertEquals(Collections.emptySet(), actualResult);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testFindLiveDataForGroup4() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            measurementDataManager.findLiveDataForGroup(null, group.getId(), new int[] { resource1.getId() },
+                new int[] { definitionCt1.getId() });
+            fail();
+        } catch (Exception e) {
+            // ok, it was expected
+        }
+    }
+
+    private MeasurementData makeMeasurement(long time, int scheduleId, String value, String name) {
+        MeasurementData measurement = new MeasurementDataTrait(new MeasurementDataPK(time, scheduleId), value);
+        measurement.setName(name);
+        return measurement;
     }
 
     private EntityManager beginTx() throws Exception {

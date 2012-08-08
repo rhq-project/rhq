@@ -37,6 +37,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -148,6 +149,11 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
         markForRedraw();
     }
 
+    @Override
+    public boolean isResetMatching() {
+        return false;
+    }
+
     private void buildForm() {
         if (!formBuilt) {
             disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", MSG
@@ -166,7 +172,7 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
                 .view_alert_definition_recovery_editor_disable_when_fired());
             disableWhenFiredStatic.setWrapTitle(false);
 
-            recoverAlertSelection = new SelectItem("recoveryAlert", MSG
+            recoverAlertSelection = new SortedSelectItem("recoveryAlert", MSG
                 .view_alert_definition_recovery_editor_recovery_alert());
             recoverAlertSelection.setDefaultValue("0");
             recoverAlertSelection.setWrapTitle(false);

@@ -18,15 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search.favorites;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
@@ -35,11 +31,14 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Joseph Marques
  */
+@Deprecated
 public class SavedSearchGrid extends Grid {
 
     private SavedSearchSelectionHandler patternSelectionHandler;
@@ -130,7 +129,7 @@ public class SavedSearchGrid extends Grid {
 
     protected void onRowOver(Element row) {
         Element actionCell = DOM.getChild(row, 1);
-        DOM.setStyleAttribute(actionCell, "backgroundImage", "url(" + SearchBar.TRASH + ")");
+        //DOM.setStyleAttribute(actionCell, "backgroundImage", "url(" + SearchBar.TRASH + ")");
         DOM.setStyleAttribute(actionCell, "backgroundRepeat", "no-repeat");
         DOM.setStyleAttribute(actionCell, "backgroundPosition", "center");
         DOM.setStyleAttribute(actionCell, "width", "24px");

@@ -22,13 +22,11 @@
  */
 package org.rhq.bindings.util;
 
-import org.rhq.core.domain.util.Summary;
-
 import java.beans.BeanInfo;
+import java.beans.IndexedPropertyDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.beans.IndexedPropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -36,13 +34,15 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.core.domain.util.Summary;
+
 public class SummaryFilter {
 
 
 
     public PropertyDescriptor[] getPropertyDescriptors(Object object, boolean exportMode) throws IntrospectionException {
 
-        BeanInfo info = Introspector.getBeanInfo(object.getClass(), object.getClass().getSuperclass());
+        BeanInfo info = Introspector.getBeanInfo(object.getClass(), Object.class);
 
         final Map<PropertyDescriptor, Integer> indexes = new HashMap<PropertyDescriptor, Integer>();
 

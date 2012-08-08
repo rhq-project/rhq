@@ -194,7 +194,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
                 Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {
@@ -213,7 +213,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 });
         } else {
             GWTServiceLookup.getAlertDefinitionService().updateAlertDefinition(alertDefinition.getId(),
-                alertDefinition, true, new AsyncCallback<AlertDefinition>() {
+                alertDefinition, purgeInternals, new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(

@@ -30,11 +30,11 @@ public interface AlertTemplateGWTService extends RemoteService {
      * Updates a alert template definition.
      * 
      * @param alertDefinition
-     * @param purgeInternals must be true if you are updating conditions or dampening settings, can be false otherwise
+     * @param resetMatching must be true if you are updating conditions, condition expression, or dampening settings, can be false otherwise
      * @return the updated definition
      * @throws Exception
      */
-    AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean purgeInternals)
+    AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean resetMatching)
         throws RuntimeException;
 
     void enableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException;

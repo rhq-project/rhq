@@ -18,17 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -40,17 +41,16 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
+
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -62,10 +62,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -372,7 +368,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
     private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton, IButton importButton,
         IButton ignoreButton, IButton unignoreButton) {
         if (treeGrid.getSelectedRecords().length == 0) {
-            selectAllButton.setDisabled(false);
+            selectAllButton.setDisabled(treeGrid.getRecords().length == 0);
             deselectAllButton.setDisabled(true);
             importButton.setDisabled(true);
             ignoreButton.setDisabled(true);

@@ -73,7 +73,7 @@ public abstract class ServerPluginDescriptorUtil {
     static {
         // maps all xsd files to their generated package names for all known server plugin types;
         // if a new plugin type is ever added, you must ensure you add the new plugin type's xsd/package here
-        // See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas
+        // See also: https://docs.jboss.org/author/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas
         PLUGIN_SCHEMA_PACKAGES = new HashMap<String, String>();
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN, XmlSchemas.PKG_SERVERPLUGIN);
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_GENERIC, XmlSchemas.PKG_SERVERPLUGIN_GENERIC);

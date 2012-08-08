@@ -23,6 +23,7 @@
 package org.rhq.core.pc.measurement;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -88,7 +89,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                         }
                     }
 
-                    this.measurementManager.reschedule(requests);
+                    this.measurementManager.reschedule(requests, 31000L); // BZ 834019 - go to the next collection interval plus 31s to skew it
                     return report;
                 }
 
@@ -131,7 +132,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
         Set<MeasurementScheduleRequest> requests, Resource resource) {
         try {
             long start = System.currentTimeMillis();
-            measurementComponent.getValues(report, (Set<MeasurementScheduleRequest>) requests);
+            measurementComponent.getValues(report, Collections.unmodifiableSet(requests));
             long duration = (System.currentTimeMillis() - start);
             if (duration > 2000L) {
                 String message = "[PERF] Collection of measurements for [" + resource + "] (component=["

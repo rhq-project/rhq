@@ -1,7 +1,9 @@
 package org.rhq.enterprise.server.rest.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -18,7 +20,7 @@ public class OperationDefinitionRest {
     String name;
     int id;
     List<Link> links = new ArrayList<Link>();
-    // TODO add parameters
+    List<SimplePropDef> params = new ArrayList<SimplePropDef>();
 
     public String getName() {
         return name;
@@ -49,4 +51,15 @@ public class OperationDefinitionRest {
         links.add(link);
     }
 
+    public List<SimplePropDef> getParams() {
+        return params;
+    }
+
+    public void setParams(List<SimplePropDef> params) {
+        this.params = params;
+    }
+
+    public void addParam(SimplePropDef prop) {
+        params.add(prop);
+    }
 }

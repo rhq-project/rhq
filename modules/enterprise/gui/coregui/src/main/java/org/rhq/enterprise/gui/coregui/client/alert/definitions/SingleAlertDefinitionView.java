@@ -70,8 +70,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         final LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
         tabSet.setHeight100();
 
-        final Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), MSG
-            .view_alert_common_tab_general());
+        final Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"),
+            MSG.view_alert_common_tab_general());
         generalProperties = new GeneralPropertiesAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
         generalPropertiesTab.addTabDeselectedHandler(new TabDeselectedHandler() {
@@ -84,14 +84,14 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
             }
         });
 
-        Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), MSG
-            .view_alert_common_tab_conditions());
+        Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"),
+            MSG.view_alert_common_tab_conditions());
         conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefView.getResourceType(),
             alertDefinition);
         conditionsTab.setPane(conditions);
 
-        Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), MSG
-            .view_alert_common_tab_notifications());
+        Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"),
+            MSG.view_alert_common_tab_notifications());
         notifications = new NotificationsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         notificationsTab.setPane(notifications);
 
@@ -134,11 +134,12 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
             @Override
             public void onClick(ClickEvent event) {
                 if (generalProperties.validate()) {
+                    boolean resetMatching = isResetMatching();
                     saveAlertDefinition();
                     setAlertDefinition(getAlertDefinition()); // loads data into static fields
                     makeViewOnly();
 
-                    alertDefView.commitAlertDefinition(getAlertDefinition());
+                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching);
                 } else {
                     tabSet.selectTab(generalPropertiesTab);
                 }
@@ -160,6 +161,10 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
 
     public AlertDefinition getAlertDefinition() {
         return alertDefinition;
+    }
+
+    public boolean isResetMatching() {
+        return conditions.isResetMatching() || dampening.isResetMatching();
     }
 
     public void setAlertDefinition(AlertDefinition alertDef) {

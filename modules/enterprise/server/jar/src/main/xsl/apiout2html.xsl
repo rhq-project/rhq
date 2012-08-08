@@ -87,6 +87,9 @@
     </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>
+    <xsl:if test="not(@gzip = '')">
+      <p><em>Supports returning a gzip'ed Content-Encoding</em></p>
+    </xsl:if>
     <xsl:choose>
     <xsl:when test="param">
     Parameters:

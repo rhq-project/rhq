@@ -81,6 +81,15 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
+    
+    public Set<MeasurementData> findLiveDataForGroup(int groupId, int resourceId[], int[] definitionIds) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(dataManager.findLiveDataForGroup(getSessionSubject(), groupId, resourceId, definitionIds),
+                "MeasurementDataService.findLiveDataForGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException {

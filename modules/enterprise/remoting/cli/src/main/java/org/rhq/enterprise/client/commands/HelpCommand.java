@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,11 +28,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import javax.jws.WebParam;
+
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.utility.ReflectionUtility;
-
-import javax.jws.WebParam;
 
 /**
  * @author Greg Hinkle
@@ -61,16 +62,16 @@ public class HelpCommand implements ClientCommand {
             tw.setHideRowCount(true);
             tw.print(data);
         } else if ("api".equals(args[1])) {
-            Map<String, Object> services = client.getRemoteClient().getManagers();
+            Map<RhqManager, Object> services = client.getRemoteClient().getScriptingAPI();
             if (args.length == 2) {
                 TabularWriter tw = new TabularWriter(client.getPrintWriter(), "API", "Package");
                 tw.setWidth(client.getConsoleWidth());
 
                 String[][] data = new String[services.size()][2];
                 int i = 0;
-                for (String apiName : services.keySet()) {
-                    data[i][0] = apiName;
-                    Object service = services.get(apiName);
+                for (RhqManager api : services.keySet()) {
+                    data[i][0] = api.name();
+                    Object service = services.get(api);
                     data[i][1] = service.getClass().getInterfaces()[0].getPackage().getName();
                     i++;
                 }

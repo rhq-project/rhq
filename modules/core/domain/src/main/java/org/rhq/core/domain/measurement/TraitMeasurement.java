@@ -34,6 +34,8 @@ public interface TraitMeasurement extends Serializable {
 
     void setValue(String value);
 
+    String getName();
+
     int getResourceId();
 
     int getScheduleId();

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.content;
 
-import java.util.Comparator;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -415,4 +414,6 @@ public interface RepoManagerLocal {
      * @return
      */
     List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
+
+    byte[] getPackageVersionBytes(Subject user, int repoId, int packageVersionId);
 }

@@ -1,95 +1,96 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-   <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-parent</artifactId>
-      <version>4.5.0-SNAPSHOT</version>
-      <relativePath>../../../../pom.xml</relativePath>
-   </parent>
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>4.5.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
 
-   <artifactId>rhq-enterprise-server</artifactId>
-   <packaging>ejb</packaging>
+  <artifactId>rhq-enterprise-server</artifactId>
+  <packaging>ejb</packaging>
 
-   <name>RHQ Enterprise Server JAR</name>
-   <description>RHQ enterprise server main JAR</description>
+  <name>RHQ Enterprise Server JAR</name>
+  <description>RHQ enterprise server main JAR</description>
 
-   <properties>
-      <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
-      <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
+  <properties>
+    <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
+    <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
 
       <!-- dependency versions -->
-      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+    <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
 
-      <clean.db>true</clean.db>
-   </properties>
+    <clean.db>true</clean.db>
+  </properties>
 
-   <dependencies>
+  <dependencies>
 
       <!-- Internal Deps -->
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-comm</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-comm</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by ear -->
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope> <!-- by ear -->
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-dbutils</artifactId>
-         <version>${project.version}</version>
-         <exclusions>
-            <exclusion>
-              <groupId>ant</groupId>
-              <artifactId>ant</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-dbutils</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>ant</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>safe-invoker</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>safe-invoker</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-common-drift</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-common-drift</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-container-lib</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope>
-      </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-container-lib</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>com.googlecode.java-diff-utils</groupId>
-           <artifactId>diffutils</artifactId>
-           <version>1.2.1</version>
-       </dependency>
+    <dependency>
+      <groupId>com.googlecode.java-diff-utils</groupId>
+      <artifactId>diffutils</artifactId>
+      <version>1.2.1</version>
+    </dependency>
 
 
       <!--================ Test Deps ================-->
@@ -99,1091 +100,1114 @@
            need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
            loaded when testing.  -->
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>test-utils</artifactId>
-         <version>${project.version}</version>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.testng</groupId>
-               <artifactId>testng</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>test-utils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.testng</groupId>
+          <artifactId>testng</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
-      <dependency>
-        <groupId>org.rhq.helpers</groupId>
-        <artifactId>perftest-support</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant-launcher</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
+    <dependency>
+      <groupId>org.rhq.helpers</groupId>
+      <artifactId>perftest-support</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>ant</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ant</groupId>
+          <artifactId>ant-launcher</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>jboss-ejb3-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>jboss.jboss-embeddable-ejb3</groupId>
+      <artifactId>jboss-ejb3-all</artifactId>
+      <version>${jboss-embeddable-ejb3.version}</version>
+      <scope>test</scope>
+    </dependency>
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
-      <dependency>
-         <groupId>antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>antlr</groupId>
+      <artifactId>antlr</artifactId>
+      <version>2.7.7</version>
+      <scope>test</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>javassist</groupId>
-         <artifactId>javassist</artifactId>
+    <dependency>
+      <groupId>javassist</groupId>
+      <artifactId>javassist</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
+      <scope>test</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>trove</groupId>
-         <artifactId>trove</artifactId>
-         <version>1.0.2</version>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>trove</groupId>
+      <artifactId>trove</artifactId>
+      <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>xerces</groupId>
-         <artifactId>xercesImpl</artifactId>
-         <version>${xercesImpl.version}</version>
-         <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>${xercesImpl.version}</version>
+      <scope>test</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>net.sf.opencsv</groupId>
-           <artifactId>opencsv</artifactId>
-           <version>1.8</version>
-           <scope>test</scope>
-       </dependency>
+    <dependency>
+      <groupId>net.sf.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+      <version>1.8</version>
+      <scope>test</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>commons-jxpath</groupId>
-           <artifactId>commons-jxpath</artifactId>
-           <version>1.3</version>
-           <scope>test</scope>
-       </dependency>
+    <dependency>
+      <groupId>commons-jxpath</groupId>
+      <artifactId>commons-jxpath</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
 
 
       <!-- 3rd Party Deps -->
 
-      <dependency>
-         <groupId>org.antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>3.2</version>
-      </dependency>
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr</artifactId>
+      <version>3.2</version>
+    </dependency>
 
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
-      <dependency>
-         <groupId>commons-beanutils</groupId>
-         <artifactId>commons-beanutils</artifactId>
-         <version>1.6.1</version>
-      </dependency>
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>1.6.1</version>
+    </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
       <!-- also required by EJB3 Embedded (test scope) -->
-      <dependency>
-         <groupId>commons-collections</groupId>
-         <artifactId>commons-collections</artifactId>
-         <version>3.2</version>
-      </dependency>
+    <dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+      <version>3.2</version>
+    </dependency>
 
-      <dependency>
-         <groupId>commons-httpclient</groupId>
-         <artifactId>commons-httpclient</artifactId>
-         <version>3.0.1</version>
-      </dependency>
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.0.1</version>
+    </dependency>
 
-      <dependency>
-        <groupId>commons-lang</groupId>
-         <artifactId>commons-lang</artifactId>
-         <version>2.4</version>
-      </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.4</version>
+    </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
-      <dependency>
-         <groupId>commons-validator</groupId>
-         <artifactId>commons-validator</artifactId>
-         <version>1.1.4</version>
-      </dependency>
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>1.1.4</version>
+    </dependency>
 
       <!-- required by RHQ server classes, as well as EJB3 Embedded -->
-      <dependency>
-         <groupId>dom4j</groupId>
-         <artifactId>dom4j</artifactId>
-         <version>1.6.1-jboss</version>
-         <scope>runtime</scope>
-      </dependency>
+    <dependency>
+      <groupId>dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>1.6.1-jboss</version>
+      <scope>runtime</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
+    <dependency>
+      <groupId>gnu-getopt</groupId>
+      <artifactId>getopt</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
+    </dependency>
 
-      <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
+    <dependency>
+      <groupId>hibernate</groupId>
+      <artifactId>hibernate3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
+    <dependency>
+      <groupId>hibernate-annotations</groupId>
+      <artifactId>hibernate-annotations</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
+    <dependency>
+      <groupId>hibernate-entitymanager</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>i18nlog</groupId>
-         <artifactId>i18nlog</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+    </dependency>
 
-      <dependency>
-         <groupId>org.apache.geronimo.specs</groupId>
-         <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
          <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
               so use the Geronimo one instead. -->
-         <version>1.3</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <version>1.3</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
-         <version>2.4</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.4</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>jsp-api</artifactId>
-         <version>2.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jsp-api</artifactId>
+      <version>2.0</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-annotations-ejb3</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-annotations-ejb3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-cache</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-cache</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>compile</scope>
-      </dependency>
+      <scope>compile</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-common</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3x</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-ejb3x</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
       <!-- includes the org.jboss.ejb3.StrictMaxPool class, which is needed by the PoolClass annotation used on some
            of our SLSB's -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-ejb3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-j2ee</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-j2ee</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-jmx</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-jmx</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-system</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-system</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbosssx</artifactId>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jbosssx</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbpm</artifactId>
-         <version>3.1.1</version>
-      </dependency>
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jbpm</artifactId>
+      <version>3.1.1</version>
+    </dependency>
 
       <!-- for the transaction interrupt EJB3 interceptor -->
-      <dependency>
-         <groupId>org.jboss.transaction</groupId>
-         <artifactId>jboss-jta</artifactId>
+    <dependency>
+      <groupId>org.jboss.transaction</groupId>
+      <artifactId>jboss-jta</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
 
       <!-- TODO: remove this - tests should all be moved under the test source tree -->
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>3.8.1</version>
-      </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+    </dependency>
 
-      <dependency>
-         <groupId>org.opensymphony.quartz</groupId>
-         <artifactId>quartz</artifactId>
+    <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
+    </dependency>
 
-      <dependency>
-         <groupId>org.opensymphony.quartz</groupId>
-         <artifactId>quartz-oracle</artifactId>
+    <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz-oracle</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
-      </dependency>
+      <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
+    </dependency>
 
-      <dependency>
-         <groupId>org.easymock</groupId>
-         <artifactId>easymockclassextension</artifactId>
-         <version>2.2</version>
-         <scope>test</scope>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+      <version>2.2</version>
+      <scope>test</scope>
          <!-- somehow this is needed otherwise the hibernate stuff doesn't initialize in our tests -->
-      </dependency>
+    </dependency>
 
-      <dependency>
-         <groupId>org.snmp4j</groupId>
-         <artifactId>snmp4j</artifactId>
-         <version>1.8.2</version>
-      </dependency>
+    <dependency>
+      <groupId>org.snmp4j</groupId>
+      <artifactId>snmp4j</artifactId>
+      <version>1.8.2</version>
+    </dependency>
 
       <!-- required by RHQ server classes, as well as EJB3 Embedded -->
-      <dependency>
-         <groupId>oswego-concurrent</groupId>
-         <artifactId>concurrent</artifactId>
-         <version>1.3.4</version>
-      </dependency>
+    <dependency>
+      <groupId>oswego-concurrent</groupId>
+      <artifactId>concurrent</artifactId>
+      <version>1.3.4</version>
+    </dependency>
 
       <!-- TODO: Why is this needed? -->
-      <dependency>
-         <groupId>postgresql</groupId>
-         <artifactId>postgresql</artifactId>
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
          <!--<scope>test</scope>-->
-      </dependency>
+    </dependency>
 
-      <dependency>
-         <groupId>rss4j</groupId>
-         <artifactId>rss4j</artifactId>
-         <version>0.92-on.2</version>
-      </dependency>
+    <dependency>
+      <groupId>rss4j</groupId>
+      <artifactId>rss4j</artifactId>
+      <version>0.92-on.2</version>
+    </dependency>
 
-      <dependency>
-         <groupId>tomcat</groupId>
-         <artifactId>catalina</artifactId>
-         <version>5.5.20</version>
-         <scope>provided</scope>
-      </dependency>
+    <dependency>
+      <groupId>tomcat</groupId>
+      <artifactId>catalina</artifactId>
+      <version>5.5.20</version>
+      <scope>provided</scope>
+    </dependency>
 
-      <dependency>
-         <groupId>tomcat</groupId>
-         <artifactId>tomcat-jk</artifactId>
-         <version>4.1.31</version>
-         <scope>provided</scope>
-      </dependency>
+    <dependency>
+      <groupId>tomcat</groupId>
+      <artifactId>tomcat-jk</artifactId>
+      <version>4.1.31</version>
+      <scope>provided</scope>
+    </dependency>
 
       <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
-      <dependency>
-         <groupId>xalan</groupId>
-         <artifactId>xalan</artifactId>
-         <version>2.5.1</version>
-         <scope>provided</scope>
-      </dependency>
+    <dependency>
+      <groupId>xalan</groupId>
+      <artifactId>xalan</artifactId>
+      <version>2.5.1</version>
+      <scope>provided</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>com.jcraft</groupId>
-           <artifactId>jsch</artifactId>
-           <version>0.1.29</version>
-       </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.29</version>
+    </dependency>
 
-       <dependency>
-           <groupId>org.jboss.resteasy</groupId>
-           <artifactId>resteasy-jaxrs</artifactId>
-           <version>${resteasy.version}</version>
-           <scope>provided</scope> <!-- by container -->
-       </dependency>
-       <dependency>
-           <groupId>org.jboss.resteasy</groupId>
-           <artifactId>resteasy-jackson-provider</artifactId>
-           <version>${resteasy.version}</version>
-           <scope>provided</scope> <!-- by container -->
-       </dependency>
-       <dependency>
-           <groupId>org.jboss.resteasy</groupId>
-           <artifactId>resteasy-links</artifactId>
-           <version>${resteasy.version}</version>
-           <scope>provided</scope> <!-- by container -->
-       </dependency>
-       <dependency>
-             <groupId>org.jboss.resteasy</groupId>
-             <artifactId>resteasy-yaml-provider</artifactId>
-             <version>${resteasy.version}</version>
-           <scope>provided</scope>
-       </dependency>
-       <dependency>
-           <groupId>org.jboss.resteasy</groupId>
-           <artifactId>resteasy-jaxb-provider</artifactId>
-           <version>${resteasy.version}</version>
-           <scope>provided</scope>
-           <exclusions>
-               <exclusion>
-                   <groupId>com.sun.xml.bind</groupId>
-                   <artifactId>jaxb-impl</artifactId>
-               </exclusion>
-               <exclusion>
-                   <groupId>com.sun.xml.stream</groupId>
-                   <artifactId>sjsxp</artifactId>
-               </exclusion>
-           </exclusions>
-       </dependency>
-     <dependency>
-       <groupId>com.wordnik</groupId>
-       <artifactId>swagger-annotations_2.9.1</artifactId>
-       <version>1.1-SNAPSHOT</version>
-     </dependency>
-     <dependency>
-       <groupId>org.rhq.helpers</groupId>
-       <artifactId>rest-docs-generator</artifactId>
-       <version>${project.version}</version>
-       <scope>compile</scope>
-     </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope> <!-- by container -->
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jackson-provider</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope> <!-- by container -->
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-links</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope> <!-- by container -->
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-yaml-provider</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxb-provider</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-impl</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.xml.stream</groupId>
+          <artifactId>sjsxp</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.wordnik</groupId>
+      <artifactId>swagger-annotations_2.9.1</artifactId>
+      <version>1.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.rhq.helpers</groupId>
+      <artifactId>rest-docs-generator</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>org.yaml</groupId>
-           <artifactId>snakeyaml</artifactId>
-           <version>1.8</version>
-       </dependency>
-       <dependency>
-           <groupId>org.jboss.el</groupId>
-           <artifactId>jboss-el</artifactId>
-           <version>2.0.1.GA</version>
-           <scope>provided</scope>
-       </dependency>
-       <dependency>
-           <groupId>org.freemarker</groupId>
-           <artifactId>freemarker</artifactId>
-           <version>2.3.18</version>
-           <scope>provided</scope>
-       </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.el</groupId>
+      <artifactId>jboss-el</artifactId>
+      <version>2.0.1.GA</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
+      <version>2.3.18</version>
+      <scope>provided</scope>
+    </dependency>
 
-       <dependency>
-          <groupId>org.powermock</groupId>
-          <artifactId>powermock-module-testng</artifactId>
-          <version>${powermock.version}</version>
-          <scope>test</scope>
-       </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-testng</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>org.powermock</groupId>
-           <artifactId>powermock-api-mockito</artifactId>
-           <version>${powermock.version}</version>
-           <scope>test</scope>
-       </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
 
-       <dependency>
-           <groupId>org.liquibase</groupId>
-           <artifactId>liquibase-core</artifactId>
-           <version>2.0.3</version>
-           <scope>test</scope>
-       </dependency>
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>2.0.3</version>
+      <scope>test</scope>
+    </dependency>
 
-   </dependencies>
+  </dependencies>
 
-   <build>
-      <finalName>${project.artifactId}</finalName>
+  <build>
+    <finalName>${project.artifactId}</finalName>
 
-      <resources>
+    <resources>
          <!-- Redefine which directories to treat like resources (which are filtered). -->
-         <resource>
-           <directory>src/main/filtered-sources/java</directory>
-           <filtering>true</filtering>
-           <targetPath>../filtered-sources/java</targetPath>
-         </resource>
-         <resource>
-            <directory>src/main/resources</directory>
-            <filtering>true</filtering>
-         </resource>
-      </resources>
+      <resource>
+        <directory>src/main/filtered-sources/java</directory>
+        <filtering>true</filtering>
+        <targetPath>../filtered-sources/java</targetPath>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
 
-      <testResources>
-         <testResource>
-            <directory>src/test/resources</directory>
-            <filtering>true</filtering>
-         </testResource>
-      </testResources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
 
-      <plugins>
-        <plugin>
-           <groupId>org.apache.maven.plugins</groupId>
-           <artifactId>maven-ejb-plugin</artifactId>
-           <version>2.3</version>
-           <configuration>
-              <generateClient>true</generateClient>
-           </configuration>
-         </plugin>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-ejb-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <generateClient>true</generateClient>
+        </configuration>
+      </plugin>
 
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>test-jar</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-         <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
 
-               <execution>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <target>
+          <execution>
+            <phase>process-classes</phase>
+            <configuration>
+              <target>
                         <!-- generate the I18N resource bundles -->
-                        <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+                <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask"/>
 
-                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                           <classpath refid="maven.runtime.classpath" />
-                           <classfileset dir="${project.build.outputDirectory}">
-                              <include name="**/ServerI18NResourceKeys.class" />
-                              <include name="**/AlertI18NResourceKeys.class" />
-                           </classfileset>
-                        </i18n>
+                <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false"
+                  verify="true">
+                  <classpath refid="maven.runtime.classpath"/>
+                  <classfileset dir="${project.build.outputDirectory}">
+                    <include name="**/ServerI18NResourceKeys.class"/>
+                    <include name="**/AlertI18NResourceKeys.class"/>
+                  </classfileset>
+                </i18n>
 
                         <!-- create our rhq-server-version.properties file that goes in our jar -->
-                        <tstamp>
-                           <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
-                        </tstamp>
+                <tstamp>
+                  <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z"/>
+                </tstamp>
 
-                        <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
-Product-Version=${project.version}
-Module-Name=${project.name}
-Module-Version=${project.version}
-Build-Number=${buildNumber}
-Build-Date=${build.time}
-Build-Jdk-Vendor=${java.vendor}
-Build-Jdk=${java.version}
-Build-OS-Name=${os.name}
-Build-OS-Version=${os.version}
+                <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
+                  Product-Version=${project.version}
+                  Module-Name=${project.name}
+                  Module-Version=${project.version}
+                  Build-Number=${buildNumber}
+                  Build-Date=${build.time}
+                  Build-Jdk-Vendor=${java.vendor}
+                  Build-Jdk=${java.version}
+                  Build-OS-Name=${os.name}
+                  Build-OS-Version=${os.version}
 </echo>
-                     </target>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
 
                <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
-               <execution>
-                  <id>Extract JMS classes from RAR needed for JMS tests</id>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <target>
-                        <unzip src="src/test/resources/jms-ra.rar" dest="target">
-                           <patternset>
-                              <include name="jms-ra.jar"/>
-                           </patternset>
-                        </unzip>
-                        <unzip src="target/jms-ra.jar" dest="target/test-classes">
-                           <patternset>
-                              <include name="org/**"/>
-                           </patternset>
-                        </unzip>
-                     </target>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-
-            </executions>
-         </plugin>
-
-         <plugin>
-           <artifactId>maven-surefire-plugin</artifactId>
-            <!-- Everything but the web service tests, this is the standard test execution -->
-           <configuration>
-               <skipTests>true</skipTests>
-               <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-               <groups>${rhq.testng.includedGroups}</groups>
-               <properties>
-                  <property>
-                     <name>listener</name>
-                     <value>org.rhq.test.testng.StdoutReporter</value>
-                  </property>
-               </properties>
-               <systemPropertyVariables>
-                  <embeddedDeployment>true</embeddedDeployment>
-                  <deploymentDirectory>target/classes</deploymentDirectory>
-                  <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
-                  <clean.db>${clean.db}</clean.db>
-                  <log4j.configDebug>false</log4j.configDebug>
-               </systemPropertyVariables>
-               <additionalClasspathElements>
-                  <!-- The below is required for tests to run against Oracle. -->
-                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
-               </additionalClasspathElements>
+          <execution>
+            <id>Extract JMS classes from RAR needed for JMS tests</id>
+            <phase>process-classes</phase>
+            <configuration>
+              <target>
+                <unzip src="src/test/resources/jms-ra.rar" dest="target">
+                  <patternset>
+                    <include name="jms-ra.jar"/>
+                  </patternset>
+                </unzip>
+                <unzip src="target/jms-ra.jar" dest="target/test-classes">
+                  <patternset>
+                    <include name="org/**"/>
+                  </patternset>
+                </unzip>
+              </target>
             </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
 
-            <executions>
+        </executions>
+      </plugin>
 
-                <execution>
-                    <id>allExceptDbTests</id>
-                    <goals>
-                        <goal>test</goal>
-                    </goals>
-                    <configuration>
-                        <skipTests>${skipTests}</skipTests>
-                        <excludes>
-                            <exclude>com/**/*.java</exclude>
-                            <exclude>org/rhq/**/performance/**/*.java</exclude>
-                            <exclude>org/rhq/enterprise/server/db/**</exclude>
-                        </excludes>
-                    </configuration>
-                </execution>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+            <!-- Everything but the web service tests, this is the standard test execution -->
+        <configuration>
+          <skipTests>true</skipTests>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <groups>${rhq.testng.includedGroups}</groups>
+          <properties>
+            <property>
+              <name>listener</name>
+              <value>org.rhq.test.testng.StdoutReporter</value>
+            </property>
+          </properties>
+          <systemPropertyVariables>
+            <embeddedDeployment>true</embeddedDeployment>
+            <deploymentDirectory>target/classes</deploymentDirectory>
+            <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+            <clean.db>${clean.db}</clean.db>
+            <log4j.configDebug>false</log4j.configDebug>
+          </systemPropertyVariables>
+          <additionalClasspathElements>
+                  <!-- The below is required for tests to run against Oracle. -->
+            <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
 
-            </executions>
-         </plugin>
+        <executions>
 
-         <plugin>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr3-maven-plugin</artifactId>
-            <version>3.2</version>
-            <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <goals>
-                     <goal>antlr</goal>
-                  </goals>
-                  <configuration>
-                     <conversionTimeout>30000</conversionTimeout>
-                     <debug>false</debug>
-                     <dfa>false</dfa>
-                     <nfa>false</nfa>
-                     <excludes>
+          <execution>
+            <id>allExceptDbTests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skipTests>${skipTests}</skipTests>
+              <excludes>
+                <exclude>com/**/*.java</exclude>
+                <exclude>org/rhq/**/performance/**/*.java</exclude>
+                <exclude>org/rhq/enterprise/server/db/**</exclude>
+              </excludes>
+            </configuration>
+          </execution>
 
-                     </excludes>
-                     <includes>
+        </executions>
+      </plugin>
 
-                     </includes>
-                     <libDirectory>src/main/antlr3/imports</libDirectory>
-                     <messageFormat>antlr</messageFormat>
-                     <outputDirectory>target/generated-sources/antlr3</outputDirectory>
-                     <printGrammar>false</printGrammar>
-                     <profile>false</profile>
-                     <report>false</report>
-                     <sourceDirectory>src/main/antlr3</sourceDirectory>
-                     <trace>false</trace>
-                     <verbose>true</verbose>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr3-maven-plugin</artifactId>
+        <version>3.2</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>antlr</goal>
+            </goals>
+            <configuration>
+              <conversionTimeout>30000</conversionTimeout>
+              <debug>false</debug>
+              <dfa>false</dfa>
+              <nfa>false</nfa>
+              <excludes>
 
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-                <execution>
-                    <id>add-filtered-sources</id>
-                    <phase>generate-sources</phase>
-                    <goals>
-                        <goal>add-source</goal>
-                    </goals>
-                    <configuration>
-                        <sources>
-                            <source>target/filtered-sources/java</source>
-                        </sources>
-                    </configuration>
-                </execution>
-            </executions>
-         </plugin>
+              </excludes>
+              <includes>
+
+              </includes>
+              <libDirectory>src/main/antlr3/imports</libDirectory>
+              <messageFormat>antlr</messageFormat>
+              <outputDirectory>target/generated-sources/antlr3</outputDirectory>
+              <printGrammar>false</printGrammar>
+              <profile>false</profile>
+              <report>false</report>
+              <sourceDirectory>src/main/antlr3</sourceDirectory>
+              <trace>false</trace>
+              <verbose>true</verbose>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-filtered-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>target/filtered-sources/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-antlr-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/target/generated-sources/antlr3</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
         <!-- Document generation from the Annotations on the REST-API. -->
         <!-- TODO move to a better suited processing phase -->
-        <plugin>
-          <groupId>org.bsc.maven</groupId>
-          <artifactId>maven-processor-plugin</artifactId>
-          <version>2.0.6-redhat</version>
-          <configuration>
-            <processors>
-              <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
-            </processors>
-            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+      <plugin>
+        <groupId>org.bsc.maven</groupId>
+        <artifactId>maven-processor-plugin</artifactId>
+        <version>2.0.6-redhat</version>
+        <configuration>
+          <processors>
+            <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+          </processors>
+          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
             <!-- Comment the next line in to get more verbose output for debugging -->
             <!--<compilerArguments>-Averbose=true</compilerArguments>-->
-          </configuration>
-          <executions>
-            <execution>
-              <id>create-rest-api-reports</id>
-              <phase>process-classes</phase>
-              <goals>
+        </configuration>
+        <executions>
+          <execution>
+            <id>create-rest-api-reports</id>
+            <phase>process-classes</phase>
+            <goals>
                 <!-- We want to process the classes in src/ -->
-                <goal>process</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+              <goal>process</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
         <!-- Disable annotation processors during normal compilation -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <compilerArgument>-proc:none</compilerArgument>
-          </configuration>
-        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgument>-proc:none</compilerArgument>
+        </configuration>
+      </plugin>
 
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>xml-maven-plugin</artifactId>
-          <executions>
-            <execution>
-              <phase>process-classes</phase>
-              <goals>
-                <goal>transform</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <transformationSets>
-              <transformationSet>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>xml-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>transform</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <transformationSets>
+            <transformationSet>
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
-                <dir>target/docs/xml</dir>
-                <includes><include>rest-api-out.xml</include></includes>
-                <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
-                <parameters>
-                  <parameter>
-                    <name>basePath</name>
-                    <value>http://localhost:7080/rest/1</value>
-                  </parameter>
-                </parameters>
-                <outputDir>${project.build.directory}/docs/html</outputDir>
-                <fileMappers>
-                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
-                    <targetExtension>.html</targetExtension>
-                  </fileMapper>
-                </fileMappers>
-              </transformationSet>
-              <transformationSet>
+              <dir>target/docs/xml</dir>
+              <includes>
+                <include>rest-api-out.xml</include>
+              </includes>
+              <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
+              <parameters>
+                <parameter>
+                  <name>basePath</name>
+                  <value>http://localhost:7080/rest/1</value>
+                </parameter>
+              </parameters>
+              <outputDir>${project.build.directory}/docs/html</outputDir>
+              <fileMappers>
+                <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                  <targetExtension>.html</targetExtension>
+                </fileMapper>
+              </fileMappers>
+            </transformationSet>
+            <transformationSet>
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
-                <dir>target/docs/xml</dir>
-                <includes><include>rest-api-out.xml</include></includes>
-                <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
-                <parameters>
-                  <parameter>
-                    <name>basePath</name>
-                    <value>http://localhost:7080/rest/1</value>
-                  </parameter>
-                </parameters>
-                <outputDir>${project.build.directory}/docs/xml</outputDir>
-                <fileMappers>
-                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
-                    <targetExtension>.dbx.xml</targetExtension>
-                  </fileMapper>
-                </fileMappers>
-              </transformationSet>
-            </transformationSets>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>com.agilejava.docbkx</groupId>
-          <artifactId>docbkx-maven-plugin</artifactId>
-          <version>2.0.9</version>
-          <executions>
-              <execution>
-                <phase>process-classes</phase>
-                <goals>
-                  <goal>generate-pdf</goal>
-                  <goal>generate-html</goal>
-                </goals>
-              </execution>
-          </executions>
-          <configuration>
-            <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
-            <includes>rest-api-out.dbx.xml</includes>
-            <hyphenate>false</hyphenate>
-            <generateToc>true</generateToc>
-          </configuration>
-        </plugin>
+              <dir>target/docs/xml</dir>
+              <includes>
+                <include>rest-api-out.xml</include>
+              </includes>
+              <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
+              <parameters>
+                <parameter>
+                  <name>basePath</name>
+                  <value>http://localhost:7080/rest/1</value>
+                </parameter>
+              </parameters>
+              <outputDir>${project.build.directory}/docs/xml</outputDir>
+              <fileMappers>
+                <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                  <targetExtension>.dbx.xml</targetExtension>
+                </fileMapper>
+              </fileMappers>
+            </transformationSet>
+          </transformationSets>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.agilejava.docbkx</groupId>
+        <artifactId>docbkx-maven-plugin</artifactId>
+        <version>2.0.9</version>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate-pdf</goal>
+              <goal>generate-html</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
+          <includes>rest-api-out.dbx.xml</includes>
+          <hyphenate>false</hyphenate>
+          <generateToc>true</generateToc>
+        </configuration>
+      </plugin>
 
-      </plugins>
+    </plugins>
 
-   </build>
+  </build>
 
   <repositories>
     <repository>
       <!-- TODO change when the annotations are puplished. This is temporary for the swagger annotations for REST-docu -->
-       <id>sonatype-oss-snapshot</id>
-       <name>Sonatype OSS Snapshot repository</name>
-       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <id>sonatype-oss-snapshot</id>
+      <name>Sonatype OSS Snapshot repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
 
   </repositories>
 
-   <profiles>
+  <profiles>
 
-      <profile>
+    <profile>
          <!-- only if we are not running an individual set of tests via -Dtest do we do this -->
-         <id>no-individual-test</id>
-         <activation>
-            <property><name>!test</name></property>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
+      <id>no-individual-test</id>
+      <activation>
+        <property>
+          <name>!test</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
                   <!-- Everything but the web service tests, this is the standard test execution -->
-                  <configuration>
-                     <skipTests>true</skipTests>
-                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                     <groups>${rhq.testng.includedGroups}</groups>
-                     <properties>
-                        <property>
-                           <name>listener</name>
-                           <value>org.rhq.test.testng.StdoutReporter</value>
-                        </property>
-                     </properties>
-                     <systemPropertyVariables>
-                        <embeddedDeployment>true</embeddedDeployment>
-                        <deploymentDirectory>target/classes</deploymentDirectory>
-                        <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
-                        <clean.db>${clean.db}</clean.db>
-                        <log4j.configDebug>false</log4j.configDebug>
-                     </systemPropertyVariables>
-                     <additionalClasspathElements>
+            <configuration>
+              <skipTests>true</skipTests>
+              <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+              <groups>${rhq.testng.includedGroups}</groups>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>org.rhq.test.testng.StdoutReporter</value>
+                </property>
+              </properties>
+              <systemPropertyVariables>
+                <embeddedDeployment>true</embeddedDeployment>
+                <deploymentDirectory>target/classes</deploymentDirectory>
+                <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                <clean.db>${clean.db}</clean.db>
+                <log4j.configDebug>false</log4j.configDebug>
+              </systemPropertyVariables>
+              <additionalClasspathElements>
                      <!-- The below is required for tests to run against Oracle. -->
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
-                     </additionalClasspathElements>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <id>dbTestsOnly</id>
-                        <goals>
-                           <goal>test</goal>
-                        </goals>
-                        <configuration>
-                           <skipTests>${skipTests}</skipTests>
-                           <includes>
-                              <include>org/rhq/enterprise/server/db/**</include>
-                           </includes>
-                           <failIfNoTests>false</failIfNoTests>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
+                <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
+              </additionalClasspathElements>
+            </configuration>
+            <executions>
+              <execution>
+                <id>dbTestsOnly</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <configuration>
+                  <skipTests>${skipTests}</skipTests>
+                  <includes>
+                    <include>org/rhq/enterprise/server/db/**</include>
+                  </includes>
+                  <failIfNoTests>false</failIfNoTests>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
-      <profile>
-         <id>dev</id>
+    <profile>
+      <id>dev</id>
 
-         <properties>
-            <rhq.rootDir>../../../..</rhq.rootDir>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
-         </properties>
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+      </properties>
 
-         <build>
-            <plugins>
+      <build>
+        <plugins>
 
-               <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
 
-                     <execution>
-                        <id>deploy</id>
-                        <phase>compile</phase>
-                        <configuration>
-                           <target>
-                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                              <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
-                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                                 <fileset dir="target/classes" />
-                              </copy>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                    <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
+                    <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                      <fileset dir="target/classes"/>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
                      <!--
                         NOTE: The below execution is necessary to make sure the META-INF/MANIFEST.MF and
                         META-INF/maven/** files, which get created by the ejb plugin during the package phase, get
                         copied over to the deployment dir.
                      -->
-                     <execution>
-                        <id>deploy-jar-meta-inf</id>
-                        <phase>package</phase>
-                        <configuration>
-                           <target>
-                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
-                                 <patternset>
-                                    <include name="META-INF/**" />
-                                 </patternset>
-                              </unjar>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>deploy-jar-meta-inf</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}"
+                      overwrite="false">
+                      <patternset>
+                        <include name="META-INF/**"/>
+                      </patternset>
+                    </unjar>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                     <execution>
-                        <id>undeploy</id>
-                        <phase>clean</phase>
-                        <configuration>
-                           <target>
-                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                              <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                              <delete dir="${deployment.dir}" />
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                    <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                    <delete dir="${deployment.dir}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                  </executions>
-               </plugin>
+            </executions>
+          </plugin>
 
-            </plugins>
-         </build>
-      </profile>
+        </plugins>
+      </build>
+    </profile>
 
       <!--  Add dependencies need for jdk5 builds. Remove when we stop supporting jdk5 -->
-      <profile>
-         <id>java-5-dependencies</id>
-         <activation>
-            <jdk>1.5</jdk>
-            <property>
-               <name>java5.home</name>
-            </property>
-         </activation>
+    <profile>
+      <id>java-5-dependencies</id>
+      <activation>
+        <jdk>1.5</jdk>
+        <property>
+          <name>java5.home</name>
+        </property>
+      </activation>
 
-         <dependencies>
-            <dependency>
-               <groupId>jboss.jbossws</groupId>
-               <artifactId>jboss-jaxws</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>jboss.jbossws</groupId>
+          <artifactId>jboss-jaxws</artifactId>
                <!-- NOTE: This version is old but is good enough to resolve the build dependency. -->
-               <version>3.0.1-native-2.0.4.GA</version>
-               <scope>provided</scope>
-            </dependency>
-         </dependencies>
-      </profile>
+          <version>3.0.1-native-2.0.4.GA</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
 
-      <profile>
-         <id>javadoc</id>
-         <activation>
-            <property>
-               <name>javadoc.outputDirectory</name>
-            </property>
-         </activation>
+    <profile>
+      <id>javadoc</id>
+      <activation>
+        <property>
+          <name>javadoc.outputDirectory</name>
+        </property>
+      </activation>
 
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
 
-                     <execution>
-                        <id>remote-api</id>
-                        <phase>compile</phase>
-                        <configuration>
-                           <target>
-                              <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
-                              <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server" />
-                              <property name="maven.compile.classpath" refid="maven.compile.classpath" />
-
-                              <mkdir dir="${javadoc.outputDirectory}/remote-api" />
-                              <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="false" version="true" windowtitle="RHQ ${project.version} Remote API" noindex="false">
-                                 <classpath>
-                                    <pathelement path="${maven.compile.classpath}" />
-                                 </classpath>
-                                 <fileset dir="${project.dir}" defaultexcludes="yes">
-                                    <include name="**/*Remote.java" />
-                                 </fileset>
-                                 <link href="../domain/" />
-                                 <link href="http://download.oracle.com/javase/6/docs/api/" />
-                                 <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
-                              </javadoc>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-
-      </profile>
-
-      <profile>
-        <id>cobertura</id>
-        <build>
-         <plugins>
-           <plugin>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
               <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <target>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                         <include name="**/*.class" />
+                <id>remote-api</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}"/>
+                    <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server"/>
+                    <property name="maven.compile.classpath" refid="maven.compile.classpath"/>
+
+                    <mkdir dir="${javadoc.outputDirectory}/remote-api"/>
+                    <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="false" version="true"
+                      windowtitle="RHQ ${project.version} Remote API" noindex="false">
+                      <classpath>
+                        <pathelement path="${maven.compile.classpath}"/>
+                      </classpath>
+                      <fileset dir="${project.dir}" defaultexcludes="yes">
+                        <include name="**/*Remote.java"/>
                       </fileset>
-                   </copy>
+                      <link href="../domain/"/>
+                      <link href="http://download.oracle.com/javase/6/docs/api/"/>
+                      <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
+                    </javadoc>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+
+    </profile>
+
+    <profile>
+      <id>cobertura</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>net.sourceforge.cobertura</groupId>
+                <artifactId>cobertura</artifactId>
+                <version>${cobertura.version}</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>cobertura-instrument</id>
+                <phase>process-test-classes</phase>
+                <configuration>
+                  <target>
+                   <!-- prepare directory structure for cobertura-->
+                    <mkdir dir="target/cobertura"/>
+                    <mkdir dir="target/cobertura/backup"/>
+                   <!-- backup all classes so that we can instrument the original classes-->
+                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                      <fileset dir="target/classes">
+                        <include name="**/*.class"/>
+                      </fileset>
+                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                    <touch file="target/classes/cobertura.properties"/>
+                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties"/>
                    <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
-                        <exclude name="**/DynamicConfigurationPropertyLocal.class" />
-                        <exclude name="**/DynamicConfigurationPropertyBean.class" />
+                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser"
+                      todir="${project.build.directory}/classes">
+                      <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class"/>
+                        <exclude name="**/DynamicConfigurationPropertyLocal.class"/>
+                        <exclude name="**/DynamicConfigurationPropertyBean.class"/>
                       </fileset>
                     </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
               </execution>
               <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                <id>cobertura-report</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties"/>
                      <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
+                    <mkdir dir="target/cobertura"/>
+                    <mkdir dir="target/site/cobertura"/>
                      <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                    <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
+                        <include name="**/*.class"/>
                       </fileset>
-                     </copy>
+                    </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
+                    <delete dir="target/cobertura/backup"/>
                      <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                    <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser"
+                      destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
+                        <include name="**/*.java"/>
                       </fileset>
-                     </cobertura-report>
+                    </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
+                    <delete file="target/classes/cobertura.properties"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
             </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
-   </profiles>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

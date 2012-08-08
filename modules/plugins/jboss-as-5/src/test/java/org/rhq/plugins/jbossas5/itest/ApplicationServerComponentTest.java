@@ -24,6 +24,8 @@ package org.rhq.plugins.jbossas5.itest;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -50,6 +52,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
@@ -197,9 +200,32 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         avail = getAvailability(getServerResource());
         assertEquals(avail, AvailabilityType.DOWN);
 
+        //change the plugin config to shutdown via JMX
+        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+        pluginConfig.getSimple("shutdownMethod").setValue("JMX");
+        restartServerResourceComponent();
+        
+        //invoke the shutdown operation again and assert that it actually ran and generated some error message.
+        OperationResult operationResult = invokeOperation(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());        
+        assertEquals(avail, AvailabilityType.DOWN);
+        assertNotNull(operationResult.getErrorMessage());
+        
+        //ok, now try the same with the script shutdown method
+        pluginConfig = getServerResource().getPluginConfiguration();
+        pluginConfig.getSimple("shutdownMethod").setValue("SCRIPT");
+        restartServerResourceComponent();
+        
+        //invoke the shutdown operation again and assert that it actually ran
+        operationResult = invokeOperation(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());        
+        assertEquals(avail, AvailabilityType.DOWN);
+        assertNull(operationResult.getErrorMessage());
+        assertEquals(operationResult.getSimpleResult(), "The server has been shut down.");
+        
         // Before restarting it, add some stuff to the 'startScriptEnv' and 'startScriptArgs' props so we can verify
         // they are used correctly by the Start op.
-        Configuration pluginConfig = getServerResource().getPluginConfiguration();
+        pluginConfig = getServerResource().getPluginConfiguration();
         StartScriptConfiguration startScriptConfig = new StartScriptConfiguration(pluginConfig);
 
         // Add a var to the start script env.

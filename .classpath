@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/metrics-rhq/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/api/src/main/java"/>
 	<classpathentry kind="src" path="modules/cli-tests/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/jeeGen/src/main/java"/>

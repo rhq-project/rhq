@@ -31,10 +31,12 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.metrics.AggregateTestData;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginException;
 import org.rhq.enterprise.server.plugin.pc.metrics.MetricsServerPluginTestDelegate;
@@ -201,6 +203,11 @@ public class RhqDBTestDelegate implements MetricsServerPluginTestDelegate {
         } catch (SQLException e) {
             throw new MetricsServerPluginException("Failed to get DataSource connection", e);
         }
+    }
+
+    @Override
+    public ServerPluginContext createTestContext() {
+        return new ServerPluginContext(null, null, null, new Configuration(), null);
     }
 
 }

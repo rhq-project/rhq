@@ -19,6 +19,8 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +66,10 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
 
         parentComponent = discoveryContext.getParentResourceComponent();
         Configuration hcConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
-        String hostName = hcConfig.getSimpleValue("domainHost", "master"); // TODO good default?
+        String hostName = hcConfig.getSimpleValue("domainHost", null);
+        if (hostName==null) {
+            hostName = getHostName(discoveryContext.getParentResourceComponent().getASConnection());
+        }
         String productTypeString = hcConfig.getSimpleValue("productType", null);
         JBossProductType productType = JBossProductType.valueOf(productTypeString);
 
@@ -127,6 +132,32 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
                 + e.getMessage());
         }
         return discoveredResources;
+    }
+
+    /**
+     * Let us try to determine the hostname of the parent's controller via api access.
+     * If that does not work, use host name resolution.
+     *
+     * @param asConnection ASConnection to the parent
+     * @return Host name
+     */
+    private String getHostName(ASConnection asConnection) {
+
+        Operation op = new ReadAttribute(new Address(),"local-host-name");
+        String hostname;
+        Result res = asConnection.execute(op);
+        if (res.isSuccess()) {
+            hostname = (String) res.getResult();
+            return hostname;
+        }
+        // Above failed. Now try falling back to host name resolution
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            hostname = "master"; // Very last resort
+        }
+
+        return hostname;
     }
 
     private String resolveSocketBindingGroup(String serverGroup) {

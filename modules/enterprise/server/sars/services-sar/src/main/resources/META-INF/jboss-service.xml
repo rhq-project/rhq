@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server xmlns="urn:jboss:service:7.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:jboss:service:7.0 jboss-service_7_0.xsd">
+
+    <!-- TODO: need to figure out how to port this to AS7
+    <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
+           name="rhq:service=CustomJaasDeployment">
+        <depends>jboss.jca:service=XATxCM,name=RHQDS</depends>
+    </mbean>
+    -->
+
+    <mbean code="org.rhq.enterprise.server.core.CoreServer"
+           name="rhq:service=CoreServer" />
+
+    <mbean code="org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor"
+           name="rhq:service=MeasurementMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor"
+           name="rhq:service=AlertConditionCacheMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitor"
+           name="rhq:service=GroupDefinitionRecalculationThreadMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner"
+           name="rhq:service=PluginDeploymentScanner">
+        <attribute name="ScanPeriod">${rhq.server.plugin-scan-period-ms:300000}</attribute>
+        <attribute name="AgentPluginDir">${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
+        <attribute name="ServerPluginDir">${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-serverplugins</attribute>
+        <attribute name="UserPluginDir">${jboss.home.dir}/../plugins</attribute>
+    </mbean>
+
+    <mbean code="org.rhq.enterprise.server.scheduler.SchedulerService"
+           name="rhq:service=scheduler">
+        <attribute name="QuartzProperties">
+# RHQ custom property that defines the default timeout for all operations.
+# This is specified in seconds.  If any operation takes longer than this, it is assumed to have failed.
+rhq.server.operation-timeout = ${rhq.server.operation-timeout:600}
+
+# scheduler factory config
+org.quartz.scheduler.instanceName = RHQScheduler
+org.quartz.scheduler.instanceId   = AUTO
+
+# thread pool config
+org.quartz.threadPool.class       = org.quartz.simpl.SimpleThreadPool
+org.quartz.threadPool.threadCount = 5
+
+# database config
+# note that the delegate class property should be set at build/installation time
+org.quartz.jobStore.class                      = org.quartz.impl.jdbcjobstore.JobStoreCMT
+org.quartz.jobStore.driverDelegateClass        = ${rhq.server.quartz.driverDelegateClass}
+org.quartz.jobStore.isClustered                = true
+org.quartz.jobStore.clusterCheckinInterval     = 30000
+org.quartz.jobStore.tablePrefix                = RHQ_QRTZ_
+org.quartz.jobStore.useProperties              = true
+org.quartz.jobStore.selectWithLockSQL          = ${rhq.server.quartz.selectWithLockSQL}
+org.quartz.jobStore.dataSource                 = RHQDS
+org.quartz.dataSource.RHQDS.jndiURL            = java:/RHQDS
+org.quartz.dataSource.RHQDS.maxConnections     = 10
+org.quartz.jobStore.nonManagedTXDataSource     = NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:/NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.maxConnections = 10
+org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandlerClass}
+        </attribute>
+    </mbean>
+
+    <mbean code="org.rhq.enterprise.server.core.comm.ServerCommunicationsService"
+           name="rhq:service=ServerCommunications">
+
+        <!--
+        <attribute name="ConfigurationFile">.../server-comm-configuration.xml</attribute>
+        -->
+
+        <attribute name="ConfigurationOverrides" serialDataType="jbxb">
+            <java:properties xmlns:java="urn:jboss:java-properties"
+                             xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+                             xs:schemaLocation="urn:jboss:java-properties resource:java-properties_1_0.xsd">
+
+                <!-- location of the plugin jars and other files agents can download directly from sever -->
+
+                <java:property>
+                    <java:key>rhq.server.agent-files-directory</java:key>
+                    <java:value>${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads</java:value>
+                </java:property>
+
+                <!-- location where data files can be stored -->
+
+                <java:property>
+                    <java:key>rhq.communications.data-directory</java:key>
+                    <java:value>${jboss.server.data.dir}</java:value>
+                </java:property>
+
+                <!-- global limit on number of concurrent incoming messages allowed -->
+
+                <java:property>
+                    <java:key>rhq.communications.global-concurrency-limit</java:key>
+                    <java:value>${rhq.communications.global-concurrency-limit:200}</java:value>
+                </java:property>
+
+                <!-- Server's remote endpoint for agents to talk to -->
+
+                <java:property>
+                    <java:key>rhq.communications.connector.transport</java:key>
+                    <java:value>${rhq.communications.connector.transport:servlet}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.bind-address</java:key>
+                    <java:value>${rhq.communications.connector.bind-address}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.bind-port</java:key>
+                    <java:value>${rhq.communications.connector.bind-port:7080}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.transport-params</java:key>
+                    <java:value>${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}</java:value>
+                </java:property>
+
+                <!-- Multicast detector configuration for auto-discovery -->
+
+                <java:property>
+                    <java:key>rhq.communications.multicast-detector.enabled</java:key>
+                    <java:value>${rhq.communications.multicast-detector.enabled:false}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.multicast-detector.multicast-address</java:key>
+                    <java:value>${rhq.communications.multicast-detector.multicast-address:224.16.16.16}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.multicast-detector.bind-address</java:key>
+                    <java:value>${rhq.communications.multicast-detector.bind-address}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.multicast-detector.port</java:key>
+                    <java:value>${rhq.communications.multicast-detector.port:16162}</java:value>
+                </java:property>
+
+                <!-- Server-side SSL Security Configuration (for incoming messages from agents) -->
+
+                <java:property>
+                    <java:key>rhq.communications.connector.security.secure-socket-protocol</java:key>
+                    <java:value>${rhq.communications.connector.security.secure-socket-protocol:TLS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.file</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.file}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.algorithm</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.algorithm:SunX509}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.type</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.type:JKS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.password</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.password:rhqpwd}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.key-password</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.key-password:rhqpwd}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.keystore.alias</java:key>
+                    <java:value>${rhq.communications.connector.security.keystore.alias:rhq}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.truststore.file</java:key>
+                    <java:value>${rhq.communications.connector.security.truststore.file}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.truststore.algorithm</java:key>
+                    <java:value>${rhq.communications.connector.security.truststore.algorithm:SunX509}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.truststore.type</java:key>
+                    <java:value>${rhq.communications.connector.security.truststore.type:JKS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.truststore.password</java:key>
+                    <java:value>${rhq.communications.connector.security.truststore.password}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.communications.connector.security.client-auth-mode</java:key>
+                    <java:value>${rhq.communications.connector.security.client-auth-mode:none}</java:value>
+                </java:property>
+
+                <!-- Client-side SSL Security Configuration (for outgoing messages to agents) -->
+
+                <java:property>
+                    <java:key>rhq.server.client.security.secure-socket-protocol</java:key>
+                    <java:value>${rhq.server.client.security.secure-socket-protocol:TLS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.file</java:key>
+                    <java:value>${rhq.server.client.security.keystore.file}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.algorithm</java:key>
+                    <java:value>${rhq.server.client.security.keystore.algorithm:SunX509}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.type</java:key>
+                    <java:value>${rhq.server.client.security.keystore.type:JKS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.password</java:key>
+                    <java:value>${rhq.server.client.security.keystore.password:rhqpwd}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.key-password</java:key>
+                    <java:value>${rhq.server.client.security.keystore.key-password:rhqpwd}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.keystore.alias</java:key>
+                    <java:value>${rhq.server.client.security.keystore.alias:rhq}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.truststore.file</java:key>
+                    <java:value>${rhq.server.client.security.truststore.file}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.truststore.algorithm</java:key>
+                    <java:value>${rhq.server.client.security.truststore.algorithm:SunX509}</java:value>
+                </java:property>
+                <java:property>
+                   <java:key>rhq.server.client.security.truststore.type</java:key>
+                   <java:value>${rhq.server.client.security.truststore.type:JKS}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.truststore.password</java:key>
+                    <java:value>${rhq.server.client.security.truststore.password}</java:value>
+                </java:property>
+                <java:property>
+                    <java:key>rhq.server.client.security.server-auth-mode-enabled</java:key>
+                    <java:value>${rhq.server.client.security.server-auth-mode-enabled:false}</java:value>
+                </java:property>
+            </java:properties>
+        </attribute>
+    </mbean>
+</server>

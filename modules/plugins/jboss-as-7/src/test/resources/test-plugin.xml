@@ -290,6 +290,37 @@
         </resource-configuration>
     </server>
 
+  <server name="simpleWithDefault1"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery">
+
+    <resource-configuration>
+      <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" >
+        <c:property-options>
+          <c:option value="SYNC"/>
+          <c:option value="ASYNC"/>
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+
+  </server>
+
+  <server name="simpleWithDefault2"
+           class="BaseComponent"
+           discovery="SubsystemDiscovery">
+
+    <resource-configuration>
+      <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" >
+        <c:property-options>
+          <c:option value="SYNC"/>
+          <c:option value="ASYNC"/>
+        </c:property-options>
+      </c:simple-property>
+    </resource-configuration>
+
+  </server>
+
+
     <!-- Simple c:group entries from descriptor with no special handling. -->
     <service name="simpleGroupNoSpecial"
              class="BaseComponent"
@@ -326,5 +357,7 @@
           </c:group>
        </resource-configuration>
     </service>
+
+
 
 </plugin>

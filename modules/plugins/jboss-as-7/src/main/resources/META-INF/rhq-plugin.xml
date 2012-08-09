@@ -11350,7 +11350,7 @@
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
-          <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+          <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
             <c:property-options>
               <c:option value="SYNC"/>
               <c:option value="ASYNC"/>

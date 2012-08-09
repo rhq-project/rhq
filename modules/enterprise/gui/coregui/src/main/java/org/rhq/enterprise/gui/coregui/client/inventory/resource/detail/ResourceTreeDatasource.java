@@ -43,6 +43,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
@@ -152,6 +153,8 @@ public class ResourceTreeDatasource extends DataSource {
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
+            // we don't need sorting since we get everything and the tree nodes are already sorted
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {

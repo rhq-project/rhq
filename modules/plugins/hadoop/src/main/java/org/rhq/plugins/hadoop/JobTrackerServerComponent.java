@@ -20,20 +20,29 @@
 package org.rhq.plugins.hadoop;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.content.ContentContext;
+import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.hadoop.calltime.HadoopEventAndCalltimeDelegate;
@@ -44,13 +53,16 @@ import org.rhq.plugins.hadoop.calltime.JobSummary;
  *
  * @author Lukas Krejci
  */
-public class JobTrackerServerComponent extends HadoopServerComponent {
+public class JobTrackerServerComponent extends HadoopServerComponent implements CreateChildResourceFacet {
 
     private static final String SYNTHETIC_METRICS_PREFIX = "_synthetic_";
     private static final String JOB_DURATION_METRIC_NAME = "_synthetic_jobDuration";
     private static final String JOB_PRE_START_DELAY_METRIC_NAME = "_synthetic_jobPreStartDelay";
     private static final String JOB_SUCCESS_RATE_METRIC_NAME = "_synthetic_jobSuccessRate";
 
+    private static final String DEFAULT_JOB_STORAGE_NAME = "__dataDir";    
+    private static final String JOB_STORAGE_PROP_NAME = "jobStorage";
+    
     private Map<String, Map<String, Set<JobSummary>>> unprocessedCalltimeMeasurements = new HashMap<String, Map<String,Set<JobSummary>>>();
 
     private HadoopEventAndCalltimeDelegate logProcessor;
@@ -76,6 +88,72 @@ public class JobTrackerServerComponent extends HadoopServerComponent {
         super.stop();
     }
 
+    public File getJobJarDataDir() {
+        String dataDirName = getResourceContext().getPluginConfiguration().getSimpleValue(JOB_STORAGE_PROP_NAME, DEFAULT_JOB_STORAGE_NAME);
+        
+        File dataDir = null;
+        
+        if (DEFAULT_JOB_STORAGE_NAME.equals(dataDirName)) {
+            dataDir = new File(getResourceContext().getDataDirectory(), "jobJars");
+            dataDir.mkdirs();
+        } else {            
+            dataDir = new File(dataDirName);
+            if (!dataDir.isAbsolute()) {
+                File hadoopHome = getHomeDir();
+                
+                dataDir = new File(hadoopHome, dataDirName);
+            }
+        }
+        
+        return dataDir;
+    }
+    
+    @Override
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        if (!JobJarComponent.CONTENT_TYPE_NAME.equals(report.getPackageDetails().getKey().getPackageTypeName())) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("Unknown content type");
+            return report;
+        }
+        
+        File dataDir = getJobJarDataDir();
+        
+        ResourcePackageDetails packageDetails = report.getPackageDetails();
+        
+        File jobJar = new File(dataDir, packageDetails.getFileName());
+        
+        FileOutputStream jobJarStream = null;
+        try {
+            jobJarStream = new FileOutputStream(jobJar); 
+        } catch (FileNotFoundException e) {
+            report.setErrorMessage("Could not create the job jar file on the agent: " + e.getMessage());
+            return report;
+        }
+        
+        ContentContext contentContext = getResourceContext().getContentContext();
+        ContentServices contentServices = contentContext.getContentServices();
+        contentServices.downloadPackageBitsForChildResource(contentContext, JobJarComponent.RESOURCE_TYPE_NAME, packageDetails.getKey(), jobJarStream);
+        
+        try {
+            jobJarStream.close();
+        } catch (IOException e) {
+            //hmmm, do I care?
+        }
+        
+        report.setResourceKey(jobJar.getAbsolutePath());
+        report.setResourceName(jobJar.getName());
+        
+        report.setStatus(CreateResourceStatus.SUCCESS);
+        
+        return report;
+    }
+
+    @Override
+    public ResourceContext<?> getResourceContext() {
+        // TODO Auto-generated method stub
+        return super.getResourceContext();
+    }
+    
     @Override
     protected void handleMetric(MeasurementReport report, MeasurementScheduleRequest request) throws Exception {
         if (request.getName().startsWith(SYNTHETIC_METRICS_PREFIX)) {

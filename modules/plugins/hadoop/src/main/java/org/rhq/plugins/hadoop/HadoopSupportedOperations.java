@@ -24,24 +24,28 @@ package org.rhq.plugins.hadoop;
  * @author Jirka Kremser
  */
 public enum HadoopSupportedOperations {
-    FORMAT("/bin/hadoop", "namenode -format"),
-    FSCK("/bin/hadoop", "fsck /"),
-    LS("/bin/hadoop", "fs -ls"),
-    START("/bin/hadoop-daemon.sh", "start "),
-    STOP("/bin/hadoop-daemon.sh", "stop "),
-    QUEUE_LIST("/bin/hadoop", "queue -list"),
-    JOB_LIST_RUNNING("/bin/hadoop", "job -list"),
-    JOB_LIST_ALL("/bin/hadoop", "job -list all"),
-    REBALANCE_DFS("/bin/hadoop", "balancer"),
-    KILL("/bin/hadoop", "job -kill", "pid");
+    FORMAT(true, "/bin/hadoop", "namenode -format"),
+    FSCK(true, "/bin/hadoop", "fsck /"),
+    LS(true, "/bin/hadoop", "fs -ls"),
+    START(true, "/bin/hadoop-daemon.sh", "start "),
+    STOP(true, "/bin/hadoop-daemon.sh", "stop "),
+    QUEUE_LIST(true, "/bin/hadoop", "queue -list"),
+    JOB_LIST_RUNNING(true, "/bin/hadoop", "job -list"),
+    JOB_LIST_ALL(true, "/bin/hadoop", "job -list all"),
+    REBALANCE_DFS(true, "/bin/hadoop", "balancer"),
+    KILL(true, "/bin/hadoop", "job -kill", "pid"),
+    JAR(false, "/bin/hadoop", "jar",  "args");
 
     private final String relativePathToExecutable;
 
     private final String args;
     
     private final String[] paramNames;
-
-    private HadoopSupportedOperations(String relativePathToExecutable, String args, String... paramNames) {
+    
+    private final boolean killOnTimeout;
+    
+    private HadoopSupportedOperations(boolean killOnTimeout, String relativePathToExecutable, String args, String... paramNames) {
+        this.killOnTimeout = killOnTimeout;
         this.relativePathToExecutable = relativePathToExecutable;
         this.args = args;
         this.paramNames = paramNames;
@@ -57,5 +61,9 @@ public enum HadoopSupportedOperations {
 
     public String[] getParamsNames() {
         return paramNames;
+    }
+    
+    public boolean isKillOnTimeout() {
+        return killOnTimeout;
     }
 }

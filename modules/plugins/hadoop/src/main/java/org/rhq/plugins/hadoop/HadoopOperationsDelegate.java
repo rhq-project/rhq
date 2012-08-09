@@ -84,6 +84,9 @@ public class HadoopOperationsDelegate {
         case KILL:
             results = invokeGeneralOperation(operation, parameters, null);
             break;
+        case JAR:
+            results = invokeGeneralOperation(operation, parameters, null);
+            break;
         default:
             throw new UnsupportedOperationException(operation.toString());
         }
@@ -168,7 +171,7 @@ public class HadoopOperationsDelegate {
 
         ProcessExecution processExecution = new ProcessExecution(executable);
         if (args != null) {
-            processExecution.setArguments(args.split(" "));
+            processExecution.setArguments(args.split("[ \\t\\n]+"));
         }
         processExecution.setWaitForCompletion(wait);
         processExecution.setCaptureOutput(captureOutput);
@@ -209,7 +212,7 @@ public class HadoopOperationsDelegate {
         }
 
         ProcessExecutionResults results = executeExecutable(resourceContext.getSystemInformation(), executable, args,
-            MAX_WAIT, true, true);
+            MAX_WAIT, true, operation.isKillOnTimeout());
         return results;
     }
 }

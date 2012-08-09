@@ -246,7 +246,7 @@ public class HadoopServerComponent extends JMXServerComponent<ResourceComponent<
         return className.toLowerCase();
     }
     
-    private File getHomeDir() {
+    protected File getHomeDir() {
         File homeDir =
             new File(getResourceContext().getPluginConfiguration().getSimpleValue(HadoopServerDiscovery.HOME_DIR_PROPERTY));
 

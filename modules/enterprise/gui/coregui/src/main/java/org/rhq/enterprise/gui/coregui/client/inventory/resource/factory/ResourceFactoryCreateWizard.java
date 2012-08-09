@@ -62,7 +62,10 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
             ConfigurationDefinition deployTimeConfigDef = packageType.getDeploymentConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(deployTimeConfigDef);
-            Map<String, ConfigurationTemplate> templates = deployTimeConfigDef.getTemplates();
+            Map<String, ConfigurationTemplate> templates = Collections.emptyMap();
+            if (deployTimeConfigDef != null) {
+                templates = deployTimeConfigDef.getTemplates();
+            }
 
             steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, null, MSG
                 .widget_resourceFactoryWizard_versionPrompt(), archPrompt, MSG

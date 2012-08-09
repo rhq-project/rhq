@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class BasicSearchStrategy extends AbstractSearchStrategy {
 
-    private String lastExpression;
 
     public BasicSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
@@ -175,12 +174,9 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
         int caretPosition) {
 
-        if (null != expression && expression.equals(lastExpression)) {
-            // short-circuit if we dont really need to do a search
-            Log.debug("search tab aware Suggestions: ignoring duplicate search for: " + expression);
+        if(null == expression || expression.isEmpty()){
             return;
         }
-        lastExpression = expression;
 
         final long suggestStart = System.currentTimeMillis();
 

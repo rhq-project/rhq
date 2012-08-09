@@ -26,7 +26,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -126,8 +125,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     processResponse(request.getRequestId(), response);
                 }
                 
-                private PageList<ResourceGroupComposite> filterEmptyMemberGroups(ResourceGroupCriteria groupCriteria,
-                                                                                 PageList<ResourceGroupComposite> result){
+                private PageList<ResourceGroupComposite> filterEmptyMemberGroups(PageList<ResourceGroupComposite> result){
 
                     PageList<ResourceGroupComposite> pageList = new PageList<ResourceGroupComposite>(result.getPageControl());
 
@@ -141,7 +139,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
-                    PageList<ResourceGroupComposite> filteredResult =    filterEmptyMemberGroups(criteria,result);
+                    PageList<ResourceGroupComposite> filteredResult =    filterEmptyMemberGroups(result);
                     response.setData(buildRecords(filteredResult));
                     response.setTotalRows(filteredResult.getTotalSize()); // for paging to work we have to specify size of full result set
                     processResponse(request.getRequestId(), response);

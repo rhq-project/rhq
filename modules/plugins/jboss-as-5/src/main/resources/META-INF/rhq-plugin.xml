@@ -223,7 +223,7 @@
     <c:map-property name="metadata" required="false" description="Metadata properties.">
         <c:simple-property required="false" name="typeMapping">
             <c:description>
-                The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres. 
+                The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres.
                 Note, there may be custom type mappings defined in addition to these predefined mappings.
             </c:description>
         </c:simple-property>
@@ -286,7 +286,7 @@
 
     <c:simple-property name="type-mapping" displayName="Type Mapping" required="false">
         <c:description>
-            The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres. 
+            The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres.
                 Note, there may be custom type mappings defined in addition to these predefined mappings.
         </c:description>
     </c:simple-property>
@@ -561,11 +561,11 @@
             category="performance"/>
 
     <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
-            displayName="Connection Created Count" 
+            displayName="Connection Created Count"
             dataType="measurement" category="performance"/>
 
     <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
-            displayName="Connection Destroyed Count" 
+            displayName="Connection Destroyed Count"
             dataType="measurement" category="performance"/>
 
     <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
@@ -628,7 +628,7 @@
 <!ENTITY webApplicationContextMetrics '
     <metric property="clustered" dataType="trait" displayType="summary"
             description="True if this web application context is clustered" />
-            
+
     <metric property="virtualHost"
             dataType="trait" displayType="summary"
             description="the virtual host with which this context is associated"/>
@@ -955,8 +955,8 @@
                                             then it will be resolved relative to {jbossHomeDir};
                                             defaults to 'bin/run.sh' on UNIX or 'bin\run.bat' on Windows."/>
                <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables"
-                               required="false" 
-                               type="longString" 
+                               required="false"
+                               type="longString"
                                default="" >
                  <c:description>
             The variables that the Start and Restart operations will add to the environment of the server start script.
@@ -969,10 +969,10 @@
             a 2000 character limit for this value.
                  </c:description>
                </c:simple-property>
-               <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" 
-                               required="false" 
-                               type="longString" 
-                               default="" > 
+               <c:simple-property name="startScriptArgs" displayName="Start Script Arguments"
+                               required="false"
+                               type="longString"
+                               default="" >
                  <c:description>
             The arguments that the Start and Restart operations will pass to the server
             start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
@@ -1049,8 +1049,8 @@
                                         server, like for collecting metrics, the availability information is updated and
                                         the interval is reset."/>
 
-                     <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
-                                        readOnly="true" required="false" 
+                     <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM"
+                                        readOnly="true" required="false"
                                         description="The name of the JBoss AS JVM resource."/>
              </c:group>
 
@@ -1816,7 +1816,7 @@
                         description="The timestamp of the last message add"/>
 
                 <metric property="clustered" dataType="trait" description="True if this queue is clustered, false otherwise" />
-                
+
                 <resource-configuration>
 
                     <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
@@ -1903,7 +1903,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="DLQ">
+                    <c:simple-property required="false" name="DLQ" default="jboss.messaging.destination:service=Queue,name=DLQ">
                         <c:description>
                             The JMX ObjectName of the dead letter queue (DLQ) for this queue (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
@@ -1914,7 +1914,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="expiryQueue">
+                    <c:simple-property required="false" name="expiryQueue" default="jboss.messaging.destination:service=Queue,name=ExpiryQueue">
                         <c:description>
                             The JMX ObjectName of the expiry queue for this queue (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
@@ -1925,7 +1925,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="serverPeer">
+                    <c:simple-property required="false" name="serverPeer" default="jboss.messaging:service=ServerPeer" >
                         <c:description>
                             The JMX ObjectName of the server peer this queue was deployed on (e.g.
                             "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
@@ -1985,7 +1985,7 @@
 
             </service>
 
-            
+
             <service name="Topic"
                      class="JmsDestinationComponent"
                      createDeletePolicy="both"
@@ -2242,7 +2242,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="DLQ">
+                    <c:simple-property required="false" name="DLQ" default="jboss.messaging.destination:service=Queue,name=DLQ">
                         <c:description>
                             The JMX ObjectName of the dead letter queue (DLQ) for this topic (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
@@ -2253,7 +2253,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="expiryQueue">
+                    <c:simple-property required="false" name="expiryQueue" default="jboss.messaging.destination:service=Queue,name=ExpiryQueue">
                         <c:description>
                             The JMX ObjectName of the expiry queue for this topic (e.g.
                             "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
@@ -2264,7 +2264,7 @@
                         </c:constraint>
                     </c:simple-property>
 
-                    <c:simple-property required="false" name="serverPeer">
+                    <c:simple-property required="false" name="serverPeer" default="jboss.messaging:service=ServerPeer">
                         <c:description>
                             The JMX ObjectName of the server peer this topic was deployed on (e.g.
                             "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
@@ -2373,8 +2373,8 @@
             	&deploymentContentConfigProps;
             </content>
 
-            <drift-definition 
-                  name="Template-Files" 
+            <drift-definition
+                  name="Template-Files"
                   description="Monitor files comprising the enterprise application archive (EAR).  Use filters for more fine-grained monitoring. Or, create definitions only on the embedded WAR resources themselves.">
                <basedir>
                   <value-context>measurementTrait</value-context>
@@ -2395,7 +2395,7 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this WAR" readOnly="true"/>
-                    <!--  setting to required=false since this is not usually set properly at discovery time -->                    
+                    <!--  setting to required=false since this is not usually set properly at discovery time -->
                     <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console)" required="false" readOnly="false"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
@@ -2433,8 +2433,8 @@
                 &deploymentContentConfigProps;
             </content>
 
-            <drift-definition 
-                  name="Template-Files" 
+            <drift-definition
+                  name="Template-Files"
                   description="Monitor files comprising the web application archive (WAR).  Use filters for more fine-grained monitoring.">
                <basedir>
                   <value-context>measurementTrait</value-context>
@@ -2959,10 +2959,10 @@
                         The file name that should be used to store the script under the server's bin directory. If left unset, the name of the uploaded file will be used.
                         Only files with "sh" and "pl" extensions on *NIX platforms and with "cmd" and "bat" extensions on WINDOWS platforms are allowed.
                     </c:description>
-                </c:simple-property>                 
+                </c:simple-property>
             </configuration>
          </content>
-         
+
       </service>
 
         <service name="Service Binding Manager"
@@ -2979,7 +2979,7 @@
 
             <metric property="activeBindingSetName" dataType="trait" displayName="Active Binding Set"
                     displayType="summary" description="The active binding set used to obtain port bindings from." />
-            
+
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
                                    activationPolicy="restart">
@@ -2987,13 +2987,13 @@
 The name of the binding set the Service Binding Manager should use when resolving bindings.
 Note to JBoss ON or Jopr users (does not apply to JBoss AS admin console):
 CHANGING THIS PROPERTY IS POTENTIALLY DANGEROUS because if there are any port conflicts
-on the machine the Application Server is running on, the server will not start up again and 
+on the machine the Application Server is running on, the server will not start up again and
 it will not be possible to monitor it.
 To be able to monitor the server again after the restart you have to update the "Naming Provider Url"
 in the "Connection" subtab in the "Inventory" of the Application Server to the value
 of "jboss:service=Naming:Port" binding of the active binding set.
 I.e. if the "jboss:service=Naming:Port" binding of the active binding set has the port set to 4099 and hostname to 127.0.0.1,
-you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.                    
+you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                     ]]></c:description>
                 </c:simple-property>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
@@ -3039,7 +3039,7 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                 <metric property="name" displayName="Name" dataType="trait" displayType="summary" description="The name of this binding set."/>
                 <metric property="defaultHostName" dataType="trait" displayName="Default Host Name" displayType="summary" description="The default host name of this binding set." />
                 <metric property="portOffset" dataType="trait" displayName="Port Offset" displayType="summary" description="The port offset of this binding set."/>
-                
+
                 <resource-configuration>
                     <c:simple-property name="name" readOnly="true" description="The name of this binding set."/>
                     <c:simple-property name="defaultHostName" description='The host name that should be used for all bindings whose configuration does not specify "fixed host name".'/>
@@ -3067,7 +3067,7 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
 						        <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
 						    </c:map-property>
                     </c:list-property>
-                </resource-configuration>                
+                </resource-configuration>
             </service>
 		</service>
 

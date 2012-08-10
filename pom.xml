@@ -1317,6 +1317,7 @@
             <plugin>
                 <groupId>com.googlecode.maven-overview-plugin</groupId>
                 <artifactId>maven-overview-plugin</artifactId>
+                <version>RELEASE</version>
             </plugin>
 
 <!--

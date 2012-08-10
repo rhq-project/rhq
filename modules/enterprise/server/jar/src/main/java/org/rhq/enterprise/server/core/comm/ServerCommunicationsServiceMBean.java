@@ -97,6 +97,8 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      */
     void setConfigurationOverrides(Properties overrides);
 
+    void setConfigurationOverrides2(Properties overrides); // why this? see https://issues.jboss.org/browse/AS7-5342
+
     /**
      * This will clear any and all current configuration preferences and then reload the
      * {@link #getConfigurationFile() configuration file}.

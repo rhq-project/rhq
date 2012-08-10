@@ -122,7 +122,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * Properties that will be used to override preferences found in the preferences node and the configuration
      * preferences file.
      */
-    private Properties m_configurationOverrides = null;
+    private Properties m_configurationOverrides = new Properties();
 
     /**
      * A list of known agents.
@@ -278,7 +278,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_configuration = null;
         m_configFile = ServerConfigurationConstants.DEFAULT_SERVER_CONFIGURATION_FILE;
         m_preferencesNodeName = ServerConfigurationConstants.DEFAULT_PREFERENCE_NODE;
-        m_configurationOverrides = null;
+        m_configurationOverrides = new Properties();
         m_knownAgents.removeAllAgents();
         m_knownAgentClients.clear();
         m_started = false;
@@ -325,7 +325,15 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * @see ServerCommunicationsServiceMBean#setConfigurationOverrides(Properties)
      */
     public void setConfigurationOverrides(Properties overrides) {
-        m_configurationOverrides = overrides;
+        m_configurationOverrides.putAll(overrides);
+    }
+
+    /*
+     * @see ServerCommunicationsServiceMBean#setConfigurationOverrides2(Properties)
+     */
+    // for why we need to split our overrides into two attributes - see https://issues.jboss.org/browse/AS7-5342
+    public void setConfigurationOverrides2(Properties overrides) {
+        m_configurationOverrides.putAll(overrides);
     }
 
     /*
@@ -996,5 +1004,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         getServiceContainer().setConcurrencyManager(new ConcurrencyManager(limits));
 
         LOG.info(ServerI18NResourceKeys.NEW_CONCURRENCY_LIMIT, limitName, maxConcurrency);
+    }
+
+    // for why we need this in RHQ - see https://issues.jboss.org/browse/AS7-5336
+    static {
+        java.beans.PropertyEditorManager.registerEditor(Properties.class,
+            org.jboss.util.propertyeditor.PropertiesEditor.class);
     }
 }

@@ -213,7 +213,11 @@
                     <earSourceDirectory>${basedir}/target/classes</earSourceDirectory>
                     <defaultJavaBundleDir>lib</defaultJavaBundleDir>
                     <unpackTypes>war,ejb</unpackTypes>
-
+                    <archive>
+                        <manifestEntries>
+                            <Dependencies>org.jboss.common-core</Dependencies> <!-- needed to fix https://issues.jboss.org/browse/AS7-5336 -->
+                        </manifestEntries>
+                    </archive>
                     <modules>
                         <!-- ** WARs -->
                         <webModule>

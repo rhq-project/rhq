@@ -71,172 +71,53 @@ org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandler
         <attribute name="ConfigurationFile">.../server-comm-configuration.xml</attribute>
         -->
 
-        <attribute name="ConfigurationOverrides" serialDataType="jbxb">
-            <java:properties xmlns:java="urn:jboss:java-properties"
-                             xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
-                             xs:schemaLocation="urn:jboss:java-properties resource:java-properties_1_0.xsd">
+        <!-- see https://issues.jboss.org/browse/AS7-5342 for why we have two attributes instead of just one-->
+        <attribute name="ConfigurationOverrides">
+# location of the plugin jars and other files agents can download directly from sever
+rhq.server.agent-files-directory=${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads
+# location where data files can be stored
+rhq.communications.data-directory=${jboss.server.data.dir}
+# global limit on number of concurrent incoming messages allowed
+rhq.communications.global-concurrency-limit=${rhq.communications.global-concurrency-limit:200}
+# Server's remote endpoint for agents to talk to
+rhq.communications.connector.transport=${rhq.communications.connector.transport:servlet}
+rhq.communications.connector.bind-address=${rhq.communications.connector.bind-address}
+rhq.communications.connector.bind-port=${rhq.communications.connector.bind-port:7080}
+rhq.communications.connector.transport-params=${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}
+# Multicast detector configuration for auto-discovery
+rhq.communications.multicast-detector.enabled=${rhq.communications.multicast-detector.enabled:false}
+rhq.communications.multicast-detector.multicast-address=${rhq.communications.multicast-detector.multicast-address:224.16.16.16}
+rhq.communications.multicast-detector.bind-address=${rhq.communications.multicast-detector.bind-address}
+rhq.communications.multicast-detector.port=${rhq.communications.multicast-detector.port:16162}
+        </attribute>
 
-                <!-- location of the plugin jars and other files agents can download directly from sever -->
-
-                <java:property>
-                    <java:key>rhq.server.agent-files-directory</java:key>
-                    <java:value>${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads</java:value>
-                </java:property>
-
-                <!-- location where data files can be stored -->
-
-                <java:property>
-                    <java:key>rhq.communications.data-directory</java:key>
-                    <java:value>${jboss.server.data.dir}</java:value>
-                </java:property>
-
-                <!-- global limit on number of concurrent incoming messages allowed -->
-
-                <java:property>
-                    <java:key>rhq.communications.global-concurrency-limit</java:key>
-                    <java:value>${rhq.communications.global-concurrency-limit:200}</java:value>
-                </java:property>
-
-                <!-- Server's remote endpoint for agents to talk to -->
-
-                <java:property>
-                    <java:key>rhq.communications.connector.transport</java:key>
-                    <java:value>${rhq.communications.connector.transport:servlet}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.bind-address</java:key>
-                    <java:value>${rhq.communications.connector.bind-address}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.bind-port</java:key>
-                    <java:value>${rhq.communications.connector.bind-port:7080}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.transport-params</java:key>
-                    <java:value>${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}</java:value>
-                </java:property>
-
-                <!-- Multicast detector configuration for auto-discovery -->
-
-                <java:property>
-                    <java:key>rhq.communications.multicast-detector.enabled</java:key>
-                    <java:value>${rhq.communications.multicast-detector.enabled:false}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.multicast-detector.multicast-address</java:key>
-                    <java:value>${rhq.communications.multicast-detector.multicast-address:224.16.16.16}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.multicast-detector.bind-address</java:key>
-                    <java:value>${rhq.communications.multicast-detector.bind-address}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.multicast-detector.port</java:key>
-                    <java:value>${rhq.communications.multicast-detector.port:16162}</java:value>
-                </java:property>
-
-                <!-- Server-side SSL Security Configuration (for incoming messages from agents) -->
-
-                <java:property>
-                    <java:key>rhq.communications.connector.security.secure-socket-protocol</java:key>
-                    <java:value>${rhq.communications.connector.security.secure-socket-protocol:TLS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.file</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.file}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.algorithm</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.algorithm:SunX509}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.type</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.type:JKS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.password</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.password:rhqpwd}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.key-password</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.key-password:rhqpwd}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.keystore.alias</java:key>
-                    <java:value>${rhq.communications.connector.security.keystore.alias:rhq}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.truststore.file</java:key>
-                    <java:value>${rhq.communications.connector.security.truststore.file}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.truststore.algorithm</java:key>
-                    <java:value>${rhq.communications.connector.security.truststore.algorithm:SunX509}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.truststore.type</java:key>
-                    <java:value>${rhq.communications.connector.security.truststore.type:JKS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.truststore.password</java:key>
-                    <java:value>${rhq.communications.connector.security.truststore.password}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.communications.connector.security.client-auth-mode</java:key>
-                    <java:value>${rhq.communications.connector.security.client-auth-mode:none}</java:value>
-                </java:property>
-
-                <!-- Client-side SSL Security Configuration (for outgoing messages to agents) -->
-
-                <java:property>
-                    <java:key>rhq.server.client.security.secure-socket-protocol</java:key>
-                    <java:value>${rhq.server.client.security.secure-socket-protocol:TLS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.file</java:key>
-                    <java:value>${rhq.server.client.security.keystore.file}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.algorithm</java:key>
-                    <java:value>${rhq.server.client.security.keystore.algorithm:SunX509}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.type</java:key>
-                    <java:value>${rhq.server.client.security.keystore.type:JKS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.password</java:key>
-                    <java:value>${rhq.server.client.security.keystore.password:rhqpwd}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.key-password</java:key>
-                    <java:value>${rhq.server.client.security.keystore.key-password:rhqpwd}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.keystore.alias</java:key>
-                    <java:value>${rhq.server.client.security.keystore.alias:rhq}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.truststore.file</java:key>
-                    <java:value>${rhq.server.client.security.truststore.file}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.truststore.algorithm</java:key>
-                    <java:value>${rhq.server.client.security.truststore.algorithm:SunX509}</java:value>
-                </java:property>
-                <java:property>
-                   <java:key>rhq.server.client.security.truststore.type</java:key>
-                   <java:value>${rhq.server.client.security.truststore.type:JKS}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.truststore.password</java:key>
-                    <java:value>${rhq.server.client.security.truststore.password}</java:value>
-                </java:property>
-                <java:property>
-                    <java:key>rhq.server.client.security.server-auth-mode-enabled</java:key>
-                    <java:value>${rhq.server.client.security.server-auth-mode-enabled:false}</java:value>
-                </java:property>
-            </java:properties>
+        <attribute name="ConfigurationOverrides2">
+# Server-side SSL Security Configuration (for incoming messages from agents
+rhq.communications.connector.security.secure-socket-protocol=${rhq.communications.connector.security.secure-socket-protocol:TLS}
+rhq.communications.connector.security.keystore.file=${rhq.communications.connector.security.keystore.file}
+rhq.communications.connector.security.keystore.algorithm=${rhq.communications.connector.security.keystore.algorithm:SunX509}
+rhq.communications.connector.security.keystore.type=${rhq.communications.connector.security.keystore.type:JKS}
+rhq.communications.connector.security.keystore.password=${rhq.communications.connector.security.keystore.password:rhqpwd}
+rhq.communications.connector.security.keystore.key-password=${rhq.communications.connector.security.keystore.key-password:rhqpwd}
+rhq.communications.connector.security.keystore.alias=${rhq.communications.connector.security.keystore.alias:rhq}
+rhq.communications.connector.security.truststore.file=${rhq.communications.connector.security.truststore.file}
+rhq.communications.connector.security.truststore.algorithm=${rhq.communications.connector.security.truststore.algorithm:SunX509}
+rhq.communications.connector.security.truststore.type=${rhq.communications.connector.security.truststore.type:JKS}
+rhq.communications.connector.security.truststore.password=${rhq.communications.connector.security.truststore.password}
+rhq.communications.connector.security.client-auth-mode=${rhq.communications.connector.security.client-auth-mode:none}
+# Client-side SSL Security Configuration (for outgoing messages to agents)
+rhq.server.client.security.secure-socket-protocol=${rhq.server.client.security.secure-socket-protocol:TLS}
+rhq.server.client.security.keystore.file=${rhq.server.client.security.keystore.file}
+rhq.server.client.security.keystore.algorithm=${rhq.server.client.security.keystore.algorithm:SunX509}
+rhq.server.client.security.keystore.type=${rhq.server.client.security.keystore.type:JKS}
+rhq.server.client.security.keystore.password=${rhq.server.client.security.keystore.password:rhqpwd}
+rhq.server.client.security.keystore.key-password=${rhq.server.client.security.keystore.key-password:rhqpwd}
+rhq.server.client.security.keystore.alias=${rhq.server.client.security.keystore.alias:rhq}
+rhq.server.client.security.truststore.file=${rhq.server.client.security.truststore.file}
+rhq.server.client.security.truststore.algorithm=${rhq.server.client.security.truststore.algorithm:SunX509}
+rhq.server.client.security.truststore.type=${rhq.server.client.security.truststore.type:JKS}
+rhq.server.client.security.truststore.password=${rhq.server.client.security.truststore.password}
+rhq.server.client.security.server-auth-mode-enabled=${rhq.server.client.security.server-auth-mode-enabled:false}
         </attribute>
     </mbean>
 </server>

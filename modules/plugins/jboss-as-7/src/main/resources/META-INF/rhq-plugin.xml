@@ -398,33 +398,34 @@
 
 <!ENTITY datasourceReadWriteConfiguration '
       <resource-configuration>
-        <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
+        <c:simple-property name="connection-url" required="true" type="string" readOnly="false" description="The JDBC driver connection URL"/>
+        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="false">
           <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
         </c:simple-property>
-        <c:simple-property name="driver-class" required="false" type="string" readOnly="true" description="The fully qualified name of the JDBC driver class"/>
-        <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
+        <c:simple-property name="driver-class" required="false" type="string" readOnly="false" description="The fully qualified name of the JDBC driver class"/>
+        <c:simple-property name="jndi-name" required="true" type="string" readOnly="false" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="driver" required="false" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualified name of the JDBC driver class"/>
-        <c:simple-property name="user-name" type="string" readOnly="true" required="false" description="Specify the username used when creating a new connection."/>
-        <c:simple-property name="password" type="password" readOnly="true" required="false" description="Specify the password used when creating a new connection."/>
-        <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-        <c:simple-property name="url-delimiter" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
-        <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
-        <c:simple-property name="use-java-context" type="boolean" readOnly="true" required="false" description="Setting this to false will bind the DataSource into global JNDI;"/>
+        <c:simple-property name="user-name" type="string" readOnly="false" required="false" description="Specify the username used when creating a new connection."/>
+        <c:simple-property name="password" type="password" readOnly="false" required="false" description="Specify the password used when creating a new connection."/>
+        <c:simple-property name="new-connection-sql" type="string" readOnly="false" required="false" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
+        <c:simple-property name="url-delimiter" type="string" readOnly="false" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
+        <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="false" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
+        <c:simple-property name="use-java-context" type="boolean" readOnly="false" required="false" default="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
         <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
         <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" description="Define if the min-pool-size should be considered a strictly."/>
-        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
-        <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
+        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" default="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
+        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" default="false" description="Define if the min-pool-size should be considered a strictly."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
+        <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="false" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
                         <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)" >
                             read-only
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
           <c:property-options>
             <c:option value="FailingConnectionOnly"/>
             <c:option value="IdleConnections"/>
@@ -432,17 +433,24 @@
           </c:property-options>
         </c:simple-property>
 
-        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false" description="The number of prepared statements per connection in an LRU cache"/>
-        <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
-        <c:simple-property name="track-statements" type="string" readOnly="true" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
-        <c:simple-property name="allocation-retry" type="integer" readOnly="true" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
-        <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="true" required="false" description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
+        <c:simple-property name="allow-multiple-users" type="boolean" required="false" readOnly="false" description="Specifies if multiple users will access the datasource through the getConnection(user, password) method and hence if the internal pool type should account for that"/>
+        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="false" required="false" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="share-prepared-statements" type="boolean" readOnly="false" required="false" default="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
+        <c:simple-property name="track-statements" type="string" readOnly="false" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed">
+          <c:property-options>
+            <c:option value="false"/>
+            <c:option value="true"/>
+            <c:option value="NOWARN"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="allocation-retry" type="integer" readOnly="false" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
+        <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="false" required="false" description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
         <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false" required="false" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
         <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false" required="false" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
-        <c:simple-property name="query-timeout" type="long" readOnly="true" required="false" description="Any configured query timeout in seconds The default is no timeout"/>
-        <c:simple-property name="use-try-lock" type="long" readOnly="true" required="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
-        <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true" required="false" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
-        <c:simple-property name="transaction-isolation" type="string" readOnly="true" required="false" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
+        <c:simple-property name="query-timeout" type="long" readOnly="false" required="false" description="Any configured query timeout in seconds The default is no timeout"/>
+        <c:simple-property name="use-try-lock" type="long" readOnly="false" required="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
+        <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="false" required="false" default="false" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
+        <c:simple-property name="transaction-isolation" type="string" readOnly="false" required="false" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
           <c:property-options>
             <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
             <c:option value="TRANSACTION_READ_COMMITTED"/>
@@ -451,16 +459,16 @@
             <c:option value="TRANSACTION_NONE"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true" required="false" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
-        <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
-        <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
-        <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-        <c:simple-property name="background-validation-minutes" type="long" readOnly="false" required="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
-        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+        <c:simple-property name="check-valid-connection-sql" type="string" readOnly="false" required="false" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
+        <c:simple-property name="exception-sorter-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
+        <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
+        <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
+        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" default="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
-        <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
-        <c:simple-property name="spy" type="boolean" readOnly="true" required="false" description="whatever spy or not the jdbc connection"/>
-        <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
+        <c:simple-property name="validate-on-match" type="boolean" readOnly="false" required="false" default="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
+        <c:simple-property name="spy" type="boolean" readOnly="false" required="false" defaultValue="false" description="whatever spy or not the jdbc connection"/>
+        <c:simple-property name="use-ccm" type="boolean" readOnly="false" required="false" description="Enable the use of a cached connection manager"/>
         <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
           <c:list-property name="*1" displayName="Connection Property" readOnly="false" required="false">
             <c:map-property name="*:pname" displayName="Name" readOnly="false">

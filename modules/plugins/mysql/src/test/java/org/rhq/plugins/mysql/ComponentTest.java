@@ -71,6 +71,7 @@ import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.event.EventManager;
+import org.rhq.core.pc.inventory.InventoryContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
@@ -78,6 +79,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -294,12 +296,13 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         AvailabilityContext availContext = new AvailabilityContextImpl(cresource,availCollectorThreadPool);
+        InventoryContext inventoryContext = new InventoryContextImpl(cresource);
 
         EventContext eventContext = new EventContextImpl(resource);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,
-                availContext, pluginContainerDeployment);
+                availContext, inventoryContext,pluginContainerDeployment);
 
         component.start(context);
         components.put(component, cresource);

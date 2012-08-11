@@ -607,6 +607,18 @@ public class ImageManager {
         return "subsystems/configure/Configure_16.png";
     }
 
+    public static String getHeaderBgLine() {
+        return "header/header_bg_line.png";
+    }
+
+    public static String getLogo80x28() {
+        return "header/rhq_logo_28px.png";
+    }
+
+    public static String getHeaderBackground() {
+        return "header/header_bg.png";
+    }
+
     public static String getChildCreateIcon() {
         return "subsystems/inventory/CreateChild_16.png";
     }

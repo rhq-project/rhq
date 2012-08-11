@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
@@ -73,7 +74,7 @@ public class MenuBarView extends LocatableVLayout {
         ToolStrip topStrip = new ToolStrip();
         topStrip.setHeight(34);
         topStrip.setWidth100();
-        topStrip.setBackgroundImage("header/header_bg.png");
+        topStrip.setBackgroundImage(ImageManager.getHeaderBackground());
         topStrip.setMembersMargin(20);
 
         topStrip.addMember(getLogoSection());
@@ -104,7 +105,7 @@ public class MenuBarView extends LocatableVLayout {
         logoSection.setOverflow(Overflow.VISIBLE);
 
         // NOTE: This image will either be an RHQ logo or a JON logo, but must be 80x28
-        Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
+        Img logo = new Img(ImageManager.getLogo80x28(), 80, 28);
         logo.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 aboutModalWindow.show();
@@ -152,7 +153,7 @@ public class MenuBarView extends LocatableVLayout {
             setWidth100();
             setHeight100();
 
-            Img divider = new Img("header/header_bg_line.png");
+            Img divider = new Img(ImageManager.getHeaderBgLine());
             divider.setWidth(1);
             divider.setHeight100();
             addMember(divider);
@@ -174,7 +175,7 @@ public class MenuBarView extends LocatableVLayout {
                 updateLinkStyle(sectionName.getName());
                 addMember(linkVLayout);
 
-                divider = new Img("header/header_bg_line.png");
+                divider = new Img(ImageManager.getHeaderBgLine());
                 divider.setWidth(1);
                 divider.setHeight100();
                 addMember(divider);

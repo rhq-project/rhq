@@ -222,6 +222,9 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public void setConfigurationOverrides(Properties overrides) {
     }
 
+    public void setConfigurationOverrides2(Properties overrides) {
+    }
+
     public void setPreferencesNodeName(String node) {
     }
 

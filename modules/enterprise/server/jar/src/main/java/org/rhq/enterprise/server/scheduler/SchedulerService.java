@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.scheduler;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -43,6 +44,8 @@ import org.quartz.TriggerListener;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
+
+import org.jboss.util.StringPropertyReplacer;
 
 /**
  * Scheduler MBean service that simply wraps the Quartz scheduler.
@@ -68,7 +71,19 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
         return quartzProperties;
     }
 
-    public void setQuartzProperties(final Properties quartzProps) throws SchedulerException {
+    public void setQuartzProperties(Properties quartzProps) throws SchedulerException {
+        // we need to replace ${var} notations because AS7 doesn't - see https://issues.jboss.org/browse/AS7-5343
+        if (quartzProps != null) {
+            Properties overrides = new Properties();
+            for (Map.Entry<Object, Object> entry : quartzProps.entrySet()) {
+                String key = entry.getKey().toString();
+                String value = entry.getValue().toString();
+                value = StringPropertyReplacer.replaceProperties(value);
+                overrides.put(key, value);
+            }
+            quartzProps = overrides;
+        }
+
         this.quartzProperties = quartzProps;
         schedulerFactory.initialize(quartzProps);
 

@@ -10,6 +10,10 @@
     <name>RHQ Scripting API</name>
     <description>Provides API for adding scripting support to RHQ using different javax.scripting - based interpreters</description>
 
+  <properties>
+     <rhq.internal>false</rhq.internal>
+  </properties>
+    
     <build>
         <plugins>
             <plugin>

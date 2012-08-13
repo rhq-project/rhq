@@ -508,10 +508,6 @@ rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
 
-# The number of concurrent threads used to deploy plugins.
-# Currently, it is not recommended to increase this value.
-rhq.server.plugin-deployer-threads=1
-
 # RHQ Server's remote endpoint for agents to talk to
 # bind-address and bind-port are derived from the HA server definition,
 # if you set the address/port here, they will override the HA server definition found in the database

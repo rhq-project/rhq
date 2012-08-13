@@ -55,10 +55,10 @@ org.quartz.jobStore.tablePrefix                = RHQ_QRTZ_
 org.quartz.jobStore.useProperties              = true
 org.quartz.jobStore.selectWithLockSQL          = ${rhq.server.quartz.selectWithLockSQL}
 org.quartz.jobStore.dataSource                 = RHQDS
-org.quartz.dataSource.RHQDS.jndiURL            = java:/RHQDS
+org.quartz.dataSource.RHQDS.jndiURL            = java:jboss/datasources/RHQDS
 org.quartz.dataSource.RHQDS.maxConnections     = 10
 org.quartz.jobStore.nonManagedTXDataSource     = NoTxRHQDS
-org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:/NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:jboss/datasources/NoTxRHQDS
 org.quartz.dataSource.NoTxRHQDS.maxConnections = 10
 org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandlerClass}
         </attribute>
@@ -92,7 +92,7 @@ rhq.communications.multicast-detector.port=${rhq.communications.multicast-detect
         </attribute>
 
         <attribute name="ConfigurationOverrides2">
-# Server-side SSL Security Configuration (for incoming messages from agents
+# Server-side SSL Security Configuration (for incoming messages from agents)
 rhq.communications.connector.security.secure-socket-protocol=${rhq.communications.connector.security.secure-socket-protocol:TLS}
 rhq.communications.connector.security.keystore.file=${rhq.communications.connector.security.keystore.file}
 rhq.communications.connector.security.keystore.algorithm=${rhq.communications.connector.security.keystore.algorithm:SunX509}

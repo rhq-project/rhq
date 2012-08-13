@@ -406,12 +406,19 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         int count = 0;
         while (!up) {
             Operation op = new ReadAttribute(new Address(), "release-version");
-            Result res = getASConnection().execute(op);
-            if (res.isSuccess()) { // If op succeeds, server is not down
-                up = true;
-            } else if (count > 20) {
-                break;
+            try{
+                Result res = getASConnection().execute(op);
+                if (res.isSuccess()) { // If op succeeds, server is not down
+                    up = true;
+                } else if (count > 20) {
+                    break;
+                }
+            } catch (Exception e) {
+                //do absolutely nothing
+                //if an exception is thrown that means the server is still down, so consider this
+                //a single failed attempt, equivalent to res.isSuccess == false
             }
+
             if (!up) {
                 try {
                     Thread.sleep(1000); // Wait 1s

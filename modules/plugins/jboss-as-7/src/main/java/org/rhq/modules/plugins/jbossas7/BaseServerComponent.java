@@ -552,6 +552,13 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return result;
     }
 
+    /**
+     * Requests a deferred child resource discovery for sub-resources of this server.
+     */
+    public void requestDeferredChildResourcesDiscovery() {
+        this.context.getInventoryContext().requestDeferredChildResourcesDiscovery();
+    }
+
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());

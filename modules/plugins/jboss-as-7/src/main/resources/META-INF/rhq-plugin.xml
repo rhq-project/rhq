@@ -6457,7 +6457,6 @@
             <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
             <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
             <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
             <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>

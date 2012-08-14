@@ -324,6 +324,19 @@ debug_msg "RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS: $RHQ_SERVER_ADDITIONAL_CMDLINE_OP
 _CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS $RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
+# We need to add our own modules to the core set of JBossAS modules.
+# JBOSS_MODULEPATH tells standalone.sh what to use.
+# ----------------------------------------------------------------------
+_RHQ_MODULES_PATH="${RHQ_SERVER_HOME}/modules"
+_INTERNAL_MODULES_PATH="${RHQ_SERVER_HOME}/jbossas/modules"
+if [ -n "$_CYGWIN" ]; then
+   _RHQ_MODULES_PATH=`cygpath --windows --path "$_RHQ_MODULES_PATH"`
+   _INTERNAL_MODULES_PATH=`cygpath --windows --path "$_INTERNAL_MODULES_PATH"`
+fi
+JBOSS_MODULEPATH="${_RHQ_MODULES_PATH}:${_INTERNAL_MODULES_PATH}"
+debug_msg "JBOSS_MODULEPATH: $JBOSS_MODULEPATH"
+
+# ----------------------------------------------------------------------
 # Now find the JBossAS standalone.sh script
 # ----------------------------------------------------------------------
 

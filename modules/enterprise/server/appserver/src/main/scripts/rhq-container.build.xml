@@ -78,6 +78,10 @@
 
         <property name="jboss.deploy.dir" location="${jboss.home}/standalone/deployments" />
 
+        <!-- we will put our own JBossAS modules in our own location - this will augment JBossAS's own modules -->
+        <property name="jboss.modules.dir" location="${project.build.outputDirectory}/modules" />
+        <mkdir dir="${jboss.modules.dir}" />
+
         <condition property="use-postgres" value="true">
             <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
         </condition>
@@ -159,7 +163,6 @@
               tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
         -->
 
-        <property name="jboss.modules.dir" location="${jboss.home}/modules" />
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
         <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
               toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
@@ -303,10 +306,10 @@
         <antcall target="package-connectors" />
         <echo>Deploying RT filter jar ...</echo>
         <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
-               dest="${jboss.home}/modules" />
+               dest="${jboss.modules.dir}" />
 
         <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
-               dest="${jboss.home}/modules" />
+               dest="${jboss.modules.dir}" />
         <!-- TODO: it is up to either the installer or our EAR's WAR to use this so JON itself can have its RT data collected -->
 
     </target>

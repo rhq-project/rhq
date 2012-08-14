@@ -569,7 +569,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         }
 
-        propertyName = stripNumberIdentifier(property.getName());
+        propertyName = stripNumberIdentifier(propertyName);
 
         return new SimpleEntry<String, List<Object>>(propertyName, values);
     }

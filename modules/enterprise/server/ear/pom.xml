@@ -137,6 +137,18 @@
         </dependency>
 
         <!-- ** JARs -->
+        <dependency>
+            <groupId>org.opensymphony.quartz</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opensymphony.quartz</groupId>
+            <artifactId>quartz-oracle</artifactId>
+            <version>${quartz.version}</version>
+        </dependency>
+
         <!-- TODO: I think this goes away once we are on AS7 because Postgres JDBC driver will be a module -->
         <dependency>
             <groupId>postgresql</groupId>

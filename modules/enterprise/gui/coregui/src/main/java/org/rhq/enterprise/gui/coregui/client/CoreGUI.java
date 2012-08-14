@@ -54,6 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
@@ -368,6 +369,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
         if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
             canvas = new DashboardsView(viewName);
+        } else if (viewName.equals(ResourceAutodiscoveryView.VIEW_ID.getName())) {
+            //@todo: security
+            canvas = new  ResourceAutodiscoveryView(
+                    ResourceAutodiscoveryView.VIEW_ID.getName());
         } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
         } else if (viewName.equals(ResourceTopView.VIEW_ID.getName())) {

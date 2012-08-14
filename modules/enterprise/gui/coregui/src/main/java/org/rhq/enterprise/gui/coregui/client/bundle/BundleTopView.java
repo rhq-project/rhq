@@ -48,7 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class BundleTopView extends LocatableHLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles(), IconEnum.BUNDLE);
+    //public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles(), IconEnum.BUNDLE);
+    public static final ViewName VIEW_ID = new ViewName("Deploy", "Deploy", IconEnum.BUNDLE);
 
     private ViewId currentNextPath;
 

@@ -52,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
-    public static final ViewName VIEW_ID = new ViewName("Administration", MSG.view_admin_administration());
+    public static final ViewName VIEW_ID = new ViewName("Admin", MSG.view_admin_administration());
 
     public static final ViewName SECTION_SECURITY_VIEW_ID = new ViewName("Security", MSG.view_admin_security());
     public static final ViewName SECTION_TOPOLOGY_VIEW_ID = new ViewName("Topology", MSG.view_admin_topology());

@@ -61,7 +61,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
-    public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
+    //public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
+    public static final ViewName VIEW_ID = new ViewName("Monitor", "Monitor");
 
     public static final ViewName SECTION_SUBSYSTEMS_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
     public static final ViewName SECTION_INVENTORY_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());

@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
@@ -57,8 +58,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class MenuBarView extends LocatableVLayout {
 
-    public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
-        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
+    public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID,  ResourceAutodiscoveryView.VIEW_ID,
+            InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
+        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID };
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();

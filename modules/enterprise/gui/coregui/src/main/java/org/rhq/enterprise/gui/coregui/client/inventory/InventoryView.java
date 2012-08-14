@@ -141,14 +141,14 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildResourcesSection() {
-        NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ResourceAutodiscoveryView(extendLocatorId(
-                        ResourceAutodiscoveryView.VIEW_ID.getName()));
-                }
-            }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
-        autodiscoveryQueueItem.setRefreshRequired(true);
+//        NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
+//            new ViewFactory() {
+//                public Canvas createView() {
+//                    return new ResourceAutodiscoveryView(extendLocatorId(
+//                        ResourceAutodiscoveryView.VIEW_ID.getName()));
+//                }
+//            }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
+//        autodiscoveryQueueItem.setRefreshRequired(true);
 
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, new ViewFactory() {
             public Canvas createView() {
@@ -204,7 +204,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem,
+        return new NavigationSection(RESOURCES_SECTION_VIEW_ID,  allResourcesItem,
             platformsItem, topLevelServersItem, serversItem, servicesItem, downServersItem);
     }
 

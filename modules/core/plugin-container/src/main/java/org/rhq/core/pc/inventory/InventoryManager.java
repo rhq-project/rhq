@@ -108,6 +108,7 @@ import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -575,8 +576,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @NotNull
+    public InventoryReport executeServiceScanImmediately(Resource resource) {
+        try {
+            RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
+                resource);
+            return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Service scan execution was interrupted", e);
+        } catch (ExecutionException e) {
+            // Should never happen, reports are always generated, even if they're just to report the error
+            throw new RuntimeException("Unexpected exception", e);
+        }
+    }
+
     public void executeServiceScanDeferred() {
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
+    }
+
+    public void executeServiceScanDeferred(Resource resource) {
+        RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
+        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor);
     }
 
     /** this will NOT send a availability report up to the server! */
@@ -1293,7 +1313,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Get the parent resource's children, ensuring we use the resource container version of the resource, because
      * the container's resource is guaranteed to be up to date.
-     *  
+     *
      * @param parentResource
      * @return the children, may be empty, not null.
      */
@@ -1760,6 +1780,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
+            getInventoryContext(resource),
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1779,6 +1800,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
+            getInventoryContext(resource),
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1829,7 +1851,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     return this.platform;
                 }
             } else {
-                // don't use container children here, the caller is providing the desired resources 
+                // don't use container children here, the caller is providing the desired resources
                 for (Resource child : parent.getChildResources()) {
                     if (child != null && matches(resource, child)) {
                         return child;
@@ -2352,7 +2374,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * The resource upgrade should only occur during the {@link #initialize()} method and should be
      * switched off at all other times.
-     * 
+     *
      * @return true if resource upgrade is currently active, false otherwise
      */
     public boolean isResourceUpgradeActive() {
@@ -2618,6 +2640,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource, availCollectionThreadPool);
         return availabilityContext;
+    }
+
+    /**
+     * Create inventory context for a resource.
+     *
+     * @param resource the resource
+     * @return the inventory context
+     */
+    private InventoryContext getInventoryContext(Resource resource) {
+        if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
+            log.error("RESOURCE UUID IS NOT SET! Inventory features may not work!");
+        }
+
+        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        return inventoryContext;
     }
 
     private void updateResourceVersion(Resource resource, String version) {

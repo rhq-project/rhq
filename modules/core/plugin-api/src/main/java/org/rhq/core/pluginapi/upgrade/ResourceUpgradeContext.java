@@ -23,13 +23,13 @@
 package org.rhq.core.pluginapi.upgrade;
 
 import java.io.File;
-import java.util.concurrent.Executor;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -60,11 +60,11 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
         File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
         OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
-        PluginContainerDeployment pluginContainerDeployment) {
+        InventoryContext inventoryContext, PluginContainerDeployment pluginContainerDeployment) {
 
         super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
             temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
-            availabilityContext, pluginContainerDeployment);
+            availabilityContext, inventoryContext, pluginContainerDeployment);
 
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();

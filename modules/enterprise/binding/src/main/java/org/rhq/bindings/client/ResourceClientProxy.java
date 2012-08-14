@@ -480,9 +480,13 @@ public class ResourceClientProxy {
         public Configuration getResourceConfiguration() {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
-
-            return remoteClient.getConfigurationManager().getResourceConfiguration(remoteClient.getSubject(),
-                resourceClientProxy.resourceId);
+            
+            //make sure to fetch the latest known resource config. This ensures that
+            //the server goes out to the agent if there is no known config yet and thus
+            //giving the scripting user an always up-to-date info.
+            ResourceConfigurationUpdate update = remoteClient.getConfigurationManager().getLatestResourceConfigurationUpdate(
+                remoteClient.getSubject(), resourceClientProxy.resourceId);
+            return update == null ? null : update.getConfiguration();
         }
 
         public ConfigurationDefinition getResourceConfigurationDefinition() {

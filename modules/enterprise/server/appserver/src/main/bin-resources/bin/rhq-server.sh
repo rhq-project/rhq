@@ -287,9 +287,16 @@ export JAVA
 if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
    RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000"
 fi
+
+if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+   _JBOSS_DEBUG_LOGGING="-Djboss.boot.server.log.level=DEBUG -Djboss.boot.server.log.console.level=DEBUG"
+else
+   _JBOSS_DEBUG_LOGGING=
+fi
+
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
 # Note that the double equals for the policy file specification IS INTENTIONAL
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/rhq-server.security-policy"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone-full.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/rhq-server.security-policy ${_JBOSS_DEBUG_LOGGING}"
 
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
@@ -334,6 +341,7 @@ if [ -n "$_CYGWIN" ]; then
    _INTERNAL_MODULES_PATH=`cygpath --windows --path "$_INTERNAL_MODULES_PATH"`
 fi
 JBOSS_MODULEPATH="${_RHQ_MODULES_PATH}:${_INTERNAL_MODULES_PATH}"
+export JBOSS_MODULEPATH
 debug_msg "JBOSS_MODULEPATH: $JBOSS_MODULEPATH"
 
 # ----------------------------------------------------------------------

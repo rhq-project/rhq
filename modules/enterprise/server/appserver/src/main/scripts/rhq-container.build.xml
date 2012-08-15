@@ -127,6 +127,16 @@
             </not>
         </condition>
 
+        <!-- when predeploying, don't make people go to the installer - turn on the auto-installer -->
+        <condition property="rhq.autoinstall.enabled" value="true">
+            <equals arg1="${predeploy}" arg2="true" />
+        </condition>
+        <condition property="rhq.autoinstall.enabled" value="false">
+            <not>
+                <equals arg1="${predeploy}" arg2="true" />
+            </not>
+        </condition>
+
     </target>
 
     <target name="prepare-container"
@@ -206,7 +216,7 @@
         <delete>
             <fileset dir="${jboss.home}/standalone/configuration">
                 <include name="standalone-ha.xml" />
-                <include name="standalone-full.xml" />
+                <include name="standalone.xml" />
                 <include name="standalone-full-ha.xml" />
             </fileset>
         </delete>
@@ -502,7 +512,7 @@ rhq.sync.endpoint-address=false
 #                                          will use to talk to this server.
 #                                          If not set, a value to use is
 #                                          determined at auto-install time.
-rhq.autoinstall.enabled=false
+rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 
@@ -569,8 +579,6 @@ rhq.autoinstall.public-endpoint-address=
 
     <target name="developer-release-message" if="predeploy">
         <echo>!!THIS IS A DEVELOPER CONTAINER BUILD - PRE-DEPLOYING RHQ SERVER!!</echo>
-        <!-- TODO I don't think we can skip the installer stage - but we can turn on auto-installation -->
-        <!-- So in here we should set rhq.autoinstall.enabled=true in rhq-server.properties --> 
     </target>
 
     <!-- TODO: when we ship with an embedded agent -->

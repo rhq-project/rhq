@@ -23,9 +23,11 @@
 package org.rhq.core.pc.inventory;
 
  import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
+ import org.rhq.core.clientapi.server.discovery.InventoryReport;
  import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.domain.resource.CreateResourceStatus;
+ import org.rhq.core.domain.resource.Resource;
  import org.rhq.core.pc.PluginContainer;
  import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
  import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -37,11 +39,12 @@ package org.rhq.core.pc.inventory;
  import java.util.concurrent.Callable;
 
  /**
- * Runnable implementation to thread create request requests.
+ * Runnable implementation to process Resource create requests.
  *
  * @author Jason Dobies
  */
 public class CreateResourceRunner implements Callable, Runnable {
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(CreateResourceRunner.class);
@@ -90,6 +93,7 @@ public class CreateResourceRunner implements Callable, Runnable {
 
     // Runnable Implementation  --------------------------------------------
 
+    @Override
     public void run() {
         try {
             call();
@@ -100,6 +104,7 @@ public class CreateResourceRunner implements Callable, Runnable {
 
     // Callable Implementation  --------------------------------------------
 
+    @Override
     public Object call() throws Exception {
         log.info("Creating resource through report: " + report);
 
@@ -154,6 +159,12 @@ public class CreateResourceRunner implements Callable, Runnable {
                 // If we still don't have an error message, populate it from the exception
                 errorMessage = (errorMessage != null) ? (errorMessage + " - Cause: " + messages) : messages;
             }
+        } catch(TimeoutException e) {
+            status = CreateResourceStatus.TIMED_OUT;
+            errorMessage = "The time out has been exceeded; however, the deployment may have been successful. You " +
+                "may want to run a discovery scan to see if the deployment did complete successfully. Also consider " +
+                "using a higher time out value for future deployments.\n\nRoot Cause:\n";
+            errorMessage += ThrowableUtil.getStackAsString(e);
         } catch (Throwable t) {
             errorMessage = ThrowableUtil.getStackAsString(t);
             status = CreateResourceStatus.FAILURE;
@@ -175,13 +186,24 @@ public class CreateResourceRunner implements Callable, Runnable {
 
         // Trigger a service scan on the parent resource to have the newly created resource discovered if the plugin
         // said the create was successful
-        if (runRuntimeScan && isSuccessStatus(status)) {
-            log.info("Scanning for newly created Resource...");
+        if (isSuccessStatus(status) && runRuntimeScan) {
+            log.debug("Scheduling service scan to discover newly created [" + report.getResourceType()
+                    + "] managed resource with key [" + report.getResourceKey() + "]...");
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             try {
-                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-                inventoryManager.performServiceScan(parentResourceId);
-            } catch (Throwable t) {
-                log.error("Error received while attempting runtime scan for newly created Resource...");
+                // This will block until the service scan completes.
+                InventoryReport inventoryReport = inventoryManager.performServiceScan(parentResourceId);
+            } catch (Exception e) {
+                log.error("Failed to run service scan to discover newly created [" + report.getResourceType()
+                        + "] managed resource with key [" + report.getResourceKey() + "].", e);
+            }
+
+            Resource discoveredResource = getDiscoveredResource();
+            if (discoveredResource != null) {
+                log.info("Discovered " + discoveredResource + ", for a new managed resource created via RHQ.");
+            } else {
+                log.error("Failed to discover Resource for newly created [" + report.getResourceType()
+                        + "] managed resource with key [" + report.getResourceKey() + "].");
             }
         }
 
@@ -192,4 +214,17 @@ public class CreateResourceRunner implements Callable, Runnable {
          return (status == CreateResourceStatus.SUCCESS) || (status == CreateResourceStatus.INVALID_CONFIGURATION)
                  || (status == CreateResourceStatus.INVALID_ARTIFACT);
      }
+
+     private Resource getDiscoveredResource() {
+         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+         ResourceContainer parentResourceContainer = inventoryManager.getResourceContainer(parentResourceId);
+         Resource parentResource = parentResourceContainer.getResource();
+         for (Resource childResource : parentResource.getChildResources()) {
+             if (childResource.getResourceType().equals(report.getResourceType()) && childResource.getResourceKey().equals(report.getResourceKey())) {
+                 return childResource;
+             }
+         }
+         return null;
+     }
+
  }

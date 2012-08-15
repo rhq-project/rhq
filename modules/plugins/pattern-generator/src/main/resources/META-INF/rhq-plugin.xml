@@ -16,6 +16,7 @@
         <plugin-configuration>
             <c:simple-property name="zeros" description="Number of zeros in a row" type="integer" default="1"/>
             <c:simple-property name="ones" description="Number of ones in a row" type="integer" default="2"/>
+            <c:simple-property name="delay" description="Number of seconds to delay each metric collection (to test slow reporting)" type="integer" default="0"/>
         </plugin-configuration>
 
         <metric property="pattern1" displayName="Pattern 1 Metric" defaultInterval="30000" displayType="summary" defaultOn="true"/>

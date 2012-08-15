@@ -42,6 +42,7 @@ package org.rhq.core.pc.inventory;
  * @author Jason Dobies
  */
 public class CreateResourceRunner implements Callable, Runnable {
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(CreateResourceRunner.class);
@@ -90,6 +91,7 @@ public class CreateResourceRunner implements Callable, Runnable {
 
     // Runnable Implementation  --------------------------------------------
 
+    @Override
     public void run() {
         try {
             call();
@@ -100,6 +102,7 @@ public class CreateResourceRunner implements Callable, Runnable {
 
     // Callable Implementation  --------------------------------------------
 
+    @Override
     public Object call() throws Exception {
         log.info("Creating resource through report: " + report);
 
@@ -154,6 +157,12 @@ public class CreateResourceRunner implements Callable, Runnable {
                 // If we still don't have an error message, populate it from the exception
                 errorMessage = (errorMessage != null) ? (errorMessage + " - Cause: " + messages) : messages;
             }
+        } catch(TimeoutException e) {
+            status = CreateResourceStatus.TIMED_OUT;
+            errorMessage = "The time out has been exceeded; however, the deployment may have been successful. You " +
+                "may want to run a discovery scan to see if the deployment did complete successfully. Also consider " +
+                "using a higher time out value for future deployments.\n\nRoot Cause:\n";
+            errorMessage += ThrowableUtil.getStackAsString(e);
         } catch (Throwable t) {
             errorMessage = ThrowableUtil.getStackAsString(t);
             status = CreateResourceStatus.FAILURE;

@@ -23,14 +23,15 @@ import java.util.List;
 
 import ca.nanometrics.gflot.client.Axis;
 import ca.nanometrics.gflot.client.DataPoint;
-import ca.nanometrics.gflot.client.PlotItem;
 import ca.nanometrics.gflot.client.PlotModel;
-import ca.nanometrics.gflot.client.PlotPosition;
 import ca.nanometrics.gflot.client.SeriesHandler;
 import ca.nanometrics.gflot.client.SimplePlot;
 import ca.nanometrics.gflot.client.event.PlotHoverListener;
+import ca.nanometrics.gflot.client.event.PlotItem;
+import ca.nanometrics.gflot.client.event.PlotPosition;
 import ca.nanometrics.gflot.client.jsni.Plot;
 import ca.nanometrics.gflot.client.options.AxisOptions;
+import ca.nanometrics.gflot.client.options.GlobalSeriesOptions;
 import ca.nanometrics.gflot.client.options.GridOptions;
 import ca.nanometrics.gflot.client.options.LineSeriesOptions;
 import ca.nanometrics.gflot.client.options.PlotOptions;
@@ -201,9 +202,11 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         PlotModel model = new PlotModel();
         PlotOptions plotOptions = new PlotOptions();
-        plotOptions.setDefaultLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
-        plotOptions.setDefaultPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
-        plotOptions.setDefaultShadowSize(0);
+        GlobalSeriesOptions globalSeriesOptions = new GlobalSeriesOptions();
+        globalSeriesOptions.setLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
+        globalSeriesOptions.setPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
+        globalSeriesOptions.setShadowSize(0);
+        plotOptions.setGlobalSeriesOptions(globalSeriesOptions);
 
         // You need make the grid hoverable <<<<<<<<<
         plotOptions
@@ -308,10 +311,12 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
         SeriesHandler handler = model.addSeries(definition.getDisplayName(), "#007f00");
 
         for (MeasurementDataNumericHighLowComposite d : data) {
-            handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
+            if (!Double.isNaN(d.getValue())) {
+                handler.add(new DataPoint(d.getTimestamp(), (int) d.getValue()));
+            }
         }
 
-        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70)
+        plotOptions.addYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70)
             .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double v, Axis axis) {
                     return MeasurementConverterClient.format(v, definition.getUnits(), true);
@@ -323,7 +328,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         int xTicks = getDefaultWidth() / 140;
 
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
+        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
             .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double tickValue, Axis axis) {
                     com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat

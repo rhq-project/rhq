@@ -200,7 +200,7 @@
         </resource-configuration>
 '>
 
-  <!ENTITY logLevel '
+    <!ENTITY logLevel '
            <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this. Message levels lower than this value will be discarded.">
             <c:property-options>
         <c:option value="ALL"/>
@@ -242,7 +242,7 @@
 
     <!ENTITY logFilter '
          <!--
-         <c:simple-property name="filter" required="false" description="Defines a simple filter type." >
+         <c:simple-property name="filter" required="false" description="Defines a simple filter type.">
           <c:property-options>
            <c:option value="accept"/>
            <c:option value="all"/>
@@ -280,13 +280,13 @@
         <c:simple-property name="agent-lib" required="false" type="string" readOnly="false" description="The JVM agent lib."/>
         <c:simple-property name="agent-path" required="false" type="string" readOnly="false" description="The JVM agent path."/>
         <c:simple-property name="env-classpath-ignored" required="false" type="boolean" readOnly="false" description="Ignore the environment classpath."/>
-        <c:list-property name="environment-variables" required="false" description="The JVM environment variables." >
+        <c:list-property name="environment-variables" required="false" description="The JVM environment variables.">
             <c:simple-property name="environment-variable" type="string"/>
         </c:list-property>
         <c:simple-property name="heap-size" required="false" type="string" readOnly="false" description="The initial heap size allocated by the JVM."/>
         <c:simple-property name="java-agent" required="false" type="string" readOnly="false" description="The java agent."/>
         <c:simple-property name="java-home" required="false" type="string" readOnly="false" description="The java home"/>
-        <c:list-property name="jvm-options" required="false" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true" >
+        <c:list-property name="jvm-options" required="false" description="The JVM options. Those can not be changed after initial creation of the definition." readOnly="true">
             <c:simple-property name="jvm-option" type="string"/>
         </c:list-property>
         <c:simple-property name="max-heap-size" required="false" type="string" readOnly="false" description="The maximum heap size that can be allocated by the JVM."/>
@@ -301,7 +301,7 @@
         </c:simple-property>
 '>
 
-  <!ENTITY logFile '
+    <!ENTITY logFile '
           <c:map-property name="file" required="true" readOnly="false" description="The file description consisting of the path and optional relative to path.">
             <c:simple-property name="path" required="true" readOnly="false" description="The filesystem path."/>
             <c:simple-property name="relative-to" required="false" readOnly="false" description="The name of another previously named path, or of one of the standard paths provided by the system. If &apos;relative&#45;to&apos; is provided, the value of the &apos;path&apos; attribute is treated as relative to the path specified by this attribute. The standard paths provided by the system include&#58;&lt;ul&gt;&lt;li&gt;jboss.home &#45; the root directory of the JBoss AS distribution&lt;/li&gt;&lt;li&gt;user.home &#45; user&apos;s home directory&lt;/li&gt;&lt;li&gt;user.dir &#45; user&apos;s current working directory&lt;/li&gt;&lt;li&gt;java.home &#45; java installation directory&lt;/li&gt;&lt;li&gt;jboss.server.base.dir &#45; root directory for an individual server instance&lt;/li&gt;&lt;li&gt;jboss.server.data.dir &#45; directory the server will use for persistent data file storage&lt;/li&gt;&lt;li&gt;jboss.server.log.dir &#45; directory the server will use for log file storage&lt;/li&gt;&lt;li&gt;jboss.server.tmp.dir &#45; directory the server will use for temporary file storage&lt;/li&gt;&lt;li&gt;jboss.domain.servers.dir &#45; directory under which a host controller will create the working area for individual server instances&lt;/li&gt;&lt;/ul&gt;">
@@ -363,7 +363,7 @@
       <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
 '>
 
-<!ENTITY datasourceEnableDisableOperations '
+    <!ENTITY datasourceEnableDisableOperations '
       <operation name="enable" description="Enables the data-source">
         <results>
           <c:simple-property name="operationResult"/>
@@ -376,7 +376,7 @@
       </operation>
 '>
 
-<!ENTITY datasourceTestFlushOperations '
+    <!ENTITY datasourceTestFlushOperations '
       <operation name="flush-all-connection-in-pool" description="Flushes the pool for all connections">
         <results>
           <c:simple-property name="operationResult"/>
@@ -396,7 +396,7 @@
       </operation>
 '>
 
-<!ENTITY datasourceReadWriteConfiguration '
+    <!ENTITY datasourceReadWriteConfiguration '
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="false" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="false">
@@ -420,7 +420,7 @@
         <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="false" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
-                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -480,7 +480,7 @@
       </resource-configuration>
 '>
 
-<!ENTITY datasourceReadOnlyConfiguration '
+    <!ENTITY datasourceReadOnlyConfiguration '
       <resource-configuration>
         <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
         <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
@@ -503,7 +503,7 @@
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
-                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -557,7 +557,7 @@
 '>
 
 
-<!ENTITY xaDatasourceReadWriteConfiguration '
+    <!ENTITY xaDatasourceReadWriteConfiguration '
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
@@ -584,7 +584,7 @@
         <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific purpose (i.e vendor)"/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
-                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -619,21 +619,21 @@
         <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <!--
-                        <c:map-property name="exception-sorter-properties" description="exceptionsorter properties" >
+                        <c:map-property name="exception-sorter-properties" description="exceptionsorter properties">
                             read-only
                             configuration
                         </c:map-property>
         -->
         <c:simple-property name="stale-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
         <!--
-                        <c:map-property name="stale-connection-checker-properties" description="staleconnectionchecker properties" >
+                        <c:map-property name="stale-connection-checker-properties" description="staleconnectionchecker properties">
                             read-only
                             configuration
                         </c:map-property>
         -->
         <c:simple-property name="valid-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
         <!--
-                        <c:map-property name="valid-connection-checker-properties" description="validconnectionchecker properties" >
+                        <c:map-property name="valid-connection-checker-properties" description="validconnectionchecker properties">
                             read-only
                             configuration
                         </c:map-property>
@@ -649,7 +649,7 @@
         <c:simple-property name="recovery-password" required="false" type="string" readOnly="true" description="password used to try connection recovery"/>
         <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="true" description="security-domain used to try connection recovery"/>
         <!--
-                        <c:map-property name="recovery-plugin-properties" description="recovery plugin properties passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="recovery-plugin-properties" description="recovery plugin properties passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -667,7 +667,7 @@
       </resource-configuration>
 '>
 
-<!ENTITY xaDatasourceReadOnlyConfiguration '
+    <!ENTITY xaDatasourceReadOnlyConfiguration '
       <resource-configuration>
         <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualified name of the javax.sql.XADataSource implementation"/>
         <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
@@ -694,7 +694,7 @@
         <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific purpose (i.e vendor)"/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
-                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -729,21 +729,21 @@
         <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <!--
-                        <c:map-property name="exception-sorter-properties" description="exceptionsorter properties" >
+                        <c:map-property name="exception-sorter-properties" description="exceptionsorter properties">
                             read-only
                             configuration
                         </c:map-property>
         -->
         <c:simple-property name="stale-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
         <!--
-                        <c:map-property name="stale-connection-checker-properties" description="staleconnectionchecker properties" >
+                        <c:map-property name="stale-connection-checker-properties" description="staleconnectionchecker properties">
                             read-only
                             configuration
                         </c:map-property>
         -->
         <c:simple-property name="valid-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
         <!--
-                        <c:map-property name="valid-connection-checker-properties" description="validconnectionchecker properties" >
+                        <c:map-property name="valid-connection-checker-properties" description="validconnectionchecker properties">
                             read-only
                             configuration
                         </c:map-property>
@@ -759,7 +759,7 @@
         <c:simple-property name="recovery-password" required="false" type="string" readOnly="true" description="password used to try connection recovery"/>
         <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="true" description="security-domain used to try connection recovery"/>
         <!--
-                        <c:map-property name="recovery-plugin-properties" description="recovery plugin properties passed to the implementation provided for specific purpose (i.e vendor)" >
+                        <c:map-property name="recovery-plugin-properties" description="recovery plugin properties passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
@@ -831,16 +831,13 @@
         </resource-configuration>
 '>
 
-]>
-
+    ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
-        description="provides monitoring and management of JBossAS 7.x"
+        description="provides monitoring and management of JBossAS 7.x and JBoss EAP/JDG 6.x"
         package="org.rhq.modules.plugins.jbossas7"
         xmlns="urn:xmlns:rhq-plugin"
-        xmlns:c="urn:xmlns:rhq-configuration"
-    >
-
+        xmlns:c="urn:xmlns:rhq-configuration">
 
   <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
   ~~      additional 'Personalities' for the kinds of servers (PM, SM, Standalone AS, Managed AS)
@@ -849,8 +846,7 @@
   <server name="JBossAS7 Host Controller"
           discovery="HostControllerDiscovery"
           class="HostControllerComponent"
-          description="Domain controller (delegate) for this host"
-      >
+          description="Domain controller (delegate) for this host">
 
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
@@ -972,17 +968,17 @@
     </resource-configuration>
 
     <drift-definition
-          name="Template-Base Files"
-          description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
-       <basedir>
-          <value-context>pluginConfiguration</value-context>
-          <value-name>homeDir</value-name>
-       </basedir>
-       <includes>
-          <include path="bin" />
-          <include path="appclient" />
-          <include path="welcome-content"/>
-       </includes>
+        name="Template-Base Files"
+        description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>homeDir</value-name>
+      </basedir>
+      <includes>
+        <include path="bin"/>
+        <include path="appclient"/>
+        <include path="welcome-content"/>
+      </includes>
     </drift-definition>
 
     <help>
@@ -1010,8 +1006,7 @@
              description="A server group on this domain"
              discovery="SubsystemDiscovery"
              class="ServerGroupComponent"
-             createDeletePolicy="both"
-        >
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" default="server-group" readOnly="true"/>
@@ -1060,13 +1055,13 @@
           </c:list-property>
         </c:group>
       </resource-configuration>
-    </service> <!-- server group -->
+    </service>
+    <!-- server group -->
 
     <service name="Host"
              description="A host involved in this domain"
              discovery="SubsystemDiscovery"
-             class="HostComponent"
-        >
+             class="HostComponent">
       <plugin-configuration>
         <c:simple-property name="path" default="host" readOnly="true"/>
       </plugin-configuration>
@@ -1108,7 +1103,8 @@
         </c:group>
 
       </resource-configuration>
-    </service> <!-- host -->
+    </service>
+    <!-- host -->
 
     <service name="DomainDeployment"
              class="DomainDeploymentComponent"
@@ -1151,15 +1147,14 @@
       </resource-configuration>
     </service>
 
-  </server> <!-- host controller -->
+  </server> <!-- JBossAS7 Host Controller -->
 
 
   <server name="JBossAS7 Standalone Server"
           discovery="StandaloneASDiscovery"
           class="StandaloneASComponent"
           description="Standalone AS7 server"
-          supportsManualAdd="true"
-      >
+          supportsManualAdd="true">
 
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true"/>
@@ -1170,7 +1165,6 @@
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
-      <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
       &startScriptPluginConfigGroup;
@@ -1230,6 +1224,8 @@
 
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
+    <metric property="deployDir" dataType="trait" displayName="Deploy Directory" defaultInterval="600000" defaultOn="true"
+            description="The deployment directory for bundles (usually 'standalone/deployments'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1311,33 +1307,54 @@
     </resource-configuration>
 
     <drift-definition
-          name="Template-Base Files"
-          description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
-       <basedir>
-          <value-context>pluginConfiguration</value-context>
-          <value-name>homeDir</value-name>
-       </basedir>
-       <includes>
-          <include path="bin" />
-          <include path="appclient" />
-          <include path="welcome-content"/>
-       </includes>
+        name="Template-Base Files"
+        description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+      <basedir>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>homeDir</value-name>
+      </basedir>
+      <includes>
+        <include path="bin"/>
+        <include path="appclient"/>
+        <include path="welcome-content"/>
+      </includes>
     </drift-definition>
     <drift-definition
-          name="Template-Deploy Files"
-          description="Monitor standalone deployment dir for drift. ">
-       <basedir>
-          <value-context>pluginConfiguration</value-context>
-          <value-name>deployDir</value-name>
-       </basedir>
+        name="Template-Deploy Files"
+        description="Monitor standalone deployment dir for drift. ">
+      <basedir>
+        <value-context>measurementTrait</value-context>
+        <value-name>deployDir</value-name>
+      </basedir>
     </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
-        <value-context>pluginConfiguration</value-context>
+        <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </destination-base-dir>
     </bundle-target>
+
+    <help>
+      <![CDATA[
+      The server can be started, restarted, or stopped via the Start, Restart, and Shutdown operations. The Start and
+      Restart operations start the server by executing the server start script, typically standalone.sh on UNIX or
+      standalone.bat on Windows. The following connection settings can be used to configure the start script execution:
+      <ul>
+<li>Start Script - the absolute path of the start script (e.g. "/opt/jboss-as-7.1.1.Final/bin/standalone.sh")</li>
+<li>Start Script Prefix - a prefix command line to be prepended to the start script command line (e.g. "nohup sudo -u jboss -g jboss")</li>
+<li>Start Script Arguments - arguments to be passed to the start script (e.g. "--server-config=standalone-full-ha.xml")</li>
+<li>Start Script Environment - environment variables to be set in the start script's environment (e.g. "JAVA_HOME=/usr/java/jdk1.6.0_30")</li>
+      </ul>
+      These settings are automatically initialized by the JBossAS7 plugin discovery code to match the currently running
+      server process' command line and environment.
+      <p/>
+      The settings are not used by the Stop operation, since it stops the server via the management interface, not via
+      a script.
+      <p/>
+      For more detailed descriptions of the settings, see the Connection Settings section below.
+    ]]>
+    </help>
 
     <!-- Necessary to duplicate the ModCluster component for Standalone and Domain because supported operations
       list is different. Update similar Domain service if changes are necessary. -->
@@ -1345,8 +1362,7 @@
              class="ModClusterComponent"
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
-             singleton="true"
-        >
+             singleton="true">
 
       <runs-inside>
         <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -6965,8 +6981,7 @@
     <service name="Operating System"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-             singleton="true"
-        >
+             singleton="true">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="type=operating-system"/>
@@ -6981,8 +6996,7 @@
     <service name="Memory"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-             singleton="true"
-        >
+             singleton="true">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="type=memory"/>
@@ -6990,7 +7004,7 @@
 
       <operation name="gc" displayName="Trigger GC" description="Runs the garbage collector.">
         <results>
-           <c:simple-property name="operationResult" description="Runs the garbage collector." />
+          <c:simple-property name="operationResult" description="Runs the garbage collector."/>
         </results>
       </operation>
 
@@ -7009,8 +7023,7 @@
     <service name="Runtime"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
-             singleton="true"
-        >
+             singleton="true">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="type=runtime"/>
@@ -7081,7 +7094,7 @@
       <operation name="get-thread-infos"
                  description="Returns the thread info for each thread whose ID is in the input list.">
         <parameters>
-          <c:list-property name="ids" description="A list of thread ids." >
+          <c:list-property name="ids" description="A list of thread ids.">
             <c:simple-property name="ids" required="true" type="long" readOnly="false"/>
           </c:list-property>
           <c:simple-property name="max-depth" required="false" type="integer" readOnly="false" defaultValue="0"
@@ -7199,14 +7212,14 @@
 
         <operation name="subsystem:reset-peak-usage" displayName="Reset Peak Usage" description="Resets the peak memory usage statistic of this memory pool to the current memory usage.">
           <results>
-            <c:simple-property name="operationResult" description="Resets the peak memory usage statistic of this memory pool to the current memory usage." />
+            <c:simple-property name="operationResult" description="Resets the peak memory usage statistic of this memory pool to the current memory usage."/>
           </results>
         </operation>
 
         <metric property="collection-usage:init" displayName="Collection Usage - Init" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
         <metric property="collection-usage:used" displayName="Collection Usage - Used" description="The amount of used memory in bytes."/>
         <metric property="collection-usage:committed" displayName="Collection Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
-        <metric property="collection-usage:max" displayName="Collection Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/> 
+        <metric property="collection-usage:max" displayName="Collection Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/>
         <metric property="collection-usage-threshold-count" description="The number of times that the Java virtual machine has detected that the memory usage has reached or exceeded the collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="collection-usage-threshold-exceeded" description="Whether the memory usage of this memory pool after the most recent collection on which the Java virtual machine has expended effort has reached or exceeded its collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="collection-usage-threshold-supported" dataType="trait" description="Whether this memory pool supports a collection usage threshold."/>
@@ -7227,8 +7240,8 @@
 
         <resource-configuration>
           <c:simple-property name="collection-usage-threshold" required="false" type="long" readOnly="false" description="The collection usage threshold value of this memory pool in bytes. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
-          <c:list-property name="memory-manager-names" required="true" readOnly="true" description="The names of the memory managers that manage this memory pool." >
-              <c:simple-property name="memory-manager-names" readOnly="true"/>
+          <c:list-property name="memory-manager-names" required="true" readOnly="true" description="The names of the memory managers that manage this memory pool.">
+            <c:simple-property name="memory-manager-names" readOnly="true"/>
           </c:list-property>
           <c:simple-property name="usage-threshold" required="false" type="long" readOnly="false" description="The usage threshold value of this memory pool in bytes. A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         </resource-configuration>
@@ -7239,9 +7252,9 @@
 
 
   <service name="JBossWeb"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7290,15 +7303,15 @@
         <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="false" defaultValue="true" description="Enable advertising the JSP engine in x-powered-by. The default value is true."/>
       </c:group>
       <c:group name="child:configuration=container" displayName="Container">
-<!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
-        <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false" >
-          <c:map-property name="mime-mapping:collapsed" >
-            <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
-            <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
-          </c:map-property>
-        </c:list-property>
--->
-        <c:list-property name="welcome-file" required="false" description="A welcome file declaration." >
+        <!-- Commented out - see https://bugzilla.redhat.com/show_bug.cgi?id=815288
+                <c:list-property name="mime-mapping" description="A mime-mapping definition." required="false">
+                  <c:map-property name="mime-mapping:collapsed">
+                    <c:simple-property name="name:0" displayName="Name" description="A MIME mapping name without the dot (e.g. 'txt')"/>
+                    <c:simple-property name="value:1" displayName="Value" description="A MIME mapping value (e.g. 'text/plain' )"/>
+                  </c:map-property>
+                </c:list-property>
+        -->
+        <c:list-property name="welcome-file" required="false" description="A welcome file declaration.">
           <c:simple-property name="welcome-file" type="string"/>
         </c:list-property>
       </c:group>
@@ -7341,8 +7354,8 @@
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
         <c:simple-property name="protocol" required="true" type="string" readOnly="false" default="HTTP/1.1" defaultValue="HTTP/1.1"
                            description="The web connector protocol. (e.g. 'HTTP/1.1' or 'AJP' or a name of a class implementing ProtocolHandler and MBeanRegistration )">
-        <!-- TODO let the user could enter a custom value here when the UI supports this. -->
-          <c:property-options >
+          <!-- TODO let the user could enter a custom value here when the UI supports this. -->
+          <c:property-options>
             <c:option value="HTTP/1.1"/>
             <c:option value="AJP/1.3"/>
           </c:property-options>
@@ -7469,16 +7482,17 @@
           </c:group>
         </resource-configuration>
       </service>
-    </service> <!-- End of VHost service -->
+    </service>
+    <!-- End of VHost service -->
 
-  </service> <!-- End of JBossWeb service -->
+  </service> <!-- JBossWeb -->
 
 
   <service name="General JCA connectors"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true"
-          description="General settings of the JCA engine. Not necessarily for end-users">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true"
+           description="General settings of the JCA engine. Not necessarily for end-users">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7503,10 +7517,10 @@
 
 
   <service name="Datasources (Standalone)"
-          discovery="SubsystemDiscovery"
-          class="DatasourceComponent"
-          singleton="true"
-          description="Datasources subsystem for Standalone servers.">
+           discovery="SubsystemDiscovery"
+           class="DatasourceComponent"
+           singleton="true"
+           description="Datasources subsystem for Standalone servers.">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7517,7 +7531,7 @@
     </plugin-configuration>
 
     <!-- not needed for hot-deployed drivers - only for module ones, but I am not sure we want to support that
-            <operation name="addDriver" displayName="Add a JDBC driver" >
+            <operation name="addDriver" displayName="Add a JDBC driver">
                 <parameters>
                     <c:simple-property name="driver-name" required="true"/>
                     <c:simple-property name="deployment-name" required="true">
@@ -7571,10 +7585,10 @@
 
 
   <service name="Datasources (Profile)"
-          discovery="SubsystemDiscovery"
-          class="DatasourceComponent"
-          singleton="true"
-          description="Datasources subsystem for profile.">
+           discovery="SubsystemDiscovery"
+           class="DatasourceComponent"
+           singleton="true"
+           description="Datasources subsystem for profile.">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -7618,10 +7632,10 @@
 
 
   <service name="Datasources (Managed)"
-          discovery="SubsystemDiscovery"
-          class="DatasourceComponent"
-          singleton="true"
-          description="Datasources subsystem for Managed servers.">
+           discovery="SubsystemDiscovery"
+           class="DatasourceComponent"
+           singleton="true"
+           description="Datasources subsystem for Managed servers.">
 
     <runs-inside>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
@@ -7668,40 +7682,39 @@
 
   </service>
 
-    <!-- TO BE ADDED to Datasource at a later time
-            <service name="JdbcDriver"
-                     discovery="SubsystemDiscovery"
-                     class="DatasourceComponent"
-                     singleton="true"
-                    >
+  <!-- TO BE ADDED to Datasource at a later time
+          <service name="JdbcDriver"
+                   discovery="SubsystemDiscovery"
+                   class="DatasourceComponent"
+                   singleton="true">
 
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
-                </plugin-configuration>
+              <plugin-configuration>
+                  <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
+              </plugin-configuration>
 
 
-                <resource-configuration>
-                    <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register"/>
-                    <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
-                    <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
-                    <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
-                    <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver's implementation of java.sql.Driver"/>
-                    <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
-                    <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver's major version number"/>
-                    <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver's minor version number"/>
-                    <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
-    &lt;!&ndash;
-                    <c:template name="add" description="Add a jdbc driver"> &lt;!&ndash; See BZ 705713 TODO &ndash;&gt;
-                        <c:simple-property name="driver-name" required="true"/>
-                        <c:simple-property name="deployment-name" required="true">
-                            <c:option-source target="resource" expression="type=DomainDeployment"/> &lt;!&ndash; TODO filter ? &ndash;&gt;
-                        </c:simple-property>
-                        <c:simple-property name="driver-class-name" required="true"/>
-                    </c:template>
-    &ndash;&gt;
-                </resource-configuration>
-            </service>
-    -->
+              <resource-configuration>
+                  <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register"/>
+                  <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
+                  <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
+                  <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
+                  <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver's implementation of java.sql.Driver"/>
+                  <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
+                  <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver's major version number"/>
+                  <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver's minor version number"/>
+                  <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
+  &lt;!&ndash;
+                  <c:template name="add" description="Add a jdbc driver"> &lt;!&ndash; See BZ 705713 TODO &ndash;&gt;
+                      <c:simple-property name="driver-name" required="true"/>
+                      <c:simple-property name="deployment-name" required="true">
+                          <c:option-source target="resource" expression="type=DomainDeployment"/> &lt;!&ndash; TODO filter ? &ndash;&gt;
+                      </c:simple-property>
+                      <c:simple-property name="driver-class-name" required="true"/>
+                  </c:template>
+  &ndash;&gt;
+              </resource-configuration>
+          </service>
+  -->
 
   <service name="JVM Definition (Host)"
            description="A JVM Definition on Host level, that can serve as templates for server groups and managed servers"
@@ -7719,7 +7732,8 @@
     <resource-configuration>
       &jvmDefinitionResourceConfigProperties;
     </resource-configuration>
-   </service>
+  </service>
+
 
   <service name="JVM Definition"
            description="A JVM definition that can override host and server group level definitions with the same name"
@@ -7742,14 +7756,13 @@
       </c:simple-property>
       &jvmDefinitionResourceConfigProperties;
     </resource-configuration>
-   </service>
+  </service>
 
 
   <service name="Logging"
-          discovery="SubsystemDiscovery"
-          class="LoggerComponent"
-          singleton="true"
-      >
+           discovery="SubsystemDiscovery"
+           class="LoggerComponent"
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -7762,374 +7775,382 @@
 
     <resource-configuration>
       <c:group name="child:root-logger=ROOT" displayName="Root logger">
-          &logFilter;
-          &logLevel;
-  &logLevel;
-  <c:list-property name="handlers" required="true" readOnly="false"
-                   description="The Handlers associated with this Logger.">
-    <c:simple-property name="handler" type="string" description="The Handlers associated with this Logger."/>
-  </c:list-property>
+        &logFilter;
+        &logLevel;
+        &logLevel;
+        <c:list-property name="handlers" required="true" readOnly="false"
+                         description="The Handlers associated with this Logger.">
+          <c:simple-property name="handler" type="string" description="The Handlers associated with this Logger."/>
+        </c:list-property>
       </c:group>
     </resource-configuration>
 
-     <service name="Async Handler"
-              discovery="SubsystemDiscovery"
-        createDeletePolicy="both"
-              class="BaseComponent">
+    <service name="Async Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
 
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="async-handler"/>
-        </plugin-configuration>
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="async-handler"/>
+      </plugin-configuration>
 
-       <operation name="assign-subhandler" description="Assign a subhandler to the ASYNC handler.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Assign a subhandler to the ASYNC handler." />
-         </results>
-       </operation>
-
-       <!-- no need for 'change-log-level' since resource-config handles this -->
-
-       <operation name="disable" description="Disable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="enable" description="Enable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="unassign-subhandler" description="Unassign a subhandler from the ASYNC handler.">
-         <parameters>
-           <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Unassign a subhandler from the ASYNC handler." />
-         </results>
-       </operation>
-
-       <resource-configuration>
-           &logFilter;
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-         <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
-           <c:property-options>
-        <c:option value="BLOCK"/>
-        <c:option value="DISCARD"/>
-           </c:property-options>
-   </c:simple-property>
-         <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
-         <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler." >
-             <c:simple-property name="subhandler" />
-         </c:list-property>
-       </resource-configuration>
-
-     </service><!-- End of async-handler service -->
-
-     <service name="Console Handler"
-              discovery="SubsystemDiscovery"
-        createDeletePolicy="both"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="console-handler"/>
-        </plugin-configuration>
-
-       <!-- no need for 'change-log-level' since resource-config handles this -->
-
-       <operation name="disable" description="Disable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="enable" description="Enable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <resource-configuration>
-         <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
-         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logFilter;
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-         <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
-           <c:property-options>
-        <c:option value="System.err" name="System.err"/>
-        <c:option value="System.out" name="System.out"/>
-           </c:property-options>
-   </c:simple-property>
-       </resource-configuration>
-
-     </service><!-- End of console-handler service -->
-
-     <service name="Custom Handler"
-              discovery="SubsystemDiscovery"
-        createDeletePolicy="both"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="custom-handler"/>
-        </plugin-configuration>
-
-       <!-- no need for 'change-log-level' since resource-config handles this -->
-
-       <operation name="disable" description="Disable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="enable" description="Enable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <!-- no need for 'update-properties' since resource-config does the same thing -->
-
-       <resource-configuration>
-         <c:simple-property name="class" required="true" type="string" readOnly="true" description="The logging handler class to be used."/>
-         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logFilter;
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-         <c:simple-property name="module" required="true" type="string" readOnly="true" description="The module that the logging handler depends on."/>
-         <c:list-property name="properties">
-           <c:map-property name="properties:collapsed" displayName="Properties">
-             <c:simple-property name="name:0" displayName="Name" required="true" description="The name of the configuration property."/>
-             <c:simple-property name="value:1" displayName="Value" required="true" description="The value of the configuration property."/>
-           </c:map-property>
-         </c:list-property>
-       </resource-configuration>
-
-     </service><!-- End of custom-handler service -->
-
-     <service name="File Handler"
-              discovery="SubsystemDiscovery"
-              createDeletePolicy="both"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="file-handler"/>
-        </plugin-configuration>
-
-       <!-- no need for 'change-file' since resource-config handles this -->
-
-       <!-- no need for 'change-log-level' since resource-config handles this -->
-
-       <operation name="disable" description="Disable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="enable" description="Enable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <!-- removing 'update-properties' as handled by configuration update -->
-
-       <resource-configuration>
-         <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
-         <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
-         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logFile;
-           &logFilter;
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-       </resource-configuration>
-
-     </service><!-- End of file-handler service -->
-
-     <service name="Logger"
-              discovery="SubsystemDiscovery"
-        createDeletePolicy="both"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="logger"/>
-        </plugin-configuration>
-
-       <!-- no need for 'assign-handler' since resource-config handles this -->
-
-       <operation name="change-log-level" description="Change the logging level for a logger category.">
-         <parameters>
-           <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
-         </parameters>
-         <results>
-            <c:simple-property name="operationResult" description="Change the logging level for a logger category." />
-         </results>
-       </operation>
-
-       <!-- no need for 'unassign-handler' since resource-config handles this -->
-
-       <resource-configuration>
-         <!-- category is the same as 'name' for other resources. Don't list as required here -->
-           &logFilter;
-         <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
-             <c:simple-property name="handler" />
-         </c:list-property>
-           &logLevel;
-         <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true"
-         description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
-       </resource-configuration>
-
-     </service><!-- End of logger service -->
-
-     <service name="Periodic Rotating File Handler"
-              discovery="SubsystemDiscovery"
-        createDeletePolicy="both"
-              class="BaseComponent">
-
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
-        </plugin-configuration>
-
-       <!-- no need for 'change-file' since resource-config handles this -->
-
-       <!-- no need for 'change-log-level' since resource-config handles this -->
-
-       <operation name="disable" description="Disable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
-         </results>
-       </operation>
-
-       <operation name="enable" description="Enable a logging handler.">
-         <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
-         </results>
-       </operation>
-
-       <!-- removing 'update-properties' as handled by config -->
-
-       <resource-configuration>
-         <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
-         <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
-         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-         &logFile;
-         &logFilter;
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-         <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
-       </resource-configuration>
-
-     </service><!-- End of periodic-rotating-file-handler service -->
-
-<!--     <service name="Root Logger"
-     discovery="SubsystemDiscovery"
-                 createDeletePolicy="both"
-     class="BaseComponent">
-
-     <plugin-configuration>
-       <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
-     </plugin-configuration>
-
-      <operation name="change-root-log-level" description="Change the root logger level.">
+      <operation name="assign-subhandler" description="Assign a subhandler to the ASYNC handler.">
         <parameters>
-    &logLevel;
+          <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
         </parameters>
         <results>
-    <c:simple-property name="operationResult"/>
+          <c:simple-property name="operationResult" description="Assign a subhandler to the ASYNC handler."/>
         </results>
       </operation>
 
-      <operation name="remove-root-logger" description="Remove the root logger.">
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
         <results>
-    <c:simple-property name="operationResult"/>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
         </results>
       </operation>
 
-      <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
-       <parameters>
-         <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
-       </parameters>
-       <results>
-    <c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
-       </results>
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
       </operation>
 
-      <operation name="set-root-logger" description="Set the root logger.">
+      <operation name="unassign-subhandler" description="Unassign a subhandler from the ASYNC handler.">
         <parameters>
-    &logLevel;
-    <c:list-property name="handlers" required="true" readOnly="false"
-                     description="The Handlers associated with this Logger.">
-      <c:simple-property name="handler" type="string"/>
-    </c:list-property>
+          <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
         </parameters>
         <results>
-    <c:simple-property name="operationResult"/>
+          <c:simple-property name="operationResult" description="Unassign a subhandler from the ASYNC handler."/>
         </results>
       </operation>
 
-     <resource-configuration>
-             <c:group name="Root logger" displayName="Root logger">
+      <resource-configuration>
         &logFilter;
-        <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger." >
-     <c:simple-property name="handler" />
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+        <c:simple-property name="overflow-action" required="true" type="string" readOnly="false" defaultValue="BLOCK" description="Specify what action to take when the overflowing.  The valid options are &apos;block&apos; and &apos;discard&apos;. The default value is BLOCK.">
+          <c:property-options>
+            <c:option value="BLOCK"/>
+            <c:option value="DISCARD"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="queue-length" required="true" type="integer" readOnly="false" description="The queue length to use before flushing writing"/>
+        <c:list-property name="subhandlers" required="false" description="The Handlers associated with this async handler.">
+          <c:simple-property name="subhandler"/>
+        </c:list-property>
+      </resource-configuration>
+
+    </service>
+    <!-- End of async-handler service -->
+
+    <service name="Console Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="console-handler"/>
+      </plugin-configuration>
+
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+        <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+        &logFilter;
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+        <c:simple-property name="target" required="false" type="string" readOnly="false" defaultValue="System.out" description="Defines the target of the console handler. The value can either be SYSTEM_OUT or SYSTEM_ERR. The default value is System.out.">
+          <c:property-options>
+            <c:option value="System.err" name="System.err"/>
+            <c:option value="System.out" name="System.out"/>
+          </c:property-options>
+        </c:simple-property>
+      </resource-configuration>
+
+    </service>
+    <!-- End of console-handler service -->
+
+    <service name="Custom Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="custom-handler"/>
+      </plugin-configuration>
+
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
+      </operation>
+
+      <!-- no need for 'update-properties' since resource-config does the same thing -->
+
+      <resource-configuration>
+        <c:simple-property name="class" required="true" type="string" readOnly="true" description="The logging handler class to be used."/>
+        <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+        &logFilter;
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+        <c:simple-property name="module" required="true" type="string" readOnly="true"
+  description="The module that the logging handler depends on." />
+        <c:list-property name="properties">
+          <c:map-property name="properties:collapsed" displayName="Properties">
+            <c:simple-property name="name:0" displayName="Name" required="true" description="The name of the configuration property."/>
+            <c:simple-property name="value:1" displayName="Value" required="true" description="The value of the configuration property."/>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+
+    </service>
+    <!-- End of custom-handler service -->
+
+    <service name="File Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="file-handler"/>
+      </plugin-configuration>
+
+      <!-- no need for 'change-file' since resource-config handles this -->
+
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
+      </operation>
+
+      <!-- removing 'update-properties' as handled by configuration update -->
+
+      <resource-configuration>
+        <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+        <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+        <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+        &logFile;
+        &logFilter;
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+      </resource-configuration>
+
+    </service>
+    <!-- End of file-handler service -->
+
+    <service name="Logger"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="logger"/>
+      </plugin-configuration>
+
+      <!-- no need for 'assign-handler' since resource-config handles this -->
+
+      <operation name="change-log-level" description="Change the logging level for a logger category.">
+        <parameters>
+          <c:simple-property name="level" required="false" type="string" readOnly="false" description="The log level specifying which message levels will be logged by this logger. Message levels lower than this value will be discarded."/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Change the logging level for a logger category."/>
+        </results>
+      </operation>
+
+      <!-- no need for 'unassign-handler' since resource-config handles this -->
+
+      <resource-configuration>
+        <!-- category is the same as 'name' for other resources. Don't list as required here -->
+        &logFilter;
+        <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger.">
+          <c:simple-property name="handler"/>
         </c:list-property>
         &logLevel;
-       </c:group>
-     </resource-configuration>
-  </service> --><!-- End of Root Logger service -->
+        <c:simple-property name="use-parent-handlers" required="false" type="boolean" readOnly="false" defaultValue="true"
+                           description="Specifies whether or not this logger should send its output to it&apos;s parent Logger. The default value is true."/>
+      </resource-configuration>
 
-     <service name="Size Rotating File Handler"
-              discovery="SubsystemDiscovery"
-              createDeletePolicy="both"
-              class="BaseComponent">
+    </service>
+    <!-- End of logger service -->
 
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
-        </plugin-configuration>
+    <service name="Periodic Rotating File Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
 
-       <!-- no need for 'change-file' since resource-config handles this -->
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
+      </plugin-configuration>
 
-       <!-- no need for 'change-log-level' since resource-config handles this -->
+      <!-- no need for 'change-file' since resource-config handles this -->
 
-       <operation name="disable" description="Disable a logging handler.">
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
+      </operation>
+
+      <!-- removing 'update-properties' as handled by config -->
+
+      <resource-configuration>
+        <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+        <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+        <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+        &logFile;
+        &logFilter;
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+        <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
+      </resource-configuration>
+
+    </service>
+    <!-- End of periodic-rotating-file-handler service -->
+
+    <!--     <service name="Root Logger"
+      discovery="SubsystemDiscovery"
+                  createDeletePolicy="both"
+      class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="root-logger=ROOT"/>
+      </plugin-configuration>
+
+       <operation name="change-root-log-level" description="Change the root logger level.">
+         <parameters>
+     &logLevel;
+         </parameters>
          <results>
-            <c:simple-property name="operationResult" description="Disable a logging handler." />
+     <c:simple-property name="operationResult"/>
          </results>
        </operation>
 
-       <operation name="enable" description="Enable a logging handler.">
+       <operation name="remove-root-logger" description="Remove the root logger.">
          <results>
-            <c:simple-property name="operationResult" description="Enable a logging handler." />
+     <c:simple-property name="operationResult"/>
          </results>
        </operation>
 
-       <!-- removing 'update-properties' as handled by configuration -->
+       <operation name="root-logger-assign-handler" description="Assign a Handler to the root logger.">
+        <parameters>
+          <c:simple-property name="name" required="true" type="string" readOnly="false" description="The handler&apos;s name."/>
+        </parameters>
+        <results>
+     <c:simple-property name="operationResult" description="Assign a Handler to the root logger." />
+        </results>
+       </operation>
 
-       <resource-configuration>
-         <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
-         <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
-         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
-           &logFile;
-           &logFilter;
+       <operation name="set-root-logger" description="Set the root logger.">
+         <parameters>
+     &logLevel;
+     <c:list-property name="handlers" required="true" readOnly="false"
+                      description="The Handlers associated with this Logger.">
+       <c:simple-property name="handler" type="string"/>
+     </c:list-property>
+         </parameters>
+         <results>
+     <c:simple-property name="operationResult"/>
+         </results>
+       </operation>
 
-         <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-         description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
-           &logLevel;
-         <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
-         <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
-       </resource-configuration>
+      <resource-configuration>
+              <c:group name="Root logger" displayName="Root logger">
+         &logFilter;
+         <c:list-property name="handlers" required="false" description="The Handlers associated with this Logger.">
+      <c:simple-property name="handler" />
+         </c:list-property>
+         &logLevel;
+        </c:group>
+      </resource-configuration>
+   </service> --><!-- End of Root Logger service -->
 
-     </service><!-- End of size-rotating-file-handler service -->
+    <service name="Size Rotating File Handler"
+             discovery="SubsystemDiscovery"
+             createDeletePolicy="both"
+             class="BaseComponent">
+
+      <plugin-configuration>
+        <c:simple-property name="path" readOnly="true" default="size-rotating-file-handler"/>
+      </plugin-configuration>
+
+      <!-- no need for 'change-file' since resource-config handles this -->
+
+      <!-- no need for 'change-log-level' since resource-config handles this -->
+
+      <operation name="disable" description="Disable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Disable a logging handler."/>
+        </results>
+      </operation>
+
+      <operation name="enable" description="Enable a logging handler.">
+        <results>
+          <c:simple-property name="operationResult" description="Enable a logging handler."/>
+        </results>
+      </operation>
+
+      <!-- removing 'update-properties' as handled by configuration -->
+
+      <resource-configuration>
+        <c:simple-property name="append" required="false" type="boolean" readOnly="false" defaultValue="true" description="Specify whether to append to the target file. The default value is true."/>
+        <c:simple-property name="autoflush" required="false" type="boolean" readOnly="false" defaultValue="true" description="Automatically flush after each write. The default value is true."/>
+        <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
+        &logFile;
+        &logFilter;
+
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
+                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        &logLevel;
+        <c:simple-property name="max-backup-index" required="true" type="integer" readOnly="false" defaultValue="1" description="The maximum number of backups to keep. The default value is 1."/>
+        <c:simple-property name="rotate-size" required="true" type="string" readOnly="false" defaultValue="2m" description="The size at which to rotate the log file. The default value is 2m."/>
+      </resource-configuration>
+
+    </service>
+    <!-- End of size-rotating-file-handler service -->
 
   </service>
 
@@ -8223,6 +8244,7 @@
 
   </service>
 
+
   <service name="Naming"
            discovery="SubsystemDiscovery"
            class="NamingComponent"
@@ -8283,6 +8305,7 @@
 
   </service>
 
+
   <service name="Transactions Subsystem (Standalone)"
            discovery="SubsystemDiscovery"
            class="BaseComponent"
@@ -8337,7 +8360,7 @@
 
       <operation name="subsystem:probe" displayName="Probe" description="Scan for new transaction logs. This operation will creates a child for each pending transaction.">
         <results>
-           <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction." />
+          <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction."/>
         </results>
       </operation>
 
@@ -8357,7 +8380,7 @@
 
         <operation name="subsystem:delete" displayName="Delete" description="Remove this transaction log. WARNING after this operation the transaction manager will have no knowledge of the transaction and will therefore never be able to recover it. If you are sure that the transaction is complete then the operation is safe. The representation of the transaction log is removed from the model too.">
           <results>
-            <c:simple-property name="operationResult" description="Remove this transaction log. WARNING after this operation the transaction manager will have no knowledge of the transaction and will therefore never be able to recover it. If you are sure that the transaction is complete then the operation is safe. The representation of the transaction log is removed from the model too." />
+            <c:simple-property name="operationResult" description="Remove this transaction log. WARNING after this operation the transaction manager will have no knowledge of the transaction and will therefore never be able to recover it. If you are sure that the transaction is complete then the operation is safe. The representation of the transaction log is removed from the model too."/>
           </results>
         </operation>
 
@@ -8380,13 +8403,13 @@
 
           <operation name="subsystem:recover" displayName="Recover" description="If this record is in a heuristic state then attempt to replay the commit phase of the 2PC transaction.">
             <results>
-              <c:simple-property name="operationResult" description="If this record is in a heuristic state then attempt to replay the commit phase of the 2PC transaction." />
+              <c:simple-property name="operationResult" description="If this record is in a heuristic state then attempt to replay the commit phase of the 2PC transaction."/>
             </results>
           </operation>
 
           <operation name="subsystem:refresh" displayName="Refresh" description="Refresh the management view of the attributes of this participant record by querying the transaction log. (Note that the read&#45;resource operaton only reads the model, hence the need for this refresh operation).">
             <results>
-              <c:simple-property name="operationResult" description="Refresh the management view of the attributes of this participant record by querying the transaction log. (Note that the read-resource operaton only reads the model, hence the need for this refresh operation)." />
+              <c:simple-property name="operationResult" description="Refresh the management view of the attributes of this participant record by querying the transaction log. (Note that the read-resource operaton only reads the model, hence the need for this refresh operation)."/>
             </results>
           </operation>
 
@@ -8449,7 +8472,7 @@
 
       <operation name="subsystem:probe" displayName="Probe" description="Scan for new transaction logs. This operation will creates a child for each pending transaction.">
         <results>
-           <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction." />
+          <c:simple-property name="operationResult" description="Scan for new transaction logs. This operation will creates a child for each pending transaction."/>
         </results>
       </operation>
 
@@ -8739,7 +8762,7 @@
     </content>
 
     <resource-configuration>
-      <c:list-property name="content" description="List of pieces of content that comprise the deployment." readOnly="true" >
+      <c:list-property name="content" description="List of pieces of content that comprise the deployment." readOnly="true">
         <c:map-property name="content" readOnly="true">
           <c:simple-property name="input-stream-index" type="integer" required="false" readOnly="true" description="The index into the operation's attached input streams of the input stream that contains deployment content that should be uploaded to the domain's or standalone server's deployment content repository."/>
           <c:simple-property name="hash" type="string" readOnly="true" required="false" description="The hash of managed deployment content that has been uploaded to the domain's or standalone server's deployment content repository."/>
@@ -8789,12 +8812,12 @@
       <c:simple-property name="path" default="subsystem=web" readOnly="true"/>
 
       <c:group name="responseTime">
-         <c:simple-property name="responseTimeLogFile" required="false"
-                            description="the full path to the log file containing response-time stats for this webapp"/>
-         <c:simple-property name="responseTimeUrlExcludes" required="false"
-                            description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
-         <c:simple-property name="responseTimeUrlTransforms" required="false"
-                            description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+        <c:simple-property name="responseTimeLogFile" required="false"
+                           description="the full path to the log file containing response-time stats for this webapp"/>
+        <c:simple-property name="responseTimeUrlExcludes" required="false"
+                           description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+        <c:simple-property name="responseTimeUrlTransforms" required="false"
+                           description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
       </c:group>
     </plugin-configuration>
 
@@ -8823,9 +8846,9 @@
     </plugin-configuration>
 
     <service name="XA Datasource Runtime"
-           class="DatasourceComponent"
-           discovery="SubsystemDiscovery"
-           description="A JDBC XA data-source configuration">
+             class="DatasourceComponent"
+             discovery="SubsystemDiscovery"
+             description="A JDBC XA data-source configuration">
 
       <plugin-configuration>
         <c:simple-property name="path" default="xa-data-source" readOnly="true"/>
@@ -8833,19 +8856,19 @@
 
       <operation name="subsystem:flush-all-connection-in-pool" description="Flushes all connections in the pool">
         <results>
-          <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+          <c:simple-property name="operationResult" description="Flushes all connections in the pool"/>
         </results>
       </operation>
 
       <operation name="subsystem:flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
         <results>
-           <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+          <c:simple-property name="operationResult" description="Flushes all idle connections in the pool"/>
         </results>
       </operation>
 
       <operation name="subsystem:test-connection-in-pool" description="Test if a connection can be obtained">
         <results>
-           <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+          <c:simple-property name="operationResult" description="Test if a connection can be obtained"/>
         </results>
       </operation>
 
@@ -8859,7 +8882,7 @@
         <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides an isExceptionFatal(SQLException) method to validate if an exception should broadcast an error"/>
-        <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
+        <c:map-property name="exception-sorter-properties" description="The exception sorter properties">
           <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
@@ -8885,12 +8908,12 @@
         <c:simple-property name="prepared-statements-cache-size" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="query-timeout" required="false" type="long" readOnly="true" description="Any configured query timeout in seconds. If not provided no timeout will be set"/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the reauthentication plugin implementation"/>
-        <c:map-property name="reauth-plugin-properties" description="The properties for the reauthentication plugin" >
+        <c:map-property name="reauth-plugin-properties" description="The properties for the reauthentication plugin">
           <c:simple-property name="reauth-plugin-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="recovery-password" required="false" type="string" readOnly="true" description="The password used for recovery"/>
         <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the recovery plugin implementation"/>
-        <c:map-property name="recovery-plugin-properties" description="The properties for the recovery plugin" >
+        <c:map-property name="recovery-plugin-properties" description="The properties for the recovery plugin">
           <c:simple-property name="recovery-plugin-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="true" description="The security domain used for recovery"/>
@@ -8901,7 +8924,7 @@
         <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether to share prepared statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement. The default value is false."/>
         <c:simple-property name="spy" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable spying of SQL statements. The default value is false."/>
         <c:simple-property name="stale-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides an isStaleConnection(SQLException) method which if it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
-        <c:map-property name="stale-connection-checker-properties" description="The stale connection checker properties" >
+        <c:map-property name="stale-connection-checker-properties" description="The stale connection checker properties">
           <c:simple-property name="stale-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" defaultValue="NOWARN" description="Whether to check for unclosed statements when a connection is returned to the pool, result sets are closed, a statement is closed or return to the prepared statement cache. Valid values are: 'false' - do not track statements, 'true' - track statements and result sets and warn when they are not closed, 'nowarn' - track statements but do not warn about them being unclosed. The default value is 'NOWARN'."/>
@@ -8922,7 +8945,7 @@
         <c:simple-property name="use-try-lock" required="false" type="long" readOnly="true" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the user name used when creating a new connection"/>
         <c:simple-property name="valid-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides an isValidConnection(Connection) method to validate a connection. If an exception is returned that means the connection is invalid. This overrides the check-valid-connection-sql element"/>
-        <c:map-property name="valid-connection-checker-properties" description="The valid connection checker properties" >
+        <c:map-property name="valid-connection-checker-properties" description="The valid connection checker properties">
           <c:simple-property name="valid-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" defaultValue="false" description="The validate-on-match element specifies if connection validation should be done when a connection factory attempts to match a managed connection. This is typically exclusive to the use of background validation. The default value is false."/>
@@ -8956,19 +8979,19 @@
 
       <operation name="subsystem:flush-all-connection-in-pool" description="Flushes all connections in the pool">
         <results>
-          <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+          <c:simple-property name="operationResult" description="Flushes all connections in the pool"/>
         </results>
       </operation>
 
       <operation name="subsystem:flush-idle-connection-in-pool" description="Flushes all idle connections in the pool">
         <results>
-           <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+          <c:simple-property name="operationResult" description="Flushes all idle connections in the pool"/>
         </results>
       </operation>
 
       <operation name="subsystem:test-connection-in-pool" description="Test if a connection can be obtained">
         <results>
-           <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+          <c:simple-property name="operationResult" description="Test if a connection can be obtained"/>
         </results>
       </operation>
 
@@ -8985,8 +9008,8 @@
         <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides an isExceptionFatal(SQLException) method to validate if an exception should broadcast an error"/>
-        <c:map-property name="exception-sorter-properties" description="The exception sorter properties" >
-            <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
+        <c:map-property name="exception-sorter-properties" description="The exception sorter properties">
+          <c:simple-property name="exception-sorter-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
           <c:property-options>
@@ -9007,20 +9030,20 @@
         <c:simple-property name="prepared-statements-cache-size" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="query-timeout" required="false" type="long" readOnly="true" description="Any configured query timeout in seconds. If not provided no timeout will be set"/>
         <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the reauthentication plugin implementation"/>
-        <c:map-property name="reauth-plugin-properties" description="The properties for the reauthentication plugin" >
-            <c:simple-property name="reauth-plugin-property" required="false" type="string" readOnly="true"/>
+        <c:map-property name="reauth-plugin-properties" description="The properties for the reauthentication plugin">
+          <c:simple-property name="reauth-plugin-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Specifies the security domain which defines the javax.security.auth.Subject that are used to distinguish connections in the pool"/>
         <c:simple-property name="set-tx-query-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether to set the query timeout based on the time remaining until transaction timeout. Any configured query timeout will be used if there is no transaction. The default value is false."/>
         <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether to share prepared statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement. The default value is false."/>
         <c:simple-property name="spy" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable spying of SQL statements. The default value is false."/>
         <c:simple-property name="stale-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides an isStaleConnection(SQLException) method which if it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
-        <c:map-property name="stale-connection-checker-properties" description="The stale connection checker properties" >
-            <c:simple-property name="stale-connection-checker-property" required="false" type="string" readOnly="true"/>
+        <c:map-property name="stale-connection-checker-properties" description="The stale connection checker properties">
+          <c:simple-property name="stale-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" defaultValue="NOWARN" description="Whether to check for unclosed statements when a connection is returned to the pool, result sets are closed, a statement is closed or return to the prepared statement cache. Valid values are: &apos;false&apos; - do not track statements, &apos;true&apos; - track statements and result sets and warn when they are not closed, &apos;nowarn&apos; - track statements but do not warn about them being unclosed. The default value is &apos;NOWARN&apos;."/>
         <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set the java.sql.Connection transaction isolation level. Valid values are: TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE and TRANSACTION_NONE">
-           <c:property-options>
+          <c:property-options>
             <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
             <c:option value="TRANSACTION_READ_COMMITTED"/>
             <c:option value="TRANSACTION_REPEATABLE_READ"/>
@@ -9036,8 +9059,8 @@
         <c:simple-property name="use-try-lock" required="false" type="long" readOnly="true" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
         <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the user name used when creating a new connection"/>
         <c:simple-property name="valid-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides an isValidConnection(Connection) method to validate a connection. If an exception is returned that means the connection is invalid. This overrides the check-valid-connection-sql element"/>
-        <c:map-property name="valid-connection-checker-properties" description="The valid connection checker properties" >
-            <c:simple-property name="valid-connection-checker-property" required="false" type="string" readOnly="true"/>
+        <c:map-property name="valid-connection-checker-properties" description="The valid connection checker properties">
+          <c:simple-property name="valid-connection-checker-property" required="false" type="string" readOnly="true"/>
         </c:map-property>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" defaultValue="false" description="The validate-on-match element specifies if connection validation should be done when a connection factory attempts to match a managed connection. This is typically exclusive to the use of background validation. The default value is false."/>
 
@@ -9052,6 +9075,7 @@
       </resource-configuration>
     </service>
   </service>
+
 
   <service name="Messaging Runtime"
            class="BaseComponent"
@@ -9069,10 +9093,10 @@
     </plugin-configuration>
 
     <service name="HornetQ Server Runtime"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="A HornetQ server instance."
-           createDeletePolicy="both">
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="A HornetQ server instance."
+             createDeletePolicy="both">
 
       <plugin-configuration>
         <c:simple-property name="path" default="hornetq-server" readOnly="true"/>
@@ -9098,7 +9122,7 @@
 
       <operation name="subsystem:force-failover" displayName="Force Failover" description="Force the messaging server to stop and notify clients to failover.">
         <results>
-           <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover." />
+          <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover."/>
         </results>
       </operation>
 
@@ -9249,13 +9273,13 @@
 
       <operation name="subsystem:reset-all-message-counter-histories" displayName="Reset All Message Counter Histories" description="Reset all message counters history.">
         <results>
-           <c:simple-property name="operationResult" description="Reset all message counters history." />
+          <c:simple-property name="operationResult" description="Reset all message counters history."/>
         </results>
       </operation>
 
       <operation name="subsystem:reset-all-message-counters" displayName="Reset All Message Counters" description="Reset all message counters.">
         <results>
-           <c:simple-property name="operationResult" description="Reset all message counters." />
+          <c:simple-property name="operationResult" description="Reset all message counters."/>
         </results>
       </operation>
 
@@ -9296,10 +9320,10 @@
         <c:simple-property name="journal-sync-non-transactional" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether to wait for non transaction data to be synced to the journal before returning a response to the client. The default value is true."/>
         <c:simple-property name="journal-sync-transactional" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether to wait for transaction data to be synchronized to the journal before returning a response to the client. The default value is true."/>
         <c:simple-property name="journal-type" required="false" type="string" readOnly="false" defaultValue="ASYNCIO" description="The type of journal to use. The default value is ASYNCIO.">
-         <c:property-options>
-          <c:option value="ASYNCIO" name="ASYNCIO"/>
-          <c:option value="NIO" name="NIO"/>
-         </c:property-options>
+          <c:property-options>
+            <c:option value="ASYNCIO" name="ASYNCIO"/>
+            <c:option value="NIO" name="NIO"/>
+          </c:property-options>
         </c:simple-property>
         <c:simple-property name="live-connector-ref" required="false" type="string" readOnly="false" description="The name of the connector used to connect to the live connector. If this server is not a backup that uses shared nothing HA, it&apos;s value is &apos;undefined&apos;."/>
         <c:simple-property name="log-journal-write-rate" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to periodically log the journal&apos;s write rate and flush rate. The default value is false."/>
@@ -9380,7 +9404,7 @@
           </results>
         </operation>
 
-        <operation name="subsystem:expire-messages" displayName="Expire Messages"  description="Expire the messages matching the given filter.">
+        <operation name="subsystem:expire-messages" displayName="Expire Messages" description="Expire the messages matching the given filter.">
           <parameters>
             <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
           </parameters>
@@ -9459,7 +9483,7 @@
 
         <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Pause the queue." />
+            <c:simple-property name="operationResult" description="Pause the queue."/>
           </results>
         </operation>
 
@@ -9483,13 +9507,13 @@
 
         <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
           <results>
-             <c:simple-property name="operationResult" description="Reset the message counters." />
+            <c:simple-property name="operationResult" description="Reset the message counters."/>
           </results>
         </operation>
 
         <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Resume the queue." />
+            <c:simple-property name="operationResult" description="Resume the queue."/>
           </results>
         </operation>
 
@@ -9525,8 +9549,8 @@
         <metric property="temporary" dataType="trait" description="Whether the queue is temporary."/>
 
         <resource-configuration>
-          <c:list-property name="entries" required="true" readOnly="true" description="The jndi names the queue will be bound to." >
-              <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
+          <c:list-property name="entries" required="true" readOnly="true" description="The jndi names the queue will be bound to.">
+            <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
         </resource-configuration>
       </service>
@@ -9553,7 +9577,7 @@
 
         <operation name="subsystem:drop-all-subscriptions" displayName="Drop All Subscriptions" description="Drop all subscriptions from this topic.">
           <results>
-             <c:simple-property name="operationResult" description="Drop all subscriptions from this topic." />
+            <c:simple-property name="operationResult" description="Drop all subscriptions from this topic."/>
           </results>
         </operation>
 
@@ -9563,7 +9587,7 @@
             <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
           </parameters>
           <results>
-             <c:simple-property name="operationResult" description="Drop a durable subscription" />
+            <c:simple-property name="operationResult" description="Drop a durable subscription"/>
           </results>
         </operation>
 
@@ -9651,6 +9675,7 @@
 
   </service>
 
+
   <service name="EJB3 Runtime"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
@@ -9667,9 +9692,9 @@
     </plugin-configuration>
 
     <service name="Message Driven Bean Runtime"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="Bean component included in the deployment.">
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Bean component included in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="message-driven-bean" readOnly="true"/>
@@ -9683,8 +9708,8 @@
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
-          <c:simple-property name="declared-role" />
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
+          <c:simple-property name="declared-role"/>
         </c:list-property>
         <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
@@ -9712,9 +9737,9 @@
     </service>
 
     <service name="Singleton Bean Runtime"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="Singleton bean component included in the deployment.">
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Singleton bean component included in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="singleton-bean" readOnly="true"/>
@@ -9722,8 +9747,8 @@
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
-          <c:simple-property name="declared-role" />
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
+          <c:simple-property name="declared-role"/>
         </c:list-property>
         <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
@@ -9751,9 +9776,9 @@
     </service>
 
     <service name="Stateless Session Bean Runtime"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="Stateless session bean component included in the deployment.">
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Stateless session bean component included in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="stateless-session-bean" readOnly="true"/>
@@ -9767,8 +9792,8 @@
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
-          <c:simple-property name="declared-role" />
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
+          <c:simple-property name="declared-role"/>
         </c:list-property>
         <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
@@ -9812,8 +9837,8 @@
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
-          <c:simple-property name="declared-roles" />
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
+          <c:simple-property name="declared-roles"/>
         </c:list-property>
         <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
@@ -9831,8 +9856,8 @@
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component." >
-          <c:simple-property name="declared-role" />
+        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
+          <c:simple-property name="declared-role"/>
         </c:list-property>
         <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
         <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
@@ -9858,9 +9883,9 @@
     </plugin-configuration>
 
     <service name="Endpoint Runtime"
-           class="BaseComponent"
-           discovery="SubsystemDiscovery"
-           description="Webservice endpoint.">
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Webservice endpoint.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="endpoint" readOnly="true"/>
@@ -9884,6 +9909,7 @@
     </service>
 
   </service>
+
 
   <service name="JPA Runtime"
            class="BaseComponent"
@@ -9912,19 +9938,19 @@
 
       <operation name="subsystem:clear" description="Clear statistics.">
         <results>
-           <c:simple-property name="operationResult" description="Clear statistics." />
+          <c:simple-property name="operationResult" description="Clear statistics."/>
         </results>
       </operation>
 
       <operation name="subsystem:evict-all" description="Evict all entities from second level cache.">
         <results>
-           <c:simple-property name="operationResult" description="Evict all entities from second level cache." />
+          <c:simple-property name="operationResult" description="Evict all entities from second level cache."/>
         </results>
       </operation>
 
       <operation name="subsystem:summary" description="Log the statistics.">
         <results>
-           <c:simple-property name="operationResult" description="Log the statistics." />
+          <c:simple-property name="operationResult" description="Log the statistics."/>
         </results>
       </operation>
 
@@ -10039,8 +10065,7 @@
            class="BaseComponent"
            discovery="SubsystemDiscovery"
            description="Management of the deployment scanner"
-           singleton="true"
-      >
+           singleton="true">
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
@@ -10076,6 +10101,7 @@
     </resource-configuration>
 
   </service>
+
 
   <service name="JacORB"
            class="BaseComponent"
@@ -10167,6 +10193,7 @@
     </operation>
 
   </service>
+
 
   <service name="JCA"
            class="BaseComponent"
@@ -10289,6 +10316,7 @@
 
   </service>
 
+
   <service name="JAXR"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
@@ -10326,6 +10354,7 @@
 
   </service>
 
+
   <service name="JPA"
            class="BaseComponent"
            discovery="SubsystemDiscovery"
@@ -10346,6 +10375,7 @@
     </resource-configuration>
 
   </service>
+
 
   <service name="CMP"
            class="BaseComponent"
@@ -10389,6 +10419,7 @@
     </service>
 
   </service>
+
 
   <service name="EE"
            class="BaseComponent"
@@ -11188,19 +11219,19 @@
 
         <operation name="subsystem:flush-all-connection-in-pool" displayName="Flush All Connections in Pool" description="Flushes all connections in the pool">
           <results>
-             <c:simple-property name="operationResult" description="Flushes all connections in the pool" />
+            <c:simple-property name="operationResult" description="Flushes all connections in the pool"/>
           </results>
         </operation>
 
-        <operation name="subsystem:flush-idle-connection-in-pool" displayName="Flush Idle Connections in Pool"  description="Flushes all idle connections in the pool">
+        <operation name="subsystem:flush-idle-connection-in-pool" displayName="Flush Idle Connections in Pool" description="Flushes all idle connections in the pool">
           <results>
-             <c:simple-property name="operationResult" description="Flushes all idle connections in the pool" />
+            <c:simple-property name="operationResult" description="Flushes all idle connections in the pool"/>
           </results>
         </operation>
 
         <operation name="subsystem:test-connection-in-pool" displayName="Test Connection in Pool" description="Test if a connection can be obtained">
           <results>
-             <c:simple-property name="operationResult" description="Test if a connection can be obtained" />
+            <c:simple-property name="operationResult" description="Test if a connection can be obtained"/>
           </results>
         </operation>
 
@@ -11232,7 +11263,7 @@
           <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" defaultValue="false" description="Specifies if the min&#45;pool&#45;size should be considered strictly. The default value is false."/>
           <c:simple-property name="recovery-password" required="false" type="string" readOnly="false" description="The password used for recovery"/>
           <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="false" description="The fully qualified class name of the recovery plugin implementation"/>
-          <c:map-property name="recovery-plugin-properties" required="false" displayName="Recovery Plugin Properties" description="The properties for the recovery plugin" >
+          <c:map-property name="recovery-plugin-properties" required="false" displayName="Recovery Plugin Properties" description="The properties for the recovery plugin">
             <c:simple-property name="recovery-plugin-properties" required="false" type="string" readOnly="false" displayName="Recovery Plugin Property"/>
           </c:map-property>
           <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="false" description="The security domain used for recovery"/>
@@ -11393,19 +11424,19 @@
                singleton="true"
                description="The description of the transport used by this cache container">
 
-          <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
-          </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+        </plugin-configuration>
 
-          <resource-configuration>
-            <c:simple-property name="cluster" required="false" type="string" readOnly="false" description="The name of the group communication cluster"/>
-            <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The executor to use for the transport"/>
-            <c:simple-property name="lock-timeout" required="false" type="long" readOnly="false" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
-            <c:simple-property name="machine" required="false" type="string" readOnly="false" description="A machine identifier for the transport"/>
-            <c:simple-property name="rack" required="false" type="string" readOnly="false" description="A rack identifier for the transport"/>
-            <c:simple-property name="site" required="false" type="string" readOnly="false" description="A site identifier for the transport"/>
-            <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>
-          </resource-configuration>
+        <resource-configuration>
+          <c:simple-property name="cluster" required="false" type="string" readOnly="false" description="The name of the group communication cluster"/>
+          <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The executor to use for the transport"/>
+          <c:simple-property name="lock-timeout" required="false" type="long" readOnly="false" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
+          <c:simple-property name="machine" required="false" type="string" readOnly="false" description="A machine identifier for the transport"/>
+          <c:simple-property name="rack" required="false" type="string" readOnly="false" description="A rack identifier for the transport"/>
+          <c:simple-property name="site" required="false" type="string" readOnly="false" description="A site identifier for the transport"/>
+          <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>
+        </resource-configuration>
       </service>
     </service>
 
@@ -11413,9 +11444,9 @@
 
 
   <service name="JGroups"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -11433,9 +11464,9 @@
 
 
   <service name="Remoting"
-          discovery="SubsystemDiscovery"
-          class="BaseComponent"
-          singleton="true">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           singleton="true">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -11474,7 +11505,7 @@
 
     <operation name="subsystem:activate" displayName="Activate" description="Activate the OSGi subsystem.">
       <results>
-         <c:simple-property name="operationResult" description="Activate the OSGi subsystem." />
+        <c:simple-property name="operationResult" description="Activate the OSGi subsystem."/>
       </results>
     </operation>
 
@@ -11509,13 +11540,13 @@
 
       <operation name="subsystem:start" displayName="Start" description="Starts the bundle.">
         <results>
-         <c:simple-property name="operationResult" description="Starts the bundle." />
+          <c:simple-property name="operationResult" description="Starts the bundle."/>
         </results>
       </operation>
 
       <operation name="subystem:stop" displayName="Stop" description="Stops the bundle.">
         <results>
-           <c:simple-property name="operationResult" description="Stops the bundle." />
+          <c:simple-property name="operationResult" description="Stops the bundle."/>
         </results>
       </operation>
 
@@ -11550,7 +11581,7 @@
              createDeletePolicy="both">
 
       <runs-inside>
-        <parent-resource-type name="Mail"  plugin="&pluginName;"/>
+        <parent-resource-type name="Mail" plugin="&pluginName;"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -11569,13 +11600,13 @@
                singleton="true"
                createDeletePolicy="both">
 
-          <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
-          </runs-inside>
+        <runs-inside>
+          <parent-resource-type name="Mail Session" plugin="&pluginName;"/>
+        </runs-inside>
 
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="server=smtp"/>
-          </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="server=smtp"/>
+        </plugin-configuration>
 
         <resource-configuration>
           <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
@@ -11587,19 +11618,19 @@
         </resource-configuration>
       </service>
 
-        <service name="IMAP Mail Server"
+      <service name="IMAP Mail Server"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                singleton="true"
                createDeletePolicy="both">
 
-          <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
-          </runs-inside>
+        <runs-inside>
+          <parent-resource-type name="Mail Session" plugin="&pluginName;"/>
+        </runs-inside>
 
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="server=imap"/>
-          </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="server=imap"/>
+        </plugin-configuration>
 
         <resource-configuration>
           <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
@@ -11611,19 +11642,19 @@
         </resource-configuration>
       </service>
 
-        <service name="POP3 Mail Server"
+      <service name="POP3 Mail Server"
                discovery="SubsystemDiscovery"
                class="BaseComponent"
                singleton="true"
                createDeletePolicy="both">
 
-          <runs-inside>
-              <parent-resource-type name="Mail Session"  plugin="&pluginName;"/>
-          </runs-inside>
+        <runs-inside>
+          <parent-resource-type name="Mail Session" plugin="&pluginName;"/>
+        </runs-inside>
 
-          <plugin-configuration>
-              <c:simple-property name="path" readOnly="true" default="server=pop3"/>
-          </plugin-configuration>
+        <plugin-configuration>
+          <c:simple-property name="path" readOnly="true" default="server=pop3"/>
+        </plugin-configuration>
 
         <resource-configuration>
           <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
@@ -11683,7 +11714,7 @@
 
       <operation name="subsystem:force-failover" displayName="Force Failover" description="Force the messaging server to stop and notify clients to failover.">
         <results>
-           <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover." />
+          <c:simple-property name="operationResult" description="Force the messaging server to stop and notify clients to failover."/>
         </results>
       </operation>
 
@@ -11834,13 +11865,13 @@
 
       <operation name="subsystem:reset-all-message-counter-histories" displayName="Reset All Message Counter Histories" description="Reset all message counters history.">
         <results>
-           <c:simple-property name="operationResult" description="Reset all message counters history." />
+          <c:simple-property name="operationResult" description="Reset all message counters history."/>
         </results>
       </operation>
 
       <operation name="subsystem:reset-all-message-counters" displayName="Reset All Message Counters" description="Reset all message counters.">
         <results>
-           <c:simple-property name="operationResult" description="Reset all message counters." />
+          <c:simple-property name="operationResult" description="Reset all message counters."/>
         </results>
       </operation>
 
@@ -11965,7 +11996,7 @@
           </results>
         </operation>
 
-        <operation name="subsystem:expire-messages" displayName="Expire Messages"  description="Expire the messages matching the given filter.">
+        <operation name="subsystem:expire-messages" displayName="Expire Messages" description="Expire the messages matching the given filter.">
           <parameters>
             <c:simple-property name="filter" required="false" type="string" readOnly="false" description="A queue message filter definition. An undefined or empty filter will match all messages."/>
           </parameters>
@@ -12044,7 +12075,7 @@
 
         <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Pause the queue." />
+            <c:simple-property name="operationResult" description="Pause the queue."/>
           </results>
         </operation>
 
@@ -12068,13 +12099,13 @@
 
         <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
           <results>
-             <c:simple-property name="operationResult" description="Reset the message counters." />
+            <c:simple-property name="operationResult" description="Reset the message counters."/>
           </results>
         </operation>
 
         <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Resume the queue." />
+            <c:simple-property name="operationResult" description="Resume the queue."/>
           </results>
         </operation>
 
@@ -12109,8 +12140,8 @@
 
         <resource-configuration>
           <c:simple-property name="durable" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the queue is durable or not. The default value is true."/>
-          <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to." >
-              <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
+          <c:list-property name="entries" required="true" description="The jndi names the queue will be bound to.">
+            <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
           <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
         </resource-configuration>
@@ -12138,7 +12169,7 @@
 
         <operation name="subsystem:drop-all-subscriptions" displayName="Drop All Subscriptions" description="Drop all subscriptions from this topic.">
           <results>
-             <c:simple-property name="operationResult" description="Drop all subscriptions from this topic." />
+            <c:simple-property name="operationResult" description="Drop all subscriptions from this topic."/>
           </results>
         </operation>
 
@@ -12148,7 +12179,7 @@
             <c:simple-property name="subscription-name" required="true" type="string" readOnly="false" description="The name of the durable subscription."/>
           </parameters>
           <results>
-             <c:simple-property name="operationResult" description="Drop a durable subscription" />
+            <c:simple-property name="operationResult" description="Drop a durable subscription"/>
           </results>
         </operation>
 
@@ -12248,7 +12279,7 @@
           <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
             <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
           </c:map-property>
-          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
+          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
 
@@ -12312,7 +12343,7 @@
           <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
             <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
           </c:map-property>
-          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
+          <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
 
@@ -12443,13 +12474,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the acceptor." />
+            <c:simple-property name="operationResult" description="Starts the acceptor."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the acceptor." />
+            <c:simple-property name="operationResult" description="Stops the acceptor."/>
           </results>
         </operation>
 
@@ -12491,13 +12522,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the acceptor." />
+            <c:simple-property name="operationResult" description="Starts the acceptor."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the acceptor." />
+            <c:simple-property name="operationResult" description="Stops the acceptor."/>
           </results>
         </operation>
 
@@ -12533,13 +12564,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the acceptor." />
+            <c:simple-property name="operationResult" description="Starts the acceptor."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the acceptor.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the acceptor." />
+            <c:simple-property name="operationResult" description="Stops the acceptor."/>
           </results>
         </operation>
 
@@ -12725,7 +12756,7 @@
 
         <operation name="subsystem:pause" displayName="Pause" description="Pause the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Pause the queue." />
+            <c:simple-property name="operationResult" description="Pause the queue."/>
           </results>
         </operation>
 
@@ -12749,13 +12780,13 @@
 
         <operation name="subsystem:reset-message-counter" displayName="Reset Message Counter" description="Reset the message counters.">
           <results>
-             <c:simple-property name="operationResult" description="Reset the message counters." />
+            <c:simple-property name="operationResult" description="Reset the message counters."/>
           </results>
         </operation>
 
         <operation name="subsystem:resume" displayName="Resume" description="Resume the queue.">
           <results>
-             <c:simple-property name="operationResult" description="Resume the queue." />
+            <c:simple-property name="operationResult" description="Resume the queue."/>
           </results>
         </operation>
 
@@ -12800,15 +12831,15 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:list-property name="binding-names" required="true" readOnly="true" description="The names of all bindings (both queues and diverts) bound to this address." >
-            <c:simple-property name="binding-names" />
+          <c:list-property name="binding-names" required="true" readOnly="true" description="The names of all bindings (both queues and diverts) bound to this address.">
+            <c:simple-property name="binding-names"/>
           </c:list-property>
           <c:simple-property name="number-of-bytes-per-page" required="true" type="long" readOnly="true" description="The number of bytes used by each page for this address."/>
           <c:simple-property name="number-of-pages" required="true" type="integer" readOnly="true" description="The number of pages used by this address."/>
-          <c:list-property name="queue-names" required="true" readOnly="true" description="The names of the queues associated with the address." >
-              <c:simple-property name="queue-names" />
+          <c:list-property name="queue-names" required="true" readOnly="true" description="The names of the queues associated with the address.">
+            <c:simple-property name="queue-names"/>
           </c:list-property>
-          <c:list-property name="roles" required="true" readOnly="true" description="A list of the security roles (name and permissions) associated with the address." >
+          <c:list-property name="roles" required="true" readOnly="true" description="A list of the security roles (name and permissions) associated with the address.">
             <c:map-property name="role">
               <c:simple-property name="name" type="string" readOnly="true" description="The name of a security role."/>
               <c:simple-property name="send" type="boolean" readOnly="true" description="This permission allows the user to send a message to matching addresses."/>
@@ -12840,13 +12871,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the cluster connection.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the cluster connection." />
+            <c:simple-property name="operationResult" description="Starts the cluster connection."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the cluster connection.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the cluster connection." />
+            <c:simple-property name="operationResult" description="Stops the cluster connection."/>
           </results>
         </operation>
 
@@ -12894,13 +12925,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the broadcast group.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the broadcast group." />
+            <c:simple-property name="operationResult" description="Starts the broadcast group."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the broadcast group.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the broadcast group." />
+            <c:simple-property name="operationResult" description="Stops the broadcast group."/>
           </results>
         </operation>
 
@@ -12908,8 +12939,8 @@
 
         <resource-configuration>
           <c:simple-property name="broadcast-period" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between consecutive broadcasts. The default value is 2000."/>
-          <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
-            <c:simple-property name="connectors" />
+          <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast.">
+            <c:simple-property name="connectors"/>
           </c:list-property>
           <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
             <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
@@ -12964,13 +12995,13 @@
 
         <operation name="subsystem:start" displayName="Start" description="Starts the bridge.">
           <results>
-             <c:simple-property name="operationResult" description="Starts the bridge." />
+            <c:simple-property name="operationResult" description="Starts the bridge."/>
           </results>
         </operation>
 
         <operation name="subsystem:stop" displayName="Stop" description="Stops the bridge.">
           <results>
-             <c:simple-property name="operationResult" description="Stops the bridge." />
+            <c:simple-property name="operationResult" description="Stops the bridge."/>
           </results>
         </operation>
 
@@ -13034,12 +13065,13 @@
       </service>
     </service>
 
-  </service><!-- End of Messaging-Provider service -->
+  </service> <!-- Messaging-Provider -->
+
 
   <service name="Param"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               createDeletePolicy="both">
+           discovery="SubsystemDiscovery"
+           class="BaseComponent"
+           createDeletePolicy="both">
 
     <runs-inside>
       <parent-resource-type name="Acceptor" plugin="&pluginName;"/>

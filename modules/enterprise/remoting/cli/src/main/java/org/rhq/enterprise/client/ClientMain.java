@@ -431,6 +431,7 @@ public class ClientMain {
         boolean keep_going = true;
 
         boolean isScriptFileCommand = false;
+        boolean isNamedArgs = false;
 
         // we don't want to parse numbers and we want ' to be a normal word
         // character
@@ -471,12 +472,39 @@ public class ClientMain {
                     isScriptFileCommand = true;
                 }
                 args.add(strtok.sval);
+                if (strtok.sval.equals("--args-style=named")) {
+                    isNamedArgs = true;
+                }
             } else if (nextToken == '\"' || nextToken == '\'') {
                 args.add(strtok.sval);
             } else if ((nextToken == java.io.StreamTokenizer.TT_EOF) || (nextToken == java.io.StreamTokenizer.TT_EOL)) {
                 keep_going = false;
             }
         }
+
+        if (isNamedArgs) {
+            List<String> newArgs = new ArrayList<String>();
+            int namedArgsIndex = args.indexOf("--args-style=named");
+
+            for (int i = 0; i <= namedArgsIndex; ++i) {
+                newArgs.add(args.get(i));
+            }
+
+            String namedArg = null;
+            for (int i = namedArgsIndex + 1; i < args.size(); ++i) {
+                if (namedArg == null && args.get(i).endsWith("=")) {
+                    namedArg = args.get(i);
+                } else if (namedArg != null) {
+                    newArgs.add(args.get(i - 1) + args.get(i));
+                    namedArg = null;
+                } else {
+                    newArgs.add(args.get(i));
+                }
+            }
+
+            return newArgs.toArray(new String[newArgs.size()]);
+        }
+
         return args.toArray(new String[args.size()]);
     }
 

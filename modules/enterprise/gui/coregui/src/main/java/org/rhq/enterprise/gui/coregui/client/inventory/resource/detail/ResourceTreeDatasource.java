@@ -44,8 +44,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.ViewChangedException;
@@ -159,12 +158,16 @@ public class ResourceTreeDatasource extends DataSource {
         } else {
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
+            // This fetch limits the number of resources that can be returned to protect against fetching a massive
+            // number of children for a parent. Doing so may cause an unacceptably slow tree rendering, too much vertical
+            // scroll, or perhaps even hang the gui if it consumed too many resources.  To see all children the
+            // user will need to visit the Inventory->Children view for the resource.
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
-            // we don't need sorting since we get everything and the tree nodes are already sorted
-            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            // we must sort the results to ensure that if cropped we at least show the same results each time
+            criteria.addSortName(PageOrdering.ASC);
 
-            resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            resourceService.findResourcesByCriteriaBounded(criteria, -1, -1, new AsyncCallback<List<Resource>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
@@ -173,7 +176,7 @@ public class ResourceTreeDatasource extends DataSource {
                     loadingLabel.hide();
                 }
 
-                public void onSuccess(PageList<Resource> result) {
+                public void onSuccess(List<Resource> result) {
                     processIncomingData(result, response, requestId);
                 }
             });

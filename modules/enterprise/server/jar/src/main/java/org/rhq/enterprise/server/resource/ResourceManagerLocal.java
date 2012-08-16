@@ -446,6 +446,24 @@ public interface ResourceManagerLocal {
      */
     public void updateAncestry(Subject subject, int resourceId);
 
+    /**
+     * This method exists to support the GUI resource tree, by not returning an unlimited number of resources
+     * but instead bounding the returned size.  Note, this routine does not offer paging and any PageControl set in
+     * the Criteria is ignored. This is for use when paging is not required or possible, such as in a tree. 
+     *  
+     * @param subject
+     * @param criteria
+     * @param maxResources Will not return more than this number of resources.  If the original fetch exceeds maxResources
+     * then maxResourcesByType will be enforced.  If, after trimming by type, maxResources is still exceeded, then the least
+     * significant resources (the tail, assuming a sorted set) will be removed to enforce the limit. If <=0 the default
+     * will be used.     
+     * @param maxResourcesByType If maxResources is exceeded by the initial result set then members of each type will be
+     * trimmed down to meet this limit.  If <=0 the default will be used.
+     * @return The resulting resources, trimmed if necessary to meet the specify sizing bounds.
+     */
+    List<Resource> findResourcesByCriteriaBounded(Subject subject, ResourceCriteria criteria, int maxResources,
+        int maxResourcesByType);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

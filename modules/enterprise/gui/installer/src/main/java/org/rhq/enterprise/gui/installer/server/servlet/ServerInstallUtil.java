@@ -78,6 +78,20 @@ public class ServerInstallUtil {
         POSTGRES, ORACLE
     };
 
+    public enum Marker {
+        DO_DEPLOY(".dodeploy"), SKIP_DEPLOY(".skipdeploy"), DEPLOYED(".deployed"), FAILED(".failed");
+
+        private String extension;
+
+        private Marker(String ext) {
+            extension = ext;
+        }
+
+        public String getExtenstion() {
+            return extension;
+        }
+    }
+
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
     private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
     private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
@@ -294,30 +308,43 @@ public class ServerInstallUtil {
         final HashMap<String, String> props = new HashMap<String, String>(4);
         final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
 
-        props.put("char.encoding", "UTF-8");
+        ModelNode noTxDsRequest = null;
+        ModelNode xaDsRequest = null;
 
-        ModelNode noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
-            "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
-            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
-            RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
-            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-        noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        if (!client.isDatasource(RHQ_DATASOURCE_NAME_NOTX)) {
+            props.put("char.encoding", "UTF-8");
 
-        props.clear();
-        props.put("ServerName", "${rhq.server.database.server-name:127.0.0.1}");
-        props.put("PortNumber", "${rhq.server.database.port:5432}");
-        props.put("DatabaseName", "${rhq.server.database.db-name:rhq}");
+            noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
+                "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
+                RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
+            noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        } else {
+            LOG.info("Postgres datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
+        }
 
-        ModelNode xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000,
-            JDBC_DRIVER_POSTGRES, "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5,
-            50, 75, RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
-            "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-        xaDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        if (!client.isXADatasource(RHQ_DATASOURCE_NAME_XA)) {
+            props.clear();
+            props.put("ServerName", "${rhq.server.database.server-name:127.0.0.1}");
+            props.put("PortNumber", "${rhq.server.database.port:5432}");
+            props.put("DatabaseName", "${rhq.server.database.db-name:rhq}");
 
-        ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
-        ModelNode results = client.execute(batch);
-        if (!DatasourceJBossASClient.isSuccess(results)) {
-            throw new FailureException(results, "Failed to create Postgres datasources");
+            xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, 75,
+                RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
+            xaDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+        } else {
+            LOG.info("Postgres XA datasource [" + RHQ_DATASOURCE_NAME_XA + "] already exists");
+        }
+
+        if (noTxDsRequest != null || xaDsRequest != null) {
+            ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
+            ModelNode results = client.execute(batch);
+            if (!DatasourceJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create Postgres datasources");
+            }
         }
     }
 
@@ -325,29 +352,43 @@ public class ServerInstallUtil {
         final HashMap<String, String> props = new HashMap<String, String>(2);
         final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
 
-        props.put("char.encoding", "UTF-8");
-        props.put("SetBigStringTryClob", "true");
+        ModelNode noTxDsRequest = null;
+        ModelNode xaDsRequest = null;
 
-        ModelNode noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
-            "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
-            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
-            RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
-            "TRANSACTION_READ_COMMITTED", "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker",
-            props);
+        if (!client.isDatasource(RHQ_DATASOURCE_NAME_NOTX)) {
+            props.put("char.encoding", "UTF-8");
+            props.put("SetBigStringTryClob", "true");
 
-        props.clear();
-        props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
-        props.put("ConnectionProperties", "SetBigStringTryClob=true");
+            noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
+                "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
+                RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                "TRANSACTION_READ_COMMITTED",
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
+        } else {
+            LOG.info("Oracle datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
+        }
 
-        ModelNode xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
-            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, 75, RHQ_SECURITY_DOMAIN,
-            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker", "TRANSACTION_READ_COMMITTED",
-            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
+        if (!client.isDatasource(RHQ_DATASOURCE_NAME_XA)) {
+            props.clear();
+            props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
+            props.put("ConnectionProperties", "SetBigStringTryClob=true");
 
-        ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
-        ModelNode results = client.execute(batch);
-        if (!DatasourceJBossASClient.isSuccess(results)) {
-            throw new FailureException(results, "Failed to create Oracle datasources");
+            xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, 75,
+                RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                "TRANSACTION_READ_COMMITTED",
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
+        } else {
+            LOG.info("Oracle XA datasource [" + RHQ_DATASOURCE_NAME_XA + "] already exists");
+        }
+
+        if (noTxDsRequest != null || xaDsRequest != null) {
+            ModelNode batch = DatasourceJBossASClient.createBatchRequest(noTxDsRequest, xaDsRequest);
+            ModelNode results = client.execute(batch);
+            if (!DatasourceJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create Oracle datasources");
+            }
         }
     }
 
@@ -977,4 +1018,26 @@ public class ServerInstallUtil {
             }
         }
     }
+
+    public static File getMarkerFile(String dir, String artifact, Marker marker) {
+        File markerFile = new File(dir, artifact + marker.getExtenstion());
+        return markerFile;
+    }
+
+    public static void touchMarkerFile(String dir, String artifact, Marker marker) throws Exception {
+        File markerFile = getMarkerFile(dir, artifact, marker);
+        markerFile.createNewFile();
+        markerFile.setLastModified(System.currentTimeMillis());
+    }
+
+    public static void deleteMarkerFile(String dir, String artifact, Marker marker) throws Exception {
+        File markerFile = getMarkerFile(dir, artifact, marker);
+        markerFile.delete();
+    }
+
+    public static boolean markerFileExists(String dir, String artifact, Marker marker) {
+        File markerFile = getMarkerFile(dir, artifact, marker);
+        return markerFile.exists();
+    }
+
 }

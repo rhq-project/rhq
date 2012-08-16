@@ -18,8 +18,6 @@
  */
 package org.rhq.common.jbossas.client.controller;
 
-import java.util.List;
-
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
@@ -54,20 +52,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      */
     public boolean isSecurityDomain(String securityDomainName) throws Exception {
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY);
-        ModelNode queryNode = createRequest(READ_RESOURCE, addr);
-        ModelNode results = execute(queryNode);
-        if (isSuccess(results)) {
-            ModelNode domains = getResults(results).get(SECURITY_DOMAIN);
-            List<ModelNode> list = domains.asList();
-            for (ModelNode domain : list) {
-                if (domain.has(securityDomainName)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            throw new FailureException(results, "Failed to get security domains");
-        }
+        String haystack = SECURITY_DOMAIN;
+        return null != findNodeInList(addr, haystack, securityDomainName);
     }
 
     /**

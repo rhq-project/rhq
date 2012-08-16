@@ -27,10 +27,12 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
@@ -77,9 +79,10 @@ import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 public class Installer implements EntryPoint {
 
     // This must come first to ensure proper I18N class loading for dev mode
-    public static final Messages MSG = GWT.create(Messages.class);
-    public static final ServerPropertiesMessages PROPS_MSG = GWT.create(ServerPropertiesMessages.class);
+    private static final Messages MSG = GWT.create(Messages.class);
+    private static final ServerPropertiesMessages PROPS_MSG = GWT.create(ServerPropertiesMessages.class);
 
+    private static final String INSTALLED_APP_URL = "/"; // if already installed, this is the URL context where it can be accessed
     private static final String NEW_SERVER_TO_REGISTER = "*new*";
 
     private final InstallerGWTServiceAsync installerService = InstallerGWTServiceAsync.Util.getInstance();
@@ -109,28 +112,66 @@ public class Installer implements EntryPoint {
     private TextItem serverSettingEmailFromAddress;
 
     public void onModuleLoad() {
-        Canvas header = createHeader();
-        mainInstallButton = createMainInstallButton();
-        Canvas tabSet = createTabSet();
-
         mainCanvas = new VLayout();
         mainCanvas.setWidth100();
         mainCanvas.setHeight100();
         mainCanvas.setLayoutMargin(10);
         mainCanvas.setMembersMargin(5);
         mainCanvas.setDefaultLayoutAlign(Alignment.CENTER);
-        mainCanvas.addMember(header);
-        mainCanvas.addMember(mainInstallButton);
-        mainCanvas.addMember(tabSet);
         mainCanvas.draw();
+
+        installerService.getInstallationResults(new AsyncCallback<String>() {
+            public void onSuccess(String result) {
+                if (result == null) {
+                    prepareInstallerView(); // we need the user to complete the installation
+                } else if (result.length() == 0) {
+                    showInstalledDialog(); // nothing needs to be done, we are already installed
+                } else {
+                    showInstallationErrorDialog(result);
+                }
+            }
+
+            public void onFailure(Throwable caught) {
+                SC.warn(MSG.message_install_doNotKnowIfInstalled(caught.toString()), new BooleanCallback() {
+                    public void execute(Boolean value) {
+                        prepareInstallerView();
+                    }
+                });
+            }
+        });
 
         // Remove loading image in case we don't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
 
+        return;
+    }
+
+    private void showInstallationErrorDialog(String error) {
+        SC.warn(MSG.message_install_failed() + "<br/>" + error);
+    }
+
+    private void showInstalledDialog() {
+        String loginMsg = MSG.message_install_loginHere(INSTALLED_APP_URL);
+        SC.say(loginMsg, new BooleanCallback() {
+            public void execute(Boolean value) {
+                Window.open(INSTALLED_APP_URL, "_self", null);
+            }
+        });
+    }
+
+    private void prepareInstallerView() {
+        Canvas header = createHeader();
+        mainInstallButton = createMainInstallButton();
+        Canvas tabSet = createTabSet();
+
+        mainCanvas.addMember(header);
+        mainCanvas.addMember(mainInstallButton);
+        mainCanvas.addMember(tabSet);
+        mainCanvas.draw();
+
         // get the server properties from the server
         loadServerProperties();
-
     }
 
     private void updateServerProperty(String name, Object value) {
@@ -229,13 +270,13 @@ public class Installer implements EntryPoint {
                     @Override
                     public void onSuccess(Void result) {
                         mainCanvas.enable();
-                        SC.say(MSG.message_install_done());
+                        showInstalledDialog();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         mainCanvas.enable();
-                        SC.say(MSG.message_install_failed() + " - " + caught.toString());
+                        showInstallationErrorDialog(caught.toString());
                     }
                 });
             }

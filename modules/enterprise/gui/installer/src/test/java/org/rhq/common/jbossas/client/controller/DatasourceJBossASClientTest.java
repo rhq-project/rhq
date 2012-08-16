@@ -50,7 +50,11 @@ public class DatasourceJBossASClientTest {
         when(mcc.execute(any(ModelNode.class), any(OperationMessageHandler.class))).thenAnswer(new Answer<ModelNode>() {
             public ModelNode answer(InvocationOnMock invocation) throws Throwable {
                 System.out.println("~~~~~~~\n" + invocation.getArguments()[0]);
-                return mockSuccess;
+                ModelNode retNode = mockSuccess.clone();
+                ModelNode resultNode = retNode.get(JBossASClient.RESULT);
+                resultNode.get(DatasourceJBossASClient.DATA_SOURCE).setEmptyList();
+                resultNode.get(DatasourceJBossASClient.XA_DATA_SOURCE).setEmptyList();
+                return retNode;
             }
         });
 

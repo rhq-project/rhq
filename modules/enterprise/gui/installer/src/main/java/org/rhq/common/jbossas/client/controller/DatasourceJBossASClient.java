@@ -18,7 +18,6 @@
  */
 package org.rhq.common.jbossas.client.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -50,20 +49,32 @@ public class DatasourceJBossASClient extends JBossASClient {
      */
     public boolean isJDBCDriver(String jdbcDriverName) throws Exception {
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
-        ModelNode queryNode = createRequest(READ_RESOURCE, addr);
-        ModelNode results = execute(queryNode);
-        if (isSuccess(results)) {
-            ModelNode drivers = getResults(results).get(JDBC_DRIVER);
-            List<ModelNode> list = drivers.asList();
-            for (ModelNode driver : list) {
-                if (driver.has(jdbcDriverName)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            throw new FailureException(results, "Failed to get JDBC drivers");
-        }
+        String haystack = JDBC_DRIVER;
+        return null != findNodeInList(addr, haystack, jdbcDriverName);
+    }
+
+    /**
+     * Checks to see if there is already a datasource with the given name.
+     *
+     * @param datasourceName the name to check
+     * @return true if there is a datasource with the given name already in existence
+     */
+    public boolean isDatasource(String datasourceName) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        String haystack = DATA_SOURCE;
+        return null != findNodeInList(addr, haystack, datasourceName);
+    }
+
+    /**
+     * Checks to see if there is already a XA datasource with the given name.
+     *
+     * @param datasourceName the name to check
+     * @return true if there is a XA datasource with the given name already in existence
+     */
+    public boolean isXADatasource(String datasourceName) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        String haystack = XA_DATA_SOURCE;
+        return null != findNodeInList(addr, haystack, datasourceName);
     }
 
     /**

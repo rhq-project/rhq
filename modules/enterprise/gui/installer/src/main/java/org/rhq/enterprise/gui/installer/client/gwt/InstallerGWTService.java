@@ -34,6 +34,21 @@ import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil;
 public interface InstallerGWTService extends RemoteService {
 
     /**
+     * Use this to determine if the server has already been completely installed or not.
+     * This returns a String to indicate the last installation attempt. If this returns null,
+     * then the installer has not done anything yet - you need to complete the installation.
+     * If an empty string is returned, it means the installer ran and it appears the application
+     * has successfully installed. If a non-empty string is returned, it means the installer attempted
+     * to complete the installation, but an error occurred.  When a non-empty string is returned,
+     * it means that an administrator probably has to do some manual intervention because something
+     * went wrong with the application deployment.
+     *
+     * @return indicating of the last installation attempt (see above)
+     * @throws Exception if it cannot be determined if the server has been fully installed.
+     */
+    String getInstallationResults() throws Exception;
+
+    /**
      * Starts the installation process. Once complete, the installer has nothing more it needs to do.
      *
      * @param serverProperties the server's settings to use. These will be persisted to

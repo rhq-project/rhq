@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.gui.installer.server.servlet;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,8 +38,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
-import org.rhq.common.jbossas.client.controller.Address;
-import org.rhq.common.jbossas.client.controller.JBossASClient;
+import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -44,6 +47,7 @@ import org.rhq.enterprise.gui.installer.client.shared.ServerDetails;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 import org.rhq.enterprise.gui.installer.server.service.ManagementService;
 import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.ExistingSchemaOption;
+import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.Marker;
 import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil.SupportedDatabaseType;
 
 /**
@@ -56,9 +60,23 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     private static final long serialVersionUID = 1L;
 
+    private static final String INSTALLER_NAME = "rhq-installer.war";
+    private static final String EAR_NAME = "rhq.ear";
+
     @Override
     public void init() throws ServletException {
         super.init();
+
+        try {
+            // If we are already fully installed, we don't have to do anything. Just return immediately.
+            if (getInstallationResults() != null) {
+                return;
+            }
+        } catch (Throwable t) {
+            log("Cannot determine if server has already been installed; aborting auto-install if enabled. Installer may not work properly.",
+                t);
+            return;
+        }
 
         // our installer is ready - let's see if we are in auto-install mode - if so, begin the install immediately
         final boolean autoInstallMode;
@@ -87,6 +105,28 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             new Thread(asyncAutoInstall, "RHQ Server Auto-Install Thread").start();
         } else {
             log("In manual-install mode, user must complete the installation via the Installer GUI");
+        }
+    }
+
+    @Override
+    public String getInstallationResults() throws Exception {
+        // use JBossAS's marker files to determine the status of the application EAR
+        CoreJBossASClient client = new CoreJBossASClient(getClient());
+        String deployDir = client.getAppServerDefaultDeploymentDir();
+        boolean deployedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.DEPLOYED);
+        boolean failedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.FAILED);
+        if (!failedExists) {
+            if (deployedExists) {
+                return ""; // everything looks OK and the ear has been successfully deployed
+            } else {
+                return null; // installer hasn't done anything yet
+            }
+        } else {
+            String error = slurpFile(ServerInstallUtil.getMarkerFile(deployDir, EAR_NAME, Marker.FAILED));
+            if (error.length() == 0) {
+                error = "Unknown installation error";
+            }
+            return error;
         }
     }
 
@@ -278,7 +318,9 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // now create our deployment services and our main EAR
         deployServices(serverProperties);
 
-        // TODO: deploy the EAR
+        // deploy the EAR and undeploy this installer - this will shut us down within seconds, return fast!
+        deployApp();
+
         return;
     }
 
@@ -389,38 +431,34 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public String getAppServerVersion() throws Exception {
-        final JBossASClient client = new JBossASClient(getClient());
-        final String version = client.getStringAttribute("release-version", Address.root());
+        final CoreJBossASClient client = new CoreJBossASClient(getClient());
+        final String version = client.getAppServerVersion();
         return version;
     }
 
     @Override
     public String getOperatingSystem() throws Exception {
-        final JBossASClient client = new JBossASClient(getClient());
-        final String[] address = { "core-service", "platform-mbean", "type", "operating-system" };
-        final String osName = client.getStringAttribute("name", Address.root().add(address));
+        final CoreJBossASClient client = new CoreJBossASClient(getClient());
+        final String osName = client.getOperatingSystem();
         return osName;
     }
 
     private String getAppServerHomeDir() throws Exception {
-        final JBossASClient client = new JBossASClient(getClient());
-        final String[] address = { "core-service", "server-environment" };
-        final String dir = client.getStringAttribute(true, "home-dir", Address.root().add(address));
+        final CoreJBossASClient client = new CoreJBossASClient(getClient());
+        final String dir = client.getAppServerHomeDir();
         return dir;
     }
 
     private String getAppServerConfigDir() throws Exception {
-        final JBossASClient client = new JBossASClient(getClient());
-        final String[] address = { "core-service", "server-environment" };
-        final String dir = client.getStringAttribute(true, "config-dir", Address.root().add(address));
+        final CoreJBossASClient client = new CoreJBossASClient(getClient());
+        final String dir = client.getAppServerConfigDir();
         return dir;
     }
 
     private String getLogDir() throws Exception {
-        final File asHomeDir = new File(getAppServerHomeDir());
-        final File logDir = new File(asHomeDir, "../logs"); // this is RHQ's log dir, not JBossAS's log dir
-        logDir.mkdirs(); // create it in case it doesn't yet exist
-        return logDir.getAbsolutePath();
+        final CoreJBossASClient client = new CoreJBossASClient(getClient());
+        final String dir = client.getAppServerLogDir();
+        return dir;
     }
 
     private File getServerPropertiesFile() throws Exception {
@@ -538,6 +576,87 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    private void deployApp() throws Exception {
+        try {
+            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            final String deployDir = client.getAppServerDefaultDeploymentDir();
+            if (deployDir == null) {
+                throw new IllegalStateException("Missing the deployment scanner - cannot finish install");
+            }
+
+            // set up our marker files so the app server deploys the ear
+            ServerInstallUtil.deleteMarkerFile(deployDir, EAR_NAME, Marker.FAILED);
+            ServerInstallUtil.deleteMarkerFile(deployDir, EAR_NAME, Marker.SKIP_DEPLOY);
+            ServerInstallUtil.touchMarkerFile(deployDir, EAR_NAME, Marker.DO_DEPLOY);
+
+            // We can leave the installer always deployed. It won't do anything if main EAR is deployed.
+            // Leaving it deployed will allow the installer URL to be live, so people who mistakenly go
+            // to the installer will be told (by the installer) that things are installed and it will give
+            // the real URL to the user as a help to get them started.
+            // In case we do want to undeploy the installer, I left the code intact here. Just uncomment this line below:
+            // undeployInstaller();
+        } catch (Exception e) {
+            log("deployApp failed", e);
+            throw new Exception("Failed to deploy the app: " + ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    // left this here in case we want to undeploy the installer in the future; for now, we don't use this
+    private void undeployInstaller() throws Exception {
+        try {
+            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            final String deployDir = client.getAppServerDefaultDeploymentDir();
+            if (deployDir == null) {
+                throw new IllegalStateException("Missing the deployment scanner - cannot undeploy installer");
+            }
+
+            ServerInstallUtil.touchMarkerFile(deployDir, INSTALLER_NAME, Marker.SKIP_DEPLOY);
+
+            // This will shut the installer down and undeploy it.
+            // We do it in a separate thread to let this current request thread be able to return and finish.
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(3000L); // gives the calling thread time to finish
+                    } catch (InterruptedException e) {
+                    }
+                    try {
+                        log("Installer has completed its work and is no longer needed. It is being undeployed...");
+                        ServerInstallUtil.deleteMarkerFile(deployDir, INSTALLER_NAME, Marker.DEPLOYED);
+                        log("Installer has been undeployed");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, "RHQ Installer Undeploy Thread").start();
+        } catch (Exception e) {
+            log("undeployInstaller failed", e);
+            throw new Exception("Failed to undeploy the installer: " + ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    private String slurpFile(File theFile) {
+        FileInputStream fis = null;
+        try {
+            byte[] buffer = new byte[32768];
+            fis = new FileInputStream(theFile);
+            BufferedInputStream input = new BufferedInputStream(fis, buffer.length);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
+                out.write(buffer, 0, bytesRead);
+            }
+            return out.toString();
+        } catch (Exception ioe) {
+            throw new RuntimeException("Cannot slurp file: " + theFile, ioe);
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException e) {
+            }
         }
     }
 }

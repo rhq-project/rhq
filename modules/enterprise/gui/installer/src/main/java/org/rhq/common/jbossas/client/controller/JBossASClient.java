@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 
 /**
  * A client that can be used to talk to a JBossAS server via the DMR/ModelControllerClient API.
@@ -87,7 +88,7 @@ public class JBossASClient {
      * @return the request
      */
     public static ModelNode createReadAttributeRequest(boolean runtime, String attributeName, Address address) {
-        ModelNode op = createRequest(READ_ATTRIBUTE, address);
+        final ModelNode op = createRequest(READ_ATTRIBUTE, address);
         op.get("include-runtime").set(runtime);
         op.get(NAME).set(attributeName);
         return op;
@@ -103,7 +104,7 @@ public class JBossASClient {
      * @return the request
      */
     public static ModelNode createWriteAttributeRequest(String attributeName, String attributeValue, Address address) {
-        ModelNode op = createRequest(WRITE_ATTRIBUTE, address);
+        final ModelNode op = createRequest(WRITE_ATTRIBUTE, address);
         op.get(NAME).set(attributeName);
         op.get(VALUE).set(attributeValue);
         return op;
@@ -136,7 +137,9 @@ public class JBossASClient {
         composite.get(ADDRESS).setEmptyList();
         final ModelNode stepsNode = composite.get(BATCH_STEPS);
         for (ModelNode step : steps) {
-            stepsNode.add(step);
+            if (step != null) {
+                stepsNode.add(step);
+            }
         }
         return composite;
     }
@@ -153,12 +156,12 @@ public class JBossASClient {
             return Collections.emptyList();
         }
 
-        List<ModelNode> nodeList = operationResult.get(RESULT).asList();
+        final List<ModelNode> nodeList = operationResult.get(RESULT).asList();
         if (nodeList.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<String> list = new ArrayList<String>(nodeList.size());
+        final List<String> list = new ArrayList<String>(nodeList.size());
         for (ModelNode node : nodeList) {
             list.add(node.asString());
         }
@@ -179,32 +182,6 @@ public class JBossASClient {
         }
 
         return operationResult.get(RESULT);
-    }
-
-    /**
-     * Examines the given node's result list and if the item is found, returns true.
-     * 
-     * @param operationResult the node to examine
-     * @param item the item to look for in the node's result list
-     * @return true if the node has a result list and it contains the item; false otherwise
-     */
-    public static boolean listContains(ModelNode operationResult, String item) {
-        if (!operationResult.hasDefined(RESULT)) {
-            return false;
-        }
-
-        List<ModelNode> nodeList = operationResult.get(RESULT).asList();
-        if (nodeList.isEmpty()) {
-            return false;
-        }
-
-        for (ModelNode node : nodeList) {
-            if (node.asString().equals(item)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -234,7 +211,7 @@ public class JBossASClient {
             return null;
         }
         if (operationResult != null) {
-            ModelNode descr = operationResult.get(FAILURE_DESCRIPTION);
+            final ModelNode descr = operationResult.get(FAILURE_DESCRIPTION);
             if (descr != null) {
                 return descr.asString();
             }
@@ -266,6 +243,26 @@ public class JBossASClient {
     }
 
     /**
+     * This returns information on the resource at the given address.
+     * This will not return an exception if the address points to a non-existent resource, rather,
+     * it will just return null. You can use this as a test for resource existence.
+     *
+     * @param addr
+     * @return the found item or null if not found
+     * @throws Exception if some error prevented the lookup from even happening
+     */
+    public ModelNode readResource(Address addr) throws Exception {
+        final ModelNode request = createRequest(READ_RESOURCE, addr);
+        final ModelNode results = getModelControllerClient().execute(request, OperationMessageHandler.logging);
+        if (isSuccess(results)) {
+            final ModelNode resource = getResults(results);
+            return resource;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Convienence method that allows you to obtain a single attribute's string value from
      * a resource.
      * 
@@ -291,11 +288,11 @@ public class JBossASClient {
      * @throws Exception if failed to obtain the attribute value
      */
     public String getStringAttribute(boolean runtime, String attributeName, Address address) throws Exception {
-        ModelNode op = createReadAttributeRequest(runtime, attributeName, address);
-        ModelNode results = execute(op);
+        final ModelNode op = createReadAttributeRequest(runtime, attributeName, address);
+        final ModelNode results = execute(op);
         if (isSuccess(results)) {
-            ModelNode version = getResults(results);
-            String attributeValue = version.asString();
+            final ModelNode version = getResults(results);
+            final String attributeValue = version.asString();
             return attributeValue;
         } else {
             throw new FailureException(results, "Failed to get attribute [" + attributeName + "] from [" + address
@@ -304,18 +301,37 @@ public class JBossASClient {
     }
 
     /**
-     * Can set a runtime system property in the JVM.
+     * This tries to find specific node within a list of nodes. Given an address and a named node
+     * at that address (the "haystack"), it is assumed that haystack is actually a list of other
+     * nodes. This method looks in the haystack and tries to find the named needle. If it finds it,
+     * that list item is returned. If it does not find the needle in the haystack, it returns null.
      *
-     * @param name
-     * @param value
-     * @throws Exception
+     * For example, if you want to find a specific datasource in the list of datasources, you
+     * can pass in the address for the datasource subsystem, and ask to look in the data-source
+     * node list (the haystack) and return the named datasource (the needle).
+     *
+     * @param addr
+     * @param haystack
+     * @param needle
+     * @return the found item or null if not found
+     * @throws Exception if the lookup fails for some reason
      */
-    public void setSystemProperty(String name, String value) throws Exception {
-        ModelNode request = createRequest(ADD, Address.root().add(SYSTEM_PROPERTY, name));
-        request.get(VALUE).set(value);
-        ModelNode response = execute(request);
-        if (!isSuccess(response)) {
-            throw new FailureException(response, "Failed to set system property [" + name + "]");
+    public ModelNode findNodeInList(Address addr, String haystack, String needle) throws Exception {
+        final ModelNode queryNode = createRequest(READ_RESOURCE, addr);
+        final ModelNode results = execute(queryNode);
+        if (isSuccess(results)) {
+            final ModelNode haystackNode = getResults(results).get(haystack);
+            if (haystackNode.getType() != ModelType.UNDEFINED) {
+                final List<ModelNode> haystackList = haystackNode.asList();
+                for (ModelNode needleNode : haystackList) {
+                    if (needleNode.has(needle)) {
+                        return needleNode;
+                    }
+                }
+            }
+            return null;
+        } else {
+            throw new FailureException(results, "Failed to get data for [" + addr + "]");
         }
     }
 }

@@ -145,6 +145,20 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public List<Resource> findResourcesByCriteriaBounded(ResourceCriteria criteria, int maxResources,
+        int maxResourcesByType) throws RuntimeException {
+        try {
+            List<Resource> result = resourceManager.findResourcesByCriteriaBounded(getSessionSubject(), criteria,
+                maxResources, maxResourcesByType);
+
+            ObjectFilter.filterFieldsInCollection(result, importantFieldsSet);
+
+            return SerialUtility.prepare(result, "ResourceService.findResourcesByCriteriaBounded");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria)
         throws RuntimeException {
         try {

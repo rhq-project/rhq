@@ -2516,16 +2516,15 @@
           </plugin-configuration>
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
-          <metric property="keepalive-time:time" description="The time"/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
           <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -2544,16 +2543,15 @@
           </plugin-configuration>
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
-          <metric property="keepalive-time:time" description="The time"/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
           <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:map-property name="keepalive-time" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -2856,15 +2854,14 @@
         <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
         <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been rejected."/>
         <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="true" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" displayName="Max Threads" required="false" type="string" readOnly="true" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -3081,8 +3078,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-            <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -5499,9 +5496,9 @@
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -5523,9 +5520,9 @@
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -5711,8 +5708,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -5927,8 +5924,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-            <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -10269,16 +10266,15 @@
         </plugin-configuration>
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
           <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-          <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -10298,16 +10294,15 @@
         </plugin-configuration>
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
           <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-          <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -10863,8 +10858,8 @@
 
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-          <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+          <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -10942,8 +10937,8 @@
 
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-          <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>

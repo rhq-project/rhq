@@ -1164,7 +1164,6 @@
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
-      <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
       &startScriptPluginConfigGroup;
@@ -1224,6 +1223,8 @@
 
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
+    <metric property="deployDir" dataType="trait" displayName="Deploy Directory" defaultInterval="600000" defaultOn="true"
+            description="The deployment directory for bundles (usually 'standalone/deployments'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1321,14 +1322,14 @@
         name="Template-Deploy Files"
         description="Monitor standalone deployment dir for drift. ">
       <basedir>
-        <value-context>pluginConfiguration</value-context>
+        <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </basedir>
     </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
-        <value-context>pluginConfiguration</value-context>
+        <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </destination-base-dir>
     </bundle-target>

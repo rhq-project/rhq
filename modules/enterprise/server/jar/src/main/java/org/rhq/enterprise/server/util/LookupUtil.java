@@ -258,7 +258,11 @@ public final class LookupUtil {
     public static TransactionManager getTransactionManager() {
         try {
             InitialContext context = new InitialContext();
-            TransactionManager tm = (TransactionManager) context.lookup(RHQConstants.TRANSACTION_MANAGER_JNDI_NAME);
+            String jndi = RHQConstants.TRANSACTION_MANAGER_JNDI_NAME;
+            if (embeddedDeployment) {
+                jndi = "java:/TransactionManager";
+            }
+            TransactionManager tm = (TransactionManager) context.lookup(jndi);
             context.close();
             return tm;
         } catch (Exception e) {
@@ -665,7 +669,8 @@ public final class LookupUtil {
     // Private Methods
 
     private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/local";
+        return (embeddedDeployment ? "" : ("java:app/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName() + "!"
+            + beanClass.getName().replace("Bean", "Local");
     }
 
     /**
@@ -676,7 +681,8 @@ public final class LookupUtil {
      * @return JNDI name that the remote interface is registered as
      */
     private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/remote";
+        return (embeddedDeployment ? "" : ("java:app/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName() + "!"
+            + beanClass.getName().replace("Bean", "Remote");
     }
 
     @SuppressWarnings("unchecked")

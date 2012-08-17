@@ -815,8 +815,9 @@ public class ServerInformation {
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, XMLLoginConfigMBean.class, false);
 
         XMLLoginConfigMBean conf = (XMLLoginConfigMBean) mbean;
-        conf.stop();
-        conf.start();
+        //        DISABLING SINCE THIS INSTALLER-WAR MODULE ISN'T USED FOR AS7 ANYWAY
+        //        conf.stop();
+        //        conf.start();
     }
 
     public static class Server {

@@ -35,6 +35,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -43,7 +44,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.ViewChangedException;
@@ -70,10 +71,12 @@ public class ResourceTreeDatasource extends DataSource {
     // the encompassing grid. It's unfortunate to have the DS know about the encompassing TreeGrid
     // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID. 
     private TreeGrid treeGrid;
+    private Label loadingLabel;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid) {
+    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid,
+        Label loadingLabel) {
         this.setClientOnly(false);
         this.setDataProtocol(DSProtocol.CLIENTCUSTOM);
         this.setDataFormat(DSDataFormat.CUSTOM);
@@ -81,6 +84,7 @@ public class ResourceTreeDatasource extends DataSource {
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
         this.treeGrid = treeGrid;
+        this.loadingLabel = loadingLabel;
 
         DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
@@ -130,6 +134,8 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         //final long start = System.currentTimeMillis();
 
+        loadingLabel.show();
+
         final String parentResourceId = request.getCriteria().getAttribute("parentId");
         //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
@@ -147,20 +153,30 @@ public class ResourceTreeDatasource extends DataSource {
                 processResponse(requestId, response);
             }
 
+            loadingLabel.hide();
+
         } else {
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
+            // This fetch limits the number of resources that can be returned to protect against fetching a massive
+            // number of children for a parent. Doing so may cause an unacceptably slow tree rendering, too much vertical
+            // scroll, or perhaps even hang the gui if it consumed too many resources.  To see all children the
+            // user will need to visit the Inventory->Children view for the resource.
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
+            // we must sort the results to ensure that if cropped we at least show the same results each time
+            criteria.addSortName(PageOrdering.ASC);
 
-            resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            resourceService.findResourcesByCriteriaBounded(criteria, -1, -1, new AsyncCallback<List<Resource>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(requestId, response);
+
+                    loadingLabel.hide();
                 }
 
-                public void onSuccess(PageList<Resource> result) {
+                public void onSuccess(List<Resource> result) {
                     processIncomingData(result, response, requestId);
                 }
             });
@@ -179,6 +195,8 @@ public class ResourceTreeDatasource extends DataSource {
                     TreeNode[] treeNodes = buildNodes(result, lockedData, treeGrid);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
+
+                    loadingLabel.hide();
                 }
             });
     }

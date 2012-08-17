@@ -18,7 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -37,6 +40,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -65,12 +69,70 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
                 collectConfigTrait(report, request);
             } else if (requestName.equals("multicastAddress")) {
                 collectMulticastAddressTrait(report, request);
+            } else if (requestName.equals("deployDir")) {
+                resolveDeployDir(report,request);
             } else {
                 leftovers.add(request); // handled below
             }
         }
 
         super.getValues(report, leftovers);
+    }
+
+    /**
+     * Try to determine the deployment directory (usually $as/standalone/deployments ).
+     * For JDG we return fake data, as JDG does not have such a directory.
+     * @param report Measurement report to tack the value on
+     * @param request Measurement request with the schedule id to use
+     */
+    private void resolveDeployDir(MeasurementReport report, MeasurementScheduleRequest request) {
+
+        if ("JDG".equals(pluginConfiguration.getSimpleValue("productType","AS7"))) {
+            log.debug("This is a JDG server, so there is no deployDir");
+            MeasurementDataTrait trait = new MeasurementDataTrait(request,"- not applicable to JDG -");
+            report.addData(trait);
+            return;
+        }
+
+        // So we have an AS7/EAP6
+        Address scanner = new Address("subsystem=deployment-scanner,scanner=default");
+        ReadResource op = new ReadResource(scanner);
+        Result res = getASConnection().execute(op);
+        if (res.isSuccess()) {
+            Map<String,String> scannerMap = (Map<String, String>) res.getResult();
+            String path = scannerMap.get("path");
+            String relativeTo = scannerMap.get("relative-to");
+            File basePath = resolveRelativePath(relativeTo);
+
+            // It is safe to use File.separator, as the agent we are running in, will also lay down the plugins
+            String deployDir = new File(basePath, path).getAbsolutePath();
+
+            MeasurementDataTrait trait = new MeasurementDataTrait(request,deployDir);
+            report.addData(trait);
+        }
+        else {
+            log.error("No default deployment scanner was found, returning no value");
+        }
+    }
+
+    private File resolveRelativePath(String relativeTo) {
+
+        Address addr = new Address("path",relativeTo);
+        ReadResource op = new ReadResource(addr);
+        Result res = getASConnection().execute(op);
+        if (res.isSuccess()) {
+            Map<String,String> pathMap = (Map<String, String>) res.getResult();
+            String path = pathMap.get("path");
+            String relativeToProp = pathMap.get("relative-to");
+            if (relativeToProp==null)
+                return new File(path);
+            else {
+                File basePath = resolveRelativePath(relativeToProp);
+                return new File(basePath, path);
+            }
+        }
+        log.warn("The requested path property " + relativeTo + " is not registered in the server, so not resolving it.");
+        return new File(relativeTo);
     }
 
     @Override

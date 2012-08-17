@@ -345,7 +345,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
         parentComponent.setConnection(getASConnection());
-        ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
+        ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
+            null, null, null, null, null, null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
@@ -379,7 +380,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
         parentComponent.setConnection(getASConnection());
-        ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
+        ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
+            null, null, null, null, null, null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);

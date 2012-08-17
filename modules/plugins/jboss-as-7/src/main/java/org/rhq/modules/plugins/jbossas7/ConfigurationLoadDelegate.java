@@ -257,7 +257,8 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                     }
                 }
 
-                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")) {
+                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")
+                    || propertyName.endsWith(":nullable")) {
                     String realName = propertyName.substring(0, propertyName.indexOf(":"));
                     valueObject = results.get(realName);
                 } else {

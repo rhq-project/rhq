@@ -43,6 +43,7 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
@@ -79,6 +80,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -111,6 +113,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private TreeGrid treeGrid;
     private String selectedNodeId;
+    private Label loadingLabel;
 
     private Resource rootResource;
 
@@ -131,11 +134,17 @@ public class ResourceTreeView extends LocatableVLayout {
 
     @Override
     public void onInit() {
+        // manually handle a loading... message at initial load and also subsequent fetches
+        loadingLabel = new Label(MSG.common_msg_loading());
+        loadingLabel.setIcon(ImageManager.getLoadingIcon());
+        loadingLabel.setHeight(20);
+        loadingLabel.hide();
+        addMember(loadingLabel);
+
         // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
 
     private void buildTree() {
-
         treeGrid = new CustomResourceTreeGrid(getLocatorId());
 
         treeGrid.setOpenerImage("resources/dir.png");
@@ -149,6 +158,8 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setShowRollOver(false);
         treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
+        // disable what the tree grid may do, defer to loadingLabel to handle all of our cases 
+        treeGrid.setLoadingDataMessage(null);
 
         treeGrid.setLeaveScrollbarGap(false);
 
@@ -190,12 +201,15 @@ public class ResourceTreeView extends LocatableVLayout {
                         disable();
 
                         try {
+                            loadingLabel.show();
                             getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
                                 public void onSuccess(ResourceGroup result) {
+                                    loadingLabel.hide();
                                     renderAutoGroup(result);
                                 }
 
                                 public void onFailure(Throwable caught) {
+                                    loadingLabel.hide();
                                     // Make sure to re-enable ourselves.
                                     enable();
                                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
@@ -203,6 +217,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 }
                             });
                         } catch (RuntimeException re) {
+                            loadingLabel.hide();
                             // Make sure to re-enable ourselves.
                             enable();
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), re);
@@ -281,9 +296,11 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterResourceTypeId(agNode.getResourceType().getId());
         criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
         criteria.addFilterVisible(false);
+        loadingLabel.show();
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
 
             public void onFailure(Throwable caught) {
+                loadingLabel.hide();
                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_node(), caught));
             }
 
@@ -299,11 +316,13 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.createPrivateResourceGroup(backingGroup, childIds,
                         new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
+                                loadingLabel.hide();
                                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_create(),
                                     caught));
                             }
 
                             public void onSuccess(ResourceGroup result) {
+                                loadingLabel.hide();
                                 // store a map entry from backingGroupId to AGTreeNode so we can easily
                                 // get back to this node given the id of the backing group (from the viewpath)
                                 autoGroupNodeMap.put(result.getId(), agNode);
@@ -322,11 +341,13 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
+                                loadingLabel.hide();
                                 callback.onFailure(new RuntimeException(MSG.view_tree_common_loadFailed_update(),
                                     caught));
                             }
 
                             public void onSuccess(Void result) {
+                                loadingLabel.hide();
                                 callback.onSuccess(backingGroup);
                             }
                         });
@@ -895,7 +916,6 @@ public class ResourceTreeView extends LocatableVLayout {
             // This is the case where the tree was previously loaded and we get fired to look at a different
             // node in the same tree and just have to switch the selection            
             updateSelection(isRefresh);
-
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
             loadTree(selectedResourceId, true, null);
@@ -913,10 +933,12 @@ public class ResourceTreeView extends LocatableVLayout {
         final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
         // This is an expensive call, but loads all nodes that are visible in the tree given a selected resource
+        loadingLabel.show();
         resourceService.getResourceLineageAndSiblings(selectedResourceId,
             new AsyncCallback<List<ResourceLineageComposite>>() {
 
                 public void onFailure(Throwable caught) {
+                    loadingLabel.hide();
                     boolean resourceDoesNotExist = caught.getMessage().contains("ResourceNotFoundException");
                     // If a Resource with the specified id does not exist, don't emit an error, since
                     // ResourceDetailView.loadSelectedItem() will take care of emitting one.
@@ -953,7 +975,8 @@ public class ResourceTreeView extends LocatableVLayout {
                         setRootResource(root);
 
                         // seed datasource with initial resource list and which ancestor resources are locked 
-                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid);
+                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid,
+                            loadingLabel);
                         treeGrid.setDataSource(dataSource);
 
                         addMember(treeGrid);
@@ -962,6 +985,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 Log.info("Done fetching data for tree.");
+
+                                loadingLabel.hide();
 
                                 if (updateSelection) {
                                     updateSelection();
@@ -993,6 +1018,8 @@ public class ResourceTreeView extends LocatableVLayout {
                                 public void onResourceTypeLoaded(List<Resource> result) {
                                     treeGrid.getTree().linkNodes(
                                         ResourceTreeDatasource.buildNodes(lineage, lockedData, treeGrid));
+
+                                    loadingLabel.hide();
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
                                     if (selectedNode != null && updateSelection) {
@@ -1029,9 +1056,11 @@ public class ResourceTreeView extends LocatableVLayout {
             criteria.addFilterId(selectedAutoGroupId);
             criteria.addFilterVisible(false);
             criteria.fetchResourceType(true);
+            loadingLabel.show();
             resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
 
                 public void onFailure(Throwable caught) {
+                    loadingLabel.hide();
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
                 }
 
@@ -1043,6 +1072,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
 
                         public void onFailure(Throwable caught) {
+                            loadingLabel.hide();
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                         }
 
@@ -1053,6 +1083,8 @@ public class ResourceTreeView extends LocatableVLayout {
                             AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
                             autoGroupNodeMap.put(backingGroup.getId(), agNode);
                             updateSelection();
+
+                            loadingLabel.hide();
                         }
                     });
                 }
@@ -1061,7 +1093,6 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     public void renderView(ViewPath viewPath) {
-
         ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {

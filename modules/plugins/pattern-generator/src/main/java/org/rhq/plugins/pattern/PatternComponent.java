@@ -1,4 +1,3 @@
-
 package org.rhq.plugins.pattern;
 
 import java.util.Set;
@@ -30,6 +29,8 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet {
 
     int[] wanted = new int[2];
 
+    long delay = 0L; // in seconds
+
     /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -38,7 +39,6 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet {
         return AvailabilityType.UP;
     }
 
-
     /**
      * Start the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
@@ -46,19 +46,23 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet {
     public void start(ResourceContext context) throws InvalidPluginConfigurationException {
 
         Configuration conf = context.getPluginConfiguration();
-        String tmp = conf.getSimpleValue("ones","1");
+        String tmp = conf.getSimpleValue("ones", "1");
         int wantedOnes = Integer.parseInt(tmp);
-        if (wantedOnes<1)
+        if (wantedOnes < 1)
             throw new InvalidPluginConfigurationException("Ones must be > 0");
-        tmp = conf.getSimpleValue("zeros","1");
+        tmp = conf.getSimpleValue("zeros", "1");
         int wantedZeros = Integer.parseInt(tmp);
-        if (wantedZeros<1)
+        if (wantedZeros < 1)
             throw new InvalidPluginConfigurationException("Zeros must be > 0");
 
         wanted[0] = wantedZeros;
         wanted[1] = wantedOnes;
-    }
 
+        tmp = conf.getSimpleValue("delay", "0");
+        delay = Long.parseLong(tmp);
+        if (delay < 0L)
+            delay = 0L;
+    }
 
     /**
      * Tear down the resource connection
@@ -68,19 +72,22 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet {
         // Nothing to do.
     }
 
-
     /**
      * Gather "measurement" data - actually a series of 1s and 0s starting with 0.
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
-    public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
-         boolean flipMetrics = false;
-         boolean flipTraits = false;
-         for (MeasurementScheduleRequest request : requests) {
-             String metricName = request.getName();
+        if (delay > 0L) {
+            Thread.sleep(delay * 1000L);
+        }
 
-             if (metricName.startsWith("pattern")) {
+        boolean flipMetrics = false;
+        boolean flipTraits = false;
+        for (MeasurementScheduleRequest request : requests) {
+            String metricName = request.getName();
+
+            if (metricName.startsWith("pattern")) {
 
                 double value;
                 if (metricName.equals("pattern1")) {
@@ -98,15 +105,15 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet {
 
                 double value;
                 if (metricName.equals("text1")) {
-                     value = numberForTrait;
-                     flipTraits = true;
+                    value = numberForTrait;
+                    flipTraits = true;
                 } else {
-                     // text2
-                     value = 1 - numberForTrait;
+                    // text2
+                    value = 1 - numberForTrait;
                 }
                 String traitValue = (value == 0) ? "red" : "green";
 
-                MeasurementDataTrait datum = new MeasurementDataTrait(request,traitValue);
+                MeasurementDataTrait datum = new MeasurementDataTrait(request, traitValue);
                 report.addData(datum);
             }
         }

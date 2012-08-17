@@ -95,7 +95,7 @@ public class BundleCriteria extends TaggedCriteria {
     }
 
     public void addFilterBundleTypeName(String filterBundleTypeName) {
-        this.filterName = filterBundleTypeName;
+        this.filterBundleTypeName = filterBundleTypeName;
     }
 
     public void addFilterDescription(String filterDescription) {

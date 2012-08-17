@@ -397,33 +397,34 @@
 
     <!ENTITY datasourceReadWriteConfiguration '
       <resource-configuration>
-        <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true">
+        <c:simple-property name="connection-url" required="true" type="string" readOnly="false" description="The JDBC driver connection URL"/>
+        <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="false">
           <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
         </c:simple-property>
-        <c:simple-property name="driver-class" required="false" type="string" readOnly="true" description="The fully qualified name of the JDBC driver class"/>
-        <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
+        <c:simple-property name="driver-class" required="false" type="string" readOnly="false" description="The fully qualified name of the JDBC driver class"/>
+        <c:simple-property name="jndi-name" required="true" type="string" readOnly="false" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="driver" required="false" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualified name of the JDBC driver class"/>
-        <c:simple-property name="user-name" type="string" readOnly="true" required="false" description="Specify the username used when creating a new connection."/>
-        <c:simple-property name="password" type="password" readOnly="true" required="false" description="Specify the password used when creating a new connection."/>
-        <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-        <c:simple-property name="url-delimiter" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
-        <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
-        <c:simple-property name="use-java-context" type="boolean" readOnly="true" required="false" description="Setting this to false will bind the DataSource into global JNDI;"/>
+        <c:simple-property name="user-name" type="string" readOnly="false" required="false" description="Specify the username used when creating a new connection."/>
+        <c:simple-property name="password" type="password" readOnly="false" required="false" description="Specify the password used when creating a new connection."/>
+        <c:simple-property name="new-connection-sql" type="string" readOnly="false" required="false" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
+        <c:simple-property name="url-delimiter" type="string" readOnly="false" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
+        <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="false" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
+        <c:simple-property name="use-java-context" type="boolean" readOnly="false" required="false" default="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
         <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
         <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" description="Define if the min-pool-size should be considered a strictly."/>
-        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
-        <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
+        <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false" default="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
+        <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false" default="false" description="Define if the min-pool-size should be considered a strictly."/>
+        <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
+        <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="false" description="re-authentication plugin implementation provided for specific purpose (i.e vendor)"/>
         <!--
                         <c:map-property name="reauth-plugin-properties" description="properties for reauthentication plugin passed to the implementation provided for specific purpose (i.e vendor)">
                             read-only
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
+        <c:simple-property name="flush-strategy" required="false" type="string" readOnly="false" description="Specifies how the pool should be flush in case of an error." default="FailingConnectionOnly" defaultValue="FailingConnectionOnly">
           <c:property-options>
             <c:option value="FailingConnectionOnly"/>
             <c:option value="IdleConnections"/>
@@ -431,17 +432,24 @@
           </c:property-options>
         </c:simple-property>
 
-        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false" description="The number of prepared statements per connection in an LRU cache"/>
-        <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
-        <c:simple-property name="track-statements" type="string" readOnly="true" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
-        <c:simple-property name="allocation-retry" type="integer" readOnly="true" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
-        <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="true" required="false" description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
+        <c:simple-property name="allow-multiple-users" type="boolean" required="false" readOnly="false" description="Specifies if multiple users will access the datasource through the getConnection(user, password) method and hence if the internal pool type should account for that"/>
+        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="false" required="false" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="share-prepared-statements" type="boolean" readOnly="false" required="false" default="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
+        <c:simple-property name="track-statements" type="string" readOnly="false" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed">
+          <c:property-options>
+            <c:option value="false"/>
+            <c:option value="true"/>
+            <c:option value="NOWARN"/>
+          </c:property-options>
+        </c:simple-property>
+        <c:simple-property name="allocation-retry" type="integer" readOnly="false" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
+        <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="false" required="false" description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
         <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false" required="false" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
         <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false" required="false" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
-        <c:simple-property name="query-timeout" type="long" readOnly="true" required="false" description="Any configured query timeout in seconds The default is no timeout"/>
-        <c:simple-property name="use-try-lock" type="long" readOnly="true" required="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
-        <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true" required="false" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
-        <c:simple-property name="transaction-isolation" type="string" readOnly="true" required="false" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
+        <c:simple-property name="query-timeout" type="long" readOnly="false" required="false" description="Any configured query timeout in seconds The default is no timeout"/>
+        <c:simple-property name="use-try-lock" type="long" readOnly="false" required="false" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
+        <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="false" required="false" default="false" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
+        <c:simple-property name="transaction-isolation" type="string" readOnly="false" required="false" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels.">
           <c:property-options>
             <c:option value="TRANSACTION_READ_UNCOMMITTED"/>
             <c:option value="TRANSACTION_READ_COMMITTED"/>
@@ -450,16 +458,16 @@
             <c:option value="TRANSACTION_NONE"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true" required="false" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
-        <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
-        <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
-        <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-        <c:simple-property name="background-validation-minutes" type="long" readOnly="false" required="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
-        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+        <c:simple-property name="check-valid-connection-sql" type="string" readOnly="false" required="false" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
+        <c:simple-property name="exception-sorter-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
+        <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
+        <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
+        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" default="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
-        <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
-        <c:simple-property name="spy" type="boolean" readOnly="true" required="false" description="whatever spy or not the jdbc connection"/>
-        <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
+        <c:simple-property name="validate-on-match" type="boolean" readOnly="false" required="false" default="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
+        <c:simple-property name="spy" type="boolean" readOnly="false" required="false" defaultValue="false" description="whatever spy or not the jdbc connection"/>
+        <c:simple-property name="use-ccm" type="boolean" readOnly="false" required="false" description="Enable the use of a cached connection manager"/>
         <c:group name="children:connection-properties:pname+-" displayName="Connection Properties">
           <c:list-property name="*1" displayName="Connection Property" readOnly="false" required="false">
             <c:map-property name="*:pname" displayName="Name" readOnly="false">
@@ -1156,7 +1164,6 @@
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
-      <c:simple-property name="deployDir" type="file" description="Deploy directory for standalone servers" displayName="Deployment directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
       &startScriptPluginConfigGroup;
@@ -1216,6 +1223,8 @@
 
     <metric property="config-file" dataType="trait" displayName="Server Config File" displayType="summary" defaultInterval="3600000"
             description="The name of the server configuration file this server is using"/>
+    <metric property="deployDir" dataType="trait" displayName="Deploy Directory" defaultInterval="600000" defaultOn="true"
+            description="The deployment directory for bundles (usually 'standalone/deployments'"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 
@@ -1313,14 +1322,14 @@
         name="Template-Deploy Files"
         description="Monitor standalone deployment dir for drift. ">
       <basedir>
-        <value-context>pluginConfiguration</value-context>
+        <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </basedir>
     </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
-        <value-context>pluginConfiguration</value-context>
+        <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
       </destination-base-dir>
     </bundle-target>
@@ -2508,16 +2517,15 @@
           </plugin-configuration>
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
-          <metric property="keepalive-time:time" description="The time"/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
           <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -2536,16 +2544,15 @@
           </plugin-configuration>
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
-          <metric property="keepalive-time:time" description="The time"/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
           <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="true" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:map-property name="keepalive-time" readOnly="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="true" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -2848,15 +2855,14 @@
         <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
         <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been rejected."/>
         <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="true" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="true" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="true" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="true" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="true" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" displayName="Max Threads" required="false" type="string" readOnly="true" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -3073,8 +3079,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-            <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -3726,7 +3732,7 @@
           <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
           <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
           <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-          <c:list-property name="remoting-interceptors:nullable" required="false" readOnly="true" description="The list of interceptor classes used by this server." >
+          <c:list-property name="remoting-interceptors:nullable" required="false" readOnly="true" displayName="Remoting Interceptors" description="The list of interceptor classes used by this server." >
               <c:simple-property name="remoting-interceptors" readOnly="true"/>
           </c:list-property>
           <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -4692,7 +4698,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
                 <c:simple-property name="static-connectors" readOnly="true"/>
             </c:list-property>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -4815,7 +4821,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
               <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="true" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
@@ -5491,9 +5497,9 @@
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -5515,9 +5521,9 @@
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
             <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-            <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-              <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-              <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+              <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+              <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
             </c:map-property>
             <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
             <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -5703,8 +5709,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -5919,8 +5925,8 @@
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-            <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -6365,7 +6371,7 @@
           <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
           <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
           <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-          <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server." >
+          <c:list-property name="remoting-interceptors:nullable" required="false" displayName="Remoting Interceptors" description="The list of interceptor classes used by this server." >
               <c:simple-property name="remoting-interceptors" />
           </c:list-property>
           <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -6463,7 +6469,6 @@
             <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
             <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
             <c:simple-property name="ha" required="true" type="boolean" readOnly="false" defaultValue="false" description="Whether the connection factory supports High Availability. The default value is false."/>
-            <c:simple-property name="initial-message-packet-size" required="true" type="integer" readOnly="true" description="The initial size of messages created through this factory."/>
             <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The max retry interval. The default value is 2000."/>
             <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" defaultValue="102400" description="The min large message size. The default value is 102400."/>
             <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to pre&#45;acknowledge. The default value is false."/>
@@ -6822,7 +6827,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
                 <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -6911,7 +6916,7 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
               <c:simple-property name="static-connectors" />
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
@@ -9335,7 +9340,7 @@
         <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
         <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
         <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server.">
+        <c:list-property name="remoting-interceptors:nullable" required="false" displayName="Remoting Interceptors" description="The list of interceptor classes used by this server.">
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -10262,16 +10267,15 @@
         </plugin-configuration>
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
           <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-          <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -10291,16 +10295,15 @@
         </plugin-configuration>
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
-        <metric property="keepalive-time:time" description="The time"/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
           <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-          <c:map-property name="keepalive-time" required="true" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-            <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-            <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
+            <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+            <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="integer" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" displayName="Name" description="The name of the thread pool."/>
@@ -10856,8 +10859,8 @@
 
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" required="true" readOnly="false" type="long" description="The time"/>
-          <c:simple-property name="unit" required="true" readOnly="false" type="string" description="The time unit"/>
+          <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -10935,8 +10938,8 @@
 
       <resource-configuration>
         <c:map-property name="keepalive-time" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
-          <c:simple-property name="time" required="true" type="long" readOnly="false" description="The time"/>
-          <c:simple-property name="unit" required="true" type="string" readOnly="false" description="The time unit"/>
+          <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
+          <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="false" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
@@ -11350,7 +11353,7 @@
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi-name to which to bind this cache instance."/>
-          <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+          <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC" description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
             <c:property-options>
               <c:option value="SYNC"/>
               <c:option value="ASYNC"/>
@@ -11929,7 +11932,7 @@
         <c:simple-property name="persist-delivery-count-before-delivery" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the delivery count is persisted before delivery. False means that this only happens after a message has been cancelled. The default value is false."/>
         <c:simple-property name="persist-id-cache" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether IDs are persisted to the journal. The default value is true."/>
         <c:simple-property name="persistence-enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the server will use the file based journal for persistence. The default value is true."/>
-        <c:list-property name="remoting-interceptors:nullable" required="false" description="The list of interceptor classes used by this server.">
+        <c:list-property name="remoting-interceptors:nullable" required="false" displayName="Remoting Interceptors" description="The list of interceptor classes used by this server.">
           <c:simple-property name="remoting-interceptors"/>
         </c:list-property>
         <c:simple-property name="run-sync-speed-test" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether on startup to perform a diagnostic test on how fast your disk can sync. Useful when determining performance issues. The default value is false."/>
@@ -12896,7 +12899,7 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors:nullable" required="false" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+          <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
             <c:simple-property name="static-connectors"/>
           </c:list-property>
           <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -13019,7 +13022,7 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors:nullable" required="false" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+          <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
             <c:simple-property name="static-connectors"/>
           </c:list-property>
           <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>

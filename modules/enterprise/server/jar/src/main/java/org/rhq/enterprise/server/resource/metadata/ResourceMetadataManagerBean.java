@@ -153,7 +153,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
         for (ResourceType resourceType : nonRunsInsideResourceTypes) {
             long startTime = System.currentTimeMillis();
-            updateType(resourceType);
+            resourceType = resourceMetadataManager.updateType(resourceType);
             long endTime = System.currentTimeMillis();
             log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
                 + " ms");
@@ -181,7 +181,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes, metadataCache);
 
             if (!obsoleteTypes.isEmpty()) {
-                log.debug("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
+                log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
                 removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
             }
 
@@ -361,21 +361,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    private void updateType(ResourceType resourceType) {
-        entityManager.flush();
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ResourceType updateType(ResourceType resourceType) {
 
         // see if there is already an existing type that we need to update
-        if (log.isDebugEnabled()) {
-            log.debug("Updating resource type [" + resourceType.getName() + "] from plugin ["
-                + resourceType.getPlugin() + "]...");
-        }
+        log.info("Updating resource type [" + toConciseString(resourceType) + "]...");
 
         ResourceType existingType;
         try {
             existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(),
                 resourceType.getPlugin());
+
         } catch (NonUniqueResultException nure) {
-            log.debug("Found more than one existing ResourceType for " + resourceType);
+            log.info("Found more than one existing ResourceType for " + resourceType);
             // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
             throw new IllegalStateException(nure);
         }
@@ -390,6 +388,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         } else {
             mergeExistingType(resourceType, existingType);
         }
+
+        return resourceType;
     }
 
     private void mergeExistingType(ResourceType resourceType, ResourceType existingType) {
@@ -427,7 +427,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Update the type itself
         if (resourceType.getCategory() != existingType.getCategory()) {
             log.info("Changing category of Resource type [" + resourceType + "] from " + existingType.getCategory()
-                    + " to " + resourceType.getCategory() + "...");
+                + " to " + resourceType.getCategory() + "...");
             existingType.setCategory(resourceType.getCategory());
         }
 
@@ -447,7 +447,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // above already took care of any modifications to the ResourceSubCategories themselves).
         } else if (newSubCat == null) {
             if (oldSubCat != null) {
-                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+                log.info("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
                     + oldSubCat + " to " + newSubCat);
                 existingType.setSubCategory(null);
             }
@@ -459,13 +459,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 throw new IllegalStateException("Resource type [" + resourceType.getName() + "] in plugin ["
                     + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
                     + ") which was not defined as a child subcategory of one of its ancestor resource types.");
-            log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+            log.info("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
                 + oldSubCat + " to " + existingSubCat);
             existingType.setSubCategory(existingSubCat);
         }
 
         existingType = entityManager.merge(existingType);
-        entityManager.flush();
     }
 
     @Override
@@ -600,7 +599,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);
 
         entityManager.persist(resourceType);
-        entityManager.flush();
     }
 
     private void linkSubCategoryToParents(ResourceType resourceType) {
@@ -665,8 +663,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             obsoleteParentType.removeChildResourceType(existingType);
             moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
         }
-
-        entityManager.flush();
     }
 
     private static String toConciseString(ResourceType type) {
@@ -711,7 +707,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 // children are not handled in this method, update their ancestry now.
                 resourceManager.updateAncestry(subjectManager.getOverlord(), resource.getId());
             } else {
-                log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
+                log.info("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                     + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
@@ -842,7 +838,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // simply use the ones from the new type
         if ((existingSubCat.getChildSubCategories() == null) || existingSubCat.getChildSubCategories().isEmpty()) {
             for (ResourceSubCategory newChildSubCategory : newSubCategory.getChildSubCategories()) {
-                log.debug("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
+                log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
                     + "] to SubCategory [" + existingSubCat.getName() + "]...");
                 existingSubCat.addChildSubCategory(newChildSubCategory);
                 entityManager.persist(newChildSubCategory);

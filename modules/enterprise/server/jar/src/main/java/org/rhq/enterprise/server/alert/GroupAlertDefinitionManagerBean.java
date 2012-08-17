@@ -137,6 +137,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         return list;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int createGroupAlertDefinitions(Subject subject, AlertDefinition groupAlertDefinition,
         Integer resourceGroupId) throws InvalidAlertDefinitionException, AlertDefinitionCreationException {
@@ -151,7 +152,6 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                 + " with data " + groupAlertDefinition.toSimpleString(), t);
         }
 
-        Subject overlord = subjectManager.getOverlord();
         Throwable firstThrowable = null;
 
         List<Integer> resourceIdsForGroup = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(subject,
@@ -164,7 +164,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                 childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
                 // persist the child
-                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+                alertDefinitionManager.createDependentAlertDefinition(subject, childAlertDefinition, resourceId);
             } catch (Throwable t) {
                 // continue on error, create as many as possible
                 if (firstThrowable == null) {

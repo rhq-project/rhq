@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -76,7 +77,7 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
     }
 
     protected RPCDataSource<Bundle, BundleCriteria> getDataSource() {
-        return new BundlesDataSource();
+        return new SelectedBundlesDataSource();
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
@@ -93,5 +94,16 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
     @Override
     protected String getItemTitle() {
         return MSG.common_title_bundles();
+    }
+    
+    public class SelectedBundlesDataSource extends BundlesDataSource {
+        @Override
+        protected BundleCriteria getFetchCriteria(final DSRequest request) {
+            BundleCriteria result = super.getFetchCriteria(request);
+            if (null != result) {
+                result.setStrict(false);
+            }
+            return result;
+        }
     }
 }

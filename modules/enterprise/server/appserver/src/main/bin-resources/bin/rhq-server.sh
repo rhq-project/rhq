@@ -63,8 +63,8 @@
 #                              instead.
 #
 #    RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS - additional command line arguments to
-#                                         be passed to the RHQ Server JBossAS 
-#                                         standalone.sh. This is added to 
+#                                         be passed to the RHQ Server JBossAS
+#                                         standalone.sh. This is added to
 #                                         RHQ_SERVER_CMDLINE_OPTS; it is mainly
 #                                         used to augment the Server's default
 #                                         set of options. This can be left unset
@@ -257,7 +257,7 @@ fi
 
 if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"     
+      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"
       if [ -d "$RHQ_SERVER_JAVA_HOME" ]; then
          debug_msg "Using the embedded JRE"
       else
@@ -318,7 +318,7 @@ if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
       _PROPS_FILE_PATH=`cygpath --windows --path "$_PROPS_FILE_PATH"`
    fi
 
-   RHQ_SERVER_CMDLINE_OPTS="-P ${_PROPS_FILE_PATH}"   
+   RHQ_SERVER_CMDLINE_OPTS="-P ${_PROPS_FILE_PATH}"
 fi
 
 debug_msg "RHQ_SERVER_CMDLINE_OPTS: $RHQ_SERVER_CMDLINE_OPTS"
@@ -490,6 +490,19 @@ case "$1" in
         exit 0
         ;;
 
+'clean')
+        if [ "$_SERVER_RUNNING" = "1" ]; then
+           echo "$_SERVER_STATUS"
+           echo "Please shutdown the server before cleaning."
+           exit 0
+        fi
+
+        echo "Cleaning data, tmp and log directories..."
+        rm -rf "${RHQ_SERVER_HOME}/jbossas/standalone/data"
+        rm -rf "${RHQ_SERVER_HOME}/jbossas/standalone/tmp"
+        rm -rf "${RHQ_SERVER_HOME}/logs"
+        ;;
+
 'status')
         echo "$_SERVER_STATUS"
         echo "$_JVM_STATUS"
@@ -497,7 +510,7 @@ case "$1" in
         ;;
 
 *)
-        echo "Usage: $0 { start | stop | kill | status | console }"
+        echo "Usage: $0 { start | stop | kill | status | console | clean }"
         exit 1
         ;;
 esac

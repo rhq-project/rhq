@@ -21,20 +21,17 @@ package org.rhq.enterprise.server.core;
 import java.io.File;
 import java.util.Date;
 
-import javax.management.ObjectName;
-
-import org.jboss.mx.util.ObjectNameFactory;
-import org.jboss.system.ServiceMBean;
 import org.rhq.core.domain.common.ProductInfo;
 
 /**
  * An MBean that exposes various core server global attributes (version, uptime, etc.).
+ * @deprecated use new management API to get things like install dir
  */
-public interface CoreServerMBean extends ServiceMBean {
+public interface CoreServerMBean {
     /**
      * The name of this MBean when deployed.
      */
-    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=CoreServer");
+    String OBJECT_NAME = "rhq:service=CoreServer";
 
     /**
      * Returns the version of the core RHQ server.

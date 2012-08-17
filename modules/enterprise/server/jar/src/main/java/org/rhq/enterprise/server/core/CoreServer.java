@@ -33,13 +33,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.ServiceMBeanSupport;
 import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 
-public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
+/**
+ * @deprecated use new management API to get things like install dir
+ */
+public class CoreServer implements CoreServerMBean {
     private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =
             "org/rhq/enterprise/server/core/ProductInfo.properties";
 
@@ -69,8 +71,7 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     private Date bootTime;
 
-    @Override
-    protected void createService() throws Exception {
+    protected void start() throws Exception {
         this.buildProps = loadBuildProperties();
         this.bootTime = new Date();
 
@@ -81,7 +82,6 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         log.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
     }
 
-    @Override
     public String getName() {
         return "RHQ Server";
     }

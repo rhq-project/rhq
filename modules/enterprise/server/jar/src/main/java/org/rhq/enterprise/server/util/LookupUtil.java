@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.util;
 
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -613,8 +614,13 @@ public final class LookupUtil {
     
     public static CoreServerMBean getCoreServer() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
-            CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
+        CoreServerMBean jonServer;
+        try {
+            jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME,
+                jBossMBeanServer);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
         return jonServer;
     }
 

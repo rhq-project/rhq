@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.persistence.Query;
 
 import org.testng.annotations.AfterGroups;
@@ -131,7 +132,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         // mock up our core server MBean that provides information about where the jboss home dir is
         MBeanServer mbs = getJBossMBeanServer();
         DummyCoreServer mbean = new DummyCoreServer();
-        mbs.registerMBean(mbean, CoreServerMBean.OBJECT_NAME);
+        mbs.registerMBean(mbean, new ObjectName(CoreServerMBean.OBJECT_NAME));
 
         // in order to register, we need to mock out the agent version file used by the server
         // to determine the agent version it supports.
@@ -173,7 +174,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         // shutdown our mock mbean server
         MBeanServer mbs = getJBossMBeanServer();
-        mbs.unregisterMBean(CoreServerMBean.OBJECT_NAME);
+        mbs.unregisterMBean(new ObjectName(CoreServerMBean.OBJECT_NAME));
 
         unprepareForTestAgents();
 
@@ -459,41 +460,6 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     };
 
     class DummyCoreServer implements DummyCoreServerMBean {
-
-        @Override
-        public String getName() {
-            return "CoreServer";
-        }
-
-        @Override
-        public int getState() {
-            return 0;
-        }
-
-        @Override
-        public String getStateString() {
-            return "";
-        }
-
-        @Override
-        public void jbossInternalLifecycle(String arg0) throws Exception {
-        }
-
-        @Override
-        public void create() throws Exception {
-        }
-
-        @Override
-        public void destroy() {
-        }
-
-        @Override
-        public void start() throws Exception {
-        }
-
-        @Override
-        public void stop() {
-        }
 
         @Override
         public String getVersion() {

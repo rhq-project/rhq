@@ -113,6 +113,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
@@ -796,14 +797,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             // If the ancestor is not locked, include viewable children.
             if (!ancestor.isLocked() || ancestor.getResource() == parent) {
-                // Get all viewable committed children.
-                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject,
-                    ancestor.getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
+                // Get viewable committed children, but bounded to ensure it's not an overwhelming return set
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.addFilterParentResourceId(ancestor.getResource().getId());
+                criteria.addSortName(PageOrdering.ASC);
+                List<Resource> children = findResourcesByCriteriaBounded(subject, criteria, 0, 0);
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
                 for (Resource child : children) {
-                    // Ensure the parentResource field is fetched.
-                    //noinspection ConstantConditions
+                    // Ensure the parentResource field is fetched. (do this here and not via criteria.fetchParentResource
+                    // because that option would require inventory manager perm)
                     child.getParentResource().getId();
                     // The query only returned viewable children, so the composite should not be locked.
                     boolean isLocked = false;

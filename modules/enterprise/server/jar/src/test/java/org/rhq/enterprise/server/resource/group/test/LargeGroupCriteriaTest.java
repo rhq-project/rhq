@@ -21,17 +21,21 @@ package org.rhq.enterprise.server.resource.group.test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.LargeGroupTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -187,6 +191,57 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
             gacs.add(new GroupAvailCounts(20, 20, 20, 20));
         }
         testGroupQueries(gacs);
+    }
+
+    // test findResourcesByCriteriaBounded here instead of ResourceGroupManagerBeanTest because we want
+    // to work with a decent # or resources.
+    @Test(enabled = TEST_ENABLED)
+    public void testResourceCriteriaBounded() throws Exception {
+        ArrayList<GroupAvailCounts> gacs = new ArrayList<LargeGroupCriteriaTest.GroupAvailCounts>();
+        gacs.add(new GroupAvailCounts(1100, 0, 0, 0)); // purposefully over 1,000, avails don't really matter
+
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        AuthorizationManagerLocal authManager = LookupUtil.getAuthorizationManager();
+
+        env = new ArrayList<LargeGroupEnvironment>(gacs.size());
+
+        LargeGroupEnvironment lgeWithTypes = null;
+        for (GroupAvailCounts gac : gacs) {
+            env.add(createLargeGroupWithNormalUserRoleAccessWithInventoryStatus(lgeWithTypes, gac.total, gac.down,
+                gac.unknown, gac.disabled, gac.uncommitted, Permission.CONFIGURE_READ));
+            lgeWithTypes = env.get(0);
+        }
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        List<Resource> result;
+
+        SessionTestHelper.simulateLogin(env.get(0).normalSubject);
+
+        criteria.addFilterParentResourceId(lgeWithTypes.platformResource.getId());
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        result = resourceManager.findResourcesByCriteria(env.get(0).normalSubject, criteria);
+        assert null != result;
+        assert result.size() == 1100 : "Expected unbounded query to return all 1100 resources";
+
+        result = resourceManager.findResourcesByCriteriaBounded(env.get(0).normalSubject, criteria, 2000, 100);
+        assert null != result;
+        assert result.size() == 1100 : "Expected 2000/100 bounded query to return all 1100 resources";
+
+        result = resourceManager.findResourcesByCriteriaBounded(env.get(0).normalSubject, criteria, 1100, 100);
+        assert null != result;
+        assert result.size() == 1100 : "Expected 1100/100 bounded query to return all 1100 resources";
+
+        result = resourceManager.findResourcesByCriteriaBounded(env.get(0).normalSubject, criteria, 0, 0);
+        assert null != result;
+        assert result.size() == 200 : "Expected default (1000/200) bounded query to return 200 resources";
+
+        result = resourceManager.findResourcesByCriteriaBounded(env.get(0).normalSubject, criteria, 0, 500);
+        assert null != result;
+        assert result.size() == 500 : "Expected default (1000)/500) bounded query to return 500 resources";
+
+        result = resourceManager.findResourcesByCriteriaBounded(env.get(0).normalSubject, criteria, 100, 200);
+        assert null != result;
+        assert result.size() == 100 : "Expected 100/200 bounded query to return 100 resources";
     }
 
     private PageList<ResourceGroupComposite> testGroupQueriesWithSearchBar(GroupAvailCounts gac, String searchExpression)

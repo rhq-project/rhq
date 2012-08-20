@@ -26,7 +26,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -48,6 +47,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -58,6 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  */
 public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGroupComposite, ResourceGroupCriteria> {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public static final String FILTER_GROUP_IDS = "resourceGroupIds";
 
@@ -114,7 +116,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
                     if (caught.getMessage().contains("SearchExpressionException")) {
-                        Message message = new Message("Invalid search expression.", Message.Severity.Error);
+                        Message message = new Message(MSG.search_invalid_search_expression(), Message.Severity.Error);
                         CoreGUI.getMessageCenter().notify(message);
                     } else {
                         CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
@@ -123,13 +125,16 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     processResponse(request.getRequestId(), response);
                 }
                 
-                private PageList<ResourceGroupComposite> filterEmptyMemberGroups(ResourceGroupCriteria groupCriteria,
-                                                                                 PageList<ResourceGroupComposite> result){
+                private PageList<ResourceGroupComposite> applyAvailabilitySearchFilter(
+                    PageList<ResourceGroupComposite> result){
 
+                    if (!isAvailabilitySearch(criteria)) {
+                        return result;
+                    }
                     PageList<ResourceGroupComposite> pageList = new PageList<ResourceGroupComposite>(result.getPageControl());
 
                     for (ResourceGroupComposite rgc : result) {
-                        if (rgc.getExplicitCount() > 0 ){
+                        if (rgc.getExplicitCount() > 0) {
                             pageList.add(rgc);
                         }
                     }
@@ -138,12 +143,16 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
-                    PageList<ResourceGroupComposite> filteredResult =    filterEmptyMemberGroups(criteria,result);
+                    PageList<ResourceGroupComposite> filteredResult = applyAvailabilitySearchFilter(result);
                     response.setData(buildRecords(filteredResult));
                     response.setTotalRows(filteredResult.getTotalSize()); // for paging to work we have to specify size of full result set
                     processResponse(request.getRequestId(), response);
                 }
             });
+    }
+
+    private boolean isAvailabilitySearch(ResourceGroupCriteria criteria) {
+        return criteria.getSearchExpression() != null && criteria.getSearchExpression().startsWith("availability");
     }
 
     @Override

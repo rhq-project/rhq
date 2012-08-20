@@ -50,6 +50,12 @@
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
 
+    <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+        <when-property-is name="user.agent" value="ie8"/>
+    </replace-with>
+
 
     <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>

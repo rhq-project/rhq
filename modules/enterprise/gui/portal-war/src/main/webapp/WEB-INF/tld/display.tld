@@ -614,6 +614,7 @@
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.AvailabilityDecorator</tag-class>
     <body-content>empty</body-content>
   </tag>
+<!--
   <tag>
     <name>resourcedecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.ResourceDecorator</tag-class>
@@ -660,6 +661,7 @@
       <type>String</type>
     </attribute>
   </tag>
+-->
   <tag>
     <name>booleandecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.BooleanDecorator</tag-class>

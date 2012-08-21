@@ -443,6 +443,7 @@
       </attribute>
    </tag>
 
+<!--
    <tag>
       <name>navMap</name>
       <tag-class>org.rhq.enterprise.gui.legacy.taglib.NavMapTag</tag-class>
@@ -463,6 +464,7 @@
          <rtexprvalue>true</rtexprvalue>
       </attribute>
    </tag>
+-->
 
    <tag>
       <name>navMapSupported</name>

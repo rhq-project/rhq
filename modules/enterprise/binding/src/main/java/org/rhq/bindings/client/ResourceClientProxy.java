@@ -570,7 +570,7 @@ public class ResourceClientProxy {
 
                 File file = new File(fileName);
 
-                byte[] data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
+                byte[] data = remoteClient.getContentManager().getPackageBytes(
                     remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
 
                 FileOutputStream fos = new FileOutputStream(file);

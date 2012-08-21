@@ -29,7 +29,7 @@ public class RHQConstants {
     public static final String PRODUCT_NAME = "RHQ";
     public static final String EAR_NAME = "rhq";
     public static final String EAR_FILE_NAME = EAR_NAME + ".ear";
-    public static final String ENTITY_MANAGER_JNDI_NAME = "java:/RHQEntityManagerFactory";
+    public static final String ENTITY_MANAGER_JNDI_NAME = "java:jboss/RHQEntityManagerFactory";
     public static final String DATASOURCE_JNDI_NAME = "java:jboss/datasources/RHQDS";
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
     public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:jboss/TransactionManager";

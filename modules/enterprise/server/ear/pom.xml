@@ -226,7 +226,9 @@
                     <unpackTypes>war,ejb</unpackTypes>
                     <archive>
                         <manifestEntries>
-                            <Dependencies>org.jboss.common-core export</Dependencies> <!-- needed to fix https://issues.jboss.org/browse/AS7-5336 -->
+                            <!-- org.jboss.common-core - needed to fix https://issues.jboss.org/browse/AS7-5336 -->
+                            <!-- org.jboss.jta - needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
+                            <Dependencies>org.jboss.common-core export,org.jboss.jts</Dependencies>
                         </manifestEntries>
                     </archive>
                     <modules>

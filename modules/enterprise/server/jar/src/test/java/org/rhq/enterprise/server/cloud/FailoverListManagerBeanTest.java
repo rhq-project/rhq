@@ -225,11 +225,15 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         validateBasic(result, numServers, numAgents);
 
         // validate balance level by level
-        for (int i = 0; (i < numServers); ++i) {
+        for (int level = 0; (level < numServers); ++level) {
             Map<String, Integer> distributionMap = new HashMap<String, Integer>(numServers);
             for (Agent agent : result.keySet()) {
                 FailoverListComposite flc = result.get(agent);
-                FailoverListComposite.ServerEntry server = flc.get(i);
+                // for debugging
+                //if (i == 1) {
+                //    System.out.println(agent + " : " + flc);
+                //}
+                FailoverListComposite.ServerEntry server = flc.get(level);
                 Integer count = distributionMap.get(server.address);
                 distributionMap.put(server.address, (null == count) ? 1 : ++count);
             }
@@ -237,8 +241,21 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                 double div = (double) numAgents / (double) numServers;
                 int ceil = (int) Math.ceil(div);
                 int floor = (int) Math.floor(div);
-                assert agentsOnServer <= ceil;
-                assert agentsOnServer >= floor;
+                // as we get deeper be more lenient. We haven't come up with any sort of genius algorithm, it's
+                // just ok, if it balances well for the primary and secondary that's good.  Allow a skew of 1 for
+                // level 3-5 and a skew of 2 for levels past that
+                if (level > 2) {
+                    ++ceil;
+                    --floor;
+                }
+                if (level > 5) {
+                    ++ceil;
+                    --floor;
+                }
+                assert agentsOnServer <= ceil : "AgentsOnServer [" + agentsOnServer + "] > ceiling [" + ceil
+                    + "] (level " + level + ")";
+                assert agentsOnServer >= floor : "AgentsOnServer [" + agentsOnServer + "] < floor [" + floor
+                    + "] (level " + level + ")";
             }
         }
 

@@ -369,10 +369,6 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
     </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ReportExporter</servlet-name>
-        <url-pattern>/ReportExporter</url-pattern>
-    </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>Resteasy</servlet-name>

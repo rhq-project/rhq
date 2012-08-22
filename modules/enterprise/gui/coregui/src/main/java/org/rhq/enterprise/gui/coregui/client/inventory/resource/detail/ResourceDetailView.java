@@ -18,8 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -33,7 +39,11 @@ import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -56,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.MonitorGraphsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -66,11 +77,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.T
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Right panel of the Resource view (#Resource/*).
@@ -124,6 +130,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
+    private SubTab monitorCubismGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
     private SubTab monitorAvail;
@@ -199,6 +206,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_monitoring()), IconEnum.SUSPECT_METRICS);
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs",
             MSG.view_tabs_common_graphs()), null);
+        monitorCubismGraphs = new SubTab(monitoringTab.extendLocatorId("CubismGraphs"), new ViewName("CubismGraphs",
+                MSG.view_tabs_common_graphs_cubism()), null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
             MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), new ViewName("Traits",
@@ -209,7 +218,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorTraits, monitorAvail, monitorSched,
+        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorCubismGraphs, monitorTraits, monitorAvail, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -407,8 +416,17 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"),
                     "/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId());
             }
+
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
+
+        viewFactory = (!visible) ? null : new ViewFactory() {
+            @Override
+            public Canvas createView() {
+                return new MonitorGraphsView(monitoringTab.extendLocatorId("CubismGraphs"), resourceComposite);
+            }
+        };
+        updateSubTab(this.monitoringTab, this.monitorCubismGraphs, visible, true, viewFactory);
 
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {
@@ -666,3 +684,5 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return false;
     }
 }
+
+

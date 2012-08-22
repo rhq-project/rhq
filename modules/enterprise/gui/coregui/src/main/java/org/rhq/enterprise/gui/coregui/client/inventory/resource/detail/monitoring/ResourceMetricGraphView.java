@@ -134,7 +134,6 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
             });
 
         } else {
-
             drawGraph();
         }
     }

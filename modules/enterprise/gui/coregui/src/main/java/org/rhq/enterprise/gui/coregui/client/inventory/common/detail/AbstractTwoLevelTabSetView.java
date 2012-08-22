@@ -67,7 +67,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         setHeight100();
 
         this.titleBar = createTitleBar();
-        addMember(this.titleBar);
+        if(null != this.titleBar){
+            addMember(this.titleBar);
+        }
 
         this.tabSet = new TwoLevelTabSet(extendLocatorId("TabSet"));
         this.tabSet.setTabBarPosition(Side.TOP);
@@ -92,8 +94,6 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     protected abstract List<TwoLevelTab> createTabs();
 
     /**
-     * TODO
-     *
      * @param itemId
      * @param viewPath
      */

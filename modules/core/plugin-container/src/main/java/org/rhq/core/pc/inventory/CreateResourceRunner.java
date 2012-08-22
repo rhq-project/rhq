@@ -161,8 +161,15 @@ public class CreateResourceRunner implements Callable, Runnable {
             status = CreateResourceStatus.TIMED_OUT;
             errorMessage = "The time out has been exceeded; however, the deployment may have been successful. You " +
                 "may want to run a discovery scan to see if the deployment did complete successfully. Also consider " +
-                "using a higher time out value for future deployments.\n\nRoot Cause:\n";
-            errorMessage += ThrowableUtil.getStackAsString(e);
+                "using a higher time out value for future deployments.";
+
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to create resource for " + report + ". " + errorMessage, e);
+            } else {
+                log.info("Failed to create resource for " + report + ". " + errorMessage, e);
+            }
+
+            errorMessage += "\n\nRoot Cause:\n" + e.getMessage();
         } catch (Throwable t) {
             errorMessage = ThrowableUtil.getStackAsString(t);
             status = CreateResourceStatus.FAILURE;

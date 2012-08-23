@@ -993,7 +993,7 @@
 
               <execution>
                 <id>deploy</id>
-                <phase>compile</phase>
+                <phase>process-classes</phase>
                 <configuration>
                   <target>
                     <property name="deployment.dir" location="${rhq.deploymentDir}"/>

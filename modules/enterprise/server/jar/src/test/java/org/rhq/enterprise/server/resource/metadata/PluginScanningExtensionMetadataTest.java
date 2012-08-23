@@ -94,9 +94,9 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
             } catch (Exception e) {
                 throw new RuntimeException("Cannot determine where to put the plugin jar files", e);
             }
-            this.pluginScanner.setAgentPluginDir(new File(pluginDirPath)); // we don't want to scan for these
+            this.pluginScanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
             this.pluginScanner.setServerPluginDir(null); // we don't want to scan for these
-            this.pluginScanner.setScanPeriod(9999999L); // we want to manually scan - don't allow for auto-scan to happen
+            this.pluginScanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen
         }
         super.preparePluginScannerService(this.pluginScanner);
 

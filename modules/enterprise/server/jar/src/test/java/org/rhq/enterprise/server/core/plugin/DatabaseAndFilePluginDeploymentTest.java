@@ -504,7 +504,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     private PluginDeploymentScanner createScanner() throws Exception {
         PluginDeploymentScanner scanner = new PluginDeploymentScanner();
         File pluginDirectoryFile = new File(DEPLOY_LOCATION);
-        scanner.setAgentPluginDir(pluginDirectoryFile);
+        scanner.setAgentPluginDir(pluginDirectoryFile.getAbsolutePath());
         return scanner;
     }
 

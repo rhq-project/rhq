@@ -297,6 +297,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * @see ServerCommunicationsServiceMBean#setConfigurationFile(String)
      */
     public void setConfigurationFile(String location) {
+        if (location == null) {
+            return;
+        }
         m_configFile = StringPropertyReplacer.replaceProperties(location);
     }
 
@@ -325,6 +328,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * @see ServerCommunicationsServiceMBean#setConfigurationOverrides(Properties)
      */
     public void setConfigurationOverrides(Properties overrides) {
+        if (overrides == null) {
+            return;
+        }
         m_configurationOverrides.putAll(overrides);
     }
 
@@ -333,6 +339,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      */
     // for why we need to split our overrides into two attributes - see https://issues.jboss.org/browse/AS7-5342
     public void setConfigurationOverrides2(Properties overrides) {
+        if (overrides == null) {
+            return;
+        }
         m_configurationOverrides.putAll(overrides);
     }
 

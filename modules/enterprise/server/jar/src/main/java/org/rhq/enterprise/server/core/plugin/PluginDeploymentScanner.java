@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -61,45 +61,85 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     /** what looks for new or changed agent plugins */
     private ServerPluginScanner serverPluginScanner = new ServerPluginScanner();
 
-    @NotNull
-    public Long getScanPeriod() {
-        return this.scanPeriod;
+    // https://issues.jboss.org/browse/AS7-5343 forces us to change the attribute values as Strings
+    // we then must convert ourselves.
+
+    //public Long getScanPeriod() {
+    public String getScanPeriod() {
+        //return this.scanPeriod;
+        return Long.toString(this.scanPeriod);
     }
 
-    public void setScanPeriod(@Nullable Long ms) {
+    //public void setScanPeriod(Long ms) {
+    public void setScanPeriod(String ms) {
         if (ms != null) {
-            this.scanPeriod = ms;
+            //this.scanPeriod = ms;
+            this.scanPeriod = Long.parseLong(StringPropertyReplacer.replaceProperties(ms));
         } else {
             this.scanPeriod = 300000L;
         }
     }
 
-    public File getUserPluginDir() {
-        return this.userPluginDir;
+    //public File getUserPluginDir() {
+    public String getUserPluginDir() {
+        //return this.userPluginDir;
+        return this.userPluginDir.getAbsolutePath();
     }
 
-    public void setUserPluginDir(File dir) {
-        this.userPluginDir = dir;
+    //public void setUserPluginDir(File dir) {
+    public void setUserPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.userPluginDir = dir;
+        this.userPluginDir = new File(StringPropertyReplacer.replaceProperties(dir));
     }
 
-    public File getServerPluginDir() {
-        return this.serverPluginScanner.getServerPluginDir();
+    //public File getServerPluginDir() {
+    public String getServerPluginDir() {
+        //return this.serverPluginScanner.getServerPluginDir();
+        return this.serverPluginScanner.getServerPluginDir().getAbsolutePath();
     }
 
-    public void setServerPluginDir(File dir) {
-        this.serverPluginScanner.setServerPluginDir(dir);
+    //public void setServerPluginDir(File dir) {
+    public void setServerPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.serverPluginScanner.setServerPluginDir(dir);
+        this.serverPluginScanner.setServerPluginDir(new File(StringPropertyReplacer.replaceProperties(dir)));
     }
 
-    public File getAgentPluginDir() {
-        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+    //public File getAgentPluginDir() {
+    public String getAgentPluginDir() {
+        //return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir().getAbsolutePath();
     }
 
-    public void setAgentPluginDir(File dir) {
-        this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
+    //public void setAgentPluginDir(File dir) {
+    public void setAgentPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
+        this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(
+            new File(StringPropertyReplacer.replaceProperties(dir)));
     }
 
     public PluginMetadataManager getPluginMetadataManager() {
         return this.agentPluginScanner.getAgentPluginDeployer().getPluginMetadataManager();
+    }
+
+    private File getUserPluginDirAsFile() {
+        return this.userPluginDir;
+    }
+
+    private File getAgentPluginDirAsFile() {
+        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+    }
+
+    private File getServerPluginDirAsFile() {
+        return this.serverPluginScanner.getServerPluginDir();
     }
 
     public void start() throws Exception {
@@ -191,7 +231,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
      * in the server.
      */
     private void scanUserDirectory() {
-        File userDir = getUserPluginDir();
+        File userDir = getUserPluginDirAsFile(); // 
         if (userDir == null || !userDir.isDirectory()) {
             return; // not configured for a user directory, just return immediately and do nothing
         }
@@ -208,7 +248,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                     if (!isJarLess && null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
                         throw new NullPointerException("no xml descriptor found in jar");
                     }
-                    destinationDirectory = getAgentPluginDir();
+                    destinationDirectory = getAgentPluginDirAsFile(); //
                 } catch (Exception e) {
                     try {
                         log.debug("[" + file.getAbsolutePath() + "] is not an agent plugin jar (Cause: "
@@ -217,7 +257,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                         if (null == ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
                             throw new NullPointerException("no xml descriptor found in jar");
                         }
-                        destinationDirectory = getServerPluginDir();
+                        destinationDirectory = getServerPluginDirAsFile(); //
                     } catch (Exception e1) {
                         // skip it, doesn't look like a valid plugin jar
                         File fixmeFile = new File(file.getAbsolutePath() + ".fixme");

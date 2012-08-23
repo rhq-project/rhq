@@ -309,7 +309,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @Override
     public File getPluginDropboxDirectory() {
-        File dir = LookupUtil.getPluginDeploymentScanner().getUserPluginDir();
+        File dir = new File(LookupUtil.getPluginDeploymentScanner().getUserPluginDir());
         return dir;
     }
 

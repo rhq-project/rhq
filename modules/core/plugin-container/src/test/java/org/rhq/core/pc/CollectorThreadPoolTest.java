@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.*;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -47,6 +48,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 @Test
 public class CollectorThreadPoolTest {
 
+    private static long INTERVAL = 30 * 1000;
     protected final Log log = LogFactory.getLog(getClass());
     private CollectorThreadPool threadPool;
 
@@ -94,11 +96,11 @@ public class CollectorThreadPoolTest {
     public void testMeasurement() throws Exception {
         log("testMeasurement");
         TestMeasumentFacet component = new TestMeasumentFacet();
-        // 0L means do the initial collection immediately with no delay - so our test can run fast 
+        // 0L means do the initial collection immediately with no delay - so our test can run fast
         MeasurementCollectorRunnable runnable = new MeasurementCollectorRunnable(component, 0L, 500L, null,
                 this.threadPool.getExecutor());
         Set<MeasurementScheduleRequest> metrics = new HashSet<MeasurementScheduleRequest>();
-        metrics.add(new MeasurementScheduleRequest(0, "name", 0, true, DataType.TRAIT));
+        metrics.add(new MeasurementScheduleRequest(0, "name", INTERVAL, true, DataType.TRAIT));
         MeasurementReport report = new MeasurementReport();
         runnable.getLastValues(report, metrics);
         assert 0 == report.getCollectionTime();
@@ -111,7 +113,7 @@ public class CollectorThreadPoolTest {
 
         report = new MeasurementReport();
         runnable.getLastValues(report, metrics);
-        assert 42 == report.getCollectionTime();
+        assertEquals(42, report.getCollectionTime());
         assert !report.getTraitData().isEmpty();
 
         runnable.stop();
@@ -176,7 +178,7 @@ public class CollectorThreadPoolTest {
         // now we only ask for individual metrics, not all of them at once
         report = new MeasurementReport();
         runnable.getLastValues(report, onlyNumericMetric);
-        assert 1000 == report.getCollectionTime();
+        assertEquals(1000L, report.getCollectionTime());
         assert report.getNumericData().size() == 1;
         assert report.getTraitData().isEmpty() : "we didn't ask for the trait data";
         assert report.getCallTimeData().isEmpty() : "we didn't ask for the calltime data";
@@ -256,7 +258,7 @@ public class CollectorThreadPoolTest {
         }
         System.out.println("done.");
 
-        assert 1001L == report.getCollectionTime();
+        assertEquals(1001L, report.getCollectionTime());
         assert report.getCallTimeData().size() == 1 : report.getCallTimeData();
         assert report.getNumericData().size() == 1 : report.getNumericData();
         nextNumeric = report.getNumericData().iterator().next();
@@ -267,6 +269,7 @@ public class CollectorThreadPoolTest {
     }
 
     public void testLotsOfDataMeasurements() throws Exception {
+        log.info("testLotsOf");
         TestLotsOfDataMeasurementFacet component = new TestLotsOfDataMeasurementFacet();
         Set<MeasurementScheduleRequest> allMetrics = new HashSet<MeasurementScheduleRequest>();
         allMetrics.add(component.getNumericMetricSchedule());
@@ -276,31 +279,49 @@ public class CollectorThreadPoolTest {
         MeasurementCollectorRunnable runnable = new MeasurementCollectorRunnable(component, 0L, 123L, null,
             this.threadPool.getExecutor());
 
-        runnable.getLastValues(new MeasurementReport(), allMetrics); // prime the pump so we begin collecting everything immediately
+        log.info("prime the pump so we begin collecting everything immediately");
+        runnable.getLastValues(new MeasurementReport(), allMetrics);
         runnable.start();
         Thread.sleep(1000L);
 
-        // this tests to make sure we can have multiple data points for a single metric
+        log.info("this tests to make sure we can have multiple data points for a single metric");
         MeasurementReport report = new MeasurementReport();
         runnable.getLastValues(report, allMetrics);
-        assert 1000L == report.getCollectionTime();
-        assert report.getCallTimeData().size() == 1;
+        assertEquals(1000L, report.getCollectionTime());
+        assertEquals(1, report.getCallTimeData().size());
         CallTimeData nextCalltime = report.getCallTimeData().iterator().next();
-        assert nextCalltime.getValues().size() == 2;
-        assert report.getNumericData().size() == 3;
+        assertEquals(2, nextCalltime.getValues().size());
+        assertEquals(3, report.getNumericData().size());
         MeasurementDataNumeric nextNumeric = report.getNumericData().iterator().next();
         assert nextNumeric.getValue() == (double) 1;
         assert report.getTraitData().size() == 3;
         MeasurementDataTrait nextTrait = report.getTraitData().iterator().next();
         assert nextTrait.getValue().equals("1");
 
-        // make sure all the data has been flushed now
+        log.info("make sure data is not returned again");
         report = new MeasurementReport();
         runnable.getLastValues(report, allMetrics);
-        assert 1000L == report.getCollectionTime();
-        assert report.getNumericData().isEmpty();
-        assert report.getTraitData().isEmpty();
-        assert report.getCallTimeData().isEmpty();
+        assertEquals(1000L, report.getCollectionTime());
+        assertEquals(0, report.getCallTimeData().size());
+        assertEquals(0, report.getNumericData().size());
+        assertEquals(0, report.getTraitData().size());
+
+        log.info("test expiration");
+        for (MeasurementScheduleRequest msr : allMetrics) {
+            msr.setInterval(100);
+        }
+        // updates expiration
+        runnable.getLastValues(new MeasurementReport(), allMetrics);
+        Thread.sleep(200);
+        log.info("... expire");
+        runnable.run();
+        report = new MeasurementReport();
+        log.info("... getLastValues");
+        runnable.getLastValues(report, allMetrics);
+        assertEquals(0, report.getCollectionTime());
+        assertEquals(0, report.getCallTimeData().size());
+        assertEquals(0, report.getTraitData().size());
+        assertEquals(0, report.getNumericData().size());
     }
 
     protected class TestAvailabilityFacet implements AvailabilityFacet {

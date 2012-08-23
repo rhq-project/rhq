@@ -18,11 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
 
-import java.util.Date;
 
-import com.google.gwt.user.client.DOM;
-import com.smartgwt.client.core.Function;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 /**
@@ -66,12 +62,14 @@ public class GraphCanvas extends com.smartgwt.client.widgets.Canvas
         this.step = step;
     }
 
+    @Override
     public void setWidth(int width)
     {
         this.width = width;
         flow.setWidth(width);
     }
 
+    @Override
     public void setHeight(int height)
     {
         this.height = height;

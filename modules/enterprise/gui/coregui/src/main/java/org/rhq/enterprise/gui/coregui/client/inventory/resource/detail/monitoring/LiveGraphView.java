@@ -70,6 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public class LiveGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();

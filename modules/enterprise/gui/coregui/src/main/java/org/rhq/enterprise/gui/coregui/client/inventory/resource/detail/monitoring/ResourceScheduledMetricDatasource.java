@@ -96,10 +96,12 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
 
             GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementDefinition>>() {
+                    @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.dataSource_definitions_loadFailed(), caught);
                     }
 
+                    @Override
                     public void onSuccess(PageList<MeasurementDefinition> result) {
                         response.setData(buildRecords(result));
                         processResponse(request.getRequestId(), response);
@@ -114,10 +116,12 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
 
             GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementSchedule>>() {
+                    @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
                     }
 
+                    @Override
                     public void onSuccess(PageList<MeasurementSchedule> result) {
                         response.setData(buildRecords(result));
                         processResponse(request.getRequestId(), response);
@@ -132,10 +136,12 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
 
             GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementSchedule>>() {
+                    @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
                     }
 
+                    @Override
                     public void onSuccess(PageList<MeasurementSchedule> result) {
                         response.setData(buildRecords(result));
                         processResponse(request.getRequestId(), response);

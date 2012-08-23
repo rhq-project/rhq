@@ -75,10 +75,12 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterId(getEntityId());
             resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                 }
 
+                @Override
                 public void onSuccess(PageList<Resource> result) {
                     if (result.isEmpty()) {
                         return;
@@ -114,11 +116,13 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
                                             System.currentTimeMillis() - (1000L * 60 * 60 * 8),
                                             System.currentTimeMillis(), 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
                                                         MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                 }
 
+                                                @Override
                                                 public void onSuccess(
                                                     List<List<MeasurementDataNumericHighLowComposite>> result) {
                                                     setData(result.get(0));

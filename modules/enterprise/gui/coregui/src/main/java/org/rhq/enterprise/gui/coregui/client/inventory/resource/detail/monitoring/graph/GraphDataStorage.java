@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -62,6 +61,7 @@ public class GraphDataStorage implements DataStorage
         beforeMap.clear();
     }
 
+    @Override
     public Collection<Double> getAllValues()
     {
         return processedPoints.values();

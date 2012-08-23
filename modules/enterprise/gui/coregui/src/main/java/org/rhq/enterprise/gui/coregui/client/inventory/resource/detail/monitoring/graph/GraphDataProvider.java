@@ -20,13 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -68,7 +66,7 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
         {
             public void run()
             {
-                int numPoints = Math.round((end - begin) / 60000f);
+                //int numPoints = Math.round((end - begin) / 60000f);
                 end = System.currentTimeMillis();
                 loadData(begin, end, 60);
                 begin = end - (1000 * 60 * 5);
@@ -152,6 +150,7 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
         }
     }
 
+    @Override
     public String getAllJSONPoints()
     {
         String s = "{";

@@ -51,6 +51,12 @@ import org.jboss.util.StringPropertyReplacer;
  * Scheduler MBean service that simply wraps the Quartz scheduler.
  */
 public class SchedulerService implements SchedulerServiceMBean, MBeanRegistration {
+    // for why we need this in RHQ - see https://issues.jboss.org/browse/AS7-5336
+    static {
+        java.beans.PropertyEditorManager.registerEditor(Properties.class,
+            org.jboss.util.propertyeditor.PropertiesEditor.class);
+    }
+
     private Log log = LogFactory.getLog(SchedulerService.class);
 
     private String TIMEOUT_PROPERTY_NAME = "rhq.server.operation-timeout";

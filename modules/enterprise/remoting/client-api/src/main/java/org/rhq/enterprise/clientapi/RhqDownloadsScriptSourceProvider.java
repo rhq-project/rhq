@@ -42,9 +42,13 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
     private static final Log LOG = LogFactory.getLog(RhqDownloadsScriptSourceProvider.class);
 
-    private static final String PREFIX = "//downloads/";
+    private static final String AUTHORITY = "downloads";
 
     private RemoteClient remoteClient;
+
+    public RhqDownloadsScriptSourceProvider() {
+        super(AUTHORITY);
+    }
 
     @Override
     public void rhqFacadeChanged(StandardBindings bindings) {
@@ -63,25 +67,18 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
             return null;
         }
 
-        String path = scriptUri.getSchemeSpecificPart();
+        String path = scriptUri.getPath();
 
-        if (!path.startsWith(PREFIX)) {
-            return null;
-        }
-
-        path.substring(1); //remove the leading '/'
-
-        String urlString = remoteClient.getTransport() + "://" + remoteClient.getHost() + ":" + remoteClient.getPort()
-            + path;
+        URI remoteUri = remoteClient.getRemoteURI().resolve(AUTHORITY + path);
 
         try {
-            URL downloadUrl = new URL(urlString);
+            URL downloadUrl = remoteUri.toURL();
 
             return new InputStreamReader(downloadUrl.openStream());
         } catch (MalformedURLException e) {
-            LOG.debug("Failed to download the script from the RHQ server using URL: " + urlString, e);
+            LOG.debug("Failed to download the script from the RHQ server using URL: " + remoteUri, e);
         } catch (IOException e) {
-            LOG.debug("Failed to download the script from the RHQ server using URL: " + urlString, e);
+            LOG.debug("Failed to download the script from the RHQ server using URL: " + remoteUri, e);
         }
 
         return null;

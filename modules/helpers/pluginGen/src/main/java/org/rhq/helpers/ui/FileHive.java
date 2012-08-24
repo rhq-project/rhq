@@ -19,12 +19,17 @@
 package org.rhq.helpers.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 /** Is a simple ui that generates a very simple managed
@@ -46,6 +51,9 @@ public class FileHive extends JFrame {
         initializeUi();
     }
 
+    /******************* UI Logic & Components **************************/
+    private JTextField hiveDirectory;
+
     /** Responsible for putting together the layout components.
      * 
      */
@@ -55,14 +63,42 @@ public class FileHive extends JFrame {
         getContentPane().setLayout(new BorderLayout());
         // top panel definition
         JPanel top = new JPanel();
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
         top.setBorder(LineBorder.createGrayLineBorder());
+        //Create Hive button
+        JButton createHive = new JButton("Create Hive");
+        createHive.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+        });
+        top.add(createHive);
+        // TextBox that is path to folder where hives will be stored
+        hiveDirectory = new JTextField("(set to a directory where hives can be stored)");
+        top.add(hiveDirectory);
+        //file chooser to graphically set hive root directory
+        //TODO: spinder 8/24/12. Need to choose an icon and bundle this logic under it.
+        JFileChooser hiveDirectoryChooser = new JFileChooser();
+        hiveDirectoryChooser.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        //        top.add(hiveDirectoryChooser);
+
+        //Shake hive button
+        JButton shake = new JButton("Shake Hive");
+        shake.setEnabled(false);
+        top.add(shake);
 
         // center
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.X_AXIS));
-        //        // build center panel
-        //        buildCenterPanel(center);
+        // build center panel
+        buildCenterPanel(center);
 
         // final component layout
         getContentPane().add(top, BorderLayout.NORTH);
@@ -74,5 +110,9 @@ public class FileHive extends JFrame {
             }
         });
         setVisible(true);
+    }
+
+    private void buildCenterPanel(JPanel center) {
+
     }
 }

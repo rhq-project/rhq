@@ -34,6 +34,13 @@
       </dependency>
       
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-scripting-javascript</artifactId>
+         <version>${project.version}</version>
+         <scope>runtime</scope>
+      </dependency>
+            
+      <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
           <version>${project.version}</version>
@@ -131,6 +138,7 @@
                            <property name="persistence-api.version" value="${persistence-api.version}" />
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
+                           <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
                         </ant>
                      </target>
                   </configuration>
@@ -219,6 +227,25 @@
 
 
    <profiles>
+
+      <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
+      <profile>
+         <id>bundle-additional-script-languages</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+         <dependencies>
+            <dependency>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-scripting-python</artifactId>
+               <version>${project.version}</version>
+               <scope>runtime</scope>
+            </dependency>
+         </dependencies>
+      </profile>
 
       <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
       <profile>

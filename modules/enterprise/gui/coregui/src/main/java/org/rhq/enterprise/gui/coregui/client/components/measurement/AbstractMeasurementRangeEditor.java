@@ -24,10 +24,12 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -62,6 +64,7 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
     private boolean displayEnableButton = false;
     private boolean displayRangeItemGrouping = false;
     protected CheckboxItem enableRangeItem;
+    private SpacerItem space;
 
     private ButtonItem setButton;
     public static String ENABLE_RANGE_ITEM = "ENABLE_RANGE_ITEM";
@@ -83,8 +86,9 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
 
     public AbstractMeasurementRangeEditor(String locatorId) {
         super(locatorId);
-        setNumCols(12);
+        setNumCols(10);
         setWrapItemTitles(false);
+        setAlign(Alignment.LEFT);
     }
 
     /**
@@ -106,7 +110,6 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
             setGroupTitle("Filter by: Time");
         }
         enableRangeItem = new CheckboxItem(ENABLE_RANGE_ITEM, "");
-        enableRangeItem.setStartRow(true);
         enableRangeItem.setShowTitle(false);
         enableRangeItem.setShowLabel(false);
         enableRangeItem.addChangeHandler(new ChangeHandler() {
@@ -119,35 +122,24 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
 
         //combobox of last items
         simpleLastValuesItem = new SelectItem(SIMPLE_VALUE_ITEM, MSG.view_measureRange_last());
-        simpleLastValuesItem.setStartRow(false);
-        simpleLastValuesItem.setEndRow(false);
         simpleLastValuesItem.setValueMap(lastValues);
-        simpleLastValuesItem.setWidth("*");
-        simpleLastValuesItem.setRedrawOnChange(true);
+        simpleLastValuesItem.setTitleAlign(Alignment.LEFT);
 
         //combobox of units of time
         simpleLastUnitsItem = new SelectItem(SIMPLE_UNIT_ITEM);
-        simpleLastUnitsItem.setStartRow(false);
-        simpleLastUnitsItem.setEndRow(false);
         simpleLastUnitsItem.setValueMap(lastUnits);
         simpleLastUnitsItem.setShowTitle(false);
-        simpleLastUnitsItem.setWidth("*");
-        simpleLastUnitsItem.setRedrawOnChange(true);
 
         //time range start from
         advancedStartItem = new DateTimeItem(ADVANCED_START_ITEM, MSG.view_measureRange_start());
-        advancedStartItem.setStartRow(false);
-        advancedStartItem.setEndRow(false);
+        advancedStartItem.setTitleAlign(Alignment.LEFT);
 
         //time range end
         advancedEndItem = new DateTimeItem(ADVANCED_END_ITEM, MSG.common_title_end());
-        advancedEndItem.setStartRow(false);
-        advancedEndItem.setEndRow(false);
 
         setButton = new ButtonItem(SET_ITEM, MSG.common_button_set());
         setButton.setStartRow(false);
         setButton.setEndRow(false);
-        setButton.setShowTitle(false);
         setButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -167,30 +159,31 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
         advancedSimpleButton = new ButtonItem(ADVANCED_BUTTON_ITEM, MSG.common_button_advanced());
         advancedSimpleButton.setStartRow(false);
         advancedSimpleButton.setEndRow(false);
-        advancedSimpleButton.setShowTitle(false);
         advancedSimpleButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 advanced = !advanced;
                 update();
             }
         });
+        
+        space = new SpacerItem();
+        space.setWidth(300);
 
         MetricRangePreferences metricRangePrefs = getMetricRangePreferences();
         if (metricRangePrefs != null) {
             advanced = (metricRangePrefs.explicitBeginEnd);
         }
-
+        
         if (displaySetButton) {
             setItems(simpleLastValuesItem, simpleLastUnitsItem, advancedStartItem, advancedEndItem, setButton,
-                advancedSimpleButton);
+                advancedSimpleButton, space);
         } else {//not displaying Set button
             if (displayEnableButton) {
                 setItems(enableRangeItem, simpleLastValuesItem, simpleLastUnitsItem, advancedStartItem,
-                    advancedEndItem, advancedSimpleButton);
-                setNumCols(9);//extend to encompass expanded
+                    advancedEndItem, advancedSimpleButton, space);
             } else {
                 setItems(simpleLastValuesItem, simpleLastUnitsItem, advancedStartItem, advancedEndItem,
-                    advancedSimpleButton);
+                    advancedSimpleButton, space);
             }
         }
         update();

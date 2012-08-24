@@ -303,6 +303,7 @@
                     </condition>
                     <property name="as7.zipfile"
                               location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
+                    <delete file="${as7.zipfile}"/>
                     <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true"/>
                     <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
                     <delete dir="${jboss7.home}" verbose="true"/>

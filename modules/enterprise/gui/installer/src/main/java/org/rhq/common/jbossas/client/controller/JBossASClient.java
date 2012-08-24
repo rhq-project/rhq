@@ -56,6 +56,7 @@ public class JBossASClient {
     public static final String WRITE_ATTRIBUTE = "write-attribute";
     public static final String ADD = "add";
     public static final String SYSTEM_PROPERTY = "system-property";
+    public static final String PERSISTENT = "persistent"; // used by some operations to persist their effects
 
     private ModelControllerClient client;
 

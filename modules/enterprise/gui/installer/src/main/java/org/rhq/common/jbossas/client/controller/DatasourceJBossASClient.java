@@ -36,9 +36,54 @@ public class DatasourceJBossASClient extends JBossASClient {
     public static final String JDBC_DRIVER = "jdbc-driver";
     public static final String CONNECTION_PROPERTIES = "connection-properties";
     public static final String XA_DATASOURCE_PROPERTIES = "xa-datasource-properties";
+    public static final String OP_ENABLE = "enable";
 
     public DatasourceJBossASClient(ModelControllerClient client) {
         super(client);
+    }
+
+    public boolean isDatasourceEnabled(String name) throws Exception {
+        return isDatasourceEnabled(false, name);
+    }
+
+    public boolean isXADatasourceEnabled(String name) throws Exception {
+        return isDatasourceEnabled(true, name);
+    }
+
+    private boolean isDatasourceEnabled(boolean isXA, String name) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        addr.add((isXA) ? XA_DATA_SOURCE : DATA_SOURCE, name);
+        ModelNode results = readResource(addr);
+        boolean enabledFlag = false;
+        if (results.hasDefined("enabled")) {
+            ModelNode enabled = results.get("enabled");
+            enabledFlag = enabled.asBoolean(false);
+        }
+        return enabledFlag;
+    }
+
+    public void enableDatasource(String name) throws Exception {
+        enableDatasource(false, name);
+    }
+
+    public void enableXADatasource(String name) throws Exception {
+        enableDatasource(true, name);
+    }
+
+    private void enableDatasource(boolean isXA, String name) throws Exception {
+        if (isDatasourceEnabled(isXA, name)) {
+            return; // nothing to do - its already enabled
+        }
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        addr.add((isXA) ? XA_DATA_SOURCE : DATA_SOURCE, name);
+        ModelNode request = createRequest(OP_ENABLE, addr);
+        request.get(PERSISTENT).set(true);
+        ModelNode results = execute(request);
+        if (!isSuccess(results)) {
+            throw new FailureException(results);
+        }
+        return; // everything is OK
     }
 
     /**

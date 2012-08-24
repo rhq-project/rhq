@@ -302,6 +302,12 @@ public class ServerInstallUtil {
         }
 
         LOG.info("Created datasources");
+
+        final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
+        client.enableDatasource(RHQ_DATASOURCE_NAME_NOTX);
+        client.enableXADatasource(RHQ_DATASOURCE_NAME_XA);
+        LOG.info("Enabled datasources");
+
     }
 
     private static void createNewDatasources_Postgres(ModelControllerClient mcc) throws Exception {

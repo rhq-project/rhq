@@ -594,6 +594,7 @@
         <artifactId>maven-ejb-plugin</artifactId>
         <version>2.3</version>
         <configuration>
+          <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
         </configuration>
       </plugin>

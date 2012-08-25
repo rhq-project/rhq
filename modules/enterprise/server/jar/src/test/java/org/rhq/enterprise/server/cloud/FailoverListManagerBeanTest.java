@@ -27,6 +27,11 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.PartitionEvent;

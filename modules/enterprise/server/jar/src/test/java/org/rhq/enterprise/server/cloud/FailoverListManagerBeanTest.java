@@ -27,11 +27,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.PartitionEvent;
@@ -243,14 +238,14 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                 int floor = (int) Math.floor(div);
                 // as we get deeper be more lenient. We haven't come up with any sort of genius algorithm, it's
                 // just ok, if it balances well for the primary and secondary that's good.  Allow a skew of 1 for
-                // level 3-5 and a skew of 2 for levels past that
-                if (level > 2) {
+                // level 2-5 and a skew of 3 for levels past that
+                if (level > 1) {
                     ++ceil;
                     --floor;
                 }
                 if (level > 5) {
-                    ++ceil;
-                    --floor;
+                    ceil += 2;
+                    floor -= 2;
                 }
                 assert agentsOnServer <= ceil : "AgentsOnServer [" + agentsOnServer + "] > ceiling [" + ceil
                     + "] (level " + level + ")";

@@ -54,7 +54,7 @@ public class RhqDownloadsScriptSourceProviderTest {
     @BeforeClass
     public void createTmpDir() throws Exception {
         tmpDir = FileUtil.createTempDirectory(getClass().getName(), null, null);
-        File downloadsDir = new File(new File(new File(tmpDir, "deploy"), "rhq.ear"), "rhq-downloads");
+        File downloadsDir = new File(new File(new File(new File(tmpDir, "deploy"), "rhq.ear"), "rhq-downloads"), "script-modules");
         downloadsDir.mkdirs();
         
         File testScript = new File(downloadsDir, "test-script.js");

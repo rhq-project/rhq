@@ -69,7 +69,7 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
         String serverHomeDir = serverDetails.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR);
 
-        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
+        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/script-modules");
 
         File file = new File(downloads, path);
 

@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.apache.commons.logging.Log;
@@ -33,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.script.BaseRhqSchemeScriptSourceProvider;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
  * @author Lukas Krejci
@@ -43,6 +45,8 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
     private static final Log LOG = LogFactory.getLog(RhqDownloadsScriptSourceProvider.class);
 
     private static final String AUTHORITY = "downloads";
+
+    private static final String URL_PATH_PREFIX = "/downloads/script-modules";
 
     private RemoteClient remoteClient;
 
@@ -69,7 +73,15 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
         String path = scriptUri.getPath();
 
-        URI remoteUri = remoteClient.getRemoteURI().resolve(AUTHORITY + path);
+        URI remoteUri = remoteClient.getRemoteURI().resolve(URL_PATH_PREFIX + path);
+
+        String replacementScheme = SecurityUtil.isTransportSecure(remoteUri.getScheme()) ? "https" : "http";
+
+        try {
+            remoteUri = new URI(replacementScheme, remoteUri.getAuthority(), remoteUri.getPath(), remoteUri.getQuery(), remoteUri.getFragment());
+        } catch (URISyntaxException e) {
+            LOG.error("Failed to copy the RHQ server download URI: " + remoteUri + " to the " + replacementScheme + " scheme.");
+        }
 
         try {
             URL downloadUrl = remoteUri.toURL();

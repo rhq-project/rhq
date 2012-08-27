@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-20012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-plugins-parent</artifactId>
-        <version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></version><!-- TODO adjust RHQ version -->
+        <version><#if props.rhqVersion??>${props.rhqVersion}<#else >4.5.0-SNAPSHOT</#if></version><!-- TODO adjust RHQ version -->
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -43,9 +43,6 @@
     <description>${props.description}</description>
     </#if>
 
-    <properties>
-        <rhq.version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></rhq.version> <!-- TODO adjust, see above too -->
-    </properties>
 
     <build>
         <plugins>
@@ -212,26 +209,26 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-domain</artifactId>
-                <version>${r"${rhq.version}"}</version>
+                <version>${r"${project.version}"}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-plugin-api</artifactId>
-                <version>${r"${rhq.version}"}</version>
+                <version>${r"${project.version}"}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-native-system</artifactId>
-                <version>${r"${rhq.version}"}</version>
+                <version>${r"${project.version}"}</version>
                 <scope>provided</scope>
             </dependency>
 <#if props.dependsOnJmxPlugin>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-jmx-plugin</artifactId>
-                <version>${r"${rhq.version}"}</version>
+                <version>${r"${project.version}"}</version>
                 <scope>provided</scope>
             </dependency>
 </#if>

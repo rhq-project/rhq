@@ -7,5 +7,5 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${system_path:sh}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-c &quot;rm hadoop* jopr-jboss-as-5* jopr-jboss-cache* jopr-tomcat* modcluster* pattern* rhq-augeas* rhq-aliases* rhq-apache* rhq-byteman* rhq-cobbler* rhq-cron* rhq-database* rhq-grub* rhq-hosts* rhq-hudson* rhq-iis* rhq-irc* rhq-jboss-as-7* rhq-kickstart* rhq-mysql* rhq-netservices* rhq-oracle* rhq-postgres* rhq-postfix* rhq-samba* rhq-script2* rhq-snmp* rhq-sshd* rhq-sudoers* rhq-twitter* rhq-virt*&quot;"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/rhq/dev-container/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-plugins}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/rhq/dev-container/jbossas/standalone/deployments/rhq.ear/rhq-downloads/rhq-plugins}"/>
 </launchConfiguration>

@@ -39,6 +39,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -321,6 +322,9 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // deploy the EAR and undeploy this installer - this will shut us down within seconds, return fast!
         deployApp();
 
+        // some of the changes we made require the app server container to reload
+        reloadConfiguration();
+
         return;
     }
 
@@ -573,6 +577,9 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             // setup the email service
             ServerInstallUtil.setupMailService(client, serverProperties);
 
+            // we don't want to the JBossAS welcome screen; turn it off
+            new WebJBossASClient(client).setEnableWelcomeRoot(false);
+
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
@@ -601,6 +608,15 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         } catch (Exception e) {
             log("deployApp failed", e);
             throw new Exception("Failed to deploy the app: " + ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    private void reloadConfiguration() throws Exception {
+        try {
+            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            client.reload();
+        } catch (Exception e) {
+            log("reloadConfiguration failed - restart the server to complete the installation", e);
         }
     }
 

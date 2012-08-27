@@ -135,4 +135,54 @@ public class CoreJBossASClient extends JBossASClient {
             throw new FailureException(response, "Failed to set system property [" + name + "]");
         }
     }
+
+    /**
+     * Invokes the management "reload" operation which will shut down all the app server services and
+     * restart them again. This is required for certain configuration changes to take effect.
+     * This does not shutdown the JVM itself.
+     *
+     * @throws Exception
+     */
+    public void reload() throws Exception {
+        ModelNode request = createRequest("reload", Address.root());
+        request.get("admin-only").set(false);
+        ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
+
+    /**
+     * Invokes the management "shutdown" operation with the restart option set to true
+     * (see {@link #shutdown(boolean)}).
+     * This means the app server JVM will shutdown but immediately be restarted.
+     * Note that the caller may not be returned to since the JVM in which this call is made
+     * will be killed.
+     *
+     * @throws Exception
+     */
+    public void restart() throws Exception {
+        shutdown(true);
+    }
+
+    /**
+     * Invokes the management "shutdown" operation that kills the JVM completely with System.exit.
+     * If restart is set to true, the JVM will immediately be restarted again. If restart is false,
+     * the JVM is killed and will stay down.
+     * Note that in either case, the caller may not be returned to since the JVM in which this call is made
+     * will be killed.
+     *
+     * @param restart if true, the JVM will be restarted
+     * @throws Exception
+     */
+    public void shutdown(boolean restart) throws Exception {
+        ModelNode request = createRequest("shutdown", Address.root());
+        request.get("restart").set(restart);
+        ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
 }

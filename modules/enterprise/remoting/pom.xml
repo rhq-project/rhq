@@ -29,10 +29,11 @@
             <jdk>1.6</jdk>
          </activation>
 
-         <modules>            
+         <modules>
             <module>cli</module>
          </modules>
       </profile>
+<!--
 
       <profile>
          <id>enterprise</id>
@@ -48,6 +49,7 @@
          </modules>
       </profile>
 
+-->
 
    </profiles>
 

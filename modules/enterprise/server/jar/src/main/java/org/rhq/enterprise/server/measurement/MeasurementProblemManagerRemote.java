@@ -19,26 +19,15 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface MeasurementProblemManagerRemote {
 
-    @WebMethod
-    PageList<ProblemResourceComposite> findProblemResources(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "oldestDate") long oldestDate, //
-        @WebParam(name = "pageControl") PageControl pc);
+    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc);
 
 }

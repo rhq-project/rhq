@@ -19,46 +19,24 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface AlertManagerRemote {
 
-    @WebMethod
-    PageList<Alert> findAlertsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") AlertCriteria criteria);
+    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 
-    @WebMethod
-    int deleteAlerts( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertIds") int[] alertIds);
+    int deleteAlerts(Subject subject, int[] alertIds);
 
-    @WebMethod
-    int deleteAlertsByContext( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "context") EntityContext context);
+    int deleteAlertsByContext(Subject subject, EntityContext context);
 
-    @WebMethod
-    int acknowledgeAlerts( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertIds") int[] alertIds);
+    int acknowledgeAlerts(Subject subject, int[] alertIds);
 
-    @WebMethod
-    int acknowledgeAlertsByContext( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "context") EntityContext context);
+    int acknowledgeAlertsByContext(Subject subject, EntityContext context);
 
 }

@@ -223,13 +223,6 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss.jbossws</groupId>
-      <artifactId>jboss-jaxws</artifactId>
-      <version>3.0.1-native-2.0.4.GA</version>
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-jaxrs</artifactId>
       <version>${resteasy.version}</version>

@@ -19,27 +19,16 @@
 package org.rhq.enterprise.server.resource;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceTypeManagerRemote {
 
-    @WebMethod
-    ResourceType getResourceTypeById(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId) //
-        throws ResourceTypeNotFoundException;
+    ResourceType getResourceTypeById(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException;
 
     /**
      * @param  subject
@@ -48,14 +37,7 @@ public interface ResourceTypeManagerRemote {
      *
      * @return the resource type by name and plugin or null if the type is not found
      */
-    @WebMethod
-    ResourceType getResourceTypeByNameAndPlugin(//
-        @WebParam(name = "subject") Subject subject, //        
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "plugin") String plugin);
+    ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 
-    @WebMethod
-    PageList<ResourceType> findResourceTypesByCriteria(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceTypeCriteria criteria);
+    PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);
 }

@@ -13,22 +13,10 @@
    <artifactId>safe-invoker</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Enterprise Safe WebService Invoker</name>
-   <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>
+   <name>RHQ Enterprise Safe Invoker</name>
+   <description>TODO: Remove this invoker and move HibernateDetachUtility</description>
 
    <dependencies>
-
-      <dependency>
-         <groupId>org.jboss.jbossws</groupId>
-         <artifactId>jbossws-native-core</artifactId>
-         <version>${jbossws-native-dist.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jbossws-spi</artifactId>
-         <version>1.1.1.GA</version>
-      </dependency>
 
       <dependency>
          <groupId>hibernate</groupId>

@@ -41,7 +41,6 @@
 	<classpathentry kind="src" path="modules/enterprise/server/xml-schemas/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/filtered-sources/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/test/java"/>
@@ -243,8 +242,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132/sigar-1.6.5.132.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/transaction/jboss-jta/4.2.3.SP5/jboss-jta-4.2.3.SP5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/transaction/jboss-jts-common/4.2.3.SP5/jboss-jts-common-4.2.3.SP5.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws-spi/1.1.1.GA/jbossws-spi-1.1.1.GA.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws/jbossws-native-core/3.1.1.GA/jbossws-native-core-3.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.6.1/swizzle-confluence-1.6.1.jar"/>

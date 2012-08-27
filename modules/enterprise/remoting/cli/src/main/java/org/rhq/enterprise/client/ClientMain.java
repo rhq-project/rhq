@@ -96,7 +96,6 @@ public class ClientMain {
     private String language;
     private ArrayList<String> notes = new ArrayList<String>();
     
-    // reference to the webservice reference factory
     private RemoteClient remoteClient;
 
     // The subject that will be used to carry out all requested actions

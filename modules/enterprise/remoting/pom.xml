@@ -34,21 +34,6 @@
          </modules>
       </profile>
 
-      <profile>
-         <id>enterprise</id>
-
-         <activation>
-            <property>
-               <name>enterprise</name>
-            </property>
-         </activation>
-
-         <modules>
-            <module>webservices</module>
-         </modules>
-      </profile>
-
-
    </profiles>
 
 </project>

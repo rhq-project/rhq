@@ -569,12 +569,7 @@
     <finalName>${project.artifactId}</finalName>
 
     <resources>
-         <!-- Redefine which directories to treat like resources (which are filtered). -->
-      <resource>
-        <directory>src/main/filtered-sources/java</directory>
-        <filtering>true</filtering>
-        <targetPath>../filtered-sources/java</targetPath>
-      </resource>
+      <!-- Redefine which directories to treat like resources (which are filtered). -->
       <resource>
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
@@ -766,18 +761,6 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
-          <execution>
-            <id>add-filtered-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>target/filtered-sources/java</source>
-              </sources>
-            </configuration>
-          </execution>
           <execution>
             <id>add-antlr-sources</id>
             <phase>generate-sources</phase>
@@ -1063,16 +1046,6 @@
           <name>java5.home</name>
         </property>
       </activation>
-
-      <dependencies>
-        <dependency>
-          <groupId>jboss.jbossws</groupId>
-          <artifactId>jboss-jaxws</artifactId>
-               <!-- NOTE: This version is old but is good enough to resolve the build dependency. -->
-          <version>3.0.1-native-2.0.4.GA</version>
-          <scope>provided</scope>
-        </dependency>
-      </dependencies>
     </profile>
 
     <profile>

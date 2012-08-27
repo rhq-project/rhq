@@ -45,7 +45,6 @@ import org.rhq.enterprise.server.perspective.activator.context.ResourceActivatio
 import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePluginMetadataManager;
 
 @Stateless
-// @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
 /**
  * @author Jay Shaughnessy
  * @author Ian Springer

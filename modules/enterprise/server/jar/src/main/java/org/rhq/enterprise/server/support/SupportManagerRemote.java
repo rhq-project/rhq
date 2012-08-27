@@ -21,12 +21,8 @@ package org.rhq.enterprise.server.support;
 import java.net.URL;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * Provides some methods that are useful for supporting managed resources. This includes being
@@ -35,7 +31,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
  * 
  * @author John Mazzitelli
  */
-@WebService(targetNamespace = ServerVersion.namespace)
+
 @Remote
 public interface SupportManagerRemote {
     /**
@@ -50,10 +46,5 @@ public interface SupportManagerRemote {
      * @return a URL that the caller can use to obtain the snapshot report
      * @throws Exception
      */
-    @WebMethod
-    URL getSnapshotReport( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "name") String name, //
-        @WebParam(name = "description") String description) throws Exception;
+    URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception;
 }

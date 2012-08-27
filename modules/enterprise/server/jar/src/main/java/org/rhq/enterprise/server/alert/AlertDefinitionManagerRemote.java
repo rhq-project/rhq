@@ -19,50 +19,31 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface AlertDefinitionManagerRemote {
-    @WebMethod
+
     AlertDefinition getAlertDefinition(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionId") int alertDefinitionId);
+        Subject subject, int alertDefinitionId);
 
-    @WebMethod
-    PageList<AlertDefinition> findAlertDefinitionsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") AlertDefinitionCriteria criteria);
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
 
-    @WebMethod
     int enableAlertDefinitions(// 
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
+        Subject subject, int[] alertDefinitionIds);
 
-    @WebMethod
     int disableAlertDefinitions(// 
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
+        Subject subject, int[] alertDefinitionIds);
 
-    @WebMethod
     int removeAlertDefinitions(// 
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
+        Subject subject, int[] alertDefinitionIds);
 
-    @WebMethod
     String[] getAlertNotificationConfigurationPreview(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "notifications") AlertNotification[] notifications);
+        Subject subject, AlertNotification[] notifications);
 
 }

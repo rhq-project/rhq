@@ -21,9 +21,6 @@ package org.rhq.enterprise.server.system;
 import java.util.Properties;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
@@ -33,7 +30,7 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 /**
  * @author John Mazzitelli
  */
-@WebService(targetNamespace = ServerVersion.namespace)
+
 @Remote
 public interface SystemManagerRemote {
     /**
@@ -43,9 +40,7 @@ public interface SystemManagerRemote {
      * 
      * @return the product info
      */
-    @WebMethod
-    ProductInfo getProductInfo( //
-        @WebParam(name = "subject") Subject subject);
+    ProductInfo getProductInfo(Subject subject);
 
     /**
      * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS. 
@@ -54,17 +49,13 @@ public interface SystemManagerRemote {
      * 
      * @return server details
      */
-    @WebMethod
-    ServerDetails getServerDetails( //
-        @WebParam(name = "subject") Subject subject);
+    ServerDetails getServerDetails(Subject subject);
 
     /**
      * @deprecated use {@link #getSystemSettings(Subject)} instead
      */
-    @WebMethod
     @Deprecated
-    Properties getSystemConfiguration( //
-        @WebParam(name = "subject") Subject subject);
+    Properties getSystemConfiguration(Subject subject);
 
     /**
      * Get the server cloud configuration. These are the server configurations that will be
@@ -74,19 +65,14 @@ public interface SystemManagerRemote {
      *
      * @return the settings
      */
-    SystemSettings getSystemSettings(
-        @WebParam(name = "subject") Subject subject);
-       
+    SystemSettings getSystemSettings(Subject subject);
+
     /**
      * @deprecated use {@link #setSystemSettings(Subject, SystemSettings)} instead
      */
-    @WebMethod
     @Deprecated
-    void setSystemConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "properties") Properties properties, //
-        @WebParam(name = "skipValidation") boolean skipValidation) throws Exception;
-    
+    void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception;
+
     /**
      * Set the server cloud configuration.  The given properties will be the new settings
      * for all servers in the HA server cloud.
@@ -94,8 +80,5 @@ public interface SystemManagerRemote {
      * @param subject        the user who wants to change the settings
      * @param settings     the new system configuration settings
      */
-    @WebMethod
-    void setSystemSettings(
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "settings") SystemSettings settings) throws Exception;        
+    void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
 }

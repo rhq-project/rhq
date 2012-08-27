@@ -19,29 +19,17 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface MeasurementDefinitionManagerRemote {
 
-    @WebMethod
-    MeasurementDefinition getMeasurementDefinition(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "definitionId") int definitionId);
+    MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId);
 
-    @WebMethod
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") MeasurementDefinitionCriteria criteria);
+        Subject subject, MeasurementDefinitionCriteria criteria);
 }

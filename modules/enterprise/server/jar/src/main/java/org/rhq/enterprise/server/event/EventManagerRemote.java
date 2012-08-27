@@ -19,50 +19,23 @@
 package org.rhq.enterprise.server.event;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface EventManagerRemote {
 
-    @WebMethod
-    EventSeverity[] getSeverityBuckets( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets);
+    EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
 
-    @WebMethod
-    EventSeverity[] getSeverityBucketsForAutoGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets);
+    EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+        long begin, long end, int numBuckets);
 
-    @WebMethod
-    EventSeverity[] getSeverityBucketsForCompGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroupId") int resourceGroupId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets);
+    EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
+        int numBuckets);
 
-    @WebMethod
-    PageList<Event> findEventsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") EventCriteria criteria);
+    PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

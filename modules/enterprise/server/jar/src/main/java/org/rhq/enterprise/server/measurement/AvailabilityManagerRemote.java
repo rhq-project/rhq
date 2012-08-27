@@ -20,24 +20,18 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
+ * @Author Jay Shaughnessy
  * @author Noam Malki
  */
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface AvailabilityManagerRemote {
 
@@ -50,11 +44,7 @@ public interface AvailabilityManagerRemote {
      * @Deprecated use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      */
     @Deprecated
-    @WebMethod
-    public PageList<Availability> findAvailabilityForResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pageControl") PageControl pc);
+    public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Gets the last known Availability for the given resource - which includes whether it is currently up (i.e.
@@ -67,12 +57,7 @@ public interface AvailabilityManagerRemote {
      * @throws FetchException TODO
      * @throws FetchException
      */
-    @WebMethod
-    public Availability getCurrentAvailabilityForResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId);
 
-    PageList<Availability> findAvailabilityByCriteria( //
-        Subject subject, //
-        AvailabilityCriteria criteria);
+    PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria);
 }

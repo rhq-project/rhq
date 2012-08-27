@@ -44,7 +44,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.sql.DataSource;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -88,7 +87,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -146,8 +144,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
-    public ResourceGroup createPrivateResourceGroup(Subject subject, //
-        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
+    public ResourceGroup createPrivateResourceGroup(Subject subject, ResourceGroup group) {
 
         group.setSubject(subject);
         group.setRecursive(false);
@@ -156,8 +153,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup createResourceGroup(Subject user, //
-        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
+    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) {
 
         // We are now allowing Groups where names collide if the group is not visible as for autogroups and clusters
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP);
@@ -356,10 +352,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, group.getId());
 
             for (GroupOperationSchedule schedule : ops) {
-                    operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
+                operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
             }
         } catch (Exception e) {
-            throw new ResourceGroupDeleteException( "Failed to get jobs for a group being deleted [" + group
+            throw new ResourceGroupDeleteException("Failed to get jobs for a group being deleted [" + group
                 + "]; will not attempt to unschedule anything", e);
         }
 

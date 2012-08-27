@@ -57,7 +57,7 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
  * @author Ian Springer
  */
 @Local
-public interface ConfigurationManagerLocal {
+public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource using the information in the
@@ -276,19 +276,6 @@ public interface ConfigurationManagerLocal {
 
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     * specified id.
-     *
-     * @param  subject         the user who is requesting the resource configuration definition
-     * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
-     *
-     * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
-     */
-    @Nullable
-    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
-
-    /**
-     * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      * specified id. The templates will be loaded in the definition returned from this call.
      *
      * @param  subject         the user who is requesting the resource configuration definition
@@ -300,19 +287,6 @@ public interface ConfigurationManagerLocal {
     @Nullable
     ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
         int resourceTypeId);
-
-    /**
-     * Return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     * specified id.
-     *
-     * @param  subject         the user who is requesting the plugin configuration definition
-     * @param  resourceTypeId identifies the resource type whose plugin configuration definition is being requested
-     *
-     * @return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
-     *         specified id, or <code>null</code> if the ResourceType does not define a plugin configuration
-     */
-    @Nullable
-    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
 
     /**
      * Merge the specified configuration update into the DB.
@@ -432,31 +406,6 @@ public interface ConfigurationManagerLocal {
 
     public Configuration getConfiguration(Subject subject, int configurationId);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
-
-    public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
-        int configurationUpdateId);
-
-    /**
-     * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's plugin configuration is not yet initialized.
-     *
-     * @param  subject     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     *         resource's configuration is not yet initialized
-     * @throws FetchException TODO
-     */
-    @Nullable
-    Configuration getPluginConfiguration(Subject subject, int resourceId);
-
     /**
      * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
      * is known on the server-side in the database.
@@ -491,53 +440,13 @@ public interface ConfigurationManagerLocal {
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
         boolean fromStructured);
 
-    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
-
-    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
-
     boolean isGroupPluginConfigurationUpdateInProgress(Subject subject, int groupId);
 
-    int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> newResourceConfigurationMap);
-
-    /**
-     * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
-     * newConfiguration</code> is usually a modified version of a configuration returned by
-     * {@link #getPluginConfiguration(Subject, int)}.
-     *
-     * @param  subject           the user who wants to see the information
-     * @param  resourceId       a {@link Resource} id
-     * @param  newConfiguration the new plugin configuration
-     *
-     * @return the plugin configuration update item corresponding to this request
-     */
-    PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
-        throws ResourceNotFoundException;
-
-    /**
-     * This method is called when a user has requested to change the resource configuration for an existing resource. If
-     * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
-     *
-     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completeResourceConfigurationUpdate}.</p>
-     *
-     * @param  subject           the user who is requesting the update
-     * @param  resourceId       identifies the resource to be updated
-     * @param  newConfiguration the resource's desired new configuration
-     *
-     * @return the resource configuration update item corresponding to this request. null
-     * if newConfiguration is equal to the existing configuration.
-     */
-    @Nullable
-    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+    boolean isPluginConfigurationUpdateInProgress(Subject subject, int resourceId);
 
     ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
         ConfigurationUpdateStillInProgressException;
-
-    Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
      * This method is called when the plugin container reports a new Resource configuration after an external change was
@@ -547,14 +456,6 @@ public interface ConfigurationManagerLocal {
      * @param configuration the updated configuration
      */
     void setResourceConfiguration(int resourceId, Configuration configuration);
-
-    /**
-     * @see ConfigurationManagerRemote#getPackageTypeConfigurationDefinition(Subject,int)
-     */
-    ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
-
-    Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
     Configuration mergeConfiguration(Configuration config);
 

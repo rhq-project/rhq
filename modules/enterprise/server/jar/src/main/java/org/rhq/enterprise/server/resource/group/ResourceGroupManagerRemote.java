@@ -19,11 +19,6 @@
 package org.rhq.enterprise.server.resource.group;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -31,76 +26,35 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Jay Shaughnessy 
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceGroupManagerRemote {
 
-    @WebMethod
-    void addResourcesToGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds);
 
-    @WebMethod
-    ResourceGroup createResourceGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroup")//
-        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup resourceGroup);
+    ResourceGroup createResourceGroup(Subject subject, ResourceGroup resourceGroup);
 
-    @WebMethod
-    void deleteResourceGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId) throws ResourceGroupNotFoundException, ResourceGroupDeleteException;
-
-    @WebMethod
-    void deleteResourceGroups( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupIds") int[] groupIds) throws ResourceGroupNotFoundException,
+    void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException;
 
-    @WebMethod
-    ResourceGroup getResourceGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId);
+    void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
 
-    @WebMethod
-    ResourceGroupComposite getResourceGroupComposite( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId);
+    ResourceGroup getResourceGroup(Subject subject, int groupId);
 
-    @WebMethod
-    PageList<ResourceGroup> findResourceGroupsForRole( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "pageControl") PageControl pc);
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
 
-    @WebMethod
-    void removeResourcesFromGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc);
 
-    @WebMethod
-    void setRecursive( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "isRecursive") boolean isRecursive);
+    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds);
 
-    @WebMethod
-    ResourceGroup updateResourceGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "newResourceGroup") ResourceGroup newResourceGroup);
+    void setRecursive(Subject subject, int groupId, boolean isRecursive);
 
-    @WebMethod
-    PageList<ResourceGroup> findResourceGroupsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceGroupCriteria criteria);
+    ResourceGroup updateResourceGroup(Subject subject, ResourceGroup newResourceGroup);
+
+    PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
 
 }

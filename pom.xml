@@ -70,7 +70,6 @@
     <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-javassist.version>3.9.0.GA</jboss-javassist.version>
-    <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
 
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
@@ -198,13 +197,6 @@
         <version>${jboss.version}</version>
         <type>zip</type>
       </dependency>
-
-     <dependency>
-         <groupId>org.jboss.jbossws</groupId>
-         <artifactId>jbossws-native-dist</artifactId>
-         <version>${jbossws-native-dist.version}</version>
-         <type>zip</type>
-     </dependency>
 
       <dependency>
         <groupId>jboss</groupId>

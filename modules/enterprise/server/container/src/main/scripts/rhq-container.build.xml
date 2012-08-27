@@ -73,9 +73,6 @@
       <echo>*** Database type is ${rhq.server.database.type-mapping}</echo>
 
       <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
-      <!-- The expanded native directory name -->
-      <property name="jboss-native-dir" value="jbossws-native-bin-dist" />
-      <property name="jbossws-native.home" location="${project.build.outputDirectory}/${jboss-native-dir}" />
 
       <!-- TODO: we no longer deploy hypersonic - so we no longer have a marker file that we can check to see if server is running -->
       <!--
@@ -147,12 +144,6 @@
          </and>
       </condition>
 
-      <condition property="undeploy-web-services" value="true">
-         <not>
-            <equals arg1="${rhq.server.enable.ws}" arg2="true" />
-         </not>
-      </condition>
-
       <!-- developers might want to deploy agent/server plugins frequently, so we'll scan every 30 seconds -->
       <!-- in production, plugins change very infrequently, so only scan every 5 minutes -->
       <condition property="rhq.server.plugin-scan-period-ms" value="30000">
@@ -173,10 +164,8 @@
   </target>
 
   <target name="prepare-container"
-          depends="prepare-web-services-1,
-                   prepare-jbossas-dir,
-                   prepare-bin-dir,
-                   prepare-web-services-2" />
+	      depends="prepare-jbossas-dir,
+	               prepare-bin-dir" />
 
   <target name="prepare-jbossas-dir"
           depends="initialize"
@@ -197,55 +186,17 @@
       <available file="${jboss.home}/lib/jboss-system.jar" type="file" property="jboss.home.is.valid" />
       <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
-    <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS:
-         i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance
-        (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
-    <echo>...Upgrading JBossWS version from bundled version...</echo>
-
-    <!-- Unzip JBossWS dist zipfile... if necessary -->
-    <property name="jbossws-native.zip" location="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" />
-    <condition property="jbossws-native.uptodate">
-       <and>
-          <uptodate srcfile="${jbossws-native.zip}" targetfile="${jboss-native.home}" />
-          <available file="${jboss-native.home}/deploy/lib/jbossws-native-core.jar" type="file" />
-       </and>
-    </condition>
-
-    <!-- Prepare the upgrade location -->
-    <antcall target="unzip-jbossws-native" inheritall="true" />
-
-    <!-- Call the upgrade script -->
-    <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
-    <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
-
     <echo/>
-    <echo>Installing safe ejb3 web invoker ...</echo>
-      <delete verbose="true">
-         <fileset dir="${jboss.deploy.dir}/jbossws.sar">
-            <include name="safe-invoker*" />
-         </fileset>
-         <fileset dir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF">
-            <include name="jboss-beans.xml" />
-         </fileset>
-      </delete>
-    <copy file="${settings.localRepository}/org/rhq/safe-invoker/${rhq.version}/safe-invoker-${rhq.version}.jar"
-           toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
-    <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
-          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
-    <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws-management.war/WEB-INF/web.xml"
-          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws-management.war/WEB-INF" verbose="true" overwrite="true"/>
-
-
-      <echo>Installing patched hibernate jar ...</echo>
+    <echo>Installing patched hibernate jar ...</echo>
     <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
 
-      <echo>Installing custom container library...</echo>
+    <echo>Installing custom container library...</echo>
     <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
           tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
 
-      <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
-      <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
+    <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
+    <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
     <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
           toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
@@ -406,8 +357,6 @@
       <move todir="${jboss.home}/lib/endorsed" verbose="true">
          <fileset dir="${jboss.home}/client">
             <include name="jboss-jaxrpc.jar" />
-            <include name="jboss-jaxws.jar" />
-            <include name="jboss-jaxws-ext.jar" />
             <include name="jboss-saaj.jar" />
             <include name="jaxb-api.jar" />
          </fileset>
@@ -499,7 +448,6 @@ rhq.server.maintenance-mode-at-startup=false
 # General Properties
 rhq.server.startup.web.http.port=${rhq.server.http.port}
 rhq.server.startup.web.https.port=${rhq.server.https.port}
-rhq.server.startup.webservice.port=9093
 rhq.server.startup.namingservice.port=2099
 rhq.server.startup.namingservice.rmiport=2098
 rhq.server.startup.jrmpinvoker.rmiport=7444
@@ -642,27 +590,6 @@ rhq.autoinstall.public-endpoint-address=
 
    </target>
 
-   <!-- even if user does not want to deploy web services we must temporarily move the rej dir
-       back to the non-rej dir because other parts of the build expect the non-rej name -->
-   <target name="prepare-web-services-1" depends="initialize">
-     <move todir="${jboss.deploy.dir}/jbossws.sar"
-           verbose="true" failonerror="false">
-         <!-- failonerror is false because if the container is built clean
-             the rej dir will not exist yet, so this error must be skipped;
-             if undeploy-web-services has never been set, this will be a no-op -->
-         <fileset dir="${jboss.deploy.dir}/jbossws.sar.rej" />
-      </move>
-   </target>
-
-   <!-- if user does not want to deploy web services, we want to rename the non-rej dir
-       to the rej dir name so that the jboss deployer does not pick up this sar at all -->
-   <target name="prepare-web-services-2" depends="initialize" if="undeploy-web-services">
-     <move todir="${jboss.deploy.dir}/jbossws.sar.rej"
-           verbose="true">
-         <fileset dir="${jboss.deploy.dir}/jbossws.sar" />
-      </move>
-   </target>
-
    <target name="unzip-jboss" unless="jboss.uptodate">
     <unzip src="${settings.localRepository}/org/jboss/jbossas/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip"
            dest="${basedir}/target" />
@@ -681,26 +608,6 @@ rhq.autoinstall.public-endpoint-address=
       <delete dir="${jboss.home}/server/minimal" />
       <delete dir="${jboss.home}/server/all" />
       <delete file="${jboss.home}/server/default/deploy/quartz-ra.rar" />
-   </target>
-
-   <target name="unzip-jbossws-native" unless="jbossws-native.uptodate">
-
-      <echo>Unzipping JBossWS-Native container</echo>
-      <!-- As it doesn't already exist we will create it now -->
-      <unzip src="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" dest="${basedir}/target" />
-
-      <!-- Modify the properties file for upgrade -->
-      <echo>The expanded native dir : ${jbossws-native.home}</echo>
-      <copy file="${basedir}/target/${jboss-native-dir}/ant.properties.example" tofile="${basedir}/target/${jboss-native-dir}/ant.properties" filtering="true">
-         <!-- modify properties appropriately -->
-         <filterset>
-            <filter token="jboss423.home" value="${jboss.home}" />
-         </filterset>
-      </copy>
-      <replace file="${basedir}/target/${jboss-native-dir}/ant.properties" token="jbossws.integration.target=jboss500" value="jbossws.integration.target=jboss423" />
-
-      <!-- This line added to convert the \ in Window's paths to /.  Should have no effect on non-Windows  -->
-      <replace file="${basedir}/target/${jboss-native-dir}/ant.properties" token="\" value="/" />
    </target>
 
 
@@ -827,7 +734,6 @@ rhq.autoinstall.public-endpoint-address=
    <!-- (i.e. after rhq-ds.xml, rhq-server.sh, etc. have been copied over by the resources plugin) -->
 
    <target name="prepare-release" depends="initialize,
-                   prepare-web-services-1,
                    fix-perms,
                    prepare-postinstaller-war,
                    developer-release-message,
@@ -844,8 +750,7 @@ rhq.autoinstall.public-endpoint-address=
                    undeploy-embedded-agent,
                    undeploy-jms,
                    undeploy-ear,
-                   undeploy-ds,
-                   prepare-web-services-2" description="If this is a release build, make sure it is properly prepared.">
+                   undeploy-ds" description="If this is a release build, make sure it is properly prepared.">
 
       <echo>Adding license files...</echo>
       <copy todir="${project.build.outputDirectory}">

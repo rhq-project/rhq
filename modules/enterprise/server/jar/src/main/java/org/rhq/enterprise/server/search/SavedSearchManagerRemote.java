@@ -19,25 +19,18 @@
 package org.rhq.enterprise.server.search;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The remote interface to the SavedSearchManager.
  *
  * @author Joseph Marques
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface SavedSearchManagerRemote {
 
@@ -51,10 +44,10 @@ public interface SavedSearchManagerRemote {
      *         managers can create global saved searches.  Regular users can only create {@link SavedSearch}es against
      *         their own accounts.
      */
-    @WebMethod
+
     public int createSavedSearch( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "savedSearch") SavedSearch savedSearch);
+        Subject subject, //
+        SavedSearch savedSearch);
 
     /**
      * Saves all changes to the passed {@link SavedSearch} database, correlating it to the record already
@@ -68,10 +61,10 @@ public interface SavedSearchManagerRemote {
      *         managers can update global saved searches.  Regular users can only update {@link SavedSearch}es from
      *         their own accounts.
      */
-    @WebMethod
+
     public boolean updateSavedSearch( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "savedSearch") SavedSearch savedSearch);
+        Subject subject, //
+        SavedSearch savedSearch);
 
     /**
      * Deletes the {@link SavedSearch} with the given primary key
@@ -83,10 +76,10 @@ public interface SavedSearchManagerRemote {
      *         managers can delete global saved searches.  Regular users can only delete {@link SavedSearch}es from
      *         their own accounts.
      */
-    @WebMethod
+
     public void deleteSavedSearch( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "savedSearchId") int savedSearchId);
+        Subject subject, //
+        int savedSearchId);
 
     /**
      * Returns the {@link SavedSearch} with the given primary key
@@ -98,10 +91,8 @@ public interface SavedSearchManagerRemote {
      * @throws PermissionException if the user is not authorized to view the {@link SavedSearch}.  Regular users can
      *         only view {@link SavedSearch}es from their own accounts.
      */
-    @WebMethod
-    public SavedSearch getSavedSearchById( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "savedSearchId") int savedSearchId);
+
+    public SavedSearch getSavedSearchById(Subject subject, int savedSearchId);
 
     /**
      * Returns the {@link PageList} of {@link SavedSearch} entities that match the criteria filters that are visible
@@ -113,8 +104,6 @@ public interface SavedSearchManagerRemote {
      * @return the {@link PageList} of {@link SavedSearch} entities that match the criteria filters, an empty list
      *         will be returned if no results were found or none matches the given filters
      */
-    @WebMethod
-    public PageList<SavedSearch> findSavedSearchesByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") SavedSearchCriteria criteria);
+
+    public PageList<SavedSearch> findSavedSearchesByCriteria(Subject subject, SavedSearchCriteria criteria);
 }

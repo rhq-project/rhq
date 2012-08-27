@@ -23,23 +23,16 @@
 package org.rhq.enterprise.server.install.remote;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * Provides an interface to remotely install an RHQ Agent over SSH.
  * 
  * @author Greg Hinkle
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface RemoteInstallManagerRemote {
     /**
@@ -51,11 +44,7 @@ public interface RemoteInstallManagerRemote {
      *
      * @return true if an agent is installed in the given install path, false if not
      */
-    @WebMethod
-    boolean agentInstallCheck( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "agentInstallPath") String agentInstallPath);
+    boolean agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
 
     /**
      * Installs the agent update binary distribution file to the given parent
@@ -69,11 +58,7 @@ public interface RemoteInstallManagerRemote {
      *
      * @return info containing the results of the installation
      */
-    @WebMethod
-    AgentInstallInfo installAgent( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "parentPath") String parentPath);
+    AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
     /**
      * Starts the agent located in the given installation directory.
@@ -84,11 +69,7 @@ public interface RemoteInstallManagerRemote {
      * 
      * @return results of the start command
      */
-    @WebMethod
-    String startAgent( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "agentInstallPath") String agentInstallPath);
+    String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
 
     /**
      * Stops the agent located in the given installation directory.
@@ -99,11 +80,7 @@ public interface RemoteInstallManagerRemote {
      * 
      * @return results of the stop command
      */
-    @WebMethod
-    String stopAgent( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "agentInstallPath") String agentInstallPath);
+    String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
 
     /**
      * Determines the running status of the agent located in the given installation directory.
@@ -114,11 +91,7 @@ public interface RemoteInstallManagerRemote {
      * 
      * @return results of the status command
      */
-    @WebMethod
-    String agentStatus( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "agentInstallPath") String agentInstallPath);
+    String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
 
     /**
      * Given a root parent path to check, this will scan all subdirectories (recursively)
@@ -134,11 +107,7 @@ public interface RemoteInstallManagerRemote {
      * 
      * @return the probable location of an installed agent; null if no agent install was found
      */
-    @WebMethod
-    String findAgentInstallPath( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "parentPath") String parentPath);
+    String findAgentInstallPath(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
     /**
      * Returns the given parent directory's child files/directories.
@@ -149,9 +118,5 @@ public interface RemoteInstallManagerRemote {
      * 
      * @return names of the parent's child files/directories
      */
-    @WebMethod
-    String[] remotePathDiscover( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "remoteAccessInfo") RemoteAccessInfo remoteAccessInfo, //
-        @WebParam(name = "parentPath") String parentPath);
+    String[] remotePathDiscover(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 }

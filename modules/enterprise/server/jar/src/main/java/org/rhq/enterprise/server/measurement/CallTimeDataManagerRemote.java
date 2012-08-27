@@ -19,38 +19,27 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface CallTimeDataManagerRemote {
-    @WebMethod
-    PageList<CallTimeDataComposite> findCallTimeDataForResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "scheduleId") int scheduleId, //
-        @WebParam(name = "beginTime") long beginTime, //
-        @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pageControl") PageControl pc);
+
+    PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
+        long endTime, PageControl pc);
 
     /* this method was never implemented, and so won't be in the remote api yet
-    @WebMethod
-    PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup( //
-        @WebParam(name = "subject") Subject subject, // 
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "measurementDefinitionId") int measurementDefinitionId, //
-        @WebParam(name = "beginTime") long beginTime, //
-        @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pageControl") PageControl pageControl) //
+    
+    PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup(
+         Subject subject, 
+         int groupId,
+         int measurementDefinitionId,
+         long beginTime,
+         long endTime,
+         PageControl pageControl)
         throws FetchException;
         */
 }

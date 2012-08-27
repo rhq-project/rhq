@@ -21,10 +21,6 @@ package org.rhq.enterprise.server.content;
 import java.util.List;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageVersion;
@@ -35,10 +31,7 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface RepoManagerRemote {
 
@@ -49,11 +42,7 @@ public interface RepoManagerRemote {
      * @param repoId         the ID of the repo
      * @param packageVersionIds the list of package version IDs to add to the repo
      */
-    @WebMethod
-    void addPackageVersionsToRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId, //
-        @WebParam(name = "packageVersionIds") int[] packageVersionIds);
+    void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds);
 
     /**
      * Creates a new {@link Repo}. Note that the created repo will not have any content sources assigned and no
@@ -65,11 +54,7 @@ public interface RepoManagerRemote {
      * @return the newly created repo
      * @throws RepoException if a repo already exists with the same name 
      */
-    @WebMethod
-    Repo createRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repo") Repo repo) //
-        throws RepoException;
+    Repo createRepo(Subject subject, Repo repo) throws RepoException;
 
     /**
      * Deletes the indicated repo. If this deletion orphans package versions (that is, its originating resource or
@@ -78,10 +63,7 @@ public interface RepoManagerRemote {
      * @param subject The logged in user's subject.
      * @param repoId  identifies the repo to delete
      */
-    @WebMethod
-    void deleteRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId);
+    void deleteRepo(Subject subject, int repoId);
 
     /**
      * Returns the repo with the given id; throws an error if one does not exist at that id.
@@ -90,10 +72,7 @@ public interface RepoManagerRemote {
      * @param repoId  identifies the repo to be retrieved
      * @return details describing the repo
      */
-    @WebMethod
-    Repo getRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId);
+    Repo getRepo(Subject subject, int repoId);
 
     /**
      * Returns all repos that match the given criteria.
@@ -102,10 +81,7 @@ public interface RepoManagerRemote {
      * @param criteria describes how the query should function; may not be <code>null</code>
      * @return any repos that match the given criteria; empty list if none match 
      */
-    @WebMethod
-    PageList<Repo> findReposByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") RepoCriteria criteria);
+    PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);
 
     /**
      * Returns all imported repos in the server.
@@ -114,10 +90,7 @@ public interface RepoManagerRemote {
      * @param pc      used for pagination
      * @return paged list
      */
-    @WebMethod
-    PageList<Repo> findRepos( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "pageControl") PageControl pc);
+    PageList<Repo> findRepos(Subject subject, PageControl pc);
 
     /**
      * @param subject
@@ -125,10 +98,7 @@ public interface RepoManagerRemote {
      * @return PackageVersions for the repo
      * @throws IllegalArgumentException for invalid repoId filter
      */
-    @WebMethod
-    PageList<PackageVersion> findPackageVersionsInRepoByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") PackageVersionCriteria criteria);
+    PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria);
 
     /**
      * Returns the latest package version of the supplied package.
@@ -143,12 +113,8 @@ public interface RepoManagerRemote {
      * @param repoId the repo where to take the package versions of the package from
      * @return
      */
-    @WebMethod
-    PackageVersion getLatestPackageVersion(
-        @WebParam(name = "subject") Subject subject, 
-        @WebParam(name = "packageId") int packageId, 
-        @WebParam(name = "repoId") int repoId);
-    
+    PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId);
+
     /**
      * Update an existing {@link Repo} object's basic fields, like name, description, etc. Note that the given <code>
      * repo</code>'s relationships will be ignored and not merged with the existing repo (e.g. is subscribed
@@ -159,11 +125,7 @@ public interface RepoManagerRemote {
      *
      * @return Repo that was updated
      */
-    @WebMethod
-    Repo updateRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repo") Repo repo) //
-        throws RepoException;
+    Repo updateRepo(Subject subject, Repo repo) throws RepoException;
 
     /**
      * Returns the set of package versions that can currently be accessed via the given repo.
@@ -175,12 +137,7 @@ public interface RepoManagerRemote {
      *
      * @return the package versions that are available in the repo
      */
-    @WebMethod
-    PageList<PackageVersion> findPackageVersionsInRepo( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId, //
-        @WebParam(name = "filter") String filter, //
-        @WebParam(name = "pageControl") PageControl pc);
+    PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
      * Deletes package versions from a repo if they are not referenced by 
@@ -194,12 +151,8 @@ public interface RepoManagerRemote {
      * @param packageVersionIds
      * @return true if all the package versions were successfully deleted, false if some references exist.
      */
-    @WebMethod
-    boolean deletePackageVersionsFromRepo(
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "repoId") int repoId,
-        @WebParam(name = "packageVersionIds") int[] packageVersionId);
-    
+    boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionId);
+
     /**
      * Gets all resources that are subscribed to the given repo.
      *
@@ -209,11 +162,7 @@ public interface RepoManagerRemote {
      *
      * @return the list of subscribers
      */
-    @WebMethod
-    PageList<Resource> findSubscribedResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId, //
-        @WebParam(name = "pageControl") PageControl pc);
+    PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc);
 
     /**
      * Get a list of truncated Repo objects that represent the
@@ -222,10 +171,7 @@ public interface RepoManagerRemote {
      * @param resourceId The id of the resource.
      * @return A list of repos.
      */
-    @WebMethod
-    List<SubscribedRepo> findSubscriptions( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
 
     /**
      * Subscribes the identified resource to the set of identified repos. Once complete, the resource will be able to
@@ -235,11 +181,7 @@ public interface RepoManagerRemote {
      * @param resourceId The id of the resource to be subscribed.
      * @param repoIds A list of repos to which the resource is subscribed.
      */
-    @WebMethod
-    void subscribeResourceToRepos( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "repoIds") int[] repoIds);
+    void subscribeResourceToRepos(Subject subject, int resourceId, int[] repoIds);
 
     /**
      * Unsubscribes the identified resource from the set of identified repos.
@@ -248,28 +190,18 @@ public interface RepoManagerRemote {
      * @param resourceId The id of the resource to be subscribed.
      * @param repoIds A list of repos to which the resource is subscribed.
      */
-    @WebMethod
-    void unsubscribeResourceFromRepos( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "repoIds") int[] repoIds);
+    void unsubscribeResourceFromRepos(Subject subject, int resourceId, int[] repoIds);
 
-    @WebMethod
-    int synchronizeRepos( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoIds") int[] repoIds) //
-        throws Exception;
+    int synchronizeRepos(Subject subject, int[] repoIds) throws Exception;
 
     /**
      * This method allows for downloading the bytes of an arbitrary package version. This call can be dangerous with 
      * large packages because it will attempt to load the whole package in memory.
      * 
-     * @param user
+     * @param subject
      * @param repoId
      * @param packageVersionId
      * @return the bytes of the package version
      */
-    @WebMethod
-    byte[] getPackageVersionBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "repoId") int repoId,
-        @WebParam(name = "packageVersionId") int packageVersionId);
+    byte[] getPackageVersionBytes(Subject subject, int repoId, int packageVersionId);
 }

@@ -18,22 +18,18 @@
  */
 package org.rhq.enterprise.server.report;
 
+import java.util.List;
+
+import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
-
-import javax.jws.soap.SOAPBinding;
-import javax.jws.WebService;
-import javax.ejb.Remote;
-import javax.ejb.Local;
-import java.util.List;
 
 @Local
 public interface DataAccessManagerLocal {
 
-
     public List<Object[]> executeQuery(Subject subject, String query);
 
     public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl);
-
 
 }

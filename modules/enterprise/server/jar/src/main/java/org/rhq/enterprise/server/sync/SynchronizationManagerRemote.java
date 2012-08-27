@@ -31,10 +31,9 @@ import org.rhq.core.domain.sync.ImportConfigurationDefinition;
 import org.rhq.core.domain.sync.ImportReport;
 
 /**
- * 
- *
  * @author Lukas Krejci
  */
+
 @Remote
 public interface SynchronizationManagerRemote {
 

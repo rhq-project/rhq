@@ -290,6 +290,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);
                                                         value.setVAlign(VerticalAlignment.TOP);
+                                                        value.setAlign(Alignment.RIGHT);
 
                                                         row.setItems(graphContainer, link, value);
                                                         row.setWidth100();

@@ -33,7 +33,6 @@
             <module>cli</module>
          </modules>
       </profile>
-<!--
 
       <profile>
          <id>enterprise</id>
@@ -49,7 +48,6 @@
          </modules>
       </profile>
 
--->
 
    </profiles>
 

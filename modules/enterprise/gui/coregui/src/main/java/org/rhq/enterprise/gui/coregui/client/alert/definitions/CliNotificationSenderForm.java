@@ -402,6 +402,11 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private void validatePackage(final AsyncCallback<Void> callback) {
+        if (config.selectedRepo == null) {
+            repoSelector.setIcons(failureIcon);
+            callback.onFailure(null);
+            return;
+        }
         getConfiguration().put(new PropertySimple(PROP_REPO_ID, config.selectedRepo.getId()));
 
         if (packageSelector.getSelectedIndex() == 0) {

@@ -229,7 +229,8 @@
                             <!-- org.jboss.common-core - needed to fix https://issues.jboss.org/browse/AS7-5336 -->
                             <!-- org.jboss.jta - needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
                             <!-- org.apache.commons.logging - needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
-                            <Dependencies>org.jboss.common-core export,org.jboss.jts,org.apache.commons.logging</Dependencies>
+                            <!-- org.hibernate because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
+                            <Dependencies>org.jboss.common-core export,org.jboss.jts,org.apache.commons.logging,org.hibernate</Dependencies>
                         </manifestEntries>
                     </archive>
                     <modules>

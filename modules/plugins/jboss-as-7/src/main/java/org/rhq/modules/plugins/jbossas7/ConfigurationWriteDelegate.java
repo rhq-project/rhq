@@ -628,10 +628,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
         }
 
-        Map<String, Object> resultMap = new HashMap<String, Object>();
-        resultMap.put(key, value);
+        if (key != null) {
+            Map<String, Object> resultMap = new HashMap<String, Object>();
+            resultMap.put(key, value);
 
-        return resultMap;
+            return resultMap;
+        } else {
+            return null;
+        }
     }
 
 

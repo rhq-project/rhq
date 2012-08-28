@@ -63,7 +63,7 @@ public class SigarInstaller {
                 .loadMetadataFromPom("pom.xml")
                 .goOffline()
                 // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
-                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132-1")
+                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132-2")
                 .resolveAs(JavaArchive.class);
 
         if (sigars.size() > 1) {

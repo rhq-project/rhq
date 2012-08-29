@@ -86,6 +86,9 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         //will revisit after BZ 826542 is resolved
         //        ignoredResources.add("Authentication (Classic)");
 
+        ignoredResources.add("Memory Pool");
+        ignoredResources.add("Periodic Rotating File Handler");
+
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);

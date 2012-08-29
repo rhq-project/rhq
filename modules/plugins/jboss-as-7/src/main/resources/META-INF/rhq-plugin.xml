@@ -169,7 +169,7 @@
             <c:simple-property name="connector" required="true" type="string" readOnly="false" defaultValue="ajp" description="Name of the web connector used to communicate with the load balancer.">
               <c:option-source target="resource" expression="type=Connector plugin=&pluginName;"/>
             </c:simple-property>
-            <c:simple-property name="domain" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
+            <c:simple-property name="load-balancing-group" required="false" type="string" readOnly="false" description="loadBalancingGroup name."/>
           </c:group>
 
           <c:group name="context" displayName="Web Context Options">

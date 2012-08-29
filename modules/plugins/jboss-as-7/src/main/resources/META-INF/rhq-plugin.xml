@@ -2100,6 +2100,9 @@
             <c:simple-property name="cluster" required="false" type="string" readOnly="true" description="The name of the group communication cluster"/>
             <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The executor to use for the transport"/>
             <c:simple-property name="lock-timeout" required="false" type="long" readOnly="true" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
+            <c:simple-property name="machine" required="false" type="string" readOnly="true" description="A machine identifier for the transport"/>
+            <c:simple-property name="rack" required="false" type="string" readOnly="true" description="A rack identifier for the transport"/>
+            <c:simple-property name="site" required="false" type="string" readOnly="true" description="A site identifier for the transport"/>
             <c:simple-property name="stack" required="false" type="string" readOnly="true" description="The jgroups stack to use for the transport"/>
           </resource-configuration>
         </service>
@@ -11427,6 +11430,9 @@
           <c:simple-property name="cluster" required="false" type="string" readOnly="false" description="The name of the group communication cluster"/>
           <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The executor to use for the transport"/>
           <c:simple-property name="lock-timeout" required="false" type="long" readOnly="false" defaultValue="240000" description="The timeout for locks for the transport. The default value is 240000."/>
+          <c:simple-property name="machine" required="false" type="string" readOnly="false" description="A machine identifier for the transport"/>
+          <c:simple-property name="rack" required="false" type="string" readOnly="false" description="A rack identifier for the transport"/>
+          <c:simple-property name="site" required="false" type="string" readOnly="false" description="A site identifier for the transport"/>
           <c:simple-property name="stack" required="false" type="string" readOnly="false" description="The jgroups stack to use for the transport"/>
         </resource-configuration>
       </service>

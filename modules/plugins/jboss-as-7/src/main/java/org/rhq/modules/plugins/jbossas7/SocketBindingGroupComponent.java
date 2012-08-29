@@ -2,7 +2,6 @@ package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
@@ -30,14 +29,12 @@ public class SocketBindingGroupComponent extends BaseComponent implements Config
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         Configuration config = report.getConfiguration();
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-
         if (!(context.getParentResourceComponent() instanceof StandaloneASComponent)) { // TODO what about managed servers
-            configDef.getPropertyDefinitions().remove("port-offset");
-            config.remove("port-offset");
+            config.put(new PropertySimple("port-offset",null));
         }
 
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
-        delegate.updateResourceConfiguration(report);
+        super.updateResourceConfiguration(report);
+
+
     }
 }

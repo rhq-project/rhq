@@ -4140,7 +4140,7 @@
 
           <resource-configuration>
             <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
+              <c:simple-property name="name:0" displayName="Name" readOnly="true" description="Connector name." required="false"/>
             </c:map-property>
             <c:list-property name="entries" required="true" readOnly="true" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
               <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
@@ -4821,8 +4821,8 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="true" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="true" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="true" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
-              <c:simple-property name="static-connectors" />
+            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+              <c:simple-property name="static-connectors" readOnly="true" />
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="true" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="true" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -6432,8 +6432,8 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
+            <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
+              <c:simple-property name="name:0" displayName="Name" readOnly="true" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
             </c:map-property>
             <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
               <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
@@ -6452,7 +6452,7 @@
             <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
             <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
             <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
             <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
             <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
             <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
@@ -6494,8 +6494,8 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-              <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
+            <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
+              <c:simple-property name="name:0" displayName="Name" description="Connector name." readOnly="true" required="false"/>
             </c:map-property>
             <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1"  description="The jndi names the connection factory should be bound to.">
               <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
@@ -6514,7 +6514,7 @@
             <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
             <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
             <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
             <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
             <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
             <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
@@ -6818,7 +6818,7 @@
             <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node. The default value is 1048576."/>
             <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the cluster connections are considered alive (in the absence of heartbeat). The default value is 60000."/>
             <c:simple-property name="connector-ref" required="true" type="string" readOnly="false" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
             <c:simple-property name="forward-when-no-consumers" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether messages will be distributed round robin between other nodes of the cluster irrespective of whether there are matching or indeed any consumers on other nodes. If this is set to false (the default) then HornetQ will only forward messages to other nodes of the cluster if the address to which they are being forwarded has queues which have consumers, and if those consumers have message filters (selectors) at least one of those selectors must match the message. The default value is false."/>
             <c:simple-property name="max-hops" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of times a message can be forwarded. HornetQ can be configured to also load balance messages to nodes which might be connected to it only indirectly with other HornetQ servers as intermediates in a chain. The default value is 1."/>
             <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
@@ -6826,8 +6826,8 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
-                <c:simple-property name="static-connectors" />
+            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+                <c:simple-property name="static-connectors" readOnly="true"/>
             </c:list-property>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
           </resource-configuration>
@@ -6903,7 +6903,7 @@
             <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
             <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to the target node. The default value is 1048576."/>
             <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the bridges are considered alive (in the absence of heartbeat). The default value is 60000."/>
-            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+            <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
             <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="Whether the bridge will attempt to failover onto a backup server (if specified) when the target server is cleanly shutdown rather than crashed."/>
             <c:simple-property name="filter" required="false" type="string" readOnly="false" description="An optional filter string. If specified then only messages which match the filter expression specified will be forwarded. The filter string follows the HornetQ filter expression syntax described in the HornetQ documentation."/>
             <c:simple-property name="forwarding-address" required="false" type="string" readOnly="false" description="The address on the target server that the message will be forwarded to. If a forwarding address is not specified then the original destination of the message will be retained."/>
@@ -6915,8 +6915,8 @@
             <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
             <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
             <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-            <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
-              <c:simple-property name="static-connectors" />
+            <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined." >
+              <c:simple-property name="static-connectors" readOnly="true"/>
             </c:list-property>
             <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
             <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
@@ -12274,8 +12274,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
+          <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connector to be used. This is mutually exclusive with discovery-group-name">
+            <c:simple-property name="name:0" displayName="Name" readOnly="true" description="Connector name. Mutually exclusive with discovery-group-name" required="false"/>
           </c:map-property>
           <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
@@ -12295,7 +12295,7 @@
           <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
           <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
           <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
           <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
           <c:simple-property name="factory-type" required="false" type="string" readOnly="true" description="The type of connection factory.">
@@ -12338,8 +12338,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:map-property name="connector:collapsed" required="false" readOnly="false" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
-            <c:simple-property name="name:0" displayName="Name" description="Connector name." required="false"/>
+          <c:map-property name="connector:collapsed" required="false" readOnly="true" displayName="Connector" description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
+            <c:simple-property name="name:0" displayName="Name" readOnly="true" description="Connector name." required="false"/>
           </c:map-property>
           <c:list-property name="entries" required="true" readOnly="false" displayName="JNDI Names" min="1" description="The jndi names the connection factory should be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
@@ -12358,7 +12358,7 @@
           <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The connection ttl. The default value is 60000."/>
           <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The consumer max rate. The default value is &#45;1."/>
           <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The consumer window size. The default value is 1048576."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group name."/>
           <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
           <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The dups ok batch size. The default value is 1048576."/>
           <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" defaultValue="false" description="True to fail over on initial connection. The default value is false."/>
@@ -12889,7 +12889,7 @@
           <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node. The default value is 1048576."/>
           <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the cluster connections are considered alive (in the absence of heartbeat). The default value is 60000."/>
           <c:simple-property name="connector-ref" required="true" type="string" readOnly="false" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to a target node."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The discovery group used to obtain the list of other servers in the cluster to which this cluster connection will make connections. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
           <c:simple-property name="forward-when-no-consumers" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether messages will be distributed round robin between other nodes of the cluster irrespective of whether there are matching or indeed any consumers on other nodes. If this is set to false (the default) then HornetQ will only forward messages to other nodes of the cluster if the address to which they are being forwarded has queues which have consumers, and if those consumers have message filters (selectors) at least one of those selectors must match the message. The default value is false."/>
           <c:simple-property name="max-hops" required="false" type="integer" readOnly="false" defaultValue="1" description="The maximum number of times a message can be forwarded. HornetQ can be configured to also load balance messages to nodes which might be connected to it only indirectly with other HornetQ servers as intermediates in a chain. The default value is 1."/>
           <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The maximum interval of time used to retry connections. The default value is 2000."/>
@@ -12897,8 +12897,8 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="500" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 500."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
-            <c:simple-property name="static-connectors"/>
+          <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="The statically defined list of connectors to which this cluster connection will make connections. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+            <c:simple-property name="static-connectors" readOnly="true"/>
           </c:list-property>
           <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>
         </resource-configuration>
@@ -13008,7 +13008,7 @@
           <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
           <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" defaultValue="1048576" description="The confirmation&#45;window&#45;size to use for the connection used to forward messages to the target node. The default value is 1048576."/>
           <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" defaultValue="60000" description="The maximum time (in milliseconds) for which the connections used by the bridges are considered alive (in the absence of heartbeat). The default value is 60000."/>
-          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
+          <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="true" description="The name of the discovery group used by this bridge. Must be undefined (null) if &apos;static&#45;connectors&apos; is defined."/>
           <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="Whether the bridge will attempt to failover onto a backup server (if specified) when the target server is cleanly shutdown rather than crashed."/>
           <c:simple-property name="filter" required="false" type="string" readOnly="false" description="An optional filter string. If specified then only messages which match the filter expression specified will be forwarded. The filter string follows the HornetQ filter expression syntax described in the HornetQ documentation."/>
           <c:simple-property name="forwarding-address" required="false" type="string" readOnly="false" description="The address on the target server that the message will be forwarded to. If a forwarding address is not specified then the original destination of the message will be retained."/>
@@ -13020,8 +13020,8 @@
           <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" defaultValue="&#45;1" description="The total number of reconnect attempts the bridge will make before giving up and shutting down. A value of &#45;1 signifies an unlimited number of attempts. The default value is &#45;1."/>
           <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between subsequent reconnection attempts, if the connection to the target server has failed. The default value is 2000."/>
           <c:simple-property name="retry-interval-multiplier" required="false" type="double" readOnly="false" defaultValue="1.0" description="A multiplier to apply to the time since the last retry to compute the time to the next retry. This allows you to implement an exponential backoff between retry attempts. The default value is 1.0."/>
-          <c:list-property name="static-connectors:nullable" required="false" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
-            <c:simple-property name="static-connectors"/>
+          <c:list-property name="static-connectors:nullable" required="false" readOnly="true" displayName="Static Connectors" description="A list of names of statically defined connectors used by this bridge. Must be undefined (null) if &apos;discovery&#45;group&#45;name&apos; is defined.">
+            <c:simple-property name="static-connectors" readOnly="true"/>
           </c:list-property>
           <c:simple-property name="transformer-class-name" required="false" type="string" readOnly="false" description="The name of a user&#45;defined class which implements the org.hornetq.core.server.cluster.Transformer interface."/>
           <c:simple-property name="use-duplicate-detection" required="false" type="boolean" readOnly="false" defaultValue="true" description="Whether the bridge will automatically insert a duplicate id property into each message that it forwards. The default value is true."/>

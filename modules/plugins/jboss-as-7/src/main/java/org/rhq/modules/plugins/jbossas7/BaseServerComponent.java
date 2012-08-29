@@ -241,25 +241,36 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return startServer();
     }
 
-    protected boolean waitUntilDown(OperationResult tmp) throws InterruptedException {
+    protected boolean waitUntilDown() throws InterruptedException {
         boolean down=false;
         int count=0;
+
         while (!down) {
             Operation op = new ReadAttribute(new Address(),"release-version");
-            Result res = getASConnection().execute(op);
-            if (!res.isSuccess()) { // If op succeeds, server is not down
-                down=true;
-            } else if (count > 20) {
-                tmp.setErrorMessage("Was not able to shut down the server");
-                return true;
+
+            try{
+                Result res = getASConnection().execute(op);
+                if (!res.isSuccess()) { // If op succeeds, server is not down
+                    down = true;
+                } else if (count > 20) {
+                    break;
+                }
+            } catch (Exception e) {
+                down = true;
             }
+
             if (!down) {
-                Thread.sleep(1000); // Wait 1s
+                try {
+                    Thread.sleep(1000); // Wait 1s
+                } catch (InterruptedException e) {
+                    // ignore
+                }
             }
             count++;
         }
-        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down");
-        return false;
+
+        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down. Server down=" + down);
+        return down;
     }
 
     /**

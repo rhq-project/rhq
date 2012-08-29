@@ -431,24 +431,15 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple property,
         PropertyDefinitionSimple propertyDefinition, Address address) {
 
+        // If the property value is null and the property is optional, skip too
+        if (property.getStringValue() == null && !propertyDefinition.isRequired())
+            return;
+
         if (property.getName().endsWith(":ignore")) // Caller takes care
             return;
 
         if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
-
-        //If the property value is null and the property is optional,
-        //then send default value or null to the server
-        if (property.getStringValue() == null && !propertyDefinition.isRequired()) {
-            String name = property.getName();
-            if (name.indexOf(':') != -1) {
-                name = name.substring(0, name.indexOf(":"));
-            }
-
-            Operation writeAttribute = new WriteAttribute(address, name, null);
-            cop.addStep(writeAttribute);
-            return;
-        }
 
         SimpleEntry<String, Object> entry = this.preparePropertySimple(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());

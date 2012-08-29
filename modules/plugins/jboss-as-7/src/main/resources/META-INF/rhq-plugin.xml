@@ -4654,7 +4654,7 @@
 
         <service name="Cluster Connection (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="ConnectorDiscoveryGroupValidatorComponent"
                  createDeletePolicy="neither">
 
           <plugin-configuration>
@@ -4784,7 +4784,7 @@
 
         <service name="Bridge (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="ConnectorDiscoveryGroupValidatorComponent"
                  createDeletePolicy="neither">
 
           <plugin-configuration>
@@ -6804,7 +6804,7 @@
 
         <service name="Cluster Connection (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="ConnectorDiscoveryGroupValidatorComponent"
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -6893,7 +6893,7 @@
 
         <service name="Bridge (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="ConnectorDiscoveryGroupValidatorComponent"
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -12855,7 +12855,7 @@
 
       <service name="Cluster Connection"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="ConnectorDiscoveryGroupValidatorComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -12985,7 +12985,7 @@
 
       <service name="Bridge"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="ConnectorDiscoveryGroupValidatorComponent"
                createDeletePolicy="both">
 
         <plugin-configuration>

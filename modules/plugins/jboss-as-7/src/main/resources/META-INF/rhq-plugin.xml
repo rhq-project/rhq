@@ -8339,7 +8339,7 @@
 
   <service name="Transactions Subsystem (Standalone)"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem.">
 
@@ -8461,7 +8461,7 @@
 
   <service name="Transactions Subsystem (Profile)"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem.">
 
@@ -8517,7 +8517,7 @@
 
   <service name="Transactions Subsystem (Managed)"
            discovery="SubsystemDiscovery"
-           class="BaseComponent"
+           class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem.">
 

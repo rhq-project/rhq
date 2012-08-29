@@ -4714,7 +4714,6 @@
           <metric property="started" dataType="trait" description="Whether the cluster connection is started."/>
 
           <resource-configuration>
-            <c:simple-property name="allow-direct-connections-only" required="false" type="boolean" readOnly="true" defaultValue="false" description="Whether, if a node learns of the existence of a node that is more than 1 hop away, we do not create a bridge for direct cluster connection. Only relevant if &apos;static&#45;connectors&apos; is defined. The default value is false."/>
             <c:simple-property name="call-timeout" required="false" type="long" readOnly="true" defaultValue="30000" description="The timeout (in ms) for remote calls made by the cluster connection. The default value is 30000."/>
             <c:simple-property name="check-period" required="false" type="long" readOnly="true" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
             <c:simple-property name="cluster-connection-address" required="true" type="string" readOnly="true" description="Each cluster connection only applies to messages sent to an address that starts with this value."/>
@@ -6843,7 +6842,6 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="allow-direct-connections-only" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether, if a node learns of the existence of a node that is more than 1 hop away, we do not create a bridge for direct cluster connection. Only relevant if &apos;static&#45;connectors&apos; is defined. The default value is false."/>
             <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The timeout (in ms) for remote calls made by the cluster connection. The default value is 30000."/>
             <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
             <c:simple-property name="cluster-connection-address" required="true" type="string" readOnly="false" description="Each cluster connection only applies to messages sent to an address that starts with this value."/>
@@ -12948,7 +12946,6 @@
         <metric property="started" dataType="trait" description="Whether the cluster connection is started."/>
 
         <resource-configuration>
-          <c:simple-property name="allow-direct-connections-only" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether, if a node learns of the existence of a node that is more than 1 hop away, we do not create a bridge for direct cluster connection. Only relevant if &apos;static&#45;connectors&apos; is defined. The default value is false."/>
           <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" defaultValue="30000" description="The timeout (in ms) for remote calls made by the cluster connection. The default value is 30000."/>
           <c:simple-property name="check-period" required="false" type="long" readOnly="false" defaultValue="30000" description="The period (in milliseconds) between client failure check. The default value is 30000."/>
           <c:simple-property name="cluster-connection-address" required="true" type="string" readOnly="false" description="Each cluster connection only applies to messages sent to an address that starts with this value."/>

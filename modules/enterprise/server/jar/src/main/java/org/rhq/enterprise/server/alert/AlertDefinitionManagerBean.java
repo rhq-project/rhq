@@ -196,23 +196,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return results;
     }
 
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createDependentAlertDefinition(Subject subject, AlertDefinition alertDefinition, int resourceId)
-        throws InvalidAlertDefinitionException {
-        
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, false);
-    }
-
-    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
-        
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true);
-    }
-
-    private int createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms) throws InvalidAlertDefinitionException {
         checkAlertDefinition(subject, alertDefinition, resourceId);
 
         // if this is an alert definition, set up the link to a resource
@@ -226,7 +212,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         // after the resource is set up (in the case of non-templates), we can use the checkPermission on it
-        if (checkPerms && checkPermission(subject, alertDefinition) == false) {
+        if (checkPermission(subject, alertDefinition) == false) {
             if (alertDefinition.getResourceType() != null) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert templates for type ["
@@ -279,7 +265,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         return alertDefinition.getId();
     }
-    
+
     private void fixRecoveryId(AlertDefinition definition) {
         try {
             if (definition.getParentId() != 0 && definition.getRecoveryId() != 0) {

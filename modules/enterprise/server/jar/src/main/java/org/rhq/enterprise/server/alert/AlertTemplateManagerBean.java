@@ -128,6 +128,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 + alertTemplate.toSimpleString(), t);
         }
 
+        Subject overlord = subjectManager.getOverlord();
         Throwable firstThrowable = null;
 
         List<Integer> resourceIdsForType = getCommittedResourceIdsNeedingTemplateApplication(user, alertTemplateId,
@@ -139,8 +140,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 AlertDefinition childAlertDefinition = new AlertDefinition(alertTemplate);
                 childAlertDefinition.setParentId(alertTemplate.getId());
 
-                // persist the child as a dependent alert definition
-                alertDefinitionManager.createDependentAlertDefinition(user, childAlertDefinition, resourceId);
+                // persist the child using overlord
+                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
             } catch (Throwable t) {
                 // continue on error, create as many as possible
                 if (firstThrowable == null) {

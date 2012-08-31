@@ -48,25 +48,6 @@ public interface AlertDefinitionManagerLocal {
     int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;
 
-    /**
-     * This is exactly the same as {@link #createAlertDefinition(Subject, AlertDefinition, Integer)} but
-     * assumes the resource is part of a group (or has given resource type for templates) for which 
-     * a group or template alert definition is being created.
-     * <p>
-     * This method assumes the caller already checked the subject has permissions to create a group or template alert
-     * definition on a group / resource type the resource is member of.
-     * <p>
-     * In another words this method is a helper to 
-     * {@link GroupAlertDefinitionManagerLocal#createGroupAlertDefinitions(Subject, AlertDefinition, Integer)} and
-     * {@link AlertTemplateManagerLocal#createAlertTemplate(Subject, AlertDefinition, Integer)}.
-     * 
-     * @param subject the user that is creating the group or template alert definition
-     * @param alertDefinition the alert definition on the resource
-     * @param resourceId the resource
-     * @return the id of the newly created alert definition
-     */
-    int createDependentAlertDefinition(Subject subject, AlertDefinition alertDefinition, int resourceId);
-    
     boolean isEnabled(Integer definitionId);
 
     boolean isTemplate(Integer definitionId);

@@ -39,7 +39,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 
 /**
- * @deprecated use new management API to get things like install dir
+ * Get information about RHQ's underlying AS Server.
  */
 public class CoreServer implements CoreServerMBean {
     private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =

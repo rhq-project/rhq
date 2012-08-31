@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.util;
 
+import java.lang.management.ManagementFactory;
+
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.naming.InitialContext;
@@ -617,15 +619,16 @@ public final class LookupUtil {
     }
     
     public static CoreServerMBean getCoreServer() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        CoreServerMBean jonServer;
+        // The default MBean server for AS7 is the platform MBeanServer
+        MBeanServer defaultMBeanServer = ManagementFactory.getPlatformMBeanServer();
+        CoreServerMBean rhqServer;
         try {
-            jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME,
-                jBossMBeanServer);
+            rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME,
+                defaultMBeanServer);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
-        return jonServer;
+        return rhqServer;
     }
 
     public static PluginDeploymentScannerMBean getPluginDeploymentScanner() {

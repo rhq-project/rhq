@@ -24,8 +24,7 @@ import java.util.Date;
 import org.rhq.core.domain.common.ProductInfo;
 
 /**
- * An MBean that exposes various core server global attributes (version, uptime, etc.).
- * @deprecated use new management API to get things like install dir
+ * An MBean that exposes various global attributes of the underlying AS Server (version, uptime, etc.).
  */
 public interface CoreServerMBean {
     /**

@@ -427,7 +427,7 @@ public class AlertCondition implements Serializable {
     /**
      * The name of the condition whose semantics are different based on this condition's category:
      * 
-     * AVAILABILITY: n/a (null)
+     * AVAILABILITY: The relevant Avail AlertConditionOperator name
      * THRESHOLD: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * BASELINE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * CHANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)

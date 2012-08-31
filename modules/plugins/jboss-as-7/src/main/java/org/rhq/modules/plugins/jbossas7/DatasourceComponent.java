@@ -13,6 +13,9 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -174,6 +177,27 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         }
     }
 
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        Configuration config = report.getConfiguration();
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+
+        //These properties cannot be undefined once set.
+        //Also the AS7 server does not accept null values even if the properties are still unset.
+        replaceWithDefaultIfNull("max-pool-size", config, configDef);
+        replaceWithDefaultIfNull("min-pool-size", config, configDef);
+        replaceWithDefaultIfNull("pool-prefill", config, configDef);
+        replaceWithDefaultIfNull("pool-use-strict-min", config, configDef);
+        replaceWithDefaultIfNull("blocking-timeout-wait-millis", config, configDef);
+        replaceWithDefaultIfNull("idle-timeout-minutes", config, configDef);
+        replaceWithDefaultIfNull("background-validation-millis", config, configDef);
+        replaceWithDefaultIfNull("background-validation-minutes", config, configDef);
+        replaceWithDefaultIfNull("background-validation", config, configDef);
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), address);
+        delegate.updateResourceConfiguration(report);
+    }
+
     private void getRCAsMetric(MeasurementReport report, MeasurementScheduleRequest request) {
         Operation op = new ReadAttribute(getAddress(), request.getName());
         Result res = getASConnection().execute(op);
@@ -203,5 +227,24 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         MeasurementDataTrait trait = new MeasurementDataTrait(request, String.valueOf(res.isSuccess()));
 
         return trait;
+    }
+
+    /**
+     * Replace the value configured by the user with the default value from the resource descriptor if
+     * the value to be sent to the server is null or empty.
+     *
+     * @param propertyName property name
+     * @param config configuration update
+     * @param configDef configuration definition
+     */
+    private void replaceWithDefaultIfNull(String propertyName, Configuration config, ConfigurationDefinition configDef) {
+        PropertyDefinitionSimple propertyDefinition = configDef.getPropertyDefinitionSimple(propertyName);
+
+        if (propertyDefinition != null) {
+            String propertyValue = config.getSimpleValue(propertyName);
+            if (propertyValue == null || propertyValue.isEmpty()) {
+                config.put(new PropertySimple(propertyName, propertyDefinition.getDefaultValue()));
+            }
+        }
     }
 }

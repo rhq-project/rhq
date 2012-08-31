@@ -17,14 +17,13 @@
    <description>TODO: Remove this invoker and move HibernateDetachUtility</description>
 
    <dependencies>
-
+ 
       <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>    
+         <scope>provided</scope>
       </dependency>
-
+ 
    </dependencies>
 
   <profiles>

@@ -29,35 +29,25 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- required by PersistenceUtil (provided by AS) -->
-      <!-- required also by hibernate Instrument task. (but use compile scope for this) -->
+      <!-- provided by AS7 -->
       <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>compile</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- required by PersistenceUtil and EJB3 Embedded -->
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
+         <groupId>org.hibernate</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <scope>provided</scope>
       </dependency>
 
+      <!-- required by PersistenceUtil (provided by AS7) -->
       <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <!-- provided by AS7 -->
+      <dependency>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.0-api</artifactId>
+         <scope>provided</scope>    
       </dependency>
 
       <dependency>
@@ -73,38 +63,11 @@
        <scope>provided</scope> <!-- by JBossAS -->
      </dependency>
 
-      <!--  needed for hibernate Instrument task
-      <dependency>
-         <groupId>javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <version>${jboss-javassist.version}</version>
-         <scope>runtime</scope>
-      </dependency>
-      -->
-
-      <!--  needed for hibernate Instrument task
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <scope>runtime</scope>
-      </dependency>
-      -->
-
       <!-- needed if you want to use the logging JDBC wrapper
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-dbutils</artifactId>
          <version>${project.version}</version>
-      </dependency>
-      -->
-
-      <!--
-      <!- - so Seam annotations can be used in the entities - ->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-seam</artifactId>
-         <version>${seam.version}</version>
-         <scope>provided</scope> <!- - by ${rhq.earName} - ->
       </dependency>
       -->
 
@@ -151,28 +114,11 @@
          <scope>test</scope>
       </dependency>
 
-<!--
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>hibernate-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>thirdparty-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
--->
-
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
          <groupId>antlr</groupId>
          <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
          <scope>test</scope>
       </dependency>
 
@@ -344,6 +290,7 @@
                            Using it turned out not t be a current option since the instrumented class carries with
                            it hibernate imports that we can't put in the domain jar since it's used on the Agent and
                            in Remote Java Clients. But this worked, so here ya go...
+                           (update: this may no longer work given the upgrade to H4, also, deps would have changed)                          
                               <taskdef name="instrument" classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
                                  <classpath>
                                     <path refid="maven.runtime.classpath" />

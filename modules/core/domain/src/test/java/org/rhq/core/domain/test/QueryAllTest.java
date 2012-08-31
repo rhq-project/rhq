@@ -36,7 +36,7 @@ import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.Session;
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.testng.annotations.Test;
 

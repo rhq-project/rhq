@@ -48,36 +48,11 @@
 
         <!-- 3rd Party Deps -->
 
-        <dependency>
-            <groupId>hibernate</groupId>
-            <artifactId>hibernate3</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
         <!-- used by a test JSP -->
         <dependency>
-            <groupId>hibernate-entitymanager</groupId>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-
-        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope> <!-- by JBossAS -->
+            <scope>provided</scope>
         </dependency>
         
         <!--

@@ -1,5 +1,7 @@
 package org.rhq.core.domain.drift;
 
+import static org.apache.commons.io.IOUtils.toInputStream;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,14 +13,14 @@ import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+
 import org.apache.commons.io.IOUtils;
-import org.hibernate.Hibernate;
+import org.hibernate.Session;
 import org.testng.annotations.Test;
 
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.test.TransactionCallback;
-
-import static org.apache.commons.io.IOUtils.toInputStream;
 
 public class DriftFileTest extends DriftDataAccessTest {
 
@@ -35,7 +37,9 @@ public class DriftFileTest extends DriftDataAccessTest {
         final JPADriftFileBits df1 = new JPADriftFileBits();
         df1.setHashId(hashId);
         df1.setDataSize((long) content.length());
-        df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
+        EntityManager em = getEntityManager();
+        Session session = (Session) em.getDelegate();
+        df1.setData(session.getLobHelper().createBlob(toInputStream(content), content.length()));
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -49,8 +53,10 @@ public class DriftFileTest extends DriftDataAccessTest {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() {
-                JPADriftFileBits df2 = getEntityManager().find(JPADriftFileBits.class, df1.getHashId());
-                df2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
+                EntityManager em = getEntityManager();
+                Session session = (Session) em.getDelegate();
+                JPADriftFileBits df2 = em.find(JPADriftFileBits.class, df1.getHashId());
+                df2.setData(session.getLobHelper().createBlob(toInputStream(newContent), newContent.length()));
                 getEntityManager().merge(df2);
             }
         });
@@ -87,7 +93,10 @@ public class DriftFileTest extends DriftDataAccessTest {
             final JPADriftFileBits driftFile = new JPADriftFileBits();
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
-            driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
+            EntityManager em = getEntityManager();
+            Session session = (Session) em.getDelegate();            
+            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
+                dataFile.length()));
             dataFile.delete();
 
             executeInTransaction(new TransactionCallback() {
@@ -105,7 +114,8 @@ public class DriftFileTest extends DriftDataAccessTest {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
+                    EntityManager em = getEntityManager();
+                    JPADriftFileBits driftFileBits = em.find(JPADriftFileBits.class, hashId);
                     blobs.add(driftFileBits.getBlob());
                     driftFiles.add(driftFileBits);
                 }
@@ -127,7 +137,10 @@ public class DriftFileTest extends DriftDataAccessTest {
             final JPADriftFileBits driftFile = new JPADriftFileBits();
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
-            driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
+            EntityManager em = getEntityManager();
+            Session session = (Session) em.getDelegate();
+            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
+                dataFile.length()));
             dataFile.delete();
 
             try {

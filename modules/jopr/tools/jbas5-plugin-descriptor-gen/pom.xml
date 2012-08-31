@@ -63,21 +63,6 @@
 		  <version>${project.version}</version>          
 		</dependency>
 
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagemen
-t section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
         <dependency>
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>

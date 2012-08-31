@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.seam.core.Manager;
-import org.jboss.seam.faces.FacesMessages;
 import org.jboss.seam.util.Strings;
 
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -168,7 +167,7 @@ public abstract class FacesContextUtility {
             //Because the detail therefore must not be empty, we must resort to an ugly hack here and put in a unicode
             //for non-breakable space:
             String detailToUse = Strings.isEmpty(detail) ? "\u00a0" : detail;
-            FacesMessages.instance().add(toSeverity(severity), null, null, summary, detailToUse);
+            //FacesMessages.instance().add(toSeverity(severity), null, null, summary, detailToUse);
         } else {
             getFacesContext().addMessage(null, new FacesMessage(severity, summary, (detail != null) ? detail : ""));
         }

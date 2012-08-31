@@ -156,13 +156,6 @@
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
     <dependency>
-      <groupId>antlr</groupId>
-      <artifactId>antlr</artifactId>
-      <version>2.7.7</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>javassist</groupId>
       <artifactId>javassist</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
@@ -200,10 +193,27 @@
 
       <!-- 3rd Party Deps -->
 
+    <!-- do we really need this version, for now use the version provided by AS7, declare just below --> 
     <dependency>
       <groupId>org.antlr</groupId>
-      <artifactId>antlr</artifactId>
-      <version>3.2</version>
+      <artifactId>antlr-runtime</artifactId>
+      <version>3.2</version>  
+      <exclusions>
+        <exclusion>
+          <groupId>antlr</groupId>
+          <artifactId>antlr</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr</artifactId>
+        </exclusion>        
+      </exclusions>      
+    </dependency>    
+
+    <dependency>
+      <groupId>antlr</groupId>
+      <artifactId>antlr</artifactId>  
+      <scope>provided</scope>
     </dependency>
 
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
@@ -255,24 +265,9 @@
     </dependency>
 
     <dependency>
-      <groupId>hibernate</groupId>
-      <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>hibernate-annotations</groupId>
-      <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>hibernate-entitymanager</groupId>
+      <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

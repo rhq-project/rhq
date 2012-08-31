@@ -471,10 +471,10 @@ public class HibernateDetachUtility {
                 }
 
             } else {
-                if (fieldValue instanceof org.hibernate.collection.PersistentCollection) {
+                if (fieldValue instanceof org.hibernate.collection.spi.PersistentCollection) {
                     // Replace hibernate specific collection types
 
-                    if (!((org.hibernate.collection.PersistentCollection) fieldValue).wasInitialized()) {
+                    if (!((org.hibernate.collection.spi.PersistentCollection) fieldValue).wasInitialized()) {
                         field.set(object, null);
                     } else {
 

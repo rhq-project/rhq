@@ -28,6 +28,13 @@
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by ${rhq.earName} -->
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ${rhq.earName} -->
@@ -41,36 +48,9 @@
       </dependency>
 
       <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by ${rhq.earName} -->
-      </dependency>
-
-      <!-- 3rd Party Deps -->
-
-      <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope>
-         <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
          <groupId>javax.el</groupId>
          <artifactId>el-api</artifactId>
          <version>${el.version}</version>
-         <scope>provided</scope>
-         <!-- by JBossAS -->
-      </dependency>
-
-      <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
          <scope>provided</scope>
          <!-- by JBossAS -->
       </dependency>

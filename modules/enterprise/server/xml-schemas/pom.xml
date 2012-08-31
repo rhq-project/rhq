@@ -44,17 +44,6 @@
             <!--<scope>test</scope>  not sure about this -->
     </dependency>
 
-        <!--
-            TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent
-            classes; it is fixed in JDK 6.
-        -->
-    <dependency>
-      <groupId>jboss.jboss-embeddable-ejb3</groupId>
-      <artifactId>hibernate-all</artifactId>
-      <version>1.0.0.Alpha9</version>
-      <scope>provided</scope>
-    </dependency>
-
   </dependencies>
 
   <build>

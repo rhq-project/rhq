@@ -13,13 +13,7 @@
 
    <name>RHQ Enterprise Remote CLI</name>
    <description>RHQ Enterprise Remote Command Line Interface</description>
-
-   <properties>
-      <persistence-api.version>1.0</persistence-api.version>
-      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
-      <opencsv.version>1.8</opencsv.version>
-   </properties>
-
+ 
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

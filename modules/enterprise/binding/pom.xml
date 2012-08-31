@@ -23,15 +23,23 @@
            <artifactId>rhq-scripting-api</artifactId>
            <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-util</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by PC -->
+        </dependency>
         
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
             <version>${project.version}</version>
+            <!-- I'm not sure this is still necessary due to hibernate now being provided scope in domain (jshaughn -->
             <exclusions>
                 <exclusion>
-                    <groupId>hibernate</groupId>
-                    <artifactId>hibernate3</artifactId>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-entitymanager</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -162,6 +170,10 @@
                     <artifactId>jboss-serialization</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>antlr</groupId>
+                    <artifactId>antlr</artifactId>
+                </exclusion>                
+                <exclusion>
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr</artifactId>
                 </exclusion>
@@ -181,21 +193,6 @@
             <artifactId>commons-lang</artifactId>
             <version>2.4</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>${persistence-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement 
-                section. -->
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -229,6 +226,12 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+           <groupId>org.hibernate.javax.persistence</groupId>
+           <artifactId>hibernate-jpa-2.0-api</artifactId>
+           <scope>test</scope>    
+      </dependency>
 
     </dependencies>
 

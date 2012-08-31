@@ -22,8 +22,13 @@
  */
 package org.rhq.core.domain.test;
 
+import static org.rhq.test.JPAUtils.lookupEntityManager;
+import static org.rhq.test.JPAUtils.lookupTransactionManager;
+
 import java.io.File;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Hashtable;
 
@@ -32,6 +37,8 @@ import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.transaction.TransactionManager;
 
+import org.hibernate.Session;
+import org.hibernate.jdbc.Work;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -41,9 +48,6 @@ import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallback;
-
-import static org.rhq.test.JPAUtils.lookupEntityManager;
-import static org.rhq.test.JPAUtils.lookupTransactionManager;
 
 public abstract class AbstractEJB3Test extends AssertJUnit {
 
@@ -101,8 +105,24 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
     public boolean isPostgres(EntityManager em) throws Exception {
-        return ((org.hibernate.ejb.EntityManagerImpl) em).getSession().connection().getMetaData()
-            .getDatabaseProductName().toLowerCase().indexOf("postgres") > -1;
+        Session session = (Session) em.getDelegate();
+        ConnectionMetaData metaData = new ConnectionMetaData();
+        session.doWork(metaData);
+
+        return metaData.getDbProductName().indexOf("postgres") > -1;
+    }
+
+    private static class ConnectionMetaData implements Work {
+        private String dbProductName;
+
+        @Override
+        public void execute(Connection conn) throws SQLException {
+            dbProductName = conn.getMetaData().getDatabaseProductName().toLowerCase();
+        }
+
+        String getDbProductName() {
+            return dbProductName;
+        }
     }
 
     public InitialContext getInitialContext() {

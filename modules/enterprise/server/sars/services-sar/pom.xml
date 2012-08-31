@@ -81,13 +81,6 @@
                                         <jar destfile="${deployment.dir}">
                                             <fileset dir="target/${project.build.finalName}" />
                                         </jar>
-                                        <property name="dodeploy.file" location="${deployment.dir}/../../${rhq.earName}.dodeploy" />
-                                        <property name="skipdeploy.file" location="${deployment.dir}/../../${rhq.earName}.skipdeploy" />
-                                        <property name="failed.file" location="${deployment.dir}/../../${rhq.earName}.failed" />
-                                        <echo>*** Touching ${dodeploy.file} to force redeployment of ${rhq.deploymentName}...</echo>
-                                        <touch file="${dodeploy.file}" />
-                                        <delete file="${skipdeploy.file}" /> <!-- in case this exists -->
-                                        <delete file="${failed.file}" /> <!-- in case this exists -->
                                     </target>
                                 </configuration>
                                 <goals>

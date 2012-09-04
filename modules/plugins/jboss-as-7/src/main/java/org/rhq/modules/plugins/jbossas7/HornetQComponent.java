@@ -44,7 +44,8 @@ public class HornetQComponent extends TemplatedSubResourcesComponent {
         }
 
         ResourceType resourceType = report.getResourceType();
-        if (resourceType.getName().equals("Connection-Factory")) {
+        if (resourceType.getName().equals("Connection-Factory")
+            || resourceType.getName().equals("Pooled Connection Factory")) {
             // we need to check that a connector XOR a discovery-group-name is given
             int found = 0;
             PropertyMap connector = resourceConfiguration.getMap("connector:collapsed");
@@ -61,7 +62,28 @@ public class HornetQComponent extends TemplatedSubResourcesComponent {
 
             if (found == 0 || found == 2) {
                 String errorMessage = "You need to provide either a connector name OR a discovery-group-name. You provided ";
-                errorMessage += (found == 0) ? "none" : "both";
+                errorMessage += (found == 0) ? "none." : "both.";
+                report.setErrorMessage(errorMessage);
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+        } else if (resourceType.getName().equals("Bridge") || resourceType.getName().equals("Cluster Connection")) {
+            // we need to check that static-connector XOR a discovery-group-name is given
+            int found = 0;
+
+            PropertyList staticConnectors = resourceConfiguration.getList("static-connectors:nullable");
+            if (staticConnectors != null && !staticConnectors.getList().isEmpty()) {
+                found++;
+            }
+
+            String discoveryGroup = resourceConfiguration.getSimpleValue("discovery-group-name", "");
+            if (!discoveryGroup.isEmpty()) {
+                found++;
+            }
+
+            if (found == 0 || found == 2) {
+                String errorMessage = "You need to provide either static-connectors OR a discovery-group-name. You provided ";
+                errorMessage += (found == 0) ? "none." : "both.";
                 report.setErrorMessage(errorMessage);
                 report.setStatus(CreateResourceStatus.FAILURE);
                 return report;

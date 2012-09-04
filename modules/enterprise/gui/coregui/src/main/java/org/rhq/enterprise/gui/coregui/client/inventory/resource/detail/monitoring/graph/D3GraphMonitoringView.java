@@ -20,19 +20,23 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas;
+import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphDataProvider;
+import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.MetricProvider;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Denis Krusko
+ * @author Mike Thompson
  */
-public class MonitorGraphsView extends LocatableVLayout implements RefreshableView
+public class D3GraphMonitoringView extends LocatableVLayout implements RefreshableView
 {
     private ResourceComposite resourceComposite;
-    private PointsDataProvider dataProvider;
-    private GraphCanvas graphCanvas;
+    private MetricProvider metricProvider;
+    private D3GraphCanvas graphCanvas;
 
-    public MonitorGraphsView(String locatorId, ResourceComposite resourceComposite)
+    public D3GraphMonitoringView(String locatorId, ResourceComposite resourceComposite)
     {
         super(locatorId);
         this.resourceComposite = resourceComposite;
@@ -49,23 +53,27 @@ public class MonitorGraphsView extends LocatableVLayout implements RefreshableVi
 
     private LocatableDynamicForm createGraphForm()
     {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Graphing"));
+        final int PIXEL_OFFSET = 5;
         form.setWidth100();
         form.setAutoHeight();
 
-        graphCanvas = new GraphCanvas("cubism_chart", 5000, 5000, 60000);
+        //@todo: get rid of all these hard-coded values
+        graphCanvas = new D3GraphCanvas("d3_chart");
+        //graphCanvas.setWidth(form.getInnerContentWidth() - PIXEL_OFFSET);
+        //graphCanvas.setHeight(form.getInnerHeight() - PIXEL_OFFSET);
         graphCanvas.setWidth(900);
         graphCanvas.setHeight(700);
         form.addChild(graphCanvas);
-        dataProvider = new GraphDataProvider(getLocatorId(), resourceComposite.getResource().getId());
-        graphCanvas.setDataProvider(dataProvider);
+        metricProvider = new GraphDataProvider(getLocatorId(), resourceComposite.getResource().getId());
+        graphCanvas.setDataProvider(metricProvider);
         return form;
     }
     @Override
     public void destroy()
     {
         super.destroy();
-        dataProvider.stop();
+        metricProvider.stop();
     }
 
     @Override

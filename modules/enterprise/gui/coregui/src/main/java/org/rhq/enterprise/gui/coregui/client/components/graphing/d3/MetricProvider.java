@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
+package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 import java.util.List;
 
@@ -25,20 +25,20 @@ import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 /**
  * @author Denis Krusko
  */
-public interface PointsDataProvider
+public interface MetricProvider
 {
 
     /**
      * @param metrics
      * @return metrics in JSON format
      */
-    String getJSONMetrics(List<MetricDisplaySummary> metrics);
+    String getMetricsAsJson(List<MetricDisplaySummary> metrics);
 
     /**
      * @param metricIndex
      * @return all points for definition in JSON format
      */
-    String getJSONPoints(int metricIndex);
+    String getPointsAsJson(int metricIndex);
 
     /**
      * @param metricIndex
@@ -46,7 +46,7 @@ public interface PointsDataProvider
      * @param stop
      * @return points between start and stop for definition in JSON format
      */
-    String getJSONPoints(int metricIndex, long start, long stop);
+    String getPointsAsJson(int metricIndex, long start, long stop);
 
     /**
      * @return map definition: points in JSON format
@@ -57,12 +57,12 @@ public interface PointsDataProvider
      * @param graphCanvas
      * @param step        the frequency with which DataProvider will receive data
      */
-    void initDataProvider(GraphCanvas graphCanvas, final int step);
+    void initDataProvider(AbstractGraphCanvas graphCanvas, final int step);
 
     /**
      * @return metrics in JSON format
      */
-    String getJSONmetrics();
+    String getMetricsAsJson();
 
     /**
      * Stops automatically obtain data

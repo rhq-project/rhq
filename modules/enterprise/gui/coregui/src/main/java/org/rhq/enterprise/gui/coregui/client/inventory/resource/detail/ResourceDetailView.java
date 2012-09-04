@@ -66,7 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.MonitorGraphsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.D3GraphMonitoringView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphMonitoringView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -101,8 +102,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     public static class DriftSubTab {
-        public static final String HISTORY = "History";
-        public static final String SNAPSHOTS = "Snapshots";
+        //public static final String HISTORY = "History";
+        //public static final String SNAPSHOTS = "Snapshots";
         public static final String DEFINITIONS = "Definitions";
     }
 
@@ -131,6 +132,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorCubismGraphs;
+    private SubTab monitorD3Graphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
     private SubTab monitorAvail;
@@ -163,6 +165,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         this.hide();
     }
 
+    @Override
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
@@ -208,6 +211,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_graphs()), null);
         monitorCubismGraphs = new SubTab(monitoringTab.extendLocatorId("CubismGraphs"), new ViewName("CubismGraphs",
                 MSG.view_tabs_common_graphs_cubism()), null);
+
+        //@todo: i18n
+        monitorD3Graphs = new SubTab(monitoringTab.extendLocatorId("D3Graphs"), new ViewName("D3Graphs",
+                "D3 Graphs"), null);
+
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
             MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), new ViewName("Traits",
@@ -218,8 +226,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorCubismGraphs, monitorTraits, monitorAvail, monitorSched,
-            monitorCallTime);
+        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorCubismGraphs, monitorD3Graphs,
+                monitorTraits, monitorAvail, monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events",
@@ -275,10 +283,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return tabs;
     }
 
+    @Override
     protected ResourceTitleBar createTitleBar() {
         return new ResourceTitleBar(extendLocatorId("TitleBar"));
     }
 
+    @Override
     protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {
         super.updateTabContent(resourceComposite, isRefresh);
 
@@ -296,14 +306,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
             Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
-            updateSummaryTabContent(resource);
+            updateSummaryTabContent();
             updateInventoryTabContent(resourceComposite, resource, facets);
             updateAlertsTabContent(resourceComposite);
             updateMonitoringTabContent(resource, facets);
             updateEventsTabContent(resourceComposite, facets);
             updateOperationsTabContent(facets);
             updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
-            updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
+            updateDriftTabContent(resourceComposite,  facets);
             updateContentTabContent(resource, facets);
 
             this.show();
@@ -313,7 +323,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
     }
 
-    private void updateSummaryTabContent(final Resource resource) {
+    private void updateSummaryTabContent() {
         updateSubTab(this.summaryTab, this.summaryActivity, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
@@ -410,6 +420,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     private void updateMonitoringTabContent(final Resource resource, Set<ResourceTypeFacet> facets) {
         boolean visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
+
         ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
@@ -423,10 +434,18 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MonitorGraphsView(monitoringTab.extendLocatorId("CubismGraphs"), resourceComposite);
+                return new GraphMonitoringView(monitoringTab.extendLocatorId("CubismGraphs"), resourceComposite);
             }
         };
         updateSubTab(this.monitoringTab, this.monitorCubismGraphs, visible, true, viewFactory);
+
+        viewFactory = (!visible) ? null : new ViewFactory() {
+            @Override
+            public Canvas createView() {
+                return new D3GraphMonitoringView(monitoringTab.extendLocatorId("D3Graphs"), resourceComposite);
+            }
+        };
+        updateSubTab(this.monitoringTab, this.monitorD3Graphs, visible, true, viewFactory);
 
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {
@@ -535,8 +554,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
     }
 
-    private void updateDriftTabContent(final ResourceComposite resourceComposite, final Resource resource,
-        ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
+    private void updateDriftTabContent(final ResourceComposite resourceComposite, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), true)) {
 
             // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
@@ -598,9 +616,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return this.resourceId;
     }
 
-    public void addResourceSelectListener(ResourceSelectListener listener) {
-        this.selectListeners.add(listener);
-    }
+//    public void addResourceSelectListener(ResourceSelectListener listener) {
+//        this.selectListeners.add(listener);
+//    }
 
     @Override
     protected ResourceComposite getSelectedItem() {
@@ -615,12 +633,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         criteria.fetchTags(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
                         Message.Severity.Warning);
                     CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
@@ -633,10 +653,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         UserSessionManager.getUserPreferences().addRecentResource(resourceId,
                             new AsyncCallback<Subject>() {
 
+                                @Override
                                 public void onFailure(Throwable caught) {
                                     Log.error("Unable to update recently viewed resources", caught);
                                 }
 
+                                @Override
                                 public void onSuccess(Subject result) {
                                     if (Log.isDebugEnabled()) {
                                         Log.debug("Updated recently viewed resources for " + result

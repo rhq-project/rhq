@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
+package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +29,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 /**
  * @author Denis Krusko
  */
-public class GraphDataStorage implements DataStorage
+public class GraphDataStorage implements GraphBackingStore
 {
     private SortedMap<Long, Double> processedPoints = new TreeMap<Long, Double>();
     private int maxOldValues = 0;
@@ -72,7 +72,7 @@ public class GraphDataStorage implements DataStorage
      * @param end   time
      * @return values ??between the start (inclusive) and end (exclusive)
      */
-    public Collection<Double> getValues(long start, long end)
+    public Collection<Double> getValuesForRange(long start, long end)
     {
         SortedMap<Long, Double> requestMap = processedPoints.subMap(start, end);
         return requestMap.values();
@@ -83,7 +83,7 @@ public class GraphDataStorage implements DataStorage
      * @return near value for specified time
      */
     @Override
-    public Double getValue(long time)
+    public Double getValueAtTime(long time)
     {
         SortedMap<Long, Double> afterMap = processedPoints.tailMap(time);
         if (!afterMap.isEmpty())

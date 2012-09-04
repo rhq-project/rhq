@@ -67,8 +67,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-// TODO: Re-enable and flesh out Drift support        
-
 /**
  * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).
  *
@@ -79,7 +77,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
-   // public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -90,7 +87,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private TwoLevelTab inventoryTab;
     private TwoLevelTab operationsTab;
     private TwoLevelTab alertsTab;
-    // private TwoLevelTab driftTab;
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
 
@@ -109,8 +105,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
-    // private SubTab driftDefinition;
-    // private SubTab driftHistory;
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
@@ -154,6 +148,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return new ResourceGroupTitleBar(getLocatorId(), isAutoGroup(), isAutoCluster());
     }
 
+    @Override
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
@@ -240,6 +235,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
+    @Override
     protected void updateTabContent(ResourceGroupComposite groupComposite, boolean isRefresh) {
         super.updateTabContent(groupComposite, isRefresh);
 
@@ -481,6 +477,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return this.groupComposite;
     }
 
+    @Override
     protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
 
@@ -499,12 +496,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(groupId)),
                         Message.Severity.Warning);
                     CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
@@ -518,10 +517,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             UserSessionManager.getUserPreferences().addRecentResourceGroup(groupId,
                                 new AsyncCallback<Subject>() {
 
+                                    @Override
                                     public void onFailure(Throwable caught) {
                                         Log.error("Unable to update recently viewed resource groups", caught);
                                     }
 
+                                    @Override
                                     public void onSuccess(Subject result) {
                                         if (Log.isDebugEnabled()) {
                                             Log.debug("Updated recently viewed resource groups for " + result

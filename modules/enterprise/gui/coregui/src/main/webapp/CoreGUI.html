@@ -17,7 +17,7 @@
         if(search.indexOf("locale") == -1){
             // IE uses browserLanguage
             var lang = navigator.language!=null ? navigator.language : navigator.browserLanguage;
-            var lang = lang.replace("-", "_");
+            lang = lang.replace("-", "_");
             document.write("<meta name='gwt:property' content='locale="+lang +"'>");
         }
     </script>
@@ -34,6 +34,10 @@
             src="/coregui/js/d3.v2.js"></script>
     <script type="text/javascript" language="javascript"
             src="/coregui/js/cubism.v1.js"></script>
+    <!--
+    <script type="text/javascript" language="javascript"
+            src="/coregui/js/nv.d3.js"></script>
+    -->
 
     <link rel="stylesheet" href="CoreGUI.css">
     <link rel="stylesheet" href="css/search.css">

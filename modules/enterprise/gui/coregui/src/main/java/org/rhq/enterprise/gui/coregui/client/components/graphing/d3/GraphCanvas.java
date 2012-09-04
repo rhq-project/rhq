@@ -16,42 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
+package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 
-import com.smartgwt.client.widgets.HTMLFlow;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Denis Krusko
  */
-public class GraphCanvas extends com.smartgwt.client.widgets.Canvas
+public class GraphCanvas extends AbstractGraphCanvas
 {
-
-    HTMLFlow flow;
-
-    private int width;
-    private int height;
-    private int serverDelay = 0;
-    private int clientDelay = 0;
-    private int step = 1000;
-    private PointsDataProvider dataProvider;
-    private String chartId;
-    private boolean initialized = false;
+    String chartId;
+    public int serverDelay = 5000;
+    public int clientDelay = 5000;
+    public int step = 1000;
+    protected int width = 900;
+    protected int height = 700;
 
     public GraphCanvas(String chartId)
     {
-        this.chartId = chartId;
-        init();
+        super(chartId);
     }
 
+    @Override
+    public void initOverride() {
+        // TODO: Implement this method.
+    }
 
-    private void init()
-    {
-        flow = new HTMLFlow();
-        flow.setContents("<div id = \"" + chartId + "\" />");
-        this.setHeight100();
-        this.setWidth100();
-        this.addChild(flow);
+    @Override
+    public void copyShadowProperties() {
+        chartId = parentChartId;
     }
 
     public GraphCanvas(String chartId, int serverDelay, int clientDelay, int step)
@@ -62,56 +56,28 @@ public class GraphCanvas extends com.smartgwt.client.widgets.Canvas
         this.step = step;
     }
 
-    @Override
-    public void setWidth(int width)
-    {
-        this.width = width;
-        flow.setWidth(width);
-    }
-
-    @Override
-    public void setHeight(int height)
-    {
-        this.height = height;
-        flow.setHeight(height);
-    }
-
-    public void setDataProvider(PointsDataProvider dataProvider)
-    {
-        this.dataProvider = dataProvider;
-        dataProvider.initDataProvider(this, step);
-        initialized = true;
-    }
 
     private String getPoints(int metricIndex, double start, double stop)
     {
-        return dataProvider.getJSONPoints(metricIndex, Math.round(start), Math.round(stop));
+        Log.info(" *** GraphCanvas.getPoints");
+        return dataProvider.getPointsAsJson(metricIndex, Math.round(start), Math.round(stop));
     }
 
     private String getMetrics()
     {
-        return dataProvider.getJSONmetrics();
+        return dataProvider.getMetricsAsJson();
     }
 
-    @Override
-    public void redraw()
-    {
-        super.redraw();
-        if (initialized)
-        {
-            drawCharts();
-        }
-    }
 
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::serverDelay)// allow seconds of collection lag
-                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::clientDelay)
-                .step(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::step)
-                .size(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::width);
+                .serverDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
+                .clientDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
+                .step(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
+                .size(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
 
-        var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::chartId;
-        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::getMetrics()());
+        var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetrics()());
 
 
         var metrics = [];
@@ -122,7 +88,7 @@ public class GraphCanvas extends com.smartgwt.client.widgets.Canvas
             var metric = context.metric(function (start, stop, step, callback)
             {
 
-                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
+                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
 
                 try
                 {
@@ -130,7 +96,7 @@ public class GraphCanvas extends com.smartgwt.client.widgets.Canvas
                 }
                 catch (e)
                 {
-                    alert(e + jsonPoints);
+                    console.log(e + jsonPoints);
                 }
                 callback(null, json);
             }, name);

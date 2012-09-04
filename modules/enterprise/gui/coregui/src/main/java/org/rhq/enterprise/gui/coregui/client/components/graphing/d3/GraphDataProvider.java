@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
+package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,19 +34,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 /**
  * @author Denis Krusko
  */
-public class GraphDataProvider implements Locatable, PointsDataProvider
+public class GraphDataProvider implements Locatable, MetricProvider
 {
     private List<MetricDisplaySummary> metrics;
-    private String JSONmetrics;
+    private String jsonMetrics;
     private int[] definitions;
     private int resourceId;
     private String locatorId;
     private long begin;
     private long end;
-    private Timer pointTimer;
+    private Timer graphTimer;
     private int step;
-    private GraphCanvas graphCanvas;
-    private List<DataStorage> pointsStorage = new ArrayList<DataStorage>();
+    private AbstractGraphCanvas graphCanvas;
+    private List<GraphBackingStore> pointsStorage = new ArrayList<GraphBackingStore>();
 
     public GraphDataProvider(String locatorId, int resourceId)
     {
@@ -54,15 +54,16 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
         this.resourceId = resourceId;
     }
 
-    public void initDataProvider(GraphCanvas graphCanvas, final int step)
+    @Override
+    public void initDataProvider(AbstractGraphCanvas graphCanvas, final int step)
     {
         this.graphCanvas = graphCanvas;
         this.step = step;
-        initMetrics();
+        fetchAndGraphMetrics();
         end = System.currentTimeMillis();
         begin = end - (1000L * 60 * 60 * 8);
 
-        pointTimer = new Timer()
+        graphTimer = new Timer()
         {
             public void run()
             {
@@ -77,15 +78,16 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
 
     private void start()
     {
-        pointTimer.scheduleRepeating(step);
+        graphTimer.scheduleRepeating(step);
     }
 
+    @Override
     public void stop()
     {
-        pointTimer.cancel();
+        graphTimer.cancel();
     }
 
-    public void initMetrics()
+    private void fetchAndGraphMetrics()
     {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId, locatorId, new AsyncCallback<ArrayList<MetricDisplaySummary>>()
         {
@@ -96,23 +98,25 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
             }
 
             @Override
-            public void onSuccess(ArrayList<MetricDisplaySummary> result)
+            public void onSuccess(ArrayList<MetricDisplaySummary> metricSummaryList)
             {
-                metrics = result;
-                definitions = new int[result.size()];
-                for (int i = 0; i < result.size(); i++)
+                metrics = metricSummaryList;
+                definitions = new int[metricSummaryList.size()];
+                for (int i = 0; i < metricSummaryList.size(); i++)
                 {
-                    definitions[i] = result.get(i).getDefinitionId();
+                    definitions[i] = metricSummaryList.get(i).getDefinitionId();
                     pointsStorage.add(new GraphDataStorage(400));
                 }
-                JSONmetrics = getJSONMetrics(result);
+                jsonMetrics = getMetricsAsJson(metricSummaryList);
                 graphCanvas.drawCharts();
             }
         });
     }
 
     @Override
-    public String getJSONMetrics(List<MetricDisplaySummary> metrics)
+    //@todo: use GWT JSON to produce json
+    //@todo: use generics
+    public String getMetricsAsJson(List<MetricDisplaySummary> metrics)
     {
         String s = "[";
         MetricDisplaySummary metric;
@@ -126,18 +130,20 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
     }
 
 
-    public void loadData(long begin, long end, int numPoints)
+    private void loadData(long begin, long end, int numPoints)
     {
         if (definitions != null && definitions.length > 0)
         {
             GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitions,
                     begin, end, numPoints, new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
             {
+                @Override
                 public void onFailure(Throwable caught)
                 {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
                 }
 
+                @Override
                 public void onSuccess(
                         List<List<MeasurementDataNumericHighLowComposite>> result)
                 {
@@ -156,14 +162,14 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
         String s = "{";
         for (int i = 0; i < definitions.length; i++)
         {
-            s += "" + definitions[i] + ":" + getJSONPoints(i) + ",";
+            s += "" + definitions[i] + ":" + getPointsAsJson(i) + ",";
         }
         s += "}";
         return s;
     }
 
     @Override
-    public String getJSONPoints(int metricIndex)
+    public String getPointsAsJson(int metricIndex)
     {
         Collection<Double> points = pointsStorage.get(metricIndex).getAllValues();
         String s = "[";
@@ -176,9 +182,9 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
     }
 
     @Override
-    public String getJSONPoints(int metricIndex, long start, long stop)
+    public String getPointsAsJson(int metricIndex, long start, long stop)
     {
-        Collection<Double> points = pointsStorage.get(metricIndex).getValues(start, stop);
+        Collection<Double> points = pointsStorage.get(metricIndex).getValuesForRange(start, stop);
         String s = "[";
         for (Double point : points)
         {
@@ -206,9 +212,9 @@ public class GraphDataProvider implements Locatable, PointsDataProvider
         return metrics;
     }
 
-    public String getJSONmetrics()
+    public String getMetricsAsJson()
     {
-        return JSONmetrics;
+        return jsonMetrics;
     }
 }
 

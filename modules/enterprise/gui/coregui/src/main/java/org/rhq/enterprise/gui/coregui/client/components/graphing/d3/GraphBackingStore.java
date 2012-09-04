@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph;
+package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +26,8 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 /**
  * @author Denis Krusko
  */
-public interface DataStorage
+//@todo: use generics
+public interface GraphBackingStore
 {
 
     /**
@@ -38,14 +39,14 @@ public interface DataStorage
      * @param time time for requested data
      * @return near value for specified time
      */
-    Double getValue(long time);
+    Double getValueAtTime(long time);
 
     /**
      * @param start time
      * @param end   time
      * @return values ??between the start (inclusive) and end (exclusive)
      */
-    Collection<Double> getValues(long start, long end);
+    Collection<Double> getValuesForRange(long start, long end);
 
     Collection<Double> getAllValues();
 }

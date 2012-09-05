@@ -424,13 +424,6 @@
                                     <version>${project.version}</version>
                                 </artifactItem>
 
-                                <!-- TODO: remove this once all JSF pages are gone -->
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>rhq-core-perspective</artifactId>
-                                    <version>${project.version}</version>
-                                </artifactItem>
-
                                 <artifactItem>
                                     <groupId>${project.groupId}.server</groupId>
                                     <artifactId>alert-email</artifactId>

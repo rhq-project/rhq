@@ -92,7 +92,7 @@ public class GraphCanvas extends AbstractGraphCanvas
 
                 try
                 {
-                    var json = jsonPoints ? eval("tmp=" + jsonPoints) : null;
+                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
                 }
                 catch (e)
                 {
@@ -117,24 +117,24 @@ public class GraphCanvas extends AbstractGraphCanvas
         for (var i = 0; i < jsonMetrics.length; i++)
         {
             var jsonMetric = jsonMetrics[i];
-            var metricI = createMetric(jsonMetric.label, jsonMetric.metricIndex);
-            var horizonI;
+            var metric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
+            var horizonContext;
 
             if (jsonMetric.metricUnit != 'PERCENTAGE')
             {
-                horizonI = context.horizon();
+                horizonContext = context.horizon();
             }
             else
             {
-                horizonI = context.horizon()
+                horizonContext = context.horizon()
                         .format($wnd.d3.format(".2%"));
             }
             selection.call(function (div)
             {
-                div.datum(metricI);
+                div.datum(metric);
                 div.append("div")
                         .attr("class", "horizon")
-                        .call(horizonI);
+                        .call(horizonContext);
             });
         }
         // On mousemove, reposition the chart values to match the rule.

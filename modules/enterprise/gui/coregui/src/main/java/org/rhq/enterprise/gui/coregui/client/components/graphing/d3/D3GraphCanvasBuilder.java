@@ -81,7 +81,7 @@ public class D3GraphCanvasBuilder extends com.smartgwt.client.widgets.Canvas
     public void setDataProvider(GraphDataProvider dataProvider)
     {
         this.dataProvider = dataProvider;
-        dataProvider.initDataProvider(this, step);
+        //dataProvider.initDataProvider(this, step);
         initialized = true;
     }
 
@@ -107,13 +107,13 @@ public class D3GraphCanvasBuilder extends com.smartgwt.client.widgets.Canvas
 
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::serverDelay)// allow seconds of collection lag
-                .clientDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::clientDelay)
-                .step(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::step)
-                .size(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::width);
+                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::serverDelay)// allow seconds of collection lag
+                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::clientDelay)
+                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::step)
+                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::width);
 
-        var chartDiv = "#" + @org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::chartId;
-        var jsonMetrics = eval(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::getMetrics()());
+        var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::chartId;
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvasBuilder::getMetrics()());
 
 
         var metrics = [];
@@ -132,7 +132,7 @@ public class D3GraphCanvasBuilder extends com.smartgwt.client.widgets.Canvas
                 }
                 catch (e)
                 {
-                    alert(e + jsonPoints);
+                    console.log(e + jsonPoints);
                 }
                 callback(null, json);
             }, name);
@@ -150,27 +150,30 @@ public class D3GraphCanvasBuilder extends com.smartgwt.client.widgets.Canvas
                             .attr("class", "rule")
                             .call(context.rule());
                 });
+
+
+        // create the json metrics from real data
         for (var i = 0; i < jsonMetrics.length; i++)
         {
             var jsonMetric = jsonMetrics[i];
-            var metricI = createMetric(jsonMetric.label, jsonMetric.metricIndex);
-            var horizonI;
+            var aMetric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
+            var theHorizon;
 
             if (jsonMetric.metricUnit != 'PERCENTAGE')
             {
-                horizonI = context.horizon();
+                theHorizon = context.horizon();
             }
             else
             {
-                horizonI = context.horizon()
+                theHorizon = context.horizon()
                         .format($wnd.d3.format(".2%"));
             }
             selection.call(function (div)
             {
-                div.datum(metricI);
+                div.datum(aMetric);
                 div.append("div")
                         .attr("class", "horizon")
-                        .call(horizonI);
+                        .call(theHorizon);
             });
         }
         // On mousemove, reposition the chart values to match the rule.

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,10 +33,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Denis Krusko
+ * @author Mike Thompson
  */
 public class GraphDataProvider implements Locatable, MetricProvider
 {
-    private List<MetricDisplaySummary> metrics;
+    private List<MetricDisplaySummary> metricsList;
     private String jsonMetrics;
     private int[] definitions;
     private int resourceId;
@@ -100,7 +101,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
             @Override
             public void onSuccess(ArrayList<MetricDisplaySummary> metricSummaryList)
             {
-                metrics = metricSummaryList;
+                metricsList = metricSummaryList;
                 definitions = new int[metricSummaryList.size()];
                 for (int i = 0; i < metricSummaryList.size(); i++)
                 {
@@ -123,6 +124,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
         for (int i = 0; i < metrics.size(); i++)
         {
             metric = metrics.get(i);
+            //@todo:optimize
             s += " {label:'" + metric.getLabel() + "',metricIndex:" + i + ",metricName:'" + metric.getMetricName() + "',metricUnit:'" + metric.getUnits() + "'},";
         }
         s += "]";
@@ -162,14 +164,17 @@ public class GraphDataProvider implements Locatable, MetricProvider
         String s = "{";
         for (int i = 0; i < definitions.length; i++)
         {
-            s += "" + definitions[i] + ":" + getPointsAsJson(i) + ",";
+            s += "" + definitions[i] + ":" + getStoredPointsAsJson(i) + ",";
         }
         s += "}";
         return s;
     }
 
     @Override
-    public String getPointsAsJson(int metricIndex)
+    /**
+     * Grab all the metrics data for a particular metric, already stored in the client as json.
+     */
+    public String getStoredPointsAsJson(int metricIndex)
     {
         Collection<Double> points = pointsStorage.get(metricIndex).getAllValues();
         String s = "[";
@@ -207,9 +212,9 @@ public class GraphDataProvider implements Locatable, MetricProvider
         return this.locatorId + "_" + extension;
     }
 
-    public List<MetricDisplaySummary> getMetrics()
+    public List<MetricDisplaySummary> getMetricsList()
     {
-        return metrics;
+        return metricsList;
     }
 
     public String getMetricsAsJson()

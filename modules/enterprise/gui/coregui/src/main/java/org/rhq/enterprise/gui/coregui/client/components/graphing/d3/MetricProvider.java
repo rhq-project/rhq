@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,15 @@ import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 /**
  * @author Denis Krusko
+ * @author Mike Thompson
  */
 public interface MetricProvider
 {
+    /**
+     * @param graphCanvas
+     * @param stepInMillis        the frequency with which DataProvider will receive data
+     */
+    void initDataProvider(AbstractGraphCanvas graphCanvas, final int stepInMillis);
 
     /**
      * @param metrics
@@ -38,7 +44,17 @@ public interface MetricProvider
      * @param metricIndex
      * @return all points for definition in JSON format
      */
-    String getPointsAsJson(int metricIndex);
+    String getStoredPointsAsJson(int metricIndex);
+
+    /**
+     * @return map definition: points in JSON format
+     */
+    String getAllJSONPoints();
+
+    /**
+     * @return metrics in JSON format
+     */
+    String getMetricsAsJson();
 
     /**
      * @param metricIndex
@@ -47,22 +63,6 @@ public interface MetricProvider
      * @return points between start and stop for definition in JSON format
      */
     String getPointsAsJson(int metricIndex, long start, long stop);
-
-    /**
-     * @return map definition: points in JSON format
-     */
-    String getAllJSONPoints();
-
-    /**
-     * @param graphCanvas
-     * @param step        the frequency with which DataProvider will receive data
-     */
-    void initDataProvider(AbstractGraphCanvas graphCanvas, final int step);
-
-    /**
-     * @return metrics in JSON format
-     */
-    String getMetricsAsJson();
 
     /**
      * Stops automatically obtain data

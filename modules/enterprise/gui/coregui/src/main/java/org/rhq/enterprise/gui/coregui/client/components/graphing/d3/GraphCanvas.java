@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ public class GraphCanvas extends AbstractGraphCanvas
     String chartId;
     public int serverDelay = 5000;
     public int clientDelay = 5000;
-    public int step = 1000;
+    public int step = 3000;
     protected int width = 900;
     protected int height = 700;
 
@@ -71,10 +71,10 @@ public class GraphCanvas extends AbstractGraphCanvas
 
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
-                .clientDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
-                .step(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
-                .size(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
+                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
+                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
+                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
+                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
 
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
         var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetrics()());

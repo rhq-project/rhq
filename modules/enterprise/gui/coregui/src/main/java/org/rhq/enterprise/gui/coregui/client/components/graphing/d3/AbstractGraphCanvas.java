@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 public abstract class AbstractGraphCanvas extends Canvas implements GraphCanvasProperties {
 
     HTMLFlow flow;
-    MetricProvider dataProvider;
+    protected MetricProvider dataProvider;
 
     // Shadow Properties for JSNI.
     // parent properties here are shadowed in the child so JSNI can see them.
@@ -87,7 +87,7 @@ public abstract class AbstractGraphCanvas extends Canvas implements GraphCanvasP
     public void setDataProvider(MetricProvider dataProvider)
     {
         this.dataProvider = dataProvider;
-        //dataProvider.initDataProvider(this, step);
+        dataProvider.initDataProvider(this, parentStep);
         initialized = true;
     }
 

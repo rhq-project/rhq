@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 //@todo: add Generics
 public class D3GraphCanvas extends AbstractGraphCanvas
 {
-
     String chartId;
     public int serverDelay = 5000;
     public int clientDelay = 5000;
@@ -46,7 +45,6 @@ public class D3GraphCanvas extends AbstractGraphCanvas
     }
 
     @Override
-
     public void copyShadowProperties() {
         chartId = parentChartId;
     }
@@ -64,10 +62,10 @@ public class D3GraphCanvas extends AbstractGraphCanvas
 
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
-                .clientDelay(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
-                .step(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
-                .size(@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
+                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
+                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
+                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
+                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
 
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::chartId;
         var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::getMetrics()());

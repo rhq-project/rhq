@@ -13,7 +13,7 @@
 
    <name>RHQ Enterprise Remote CLI</name>
    <description>RHQ Enterprise Remote Command Line Interface</description>
- 
+   
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -50,7 +50,6 @@
       <dependency>
          <groupId>net.sf.opencsv</groupId>
          <artifactId>opencsv</artifactId>
-         <version>${opencsv.version}</version>
       </dependency>
 
       <dependency>

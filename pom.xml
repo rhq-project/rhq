@@ -106,13 +106,15 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.3.4.Final</resteasy.version>
+    <resteasy.version>2.3.2.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.1.Final</arquillian.version>
     <animal.sniffer.version>1.7</animal.sniffer.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <antlr.version>2.7.7</antlr.version>
+    <infinispan.version>5.1.2.FINAL</infinispan.version>
+    <opencsv.version>1.8</opencsv.version>    
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -378,6 +380,18 @@
          <groupId>antlr</groupId>
          <artifactId>antlr</artifactId>
          <version>${antlr.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${infinispan.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.sf.opencsv</groupId>
+        <artifactId>opencsv</artifactId>
+        <version>${opencsv.version}</version>
       </dependency>
 
       <dependency>

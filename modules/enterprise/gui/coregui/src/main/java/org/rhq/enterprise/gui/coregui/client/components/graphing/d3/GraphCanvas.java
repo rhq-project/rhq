@@ -83,26 +83,7 @@ public class GraphCanvas extends AbstractGraphCanvas
         var metrics = [];
         var self = this;
 
-        function createMetric(name, metricIndex)
-        {
-            var metric = context.metric(function (start, stop, step, callback)
-            {
 
-                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
-
-                try
-                {
-                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
-                }
-                catch (e)
-                {
-                    console.log(e + jsonPoints);
-                }
-                callback(null, json);
-            }, name);
-            metrics.push(metric);
-            return metric;
-        }
 
         var selection = $wnd.d3.select(chartDiv)
                 .call(function (div)
@@ -142,6 +123,26 @@ public class GraphCanvas extends AbstractGraphCanvas
         {
             $wnd.d3.selectAll(".value").style("right", i == null ? null : context.size() - i + "px");
         });
+
+        function createMetric(name, metricIndex)
+        {
+            var metric = context.metric(function (start, stop, step, callback)
+            {
+                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
+
+                try
+                {
+                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
+                }
+                catch (e)
+                {
+                    console.log(e + jsonPoints);
+                }
+                callback(null, json);
+            }, name);
+            metrics.push(metric);
+            return metric;
+        }
     }-*/;
 }
 

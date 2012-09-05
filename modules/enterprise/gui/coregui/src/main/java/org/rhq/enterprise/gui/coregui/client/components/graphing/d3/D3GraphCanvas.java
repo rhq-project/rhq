@@ -70,30 +70,8 @@ public class D3GraphCanvas extends AbstractGraphCanvas
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::chartId;
         var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::getMetrics()());
 
-
         var metrics = [];
         var self = this;
-
-        function createMetric(name, metricIndex)
-        {
-            var metric = context.metric(function (start, stop, step, callback)
-            {
-
-                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
-
-                try
-                {
-                    var json = jsonPoints ? eval("tmp=" + jsonPoints) : null;
-                }
-                catch (e)
-                {
-                    console.log(e + jsonPoints);
-                }
-                callback(null, json);
-            }, name);
-            metrics.push(metric);
-            return metric;
-        }
 
         var selection = $wnd.d3.select(chartDiv)
                 .call(function (div)
@@ -109,15 +87,15 @@ public class D3GraphCanvas extends AbstractGraphCanvas
         {
             var jsonMetric = jsonMetrics[i];
             var graphMetric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
-            var graphHorizon;
+            var horizonContext;
 
             if (jsonMetric.metricUnit != 'PERCENTAGE')
             {
-                graphHorizon = context.horizon();
+                horizonContext = context.horizon();
             }
             else
             {
-                graphHorizon = context.horizon()
+                horizonContext = context.horizon()
                         .format($wnd.d3.format(".2%"));
             }
             selection.call(function (div)
@@ -125,8 +103,29 @@ public class D3GraphCanvas extends AbstractGraphCanvas
                 div.datum(graphMetric);
                 div.append("div")
                         .attr("class", "horizon")
-                        .call(graphHorizon);
+                        .call(horizonContext);
             });
+        }
+
+        function createMetric(name, metricIndex)
+        {
+            var metric = context.metric(function (start, stop, step, callback)
+            {
+
+                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
+
+                try
+                {
+                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
+                }
+                catch (e)
+                {
+                    console.log(e + jsonPoints);
+                }
+                callback(null, json);
+            }, name);
+            metrics.push(metric);
+            return metric;
         }
 
     }-*/;

@@ -35,7 +35,6 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 
@@ -92,7 +91,6 @@ public class StandardServerPluginService extends ServerPluginService implements 
         pluginContainerClasses.add(AlertServerPluginContainer.class);
         pluginContainerClasses.add(BundleServerPluginContainer.class);
         pluginContainerClasses.add(ContentServerPluginContainer.class);
-        pluginContainerClasses.add(EntitlementServerPluginContainer.class);
         pluginContainerClasses.add(GenericServerPluginContainer.class);
         pluginContainerClasses.add(PackageTypeServerPluginContainer.class);
         pluginContainerClasses.add(PerspectiveServerPluginContainer.class);

@@ -112,8 +112,6 @@ import org.rhq.enterprise.server.drift.DriftTemplateManagerBean;
 import org.rhq.enterprise.server.drift.DriftTemplateManagerLocal;
 import org.rhq.enterprise.server.drift.JPADriftServerBean;
 import org.rhq.enterprise.server.drift.JPADriftServerLocal;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
@@ -378,10 +376,6 @@ public final class LookupUtil {
 
     public static EmailManagerLocal getEmailManagerBean() {
         return lookupLocal(EmailManagerBean.class);
-    }
-
-    public static EntitlementManagerLocal getEntitlementManagerBean() {
-        return lookupLocal(EntitlementManagerBean.class);
     }
 
     public static EntityManagerFacadeLocal getEntityManagerFacade() {

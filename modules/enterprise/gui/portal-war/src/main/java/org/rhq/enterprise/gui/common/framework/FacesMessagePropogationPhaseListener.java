@@ -33,8 +33,6 @@ import javax.faces.event.PhaseListener;
 import org.ajax4jsf.context.AjaxContext;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.seam.core.Manager;
-
 /**
  * A phase listener that propogates global JSF messages across redirects.
  *
@@ -73,9 +71,7 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.INVOKE_APPLICATION) {
             // We want to store the messages in the context after the application has done its processing.
-            if (!Manager.instance().isReallyLongRunningConversation()) {
-                putGlobalFacesMessagesInSession();
-            }
+            putGlobalFacesMessagesInSession();
         } else if (phaseId == PhaseId.RENDER_RESPONSE) {
             // If we've just rendered a response, this isn't a redirect, so we don't want to propogate messages.
             // (fix for http://jira.jboss.com/jira/browse/JBNADM-1548, ips, 08/15/07)

@@ -144,8 +144,6 @@ import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
@@ -572,10 +570,6 @@ public final class LookupUtil {
 
     public static SystemManagerLocal getSystemManager() {
         return lookupLocal(SystemManagerBean.class);
-    }
-
-    public static PerspectiveManagerLocal getPerspectiveManager() {
-        return lookupLocal(PerspectiveManagerBean.class);
     }
 
     public static ProductVersionManagerLocal getProductVersionManager() {

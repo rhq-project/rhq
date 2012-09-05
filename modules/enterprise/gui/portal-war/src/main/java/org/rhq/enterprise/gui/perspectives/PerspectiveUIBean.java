@@ -26,13 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.perspective.PerspectiveException;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
 
 /**
  *  Bean dynamically provides menu information used by menu.xhtml.  This bean should be viewed 
@@ -43,19 +37,19 @@ import org.jboss.seam.annotations.Scope;
  * @author Jay Shaughnessy  
  *
  */
-@Name("PerspectiveUIBean")
-@Scope(ScopeType.PAGE)
+//@Name("PerspectiveUIBean")
+//@Scope(ScopeType.PAGE)
 public class PerspectiveUIBean {
 
-    PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
+    //PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     public List<org.rhq.enterprise.server.perspective.MenuItem> getCoreMenu() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         List<org.rhq.enterprise.server.perspective.MenuItem> result = null;
 
         try {
-            result = perspectiveManager.getMenu(subject);
-        } catch (PerspectiveException e) {
+            //result = perspectiveManager.getMenu(subject);
+        } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to get core menu.", e);
         }
 
@@ -73,8 +67,8 @@ public class PerspectiveUIBean {
         String result = null;
 
         try {
-            result = perspectiveManager.getUrlViaKey(Integer.valueOf(targetUrlKey));
-            result = addContextParams(result);
+            //            result = perspectiveManager.getUrlViaKey(Integer.valueOf(targetUrlKey));
+            //            result = addContextParams(result);
         } catch (NumberFormatException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Required request parameter 'targetUrlKey' was not numeric: " + targetUrlKey, e);

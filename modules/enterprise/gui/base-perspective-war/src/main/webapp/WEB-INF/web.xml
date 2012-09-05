@@ -7,33 +7,6 @@
 
   <display-name>RHQ Perspective Webapp</display-name>  
 
-   <!--=== Seam ===-->
-
-   <listener>
-      <listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
-   </listener>
-
-   <!-- From Seam docs: The Seam master filter must be the first filter specified
-        in web.xml. This ensures it is run first. -->
-   <filter>
-      <filter-name>Seam Filter</filter-name>
-      <filter-class>org.jboss.seam.servlet.SeamFilter</filter-class>
-   </filter>
-   <filter-mapping>
-      <filter-name>Seam Filter</filter-name>
-      <url-pattern>/*</url-pattern>
-   </filter-mapping>
-
-   <servlet>
-      <servlet-name>Seam Resource Servlet</servlet-name>
-      <servlet-class>org.jboss.seam.servlet.SeamResourceServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-   </servlet>   
-   <servlet-mapping>
-      <servlet-name>Seam Resource Servlet</servlet-name>
-      <url-pattern>/seam/resource/*</url-pattern>
-   </servlet-mapping>
-
    <!-- flags for debugging during development -->
    <context-param>
       <param-name>com.sun.faces.validateXml</param-name>
@@ -52,10 +25,6 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
    <!-- serve Facelets pages (*.xhtml) via the JSF servlet -->
-   <servlet-mapping>
-      <servlet-name>Faces Servlet</servlet-name>
-      <url-pattern>*.seam</url-pattern>
-   </servlet-mapping>
 
    <servlet-mapping>
       <servlet-name>Faces Servlet</servlet-name>
@@ -83,11 +52,6 @@
    </context-param>
    
    <!--=== RichFaces ===-->
-
-   <!-- From Seam docs: If RichFaces is used in your project, Seam will install
-        the RichFaces Ajax filter for you, making sure to install it before all
-        other built-in filters. You don't need to install the RichFaces Ajax
-        filter in web.xml yourself. -->
 
     <context-param>
        <param-name>org.ajax4jsf.VIEW_HANDLERS</param-name>

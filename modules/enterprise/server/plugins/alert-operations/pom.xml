@@ -13,24 +13,6 @@
 
     <name>RHQ Enterprise Server Opertions Alert Plugin</name>
 
-     <properties>
-         <seam.version>2.1.0.SP1</seam.version>
-     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.jboss.seam</groupId>
-            <artifactId>jboss-seam</artifactId>
-            <version>${seam.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
 

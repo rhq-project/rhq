@@ -23,11 +23,13 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Observer;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.ejb.EJBException;
+import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
@@ -35,14 +37,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import javax.ejb.EJBException;
-import javax.faces.application.FacesMessage;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-
-@Name("configurationEditor")
-@Scope(ScopeType.CONVERSATION)
+//@Name("configurationEditor")
+//@Scope(ScopeType.CONVERSATION)
 public class ResourceConfigurationEditor extends ResourceConfigurationViewer implements Serializable {
 
     private Configuration originalResourceConfiguration;
@@ -51,7 +47,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
     private String modalEditorContents;
 
-    @RequestParameter
+    //    @RequestParameter
     private String tab;
 
     @Override
@@ -93,7 +89,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
             resourceConfiguration, RAW_MODE);
     }
 
-    @Observer("rawConfigUpdate")
+    //    @Observer("rawConfigUpdate")
     public void rawConfigUpdated(RawConfigUIBean rawConfigUIBean) {
         if (rawConfigUIBean.isModified()) {
             // If the file is modified and not already in the cache, then the file was previously in an unmodified state

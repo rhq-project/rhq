@@ -36,7 +36,6 @@ import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 
 /**
  * An MBean to use as a ServerPluginService for tests that actually don't care
@@ -93,7 +92,6 @@ public class StandardServerPluginService extends ServerPluginService implements 
         pluginContainerClasses.add(ContentServerPluginContainer.class);
         pluginContainerClasses.add(GenericServerPluginContainer.class);
         pluginContainerClasses.add(PackageTypeServerPluginContainer.class);
-        pluginContainerClasses.add(PerspectiveServerPluginContainer.class);
     }
 
     @Override

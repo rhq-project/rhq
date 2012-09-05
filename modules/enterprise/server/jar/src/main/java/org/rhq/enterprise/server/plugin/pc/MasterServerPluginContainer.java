@@ -43,7 +43,6 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
 import org.rhq.enterprise.server.scheduler.EnhancedSchedulerImpl;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -475,7 +474,6 @@ public class MasterServerPluginContainer {
         ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(5);
         pcs.add(new GenericServerPluginContainer(this));
         pcs.add(new ContentServerPluginContainer(this));
-        pcs.add(new PerspectiveServerPluginContainer(this));
         pcs.add(new AlertServerPluginContainer(this));
         pcs.add(new BundleServerPluginContainer(this));
         pcs.add(new PackageTypeServerPluginContainer(this));

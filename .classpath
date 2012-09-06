@@ -103,6 +103,7 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/database/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/database/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/postgres/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/postgres/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/mysql/src/main/java"/>

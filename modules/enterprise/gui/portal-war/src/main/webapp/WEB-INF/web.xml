@@ -203,15 +203,6 @@
    </context-param>
 
    <!-- Allows completeUpload of files through JSF (i.e. software uploads) -->
-   <filter>
-      <filter-name>MultipartFilter</filter-name>
-      <filter-class>org.rhq.enterprise.gui.common.upload.MultipartFilter</filter-class>
-   </filter>
-   <filter-mapping>
-      <filter-name>MultipartFilter</filter-name>
-      <url-pattern>/rhq/resource/*</url-pattern>
-   </filter-mapping>
-
 
    <!-- The stuff needed for ajax4jsf / richfaces -->
    <filter>

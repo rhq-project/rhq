@@ -102,6 +102,7 @@ public class AntBundlePluginComponentTest {
         @SuppressWarnings({ "rawtypes", "unchecked" })
         ResourceContext<?> context = new ResourceContext(resource, null, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null,
+            null,
             null);
         this.plugin.start(context);
     }

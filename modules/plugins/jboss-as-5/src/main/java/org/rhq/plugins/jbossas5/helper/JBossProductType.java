@@ -54,7 +54,12 @@ public enum JBossProductType {
 
     /**
      * Determines the product type (AS, EAP, EWP, or SOA) based on the Implementation-Title MANIFEST.MF attribute.
-     *
+     * <p>
+     * Note that this method is <b>NOT</b> always correct about the actual version of the product, because
+     * certain version of certain products don't advertise the correct product/version in the manifest.
+     * <p>
+     * Use {@link JBossInstallationInfo} for a more thorough detection of the type and version of a product.
+     * 
      * @param attributes the attributes from a manifest file (typically run.jar or jboss-j2ee.jar)
      *
      * @return the product type (AS, EAP, EWP, or SOA)

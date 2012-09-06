@@ -42,7 +42,11 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
@@ -286,6 +290,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                         }
 
                         public void onSuccess(PageList<Bundle> result) {
+                            if (result == null || result.isEmpty()) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_bundle_list_error4(), Message.Severity.Error));
+                                return;
+                            }
                             Bundle bundle = result.get(0);
                             viewBundle(bundle, viewPath.getCurrent());
                         }

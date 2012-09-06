@@ -84,17 +84,19 @@ public class DriftServerServiceImpl implements DriftServerService {
         Subject overlord = getSubjectManager().getOverlord();
         PageList<DriftDefinition> definitions = getDriftManager().findDriftDefinitionsByCriteria(overlord, criteria);
 
-        Map<Integer, List<DriftDefinition>> map = new HashMap<Integer, List<DriftDefinition>>();
-        for (Integer resourceId : resourceIds) {
-            map.put(resourceId, new ArrayList<DriftDefinition>());
-        }
-        for (DriftDefinition c : definitions) {
-            List<DriftDefinition> list = map.get(c.getResource().getId());
-            list.add(c);
-            map.put(c.getResource().getId(), list);
+        Map<Integer, List<DriftDefinition>> result = new HashMap<Integer, List<DriftDefinition>>();
+
+        for (DriftDefinition driftDef : definitions) {
+            Integer resourceId = driftDef.getResource().getId();
+            List<DriftDefinition> list = result.get(resourceId);
+            if (null == list) {
+                list = new ArrayList<DriftDefinition>();
+                result.put(resourceId, list);
+            }
+            list.add(driftDef);
         }
 
-        return map;
+        return result;
     }
 
     @Override

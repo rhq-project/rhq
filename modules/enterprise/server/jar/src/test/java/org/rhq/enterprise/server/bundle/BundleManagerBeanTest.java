@@ -952,7 +952,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // return bundle "two" using all criteria and with all optional data
         c.addFilterId(b.getId());
         c.addFilterName(b.getName());
-        c.addFilterBundleTypeName(b.getName());
+        c.addFilterBundleTypeName(b.getBundleType().getName());
         c.fetchBundleVersions(true);
         c.fetchRepo(true);
         bundles = bundleManager.findBundlesByCriteria(overlord, c);

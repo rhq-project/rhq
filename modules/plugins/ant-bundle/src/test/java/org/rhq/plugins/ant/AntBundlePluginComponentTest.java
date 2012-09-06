@@ -101,7 +101,8 @@ public class AntBundlePluginComponentTest {
         resource.setUuid(UUID.randomUUID().toString());
         @SuppressWarnings({ "rawtypes", "unchecked" })
         ResourceContext<?> context = new ResourceContext(resource, null, null, null,
-            SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
+            SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null,
+            null);
         this.plugin.start(context);
     }
 

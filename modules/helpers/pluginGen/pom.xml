@@ -7,14 +7,14 @@
     <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0</version>
+      <version>4.5.0-SNAPSHOT</version>
       <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginGen</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>4.5.0-SNAPSHOT</version>
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-pluginAnnotations</artifactId>
-            <version>3.0.2-SNAPSHOT</version>
+            <version>4.5.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

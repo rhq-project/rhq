@@ -447,6 +447,26 @@
 
    <profiles>
 
+        <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
+        <profile>
+           <id>bundle-additional-script-languages</id>
+           <activation>
+              <property>
+                 <!-- we want this always active but activeByDefault doesn't work -->
+                 <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
+                 <name>java.home</name> 
+              </property>
+           </activation>
+           
+           <dependencies>
+              <dependency>
+                 <groupId>org.rhq</groupId>
+                 <artifactId>rhq-scripting-python</artifactId>
+                 <version>${project.version}</version>
+              </dependency>                     
+           </dependencies>
+        </profile>
+        
         <profile>
             <id>bundle-plugins</id>
             <activation>

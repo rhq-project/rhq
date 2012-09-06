@@ -403,9 +403,6 @@ public class ImageManager {
         return "subsystems/availability/availability_yellow_16.png";
     }
 
-    public static String getAvailabilityYellowLargeIcon() {
-        return "subsystems/availability/availability_yellow_24.png";
-    }
 
     public static String getAvailBarImagePath(AvailabilityType availType) {
 
@@ -437,13 +434,6 @@ public class ImageManager {
         return "subsystems/alert/Flag_blue_16.png";
     }
 
-    public static String getAlertLargeIcon() {
-        return "subsystems/alert/Flag_blue_24.png";
-    }
-
-    public static String getAlertEditIcon() {
-        return "subsystems/alert/Edit_Alert.png";
-    }
 
     public static String getMetricEditIcon() {
         return "subsystems/monitor/Edit_Metric.png";
@@ -551,9 +541,6 @@ public class ImageManager {
         return "subsystems/event/" + severity.name() + "_16.png";
     }
 
-    public static String getEventLargeIcon() {
-        return "subsystems/event/Events_24.png";
-    }
 
     public static String getEventIcon() {
         return "subsystems/event/Events_16.png";
@@ -563,45 +550,25 @@ public class ImageManager {
         return "subsystems/monitor/Monitor_16.png";
     }
 
-    public static String getMonitorLargeIcon() {
-        return "subsystems/monitor/Monitor_24.png";
-    }
 
     public static String getMonitorFailedIcon() {
         return "subsystems/monitor/Monitor_failed_16.png";
-    }
-
-    public static String getMonitorFailedLargeIcon() {
-        return "subsystems/monitor/Monitor_failed_24.png";
-    }
-
-    public static String getOperationLargeIcon() {
-        return "subsystems/control/Operation_24.png";
     }
 
     public static String getOperationIcon() {
         return "subsystems/control/Operation_16.png";
     }
 
-    public static String getActivityPackageLargeIcon() {
-        return "subsystems/content/Package_24.png";
-    }
 
     public static String getActivityPackageIcon() {
         return "subsystems/content/Package_16.png";
     }
 
-    public static String getBundleLargeIcon() {
-        return "subsystems/content/Content_24.png";
-    }
 
     public static String getBundleIcon() {
         return "subsystems/content/Content_16.png";
     }
 
-    public static String getConfigureLargeIcon() {
-        return "subsystems/configure/Configure_24.png";
-    }
 
     public static String getConfigureIcon() {
         return "subsystems/configure/Configure_16.png";

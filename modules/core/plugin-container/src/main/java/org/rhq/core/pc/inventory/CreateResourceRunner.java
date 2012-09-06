@@ -22,21 +22,21 @@
   */
 package org.rhq.core.pc.inventory;
 
- import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
- import org.rhq.core.clientapi.server.discovery.InventoryReport;
- import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
- import org.rhq.core.domain.configuration.Configuration;
- import org.rhq.core.domain.resource.CreateResourceStatus;
- import org.rhq.core.domain.resource.Resource;
- import org.rhq.core.pc.PluginContainer;
- import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
- import org.rhq.core.pluginapi.inventory.CreateResourceReport;
- import org.rhq.core.util.exception.ThrowableUtil;
-
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
-
  import java.util.concurrent.Callable;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.util.exception.ThrowableUtil;
 
  /**
  * Runnable implementation to process Resource create requests.
@@ -159,9 +159,22 @@ public class CreateResourceRunner implements Callable, Runnable {
                 // If we still don't have an error message, populate it from the exception
                 errorMessage = (errorMessage != null) ? (errorMessage + " - Cause: " + messages) : messages;
             }
+        } catch(TimeoutException e) {
+            status = CreateResourceStatus.TIMED_OUT;
+            errorMessage = "The time out has been exceeded; however, the deployment may have been successful. You " +
+                "may want to run a discovery scan to see if the deployment did complete successfully. Also consider " +
+                "using a higher time out value for future deployments.";
+
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to create resource for " + report + ". " + errorMessage, e);
+            } else {
+                log.info("Failed to create resource for " + report + ". " + errorMessage, e);
+            }
+
+            errorMessage += "\n\nRoot Cause:\n" + e.getMessage();
         } catch (Throwable t) {
-            errorMessage = ThrowableUtil.getStackAsString(t);
             status = CreateResourceStatus.FAILURE;
+            errorMessage = ThrowableUtil.getStackAsString(t);
         }
 
         // Send results back to the server

@@ -22,6 +22,8 @@
          <groupId>org.mozilla</groupId>
          <artifactId>rhino</artifactId>
          <version>1.7R4</version>
+         <!-- we actually repackage Rhino inside our jar -->
+         <scope>provided</scope> 
       </dependency>
    </dependencies>
 

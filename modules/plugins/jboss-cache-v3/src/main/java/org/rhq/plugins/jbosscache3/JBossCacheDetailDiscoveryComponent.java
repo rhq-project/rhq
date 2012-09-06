@@ -40,9 +40,9 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
 
 /**
- * 
+ *
  * @author Filip Drabek
- * 
+ *
  */
 public class JBossCacheDetailDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent<?>> {
@@ -80,7 +80,7 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		String jmxName = defaultConfig.getSimple(CACHE_JMX_NAME).getStringValue();
 
-        beanName += (jmxName.equals("") ? "" : "," + jmxName);
+        beanName += ((jmxName==null || jmxName.equals("")) ? "" : "," + jmxName);
 
         // This is a singleton ResourceType, so we are only looking for a single MBean.
         EmsBean emsBean = connection.getBean(beanName);
@@ -94,6 +94,8 @@ public class JBossCacheDetailDiscoveryComponent implements
             conf.put(new PropertySimple(
                     JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
                     beanName));
+            conf.put(new PropertySimple(CACHE_JMX_NAME, jmxName));
+
             resources.add(new DiscoveredResourceDetails(resourceType,
                     beanName, resourceType.getName(), "", "JBoss Cache",
                     conf, null));

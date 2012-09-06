@@ -478,7 +478,7 @@ public class BundleManagerTest {
     @SuppressWarnings("unchecked")
     private static class MockResourceContext extends ResourceContext {
         public MockResourceContext(Resource resource) {
-            super(resource, null, null, null, null, null, null, null, null, null, null, null, null);
+            super(resource, null, null, null, null, null, null, null, null, null, null, null, null, null);
         }
     }
 }

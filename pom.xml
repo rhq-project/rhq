@@ -1171,6 +1171,25 @@
 
   <profiles>
 
+    <!-- NOTE: This profile is extended upon in several other submodules.
+         If you need to change its activation policy, make sure to do that in
+         *ALL* the modules that define this profile. -->
+    <profile>
+        <id>bundle-additional-script-languages</id>
+        <activation>
+           <property>
+              <!-- we want this always active but activeByDefault doesn't work -->
+              <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
+              <name>java.home</name> 
+           </property>
+        </activation>
+        
+        <!-- Can be used to pass a flag down to deployment composing ANT scripts and somesuch -->
+        <properties>
+           <rhq.bundle-additional-script-languages>true</rhq.bundle-additional-script-languages>
+        </properties>            
+    </profile>
+    
     <profile>
         <id>ojdbc-driver</id>
         <activation>

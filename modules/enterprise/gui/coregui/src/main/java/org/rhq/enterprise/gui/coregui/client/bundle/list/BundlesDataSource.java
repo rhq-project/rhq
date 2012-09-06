@@ -90,28 +90,12 @@ public class BundlesDataSource extends RPCDataSource<Bundle, BundleCriteria> {
     @Override
     protected BundleCriteria getFetchCriteria(final DSRequest request) {
         BundleCriteria criteria = new BundleCriteria();
-
-        if (request.getCriteria().getValues().get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
-        }
-
-        if (request.getCriteria().getValues().get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
-        }
-
-        if (request.getCriteria().getValues().get("tagName") != null) {
-            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
-        }
-
-        if (request.getCriteria().getValues().get("bundleType") != null) {
-            criteria.addFilterBundleTypeId(Integer.valueOf(request.getCriteria().getValues().get("bundleType")
-                .toString()));
-        }
-
-        // TODO: this doesn't work like I think it should, figure out how to search on the name column 
-        // if (request.getCriteria().getValues().get("search") != null) {
-        //       criteria.setSearchExpression(request.getCriteria().getValues().get("search").toString());
-        // }
+        criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
+        criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
+        criteria.addFilterTagName(getFilter(request, "tagName", String.class));
+        criteria.addFilterBundleTypeId(getFilter(request, "bundleType", Integer.class));
+        criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
+        criteria.addFilterName(getFilter(request, "search", String.class));
 
         return criteria;
     }

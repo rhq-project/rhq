@@ -21,16 +21,13 @@ package org.rhq.modules.plugins.jbossas7;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
 /**
  * Component class for the JMS subsystem
  * @author Heiko W. Rupp
  */
-public class JmsComponent extends BaseComponent {
+public class JmsComponent extends ConnectorDiscoveryGroupValidatorComponent {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -43,31 +40,8 @@ public class JmsComponent extends BaseComponent {
             return;
         }
 
-        ResourceType resourceType = context.getResourceType();
-        if (resourceType.getName().equals("Connection-Factory")) {
-            // we need to check that a connector XOR a discovery-group-name is given
-            int found = 0;
-            PropertyMap connector = resourceConfiguration.getMap("connector:collapsed");
-
-            if (connector != null) {
-
-                String name = connector.getSimpleValue("name:0", "");
-                if (!name.isEmpty())
-                    found++;
-            }
-            String discoveryGroup = resourceConfiguration.getSimpleValue("discovery-group-name", "");
-            if (!discoveryGroup.isEmpty())
-                found++;
-
-            if (found == 0 || found == 2) {
-                String errorMessage = "You need to provide either a connector name OR a discovery-group-name. You provided ";
-                errorMessage += (found == 0) ? "none" : "both";
-                report.setErrorMessage(errorMessage);
-                report.setStatus(ConfigurationUpdateStatus.FAILURE);
-                return;
-            }
-        }
-
+        //defer the rest of the validation for connector and discovery group name to
+        //the base class
         super.updateResourceConfiguration(report);
     }
 }

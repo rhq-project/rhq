@@ -38,13 +38,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
@@ -65,6 +68,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.CollectorThreadPool;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
@@ -92,10 +96,6 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
 
 /**
  * Base class for RHQ Component Testing.
@@ -155,7 +155,7 @@ public abstract class ComponentTest {
     private final String pluginContainerName = "rhq";
     private final OperationContext operationContext = new OperationContextImpl(0);
     private final ContentContext contentContext = new ContentContextImpl(0);
-    private final Executor availCollectorThreadPool = Executors.newCachedThreadPool();
+    private final CollectorThreadPool availCollectorThreadPool = new CollectorThreadPool();
     private PluginContainerDeployment pluginContainerDeployment = null;
     private Resource platform;
     private ResourceContainer platformContainer;
@@ -295,14 +295,15 @@ public abstract class ComponentTest {
         String rclassname = pmm.getComponentClass(type);
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
-        AvailabilityContext availContext = new AvailabilityContextImpl(cresource,availCollectorThreadPool);
+        AvailabilityContext availContext = new AvailabilityContextImpl(cresource,
+            availCollectorThreadPool.getExecutor());
         InventoryContext inventoryContext = new InventoryContextImpl(cresource);
 
         EventContext eventContext = new EventContextImpl(resource);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,
-                availContext, inventoryContext,pluginContainerDeployment);
+            availContext, inventoryContext, availCollectorThreadPool.getExecutor(), pluginContainerDeployment);
 
         component.start(context);
         components.put(component, cresource);

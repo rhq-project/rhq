@@ -118,6 +118,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                         notificationSenderSelectItem.setDisabled(false);
                         notificationSenderSelectItem.redraw();
 
+                        notificationSenderSelectItem.setValue(result[0]);
                         switchToAlertSender(result[0]);
                         senderCanvasItem.show();
                     } else {

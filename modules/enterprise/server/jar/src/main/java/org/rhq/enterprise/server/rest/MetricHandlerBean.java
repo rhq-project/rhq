@@ -60,8 +60,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
-
 import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -73,10 +71,13 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
@@ -101,7 +102,11 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     @EJB
     MeasurementScheduleManagerLocal scheduleManager;
     @EJB
+    MeasurementDefinitionManagerLocal definitionManager;
+    @EJB
     ResourceManagerLocal resMgr;
+    @EJB
+    ResourceGroupManagerLocal groupMgr;
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;
 
@@ -144,6 +149,59 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         CacheControl cc = new CacheControl();
         int maxAge = (int) (schedule.getInterval() / 1000L)/2; // millis  ; half of schedule interval
+        cc.setMaxAge(maxAge); // these are seconds
+        cc.setPrivate(false);
+        cc.setNoCache(false);
+
+        Response.ResponseBuilder builder;
+        if (isHtml) {
+            String htmlString = renderTemplate("metricData", res);
+            builder = Response.ok(htmlString,mediaType);
+        }
+        else
+            builder= Response.ok(res,mediaType);
+        builder.cacheControl(cc);
+
+        return builder.build();
+    }
+
+    public Response getMetricDataForGroupAndDefinition(int groupId, int definitionId, long startTime, long endTime,
+                                                       int dataPoints,boolean hideEmpty, Request request, HttpHeaders headers) {
+
+        if (startTime==0) {
+            endTime = System.currentTimeMillis();
+            startTime = endTime - EIGHT_HOURS;
+        }
+
+        if (dataPoints<1)
+            throw new IllegalArgumentException("datapoints must be >=0");
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
+
+        fetchGroup(groupId,true); // Make sure the group exists and is compatible
+        MeasurementDefinition definition = definitionManager.getMeasurementDefinition(caller,definitionId);
+        if (definition==null) {
+            throw new StuffNotFoundException("There is no definition with id " + definitionId);
+        }
+
+        MeasurementAggregate aggr = dataManager.getAggregate(caller, groupId, definitionId, startTime, endTime);
+        MetricAggregate res = new MetricAggregate(definitionId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
+        res.setGroup(true);
+
+        List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForCompatibleGroup(caller,
+                groupId,definitionId,startTime,endTime,dataPoints);
+
+        if (listList.isEmpty()) {
+            throw new StuffNotFoundException("Data for group with id " + groupId + " and definition " + definitionId);
+        }
+        List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
+        if (!listList.isEmpty()) {
+            fill(res, list,definitionId,hideEmpty,isHtml);
+        }
+
+        CacheControl cc = new CacheControl();
+        int maxAge = (int) (definition.getDefaultInterval() / 1000L)/2; // millis  ; half of schedule interval
         cc.setMaxAge(maxAge); // these are seconds
         cc.setPrivate(false);
         cc.setNoCache(false);
@@ -421,6 +479,30 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     }
 
     @Override
+    public List<MetricAggregate> getAggregatesForGroup(int groupId, long startTime, long endTime) {
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
+        if (startTime==0) {
+            startTime = endTime - EIGHT_HOURS;
+        }
+        ResourceGroup group = fetchGroup(groupId, true);
+
+        Set<MeasurementDefinition> definitions = group.getResourceType().getMetricDefinitions();
+
+        List<MetricAggregate> ret = new ArrayList<MetricAggregate>(definitions.size());
+        for (MeasurementDefinition def : definitions) {
+            if (def.getDataType()==DataType.MEASUREMENT) {
+                MeasurementAggregate aggregate = dataManager.getAggregate(caller, groupId, def.getId(), startTime, endTime);
+                MetricAggregate res = new MetricAggregate(def.getId(), aggregate.getMin(),aggregate.getAvg(),aggregate.getMax());
+                res.setGroup(true);
+                ret.add(res);
+            }
+        }
+        return ret;
+    }
+
+    @Override
     public Response updateSchedule(int scheduleId, MetricSchedule in,HttpHeaders httpHeaders) {
         if (in==null)
             throw new StuffNotFoundException("Input is null"); // TODO other type of exception
@@ -646,8 +728,13 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 PrintWriter pw = new PrintWriter(outputStream);
 
                 if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                    boolean needsComma = false;
                     pw.println("[");
                     while (rs.next()) {
+                        if (needsComma) {
+                            pw.print(",\n");
+                        }
+                        needsComma = true;
                         pw.print("{");
                         pw.print("\"scheduleId\":");
                         pw.print(scheduleId);
@@ -658,8 +745,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                         pw.print("\"value\":");
                         pw.print(rs.getDouble(2));
                         pw.print("}");
-                        if (!rs.isLast())
-                            pw.print(",\n");
                     }
                     pw.println("]");
                 }

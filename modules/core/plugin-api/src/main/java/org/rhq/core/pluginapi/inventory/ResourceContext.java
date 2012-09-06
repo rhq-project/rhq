@@ -87,6 +87,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ContentContext contentContext;
     private final AvailabilityContext availabilityContext;
     private final ScheduledExecutorService collectionThreadPool;
+    private final InventoryContext inventoryContext;
     private final PluginContainerDeployment pluginContainerDeployment;
     private final ResourceTypeProcesses trackedProcesses;
 
@@ -160,7 +161,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, AvailabilityContext availabilityContext,
+        ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
         ScheduledExecutorService collectionThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
 
@@ -187,6 +188,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.contentContext = contentContext;
         this.availabilityContext = availabilityContext;
         this.collectionThreadPool = collectionThreadPool;
+        this.inventoryContext = inventoryContext;
 
         String parentResourceUuid = "";
         if (resource.getParentResource() != null) {
@@ -512,6 +514,16 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public AvailabilityContext getAvailabilityContext() {
         return availabilityContext;
+    }
+
+    /**
+      * Returns an {@link InventoryContext} that allows the plugin to access inventory related functionality provided by the
+      * plugin container.
+      *
+      * @return the inventory context
+      */
+    public InventoryContext getInventoryContext() {
+        return inventoryContext;
     }
 
     /**

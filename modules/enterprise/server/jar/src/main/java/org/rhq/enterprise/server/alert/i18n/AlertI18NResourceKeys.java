@@ -68,7 +68,7 @@ public interface AlertI18NResourceKeys {
     @I18NMessages({ @I18NMessage("Avail stays NOT UP") })
     String ALERT_AVAILABILITY_DURATION_NOT_UP_SHORT = "alert.condition.availability.duration.notup.short";
 
-    // Foo Prop > 10.0% of Baseline Mean Value 
+    // Foo Prop > 10.0% of Baseline Mean Value
     @I18NMessages({ @I18NMessage("{0} {1} {2} of Baseline Mean Value") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_BASELINE_MEAN = "alert.condition.baseline.mean";
 
@@ -137,7 +137,8 @@ public interface AlertI18NResourceKeys {
     @I18NMessages({ @I18NMessage("{0} Val Chg"), @I18NMessage(locale = "de", value = "{0} Wert�nd.") })
     String ALERT_METRIC_CHANGED_SHORT = "alert.condition.metric.changed.short";
 
-    @I18NMessages({ @I18NMessage("Operation [{0}] has status=[{1}]") /*, @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages({ @I18NMessage("Operation [{0}] has status=[{1}]") ,
+            @I18NMessage(locale = "de", value = "Operation [{0}] hat den Status [{1}]") })
     String ALERT_OPERATION = "alert.condition.op";
 
     @I18NMessages({ @I18NMessage("Op [{0}]={1}") /*, @I18NMessage(locale = "de", value = "") */})
@@ -188,11 +189,11 @@ public interface AlertI18NResourceKeys {
 
     // Foo Value is Between 1.0B and 2.0B, Inclusive
     @I18NMessages({ @I18NMessage("{0} Value is Between {1} and {2}, Inclusive"),
-        @I18NMessage(locale = "de", value = "{0} Der Wert zwischen {1} und {2}, pauschal") })
+        @I18NMessage(locale = "de", value = "{0} Der Wert ist zwischen {1} und {2}, inklusiv") })
     String ALERT_RANGE_INSIDE_INCL = "alert.condition.range.in.incl";
 
     @I18NMessages({ @I18NMessage("{0} Between {1} - {2}, incl"),
-        @I18NMessage(locale = "de", value = "{0} zwischen {1} und {2}, paus") })
+        @I18NMessage(locale = "de", value = "{0} zwischen {1} und {2}, inkl") })
     String ALERT_RANGE_INSIDE_INCL_SHORT = "alert.condition.range.in.incl.short";
 
     @I18NMessages({ @I18NMessage("{0} Value is Between {1} and {2}, Exclusive"),
@@ -228,4 +229,8 @@ public interface AlertI18NResourceKeys {
     @I18NMessages({ @I18NMessage("\\  - Cond {0}: {1}\\n\\\n" + "\\  - Time: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n"),
         @I18NMessage(locale = "de", value = "  - Bed {0}: {1}\\n\\\n  - Zeit: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n") })
     String ALERT_EMAIL_CONDITION_LOG_FORMAT_SHORT = "alert.email.condition.log.format.short";
+
+    // Needed for the AlertManagerBeanTest
+    @I18NMessages({ @I18NMessage("Cond(?:ition)?"), @I18NMessage(locale = "de", value = "Bed(?:ingung)?")})
+    String ALERT_CONDITION_PATTERN = "alert.condition.pattern";
 }

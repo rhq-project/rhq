@@ -52,6 +52,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -59,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -169,6 +171,12 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
                 if (caught.getMessage().contains("SearchExpressionException")) {
                     Message message = new Message("Invalid search expression.", Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
+                } else if (caught.getMessage().contains("PageList was passed an empty collection")) {
+                    // Because of bug 773626
+                    Log.warn(caught.getMessage());
+                    criteria.setPageControl(new PageControl(0, getDataPageSize()));
+                    executeFetch(request, response, criteria);
+                    return;
                 } else {
                     CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 }
@@ -230,7 +238,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
 
-        //printRequestCriteria(request);
+        printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
@@ -245,7 +253,14 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.addFilterParentResourceCategory(getFilter(request, FILTER_PARENT_CATEGORY, ResourceCategory.class));
+        //@todo: Remove me when finished debugging search expression
+        Log.debug(" *** ResourceCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
+
+        // filter out unsortable fields (i.e. fields sorted client-side only)
+        PageControl pageControl = getPageControl(request);
+        pageControl.removeOrderingField(AncestryUtil.RESOURCE_ANCESTRY);
+        criteria.setPageControl(pageControl);
 
         return criteria;
     }

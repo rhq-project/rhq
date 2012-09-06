@@ -82,7 +82,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
     private String servletComponentNamesRegex;
     private ResponseTimeLogParser logParser;
 
-    private boolean clustered;
+    private Boolean clustered;
 
     @Override
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
@@ -96,17 +96,6 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
             this.logParser = new ResponseTimeLogParser(logFile);
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
-        }
-
-        try {
-            ManagedProperty distributableProp = getManagedComponent().getProperty(DISTRIBUTABLE_MANAGED_PROPERTY);
-            if (distributableProp != null) {
-                Boolean distributable = (Boolean) getInnerValue(distributableProp.getValue());
-                clustered = distributable != null && distributable.booleanValue();
-            }
-        } catch (Exception e) {
-            log.warn("Failed to determine whether the web app context " + resourceContext.getResourceKey()
-                + " is clustered or not.", e);
         }
     }
 
@@ -144,8 +133,14 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
                 } else if (metricName.equals(CLUSTERED_TRAIT)) {
-                    MeasurementDataTrait trait = new MeasurementDataTrait(request, Boolean.toString(clustered));
-                    report.addData(trait);
+                    if(clustered == null){
+                        retrieveClusteredProperty();
+                    }
+
+                    if (clustered != null) {
+                        MeasurementDataTrait trait = new MeasurementDataTrait(request, clustered.toString());
+                        report.addData(trait);
+                    }
                 } else {
                     String metricNameToUse = metricName;
                     if (clustered && !"runState".equals(metricName)) {
@@ -170,8 +165,31 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
         }
     }
 
+    /**
+     * @deprecated The clustered property should be retrieved by the individual component in the
+     * specific use case that requires it. Leaving this method for backwards compatibility
+     * with plugins that use the AS5 plugin and also use reflection.
+     */
+    @Deprecated
     public boolean isClustered() {
+        if (clustered == null) {
+            return false;
+        }
+
         return clustered;
+    }
+
+    private void retrieveClusteredProperty() {
+        try {
+            ManagedProperty distributableProp = getManagedComponent().getProperty(DISTRIBUTABLE_MANAGED_PROPERTY);
+            if (distributableProp != null) {
+                Boolean distributable = (Boolean) getInnerValue(distributableProp.getValue());
+                clustered = distributable != null && distributable.booleanValue();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to determine whether the web app context " + this.getResourceContext().getResourceKey()
+                + " is clustered or not.", e);
+        }
     }
 
     private Double getServletMetric(ManagementView managementView, String metricName) throws Exception {

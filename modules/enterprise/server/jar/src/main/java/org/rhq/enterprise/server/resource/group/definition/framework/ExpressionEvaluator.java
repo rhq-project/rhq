@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
+import org.rhq.core.domain.resource.group.InvalidExpressionException;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -92,6 +95,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private EntityManagerFacadeLocal entityManagerFacade;
 
+    private Map<String, String> resourceExpressions = new TreeMap<String, String>();
+
     public ExpressionEvaluator() {
         /*
          * used LinkedHashMap for whereConditions on purpose so that the iterator will return them in the same order
@@ -125,6 +130,78 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * initialization for special handling that all dynagroups should get
          */
         whereStatics.add("res.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED");
+
+        resourceExpressions.put("res.id", "resource id");
+        resourceExpressions.put("child.id", "resource id");
+        resourceExpressions.put("res.parentResource.id", "resource id");
+        resourceExpressions.put("res.parentResource.parentResource.id", "resource id");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.id", "resource id");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.id", "resource id");
+
+        resourceExpressions.put("res.name", "resource name");
+        resourceExpressions.put("child.name", "resource name");
+        resourceExpressions.put("res.parentResource.name", "resource name");
+        resourceExpressions.put("res.parentResource.parentResource.name", "resource name");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.name", "resource name");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.name",
+            "resource name");
+
+        resourceExpressions.put("res.version", "resource version");
+        resourceExpressions.put("child.version", "resource version");
+        resourceExpressions.put("res.parentResource.version", "resource version");
+        resourceExpressions.put("res.parentResource.parentResource.version", "resource version");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.version", "resource version");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.version",
+            "resource version");
+
+        resourceExpressions.put("res.resourceType.plugin", "resource type");
+        resourceExpressions.put("res.resourceType.name", "resource type");
+        resourceExpressions.put("child.resourceType.plugin", "resource type");
+        resourceExpressions.put("child.resourceType.name", "resource type");
+        resourceExpressions.put("res.parentResource.resourceType.plugin", "resource type");
+        resourceExpressions.put("res.parentResource.resourceType.name", "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.resourceType.plugin", "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.resourceType.name", "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.plugin",
+            "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.name", "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.resourceType.plugin",
+            "resource type");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.resourceType.name",
+            "resource type");
+
+        resourceExpressions.put("res.resourceType.category", "resource category");
+        resourceExpressions.put("child.resourceType.category", "resource category");
+        resourceExpressions.put("res.parentResource.resourceType.category", "resource category");
+        resourceExpressions.put("res.parentResource.parentResource.resourceType.category", "resource category");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.category",
+            "resource category");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.resourceType.category",
+            "resource category");
+
+        resourceExpressions.put("avail.availabilityType", "availability");
+        resourceExpressions.put("child.avail.availabilityType", "availability");
+        resourceExpressions.put("res.parentResource.avail.availabilityType", "availability");
+        resourceExpressions.put("res.parentResource.parentResource.avail.availabilityType", "availability");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.avail.availabilityType",
+            "availability");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.avail.availabilityType",
+            "availability");
+
+        resourceExpressions.put("trait.value", "trait");
+        resourceExpressions.put("child.trait.value", "trait");
+        resourceExpressions.put("res.parentResource.trait.value", "trait");
+        resourceExpressions.put("res.parentResource.parentResource.trait.value", "trait");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.trait.value", "trait");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.trait.value", "trait");
+
+        resourceExpressions.put("simple.name", "configuration");
+        resourceExpressions.put("child.simple.name", "configuration");
+        resourceExpressions.put("res.parentResource.simple.name", "configuration");
+        resourceExpressions.put("res.parentResource.parentResource.simple.name", "configuration");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.simple.name", "configuration");
+        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.simple.name",
+            "configuration");
     }
 
     public class Result {
@@ -164,7 +241,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      *
      * @return a reference to itself, so that method chaining can be used
      *
-     * @throws InvalidExpressionException if the expression can not be parsed for any reason, the message will try to
+     * @throws org.rhq.core.domain.resource.group.InvalidExpressionException if the expression can not be parsed for any reason, the message will try to
      *                                    get the details as to the parse failure
      */
     public ExpressionEvaluator addExpression(String expression) throws InvalidExpressionException {
@@ -710,6 +787,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             } else {
                 throw new InvalidExpressionException("Unknown or unsupported ComparisonType[" + comparisonType
                     + "] for predicate population");
+            }
+
+            if (resourceExpressions.containsKey(predicateName) && whereConditions.containsKey(predicateName)) {
+                throw new DuplicateExpressionTypeException(resourceExpressions.get(predicateName));
             }
 
             whereConditions.put(predicateName, argumentName);

@@ -43,6 +43,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 /**
@@ -74,7 +75,7 @@ public class ScriptUtil {
             throw new IllegalStateException("The findResources() method requires a connection to the RHQ server.");
         }
         
-        ResourceManagerRemote resourceManager = remoteClient.getResourceManager();
+        ResourceManagerRemote resourceManager = remoteClient.getProxy(ResourceManagerRemote.class);
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(string);
@@ -166,7 +167,7 @@ public class ScriptUtil {
 
         while(history == null && i < maxIntervals) {
             Thread.sleep(intervalDuration);
-            PageList<ResourceOperationHistory> histories = remoteClient.getOperationManager()
+            PageList<ResourceOperationHistory> histories = remoteClient.getProxy(OperationManagerRemote.class)
                     .findResourceOperationHistoriesByCriteria(remoteClient.getSubject(), criteria);
             if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
                 history = histories.get(0);

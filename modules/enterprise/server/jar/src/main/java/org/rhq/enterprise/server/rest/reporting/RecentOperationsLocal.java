@@ -11,14 +11,18 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/recentOperations")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The recent operations report")
 public interface RecentOperationsLocal {
 
+    @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Recent Operations Data as CSV")
     StreamingOutput recentOperations(
             @QueryParam("status") @DefaultValue("inprogress,success,failure,canceled") String operationRequestStatus,
             @QueryParam("startTime") Long startTime,

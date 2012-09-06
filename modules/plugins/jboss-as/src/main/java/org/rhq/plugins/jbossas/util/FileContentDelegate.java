@@ -84,15 +84,14 @@ public class FileContentDelegate {
     }
 
     /**
-     * Creates a new package described by the specified details. The destination of the content in the provided input
-     * stream will be determined by the package name.
+     * Creates a new package described by the specified details. The destination of the content in the provided
+     * file will be determined by the package name.
      *
      * @param  details  describes the package being created
-     * @param  content  content to be written for the package. NOTE this Stream will be closed by this method.
+     * @param  sourceContentFile  content file to be written for the package.
      * @param  unzip    if <code>true</code>, the content stream will be treated like a ZIP file and be unzipped as
     *                  it is written, using the package name as the base directory; if <code>false</code> the
      * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
-     * @param shaString the SHA-256 of the specified input stream
      */
     public void createContent(PackageDetails details, File sourceContentFile, boolean unzip, boolean createBackup) {
         File destinationContentFile = getPath(details);
@@ -107,6 +106,37 @@ public class FileContentDelegate {
                 writeSHAToManifest(destinationContentFile, shaString);
             } else {
                 FileUtil.copyFile(sourceContentFile, destinationContentFile);
+            }
+            details.setFileName(destinationContentFile.getPath());
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating artifact from details: " + destinationContentFile, e);
+        }
+    }
+
+    /**
+     * Creates a new package described by the specified details. The destination of the content in the provided input
+     * stream will be determined by the package name.
+     *
+     * @param  details  describes the package being created
+     * @param  content  content to be written for the package. NOTE this Stream will be closed by this method.
+     * @param  unzip    if <code>true</code>, the content stream will be treated like a ZIP file and be unzipped as
+    *                  it is written, using the package name as the base directory; if <code>false</code> the
+     * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
+     * @deprecated Method deprecated because of SHA256 computations. Method added only for backwards compatibility with SOA-P plugin.
+     *          Replaced by {@link #createContent(PackageDetails, File, boolean, boolean)}
+     */
+    @Deprecated
+    public void createContent(PackageDetails details, InputStream content, boolean unzip, boolean createBackup) {
+        File destinationContentFile = getPath(details);
+        try {
+            if (createBackup) {
+                moveToBackup(destinationContentFile, ".bak");
+            }
+            if (unzip) {
+                ZipUtil.unzipFile(content, destinationContentFile);
+                computeAndSaveSHA(destinationContentFile);
+            } else {
+                FileUtil.writeFile(content, destinationContentFile);
             }
             details.setFileName(destinationContentFile.getPath());
         } catch (IOException e) {

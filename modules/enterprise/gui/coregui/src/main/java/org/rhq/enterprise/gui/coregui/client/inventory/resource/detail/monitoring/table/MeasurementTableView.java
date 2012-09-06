@@ -19,12 +19,20 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -37,11 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -118,6 +121,11 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                                     records.add(record);
                                 }
                             }
+                            Collections.sort(records, new Comparator<ListGridRecord>() {
+                                public int compare(ListGridRecord o1, ListGridRecord o2) {
+                                    return o1.getAttribute("name").compareTo(o2.getAttribute("name"));
+                                }
+                            });
                             showLiveData(records);
                         }
 

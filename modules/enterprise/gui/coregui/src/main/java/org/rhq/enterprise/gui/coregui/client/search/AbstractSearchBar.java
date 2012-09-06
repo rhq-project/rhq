@@ -19,14 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.search;
 
 import com.google.gwt.user.client.ui.Composite;
-
 import org.rhq.core.domain.search.SearchSubsystem;
 
 /**
  * Abstract class for SearchBar, so that a separate implementation can be written alongside the original. 
- * 
  * @author Joseph Marques
  */
+@Deprecated
 public abstract class AbstractSearchBar extends Composite {
 
     public abstract SearchSubsystem getSearchSubsystem();

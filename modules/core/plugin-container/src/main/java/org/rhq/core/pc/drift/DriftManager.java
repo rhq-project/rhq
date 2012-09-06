@@ -479,7 +479,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void updateDriftDetection(int resourceId, DriftDefinition driftDefinition) {
-        log.info("Recived request to update schedule for " + toString(resourceId, driftDefinition));
+        log.info("Received request to update schedule for " + toString(resourceId, driftDefinition));
 
         DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftDefinition);
         if (updatedSchedule == null) {
@@ -696,7 +696,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         case pluginConfiguration: {
             baseLocation = resource.getPluginConfiguration().getSimpleValue(baseDirValueName, null);
             if (baseLocation == null) {
-                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                throw new IllegalArgumentException("Cannot determine the base directory - "
                     + "there is no plugin configuration setting for [" + baseDirValueName + "]");
             }
             break;
@@ -704,7 +704,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         case resourceConfiguration: {
             baseLocation = resource.getResourceConfiguration().getSimpleValue(baseDirValueName, null);
             if (baseLocation == null) {
-                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                throw new IllegalArgumentException("Cannot determine the base directory - "
                     + "there is no resource configuration setting for [" + baseDirValueName + "]");
             }
             break;

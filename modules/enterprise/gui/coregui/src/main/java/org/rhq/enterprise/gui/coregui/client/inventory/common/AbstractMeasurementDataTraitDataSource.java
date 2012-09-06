@@ -52,6 +52,10 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public abstract class AbstractMeasurementDataTraitDataSource extends
     RPCDataSource<MeasurementDataTrait, MeasurementDataTraitCriteria> {
+
+    public static final String FIELD_METRIC_SCHED_ID = "id";
+    public static final String FIELD_METRIC_NAME = "name";
+
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementDataTraitDataSource() {
@@ -70,9 +74,13 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
         primaryKeyField.setHidden(true);
         fields.add(primaryKeyField);
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.dataSource_traits_field_definitionID());
+        DataSourceIntegerField idField = new DataSourceIntegerField(FIELD_METRIC_SCHED_ID, MSG.dataSource_traits_field_definitionID());
         idField.setHidden(true);
         fields.add(idField);
+        
+        DataSourceIntegerField nameField = new DataSourceIntegerField(FIELD_METRIC_NAME, MSG.common_title_name());
+        nameField.setHidden(true);
+        fields.add(nameField);
 
         return fields;
     }
@@ -173,11 +181,13 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
-        record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
+        record.setAttribute(FIELD_METRIC_SCHED_ID, from.getSchedule().getDefinition().getId()); // used for detail view
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, new Date(from.getTimestamp()));
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition()
             .getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());
+        record.setAttribute(FIELD_METRIC_NAME, from.getSchedule().getDefinition().getName());
+        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getSchedule().getResource().getId());
 
         return record;
     }

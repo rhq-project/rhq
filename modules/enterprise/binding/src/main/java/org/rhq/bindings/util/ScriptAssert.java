@@ -245,20 +245,30 @@ public class ScriptAssert {
           }
     }
 
-    public void assertEquals(Object[] actual, Object[] expected, String msg) {
-        if (actual == expected) {
-            return;
+    /* These are no longer needed in Rhino 1.7R3, because native javascript arrays implement
+     * the collection interfaces.
+     */
+    /*    
+        public void assertEquals(Object[] actual, Object[] expected, String msg) {
+            if (actual == expected) {
+                return;
+            }
+
+            if ((actual == null && expected != null) || (actual != null && expected == null)) {
+                if (msg != null) {
+                    fail(msg);
+                } else {
+                    fail("Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual));
+                }
+            }
+            assertEquals(Arrays.asList(actual), Arrays.asList(expected), msg);
         }
 
-        if ((actual == null && expected != null) || (actual != null && expected == null)) {
-            if (msg != null) {
-                fail(msg);
-            } else {
-                fail("Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual));
-            }
+        public void assertEquals(Object[] actual, Object[] expected) {
+            assertEquals(actual, expected, null);
         }
-        assertEquals(Arrays.asList(actual), Arrays.asList(expected), msg);
-    }
+
+    */
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected, String msg) {
         if (actual == expected) {
@@ -286,10 +296,6 @@ public class ScriptAssert {
             failAssertNoEqual(actual, expected,
                 "Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual), msg);
         }
-    }
-
-    public void assertEquals(Object[] actual, Object[] expected) {
-        assertEquals(actual, expected, null);
     }
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected) {

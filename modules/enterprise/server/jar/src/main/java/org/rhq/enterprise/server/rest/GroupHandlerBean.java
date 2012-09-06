@@ -22,6 +22,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -32,7 +34,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefini
 import org.rhq.enterprise.server.rest.domain.GroupDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -52,9 +54,6 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLocal {
 
     private final Log log = LogFactory.getLog(GroupHandlerBean.class);
-
-    @EJB
-    ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
     ResourceManagerLocal resourceManager;
@@ -94,7 +93,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     public Response getGroup(int id, @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo) {
 
-        ResourceGroup group = fetchGroup(id);
+        ResourceGroup group = fetchGroup(id, false);
 
         GroupRest groupRest = fillGroup(group, uriInfo);
 
@@ -149,7 +148,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
-        ResourceGroup resourceGroup = fetchGroup(id);
+        ResourceGroup resourceGroup = fetchGroup(id, false);
         resourceGroup.setName(in.getName());
         Response.ResponseBuilder builder;
 
@@ -182,7 +181,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     public Response getResources(int id, @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo) {
 
-        ResourceGroup resourceGroup = fetchGroup(id);
+        ResourceGroup resourceGroup = fetchGroup(id, false);
 
         Set<Resource> resources = resourceGroup.getExplicitResources();
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(resources.size());
@@ -208,7 +207,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     public Response addResource(int id, int resourceId,
                                 @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        ResourceGroup resourceGroup = fetchGroup(id);
+        ResourceGroup resourceGroup = fetchGroup(id, false);
         Resource res = resourceManager.getResource(caller,resourceId);
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
@@ -230,7 +229,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     public Response removeResource(int id, int resourceId,
                                    @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        ResourceGroup resourceGroup = fetchGroup(id);
+        ResourceGroup resourceGroup = fetchGroup(id, false);
         Resource res = resourceManager.getResource(caller,resourceId);
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
@@ -241,21 +240,38 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     }
 
-    /**
-     * Fetch the group with the passed id
-     * @param groupId id of the resource group
-     * @return the group object if found
-     * @throws StuffNotFoundException if the group is not found (or not accessible by the caller)
-     */
-    private ResourceGroup fetchGroup(int groupId) {
-        ResourceGroup resourceGroup;
-        resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
-        if (resourceGroup==null)
-            throw new StuffNotFoundException("Group with id " + groupId);
-        return resourceGroup;
+    @Override
+    public Response getMetricDefinitionsForGroup(int id,  Request request,  HttpHeaders headers,
+                                                  UriInfo uriInfo) {
+        ResourceGroup group = fetchGroup(id, true);
+
+        Set<MeasurementDefinition> definitions = group.getResourceType().getMetricDefinitions();
+        List<MetricSchedule> schedules = new ArrayList<MetricSchedule>(definitions.size());
+        for (MeasurementDefinition def : definitions) {
+            MetricSchedule schedule = new MetricSchedule(def.getId(),def.getName(),def.getDisplayName(),false,def.getDefaultInterval(),
+                    def.getUnits().getName(),def.getDisplayType().toString());
+            if (def.getDataType()== DataType.MEASUREMENT) {
+                UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+                uriBuilder.path("/metric/data/group/{groupId}/{definitionId}");
+                URI uri = uriBuilder.build(id,def.getId());
+                Link link = new Link("metric",uri.toString());
+                schedule.addLink(link);
+            }
+
+            schedules.add(schedule);
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listMetricDefinitions",schedules));
+        }
+        else {
+            GenericEntity<List<MetricSchedule>> ret = new GenericEntity<List<MetricSchedule>>(schedules) {};
+            builder = Response.ok(ret);
+        }
+        return builder.build();
     }
-
-
 
     private GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
 
@@ -270,8 +286,13 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/group/{id}");
         URI uri = uriBuilder.build(group.getId());
-
         Link link = new Link("edit",uri.toASCIIString());
+        gr.getLinks().add(link);
+
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}/metricDefinitions");
+        uri = uriBuilder.build(group.getId());
+        link = new Link("metricDefinitions",uri.toASCIIString());
         gr.getLinks().add(link);
 
         return gr;

@@ -25,6 +25,12 @@
 
         <dependency>
             <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>
             <version>${project.version}</version>
         </dependency>

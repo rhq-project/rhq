@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <artifactId>rhq-enterprise-parent</artifactId>
+      <groupId>org.rhq</groupId>
+      <version>4.5.0-SNAPSHOT</version>
+   </parent>
+   <artifactId>rhq-scripting-parent</artifactId>
+   <packaging>pom</packaging>
+   
+   <version>4.5.0-SNAPSHOT</version>
+   <name>RHQ Scripting Parent Module</name>
+
+   <modules>
+      <module>api</module>
+      <module>javascript</module>      
+   </modules>
+   
+   <profiles>
+      <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
+      <profile>
+         <id>bundle-additional-script-languages</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+         
+         <modules>
+            <module>python</module>
+         </modules>
+      </profile>
+   </profiles>
+</project>

@@ -7,20 +7,20 @@
     <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0</version>
+      <version>4.5.0-SNAPSHOT</version>
       <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>4.5.0-SNAPSHOT</version>
 
     <name>RHQ plugin annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
 
     <build>
- 
+
      <plugins>
 
       <plugin>
@@ -31,7 +31,7 @@
         </configuration>
       </plugin>
 
-      <plugin>        
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>

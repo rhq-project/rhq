@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -112,6 +113,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
@@ -141,6 +143,9 @@ import org.rhq.enterprise.server.util.QueryUtility;
 @Stateless
 public class ResourceManagerBean implements ResourceManagerLocal, ResourceManagerRemote {
     private final Log log = LogFactory.getLog(ResourceManagerBean.class);
+
+    private final static String BOUNDED_MAX_RESOURCES = "1000";
+    private final static String BOUNDED_MAX_RESOURCES_BY_TYPE = "200";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -792,14 +797,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             // If the ancestor is not locked, include viewable children.
             if (!ancestor.isLocked() || ancestor.getResource() == parent) {
-                // Get all viewable committed children.
-                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject,
-                    ancestor.getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
+                // Get viewable committed children, but bounded to ensure it's not an overwhelming return set
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.addFilterParentResourceId(ancestor.getResource().getId());
+                criteria.addSortName(PageOrdering.ASC);
+                List<Resource> children = findResourcesByCriteriaBounded(subject, criteria, 0, 0);
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
                 for (Resource child : children) {
-                    // Ensure the parentResource field is fetched.
-                    //noinspection ConstantConditions
+                    // Ensure the parentResource field is fetched. (do this here and not via criteria.fetchParentResource
+                    // because that option would require inventory manager perm)
                     child.getParentResource().getId();
                     // The query only returned viewable children, so the composite should not be locked.
                     boolean isLocked = false;
@@ -2469,6 +2476,70 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner<Resource>(criteria, generator,
             entityManager);
         PageList<Resource> results = queryRunner.execute();
+        return results;
+    }
+
+    @Override
+    public List<Resource> findResourcesByCriteriaBounded(Subject subject, ResourceCriteria criteria, int maxResources,
+        int maxResourcesByType) {
+
+        // find all of the requested resources but don't return them until they meet our bounded return requirements
+        // maintain any requested sorting
+        criteria.clearPaging();
+
+        // perform the requested criteria query
+        PageList<Resource> results = findResourcesByCriteria(subject, criteria);
+
+        // If not specified use the default maxResources
+        if (maxResources <= 0) {
+            try {
+                maxResources = Integer.parseInt(System.getProperty(
+                    "rhq.server.findResourcesByCriteriaBounded.maxResources", BOUNDED_MAX_RESOURCES));
+            } catch (NumberFormatException e) {
+            }
+            if (maxResources <= 0) {
+                maxResources = Integer.parseInt(BOUNDED_MAX_RESOURCES);
+            }
+        }
+
+        if (results.getTotalSize() <= maxResources) {
+            return results;
+        }
+
+        // If not specified use the default maxResourcesByType
+        if (maxResourcesByType <= 0) {
+            try {
+                maxResourcesByType = Integer.parseInt(System.getProperty(
+                    "rhq.server.findResourcesByCriteriaBounded.maxResourcesByType", BOUNDED_MAX_RESOURCES_BY_TYPE));
+            } catch (NumberFormatException e) {
+            }
+            if (maxResourcesByType <= 0) {
+                maxResourcesByType = Integer.parseInt(BOUNDED_MAX_RESOURCES_BY_TYPE);
+            }
+        }
+
+        // We need to trim the returned resources, enforce maxResourcesByType
+        Map<Integer, Integer> typeCounts = new HashMap<Integer, Integer>();
+
+        for (Iterator<Resource> i = results.iterator(); i.hasNext();) {
+            Resource r = i.next();
+            Integer typeId = r.getResourceType().getId();
+            Integer count = typeCounts.get(typeId);
+            if (null == count) {
+                count = 0;
+            }
+            typeCounts.put(typeId, ++count);
+            if (count > maxResourcesByType) {
+                i.remove();
+            }
+        }
+
+        // If after we've trimmed all types the results are still more than maxSize then we need to just chop
+        // keeping the most important (presumably the beginning of the list, if it's sorted)
+        while (maxResources < results.size()) {
+            results.remove(maxResources);
+        }
+
         return results;
     }
 

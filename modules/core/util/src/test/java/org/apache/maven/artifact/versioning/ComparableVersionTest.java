@@ -39,7 +39,6 @@ public class ComparableVersionTest {
         RHQ_VERSIONS.add("4.4.0.RC1");
         RHQ_VERSIONS.add("4.4.0.RC2");
         RHQ_VERSIONS.add("4.4.0.GA");
-        RHQ_VERSIONS.add("4.4.1.GA");
     }
 
     private static List<String> JON_VERSIONS = new ArrayList<String>();
@@ -52,7 +51,7 @@ public class ComparableVersionTest {
         JON_VERSIONS.add("4.4.0.JON310BETA1");
         JON_VERSIONS.add("4.4.0.JON310CR1");
         JON_VERSIONS.add("4.4.0.JON310GA");
-        JON_VERSIONS.add("4.4.1.JON311GA");
+        JON_VERSIONS.add("4.4.0.JON311GA");
     }
 
     public void testRHQVersions() {

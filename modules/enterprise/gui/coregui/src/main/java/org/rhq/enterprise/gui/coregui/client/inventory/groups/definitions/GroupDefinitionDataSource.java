@@ -33,6 +33,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -154,7 +155,11 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_saveFailure(name), caught);
+                    if (caught instanceof DuplicateExpressionTypeException) {
+                        CoreGUI.getMessageCenter().notify(new Message(caught.getMessage(), Message.Severity.Warning));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_saveFailure(name), caught);
+                    }
                 }
 
                 @Override

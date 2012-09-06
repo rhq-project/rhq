@@ -57,14 +57,20 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
     }
 
     public String getTable() {
-        return this.context.getPluginConfiguration().getSimpleValue("table", null);
+        return this.context.getPluginConfiguration().getSimpleValue("table", "");
     }
 
     public AvailabilityType getAvailability() {
+        if (getTable().isEmpty()) {
+            // not set
+            return AvailabilityType.UP;
+        }
         Statement statement = null;
         try {
             statement = getConnection().createStatement();
-            statement.executeQuery("SELECT COUNT(*) FROM " + getTable());
+            statement.setMaxRows(1);
+            statement.setFetchSize(1);
+            statement.executeQuery("SELECT * FROM " + getTable()).close();
             return AvailabilityType.UP;
         } catch (SQLException e) {
             return AvailabilityType.DOWN;
@@ -75,8 +81,8 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-        Configuration conf = this.context.getPluginConfiguration();
-        String query = conf.getSimpleValue("metricQuery", null);
+        Configuration config = this.context.getPluginConfiguration();
+        String query = config.getSimpleValue("metricQuery", null);
 
         if (query == null) {
             if (log.isTraceEnabled()) {
@@ -93,9 +99,18 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
             return;
         }
 
-        query = CustomTableRowDiscoveryComponent.formatMessage(query, conf.getSimpleValue("key", null));
-
-        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
+        query = CustomTableRowDiscoveryComponent.formatMessage(query, config.getSimpleValue("key", null));
+        String column = config.getSimpleValue("column", "");
+        Map<String, Double> values;
+        if (Boolean.parseBoolean(column)) {
+            // data in column format
+            values = DatabaseQueryUtility.getNumericQueryValues(this, query);
+        } else {
+            // data in row format
+            values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
+        }
+        if (log.isDebugEnabled())
+            log.debug("returned values " + values);
 
         // this is a for loop because the name of each column can be the name of the metric
         for (MeasurementScheduleRequest request : metrics) {

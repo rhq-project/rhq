@@ -33,7 +33,13 @@
     </thead>
     <tr>
         <#assign sched=var.scheduleId/>
-        <td>ScheduleId</td><td><a href="/rest/1/metric/schedule/${sched?c}.html">${sched?c}</a></td>    </tr>
+        <#if var.isGroup()>
+            <td>DefinitionId</td><td>${sched?c}</a></td>
+        <#else>
+            <td>ScheduleId</td><td><a href="/rest/1/metric/schedule/${sched?c}.html">${sched?c}</a></td>
+        </#if>
+    </tr>
+
     <tr>
         <td>Min</td><td>
         <#if var.min?has_content>
@@ -64,7 +70,9 @@
         </td>
     </tr>
     <tr>
-        <td><a align="top" href="javascript:rhq.whisker(${sched?c},'one',400,200)">DataPoints</a></td><td>
+        <#if !var.isGroup()>
+            <td><a align="top" href="javascript:rhq.whisker(${sched?c},'one',400,200)">DataPoints</a></td><td>
+        </#if>
         <table>
             <thead>
             <tr>

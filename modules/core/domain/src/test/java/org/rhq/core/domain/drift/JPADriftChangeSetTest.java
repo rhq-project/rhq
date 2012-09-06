@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2011-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,11 +34,11 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.test.TransactionCallback;
 
 public class JPADriftChangeSetTest extends DriftDataAccessTest {
@@ -78,6 +78,11 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     private void purgeDB() {
         EntityManager em = getEntityManager();
+
+        List<Availability> avails = (List<Availability>) em.createQuery("SELECT a FROM Availability a").getResultList();
+        for (Availability a : avails) {
+            em.remove(a);
+        }
 
         List<Resource> resources = (List<Resource>) em.createQuery("from Resource where resourceType.name = :name")
             .setParameter("name", RESOURCE_TYPE_NAME).getResultList();

@@ -71,6 +71,13 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "definitionIds") int[] definitionIds);
+    
+    @WebMethod
+    Set<MeasurementData> findLiveDataForGroup(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId,//
+        @WebParam(name = "resourceId") int[] resourceIds, //
+        @WebParam(name = "definitionIds") int[] definitionIds);
 
     @WebMethod
     @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)

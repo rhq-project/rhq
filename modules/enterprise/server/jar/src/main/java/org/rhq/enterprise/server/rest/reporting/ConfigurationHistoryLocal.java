@@ -9,13 +9,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import org.jboss.resteasy.annotations.GZIP;
 
 @Path("/configurationHistory")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The configuration history report")
 public interface ConfigurationHistoryLocal {
 
+    @GZIP
     @GET
     @Produces({"text/csv"})
+    @ApiOperation(value = "Export the Configuration History data as CSV")
     StreamingOutput configurationHistory(@Context HttpServletRequest request);
 }

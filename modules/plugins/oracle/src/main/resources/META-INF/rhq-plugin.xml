@@ -21,7 +21,16 @@
       <plugin-configuration>
          <c:simple-property name="host" default="localhost" displayName="Listen host" description="the hostname or IP address that the database is listening on"/>
          <c:simple-property name="port" default="1521" displayName="Listen port" description="the TCP port that the database is listening on"/>
-         <c:simple-property name="sid" default="XE" displayName="Database SID" description="the name of the database to connect to"/>
+
+         <c:simple-property name="connectionMethod" displayName="Connection Method" type="string" required="true" default="SID"
+                            description="The method used to connect to Oracle; defaults to 'SID'.">
+            <c:property-options>
+               <c:option value="SID"         name="SID"/>
+               <c:option value="SERVICENAME" name="Service name"/>
+            </c:property-options>
+         </c:simple-property>
+
+         <c:simple-property name="sid" default="XE" displayName="Database SID/Service name" description="SID or service name of the database to connect to"/>
 
          <c:simple-property name="driverClass" default="oracle.jdbc.driver.OracleDriver" displayName="JDBC driver class"
                             description="the fully-qualified classname of the JDBC driver class" required="false"/>
@@ -584,8 +593,46 @@
             <c:simple-property name="description" default="Oracle User"/>
          </plugin-configuration>
 
-          <metric property="connections" displayName="Total Connections" displayType="summary"/>
-          <metric property="active" displayName="Active Connections" displayType="summary"/>
+         <metric property="connections" displayName="Total Connections" displayType="summary"/>
+         <metric property="active" displayName="Active Connections" displayType="summary"/>
+
+      </service>
+
+      <service name="Oracle Tablespaces"
+         discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+         class="org.rhq.plugins.oracle.OracleTablespaceComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="table" default="DBA_TABLESPACES"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM DBA_TABLESPACES"/>
+            <c:simple-property name="keyColumn" default="tablespace_name"/>
+            <c:simple-property name="name" default="{key}"/>
+            <c:simple-property name="description" default="Oracle Tablespace"/>
+         </plugin-configuration>
+
+         <metric property="usedSpace" displayName="Used Space" description="Space used in the tablespace (database blocks)" displayType="summary"/>
+         <metric property="totalSize" displayName="Total Size" description="Total size of the tablespace (database blocks)" displayType="summary"/>
+         <metric property="usedPercent" displayName="Used Percent" description="Percentage of the tablespace used" displayType="summary" units="percentage"/>
+
+      </service>
+      
+      <service name="Oracle Flash Recovery Areas"
+         discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+         class="org.rhq.plugins.oracle.OracleFlashRecoveryAreaComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="table" default="V$RECOVERY_FILE_DEST"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM V$RECOVERY_FILE_DEST"/>
+            <c:simple-property name="keyColumn" default="name"/>
+            <c:simple-property name="name" default="{key}"/>
+            <c:simple-property name="description" default="Oracle Flash Recovery Areas"/>
+         </plugin-configuration>
+
+         <metric property="spaceLimit" displayName="Space Limit" description="Flash Recovery Area space limit (database blocks)" displayType="summary"/>
+         <metric property="spaceUsed" displayName="Space Used" description="Space used in the Flash Recovery Area (database blocks)" displayType="summary"/>
+         <metric property="spaceReclaimable" displayName="Space Reclaimable" description="Space reclaimable in the Flash Recovery Area (database blocks)" displayType="summary"/>
+         <metric property="numberOfFiles" displayName="Number Of Files" description="Number of files in the Flash Recovery Area" displayType="summary"/>
+         <metric property="usedPercent" displayName="Used Percent" description="Percentage of the Flash Recovery Area used" displayType="summary" units="percentage"/>
 
       </service>
 

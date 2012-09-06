@@ -54,6 +54,29 @@ import org.rhq.core.system.SystemInfo;
  * @author Jay Shaughnessy
  */
 public class ApplicationServerOperationsDelegate {
+    
+    private static class ExecutionFailedException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        @SuppressWarnings("unused")
+        public ExecutionFailedException() {
+        }
+
+        public ExecutionFailedException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public ExecutionFailedException(String message) {
+            super(message);
+        }
+
+        @SuppressWarnings("unused")
+        public ExecutionFailedException(Throwable cause) {
+            super(cause);
+        }       
+    }
+    
     /**
      * max amount of time to wait for server to show as unavailable after
      * executing stop - in milliseconds
@@ -303,28 +326,30 @@ public class ApplicationServerOperationsDelegate {
      * @return The result of the shutdown operation - is successful
      */
     private OperationResult shutDown() {
-        AvailabilityType avail = this.serverComponent.getAvailability();
-        if (avail == AvailabilityType.DOWN) {
-            OperationResult result = new OperationResult();
-            result.setErrorMessage("The server is already shut down.");
-            return result;
-        }
-
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
         ApplicationServerShutdownMethod shutdownMethod = Enum.valueOf(ApplicationServerShutdownMethod.class,
             pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.SHUTDOWN_METHOD_CONFIG_PROP)
                 .getStringValue());
-        String resultMessage = ApplicationServerShutdownMethod.JMX.equals(shutdownMethod) ? shutdownViaJmx()
-            : shutdownViaScript();
-
-        avail = waitForServerToShutdown();
+        String errorMessage = null;
+        String resultMessage = null;
+        try {
+            resultMessage = ApplicationServerShutdownMethod.JMX.equals(shutdownMethod) ? shutdownViaJmx()
+                : shutdownViaScript();
+        } catch (ExecutionFailedException e) {
+            errorMessage = e.getMessage();
+        }
+        
+        AvailabilityType avail = waitForServerToShutdown();
         OperationResult result;
         if (avail == AvailabilityType.UP) {
             result = new OperationResult();
             result.setErrorMessage("The server failed to shut down.");
         } else {
-            return new OperationResult(resultMessage);
+            result = new OperationResult();
+            result.setSimpleResult(resultMessage);
+            result.setErrorMessage(errorMessage);
         }
+        
         return result;
     }
 
@@ -333,7 +358,7 @@ public class ApplicationServerOperationsDelegate {
      *
      * @return success message if no errors are encountered
      */
-    private String shutdownViaScript() {
+    private String shutdownViaScript() throws ExecutionFailedException {
         File shutdownScriptFile = getShutdownScriptPath();
         validateScriptFile(shutdownScriptFile,
             ApplicationServerPluginConfigurationProperties.SHUTDOWN_SCRIPT_CONFIG_PROP);
@@ -378,8 +403,8 @@ public class ApplicationServerOperationsDelegate {
         logExecutionResults(results);
 
         if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code ["
-                + results.getExitCode() + "]", results.getError());
+            throw new ExecutionFailedException("Error executing shutdown script while stopping AS instance. Exit code ["
+                + results.getExitCode() + "]: " + results.getError().getMessage(), results.getError());
         }
 
         return "The server has been shut down.";
@@ -397,7 +422,7 @@ public class ApplicationServerOperationsDelegate {
      *
      * @return success message if no errors are encountered
      */
-    private String shutdownViaJmx() {
+    private String shutdownViaJmx() throws ExecutionFailedException {
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
         String mbeanName = pluginConfig.getSimple(
             ApplicationServerPluginConfigurationProperties.SHUTDOWN_MBEAN_CONFIG_PROP).getStringValue();
@@ -406,7 +431,7 @@ public class ApplicationServerOperationsDelegate {
 
         EmsConnection connection = this.serverComponent.getEmsConnection();
         if (connection == null) {
-            throw new RuntimeException("Can not connect to the server");
+            throw new ExecutionFailedException("Can not connect to the server");
         }
         EmsBean bean = connection.getBean(mbeanName);
         EmsOperation operation = bean.getOperation(operationName);
@@ -422,14 +447,18 @@ public class ApplicationServerOperationsDelegate {
          * method, we'd need a clever way for the user to specify parameters
          * anyway.
          */
-        List<EmsParameter> params = operation.getParameters();
-        int count = params.size();
-        if (count == 0)
-            operation.invoke(new Object[0]);
-        else { // overloaded operation
-            operation.invoke(new Object[] { 0 }); // return code of 0
+        try {
+            List<EmsParameter> params = operation.getParameters();
+            int count = params.size();
+            if (count == 0)
+                operation.invoke(new Object[0]);
+            else { // overloaded operation
+                operation.invoke(new Object[] { 0 }); // return code of 0
+            }
+        } catch (RuntimeException e) {
+            throw new ExecutionFailedException("Shutting down the server using JMX failed: " + e.getMessage(), e);
         }
-
+        
         return "The server has been shut down.";
     }
 

@@ -30,6 +30,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -60,12 +61,13 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
         File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
         OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
+        InventoryContext inventoryContext,
         ScheduledExecutorService collectorThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
 
         super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
             temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
-            availabilityContext, collectorThreadPool, pluginContainerDeployment);
+            availabilityContext, inventoryContext, collectorThreadPool, pluginContainerDeployment);
 
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();

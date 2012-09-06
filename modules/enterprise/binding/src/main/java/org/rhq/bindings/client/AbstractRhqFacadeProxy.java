@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import org.rhq.bindings.util.InterfaceSimplifier;
-import org.rhq.core.domain.auth.Subject;
 
 /**
  * An abstract {@link InvocationHandler} to help the script users create proxies to actually call the
@@ -34,9 +33,9 @@ import org.rhq.core.domain.auth.Subject;
 public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements InvocationHandler {
 
     private T facade;
-    private RhqManagers manager;
+    private RhqManager manager;
     
-    protected AbstractRhqFacadeProxy(T facade, RhqManagers manager) {
+    protected AbstractRhqFacadeProxy(T facade, RhqManager manager) {
         this.facade = facade;
         this.manager = manager;
     }
@@ -45,46 +44,29 @@ public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements Inv
         return facade;
     }
     
-    protected RhqManagers getManager() {
+    protected RhqManager getManager() {
         return manager;
     }
     
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        Class<?>[] params = method.getParameterTypes();
+        Method origMethod = InterfaceSimplifier.getOriginalMethod(method);
 
-        try {
-            Class<?>[] interfaces = method.getDeclaringClass().getInterfaces();
+        if (origMethod != null) {
+            if (InterfaceSimplifier.isSimplified(method)) {
+                // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
+                int numArgs = (null == args) ? 0 : args.length;
+                Object[] newArgs = new Object[numArgs + 1];
+                if (numArgs > 0) {
+                    System.arraycopy(args, 0, newArgs, 1, numArgs);
+                }
+                newArgs[0] = getRhqFacade().getSubject();
 
-            Class<?> originalClass;
-            if (interfaces != null && interfaces.length > 0) {
-                originalClass = interfaces[0];
-            } else {
-                originalClass = method.getDeclaringClass();
+                args = newArgs;
             }
-
-            // See if this method really exists or if its a simplified set of parameters
-            originalClass.getMethod(method.getName(), method.getParameterTypes());
-
-        } catch (Exception e) {
-            // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
-            int numArgs = (null == args) ? 0 : args.length;
-            Object[] newArgs = new Object[numArgs + 1];
-            if (numArgs > 0) {
-                System.arraycopy(args, 0, newArgs, 1, numArgs);
-            }
-            newArgs[0] = getRhqFacade().getSubject();
-            args = newArgs;
-
-            int numParams = (null == params) ? 0 : params.length;
-            Class<?>[] newParams = new Class[numParams + 1];
-            if (numParams > 0) {
-                System.arraycopy(params, 0, newParams, 1, numParams);
-            }
-            newParams[0] = Subject.class;
-            params = newParams;
+            method = origMethod;
         }
         
-        return doInvoke(proxy, method, params, args);
+        return doInvoke(proxy, method, args);
     }
 
     /**
@@ -93,10 +75,9 @@ public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements Inv
      * 
      * @param proxy the proxy the method is executing on
      * @param originalMethod the original method
-     * @param argTypes the de-simplified argument types
      * @param args the de-simplified argumens
      * @return the result of the invocation
      * @throws Throwable if invocation throws an error
      */
-    protected abstract Object doInvoke(Object proxy, Method originalMethod, Class<?>[] argTypes, Object[] args) throws Throwable;
+    protected abstract Object doInvoke(Object proxy, Method originalMethod, Object[] args) throws Throwable;
 }

@@ -114,6 +114,14 @@
          </resource-configuration>
       </service>
 
+      <service name="service-gamma" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Omega Service Gamma">
+         <plugin-configuration>
+            <c:simple-property name="gamma-property0"/>
+         </plugin-configuration>
+         
+         <metric displayName="Gamma Metric 0" property="gamma-metric0" defaultOn="false"/>         
+      </service>
+
    </server>
 
    <!-- try to make server-a and its children representative of "average" resources -->

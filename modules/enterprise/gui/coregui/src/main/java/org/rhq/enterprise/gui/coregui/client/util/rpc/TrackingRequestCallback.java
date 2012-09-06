@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
-import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
@@ -38,6 +37,7 @@ public class TrackingRequestCallback implements RequestCallback {
     private long start = System.currentTimeMillis();
 
     private static final int STATUS_CODE_OK = 200;
+    private static final int STATUS_CODE_ERROR_INTERNET_NO_RESPONSE = 0;
     private static final int STATUS_CODE_ERROR_INTERNET_CANNOT_CONNECT = 12029;
     private static final int STATUS_CODE_ERROR_INTERNET_CONNECTION_ABORTED = 12030;
 
@@ -69,7 +69,7 @@ public class TrackingRequestCallback implements RequestCallback {
             statusCode = response.getStatusCode();
             statusText = response.getStatusText();
         } catch (Throwable t) {
-            // If the server is unreachable or has terminated firefox will generate a JavaScript exception
+            // If the server is unreachable or has terminated firefox may generate a JavaScript exception
             // when trying to read the response object. Let the user know the server is unreachable.
             // (http://helpful.knobs-dials.com/index.php/0x80004005_%28NS_ERROR_FAILURE%29_and_other_firefox_errors)) 
             if (UserSessionManager.isLoggedIn()) {
@@ -90,13 +90,15 @@ public class TrackingRequestCallback implements RequestCallback {
             callback.onResponseReceived(request, response);
             break;
 
+        // these status codes are known to be returned from various browsers when the server is lost or not responding
+        case STATUS_CODE_ERROR_INTERNET_NO_RESPONSE:
         case STATUS_CODE_ERROR_INTERNET_CANNOT_CONNECT:
         case STATUS_CODE_ERROR_INTERNET_CONNECTION_ABORTED:
             RPCTracker.getInstance().failCall(this);
             // If the server is unreachable or has terminated, and the user is still logged in,
             // let them know the server is now unreachable. 
             if (UserSessionManager.isLoggedIn()) {
-                CoreGUI.getErrorHandler().handleError("Server unreachable and may be down");
+                CoreGUI.getErrorHandler().handleError(CoreGUI.getMessages().view_core_serverUnreachable());
             }
             break;
 

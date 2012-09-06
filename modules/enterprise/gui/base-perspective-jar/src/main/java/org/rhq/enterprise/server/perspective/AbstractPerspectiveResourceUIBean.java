@@ -2,7 +2,9 @@ package org.rhq.enterprise.server.perspective;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.seam.annotations.web.RequestParameter;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -37,7 +39,7 @@ public class AbstractPerspectiveResourceUIBean extends AbstractPerspectiveUIBean
         Subject subject = this.perspectiveClient.getSubject();
 
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
-        ResourceManagerRemote resourceManager = remoteClient.getResourceManager();
+        ResourceManagerRemote resourceManager = remoteClient.getProxy(ResourceManagerRemote.class);
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterId(this.rhqResourceId);
         PageList<Resource> resources = resourceManager.findResourcesByCriteria(subject, resourceCriteria);

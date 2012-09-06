@@ -107,7 +107,7 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.3.3.Final</resteasy.version>
+    <resteasy.version>2.3.4.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.1.Final</arquillian.version>
@@ -721,6 +721,26 @@
             <artifactId>animal-sniffer-maven-plugin</artifactId>
             <version>${animal.sniffer.version}</version>
          </plugin>
+      	 <plugin>
+            <groupId>com.googlecode.maven-overview-plugin</groupId>
+            <artifactId>maven-overview-plugin</artifactId>
+            <version>RELEASE</version>
+            <configuration>
+               <width>4096</width>
+               <height>4096</height>
+               <maxDepth>0</maxDepth>
+               <suppressedScopes>provided, test</suppressedScopes>
+               <includes>${rhq.groupId}</includes>
+               <exclusions>
+                  <exclusion>
+                     <scope>test</scope>
+                  </exclusion>
+                  <!--<exclusion>
+                     <scope>provided</scope>
+                  </exclusion>-->
+               </exclusions>
+            </configuration>
+         </plugin>
        </plugins>
      </pluginManagement>
 
@@ -1151,6 +1171,25 @@
 
   <profiles>
 
+    <!-- NOTE: This profile is extended upon in several other submodules.
+         If you need to change its activation policy, make sure to do that in
+         *ALL* the modules that define this profile. -->
+    <profile>
+        <id>bundle-additional-script-languages</id>
+        <activation>
+           <property>
+              <!-- we want this always active but activeByDefault doesn't work -->
+              <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
+              <name>java.home</name> 
+           </property>
+        </activation>
+        
+        <!-- Can be used to pass a flag down to deployment composing ANT scripts and somesuch -->
+        <properties>
+           <rhq.bundle-additional-script-languages>true</rhq.bundle-additional-script-languages>
+        </properties>            
+    </profile>
+    
     <profile>
         <id>ojdbc-driver</id>
         <activation>
@@ -1294,6 +1333,12 @@
 
     <reporting>
         <plugins>
+            <plugin>
+                <groupId>com.googlecode.maven-overview-plugin</groupId>
+                <artifactId>maven-overview-plugin</artifactId>
+                <version>RELEASE</version>
+            </plugin>
+
 <!--
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -1438,6 +1483,12 @@
             <timezone>+1</timezone>
         </developer>
         <developer>
+            <name>Jirka Kremser</name>
+            <email>jkremser@redhat.com</email>
+            <timezone>+1</timezone>
+            <url>http://serviceasaservice.wordpress.com/</url>
+        </developer>
+        <developer>
             <name>Joseph Marques</name>
             <url>http://josephmarques.wordpress.com/</url>
             <timezone>-5</timezone>
@@ -1537,6 +1588,10 @@
         <contributor>
             <name>Torben Jäger</name>
             <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Richard Hensman</name>
+            <timezone>0</timezone>
         </contributor>
         <contributor>
             <name>Rafael Chies</name>

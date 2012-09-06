@@ -59,7 +59,6 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
     public void test1() throws Exception {
 
         ConfigurationDefinition definition = loadDescriptor("simple1");
-
         FakeConnection connection = new FakeConnection();
 
         ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
@@ -70,12 +69,22 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
-        assert cop.numberOfSteps() == 1;
-        Operation step1 = cop.step(0);
-        assert step1.getOperation().equals("write-attribute");
-        Map<String, Object> props = step1.getAdditionalProperties();
-        assert props.size() == 2;
+        Assert.assertEquals(cop.numberOfSteps(), 2);
 
+        for (int i = 0; i < cop.numberOfSteps(); i++) {
+            Operation step = cop.step(0);
+            Assert.assertEquals(step.getOperation(), "write-attribute");
+            Map<String, Object> stepProps = step.getAdditionalProperties();
+            Assert.assertEquals(stepProps.size(), 2);
+
+            if (stepProps.get("name").equals("needed")) {
+                Assert.assertEquals(stepProps.get("value"), "test");
+            } else if (stepProps.get("name").equals("optional")) {
+                Assert.assertEquals(stepProps.get("value"), null);
+            } else {
+                Assert.fail("Unexepected property found!");
+            }
+        }
     }
 
     public void test2() throws Exception {
@@ -862,4 +871,90 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert cop.numberOfSteps() == 1 : "One step was expected, but got " + cop.numberOfSteps();
 
     }
+
+    /**
+     * Test that if a property is required and has a defaultValue and the user just uses this,
+     * we actually pass this default to the operation, as e.g. the CreateResourceReport may not
+     * include the default value.
+     * @throws Exception If anything goes wrong
+     */
+    public void testSimpleWithDefault1() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("simpleWithDefault1");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+        PropertySimple ps = new PropertySimple("mode",null);
+        conf.put(ps);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 1;
+        Operation step1 = cop.step(0);
+        assert step1.getOperation().equals("write-attribute");
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        assert props.get("name").equals("mode");
+        assert props.get("value").equals("SYNC"); // the defaultValue
+    }
+
+    /**
+     * Check that if a property is required and has no defaultValue, but the user provides a value,
+     * that the user provided value ends up in the operation
+     * @throws Exception
+     */
+    public void testSimpleWithDefault2() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("simpleWithDefault2");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+        PropertySimple ps = new PropertySimple("mode","ASYNC");
+        conf.put(ps);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 1;
+        Operation step1 = cop.step(0);
+        assert step1.getOperation().equals("write-attribute");
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        assert props.get("name").equals("mode");
+        assert props.get("value").equals("ASYNC"); // the user provided value
+    }
+
+    /**
+     * Check that if a property is required and has no defaultValue, and the user provides null
+     * as value, that we set null
+     * @throws Exception
+     */
+    public void testSimpleWithDefault3() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("simpleWithDefault2");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
+
+        Configuration conf = new Configuration();
+        PropertySimple ps = new PropertySimple("mode",null);
+        conf.put(ps);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 1;
+        Operation step1 = cop.step(0);
+        assert step1.getOperation().equals("write-attribute");
+        Map<String, Object> props = step1.getAdditionalProperties();
+        assert props.size() == 2;
+        assert props.get("name").equals("mode");
+        assert props.get("value")==null; // no value
+    }
+
 }

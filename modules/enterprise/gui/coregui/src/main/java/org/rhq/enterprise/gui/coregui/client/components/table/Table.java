@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -50,6 +49,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -76,7 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -286,7 +286,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * </pre>
      * This is called from onInit() and guarantees grid not null.
      * 
-     * @param ListGrid grid
+     * @param grid
      */
     protected void configureListGrid(ListGrid grid) {
         listGrid.setWidth100();
@@ -310,8 +310,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             configureTableFilters();
         } else {
             if (!this.hideSearchBar) {
-                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                    getSearchSubsystem(), getInitialSearchBarSearchText());
+                final EnhancedSearchBarItem searchFilter = new EnhancedSearchBarItem("search", getSearchSubsystem(),
+                    getInitialSearchBarSearchText());
                 setFilterFormItems(searchFilter);
             }
         }
@@ -597,7 +597,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             } else {
                 // menu action
                 LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
-                final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                final Map<String, Object> menuEntries = tableAction.getValueMap();
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
                     item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
@@ -771,10 +771,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         final ListGrid listGrid = getListGrid();
 
         Criteria criteria = getCurrentCriteria();
-        if (Log.isDebugEnabled()) {
-            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria)
-                + "]...");
-        }
+        Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
         listGrid.setCriteria(criteria);
 
         if (resetPaging) {
@@ -983,7 +980,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String locatorId, String title, String confirmation,
-        LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
+        Map<String, Object> valueMap, TableAction tableAction) {
         // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
         // extends the footer's locator ID as it should.
         int underscoreIndex = locatorId.lastIndexOf('_');
@@ -996,6 +993,37 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
             confirmation, valueMap, tableAction);
         tableActions.add(info);
+    }
+
+    /**
+     * Updates the list of table's associated actions <code>tableActions</code>.
+     * It automatically updates the gui by calling <code>drawFooter()</code> provided the table has been initialized.
+     * 
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click. It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     * 
+     * @param title the title of a modified action
+     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is 
+     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to 
+     * preserve the order of map items
+     * @param tableAction the tableAction object (on this object the <code>executeAction()</code> is actually invoked)
+     */
+    public void updateTableAction(String title, Map<String, Object> valueMap,
+        TableAction tableAction) {
+        if (title == null) {
+            return;
+        }
+        for (TableActionInfo info : tableActions) {
+            if (title.equals(info.getTitle())) {
+                if (valueMap != null) info.setValueMap(valueMap);
+                if (tableAction != null) info.setAction(tableAction);
+                // the action listeners have to be re-added
+                if (isInitialized()) drawFooter();
+                break;
+            }
+        }
     }
 
     public void setListGridDoubleClickHandler(DoubleClickHandler handler) {
@@ -1150,11 +1178,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
-        com.google.gwt.event.dom.client.KeyPressHandler {
+    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler {
 
         private Table<?> table;
-        private SearchBarItem searchBarItem;
+        private EnhancedSearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
         public TableFilter(Table<?> table) {
@@ -1175,21 +1202,28 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof DateFilterItem) {
                     nextFormItem.addChangedHandler(this);
-                } else if (nextFormItem instanceof SearchBarItem) {
-                    searchBarItem = (SearchBarItem) nextFormItem;
-                    searchBarItem.getSearchBar().addKeyPressHandler(this);
+                } else if (nextFormItem instanceof EnhancedSearchBarItem) {
+                    searchBarItem = (EnhancedSearchBarItem) nextFormItem;
+                    searchBarItem.getSearchBar().getSearchComboboxItem().addKeyPressHandler(this);
                     String name = searchBarItem.getName();
+                    // postfix the name of the item so it is not processed by the filters and that the
+                    // hidden item is used instead.
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
-                    hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchComboboxItem().getValueAsString());
                 }
             }
 
             if (hiddenItem != null) {
+                Log.debug("Found hidden items");
+                // Add the hidden item if it exists
                 FormItem[] tmpItems = new FormItem[items.length + 1];
                 System.arraycopy(items, 0, tmpItems, 0, items.length);
                 tmpItems[items.length] = hiddenItem;
                 items = tmpItems;
+            }
+            for (FormItem item : items) {
+                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
             }
 
             super.setItems(items);
@@ -1203,7 +1237,22 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         public void onKeyPress(KeyPressEvent event) {
             if (event.getKeyName().equals("Enter")) {
                 Log.debug("Table.TableFilter Pressed Enter key");
-                fetchFilteredTableData();
+
+                if (null != searchBarItem) {
+                    ComboBoxItem comboBoxItem = searchBarItem.getSearchBar().getSearchComboboxItem();
+                    String searchBarValue = comboBoxItem.getValueAsString();
+                    String hiddenValue = (String) hiddenItem.getValue();
+                    Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
+
+                    // Only send a fetch request if the user actually changed the search expression.
+                    if (!equals(searchBarValue, hiddenValue)) {
+                        hiddenItem.setValue(searchBarValue);
+                        Log.debug("Table.TableFilter fetchFilteredTableData");
+                        fetchFilteredTableData();
+                    }
+                } else {
+                    fetchFilteredTableData();
+                }
             }
         }
 
@@ -1214,25 +1263,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         public boolean hasContent() {
             return super.getFields().length != 0;
-        }
-
-        @Override
-        public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
-                // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
-                //                       since the if check below will prevent the 2nd event from triggering a redundant
-                //                       fetch request.
-                Log.debug("Table.TableFilter Pressed Enter key2");
-                String searchBarValue = searchBarItem.getSearchBar().getValue();
-                String hiddenValue = (String) hiddenItem.getValue();
-                Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
-                // Only send a fetch request if the user actually changed the search expression.
-                if (!equals(searchBarValue, hiddenValue)) {
-                    hiddenItem.setValue(searchBarValue);
-                    Log.debug("Table.TableFilter fetchFilteredTableData");
-                    fetchFilteredTableData();
-                }
-            }
         }
 
         private static boolean equals(String string1, String string2) {
@@ -1248,12 +1278,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         private String locatorId;
         private String title;
         private String confirmMessage;
-        private LinkedHashMap<String, ? extends Object> valueMap;
+        private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
 
         protected TableActionInfo(String locatorId, String title, String confirmMessage,
-            LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
+            Map<String, Object> valueMap, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
             this.confirmMessage = confirmMessage;
@@ -1273,8 +1303,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             return confirmMessage;
         }
 
-        public LinkedHashMap<String, ? extends Object> getValueMap() {
+        public Map<String, Object> getValueMap() {
             return valueMap;
+        }
+        
+        public void setValueMap(Map<String, Object> valueMap) {
+            this.valueMap = valueMap;
         }
 
         public Canvas getActionCanvas() {

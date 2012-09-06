@@ -4006,6 +4006,35 @@
             <schemaSpec version="2.121">
               <schema-javaTask className="ContentSourceConfigurationObfuscationUpgradeTask" />
             </schemaSpec>
+
+<!-- RHQ 4.4, JON 3.1.0 RELEASE uses DB Schema 2.121 -->
+            
+            <schemaSpec version="2.122">
+                <schema-directSQL>                
+                   <statement desc="Updating DOWN Alert Conditions to new format">
+                      UPDATE RHQ_ALERT_CONDITION
+                         SET NAME = 'AVAIL_GOES_DOWN', OPTION_STATUS = NULL 
+                       WHERE TYPE = 'AVAILABILITY' 
+                         AND NAME IS NULL
+                         AND OPTION_STATUS = 'DOWN'
+                   </statement>
+                   <statement desc="Updating UP Alert Conditions to new format">
+                      UPDATE RHQ_ALERT_CONDITION
+                         SET NAME = 'AVAIL_GOES_UP', OPTION_STATUS = NULL 
+                       WHERE TYPE = 'AVAILABILITY'
+                         AND NAME IS NULL
+                         AND OPTION_STATUS = 'UP'
+                   </statement>      
+                </schema-directSQL>                    
+            </schemaSpec>
+            
+<!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->            
+
+            <schemaSpec version="2.123">
+               <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN_ENTRIES" columnType="INTEGER"/>
+               <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

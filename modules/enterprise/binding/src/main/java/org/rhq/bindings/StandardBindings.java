@@ -22,13 +22,15 @@ package org.rhq.bindings;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import org.rhq.bindings.client.ResourceClientFactory;
 import org.rhq.bindings.client.RhqFacade;
+import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.export.Exporter;
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.bindings.util.ScriptAssert;
@@ -49,6 +51,14 @@ import org.rhq.core.domain.util.PageControl;
  */
 public class StandardBindings extends HashMap<String, Object> {
 
+    /**
+     * A listener interface for objects that need to be aware of the fact that the
+     * RHQ facade associated with the bidings has changed.
+     */
+    public interface RhqFacadeChangeListener {
+        void rhqFacadeChanged(StandardBindings bindings);
+    }
+
     private static final long serialVersionUID = 1L;
 
     public static final String UNLIMITED_PC = "unlimitedPC";
@@ -60,7 +70,9 @@ public class StandardBindings extends HashMap<String, Object> {
     public static final String PROXY_FACTORY = "ProxyFactory";
     public static final String ASSERT = "Assert";
 
-    private Map<String, Object> managers;
+    private Map<RhqManager, Object> managers;
+    private Set<RhqFacadeChangeListener> facadeChangeListeners;
+    private RhqFacade rhqFacade;
 
     private static class CastingEntry<T> implements Map.Entry<String, T> {
 
@@ -72,14 +84,17 @@ public class StandardBindings extends HashMap<String, Object> {
             this.clazz = clazz;
         }
 
+        @Override
         public String getKey() {
             return inner.getKey();
         }
 
+        @Override
         public T getValue() {
             return clazz.cast(inner.getValue());
         }
 
+        @Override
         public T setValue(T value) {
             return clazz.cast(inner.setValue(value));
         }
@@ -87,6 +102,7 @@ public class StandardBindings extends HashMap<String, Object> {
     }
 
     public StandardBindings(PrintWriter output, RhqFacade rhqFacade) {
+        facadeChangeListeners = new HashSet<RhqFacadeChangeListener>();
         PageControl pc = new PageControl();
         pc.setPageNumber(-1);
 
@@ -107,8 +123,8 @@ public class StandardBindings extends HashMap<String, Object> {
     public void setFacade(PrintWriter output, RhqFacade rhqFacade) {
         // remove any existing managers    
         if (null != managers) {
-            for (String manager : managers.keySet()) {
-                remove(manager);
+            for (RhqManager manager : managers.keySet()) {
+                remove(manager.name());
             }
             managers.clear();
         }
@@ -117,7 +133,7 @@ public class StandardBindings extends HashMap<String, Object> {
         put(SCRIPT_UTIL, new ScriptUtil(rhqFacade));
 
         if (rhqFacade != null) {
-            managers = rhqFacade.getManagers();
+            managers = rhqFacade.getScriptingAPI();
 
             put(SUBJECT, rhqFacade.getSubject());
             put(PROXY_FACTORY, new ResourceClientFactory(rhqFacade, output));
@@ -127,7 +143,26 @@ public class StandardBindings extends HashMap<String, Object> {
             put(PROXY_FACTORY, null);
         }
 
-        putAll(managers);
+        for (Map.Entry<RhqManager, Object> entry : managers.entrySet()) {
+            put(entry.getKey().name(), entry.getValue());
+        }
+
+        this.rhqFacade = rhqFacade;
+
+        notifyFacadeChanged();
+    }
+
+    public RhqFacade getAssociatedRhqFacade() {
+        return rhqFacade;
+    }
+
+    public void addRhqFacadeChangeListener(RhqFacadeChangeListener listener) {
+        this.facadeChangeListeners.add(listener);
+        listener.rhqFacadeChanged(this);
+    }
+
+    public void removeRhqFacadeChangeListere(RhqFacadeChangeListener listener) {
+        this.facadeChangeListeners.remove(listener);
     }
 
     public void preInject(ScriptEngine scriptEngine) {
@@ -168,7 +203,7 @@ public class StandardBindings extends HashMap<String, Object> {
         return castEntry(PROXY_FACTORY, ResourceClientFactory.class);
     }
 
-    public Map<String, Object> getManagers() {
+    public Map<RhqManager, Object> getManagers() {
         //XXX ideally this should be a projection into our map          
         return (null == managers) ? managers = Collections.emptyMap() : managers;
     }
@@ -192,5 +227,11 @@ public class StandardBindings extends HashMap<String, Object> {
         }
 
         return new CastingEntry<T>(entry, clazz);
+    }
+
+    private void notifyFacadeChanged() {
+        for (RhqFacadeChangeListener listener : facadeChangeListeners) {
+            listener.rhqFacadeChanged(this);
+        }
     }
 }

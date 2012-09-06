@@ -67,6 +67,18 @@
       <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
    	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${project.version}/rhq-script-bindings-${project.version}.jar" tofile="${lib.home}/rhq-script-bindings-${project.version}.jar" verbose="true" />
    	  <copy file="${settings.localRepository}/hibernate-annotations/hibernate-annotations/${hibernate-annotations.version}/hibernate-annotations-${hibernate-annotations.version}.jar" todir="${lib.home}" verbose="true" />
+
+      <copy file="${settings.localRepository}/org/rhq/rhq-scripting-api/${project.version}/rhq-scripting-api-${project.version}.jar" tofile="${lib.home}/rhq-scripting-api-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-scripting-javascript/${project.version}/rhq-scripting-javascript-${project.version}.jar" tofile="${lib.home}/rhq-scripting-javascript-${project.version}.jar" verbose="true" />
+   	
+      <echo>*** Including additional script languages: ${rhq.bundle-additional-script-languages}</echo>
+      <!-- Copy all the additional script language support jars if we are told to do so -->
+      <copy todir="${lib.home}" verbose="true">
+         <fileset dir="${settings.localRepository}/org/rhq">
+            <include if="${rhq.bundle-additional-script-languages}" name="**/rhq-scripting-python-${project.version}.jar"/>
+         </fileset>
+         <mapper type="flatten" />
+      </copy>
    </target>
 
    <target name="prepare-samples-dir">

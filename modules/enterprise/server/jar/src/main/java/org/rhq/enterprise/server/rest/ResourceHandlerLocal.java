@@ -41,6 +41,7 @@ import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
@@ -74,6 +75,7 @@ public interface ResourceHandlerLocal {
             @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
+    @GZIP
     @GET
     @Path("/platforms")
     @Cache(isPrivate = true,maxAge = 300)
@@ -97,6 +99,7 @@ public interface ResourceHandlerLocal {
     Response getAvailability(
             @ApiParam("Id of the resource to query") @PathParam("id") int resourceId, @Context HttpHeaders headers);
 
+    @GZIP
     @GET
     @Path("/{id}/availability/history")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
@@ -115,6 +118,7 @@ public interface ResourceHandlerLocal {
             @ApiParam("Id of the resource to update") @PathParam("id") int resourceId,
             @ApiParam(value= "New Availability setting", required = true) AvailabilityRest avail);
 
+    @GZIP
     @GET
     @Path("/{id}/schedules")
     @LinkResource(rel="schedules",value = MetricSchedule.class)
@@ -130,6 +134,7 @@ public interface ResourceHandlerLocal {
           @Context UriInfo uriInfo);
 
 
+    @GZIP
     @GET
     @Path("/{id}/children")
     @LinkResource(rel="children", value = ResourceWithType.class)
@@ -141,6 +146,7 @@ public interface ResourceHandlerLocal {
                          @Context UriInfo uriInfo);
 
 
+    @GZIP
     @AddLinks
     @GET
     @Path(("/{id}/alerts"))

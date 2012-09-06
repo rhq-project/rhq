@@ -73,6 +73,7 @@ import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.OrderingField;
@@ -775,6 +776,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
@@ -782,10 +784,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
         }
 
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        Agent agent = resource.getAgent();
+        Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+        Agent agent = (Agent) query.getSingleResult();
 
-        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+        query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
         query.setParameter("resourceIds", Arrays.asList(resourceId));
         List<MeasurementSchedule> schedules = query.getResultList();
@@ -796,13 +799,56 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,requests);
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, requests);
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (values == null) {
             values = Collections.emptySet();
         }
 
+        return values;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int resourceIds[],
+        int[] definitionIds) {
+        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view measurement data for resourceGroup[id=" + groupId + "]");
+        }
+        Set<MeasurementData> values = new HashSet<MeasurementData>();
+
+        if (resourceIds != null) {
+            Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS);
+            query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
+            List<ResourceIdWithAgentComposite> resourceIdsWithAgents = query.getResultList();
+
+            for (ResourceIdWithAgentComposite resourceIdWithAgent : resourceIdsWithAgents) {
+                query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+                query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
+                query.setParameter("resourceIds", Arrays.asList(resourceIdWithAgent.getResourceId()));
+                List<MeasurementSchedule> schedules = query.getResultList();
+
+                Map<Integer, Integer> scheduleIdToResourceIdMap = new HashMap<Integer, Integer>(schedules.size());
+                Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(schedules.size());
+                for (MeasurementSchedule schedule : schedules) {
+                    requests.add(new MeasurementScheduleRequest(schedule));
+                    scheduleIdToResourceIdMap.put(schedule.getId(), resourceIdWithAgent.getResourceId());
+                }
+
+                AgentClient ac = agentClientManager.getAgentClient(resourceIdWithAgent.getAgent());
+                Set<MeasurementData> newValues = ac.getMeasurementAgentService().getRealTimeMeasurementValue(
+                    resourceIdWithAgent.getResourceId(), requests);
+                values.addAll(newValues);
+
+                // Add the resource id as a prefix of the name, because the name is not unique across different platforms
+                for (MeasurementData value : newValues) {
+                    value.setName(String.valueOf(scheduleIdToResourceIdMap.get(value.getScheduleId())) + ":"
+                        + value.getName());
+                }
+            }
+        }
         return values;
     }
 
@@ -817,22 +863,21 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         try {
             connection = rhqDs.getConnection();
             ps = connection.prepareStatement( // TODO supply real impl that spans multiple tables
-                    "SELECT time_stamp,value FROM " + table + " WHERE schedule_id= ? AND time_stamp BETWEEN ? AND ?");
-            ps.setLong(1,scheduleId);
-            ps.setLong(2,startTime);
-            ps.setLong(3,endTime);
+                "SELECT time_stamp,value FROM " + table + " WHERE schedule_id= ? AND time_stamp BETWEEN ? AND ?");
+            ps.setLong(1, scheduleId);
+            ps.setLong(2, startTime);
+            ps.setLong(3, endTime);
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                MeasurementDataNumeric point = new MeasurementDataNumeric(rs.getLong(1),scheduleId,rs.getDouble(2));
+                MeasurementDataNumeric point = new MeasurementDataNumeric(rs.getLong(1), scheduleId, rs.getDouble(2));
                 result.add(point);
             }
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
         } finally {
             JDBCUtil.safeClose(connection, ps, rs);
         }
-
 
         return result;
     }

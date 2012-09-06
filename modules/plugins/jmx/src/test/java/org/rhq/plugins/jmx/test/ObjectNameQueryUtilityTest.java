@@ -76,6 +76,19 @@ public class ObjectNameQueryUtilityTest {
         onqu = new ObjectNameQueryUtility("a:b=c,d={e},f={g}", c);
         System.out.println("Template: " + onqu.getQueryTemplate());
         assert onqu.getQueryTemplate().equals("a:b=c,d=foo,f=bar");
+
+        // Test some very long replacement tokens inspired by BZ 828596
+        onqu = new ObjectNameQueryUtility("*:type=HttpMetricInspector,name=%name%");
+        assert onqu.getQueryTemplate().equals("*:type=HttpMetricInspector,name=%name%");
+        assert onqu.getVariableProperties().size() == 1;
+        assert onqu.getVariableProperties().get("name").equals("name");
+        testON = new ObjectName("FooBarABCDEFGHIJKLMNOPQRSTUVWXYZ:type=HttpMetricInspector,name=ABCDEFGHIJKLMNOPQRSTUVWXYZöABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        onqu.setMatchedKeyValues(testON.getKeyPropertyList());
+        formulatedMessageTemplate = "Http metrics for endpoint {name}";
+        String res = onqu.formatMessage(formulatedMessageTemplate);
+        assert res.equals("Http metrics for endpoint ABCDEFGHIJKLMNOPQRSTUVWXYZöABCDEFGHIJKLMNOPQRSTUVWXYZ") : res;
+
+
     }
 
     @Test

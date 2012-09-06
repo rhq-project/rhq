@@ -431,15 +431,24 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple property,
         PropertyDefinitionSimple propertyDefinition, Address address) {
 
-        // If the property value is null and the property is optional, skip too
-        if (property.getStringValue() == null && !propertyDefinition.isRequired())
-            return;
-
         if (property.getName().endsWith(":ignore")) // Caller takes care
             return;
 
         if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
+
+        //If the property value is null and the property is optional,
+        //then send default value or null to the server
+        if (property.getStringValue() == null && !propertyDefinition.isRequired()) {
+            String name = property.getName();
+            if (name.indexOf(':') != -1) {
+                name = name.substring(0, name.indexOf(":"));
+            }
+
+            Operation writeAttribute = new WriteAttribute(address, name, null);
+            cop.addStep(writeAttribute);
+            return;
+        }
 
         SimpleEntry<String, Object> entry = this.preparePropertySimple(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
@@ -500,7 +509,25 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 entry = new SimpleEntry<String, Object>(realName, null);
             }
         } else {
-            Object o = getObjectWithType(propertyDefinition,property.getStringValue());
+            Object o;
+/*
+            If no value is given in the property and the property is required,
+            we'll take the default value from the definition. This can e.g. happen
+            when you have
+            <c:simple-property name="mode" required="true" type="string" readOnly="false" default="SYNC" defaultValue="SYNC">
+              <c:property-options>
+                <c:option value="SYNC"/>
+                <c:option value="ASYNC"/>
+              </c:property-options>
+            </c:simple-property>
+            and the user chooses to just keep the default choice in the ui
+*/
+
+            if (property.getStringValue()==null && propertyDefinition.isRequired()) {
+                o = getObjectWithType(propertyDefinition,propertyDefinition.getDefaultValue());
+            } else {
+                o = getObjectWithType(propertyDefinition,property.getStringValue());
+            }
             entry = new SimpleEntry<String, Object>(name, o);
         }
 
@@ -551,7 +578,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         }
 
-        propertyName = stripNumberIdentifier(property.getName());
+        propertyName = stripNumberIdentifier(propertyName);
 
         return new SimpleEntry<String, List<Object>>(propertyName, values);
     }
@@ -610,10 +637,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
         }
 
-        Map<String, Object> resultMap = new HashMap<String, Object>();
-        resultMap.put(key, value);
+        if (key != null) {
+            Map<String, Object> resultMap = new HashMap<String, Object>();
+            resultMap.put(key, value);
 
-        return resultMap;
+            return resultMap;
+        } else {
+            return null;
+        }
     }
 
 

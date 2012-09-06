@@ -43,6 +43,11 @@ public class ServerBucket {
         assignedAgents = new ArrayList<Agent>();
     }
 
+    @Override
+    public String toString() {
+        return serverEntry.toString();
+    }
+
     static ServerBucket getBestBucket(List<ServerBucket> buckets, List<ServerBucket> usedBuckets,
         AffinityGroup affinityGroup, String preferredServerName) {
         ServerBucket result = null;

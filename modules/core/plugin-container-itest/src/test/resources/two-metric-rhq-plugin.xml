@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="TwoMetricPlugin"
+        displayName="Plugin that has a single server with a two enabled metrics."
+        description="This will help test measurement collections by providing a server with a two enabled metrics."
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="TwoMetricServer"
+           discovery="@@@discovery@@@"
+           class="@@@class@@@">
+
+      <metric property="metric1"
+              dataType="measurement"
+              defaultOn="true"
+              displayType="summary"
+              defaultInterval="@@@metric1.interval@@@" />
+
+      <metric property="metric2"
+              dataType="measurement"
+              defaultOn="true"
+              displayType="summary"
+              defaultInterval="@@@metric2.interval@@@" />
+   </server>
+</plugin>

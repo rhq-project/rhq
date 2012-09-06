@@ -85,8 +85,9 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             lookForChildren = true;
         }
 
-        if (isIspnForJDG(context, confPath)) {
-            log.debug("We have JDG as child, ignoring the {JBossAS7}Infinispan type");
+        // check if the parent is a JDG server. In this case ignore the as7 version
+        // of the type and vice versa
+        if (shouldSkipEntryWrtIspn(context, confPath)) {
             return details;
         }
 
@@ -190,40 +191,48 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         return details;
     }
 
-    private boolean isIspnForJDG(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
+    /**
+     * The as7 plugin and the JDG plugin both have a subsystem=infinispan. We need to decide
+     * which one to 'activate' depending on the type, plugin and the detected parent.
+     * Rules are:<ul>
+     *     <li>If the parent is a host controller or such, there is no jdg available</li>
+     *     <li>If parent is eap/as7, use the type from the as7 plugin</li>
+     *     <li>If parent is a jdg server, use the type from the jdg plugin.</li>
+     * </ul>
+     *
+     *
+     * @param context The parent's resource component
+     * @param confPath The subsystem that got fed into discovery. Directly return is not subsystem=infinispan
+     * @return True if this subsystem should be skipped.
+     */
+    private boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context,
+                                           String confPath) {
 
-        // Check if this is ISPN
+        String jdgPluginType = "JDG";
+
+        // If this is not subsystem=infinispan, we should not skip it at all
         if (!"subsystem=infinispan".equals(confPath))
             return false;
 
         ResourceType ourType = context.getResourceType();
-        if (ourType.getPlugin().equals("JDG"))
-            return false;
+        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals(jdgPluginType);
 
-        if (!ourType.getName().equals("Infinispan"))
-            return false;
+        String productType = context.getParentResourceComponent().pluginConfiguration.getSimpleValue("productType","AS7");
+        boolean isJdgProduct = jdgPluginType.equals(productType);
 
-        // So we are {JBossAS7}Infinispan
-        Set<ResourceType> parentTypes = ourType.getParentResourceTypes();
-        ResourceType parent = null;
-        for (ResourceType type : parentTypes) {
-            if (type.getName().equals("JBossAS7 Standalone Server") && type.getPlugin().equals("JBossAS7")) {
-                parent = type;
-                break;
-            }
-        }
-        if (parent==null)
+        if (ourPluginTypeIsJdg && isJdgProduct) {
+            if (log.isDebugEnabled())
+                log.debug("Ours is JDG and product is JDG");
             return false;
-
-        // So we are as7/eap and need to check now if we have a JDG plugin's ISPN resource as child
-        boolean found = false;
-        for (ResourceType type: parent.getChildResourceTypes()) {
-            if (type.getPlugin().equals("JDG") && type.getName().equals("Infinispan")) {
-                found = true;
-            }
         }
 
-        return found;
+        if (!ourPluginTypeIsJdg && !isJdgProduct) {
+            if (log.isDebugEnabled())
+                log.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG (" + productType + ")");
+            return false;
+        }
+
+        return true;
     }
 
 }

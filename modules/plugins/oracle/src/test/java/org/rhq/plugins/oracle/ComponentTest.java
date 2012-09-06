@@ -37,12 +37,14 @@ import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.event.EventManager;
+import org.rhq.core.pc.inventory.InventoryContextImpl;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pc.upgrade.plugins.multi.base.NothingDiscoveringDiscoveryComponent;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -135,9 +137,10 @@ public abstract class ComponentTest {
             EventContext eventContext = new EventContextImpl(resource);
             ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
             AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
+            InventoryContext inventoryContext = new InventoryContextImpl(resource);
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-                eventContext, operationContext, contentContext, availContext, collectorThreadPool,
+                eventContext, operationContext, contentContext, availContext, inventoryContext, collectorThreadPool,
                 pluginContainerDeployment);
             component.start(context);
 
@@ -173,9 +176,10 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
             systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
-            contentContext, availContext, collectorThreadPool, pluginContainerDeployment);
+            contentContext, availContext, inventoryContext, collectorThreadPool, pluginContainerDeployment);
         ResourceDiscoveryContext resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, component,
             context, systemInfo, Collections.emptyList(), Collections.emptyList(), pluginContainerName,
             pluginContainerDeployment);
@@ -205,9 +209,10 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         ScheduledExecutorService collectorThreadPool = Executors.newScheduledThreadPool(1);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, collectorThreadPool);
+        InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-            eventContext, operationContext, contentContext, availContext, collectorThreadPool,
+            eventContext, operationContext, contentContext, availContext, inventoryContext, collectorThreadPool,
             pluginContainerDeployment);
 
         component.start(context);

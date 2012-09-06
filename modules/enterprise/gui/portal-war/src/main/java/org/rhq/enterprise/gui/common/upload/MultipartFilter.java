@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.common.upload;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -28,6 +29,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -37,6 +39,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
  * Filter used to handle multipart/form-data requests.
  *
  * @author Jason Dobies
+ * @deprecated this should be deleted, it was used prior to JSF
  */
 public class MultipartFilter implements Filter {
     // Filter Implementation  --------------------------------------------

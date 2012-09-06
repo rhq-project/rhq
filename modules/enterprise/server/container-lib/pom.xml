@@ -26,9 +26,8 @@
       </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 

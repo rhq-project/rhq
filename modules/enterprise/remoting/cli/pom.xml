@@ -124,7 +124,7 @@
                            <property name="jboss-common.version" value="${jboss-common.version}" />
                            <property name="jboss.version" value="${jboss.version}" />
                            <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
-                           <property name="jboss-javassist.version" value="${jboss-javassist.version}" />
+                           <property name="jboss-javassist.version" value="${javassist.version}" />
                            <property name="jline.version" value="${jline.version}" />
                            <property name="log4j.version" value="${log4j.version}" />
                            <property name="testng.version" value="${testng.version}" />

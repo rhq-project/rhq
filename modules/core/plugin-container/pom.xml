@@ -56,20 +56,6 @@
       </dependency>
 
       <!-- 3rd Party Deps -->
-
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
-      <dependency>
-         <groupId>com.sun.xml.bind</groupId>
-         <artifactId>jaxb-impl</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <!--<scope>test</scope>  not sure about this -->
-      </dependency>
-
       <dependency>
          <groupId>org.hyperic</groupId>
          <artifactId>sigar</artifactId>

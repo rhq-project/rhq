@@ -97,6 +97,10 @@
                 <exclusion>
                     <groupId>javassist</groupId>
                     <artifactId>javassist</artifactId>
+                </exclusion>                
+                <exclusion>
+                    <groupId>org.javassist</groupId>
+                    <artifactId>javassist</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

@@ -36,7 +36,7 @@
             <module>comm</module>
             <module>agent</module>
             <module>agentupdate</module>
-            <module>server/container-lib</module>
+            <!-- <module>server/container-lib</module>  We may no longer need this with AS7-->            
             <module>server/xml-schemas</module>
             <module>server/jar</module>
             <module>server/safe-invoker</module>
@@ -73,7 +73,7 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
-            <module>server/container-lib</module>
+            <!-- <module>server/container-lib</module>  We may no longer need this with AS7-->
             <module>server/appserver</module>
             <module>server/client-api</module>
             <module>server/itests</module>

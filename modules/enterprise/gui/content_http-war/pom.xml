@@ -81,21 +81,6 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-ejb3x</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-j2ee</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>

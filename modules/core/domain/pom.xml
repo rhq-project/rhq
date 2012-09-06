@@ -50,19 +50,13 @@
          <scope>provided</scope>    
       </dependency>
 
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <!-- provided by AS7 -->
+      <dependency>     
+        <groupId>org.jboss.spec.javax.ejb</groupId>
+        <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+        <scope>provided</scope>    
       </dependency>
-
-     <dependency>
-       <groupId>jboss</groupId>
-       <artifactId>jboss-ejb3x</artifactId>
-       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-       <scope>provided</scope> <!-- by JBossAS -->
-     </dependency>
-
+      
       <!-- needed if you want to use the logging JDBC wrapper
       <dependency>
          <groupId>org.rhq</groupId>
@@ -80,9 +74,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javassist</groupId>
+         <groupId>org.javassist</groupId>
          <artifactId>javassist</artifactId>
-         <version>${jboss-javassist.version}</version>
          <scope>test</scope>
       </dependency>
 

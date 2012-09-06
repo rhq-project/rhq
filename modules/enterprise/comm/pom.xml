@@ -65,27 +65,23 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
     </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-jmx</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-remoting</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-serialization</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>

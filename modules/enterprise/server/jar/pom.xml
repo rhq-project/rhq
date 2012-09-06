@@ -156,9 +156,8 @@
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
     <dependency>
-      <groupId>javassist</groupId>
+      <groupId>org.javassist</groupId>
       <artifactId>javassist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
 
@@ -214,6 +213,12 @@
       <groupId>antlr</groupId>
       <artifactId>antlr</artifactId>  
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+       <groupId>org.infinispan</groupId>
+       <artifactId>infinispan-core</artifactId>
+       <version>${infinispan.version}</version>
     </dependency>
 
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
@@ -306,82 +311,71 @@
     </dependency>
 
     <dependency>
+      <groupId>org.jboss.spec.javax.annotation</groupId>
+      <artifactId>jboss-annotations-api_1.1_spec</artifactId>        
+      <scope>provided</scope>
+    </dependency>
+     
+    <dependency>
       <groupId>jboss</groupId>
-      <artifactId>jboss-annotations-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
+      <artifactId>jboss-annotations-ejb3</artifactId>         
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
-      <artifactId>jboss-cache</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <artifactId>jboss-cache</artifactId>        
       <scope>compile</scope>
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-ejb3x</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
+      <groupId>org.jboss.spec.javax.annotation</groupId>
+      <artifactId>jboss-annotations-api_1.1_spec</artifactId>
+      <scope>provided</scope>
     </dependency>
 
-      <!-- includes the org.jboss.ejb3.StrictMaxPool class, which is needed by the PoolClass annotation used on some
-           of our SLSB's -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
+    <dependency>     
+      <groupId>org.jboss.spec.javax.ejb</groupId>
+      <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+      <scope>provided</scope>
     </dependency>
-
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-j2ee</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
+    
+    <dependency>     
+      <groupId>org.jboss.spec.javax.jms</groupId>
+      <artifactId>jboss-jms-api_1.1_spec</artifactId>
+      <scope>provided</scope>
     </dependency>
-
+     
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-jmx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
-
+ 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-system</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jbosssx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
-
+ 
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jbpm</artifactId>
       <version>3.1.1</version>
     </dependency>
 
-      <!-- for the transaction interrupt EJB3 interceptor -->
     <dependency>
       <groupId>org.jboss.transaction</groupId>
       <artifactId>jboss-jta</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
       <!-- TODO: remove this - tests should all be moved under the test source tree -->

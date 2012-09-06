@@ -93,7 +93,12 @@
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-remoting</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+    </dependency>
+
+    <!-- I think we are taking this whole jar for a single util method -->
+    <dependency>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
     </dependency>
 
   </dependencies>

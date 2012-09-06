@@ -182,37 +182,6 @@
          <version>1.1.2</version>
       </dependency>
 
-      <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3x</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-j2ee</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- used by org.jboss.on.enterprise.ui.servlet.startupShutdownListener -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-system</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- used by org.jboss.on.enterprise.ui.converter.MD5HashConverter -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbosssx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
       <!-- used by DisplayTag_test.jsp -->
       <dependency>
          <groupId>junit</groupId>
@@ -319,7 +288,7 @@
 
       <!-- ============ Testing ========================-->
       <dependency>
-          <groupId>javassist</groupId>
+          <groupId>org.javassist</groupId>
           <artifactId>javassist</artifactId>
           <scope>test</scope>
       </dependency>

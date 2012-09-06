@@ -49,14 +49,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-           <groupId>jboss</groupId>
-           <artifactId>jboss-ejb3x</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
     </dependencies>
     <build>
         <finalName>rhq-rest</finalName>

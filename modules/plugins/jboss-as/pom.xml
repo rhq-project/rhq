@@ -53,12 +53,6 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
-      <dependency>
          <groupId>jdom</groupId>
          <artifactId>jdom</artifactId>
          <version>1.0</version>
@@ -103,10 +97,12 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <!-- 
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jboss-common</artifactId>
                         </artifactItem>
+                        -->
                         <artifactItem>
                            <groupId>gnu-getopt</groupId>
                            <artifactId>getopt</artifactId>

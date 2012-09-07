@@ -1,32 +1,18 @@
-<jboss-deployment-structure xmlns="urn:jbosseployment-structure:1.0">
-
-    <!-- This file gives fine-grained control of the RHQ EAR and sub-deployments  -->
+<?xml version="1.0"?>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.1">
 
     <!-- Explicitly indicate that we do not want sub deployments isolated; subdeployments need to see each other's classes -->
     <ear-subdeployments-isolated>false</ear-subdeployments-isolated>
 
     <!-- This corresponds to the top level deployment - which in this case in the EAR module -->
     <deployment>
-        <!-- Exclusions allow you to prevent the server from automatically adding some dependencies
-        <exclusions>
-            <module name="blah" />
-        </exclusions>
-        -->
-
-        <!-- This allows you to define additional dependencies; it is the same as using the Dependencies: manifest attribute -->
         <dependencies>
             <module name="org.jboss.common-core" export="true" /> <!-- needed to fix https://issues.jboss.org/browse/AS7-5336 -->
-            <module name="org.jboss.jts" /> <!-- needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
-            <module name="org.apache.commons.logging" /> <!-- needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
-            <module name="org.hibernate" /> <!-- because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
+            <module name="org.jboss.jts" export="true" /> <!-- needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
+            <module name="org.apache.commons.logging" export="true" /> <!-- needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
+            <module name="org.hibernate" export="true" /> <!-- because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
             <module name="org.infinispan" export="true" /> <!-- because we use an Infinispan cache for REST services -->
         </dependencies>
-
-        <!-- These add additional classes to the module. In this case it is the same as including the jar in the EAR's lib directory
-        <resources>
-            <resource-root path="my-library.jar" />
-        </resources>
-        -->
     </deployment>
 
     <!-- This corresponds to the Portal WAR - it requires the older JSF version packaged with AS 4.2.3, not the AS7 default -->

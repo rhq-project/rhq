@@ -32,7 +32,6 @@ import javax.transaction.TransactionManager;
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.mx.util.MBeanProxyExt;
-import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerBean;
@@ -607,12 +606,10 @@ public final class LookupUtil {
     }
     
     public static CoreServerMBean getCoreServer() {
-        // The default MBean server for AS7 is the platform MBeanServer
-        MBeanServer defaultMBeanServer = ManagementFactory.getPlatformMBeanServer();
         CoreServerMBean rhqServer;
         try {
-            rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME,
-                defaultMBeanServer);
+            MBeanServer mbs = getJBossMBeanServer();
+            rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME, mbs);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
@@ -620,17 +617,23 @@ public final class LookupUtil {
     }
 
     public static PluginDeploymentScannerMBean getPluginDeploymentScanner() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        MBeanServer jBossMBeanServer = getJBossMBeanServer();
         PluginDeploymentScannerMBean scanner = (PluginDeploymentScannerMBean) MBeanProxyExt.create(
             PluginDeploymentScannerMBean.class, PluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 
     public static ServerPluginServiceManagement getServerPluginService() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        MBeanServer jBossMBeanServer = getJBossMBeanServer();
         ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
             ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
         return service;
+    }
+
+    private static MBeanServer getJBossMBeanServer() {
+        // The default MBean server for AS7 is the platform MBeanServer
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        return mbs;
     }
 
     //--------------------------------------------

@@ -567,7 +567,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     @ExcludeDefaultInterceptors
     public File getAgentDownloadDir() throws Exception {
         File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
+        File agentDownloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-agent");
         if (!agentDownloadDir.exists()) {
             throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
         }

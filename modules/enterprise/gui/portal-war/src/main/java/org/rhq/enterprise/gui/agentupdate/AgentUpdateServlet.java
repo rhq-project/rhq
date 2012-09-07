@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.agentupdate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -30,9 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -170,9 +171,9 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private int getDownloadLimit() {
         // if the server cloud was configured to disallow updates, return 0
-        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+        SystemSettings systemConfig = LookupUtil.getSystemManager().getSystemSettings(
             LookupUtil.getSubjectManager().getOverlord());
-        if (!Boolean.parseBoolean(systemConfig.getProperty(RHQConstants.EnableAgentAutoUpdate))) {
+        if (!Boolean.parseBoolean(systemConfig.get(SystemSetting.AGENT_AUTO_UPDATE_ENABLED.getInternalName()))) {
             return 0;
         }
 

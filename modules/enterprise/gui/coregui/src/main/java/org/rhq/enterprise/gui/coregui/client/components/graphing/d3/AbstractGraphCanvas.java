@@ -35,7 +35,7 @@ public abstract class AbstractGraphCanvas extends Canvas implements GraphCanvasP
     String parentChartId;
     int parentServerDelay = 5000;
     int parentClientDelay = 5000;
-    int parentStep = 1000;
+    int parentStep = 30 * 1000;
 
     boolean initialized = false;
 

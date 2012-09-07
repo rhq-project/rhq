@@ -58,13 +58,13 @@ public class GraphCanvas extends AbstractGraphCanvas
     }
 
 
-    public String getPoints(int metricIndex, double start, double stop)
+    public String getPointsAsJson(int metricIndex, double start, double stop)
     {
         Log.info(" *** GraphCanvas.getPoints");
         return dataProvider.getPointsAsJson(metricIndex, Math.round(start), Math.round(stop));
     }
 
-    private String getMetrics()
+    private String getMetricsAsJson()
     {
         return dataProvider.getMetricsAsJson();
     }
@@ -92,7 +92,7 @@ public class GraphCanvas extends AbstractGraphCanvas
 //        metric = context.metric(function (start, stop, step, callback)
 //            {
 //                // query for metrics matching time
-//                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
+//                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
 //
 //                try
 //                {
@@ -113,18 +113,18 @@ public class GraphCanvas extends AbstractGraphCanvas
     public native void loadJson() /*-{
         var context = $wnd.cubism.context();
         var metrics = [];
-        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetrics()());
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetricsAsJson()());
         for (var i = 0; i < jsonMetrics.length; i++)
         {
             var jsonMetric = jsonMetrics[i];
-            console.log('Label: '+jsonMetric.label);
+            console.log('Label: '+jsonMetric.label + ':'+jsonMetric.metricIndex);
             var metric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
             //var metric = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::createMetric(Ljava/lang/String;I)(jsonMetric.label, jsonMetric.metricIndex);
             var horizonContext;
             var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
             var selection = $wnd.d3.select(chartDiv);
 
-            // self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::determineAxisLabels(Ljava/lang/String;)(jsonMetric.metricUnit);
+            // this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::determineAxisLabels(Ljava/lang/String;)(jsonMetric.metricUnit);
             if (jsonMetric.metricUnit != 'PERCENTAGE')
             {
                 horizonContext = context.horizon();
@@ -149,7 +149,7 @@ public class GraphCanvas extends AbstractGraphCanvas
             {
                 console.log('Creating metrics');
                 // query for metrics matching time
-                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPoints(IDD)(metricIndex, start.getTime(), stop.getTime());
+                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
                 console.log('Creating metrics 1');
 
                 try
@@ -183,7 +183,6 @@ public class GraphCanvas extends AbstractGraphCanvas
 
 
         //var metrics = [];
-        //var self = this;
 
         var selection = $wnd.d3.select(chartDiv)
                 .call(function (div)

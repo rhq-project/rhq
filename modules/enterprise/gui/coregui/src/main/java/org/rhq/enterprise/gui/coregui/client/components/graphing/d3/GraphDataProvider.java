@@ -116,7 +116,6 @@ public class GraphDataProvider implements Locatable, MetricProvider
     }
 
     @Override
-    //@todo: use GWT JSON to produce json
     //@todo: use generics
     public String getMetricsAsJson(List<MetricDisplaySummary> metrics)
     {
@@ -192,6 +191,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
     public String getPointsAsJson(int metricIndex, long start, long stop)
     {
         Collection<Double> points = pointsStorage.get(metricIndex).getValuesForRange(start, stop);
+        Log.debug(" ***   PointsStorage count: "+ pointsStorage.size());
         String s = "[";
         for (Double point : points)
         {

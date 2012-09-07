@@ -46,6 +46,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 import org.rhq.common.jbossas.client.controller.Address;
+import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.FailureException;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
@@ -99,10 +100,28 @@ public class ServerInstallUtil {
     private static final String JDBC_DRIVER_ORACLE = "oracle";
 
     /**
+     * Configure the deployment scanner to get ready to deploy the application.
+     * @param mcc JBossAS management client
+     * @throws Exception
+     */
+    public static void configureDeploymentScanner(ModelControllerClient mcc) throws Exception {
+        CoreJBossASClient client = new CoreJBossASClient(mcc);
+
+        // the EAR could take a long time to deploy, increase the deployment timeout
+        client.setAppServerDefaultDeploymentTimeout(1800); // 30 minutes should be plenty of time
+
+        // We don't need to scan the deployment directory after everything is installed.
+        // TODO: We would like this to be 0, so it only scans at startup, but the installer
+        // will need the scanner to deploy the ear after the .dodeploy is created.
+        //client.setAppServerDefaultDeploymentScanInterval(0);
+    }
+
+    /**
      * Prepares the mail service by configuring the SMTP settings.
      * 
      * @param mcc JBossAS management client
      * @param serverProperties the server's properties
+     * @throws Exception
      */
     public static void setupMailService(ModelControllerClient mcc, HashMap<String, String> serverProperties)
         throws Exception {

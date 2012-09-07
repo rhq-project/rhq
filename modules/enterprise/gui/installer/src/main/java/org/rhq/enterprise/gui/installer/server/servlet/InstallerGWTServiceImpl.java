@@ -316,10 +316,13 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // create a keystore whose cert has a CN of this server's public endpoint address
         ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
 
+        // Make sure our deployment scanner is configured to be ready for deploy our services and application
+        ServerInstallUtil.configureDeploymentScanner(getClient());
+
         // now create our deployment services and our main EAR
         deployServices(serverProperties);
 
-        // deploy the EAR and undeploy this installer - this will shut us down within seconds, return fast!
+        // deploy the EAR
         deployApp();
 
         // some of the changes we made require the app server container to reload

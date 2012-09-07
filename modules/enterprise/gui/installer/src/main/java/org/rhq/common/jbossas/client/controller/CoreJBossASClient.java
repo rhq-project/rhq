@@ -25,7 +25,7 @@ import org.jboss.dmr.ModelNode;
 
 /**
  * Provides information to some core services.
- * 
+ *
  * @author John Mazzitelli
  */
 public class CoreJBossASClient extends JBossASClient {
@@ -116,8 +116,44 @@ public class CoreJBossASClient extends JBossASClient {
             relativeTo = syspropValue;
         }
 
-        File dir = new File(relativeTo, path);
+        final File dir = new File(relativeTo, path);
         return dir.getAbsolutePath();
+    }
+
+    /**
+     * Sets the interval of the default deployment scanner. If the value is
+     * less than 1 millisecond, the scanner will scan only one time at server startup.
+     * @param millis number of milliseconds to periodically scan the deployment directory
+     * @throws Exception
+     */
+    public void setAppServerDefaultDeploymentScanInterval(long millis) throws Exception {
+        final String[] addressArr = { SUBSYSTEM, DEPLOYMENT_SCANNER, SCANNER, "default" };
+        final Address address = Address.root().add(addressArr);
+        final ModelNode req = createWriteAttributeRequest("scan-interval", Long.toString(millis), address);
+        final ModelNode response = execute(req);
+
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
+
+    /**
+     * Sets the deployment timeout of the default deployment scanner. If a deployment
+     * takes longer than this value, it will fail.
+     * @param secs number of seconds the app server will wait for a deployment to finish
+     * @throws Exception
+     */
+    public void setAppServerDefaultDeploymentTimeout(long secs) throws Exception {
+        final String[] addressArr = { SUBSYSTEM, DEPLOYMENT_SCANNER, SCANNER, "default" };
+        final Address address = Address.root().add(addressArr);
+        final ModelNode req = createWriteAttributeRequest("deployment-timeout", Long.toString(secs), address);
+        final ModelNode response = execute(req);
+
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
     }
 
     /**
@@ -128,9 +164,9 @@ public class CoreJBossASClient extends JBossASClient {
      * @throws Exception
      */
     public void setSystemProperty(String name, String value) throws Exception {
-        ModelNode request = createRequest(ADD, Address.root().add(SYSTEM_PROPERTY, name));
+        final ModelNode request = createRequest(ADD, Address.root().add(SYSTEM_PROPERTY, name));
         request.get(VALUE).set(value);
-        ModelNode response = execute(request);
+        final ModelNode response = execute(request);
         if (!isSuccess(response)) {
             throw new FailureException(response, "Failed to set system property [" + name + "]");
         }
@@ -144,9 +180,9 @@ public class CoreJBossASClient extends JBossASClient {
      * @throws Exception
      */
     public void reload() throws Exception {
-        ModelNode request = createRequest("reload", Address.root());
+        final ModelNode request = createRequest("reload", Address.root());
         request.get("admin-only").set(false);
-        ModelNode response = execute(request);
+        final ModelNode response = execute(request);
         if (!isSuccess(response)) {
             throw new FailureException(response);
         }
@@ -177,9 +213,9 @@ public class CoreJBossASClient extends JBossASClient {
      * @throws Exception
      */
     public void shutdown(boolean restart) throws Exception {
-        ModelNode request = createRequest("shutdown", Address.root());
+        final ModelNode request = createRequest("shutdown", Address.root());
         request.get("restart").set(restart);
-        ModelNode response = execute(request);
+        final ModelNode response = execute(request);
         if (!isSuccess(response)) {
             throw new FailureException(response);
         }

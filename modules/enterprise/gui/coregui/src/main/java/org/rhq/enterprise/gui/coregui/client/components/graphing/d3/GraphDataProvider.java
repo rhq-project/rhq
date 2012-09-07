@@ -29,6 +29,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
@@ -37,6 +38,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
  */
 public class GraphDataProvider implements Locatable, MetricProvider
 {
+    private static final int MAX_OLD_VALUES = 400;
+    private static final int VALUES_TO_LOAD = 60;
+    private static final long INITIAL_8_HOURS = 1000L * 60 * 60 * 8;
+    private static final int FIVE_SECONDS = 1000 * 60 * 5;
     private List<MetricDisplaySummary> metricsList;
     private String jsonMetrics;
     private int[] definitions;
@@ -62,25 +67,21 @@ public class GraphDataProvider implements Locatable, MetricProvider
         this.step = step;
         fetchAndGraphMetrics();
         end = System.currentTimeMillis();
-        begin = end - (1000L * 60 * 60 * 8);
+        begin = end - INITIAL_8_HOURS;
 
         graphTimer = new Timer()
         {
             public void run()
             {
-                //int numPoints = Math.round((end - begin) / 60000f);
                 end = System.currentTimeMillis();
-                loadData(begin, end, 60);
-                begin = end - (1000 * 60 * 5);
+                //@todo: make more flexible
+                loadMeasurementData(begin, end, VALUES_TO_LOAD);
+                begin = end - (FIVE_SECONDS);
             }
         };
-        start();
-    }
-
-    private void start()
-    {
         graphTimer.scheduleRepeating(step);
     }
+
 
     @Override
     public void stop()
@@ -106,7 +107,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
                 for (int i = 0; i < metricSummaryList.size(); i++)
                 {
                     definitions[i] = metricSummaryList.get(i).getDefinitionId();
-                    pointsStorage.add(new GraphDataStorage(400));
+                    pointsStorage.add(new GraphDataStorage(MAX_OLD_VALUES));
                 }
                 jsonMetrics = getMetricsAsJson(metricSummaryList);
                 graphCanvas.drawCharts();
@@ -132,7 +133,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
     }
 
 
-    private void loadData(long begin, long end, int numPoints)
+    private void loadMeasurementData(long begin, long end, int numPoints)
     {
         if (definitions != null && definitions.length > 0)
         {
@@ -147,11 +148,12 @@ public class GraphDataProvider implements Locatable, MetricProvider
 
                 @Override
                 public void onSuccess(
-                        List<List<MeasurementDataNumericHighLowComposite>> result)
+                        List<List<MeasurementDataNumericHighLowComposite>> measurementDataList)
                 {
-                    for (int i = 0; i < result.size(); i++)
+                    Log.info("Loaded MeasurementData: " + measurementDataList.size());
+                    for (int i = 0; i < measurementDataList.size(); i++)
                     {
-                        pointsStorage.get(i).putValues(result.get(i));
+                        pointsStorage.get(i).putValues(measurementDataList.get(i));
                     }
                 }
             });
@@ -212,11 +214,20 @@ public class GraphDataProvider implements Locatable, MetricProvider
         return this.locatorId + "_" + extension;
     }
 
+    /**
+     *
+     * @return
+     */
     public List<MetricDisplaySummary> getMetricsList()
     {
         return metricsList;
     }
 
+    /**
+     * Get the list of metrics as a Json structure.
+     * @return String Json String
+     */
+    @Override
     public String getMetricsAsJson()
     {
         return jsonMetrics;

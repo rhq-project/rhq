@@ -23,6 +23,7 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphDataProvider;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.MetricProvider;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -35,6 +36,7 @@ public class D3GraphMonitoringView extends LocatableVLayout implements Refreshab
     private ResourceComposite resourceComposite;
     private MetricProvider metricProvider;
     private D3GraphCanvas graphCanvas;
+    private CustomConfigMeasurementRangeEditor measurementRangeEditor;
 
     public D3GraphMonitoringView(String locatorId, ResourceComposite resourceComposite)
     {
@@ -81,6 +83,8 @@ public class D3GraphMonitoringView extends LocatableVLayout implements Refreshab
     {
         removeMembers(getMembers());
         addMember(createGraphForm());
+        //measurementRangeEditor = new CustomConfigMeasurementRangeEditor();
+        //addMember(measurementRangeEditor);
     }
 }
 

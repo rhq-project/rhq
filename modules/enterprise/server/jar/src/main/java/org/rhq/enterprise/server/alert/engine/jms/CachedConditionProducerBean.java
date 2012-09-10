@@ -49,7 +49,7 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
     @Resource(mappedName = "java:/JmsXA")
     private ConnectionFactory factory;
 
-    @Resource(mappedName = "queue/AlertConditionQueue")
+    @Resource(mappedName = "java:/queue/AlertConditionQueue")
     private Queue alertConditionQueue;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

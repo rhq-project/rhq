@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -47,6 +48,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infinispan.Cache;
+import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
@@ -68,23 +70,28 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * @author Jay Shaughnessy
  */
 @SuppressWarnings("unchecked")
-//@javax.annotation.Resource(lookup = "java:jboss/infinispan/RhqCache")
 public class AbstractRestBean {
 
     Log log = LogFactory.getLog(getClass().getName());
 
     static private final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
 
+    @javax.annotation.Resource(lookup = "java:jboss/infinispan/rhq")
+    protected CacheContainer container;
+    protected Cache<CacheKey, Object> cache;
+
     /** Subject of the caller that gets injected via {@link SetCallerInterceptor} */
     protected Subject caller;
 
-    /** The cache to use */
-    @javax.annotation.Resource(lookup = "java:jboss/infinispan/RhqCache")
-    Cache<CacheKey, Object> cache;
     @EJB
     ResourceManagerLocal resMgr;
     @EJB
     ResourceGroupManagerLocal resourceGroupManager;
+
+    @PostConstruct
+    public void start() {
+        this.cache = this.container.getCache();
+    }
 
     /**
      * Renders the passed object with the help of a freemarker template into a string. Freemarket templates

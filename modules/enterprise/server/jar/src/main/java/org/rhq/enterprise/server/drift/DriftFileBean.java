@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-    @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/DriftFileQueue"),
+    @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/queue/DriftFileQueue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     // this is just declarative, I think it's unnecessary 
     @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable") })

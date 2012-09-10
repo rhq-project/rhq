@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.startup;
+package org.rhq.enterprise.server.core;
 
 import org.rhq.core.domain.server.ExternalizableStrategy;
 import org.rhq.enterprise.communications.command.Command;

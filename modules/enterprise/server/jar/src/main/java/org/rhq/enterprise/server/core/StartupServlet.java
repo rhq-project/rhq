@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
@@ -30,10 +31,6 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -47,14 +44,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
-import org.rhq.enterprise.gui.configuration.DatabaseDynamicPropertyRetriever;
-import org.rhq.enterprise.gui.startup.ShutdownListener;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
@@ -88,7 +81,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  *
  * This also accepts requests and responds with information regarding the state of the startup.
  */
-public class StartupServlet extends HttpServlet {
+public class StartupServlet {
 
     private static final long serialVersionUID = 1L;
 
@@ -100,22 +93,20 @@ public class StartupServlet extends HttpServlet {
      * This merely returns an HTTP status code to indicate the status of the startup.
      * Under normal conditions, this will always return a 200 status code.
      */
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setHeader("Cache-Control", "no-cache, no-store");
-        resp.setHeader("Expires", "-1");
-        resp.setHeader("Pragma", "no-cache");
-        // as opposed to SC_OK (200), return a special value due to https://issues.jboss.org/browse/JBWEB-188.
-        resp.setStatus(initialized ? 288 : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+    protected void service(Object req, Object resp) throws RuntimeException, IOException {
+        //        resp.setHeader("Cache-Control", "no-cache, no-store");
+        //        resp.setHeader("Expires", "-1");
+        //        resp.setHeader("Pragma", "no-cache");
+        //        // as opposed to SC_OK (200), return a special value due to https://issues.jboss.org/browse/JBWEB-188.
+        //        resp.setStatus(initialized ? 288 : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
     }
 
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    @Override
-    public void init() throws ServletException {
+    public void init() throws RuntimeException {
         initialized = false;
 
         log.info("All business tier deployments are complete - finishing the startup...");
@@ -162,10 +153,6 @@ public class StartupServlet extends HttpServlet {
         startAgentClients();
         startEmbeddedAgent();
         registerShutdownListener();
-
-        // Configures the configuration rendering to be able to support database backed dynamic configuration properties
-        PropertyRenderingUtility.putDynamicPropertyRetriever(PropertyDynamicType.DATABASE,
-            new DatabaseDynamicPropertyRetriever());
 
         logServerStartedMessage();
 
@@ -251,14 +238,14 @@ public class StartupServlet extends HttpServlet {
     /**
      * Starts monitoring hibernate by attaching a statistics mbean to the entity manager injected by ejb3.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void startHibernateStatistics() throws ServletException {
+    private void startHibernateStatistics() throws RuntimeException {
         log.info("Starting hibernate statistics monitoring...");
         try {
             LookupUtil.getSystemManager().enableHibernateStatistics();
         } catch (Exception e) {
-            throw new ServletException("Cannot start hibernate statistics monitoring!", e);
+            throw new RuntimeException("Cannot start hibernate statistics monitoring!", e);
         }
     }
 
@@ -269,57 +256,57 @@ public class StartupServlet extends HttpServlet {
      * Because this will scan and register the initial plugins right now, make sure this is called prior
      * to starting the master plugin container; otherwise, the master PC will not have any plugins to start.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void startPluginDeployer() throws ServletException {
+    private void startPluginDeployer() throws RuntimeException {
         log.info("Starting the agent/server plugin deployer...");
 
         try {
             PluginDeploymentScannerMBean deployer_mbean;
-            MBeanServer mbs = MBeanServerLocator.locateJBoss();
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             ObjectName name = PluginDeploymentScannerMBean.OBJECT_NAME;
             Class<?> iface = PluginDeploymentScannerMBean.class;
             deployer_mbean = (PluginDeploymentScannerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             deployer_mbean.startDeployment();
         } catch (Exception e) {
-            throw new ServletException("Cannot start the agent/server plugin deployer!", e);
+            throw new RuntimeException("Cannot start the agent/server plugin deployer!", e);
         }
     }
 
     /**
      * Installs the JAAS login modules so our users can login.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void installJaasModules() throws ServletException {
+    private void installJaasModules() throws RuntimeException {
         log.info("Installing JAAS login modules...");
 
         try {
             CustomJaasDeploymentServiceMBean jaas_mbean;
-            MBeanServer mbs = MBeanServerLocator.locateJBoss();
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             ObjectName name = CustomJaasDeploymentServiceMBean.OBJECT_NAME;
             Class<?> iface = CustomJaasDeploymentServiceMBean.class;
             jaas_mbean = (CustomJaasDeploymentServiceMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             jaas_mbean.installJaasModules();
         } catch (Exception e) {
-            throw new ServletException("Cannot install JAAS login modules!", e);
+            throw new RuntimeException("Cannot install JAAS login modules!", e);
         }
     }
 
     /**
      * Initializes, but doesn't start, the Quartz scheduler now.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void initScheduler() throws ServletException {
+    private void initScheduler() throws RuntimeException {
         log.info("Initializing the scheduler....");
 
         try {
             LookupUtil.getSchedulerBean().initQuartzScheduler();
         } catch (SchedulerException e) {
-            throw new ServletException("Cannot initialize the scheduler!", e);
+            throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
     }
 
@@ -327,24 +314,24 @@ public class StartupServlet extends HttpServlet {
      * Starts the Quartz scheduler now. We are assured that all EJBs are deployed now, so any jobs that have to be
      * executed now will have those EJBs available.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void startScheduler() throws ServletException {
+    private void startScheduler() throws RuntimeException {
         log.info("Starting the scheduler...");
 
         try {
             LookupUtil.getSchedulerBean().startQuartzScheduler();
         } catch (SchedulerException e) {
-            throw new ServletException("Cannot start the scheduler!", e);
+            throw new RuntimeException("Cannot start the scheduler!", e);
         }
     }
 
     /**
      * Initializes the server-side communications services. Once complete, agents can talk to the server.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void startServerCommunicationServices() throws ServletException {
+    private void startServerCommunicationServices() throws RuntimeException {
 
         // under a rare case, if the server starts up really fast as soon as it dies, any connected
         // agents will not realize the server has bounced and will not know to re-connect. When this
@@ -378,16 +365,16 @@ public class StartupServlet extends HttpServlet {
                     new ExternalizableStrategyCommandListener(
                         org.rhq.core.domain.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
-            throw new ServletException("Cannot start the server-side communications services.", e);
+            throw new RuntimeException("Cannot start the server-side communications services.", e);
         }
     }
 
     /**
      * This will make sure all jobs that need to periodically run are scheduled.
      *
-     * @throws ServletException if unable to schedule a job
+     * @throws RuntimeException if unable to schedule a job
      */
-    private void scheduleJobs() throws ServletException {
+    private void scheduleJobs() throws RuntimeException {
         log.info("Scheduling asynchronous jobs...");
 
         /*
@@ -563,16 +550,16 @@ public class StartupServlet extends HttpServlet {
     /**
      * Starts the embedded agent, but only if the embedded agent is installed and it is enabled.
      *
-     * @throws ServletException if the agent is installed and enabled but failed to start
+     * @throws RuntimeException if the agent is installed and enabled but failed to start
      */
-    private void startEmbeddedAgent() throws ServletException {
+    private void startEmbeddedAgent() throws RuntimeException {
         // we can't use EmbeddedAgentBootstrapServiceMBean because if the embedded agent
         // isn't installed, that class will not be available; we must use JMX API
         final ObjectName agentBootstrapMBean = ObjectNameFactory.create("rhq:service=EmbeddedAgentBootstrap");
         final String agentEnabledAttribute = "AgentEnabled";
         final String startAgentMethod = "startAgent";
         final String configurationOverridesAttribute = "ConfigurationOverrides";
-        final MBeanServer mbs = MBeanServerLocator.locateJBoss();
+        final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         try {
             // this will fail if the embedded agent isn't installed
@@ -658,9 +645,9 @@ public class StartupServlet extends HttpServlet {
                     log.debug("The embedded Agent is not enabled, so it will not be started.");
                 }
             } catch (Throwable t) {
-                throw new ServletException("Failed to start the embedded Agent.", t);
+                throw new RuntimeException("Failed to start the embedded Agent.", t);
             }
-        } catch (ServletException se) {
+        } catch (RuntimeException se) {
             throw se;
         } catch (Throwable t) {
             log.info("The embedded Agent is not installed, so it will not be started (" + t + ").");
@@ -672,16 +659,16 @@ public class StartupServlet extends HttpServlet {
     /**
      * Starts the server-side plugin container.
      *
-     * @throws ServletException
+     * @throws RuntimeException
      */
-    private void startServerPluginContainer() throws ServletException {
+    private void startServerPluginContainer() throws RuntimeException {
         log.info("Starting the master server plugin container...");
 
         try {
             ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
             mbean.startMasterPluginContainerWithoutSchedulingJobs();
         } catch (Exception e) {
-            throw new ServletException("Cannot start the master server plugin container!", e);
+            throw new RuntimeException("Cannot start the master server plugin container!", e);
         }
     }
 
@@ -689,24 +676,27 @@ public class StartupServlet extends HttpServlet {
      * Registers a listener to the JBoss server's shutdown notification so some components can be cleaned up in an
      * orderly fashion when the server is shutdown.
      *
-     * @throws ServletException if cannot register this service as a shutdown listener
+     * @throws RuntimeException if cannot register this service as a shutdown listener
      */
-    private void registerShutdownListener() throws ServletException {
+    private void registerShutdownListener() throws RuntimeException {
         // as of JBossAS 4.0.5, this is the known MBean name of the service that notifies when the server is shutting down
+        // TODO: find out how AS7 can notify us when its going down - right now, this code won't work on AS7 
+        /*
         try {
             ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");
-            MBeanServer jbossServer = MBeanServerLocator.locateJBoss();
+            MBeanServer jbossServer = ManagementFactory.getPlatformMBeanServer();
             jbossServer.addNotificationListener(jbossServerName, new ShutdownListener(), null, null);
         } catch (Exception e) {
-            throw new ServletException("Failed to register the Server Shutdown Listener", e);
+            throw new RuntimeException("Failed to register the Server Shutdown Listener", e);
         }
+        */
     }
 
     /**
      * Gets the number of milliseconds since the time when the server was started.
      * @return elapsed time since server started, 0 if not known
      */
-    private long getElapsedTimeSinceStartup() throws ServletException {
+    private long getElapsedTimeSinceStartup() throws RuntimeException {
         long elapsed;
         try {
             ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");

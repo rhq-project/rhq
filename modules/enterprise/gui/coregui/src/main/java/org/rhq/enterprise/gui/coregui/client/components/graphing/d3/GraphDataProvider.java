@@ -159,17 +159,17 @@ public class GraphDataProvider implements Locatable, MetricProvider
         }
     }
 
-    @Override
-    public String getAllJSONPoints()
-    {
-        String s = "{";
-        for (int i = 0; i < definitions.length; i++)
-        {
-            s += "" + definitions[i] + ":" + getStoredPointsAsJson(i) + ",";
-        }
-        s += "}";
-        return s;
-    }
+//    @Override
+//    public String getAllJSONPoints()
+//    {
+//        String s = "{";
+//        for (int i = 0; i < definitions.length; i++)
+//        {
+//            s += "" + definitions[i] + ":" + getStoredPointsAsJson(i) + ",";
+//        }
+//        s += "}";
+//        return s;
+//    }
 
     @Override
     /**

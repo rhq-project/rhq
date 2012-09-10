@@ -26,10 +26,8 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 /**
  * @author Denis Krusko
  */
-//@todo: use generics
 public interface GraphBackingStore
 {
-
     /**
      * @param measurements data points for aggregation
      */
@@ -42,9 +40,9 @@ public interface GraphBackingStore
     Double getValueAtTime(long time);
 
     /**
-     * @param start time
-     * @param end   time
-     * @return values ??between the start (inclusive) and end (exclusive)
+     * @param start timestamp as long
+     * @param end   timestamp as long
+     * @return values between the start (inclusive) and end (exclusive)
      */
     Collection<Double> getValuesForRange(long start, long end);
 

@@ -35,7 +35,7 @@ public interface MetricProvider
     void initDataProvider(AbstractGraphCanvas graphCanvas, final int stepInMillis);
 
     /**
-     * @param metrics
+     * @param metrics List of MetricDisplaySummary
      * @return metrics in JSON format
      */
     String getMetricsAsJson(List<MetricDisplaySummary> metrics);
@@ -49,7 +49,7 @@ public interface MetricProvider
     /**
      * @return map definition: points in JSON format
      */
-    String getAllJSONPoints();
+//    String getAllJSONPoints();
 
     /**
      * @return metrics in JSON format
@@ -58,8 +58,8 @@ public interface MetricProvider
 
     /**
      * @param metricIndex
-     * @param start
-     * @param stop
+     * @param start date as long
+     * @param stop date as long
      * @return points between start and stop for definition in JSON format
      */
     String getPointsAsJson(int metricIndex, long start, long stop);

@@ -150,7 +150,7 @@ public class GraphCanvas extends AbstractGraphCanvas
                 console.log('Creating metrics');
                 // query for metrics matching time
                 var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
-                console.log('Creating metrics 1');
+                console.log('Creating metrics 1' + jsonPoints);
 
                 try
                 {
@@ -180,9 +180,32 @@ public class GraphCanvas extends AbstractGraphCanvas
                 .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
 
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetricsAsJson()());
 
 
-        //var metrics = [];
+        var metrics = [];
+        var self = this;
+
+        function createMetric(name, metricIndex)
+        {
+            var metric = context.metric(function (start, stop, step, callback)
+            {
+
+                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
+
+                try
+                {
+                    var json = jsonPoints ? eval("tmp=" + jsonPoints) : null;
+                }
+                catch (e)
+                {
+                    console.log(e + jsonPoints);
+                }
+                callback(null, json);
+            }, name);
+            metrics.push(metric);
+            return metric;
+        }
 
         var selection = $wnd.d3.select(chartDiv)
                 .call(function (div)
@@ -194,17 +217,34 @@ public class GraphCanvas extends AbstractGraphCanvas
                             .attr("class", "rule")
                             .call(context.rule());
                 });
+        for (var i = 0; i < jsonMetrics.length; i++)
+        {
+            var jsonMetric = jsonMetrics[i];
+            var metricI = createMetric(jsonMetric.label, jsonMetric.metricIndex);
+            var horizonI;
 
-        this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::loadJson()();
-
+            if (jsonMetric.metricUnit != 'PERCENTAGE')
+            {
+                horizonI = context.horizon();
+            }
+            else
+            {
+                horizonI = context.horizon()
+                        .format($wnd.d3.format(".2%"));
+            }
+            selection.call(function (div)
+            {
+                div.datum(metricI);
+                div.append("div")
+                        .attr("class", "horizon")
+                        .call(horizonI);
+            });
+        }
         // On mousemove, reposition the chart values to match the rule.
         context.on("focus", function (i)
         {
             $wnd.d3.selectAll(".value").style("right", i == null ? null : context.size() - i + "px");
         });
-
-
-
     }-*/;
 }
 

@@ -95,7 +95,8 @@ public class ServerInstallUtil {
 
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
     private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
-    private static final String RHQ_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String RHQ_DS_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
     private static final String JDBC_DRIVER_POSTGRES = "postgres";
     private static final String JDBC_DRIVER_ORACLE = "oracle";
 
@@ -127,7 +128,7 @@ public class ServerInstallUtil {
         throws Exception {
 
         String fromAddressExpr = "${" + ServerProperties.PROP_EMAIL_FROM_ADDRESS + ":rhqadmin@localhost.com}";
-        String smtpHostExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_HOST + ":localhost}";
+        //String smtpHostExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_HOST + ":localhost}";
         String smtpPortExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_PORT + ":25}";
 
         // Tweek the mail configuration that comes out of box. Setup a batch request to write the proper attributes.
@@ -206,9 +207,31 @@ public class ServerInstallUtil {
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         final String obfuscatedPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        final String securityDomain = RHQ_SECURITY_DOMAIN;
+        final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
             client.createNewSecureIdentitySecurityDomainRequest(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Security domain [" + securityDomain + "] created");
+        } else {
+            LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+        }
+    }
+
+    /**
+     * Creates the security domain for REST.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password to store in the security domain
+     * @throws Exception
+     */
+    public static void createRESTSecurityDomain(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final String securityDomain = RHQ_REST_SECURITY_DOMAIN;
+        if (!client.isSecurityDomain(securityDomain)) {
+            client.createNewDatabaseServerSecurityDomainRequest(securityDomain, "java:jboss/datasources/RHQDS",
+                "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
+                "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
@@ -342,7 +365,7 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
             noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
@@ -357,7 +380,7 @@ public class ServerInstallUtil {
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, 75,
-                RHQ_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
             xaDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
@@ -387,7 +410,7 @@ public class ServerInstallUtil {
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
-                RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
         } else {
@@ -401,7 +424,7 @@ public class ServerInstallUtil {
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, 75,
-                RHQ_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
         } else {
@@ -799,8 +822,7 @@ public class ServerInstallUtil {
      * @throws Exception if failed to create the new schema for some reason
      */
     public static void createNewDatabaseSchema(HashMap<String, String> props, ServerDetails serverDetails,
-        String password, String logDir)
-        throws Exception {
+        String password, String logDir) throws Exception {
         String dbUrl = props.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         String userName = props.get(ServerProperties.PROP_DATABASE_USERNAME);
 
@@ -836,8 +858,7 @@ public class ServerInstallUtil {
      * @throws Exception if the upgrade failed for some reason
      */
     public static void upgradeExistingDatabaseSchema(HashMap<String, String> props, ServerDetails serverDetails,
-        String password, String logDir)
-        throws Exception {
+        String password, String logDir) throws Exception {
         String dbUrl = props.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         String userName = props.get(ServerProperties.PROP_DATABASE_USERNAME);
 
@@ -889,8 +910,7 @@ public class ServerInstallUtil {
      * @throws IOException if failed to extract the file to the log directory
      */
     private static String extractDatabaseXmlFile(String xmlFileName, HashMap<String, String> props,
-        ServerDetails serverDetails, String logDir)
-        throws IOException {
+        ServerDetails serverDetails, String logDir) throws IOException {
 
         // first slurp the file contents in memory
         InputStream resourceInStream = ServerInstallUtil.class.getClassLoader().getResourceAsStream(xmlFileName);

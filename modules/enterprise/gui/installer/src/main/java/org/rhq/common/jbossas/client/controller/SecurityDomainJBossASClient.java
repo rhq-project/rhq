@@ -22,7 +22,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
- * Provides convienence methods associated with security domain management.
+ * Provides convenience methods associated with security domain management.
  * 
  * @author John Mazzitelli
  */
@@ -39,6 +39,11 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     public static final String MODULE_OPTIONS = "module-options";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+    public static final String DS_JNDI_NAME = "dsJndiName";
+    public static final String PRINCIPALS_QUERY = "principalsQuery";
+    public static final String ROLES_QUERY = "rolesQuery";
+    public static final String HASH_ALGORITHM = "hashAlgorithm";
+    public static final String HASH_ENCODING = "hashEncoding";
 
     public SecurityDomainJBossASClient(ModelControllerClient client) {
         super(client);
@@ -57,7 +62,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
-     * Convienence method that builds a request which can create a new security-domain
+     * Convenience method that builds a request which can create a new security-domain
      * using the SecureIdentity authentication method. This is used when you want
      * to obfuscate a database password in the configuration. 
      *
@@ -96,4 +101,48 @@ public class SecurityDomainJBossASClient extends JBossASClient {
 
         return;
     }
+
+    /**
+     * Convenience method that builds a request which can create a new security domain
+     * using the database server authentication method. This is used when you want to directly
+     * authenticate against a db entry. 
+     *
+     * @param securityDomainName the name of the new security domain
+     * @param dsJndiName the jndi name for the datasource to query against
+     * @param principalsQuery the SQL query for selecting password info for a principal
+     * @param rolesQuery the SQL query for selecting role info for a principal
+     * @param hashAlgorithm if null defaults to "MD5"
+     * @param hashEncoding if null defaults to "base64"
+     * @throws Exception if failed to create security domain
+     */
+    public void createNewDatabaseServerSecurityDomainRequest(String securityDomainName, String dsJndiName,
+        String principalsQuery, String rolesQuery, String hashAlgorithm, String hashEncoding) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
+
+        ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
+        ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
+        ModelNode loginModule = new ModelNode();
+        loginModule.get(CODE).set("DatabaseServer");
+        loginModule.get(FLAG).set("required");
+        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+        moduleOptions.setEmptyList();
+        moduleOptions.add(DS_JNDI_NAME, dsJndiName);
+        moduleOptions.add(PRINCIPALS_QUERY, principalsQuery);
+        moduleOptions.add(ROLES_QUERY, rolesQuery);
+        moduleOptions.add(HASH_ALGORITHM, (null == hashAlgorithm ? "MD5" : hashAlgorithm));
+        moduleOptions.add(HASH_ENCODING, (null == hashEncoding ? "base64" : hashEncoding));
+        loginModulesNode.add(loginModule);
+
+        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
+        ModelNode results = execute(batch);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
 }

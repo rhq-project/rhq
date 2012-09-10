@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -231,7 +232,7 @@ public class DownloadServlet extends HttpServlet {
 
     private File getRootDownloadsDir() throws Exception {
         File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
+        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
         }

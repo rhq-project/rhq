@@ -64,31 +64,46 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private AgentManagerLocal agentManager = null;
 
+    private boolean initialized = false;
+
     @Override
     public void init() throws ServletException {
-        log.info("Starting the RHQ agent update servlet...");
+        log.info("Starting the RHQ agent update servlet");
+    }
 
-        // make sure we have a agent update binary file; log its location
-        try {
-            log.info("Agent Update Binary File: " + getAgentUpdateBinaryFile());
-        } catch (Throwable t) {
-            log.error("Missing agent update binary file - agents will not be able to update", t);
-        }
+    private synchronized void loadAgentUpdateBinaryInfo() throws ServletException {
+        if (!initialized) {
+            log.info("RHQ agent update servlet is looking up binary file information...");
 
-        // make sure we create a version file if we have to by getting the version file now
-        try {
-            File versionFile = getAgentUpdateVersionFile();
+            // make sure we have a agent update binary file; log its location
+            try {
+                log.info("Agent Update Binary File: " + getAgentUpdateBinaryFile());
+            } catch (Throwable t) {
+                log.error("Missing agent update binary file - agents will not be able to update", t);
+            }
 
-            // log the version info - this also makes sure we can read it back in
-            log.debug(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
+            // make sure we create a version file if we have to by getting the version file now
+            try {
+                File versionFile = getAgentUpdateVersionFile();
 
-        } catch (Throwable t) {
-            log.error("Cannot determine the agent version information - agents will not be able to update.", t);
+                // log the version info - this also makes sure we can read it back in
+                log.debug(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
+
+            } catch (Throwable t) {
+                log.error("Cannot determine the agent version information - agents will not be able to update.", t);
+            }
+
+            initialized = true;
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        // lazily initialize the servlet - we do this because when we started deploying on AS7, our servlets
+        // init() method was being called before the agent SLSB is ready. So we don't init() this at startup,
+        // rather, we now init this servlet the first time someone requests the agent update binary file.
+        loadAgentUpdateBinaryInfo();
 
         // seeing odd browser caching issues, even though we set Last-Modified. so force no caching for now
         disableBrowserCache(resp);

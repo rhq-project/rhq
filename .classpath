@@ -171,14 +171,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
-		<accessrules>
-			<accessrule kind="accessible" pattern="sun/misc/**"/>
-			<accessrule kind="accessible" pattern="sun/security/**"/>
-			<accessrule kind="accessible" pattern="com/sun/java_cup/internal/**"/>
-			<accessrule kind="accessible" pattern="com/sun/org/apache/bcel/internal/generic/**"/>
-		</accessrules>
-	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
@@ -280,10 +273,10 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/0.99/morphia-0.99.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-annotations/3.5.6-Final/hibernate-annotations-3.5.6-Final.jar"/>	
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-core/4.0.1.Final/hibernate-core-4.0.1.Final.jar"/>	
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-annotations/3.5.6-Final/hibernate-annotations-3.5.6-Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-core/4.0.1.Final/hibernate-core-4.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-entitymanager/4.0.1.Final/hibernate-entitymanager-4.0.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-validator/4.2.0.Final/hibernate-validator-4.2.0.Final.jar"/>	
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-validator/4.2.0.Final/hibernate-validator-4.2.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/javax/persistence/hibernate-jpa-2.0-api/1.0.1.Final/hibernate-jpa-2.0-api-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.1.Final/jboss-servlet-api_3.0_spec-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.0.2.GA/jboss-msc-1.0.2.GA.jar"/>
@@ -319,8 +312,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.1.Final/arquillian-testng-core-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/infinispan/infinispan-core/5.1.2.FINAL/infinispan-core-5.1.2.FINAL.jar"/>  
-    <classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>	
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/infinispan/infinispan-core/5.1.2.FINAL/infinispan-core-5.1.2.FINAL.jar"/>
+	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

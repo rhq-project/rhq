@@ -22,7 +22,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
- * Convienence methods to access the web management API.
+ * Convenience methods to access the web management API.
  *
  * @author John Mazzitelli
  */

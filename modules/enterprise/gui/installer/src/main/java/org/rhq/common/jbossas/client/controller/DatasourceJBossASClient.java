@@ -24,7 +24,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
- * Provides convienence methods associated with datasource management.
+ * Provides convenience methods associated with datasource management.
  * 
  * @author John Mazzitelli
  */

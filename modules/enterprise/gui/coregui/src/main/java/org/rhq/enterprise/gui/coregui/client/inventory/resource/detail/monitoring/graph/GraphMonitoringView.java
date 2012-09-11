@@ -35,6 +35,11 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
     private MetricProvider metricProvider;
     private GraphCanvas graphCanvas;
 
+    final private static int MARGIN = 20;
+    final private static int SERVER_DELAY_IN_MILLIS = 5 * 1000;
+    final private static int CLIENT_DELAY_IN_MILLIS = 5 * 1000;
+    final private static int STEP_IN_MILLIS = 60 * 1000;
+
     public GraphMonitoringView(String locatorId, ResourceComposite resourceComposite)
     {
         super(locatorId);
@@ -52,14 +57,13 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
 
     private LocatableDynamicForm createGraphForm()
     {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Graph"));
         form.setWidth100();
         form.setAutoHeight();
 
-        //@todo: get rid of all these hard-coded values
-        graphCanvas = new GraphCanvas("cubism_chart", 5000, 5000, 60000);
-        graphCanvas.setWidth(900);
-        graphCanvas.setHeight(700);
+        graphCanvas = new GraphCanvas("cubism_chart", SERVER_DELAY_IN_MILLIS, CLIENT_DELAY_IN_MILLIS, STEP_IN_MILLIS);
+        graphCanvas.setWidth(getWidth()-MARGIN);
+        graphCanvas.setHeight(getHeight()-MARGIN);
         form.addChild(graphCanvas);
         metricProvider = new GraphDataProvider(getLocatorId(), resourceComposite.getResource().getId());
         graphCanvas.setDataProvider(metricProvider);

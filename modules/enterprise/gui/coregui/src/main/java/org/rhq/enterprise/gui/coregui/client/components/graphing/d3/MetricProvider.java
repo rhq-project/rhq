@@ -23,6 +23,7 @@ import java.util.List;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 /**
+ * Define a metric provider.
  * @author Denis Krusko
  * @author Mike Thompson
  */

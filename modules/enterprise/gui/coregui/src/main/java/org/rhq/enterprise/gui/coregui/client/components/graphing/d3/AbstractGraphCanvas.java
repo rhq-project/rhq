@@ -22,6 +22,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 /**
+ * Abstract class for
  * @author Mike Thompson
  */
 public abstract class AbstractGraphCanvas extends Canvas implements GraphCanvasProperties {

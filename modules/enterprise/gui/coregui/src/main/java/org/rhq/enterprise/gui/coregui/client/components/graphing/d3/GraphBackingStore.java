@@ -24,6 +24,9 @@ import java.util.List;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 /**
+ * The interface that defines the backing store to semi-transient data for
+ * real-time graphing.
+ *
  * @author Denis Krusko
  */
 public interface GraphBackingStore

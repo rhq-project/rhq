@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 /**
+ * Common properties that make up a Graph.
  * @author Mike Thompson
  */
 public interface GraphCanvasProperties {

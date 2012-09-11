@@ -27,6 +27,7 @@ import java.util.TreeMap;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 /**
+ * The data store for temp storage of graphed metrics so that
  * @author Denis Krusko
  */
 public class GraphDataStorage implements GraphBackingStore

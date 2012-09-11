@@ -518,14 +518,19 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
         switch (key.getType()) {
         case Legacy: // implies main classname was not found. Include earlier naming format as well.
-            name.append("JMX Server (" + key.getJmxRemotingPort() + ")");//
+            name.append("JMX Server (" + key.getJmxRemotingPort() + ")");
             break;
-            case JmxRemotingPort:
-                name.append(':').append(key.getJmxRemotingPort()); break;
-            case Explicit:
-                name.append(' ').append(key.getExplicitValue()); break;
-            default:
-                throw new IllegalStateException("Unsupported key type: " + key.getType());
+        case ConnectorAddress:
+            name.append(key.getConnectorAddress());
+            break;
+        case JmxRemotingPort:
+            name.append(':').append(key.getJmxRemotingPort());
+            break;
+        case Explicit:
+            name.append(' ').append(key.getExplicitValue());
+            break;
+        default:
+            throw new IllegalStateException("Unsupported key type: " + key.getType());
         }
 
         return name.toString();

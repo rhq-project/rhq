@@ -131,6 +131,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 ProcessInfo processInfo = process.getProcessInfo();
                 DiscoveredResourceDetails details = discoverResourceDetails(context, processInfo);
                 if (details != null) {
+                    //detect discovered jmx resources that are erroneously using the same key 
                     if (discoveredResources.contains(details)) {                        
                         List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(details.getResourceKey());
                         if (duplicates == null) {
@@ -151,6 +152,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             }
         }
         
+        //Log the erroneous collisions and take them out of the discoveredResource list.
         for (String duplicateKey : duplicatesByKey.keySet()) {
             List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(duplicateKey);
             log.error("Multiple Resources with the same key (" + duplicateKey
@@ -511,6 +513,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             }
         }
 
+        //build the resource names from supported JvmResourceKey instances. See JvmResourceKey.Type for more details.
         switch (key.getType()) {
         case Legacy: // implies main classname was not found. Include earlier naming format as well.
             name.append("JMX Server (" + key.getJmxRemotingPort() + ")");

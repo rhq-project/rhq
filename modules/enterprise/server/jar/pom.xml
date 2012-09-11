@@ -219,6 +219,7 @@
        <groupId>org.infinispan</groupId>
        <artifactId>infinispan-core</artifactId>
        <version>${infinispan.version}</version>
+       <scope>provided</scope>
     </dependency>
 
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
@@ -260,13 +261,12 @@
       <groupId>dom4j</groupId>
       <artifactId>dom4j</artifactId>
       <version>1.6.1-jboss</version>
-      <scope>runtime</scope>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>gnu-getopt</groupId>
       <artifactId>getopt</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>
@@ -281,25 +281,16 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
-         <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
-              so use the Geronimo one instead. -->
-      <version>1.3</version>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>${javax.mail.api.version}</version>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
     <dependency>
       <groupId>javax.persistence</groupId>
       <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.4</version>
+      <version>1.0.2</version>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
@@ -308,18 +299,6 @@
       <artifactId>jsp-api</artifactId>
       <version>2.0</version>
       <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.spec.javax.annotation</groupId>
-      <artifactId>jboss-annotations-api_1.1_spec</artifactId>        
-      <scope>provided</scope>
-    </dependency>
-     
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-annotations-ejb3</artifactId>         
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -334,34 +313,66 @@
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
+    <!-- JBoss annotations like @TransactionTimeout -->
+    <dependency>
+       <groupId>org.jboss.ejb3</groupId>
+       <artifactId>jboss-ejb3-ext-api</artifactId>
+       <version>2.0.0</version>
+       <scope>provided</scope>
+    </dependency>
+
+    <!-- annotations like @ExcludeDefaultInterceptors -->
+    <dependency>
+       <groupId>org.jboss.spec.javax.interceptor</groupId>
+       <artifactId>jboss-interceptors-api_1.1_spec</artifactId>
+       <scope>provided</scope>
+    </dependency>
+
+    <!-- annotations @javax.transaction.TransactionManager -->
+    <dependency>
+       <groupId>org.jboss.spec.javax.transaction</groupId>
+       <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+       <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.jboss.spec.javax.annotation</groupId>
       <artifactId>jboss-annotations-api_1.1_spec</artifactId>
       <scope>provided</scope>
     </dependency>
 
-    <dependency>     
+    <dependency>
       <groupId>org.jboss.spec.javax.ejb</groupId>
       <artifactId>jboss-ejb-api_3.1_spec</artifactId>
       <scope>provided</scope>
     </dependency>
     
-    <dependency>     
+    <dependency>
       <groupId>org.jboss.spec.javax.jms</groupId>
       <artifactId>jboss-jms-api_1.1_spec</artifactId>
       <scope>provided</scope>
     </dependency>
-     
+
+    <!-- for some Jboss custom things like code to obfuscate passwords -->
+    <dependency>
+      <groupId>org.picketbox</groupId>
+      <artifactId>picketbox</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- TODO: find out the AS7 equivalent -->
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-jmx</artifactId>
     </dependency>
  
+    <!-- TODO: find out the AS7 equivalent -->
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-system</artifactId>
     </dependency>
 
+    <!-- TODO: find out the AS7 equivalent -->
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jbosssx</artifactId>
@@ -374,8 +385,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss.transaction</groupId>
-      <artifactId>jboss-jta</artifactId>
+      <groupId>org.jboss.jbossts</groupId>
+      <artifactId>jbossjts</artifactId>
+      <version>${jboss-jts.version}</version>
     </dependency>
 
       <!-- TODO: remove this - tests should all be moved under the test source tree -->
@@ -420,13 +432,6 @@
       <version>1.3.4</version>
     </dependency>
 
-      <!-- TODO: Why is this needed? -->
-    <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-         <!--<scope>test</scope>-->
-    </dependency>
-
     <dependency>
       <groupId>rss4j</groupId>
       <artifactId>rss4j</artifactId>
@@ -444,14 +449,6 @@
       <groupId>tomcat</groupId>
       <artifactId>tomcat-jk</artifactId>
       <version>4.1.31</version>
-      <scope>provided</scope>
-    </dependency>
-
-      <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
-    <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>xalan</artifactId>
-      <version>2.5.1</version>
       <scope>provided</scope>
     </dependency>
 

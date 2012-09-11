@@ -31,8 +31,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
@@ -76,15 +74,15 @@ public class StatusManagerBean implements StatusManagerLocal {
     AgentManagerLocal agentManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     ServerManagerLocal serverManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     CloudManagerLocal cloudManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     AlertDefinitionManagerLocal alertDefinitionManager;
 
     @SuppressWarnings("unchecked")

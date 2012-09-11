@@ -49,8 +49,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -136,7 +135,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     private AlertManagerLocal alertManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AgentManagerLocal agentClientManager;
 
     @EJB
@@ -146,7 +145,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     private MeasurementDataManagerLocal measurementDataManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     // doing a bulk delete in here, need to be in its own tx

@@ -37,8 +37,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.crypto.CryptoUtil;
 import org.jboss.security.SimpleGroup;
-import org.jboss.security.Util;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
 import org.rhq.enterprise.server.RHQConstants;
@@ -108,7 +108,7 @@ public class JDBCPrincipalCheckLoginModule extends UsernamePasswordLoginModule {
                 throw new FailedLoginException("username found in principals - do not continue");
             }
 
-            password = Util.createPasswordHash("MD5", "base64", null, null, password); // return back the string entered by the user as a hash
+            password = CryptoUtil.createPasswordHash("MD5", "base64", null, null, password); // return back the string entered by the user as a hash
         } catch (NamingException ex) {
             throw new LoginException(ex.toString(true));
         } catch (SQLException ex) {

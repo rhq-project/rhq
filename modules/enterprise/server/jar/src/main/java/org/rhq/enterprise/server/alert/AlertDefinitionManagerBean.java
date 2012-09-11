@@ -32,8 +32,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -80,14 +78,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AlertManagerLocal alertManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
 
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {

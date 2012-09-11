@@ -57,7 +57,8 @@ public class ShutdownListener implements NotificationListener {
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     public void handleNotification(Notification notification, Object handback) {
-        if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
+        // TODO: JBossAS 4.2.3 used to send us this JMX notification on shutdown - how does AS7 provide this notification?
+        if (false) {
             stopScheduler();
 
             updateServerOperationMode();

@@ -12,6 +12,10 @@
             <module name="org.apache.commons.logging" export="true" /> <!-- needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
             <module name="org.hibernate" export="true" /> <!-- because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
             <module name="org.infinispan" export="true" /> <!-- because we use an Infinispan cache for REST services -->
+            <module name="org.antlr" export="true" /> <!-- rhq ejb jar module wants this - i think for dynagroup syntax? -->
+            <module name="org.dom4j" export="true" /> <!-- rhq ejb jar module declares this with runtime/provided scope -->
+            <module name="javax.mail.api" export="true" /> <!-- for sending email notifications -->
+            <module name="org.picketbox" export="true" /> <!-- for obfuscating passwords -->
         </dependencies>
     </deployment>
 

@@ -43,8 +43,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
@@ -88,11 +86,11 @@ public class AgentManagerBean implements AgentManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private FailoverListManagerLocal failoverListManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AvailabilityManagerLocal availabilityManager;
 
     @EJB
@@ -102,7 +100,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     private SystemManagerLocal systemManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
     @EJB

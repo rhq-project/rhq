@@ -150,7 +150,6 @@
             <version>${quartz.version}</version>
         </dependency>
 
-        <!-- TODO: I think this goes away once we are on AS7 because Postgres JDBC driver will be a module -->
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -158,7 +157,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- TODO: I think the RESTEasy stuff can go away once we are on AS7 -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>

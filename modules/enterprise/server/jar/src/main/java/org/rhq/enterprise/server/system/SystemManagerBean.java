@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -40,9 +38,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
@@ -50,8 +46,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.db.DatabaseType;
@@ -66,7 +60,6 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.server.PersistenceUtility;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -114,11 +107,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private SystemManagerLocal systemManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SystemInfoManagerLocal systemInfoManager;
 
     private static SystemSettings cachedSystemSettings = null;
@@ -634,65 +627,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Ensures the installer is no longer deployed.
      */
     public void undeployInstaller() {
+        // TODO: call the mgmt api to undeploy the installer so a rogue user won't mess with it
         try {
-            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-
-            File deployDirectory = new File(serverHomeDir, "deploy");
-
-            if (deployDirectory.exists()) {
-                File deployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war");
-                File undeployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war.rej");
-
-                if (deployedInstallWar.exists()) {
-                    // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
-                    ObjectName name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
-                    MBeanServerConnection mbs = MBeanServerLocator.locateJBoss();
-                    MainDeployerMBean mbean = (MainDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
-                        name, MainDeployerMBean.class, false);
-                    URL url = deployedInstallWar.toURI().toURL();
-                    String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
-                    ((MainDeployerMBean) mbean).undeploy(urlString);
-                    if (((MainDeployerMBean) mbean).isDeployed(urlString) == false) {
-                        log.info("Installer war has been hot-undeployed from memory");
-                    } else {
-                        log.warn("Installer hot-undeploy failed - full installer undeploy may not work...");
-                    }
-
-                    if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
-                        throw new RuntimeException("Cannot undeploy the installer war: " + deployedInstallWar);
-                    }
-
-                    // I don't trust it - make sure we removed it
-                    if (deployedInstallWar.exists()) {
-                        throw new RuntimeException("Failed to undeploy the installer war: " + deployedInstallWar);
-                    }
-
-                    // now that the installer is removed, put something in its place to avoid
-                    // getting tomcat errors and to at least point the user back to the GUI
-                    File deployedPostInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-postinstaller.war");
-                    File undeployedPostInstallWar = new File(deployDirectory.getAbsolutePath(),
-                        "rhq-postinstaller.war.rej");
-                    if (!deployedPostInstallWar.exists()) {
-                        if (undeployedPostInstallWar.exists()) {
-                            if (undeployedPostInstallWar.renameTo(deployedPostInstallWar)) {
-                                log.debug("Post-install notification war has been deployed");
-                            } else {
-                                log.info("Post-install notification war failed to deploy - this can be ignored");
-                            }
-                        } else {
-                            log.info("Post-install notification war not found and not deployed - this can be ignored");
-                        }
-                    } else {
-                        log.info("Post-install notification war already deployed");
-                    }
-                } else if (undeployedInstallWar.exists()) {
-                    log.debug("Installer looks to be undeployed already, this is good: " + undeployedInstallWar);
-                } else {
-                    log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
-                }
-            } else {
-                throw new RuntimeException("Your deployment seems corrupted - missing deploy dir: " + deployDirectory);
-            }
+            log.warn("!!!!!!!!TODO: UNDEPLOY THE INSTALLER HERE!!!!!");
         } catch (Exception e) {
             log.warn("Please manually remove installer war to secure your deployment: " + e);
             return;

@@ -35,8 +35,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverList;
 import org.rhq.core.domain.cloud.FailoverListDetails;
@@ -74,7 +72,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     CloudManagerLocal cloudManager;
 
     @EJB

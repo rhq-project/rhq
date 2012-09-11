@@ -48,8 +48,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
@@ -110,17 +108,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private OperationManagerLocal operationManager;
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceTypeManagerLocal resourceTypeManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;

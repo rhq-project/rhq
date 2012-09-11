@@ -34,8 +34,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -81,10 +79,10 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     private DataSource rhqDs;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
     @EJB
     private MeasurementDataManagerLocal dataManager;

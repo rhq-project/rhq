@@ -70,7 +70,8 @@
     <jboss-javassist.version>3.9.0.GA</jboss-javassist.version>
     -->
     <jboss.version>7.1.1.Final</jboss.version>
-    
+    <jboss.javaee6.spec.version>3.0.0.Final</jboss.javaee6.spec.version>
+
     <!-- Provided -->
     <antlr.version>2.7.7</antlr.version>
     <arquillian.version>1.0.1.Final</arquillian.version>    
@@ -81,17 +82,22 @@
     <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
     <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version>
     <javax.jms.api.version>1.0.0.Final</javax.jms.api.version>
+    <javax.mail.api.version>1.4.4</javax.mail.api.version>
     <javassist.version>3.15.0-GA</javassist.version>
     <jaxb-api.version>1.0.4.Final</jaxb-api.version>
     <jaxb-impl.version>2.2.4</jaxb-impl.version>
     <jboss-common-core.version>2.2.17.GA</jboss-common-core.version>
     <resteasy.version>2.3.2.Final</resteasy.version>    
-    
+    <jboss-jts.version>4.16.2.Final</jboss-jts.version>
+    <jboss-interceptors-api.version>1.0.0.Final</jboss-interceptors-api.version>
+    <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
+    <jboss-ejb3-ext-api.version>2.0.0</jboss-ejb3-ext-api.version>
+    <picketbox.version>4.0.7.Final</picketbox.version>
+
     <!-- Not Provided -->    
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>    
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
     <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>        
-    <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
     <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-system.version>4.2.3.GA</jboss-system.version>    
@@ -288,9 +294,15 @@
       </dependency>
 
       <dependency>
+        <groupId>org.jboss.jbossts</groupId>
+        <artifactId>jbossjts</artifactId>
+        <version>${jboss-jts.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.jboss.transaction</groupId>
         <artifactId>jboss-jta</artifactId>
-        <version>${jboss-jta.version}</version>
+        <version>${jboss-jts.version}</version>
       </dependency>
 
       <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->
@@ -491,6 +503,38 @@
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jettison-provider</artifactId>
          <version>${resteasy.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.spec.javax.interceptor</groupId>
+         <artifactId>jboss-interceptors-api_1.1_spec</artifactId>
+         <version>${jboss-interceptors-api.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.spec.javax.transaction</groupId>
+         <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+         <version>${jboss-transaction-api.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.ejb3</groupId>
+         <artifactId>jboss-ejb3-ext-api</artifactId>
+         <version>${jboss-ejb3-ext-api.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.picketbox</groupId>
+         <artifactId>picketbox</artifactId>
+         <version>${picketbox.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.spec</groupId>
+         <artifactId>jboss-javaee-6.0</artifactId>
+         <version>${jboss.javaee6.spec.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
       </dependency>
 
       <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->

@@ -45,8 +45,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -163,7 +161,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private ResourceTypeManagerLocal typeManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {

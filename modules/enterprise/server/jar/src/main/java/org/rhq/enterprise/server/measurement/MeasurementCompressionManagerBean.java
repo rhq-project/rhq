@@ -36,8 +36,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
@@ -73,7 +72,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private SessionContext ctx;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
     @EJB
     private SystemManagerLocal systemManager;

@@ -45,7 +45,6 @@ import javax.naming.spi.InitialContextFactoryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jnp.interfaces.NamingContextFactory;
 
 import org.rhq.jndi.context.AccessCheckingContextDecorator;
 import org.rhq.jndi.context.AccessCheckingContextDecoratorSetContext;
@@ -133,7 +132,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
      */
     private static final InitialContextFactory DEFAULT_FACTORY = new InitialContextFactory() {
         public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
-            return createSecureWrapper(new NamingContextFactory(), environment).getInitialContext(environment);
+            return null; // TODO: how to do this in AS7? createSecureWrapper(new NamingContextFactory(), environment).getInitialContext(environment);
         }
     };
 

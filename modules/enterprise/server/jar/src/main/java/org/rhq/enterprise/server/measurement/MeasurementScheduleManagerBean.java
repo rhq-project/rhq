@@ -51,8 +51,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
@@ -118,7 +116,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private DataSource dataSource;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AgentManagerLocal agentManager;
 
     @EJB
@@ -128,7 +126,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB

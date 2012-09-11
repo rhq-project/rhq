@@ -41,8 +41,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -108,7 +107,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @EJB
     private AuthorizationManagerLocal authzManager;
 
-    @IgnoreDependency
+    //@IgnoreDependency
     @EJB
     private ContentSourceManagerLocal contentSourceManager;
 

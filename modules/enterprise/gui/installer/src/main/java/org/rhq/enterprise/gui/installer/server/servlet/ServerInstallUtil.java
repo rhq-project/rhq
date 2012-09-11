@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -50,6 +51,7 @@ import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.FailureException;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
+import org.rhq.common.jbossas.client.controller.JMSJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -99,6 +101,9 @@ public class ServerInstallUtil {
     private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
     private static final String JDBC_DRIVER_POSTGRES = "postgres";
     private static final String JDBC_DRIVER_ORACLE = "oracle";
+    private static final String JMS_ALERT_CONDITION_QUEUE = "AlertConditionQueue";
+    private static final String JMS_DRIFT_CHANGESET_QUEUE = "DriftChangesetQueue";
+    private static final String JMS_DRIFT_FILE_QUEUE = "DriftFileQueue";
 
     /**
      * Configure the deployment scanner to get ready to deploy the application.
@@ -214,6 +219,66 @@ public class ServerInstallUtil {
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
         }
+    }
+
+    /**
+     * Creates the JMS Queues required for Drift and Alerting.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password to store in the security domain
+     * @throws Exception
+     */
+    public static void createNewJMSQueues(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final JMSJBossASClient client = new JMSJBossASClient(mcc);
+        final List<String> entryNames = new ArrayList<String>();
+
+        String queue = JMS_ALERT_CONDITION_QUEUE;
+        if (!client.isQueue(queue)) {
+            entryNames.clear();
+            entryNames.add("queue/" + queue);
+            ModelNode request = client.createNewQueueRequest(queue, entryNames);
+            ModelNode results = client.execute(request);
+            if (!JMSJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
+            } else {
+                LOG.info("JMS queue [" + queue + "] created");
+            }
+        } else {
+            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
+        }
+        
+        queue = JMS_DRIFT_CHANGESET_QUEUE;
+        if (!client.isQueue(queue)) {
+            entryNames.clear();
+            entryNames.add("queue/" + queue);
+            ModelNode request = client.createNewQueueRequest(queue, entryNames);
+            ModelNode results = client.execute(request);
+            if (!JMSJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
+            } else {
+                LOG.info("JMS queue [" + queue + "] created");
+            }
+        } else {
+            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
+        }
+
+        queue = JMS_DRIFT_FILE_QUEUE;
+        if (!client.isQueue(queue)) {
+            entryNames.clear();
+            entryNames.add("queue/" + queue);
+            ModelNode request = client.createNewQueueRequest(queue, entryNames);
+            ModelNode results = client.execute(request);
+            if (!JMSJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
+            } else {
+                LOG.info("JMS queue [" + queue + "] created");
+            }
+        } else {
+            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
+        }
+
     }
 
     /**

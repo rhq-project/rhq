@@ -580,6 +580,9 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             // create the datasources
             ServerInstallUtil.createNewDatasources(client, serverProperties);
 
+            // create the JMS queues
+            ServerInstallUtil.createNewJMSQueues(client, serverProperties);
+
             // setup the email service
             ServerInstallUtil.setupMailService(client, serverProperties);
 

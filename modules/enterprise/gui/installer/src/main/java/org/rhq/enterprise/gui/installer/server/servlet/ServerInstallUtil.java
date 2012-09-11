@@ -50,8 +50,9 @@ import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.FailureException;
+import org.rhq.common.jbossas.client.controller.InfinispanJBossASClient;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
-import org.rhq.common.jbossas.client.controller.JMSJBossASClient;
+import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -104,6 +105,8 @@ public class ServerInstallUtil {
     private static final String JMS_ALERT_CONDITION_QUEUE = "AlertConditionQueue";
     private static final String JMS_DRIFT_CHANGESET_QUEUE = "DriftChangesetQueue";
     private static final String JMS_DRIFT_FILE_QUEUE = "DriftFileQueue";
+    private static final String RHQ_CACHE_CONTAINER = "rhq";
+    private static final String RHQ_CACHE = "rhqCache";
 
     /**
      * Configure the deployment scanner to get ready to deploy the application.
@@ -231,52 +234,60 @@ public class ServerInstallUtil {
     public static void createNewJMSQueues(ModelControllerClient mcc, HashMap<String, String> serverProperties)
         throws Exception {
 
-        final JMSJBossASClient client = new JMSJBossASClient(mcc);
+        final MessagingJBossASClient client = new MessagingJBossASClient(mcc);
         final List<String> entryNames = new ArrayList<String>();
 
-        String queue = JMS_ALERT_CONDITION_QUEUE;
-        if (!client.isQueue(queue)) {
+        // TODO (jshaughn): Prior to HornetQ we set recoveryRetries to 0: "don't redeliver messages on failure. It
+        // just causes more failures. just go straight to the dead messages by setting recoveryRetries to 0.
+        // This is equivalent to setting the dLQMaxResent property to 0 in the MessageDriven annotation in
+        // the class definition."
+        // HornetQ has different semantics, and may behave well with default settings. If not, we'll
+        // likely need to add specific <address-setting> elements for our queues, which set
+        // max-delivery-attempts to 0.  The documented default is 10.
+
+        String queueName = JMS_ALERT_CONDITION_QUEUE;
+        if (!client.isQueue(queueName)) {
             entryNames.clear();
-            entryNames.add("queue/" + queue);
-            ModelNode request = client.createNewQueueRequest(queue, entryNames);
+            entryNames.add("queue/" + queueName);
+            ModelNode request = client.createNewQueueRequest(queueName, true, entryNames);
             ModelNode results = client.execute(request);
-            if (!JMSJBossASClient.isSuccess(results)) {
-                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queueName + "]");
             } else {
-                LOG.info("JMS queue [" + queue + "] created");
+                LOG.info("JMS queue [" + queueName + "] created");
             }
         } else {
-            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
-        }
-        
-        queue = JMS_DRIFT_CHANGESET_QUEUE;
-        if (!client.isQueue(queue)) {
-            entryNames.clear();
-            entryNames.add("queue/" + queue);
-            ModelNode request = client.createNewQueueRequest(queue, entryNames);
-            ModelNode results = client.execute(request);
-            if (!JMSJBossASClient.isSuccess(results)) {
-                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
-            } else {
-                LOG.info("JMS queue [" + queue + "] created");
-            }
-        } else {
-            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
+            LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
         }
 
-        queue = JMS_DRIFT_FILE_QUEUE;
-        if (!client.isQueue(queue)) {
+        queueName = JMS_DRIFT_CHANGESET_QUEUE;
+        if (!client.isQueue(queueName)) {
             entryNames.clear();
-            entryNames.add("queue/" + queue);
-            ModelNode request = client.createNewQueueRequest(queue, entryNames);
+            entryNames.add("queue/" + queueName);
+            ModelNode request = client.createNewQueueRequest(queueName, true, entryNames);
             ModelNode results = client.execute(request);
-            if (!JMSJBossASClient.isSuccess(results)) {
-                throw new FailureException(results, "Failed to create JMS Queue [" + queue + "]");
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queueName + "]");
             } else {
-                LOG.info("JMS queue [" + queue + "] created");
+                LOG.info("JMS queue [" + queueName + "] created");
             }
         } else {
-            LOG.info("JMS Queue [" + queue + "] already exists, skipping the creation request");
+            LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
+        }
+
+        queueName = JMS_DRIFT_FILE_QUEUE;
+        if (!client.isQueue(queueName)) {
+            entryNames.clear();
+            entryNames.add("queue/" + queueName);
+            ModelNode request = client.createNewQueueRequest(queueName, true, entryNames);
+            ModelNode results = client.execute(request);
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create JMS Queue [" + queueName + "]");
+            } else {
+                LOG.info("JMS queue [" + queueName + "] created");
+            }
+        } else {
+            LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
         }
 
     }
@@ -300,6 +311,47 @@ public class ServerInstallUtil {
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+        }
+    }
+
+    /**
+     * Creates the Infinispan caches for RHQ.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password to store in the security domain
+     * @throws Exception
+     */
+    public static void createNewCaches(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+
+        final InfinispanJBossASClient client = new InfinispanJBossASClient(mcc);
+        final String cacheContainerName = RHQ_CACHE_CONTAINER;
+        final String localCacheName = RHQ_CACHE;
+        if (!client.isCacheContainer(cacheContainerName)) {
+            ModelNode request = client.createNewCacheContainerRequest(cacheContainerName, localCacheName);
+            ModelNode results = client.execute(request);
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create Cache container [" + cacheContainerName + "]");
+            } else {
+                LOG.info("Cache container [" + cacheContainerName + "] created");
+            }
+
+        } else {
+            LOG.info("Cache container [" + cacheContainerName + "] already exists, skipping the creation request");
+        }
+
+        if (!client.isLocalCache(cacheContainerName, localCacheName)) {
+            ModelNode request = client.createNewLocalCacheRequest(cacheContainerName, localCacheName, null, null, null,
+                null, null);
+            ModelNode results = client.execute(request);
+            if (!MessagingJBossASClient.isSuccess(results)) {
+                throw new FailureException(results, "Failed to create Local Cache [" + localCacheName + "]");
+            } else {
+                LOG.info("Local Cache [" + localCacheName + "] created");
+            }
+
+        } else {
+            LOG.info("Local Cache [" + localCacheName + "] already exists, skipping the creation request");
         }
     }
 

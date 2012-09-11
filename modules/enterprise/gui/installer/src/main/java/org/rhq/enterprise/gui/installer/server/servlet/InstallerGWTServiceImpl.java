@@ -574,6 +574,9 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             // create the security domain needed by REST
             ServerInstallUtil.createRESTSecurityDomain(client, serverProperties);
 
+            // set up REST cache
+            ServerInstallUtil.createNewCaches(client, serverProperties);
+
             // create the JDBC driver configurations for use by datasources
             ServerInstallUtil.createNewJdbcDrivers(client, serverProperties);
 

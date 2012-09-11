@@ -29,43 +29,14 @@ import org.jboss.dmr.ModelNode;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class JMSJBossASClient extends JBossASClient {
+public class MessagingJBossASClient extends JBossASClient {
 
     public static final String SUBSYSTEM_MESSAGING = "messaging";
     public static final String HORNETQ_SERVER = "hornetq-server";
     public static final String JMS_QUEUE = "jms-queue";
-    public static final String OP_ENABLE = "enable";
 
-    public JMSJBossASClient(ModelControllerClient client) {
+    public MessagingJBossASClient(ModelControllerClient client) {
         super(client);
-    }
-
-    public boolean isQueueEnabled(String queueName) throws Exception {
-        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_MESSAGING, HORNETQ_SERVER, "default", JMS_QUEUE,
-            queueName);
-        ModelNode results = readResource(addr);
-        boolean enabledFlag = false;
-        if (results.hasDefined("enabled")) {
-            ModelNode enabled = results.get("enabled");
-            enabledFlag = enabled.asBoolean(false);
-        }
-        return enabledFlag;
-    }
-
-    public void enableQueue(String queueName) throws Exception {
-        if (isQueueEnabled(queueName)) {
-            return; // nothing to do - it's already enabled
-        }
-
-        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_MESSAGING, HORNETQ_SERVER, "default", JMS_QUEUE,
-            queueName);
-        ModelNode request = createRequest(OP_ENABLE, addr);
-        request.get(PERSISTENT).set(true);
-        ModelNode results = execute(request);
-        if (!isSuccess(results)) {
-            throw new FailureException(results);
-        }
-        return; // everything is OK
     }
 
     /**
@@ -86,18 +57,20 @@ public class JMSJBossASClient extends JBossASClient {
      * if they so choose, before asking the client to execute the request.
      *
      * @param name the queue name
+     * @param durable if null, default is "true"
      * @param entryNames the jndiNames, each is prefixed with 'java:/'.  Only supports one entry currently.
      *
      * @return the request that can be used to create the queue
      */
-    public ModelNode createNewQueueRequest(String name, List<String> entryNames) {
+    public ModelNode createNewQueueRequest(String name, Boolean durable, List<String> entryNames) {
 
         String dmrTemplate = "" //
             + "{" //
-            + "\"entries\" => [\"%s\"] " //
+            + "\"durable\" => \"%s\", " //            
+            + "\"entries\" => [\"%s\"] " //            
             + "}";
 
-        String dmr = String.format(dmrTemplate, entryNames.get(0));
+        String dmr = String.format(dmrTemplate, ((null == durable) ? "true" : durable.toString()), entryNames.get(0));
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_MESSAGING, HORNETQ_SERVER, "default", JMS_QUEUE, name);
         final ModelNode request = ModelNode.fromString(dmr);

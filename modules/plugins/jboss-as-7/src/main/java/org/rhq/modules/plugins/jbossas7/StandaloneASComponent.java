@@ -163,39 +163,59 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
 
         OperationResult operationResult = postProcessResult(name, res);
 
-        if (name.equals("shutdown"))
-            waitUntilDown(operationResult);
+        if (name.equals("shutdown")) {
+            if (waitUntilDown()) {
+                operationResult.setSimpleResult("Success");
+            } else {
+                operationResult.setErrorMessage("Was not able to shut down the server.");
+            }
+        }
 
-        if (name.equals("reload"))
-            waitUntilReloaded(operationResult);
+        if (name.equals("reload")) {
+            if (waitUntilReloaded()) {
+                operationResult.setSimpleResult("Success");
+            } else {
+                operationResult.setErrorMessage("Was not able to reload the server.");
+            }
+        }
 
         context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
     }
 
-    private void waitUntilReloaded(OperationResult operationResult) {
+    private boolean waitUntilReloaded() {
         boolean reloaded = false;
         int count = 0;
+
         while (!reloaded) {
-            try {
-                Thread.sleep(2000); // Wait 2s
-            } catch (InterruptedException e) {
-                // Ignore
+            Operation op = new ReadAttribute(new Address(), "release-version");
+            try{
+                Result res = getASConnection().execute(op);
+                if (res.isSuccess() && !res.isReloadRequired()) {
+                    reloaded = true;
+                } else if (count > 20) {
+                    break;
+                }
+            } catch (Exception e) {
+                //do absolutely nothing
+                //if an exception is thrown that means the server is still reloading, so consider this
+                //a single failed attempt, equivalent to res.isSuccess == false
             }
 
-            Operation op = new ReadAttribute(new Address(), "release-version");
-            Result res = getASConnection().execute(op);
-            if (res.isSuccess() && !res.isReloadRequired()) {
-                reloaded = true;
-            } else if (count > 20) {
-                operationResult.setErrorMessage("Was not able to reload the server");
-                return;
+            if (!reloaded) {
+                try {
+                    Thread.sleep(1000); // Wait 1s
+                } catch (InterruptedException e) {
+                    // ignore
+                }
             }
             count++;
         }
-        log.debug("waitUntilReloaded: Used " + count + " delay round(s) to reload");
-        return;
+
+        log.debug("waitUntilReloaded: Used " + count + " delay round(s) to reload. Reload=" + reloaded);
+
+        return reloaded;
     }
 
     @Override

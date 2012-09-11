@@ -597,7 +597,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             } else {
                 // menu action
                 LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
-                final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                final Map<String, Object> menuEntries = tableAction.getValueMap();
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
                     item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
@@ -980,7 +980,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String locatorId, String title, String confirmation,
-        LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
+        Map<String, Object> valueMap, TableAction tableAction) {
         // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
         // extends the footer's locator ID as it should.
         int underscoreIndex = locatorId.lastIndexOf('_');
@@ -993,6 +993,37 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
             confirmation, valueMap, tableAction);
         tableActions.add(info);
+    }
+
+    /**
+     * Updates the list of table's associated actions <code>tableActions</code>.
+     * It automatically updates the gui by calling <code>drawFooter()</code> provided the table has been initialized.
+     * 
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click. It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     * 
+     * @param title the title of a modified action
+     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is 
+     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to 
+     * preserve the order of map items
+     * @param tableAction the tableAction object (on this object the <code>executeAction()</code> is actually invoked)
+     */
+    public void updateTableAction(String title, Map<String, Object> valueMap,
+        TableAction tableAction) {
+        if (title == null) {
+            return;
+        }
+        for (TableActionInfo info : tableActions) {
+            if (title.equals(info.getTitle())) {
+                if (valueMap != null) info.setValueMap(valueMap);
+                if (tableAction != null) info.setAction(tableAction);
+                // the action listeners have to be re-added
+                if (isInitialized()) drawFooter();
+                break;
+            }
+        }
     }
 
     public void setListGridDoubleClickHandler(DoubleClickHandler handler) {
@@ -1247,12 +1278,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         private String locatorId;
         private String title;
         private String confirmMessage;
-        private LinkedHashMap<String, ? extends Object> valueMap;
+        private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
 
         protected TableActionInfo(String locatorId, String title, String confirmMessage,
-            LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
+            Map<String, Object> valueMap, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
             this.confirmMessage = confirmMessage;
@@ -1272,8 +1303,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             return confirmMessage;
         }
 
-        public LinkedHashMap<String, ? extends Object> getValueMap() {
+        public Map<String, Object> getValueMap() {
             return valueMap;
+        }
+        
+        public void setValueMap(Map<String, Object> valueMap) {
+            this.valueMap = valueMap;
         }
 
         public Canvas getActionCanvas() {

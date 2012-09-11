@@ -122,6 +122,9 @@ public class ObfuscatedPropertySimple extends PropertySimple {
      */
     @Override
     public String getStringValue() {
+        if (clearTextValue == null) {
+            initClearTextValue();
+        }
         return clearTextValue;
     }
     

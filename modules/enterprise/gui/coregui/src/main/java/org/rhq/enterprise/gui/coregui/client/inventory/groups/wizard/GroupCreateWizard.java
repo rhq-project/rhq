@@ -22,7 +22,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
+import com.smartgwt.client.util.SC;
+
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 
 /**
@@ -33,13 +38,24 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListV
  */
 public class GroupCreateWizard extends AbstractGroupCreateWizard {
     private ResourceGroupListView resourceGroupListView;
+    private GroupCategory category;
 
-    public GroupCreateWizard(ResourceGroupListView resourceGroupListView) {
-        super();
+    public GroupCreateWizard(ResourceGroupListView resourceGroupListView, GroupCategory category) {
         this.resourceGroupListView = resourceGroupListView;
+        this.category = category;
     }
 
     public void groupCreateCallback(ResourceGroup group) {
         resourceGroupListView.refresh();
+        if (category != null && category != group.getGroupCategory()) {
+            if (category == GroupCategory.COMPATIBLE && group.getExplicitResources().isEmpty()) {
+                SC.say(MSG.view_group_common_emptyGroup());
+            }
+            // if null, it was invoked from all groups list
+            // the other type of group has been created
+            // navigate user to the right category
+            CoreGUI.goToView(GroupCategory.COMPATIBLE == group.getGroupCategory() ? LinkManager
+                .getHubCompatibleGroupsLink() : LinkManager.getHubMixedGroupsLink());
+        }
     }
 }

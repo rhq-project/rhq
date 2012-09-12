@@ -388,6 +388,7 @@
       <groupId>org.jboss.jbossts</groupId>
       <artifactId>jbossjts</artifactId>
       <version>${jboss-jts.version}</version>
+      <scope>provided</scope>
     </dependency>
 
       <!-- TODO: remove this - tests should all be moved under the test source tree -->

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.management.Attribute;
@@ -39,8 +40,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.SchedulerException;
 
-import org.jboss.mx.util.MBeanServerLocator;
-
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
@@ -52,7 +51,10 @@ import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
+import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
@@ -73,6 +75,7 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
@@ -89,6 +92,30 @@ public class StartupBean {
 
     private boolean initialized = false;
 
+    @EJB
+    private SystemManagerLocal systemManager;
+
+    @EJB
+    private ServerManagerLocal serverManager;
+
+    @EJB
+    private CloudManagerLocal cloudManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    private SchedulerLocal schedulerBean;
+
+    @EJB
+    private CacheConsistencyManagerLocal cacheConsistencyManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
      *
@@ -101,7 +128,7 @@ public class StartupBean {
         log.info("All business tier deployments are complete - finishing the startup...");
 
         // As a security measure, make sure the installer has been undeployed
-        LookupUtil.getSystemManager().undeployInstaller();
+        systemManager.undeployInstaller();
 
         // get singletons right now so we load the classes immediately into our classloader
         AlertConditionCacheCoordinator.getInstance();
@@ -112,8 +139,7 @@ public class StartupBean {
 
         // load resource facets cache
         try {
-            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
-            typeManager.reloadResourceFacetsCache();
+            resourceTypeManager.reloadResourceFacetsCache();
         } catch (Throwable t) {
             log.error("Could not load ResourceFacets cache.", t);
         }
@@ -171,14 +197,12 @@ public class StartupBean {
         // Ensure that this server is registered in the database.
         createDefaultServerIfNecessary();
 
-        ServerManagerLocal serverManager = LookupUtil.getServerManager();
-
         // immediately put the server into MM if configured to do so
         if (ServerCommunicationsServiceUtil.getService().getMaintenanceModeAtStartup()) {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            LookupUtil.getCloudManager().updateServerMode(serverId, OperationMode.MAINTENANCE);
+            cloudManager.updateServerMode(serverId, OperationMode.MAINTENANCE);
         }
 
         // Establish the current server mode for the server. This will move the server to NORMAL
@@ -202,8 +226,8 @@ public class StartupBean {
      * in the {@link Server} table
      */
     private void createDefaultServerIfNecessary() {
-        String identity = LookupUtil.getServerManager().getIdentity();
-        Server server = LookupUtil.getCloudManager().getServerByName(identity);
+        String identity = serverManager.getIdentity();
+        Server server = cloudManager.getServerByName(identity);
         if (server == null) {
             server = new Server();
             server.setName(identity);
@@ -219,7 +243,7 @@ public class StartupBean {
             server.setSecurePort(7443);
             server.setComputePower(1);
             server.setOperationMode(Server.OperationMode.INSTALLED);
-            LookupUtil.getServerManager().create(server);
+            serverManager.create(server);
             log.info("Default HA server created: " + server);
         }
     }
@@ -232,7 +256,7 @@ public class StartupBean {
     private void startHibernateStatistics() throws RuntimeException {
         log.info("Starting hibernate statistics monitoring...");
         try {
-            LookupUtil.getSystemManager().enableHibernateStatistics();
+            systemManager.enableHibernateStatistics();
         } catch (Exception e) {
             throw new RuntimeException("Cannot start hibernate statistics monitoring!", e);
         }
@@ -293,7 +317,7 @@ public class StartupBean {
         log.info("Initializing the scheduler....");
 
         try {
-            LookupUtil.getSchedulerBean().initQuartzScheduler();
+            schedulerBean.initQuartzScheduler();
         } catch (SchedulerException e) {
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
@@ -309,7 +333,7 @@ public class StartupBean {
         log.info("Starting the scheduler...");
 
         try {
-            LookupUtil.getSchedulerBean().startQuartzScheduler();
+            schedulerBean.startQuartzScheduler();
         } catch (SchedulerException e) {
             throw new RuntimeException("Cannot start the scheduler!", e);
         }
@@ -371,19 +395,17 @@ public class StartupBean {
          * non-volatile;
          */
 
-        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-
         // TODO [mazz]: make all of the intervals here configurable via something like SystemManagerBean
 
-        LookupUtil.getServerManager().scheduleServerHeartbeat();
-        LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
-        LookupUtil.getSystemManager().scheduleConfigCacheReloader();
+        serverManager.scheduleServerHeartbeat();
+        cacheConsistencyManager.scheduleServerCacheReloader();
+        systemManager.scheduleConfigCacheReloader();
 
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
-            scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
+            schedulerBean.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
                 initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule asynchronous resource deletion job.", e);
@@ -393,7 +415,7 @@ public class StartupBean {
             // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60 * 5;
-            scheduler.scheduleSimpleRepeatingJob(AsyncResourceDeleteJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(AsyncResourceDeleteJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule asynchronous resource deletion job.", e);
         }
@@ -402,7 +424,7 @@ public class StartupBean {
             // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60 * 5;
-            scheduler.scheduleSimpleRepeatingJob(PurgeResourceTypesJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(PurgeResourceTypesJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule purge resource types job.", e);
         }
@@ -411,7 +433,7 @@ public class StartupBean {
             // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60 * 5;
-            scheduler.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule purge plugins job.", e);
         }
@@ -421,7 +443,7 @@ public class StartupBean {
             // Do not check until we are up at least 1 min, and every minute thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
-            scheduler.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
+            schedulerBean.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
             log.error("Cannot schedule DynaGroup auto-recalculation job.", e);
@@ -430,7 +452,7 @@ public class StartupBean {
         // Cluster Manager Job
         try {
             String oldJobName = "org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob";
-            boolean foundAndDeleted = scheduler.deleteJob(oldJobName, oldJobName);
+            boolean foundAndDeleted = schedulerBean.deleteJob(oldJobName, oldJobName);
             if (foundAndDeleted) {
                 log.info("Unscheduling deprecated job references for " + oldJobName + "...");
             } else {
@@ -440,7 +462,7 @@ public class StartupBean {
             // Wait long enough to allow the Server instance jobs to start executing first.
             final long initialDelay = 1000L * 60 * 2; // 2 mins
             final long interval = 1000L * 30; // 30 secs
-            scheduler.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule cloud management job.", e);
         }
@@ -450,7 +472,7 @@ public class StartupBean {
             // Do not check until we are up at least 10 mins, but check every 60 secs thereafter.
             final long initialDelay = 1000L * 60 * 10; // 10 mins
             final long interval = 1000L * 60; // 60 secs
-            scheduler.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule suspected Agents job.", e);
         }
@@ -459,7 +481,7 @@ public class StartupBean {
         try {
             final long initialDelay = 1000L * 60 * 3; // 3 min
             final long interval = 1000L * 60 * 10; // 10 minutes
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
             log.error("Cannot schedule check-for-timed-out-operations job.", e);
@@ -470,7 +492,7 @@ public class StartupBean {
         try {
             final long initialDelay = 1000L * 60 * 4; // 4 mins
             final long interval = 1000L * 60 * 10; // 10 mins
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay,
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
             log.error("Cannot schedule check-for-timed-out-configuration-update-requests job.", e);
@@ -480,7 +502,7 @@ public class StartupBean {
         try {
             final long initialDelay = 1000L * 60 * 5; // 5 mins
             final long interval = 1000L * 60 * 15; // 15 mins
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
             log.error("Cannot schedule check-for-timed-out-artifact-requests job.", e);
@@ -491,7 +513,7 @@ public class StartupBean {
             // TODO [mazz]: make the data purge job's cron string configurable via SystemManagerBean
             // For Quartz cron syntax, see: http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger
             String cronString = "0 0 * * * ?"; // every hour, on the hour
-            scheduler.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
+            schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {
             log.error("Cannot schedule data purge job.", e);
         }
@@ -507,7 +529,7 @@ public class StartupBean {
 
         // Alerting Availability Duration Job (create only, nothing actually scheduled here) 
         try {
-            scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
+            schedulerBean.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
         } catch (Exception e) {
             log.error("Cannot create alert availability duration job.", e);
         }
@@ -524,7 +546,6 @@ public class StartupBean {
     private void startAgentClients() {
         log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
 
-        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
         List<Agent> agents = agentManager.getAllAgents();
 
         if (agents != null) {
@@ -587,7 +608,7 @@ public class StartupBean {
                     serverPort = overrides.getProperty(AgentConfigurationConstants_SERVER_BIND_PORT);
                     agentAddress = overrides.getProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS);
 
-                    Server server = LookupUtil.getServerManager().getServer();
+                    Server server = serverManager.getServer();
 
                     if (agentAddress == null || agentAddress.trim().equals("")) {
                         overrides.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS,
@@ -679,6 +700,7 @@ public class StartupBean {
             throw new RuntimeException("Failed to register the Server Shutdown Listener", e);
         }
         */
+        log.warn("!!! TODO: REGISTER OUR SHUTDOWN LISTENER!!!");
     }
 
     /**
@@ -689,7 +711,7 @@ public class StartupBean {
         long elapsed;
         try {
             ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");
-            MBeanServer jbossServer = MBeanServerLocator.locateJBoss();
+            MBeanServer jbossServer = ManagementFactory.getPlatformMBeanServer();
             Date startTime = (Date) jbossServer.getAttribute(jbossServerName, "StartDate");
             long currentTime = System.currentTimeMillis();
             elapsed = currentTime - startTime.getTime();
@@ -700,8 +722,8 @@ public class StartupBean {
     }
 
     private void logServerStartedMessage() {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        ProductInfo productInfo = LookupUtil.getSystemManager().getProductInfo(overlord);
+        Subject overlord = subjectManager.getOverlord();
+        ProductInfo productInfo = systemManager.getProductInfo(overlord);
         log.info("--------------------------------------------------"); // 50 dashes
         log.info(productInfo.getFullName() + " " + productInfo.getVersion() + " (build " + productInfo.getBuildNumber()
             + ") Server started.");

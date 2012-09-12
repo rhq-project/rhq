@@ -497,7 +497,7 @@ public final class LookupUtil {
         return lookupLocal(ServerManagerBean.class);
     }
 
-    public static CacheConsistencyManagerLocal getCacheConsistenyManager() {
+    public static CacheConsistencyManagerLocal getCacheConsistencyManager() {
         return lookupLocal(CacheConsistencyManagerBean.class);
     }
 

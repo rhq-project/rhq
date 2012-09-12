@@ -46,8 +46,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.mx.util.MBeanServerLocator;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
@@ -487,7 +485,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         try {
             Object mbean;
 
-            mbean = MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
+            mbean = MBeanServerInvocationHandler.newProxyInstance(ManagementFactory.getPlatformMBeanServer(),
                 CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
             ((CustomJaasDeploymentServiceMBean) mbean).installJaasModules();
         } catch (Exception e) {

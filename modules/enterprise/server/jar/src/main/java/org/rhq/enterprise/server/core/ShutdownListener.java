@@ -16,14 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.startup;
+package org.rhq.enterprise.server.core;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import javax.annotation.PreDestroy;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.management.Notification;
-import javax.management.NotificationListener;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -42,7 +44,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jay Shaughnessy
  * @author Joseph Marques
  */
-public class ShutdownListener implements NotificationListener {
+@Singleton
+@Startup
+public class ShutdownListener {
     /**
      * Logger
      */
@@ -56,15 +60,13 @@ public class ShutdownListener implements NotificationListener {
      *
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
+    @PreDestroy
     public void handleNotification(Notification notification, Object handback) {
-        // TODO: JBossAS 4.2.3 used to send us this JMX notification on shutdown - how does AS7 provide this notification?
-        if (false) {
-            stopScheduler();
-
-            updateServerOperationMode();
-
-            stopEmbeddedDatabase();
-        }
+        // JBossAS 4.2.3 used to send us this JMX notification on shutdown - AS7 does not have shutdown notifications.
+        // So we are using the @PreDestroy mechanism on a singleton EJB to attempt to clean up the application before it is shutdown
+        stopScheduler();
+        updateServerOperationMode();
+        stopEmbeddedDatabase();
     }
 
     /**

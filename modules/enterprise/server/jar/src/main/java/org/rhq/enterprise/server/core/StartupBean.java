@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.core;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -27,6 +26,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import javax.annotation.PostConstruct;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -76,36 +78,23 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
- * This servlet is ensured to be initialized after the rest of the RHQ Server has been deployed and started.
- * Specifically, we know that at {@link #init()} time, all EJBs have been deployed and available.
- *
- * This also accepts requests and responds with information regarding the state of the startup.
+ * This startup singleton EJB performs the rest of the RHQ Server startup initialization.
+ * In order for it to do its work properly, we must ensure everything has been deployed and started;
+ * specifically, all EJBs must have been deployed and available.
  */
+@Singleton
+@Startup
 public class StartupBean {
-
-    private static final long serialVersionUID = 1L;
-
     private Log log = LogFactory.getLog(this.getClass());
 
     private boolean initialized = false;
-
-    /**
-     * This merely returns an HTTP status code to indicate the status of the startup.
-     * Under normal conditions, this will always return a 200 status code.
-     */
-    protected void service(Object req, Object resp) throws RuntimeException, IOException {
-        //        resp.setHeader("Cache-Control", "no-cache, no-store");
-        //        resp.setHeader("Expires", "-1");
-        //        resp.setHeader("Pragma", "no-cache");
-        //        // as opposed to SC_OK (200), return a special value due to https://issues.jboss.org/browse/JBWEB-188.
-        //        resp.setStatus(initialized ? 288 : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-    }
 
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
      *
      * @throws RuntimeException
      */
+    @PostConstruct
     public void init() throws RuntimeException {
         initialized = false;
 

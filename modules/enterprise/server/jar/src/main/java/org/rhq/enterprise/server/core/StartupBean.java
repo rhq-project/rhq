@@ -81,7 +81,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  *
  * This also accepts requests and responds with information regarding the state of the startup.
  */
-public class StartupServlet {
+public class StartupBean {
 
     private static final long serialVersionUID = 1L;
 

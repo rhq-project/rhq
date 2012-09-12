@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.server.bundle;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 
-public interface TestBundleServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface TestBundleServerPluginServiceMBean extends ServerPluginServiceMBean {
 }

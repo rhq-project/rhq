@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
@@ -498,7 +498,7 @@ public class StartupBean {
 
         // Server Plugin Jobs
         try {
-            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             MasterServerPluginContainer masterPC = mbean.getMasterPluginContainer();
             masterPC.scheduleAllPluginJobs();
         } catch (Exception e) {
@@ -654,7 +654,7 @@ public class StartupBean {
         log.info("Starting the master server plugin container...");
 
         try {
-            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             mbean.startMasterPluginContainerWithoutSchedulingJobs();
         } catch (Exception e) {
             throw new RuntimeException("Cannot start the master server plugin container!", e);

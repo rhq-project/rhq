@@ -33,7 +33,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-public class ServerPluginService implements ServerPluginServiceManagement {
+public class ServerPluginService implements ServerPluginServiceMBean {
     private static final Log log = LogFactory.getLog(ServerPluginService.class);
 
     private boolean started;

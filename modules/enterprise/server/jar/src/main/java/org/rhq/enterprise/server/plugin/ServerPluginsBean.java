@@ -60,7 +60,7 @@ import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ControlDefinition;
@@ -214,7 +214,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     private boolean enableServerPluginInMasterContainer(PluginKey pluginKey) {
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         boolean success = true; // assume everything will be ok
 
@@ -272,7 +272,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     private boolean disableServerPluginInMasterContainer(PluginKey pluginKey) {
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         boolean success = true; // assume everything will be ok
 
@@ -351,7 +351,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     private boolean undeployServerPluginInMasterContainer(PluginKey pluginKey) {
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         boolean success = true; // assume everything will be ok
 
@@ -486,7 +486,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     private void loadServerPluginInMasterContainer(URL pluginUrl) throws Exception {
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         if (master != null) {
             master.loadPlugin(pluginUrl, false); // don't enable it - let the caller do that later
@@ -612,7 +612,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @Override
     public List<ControlDefinition> getServerPluginControlDefinitions(PluginKey pluginKey) throws Exception {
 
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         if (master != null) {
             AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
@@ -634,7 +634,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public ControlResults invokeServerPluginControl(Subject subject, PluginKey pluginKey, String controlName,
         Configuration params) throws Exception {
 
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         if (master != null) {
             AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);

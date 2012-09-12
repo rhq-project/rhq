@@ -19,13 +19,13 @@
 
 package org.rhq.enterprise.server.test;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 
 /**
  * A generic MBean interface for tests that need a ServerPluginService setup.
  *
  * @author Lukas Krejci
  */
-public interface StandardServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface StandardServerPluginServiceMBean extends ServerPluginServiceMBean {
 
 }

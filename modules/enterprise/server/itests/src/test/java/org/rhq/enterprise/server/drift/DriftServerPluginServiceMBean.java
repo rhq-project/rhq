@@ -19,7 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 
-public interface DriftServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface DriftServerPluginServiceMBean extends ServerPluginServiceMBean {
 }

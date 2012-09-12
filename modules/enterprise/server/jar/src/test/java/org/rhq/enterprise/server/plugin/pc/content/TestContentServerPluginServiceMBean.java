@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 
-public interface TestContentServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface TestContentServerPluginServiceMBean extends ServerPluginServiceMBean {
 }

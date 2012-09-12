@@ -19,7 +19,7 @@
 
 package org.rhq.enterprise.server.test;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 
-public interface TestServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface TestServerPluginServiceMBean extends ServerPluginServiceMBean {
 }

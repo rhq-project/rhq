@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -329,7 +329,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         try {
             MBeanServer mbs = getJBossMBeanServer();
             testServiceMBean.start();
-            mbs.registerMBean(testServiceMBean, ServerPluginServiceManagement.OBJECT_NAME);
+            mbs.registerMBean(testServiceMBean, ServerPluginServiceMBean.OBJECT_NAME);
             serverPluginService = testServiceMBean;
             return;
         } catch (Exception e) {
@@ -350,8 +350,8 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
                 if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
                     getJBossMBeanServer().unregisterMBean(ServerPluginService.OBJECT_NAME);
                 }
-                if (mbs.isRegistered(ServerPluginServiceManagement.OBJECT_NAME)) {
-                    getJBossMBeanServer().unregisterMBean(ServerPluginServiceManagement.OBJECT_NAME);
+                if (mbs.isRegistered(ServerPluginServiceMBean.OBJECT_NAME)) {
+                    getJBossMBeanServer().unregisterMBean(ServerPluginServiceMBean.OBJECT_NAME);
                 }
 
             } else {

@@ -143,7 +143,7 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerBean;
@@ -623,10 +623,10 @@ public final class LookupUtil {
         return scanner;
     }
 
-    public static ServerPluginServiceManagement getServerPluginService() {
+    public static ServerPluginServiceMBean getServerPluginService() {
         MBeanServer jBossMBeanServer = getJBossMBeanServer();
-        ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
-            ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
+        ServerPluginServiceMBean service = (ServerPluginServiceMBean) MBeanProxyExt.create(
+            ServerPluginServiceMBean.class, ServerPluginServiceMBean.OBJECT_NAME, jBossMBeanServer);
         return service;
     }
 

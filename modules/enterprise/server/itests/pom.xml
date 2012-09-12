@@ -54,13 +54,14 @@
          <scope>test</scope>
       </dependency>
 
+<!-- 
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-container-lib</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
       </dependency>
-      
+ -->      
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>

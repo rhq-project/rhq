@@ -165,24 +165,12 @@
       <artifactId>commons-logging</artifactId>
       <version>1.0.4</version>
       <scope>provided</scope>
-            <!-- by JBossAS -->
     </dependency>
 
     <dependency>
       <groupId>org.opensymphony.quartz</groupId>
       <artifactId>quartz</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>provided</scope>
-            <!-- by JBossAS itself, which the container buildNodes has packaged with 1.6.5 -->
-    </dependency>
-
-        <!-- transitive dependency needed for JspC -->
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.4</version>
-      <scope>provided</scope>
-            <!-- by JBossAS -->
     </dependency>
 
     <dependency>

@@ -127,6 +127,22 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-enterprise-comm</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss</groupId>
+                    <artifactId>jboss-common-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- 3rd Party Deps -->
 
         <!-- ** WARs -->

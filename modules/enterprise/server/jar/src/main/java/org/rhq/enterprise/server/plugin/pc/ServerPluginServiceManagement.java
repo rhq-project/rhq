@@ -32,7 +32,7 @@ import org.rhq.core.util.ObjectNameFactory;
  * @author John Mazzitelli
  */
 public interface ServerPluginServiceManagement {
-    String OBJECT_NAME_STR = "rhq.serverplugin:service=ServerPluginService";
+    String OBJECT_NAME_STR = "rhq:service=ServerPluginService";
     ObjectName OBJECT_NAME = ObjectNameFactory.create(OBJECT_NAME_STR);
 
     /**

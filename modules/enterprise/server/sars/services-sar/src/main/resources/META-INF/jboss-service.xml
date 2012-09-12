@@ -120,4 +120,8 @@ rhq.server.client.security.truststore.password=${rhq.server.client.security.trus
 rhq.server.client.security.server-auth-mode-enabled=${rhq.server.client.security.server-auth-mode-enabled:false}
         </attribute>
     </mbean>
+    
+    <mbean code="org.rhq.enterprise.server.plugin.pc.ServerPluginService"
+           name="rhq:service=ServerPluginService" />
+    
 </server>

@@ -23,9 +23,6 @@ import java.io.File;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.ejb.Management;
-import org.jboss.annotation.ejb.Service;
-
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -36,8 +33,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-@Management(ServerPluginServiceManagement.class)
-@Service(objectName = ServerPluginServiceManagement.OBJECT_NAME_STR)
 public class ServerPluginService implements ServerPluginServiceManagement {
     private static final Log log = LogFactory.getLog(ServerPluginService.class);
 

@@ -29,7 +29,7 @@
     </plugin-configuration>
 
     <process-scan name="CassandraDaemon"
-                  query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>
+                  query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
 
     <!--<server name="Cassandra JVM"-->
             <!--description="The JVM of the Cassandra node"-->
@@ -54,7 +54,7 @@
 
     <service name="StorageService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent">
+             class="org.rhq.plugins.cassandra.StorageServiceComponent">
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
       </plugin-configuration>
@@ -63,17 +63,19 @@
 
       <operation name="stopRPCServer" description="Stop the Thrift server"/>
 
-      <!--<operation name="takeSnapshot"-->
-                 <!--description="Takes the snapshot for the given tables. A snapshot name must be specified.">-->
-        <!--<parameters>-->
-          <!--<c:simple-property name="p1" displayName="tag" required="true" type="string"/>-->
-          <!--<c:list-property name="p2" displayName="columnFamilies">-->
-            <!--<c:map-property name="columnFamiliesMap">-->
-              <!--<c:simple-property name="columnFamily" type="string"/>-->
-            <!--</c:map-property>-->
-          <!--</c:list-property>-->
-        <!--</parameters>-->
-      <!--</operation>-->
+      <operation name="takeKeyspaceSnapshot"
+                 description="Takes a snapshot of all column families in a keyspace.">
+        <parameters>
+          <c:simple-property name="snapshotName"
+                             required="true"
+                             type="string"
+                             description="A snapshot first flushes all in-memory writes to disk and then creates a hard
+                             link of each SSTable file for the keyspace. Note that a column family can have multiple
+                             SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                             directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data"/>
+          <c:simple-property name="keyspaceName" required="true" type="string"/>
+        </parameters>
+      </operation>
     </service>
   </server>
 </plugin>

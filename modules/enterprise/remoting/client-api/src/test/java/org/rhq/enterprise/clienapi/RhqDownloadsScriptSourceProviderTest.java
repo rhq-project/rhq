@@ -22,13 +22,21 @@ package org.rhq.enterprise.clienapi;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Reader;
 import java.net.URI;
+import java.net.URL;
 
+import org.apache.tools.ant.filters.StringInputStream;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockObjectFactory;
+import org.testng.IObjectFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.bindings.StandardBindings;
@@ -43,11 +51,18 @@ import org.rhq.enterprise.clientapi.RhqDownloadsScriptSourceProvider;
  * @author Lukas Krejci
  */
 @Test
+@PrepareForTest(RhqDownloadsScriptSourceProvider.class)
 public class RhqDownloadsScriptSourceProviderTest {
 
     private File tmpDir;
     
+    @ObjectFactory
+    public IObjectFactory getObjectFactory() {
+        return new PowerMockObjectFactory();
+    }
+    
     private static final String EXPECTED_CONTENTS = "println('Hello, World!')";
+    
     @BeforeClass
     public void createTmpDir() throws Exception {
         tmpDir = FileUtil.createTempDirectory(getClass().getName(), null, null);
@@ -76,7 +91,11 @@ public class RhqDownloadsScriptSourceProviderTest {
     public void canLocateScripts() throws Exception {
         RemoteClient client = Mockito.mock(RemoteClient.class); 
         
-        Mockito.when(client.getRemoteURI()).thenReturn(tmpDir.toURI());
+        //this is akin to what the remote client actually returns as the remote URI
+        URI remoteURI = new URI("socket://localhost:7080");
+        Mockito.when(client.getRemoteURI()).thenReturn(remoteURI);
+        
+        URI real = tmpDir.toURI().resolve("downloads/script-modules/test-script.js");
         
         RhqDownloadsScriptSourceProvider provider = new RhqDownloadsScriptSourceProvider();
 
@@ -86,6 +105,10 @@ public class RhqDownloadsScriptSourceProviderTest {
         
         URI location = new URI("rhq://downloads/test-script.js");
         
+        //let's actually cheat - the source provider will try to locate the script using HTTP
+        //but we subvert that and use the local file URL anyway...
+        PowerMockito.whenNew(URI.class).withArguments("http", "localhost:7080", "/downloads/script-modules/test-script.js", null, null).thenReturn(real);
+
         Reader rdr = provider.getScriptSource(location);
         
         try {

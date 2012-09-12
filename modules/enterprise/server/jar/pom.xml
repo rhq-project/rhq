@@ -504,12 +504,6 @@
       <version>1.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rest-docs-generator</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.yaml</groupId>
@@ -762,118 +756,6 @@
           </execution>
         </executions>
       </plugin>
-
-        <!-- Document generation from the Annotations on the REST-API. -->
-        <!-- TODO move to a better suited processing phase -->
-      <plugin>
-        <groupId>org.bsc.maven</groupId>
-        <artifactId>maven-processor-plugin</artifactId>
-        <version>2.0.6-redhat</version>
-        <configuration>
-          <processors>
-            <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
-          </processors>
-          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
-            <!-- Comment the next line in to get more verbose output for debugging -->
-            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
-        </configuration>
-        <executions>
-          <execution>
-            <id>create-rest-api-reports</id>
-            <phase>process-classes</phase>
-            <goals>
-                <!-- We want to process the classes in src/ -->
-              <goal>process</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-        <!-- Disable annotation processors during normal compilation -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <compilerArgument>-proc:none</compilerArgument>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>xml-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>transform</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <transformationSets>
-            <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
-              <dir>target/docs/xml</dir>
-              <includes>
-                <include>rest-api-out.xml</include>
-              </includes>
-              <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
-              <parameters>
-                <parameter>
-                  <name>basePath</name>
-                  <value>http://localhost:7080/rest/1</value>
-                </parameter>
-              </parameters>
-              <outputDir>${project.build.directory}/docs/html</outputDir>
-              <fileMappers>
-                <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
-                  <targetExtension>.html</targetExtension>
-                </fileMapper>
-              </fileMappers>
-            </transformationSet>
-            <transformationSet>
-                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
-              <dir>target/docs/xml</dir>
-              <includes>
-                <include>rest-api-out.xml</include>
-              </includes>
-              <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
-              <parameters>
-                <parameter>
-                  <name>basePath</name>
-                  <value>http://localhost:7080/rest/1</value>
-                </parameter>
-              </parameters>
-              <outputDir>${project.build.directory}/docs/xml</outputDir>
-              <fileMappers>
-                <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
-                  <targetExtension>.dbx.xml</targetExtension>
-                </fileMapper>
-              </fileMappers>
-            </transformationSet>
-          </transformationSets>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>com.agilejava.docbkx</groupId>
-        <artifactId>docbkx-maven-plugin</artifactId>
-        <version>2.0.9</version>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>generate-pdf</goal>
-              <goal>generate-html</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
-          <includes>rest-api-out.dbx.xml</includes>
-          <hyphenate>false</hyphenate>
-          <generateToc>true</generateToc>
-        </configuration>
-      </plugin>
-
     </plugins>
 
   </build>
@@ -1085,6 +967,142 @@
 
     </profile>
 
+  <profile>
+    <id>REST doc generation</id>
+    <activation>
+      <property>
+        <name>docgen</name>
+      </property>
+    </activation>
+
+    <dependencies>
+      <dependency>
+        <groupId>org.rhq.helpers</groupId>
+        <artifactId>rest-docs-generator</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+      </dependency>
+    </dependencies>
+
+    <build>
+      <!-- Document generation from the Annotations on the REST-API. -->
+      <!-- TODO move to a better suited processing phase -->
+      <plugins>
+      
+        <plugin>
+          <groupId>org.bsc.maven</groupId>
+          <artifactId>maven-processor-plugin</artifactId>
+          <version>2.0.6-redhat</version>
+          <configuration>
+            <processors>
+              <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+            </processors>
+            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
+            <!-- Comment the next line in to get more verbose output for debugging -->
+            <!--<compilerArguments>-Averbose=true</compilerArguments> -->
+          </configuration>
+          <executions>
+            <execution>
+              <id>create-rest-api-reports</id>
+              <phase>process-classes</phase>
+              <goals>
+                <!-- We want to process the classes in src/ -->
+                <goal>process</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        
+        <!-- Disable annotation processors during normal compilation -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgument>-proc:none</compilerArgument>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>xml-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>transform</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <transformationSets>
+              <transformationSet>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes>
+                  <include>rest-api-out.xml</include>
+                </includes>
+                <stylesheet>src/main/xsl/apiout2html.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/html</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.html</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+              <transformationSet>
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes>
+                  <include>rest-api-out.xml</include>
+                </includes>
+                <stylesheet>src/main/xsl/apiout2docbook.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest/1</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/xml</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.dbx.xml</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+            </transformationSets>
+          </configuration>
+        </plugin>
+        
+        <plugin>
+          <groupId>com.agilejava.docbkx</groupId>
+          <artifactId>docbkx-maven-plugin</artifactId>
+          <version>2.0.9</version>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>generate-pdf</goal>
+                <goal>generate-html</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
+            <includes>rest-api-out.dbx.xml</includes>
+            <hyphenate>false</hyphenate>
+            <generateToc>true</generateToc>
+          </configuration>
+        </plugin>
+      </plugins>
+    </build>
+  </profile>
+    
     <profile>
       <id>cobertura</id>
       <build>

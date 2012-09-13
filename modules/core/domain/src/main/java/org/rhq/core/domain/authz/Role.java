@@ -123,9 +123,9 @@ public class Role implements Serializable {
 
     @ElementCollection(targetClass = Permission.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "RHQ_PERMISSION", joinColumns = { @JoinColumn(name = "ROLE_ID") })
-    @JoinColumn(name = "OPERATION", nullable = false)
+    @Column(name = "OPERATION", nullable = false)
     @Enumerated(EnumType.ORDINAL)
-    @Cascade( { org.hibernate.annotations.CascadeType.ALL })
+    @Cascade({ org.hibernate.annotations.CascadeType.ALL })
     private Set<Permission> permissions = new HashSet<Permission>();
 
     public Role() {

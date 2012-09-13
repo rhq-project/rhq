@@ -114,21 +114,18 @@
                            <property name="project.groupId" value="${project.groupId}" />
                            <property name="project.version" value="${project.version}" />
                            <property name="settings.localRepository" value="${settings.localRepository}" />
-                           <property name="rhq-remoting-ws.version" value="${project.version}" />
                            <property name="commons-logging.version" value="${commons-logging.version}" />
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />
                            <property name="getopt.version" value="${getopt.version}" />
-                           <property name="hibernate-annotations.version" value="${hibernate-annotations.version}" />
                            <property name="i18nlog.version" value="${i18nlog.version}" />
-                           <property name="jboss-common.version" value="${jboss-common.version}" />
+                           <property name="jboss-common-core.version" value="${jboss-common-core.version}" />
                            <property name="jboss.version" value="${jboss.version}" />
                            <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                            <property name="jboss-javassist.version" value="${javassist.version}" />
                            <property name="jline.version" value="${jline.version}" />
                            <property name="log4j.version" value="${log4j.version}" />
                            <property name="testng.version" value="${testng.version}" />
-                           <property name="persistence-api.version" value="${persistence-api.version}" />
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
@@ -182,39 +179,6 @@
             </executions>
          </plugin>
 
-<!--
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>test-non-ws</id>
-                  <phase>test</phase>
-
-                  <configuration>
-                     <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
-                     <forkMode>pertest</forkMode>
-                     <argLine>-Xmx512m -Xms128m</argLine>
-                     <additionalClasspathElements>
--->
-                        <!-- The below is required for WS Java Client support -->
-<!--
-                        <additionalClasspathElement>
-                           ${project.build.outputDirectory}/lib/rhq-cli-${project.version}.jar
-                        </additionalClasspathElement>
-                        <additionalClasspathElement>
-                           ${project.build.outputDirectory}/lib/${project.build.finalName}.jar
-                        </additionalClasspathElement>
-                     </additionalClasspathElements>
-
-                  </configuration>
-
-                  <goals>
-                     <goal>test</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
--->
       </plugins>
    </build>
 
@@ -238,30 +202,6 @@
                <scope>runtime</scope>
             </dependency>
          </dependencies>
-      </profile>
-
-      <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
-      <profile>
-         <id>check-java-api</id>
-
-         <activation>
-            <property>
-               <name>java5.home</name>
-            </property>
-         </activation>
-
-         <build>
-           <plugins>
-              <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                  <compilerArguments>
-                    <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jsse.jar${path.separator}${java.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>
-                </configuration>
-              </plugin>
-            </plugins>
-          </build>
       </profile>
 
       <profile>

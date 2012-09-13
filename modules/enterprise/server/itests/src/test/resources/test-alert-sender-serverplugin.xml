@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-complex-test"
+        displayName="Alert:ComplexTest"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.alert"
+        description="Alert sender plugin for testing the complex validation behavior."
+        >
+    
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Test Alert Sender</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>TestAlertSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="persistent" type="string" required="true" description="The property that is persisted into the database."/>
+        <c:simple-property name="ephemeral" type="string" required="true" description="The property used only at creation/update time. It is not stored into the datbase because the plugin actually removes it from the configuration." />
+    </alert-configuration>
+</alert-plugin>

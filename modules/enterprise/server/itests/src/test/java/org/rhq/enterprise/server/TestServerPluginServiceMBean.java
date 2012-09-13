@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,15 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.drift;
+package org.rhq.enterprise.server;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 
-public interface DriftServerPluginServiceMBean extends ServerPluginServiceManagement {
+/**
+ * 
+ *
+ * @author Lukas Krejci
+ */
+public interface TestServerPluginServiceMBean extends ServerPluginServiceManagement {
+
 }

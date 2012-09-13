@@ -45,11 +45,29 @@ public interface AlertDefinitionManagerLocal {
 
     List<IntegerOptionItem> findAlertDefinitionOptionItemsForGroup(Subject subject, int groupId);
 
-    int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
-        throws InvalidAlertDefinitionException;
-
     /**
-     * This is exactly the same as {@link #createAlertDefinition(Subject, AlertDefinition, Integer)} but
+     * Creates a new alert definition. Note that the suject is checked to have necessary authz, which might not
+     * be what you want in all use cases. See {@link #createDependentAlertDefinition(Subject, AlertDefinition, int)}
+     * for further discussion of this.
+     * 
+     * @param subject the user creating the alert definition
+     * @param alertDefinition the new alert definition to persist
+     * @param resourceId the resource id for which the def is being created
+     * @param finalizeNotificationConfiguration if true, the configuration of the def's notifications is validated.
+     * This is NOT what you want if, for example, you are merely creating a copy of an existing definition.
+     * Some notifications might require more input when creating the notification than is then persisted in their configs
+     * (prominent example being the CLI alert sender).
+     * This would then cause the validation to fail every time you created a copy of a definition and tried
+     * to persist it. Note that passing false AND having new, unpersisted notifications in the alert definition can
+     * lead to invalid configuration being stored for the notifications.
+     * @return the id of the newly persisted alert definition
+     * @throws InvalidAlertDefinitionException
+     */
+    int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotificationConfiguration)
+        throws InvalidAlertDefinitionException;
+    
+    /**
+     * This is exactly the same as {@link #createAlertDefinition(Subject, AlertDefinition, Integer, boolean)} but
      * assumes the resource is part of a group (or has given resource type for templates) for which 
      * a group or template alert definition is being created.
      * <p>
@@ -93,6 +111,24 @@ public interface AlertDefinitionManagerLocal {
     AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition,
         boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
+    /**
+     * This method is similar in use-case to {@link #createDependentAlertDefinition(Subject, AlertDefinition, int)}.
+     * It assumes that the the update is part of some more complex operation (like updating alert definition on a group
+     * or a template) and that authz checks have already been performed.
+     * <p>
+     * This method is therefore identical to {@link #updateAlertDefinition(Subject, int, AlertDefinition, boolean)} but
+     * does not perform any authorization checks.
+     * 
+     * @param subject the user that is updating the alert definition
+     * @param alertDefinitionId
+     * @param alertDefinition
+     * @param resetMatching
+     * @return
+     * @throws InvalidAlertDefinitionException
+     * @throws AlertDefinitionUpdateException
+     */
+    AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+    
     int purgeUnusedAlertDefinitions();
 
     void purgeInternals(int alertDefinitionId);

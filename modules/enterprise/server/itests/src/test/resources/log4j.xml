@@ -17,7 +17,7 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="true">
 
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
-      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+      <!-- <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>  -->
       <param name="Target" value="System.out"/>
       <param name="Threshold" value="WARN"/>
 
@@ -64,7 +64,7 @@
    <category name="org.hibernate.SQL">
       <priority value="DEBUG"/>
    </category>
-   -->
+    -->
 
    <root>
       <appender-ref ref="CONSOLE"/>

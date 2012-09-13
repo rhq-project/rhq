@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.drift;
+package org.rhq.enterprise.server.alert;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,30 +28,34 @@ import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
-import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 
-public class DriftServerPluginService extends TestServerPluginService {
+/**
+ * 
+ *
+ * @author Lukas Krejci
+ */
+public class TestAlertSenderPluginService extends TestServerPluginService {
 
     @Override
     protected List<AbstractTypeServerPluginContainer> createPluginContainers(MasterServerPluginContainer master) {
-        return Collections.<AbstractTypeServerPluginContainer>singletonList(new TestDriftServerPluginContainer(master));
+        return Collections.<AbstractTypeServerPluginContainer>singletonList(new TestAlertServerPluginContainer(master));
     }
 
-
-    class TestDriftServerPluginContainer extends DriftServerPluginContainer {
-        public TestDriftServerPluginContainer(MasterServerPluginContainer master) {
+    class TestAlertServerPluginContainer extends AlertServerPluginContainer {
+        public TestAlertServerPluginContainer(MasterServerPluginContainer master) {
             super(master);
         }
 
         @Override
         protected ServerPluginManager createPluginManager() {
-            return new TestDriftServerPluginManager(this);
+            return new TestAlertServerPluginManager(this);
         }
     }
 
-    class TestDriftServerPluginManager extends DriftServerPluginManager {
-        public TestDriftServerPluginManager(DriftServerPluginContainer pc) {
+    class TestAlertServerPluginManager extends AlertSenderPluginManager {
+        public TestAlertServerPluginManager(AlertServerPluginContainer pc) {
             super(pc);
         }
 

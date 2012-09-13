@@ -87,20 +87,6 @@
          <artifactId>commons-logging</artifactId>
       </dependency>
 
-      <!-- TODO: START the AS7 branch removed these - but master merge had a conflict so I put them back - do we need these?? -->
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss.jbossws</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <version>3.0.1-native-2.0.4.GA</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
       <dependency>
          <groupId>org.powermock</groupId>
          <artifactId>powermock-module-testng</artifactId>
@@ -114,8 +100,6 @@
          <version>${powermock.version}</version>
          <scope>test</scope>
       </dependency>
-
-      <!-- TODO: END the AS7 branch removed these - but master merge had a conflict so I put them back - do we need these?? -->
 
    </dependencies>
 

@@ -1,11 +1,23 @@
 <?xml version="1.0"?>
 <plugin name="Cassandra"
         displayName="Cassandra"
-        description="Monitor and manage a Cassandra node"
+        description="Monitor and manage a Cassandra node. This plugin is currently being developed against the 1.1.x
+        code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
+        yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
+
+  <!--
+    Note that the plugin does yet work with Cassandra builds coming from the trunk/master
+    branch of the cassandra git repo. I have already run into a couple differences that need
+    to be addressed. A different process scan for CassandraDaemon is needed because
+    CassandraDaemon is in a different package. There are also new properties in
+    cassandra.yaml that are not recognized in 1.1.x builds.
+
+    jsanda - 09/12/12
+  -->
 
   <depends plugin="JMX" useClasses="true"/>
 
@@ -30,15 +42,6 @@
 
     <process-scan name="CassandraDaemon"
                   query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
-
-    <!--<server name="Cassandra JVM"-->
-            <!--description="The JVM of the Cassandra node"-->
-            <!--sourcePlugin="JMX"-->
-            <!--sourceType="JMX Server"-->
-            <!--discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"-->
-            <!--class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"-->
-            <!--singleton="true">-->
-      <!--</server>-->
 
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

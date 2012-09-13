@@ -53,7 +53,7 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>1.1.4</version>
+      <version>1.1.5</version>
     </dependency>
     <dependency>
       <groupId>org.apache.thrift</groupId>
@@ -101,7 +101,7 @@
                 <artifactItem>
                   <groupId>org.apache.cassandra</groupId>
                   <artifactId>cassandra-thrift</artifactId>
-                  <version>1.0.9</version>
+                  <version>1.1.5</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>com.google.guava</groupId>
@@ -112,6 +112,11 @@
                   <groupId>commons-pool</groupId>
                   <artifactId>commons-pool</artifactId>
                   <version>1.6</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-lang</groupId>
+                  <artifactId>commons-lang</artifactId>
+                  <version>2.3</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>com.github.stephenc.eaio-uuid</groupId>

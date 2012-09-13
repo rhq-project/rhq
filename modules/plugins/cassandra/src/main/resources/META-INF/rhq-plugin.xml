@@ -80,5 +80,16 @@
         </parameters>
       </operation>
     </service>
+
+    <service name="ColumnFamily"
+             discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true"/>
+      </plugin-configuration>
+      <!--<resource-configuration>-->
+        <!--<c:simple-property name="columnFamilyName" type="string" readOnly="true"/>-->
+      <!--</resource-configuration>-->
+    </service>
   </server>
 </plugin>

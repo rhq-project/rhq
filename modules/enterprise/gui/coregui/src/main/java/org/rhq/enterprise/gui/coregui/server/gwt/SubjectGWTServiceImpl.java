@@ -28,7 +28,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCacheLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -40,6 +40,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     private static final long serialVersionUID = 1L;
 
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+    private SubjectPreferencesCacheLocal prefsCache = LookupUtil.getSubjectPreferencesCache();
     private Object subjectLock = new Object(); // used to lock out concurrent subject updates
 
     public void createPrincipal(String username, String password) throws RuntimeException {
@@ -106,7 +107,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             Subject subject = SerialUtility.prepare(modifiedSubject, "SubjectManager.updateSubjectPW");
             // Clear the prefs for this subject from the user prefs cache that portal-war uses, in case we just
             // changed any prefs; otherwise the cache would contain stale prefs.
-            SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
+            LookupUtil.getSubjectPreferencesCache().clearConfiguration(subject.getId());
             return subject;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -170,8 +171,8 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
                     subjectToModify = subjectManager.getSubjectById(subjectToModify.getId());
                     subjectToModify.setUserConfiguration(prefs);
                 }
-                
-                Configuration persistedPrefs = SubjectPreferencesCache.getInstance().getPreferences(subjectToModify.getId());
+
+                Configuration persistedPrefs = prefsCache.getPreferences(subjectToModify.getId());
                 
                 if (updatePrefs && changedPrefs != null) {
                     Configuration userPrefs = subjectToModify.getUserConfiguration();
@@ -191,7 +192,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
                 
                 if (updatePrefs) {
                     //clear the prefs cache so that JSF UI refreshes it
-                    SubjectPreferencesCache.getInstance().clearConfiguration(subjectToModify.getId());
+                    prefsCache.clearConfiguration(subjectToModify.getId());
                 }
             }
             

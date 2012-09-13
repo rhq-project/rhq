@@ -23,9 +23,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.management.Notification;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -34,7 +35,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 
 /**
  * This listens for the RHQ server's shutdown notification and when it hears it, will start shutting down RHQ components
@@ -47,12 +51,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Singleton
 @Startup
 public class ShutdownListener {
-    /**
-     * Logger
-     */
     private final Log log = LogFactory.getLog(ShutdownListener.class);
 
     private final String RHQ_DB_TYPE_MAPPING_PROPERTY = "rhq.server.database.type-mapping";
+
+    @EJB
+    private SchedulerLocal schedulerBean;
+
+    @EJB
+    private ServerManagerLocal serverManager;
+
+    @EJB
+    private CloudManagerLocal cloudManager;
+
+    @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     /**
      * This is called when the shutdown notification is received from the JBoss server. This gives a chance for us to
@@ -61,12 +74,14 @@ public class ShutdownListener {
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     @PreDestroy
-    public void handleNotification(Notification notification, Object handback) {
+    public void handleNotification() {
         // JBossAS 4.2.3 used to send us this JMX notification on shutdown - AS7 does not have shutdown notifications.
         // So we are using the @PreDestroy mechanism on a singleton EJB to attempt to clean up the application before it is shutdown
+        log.info("Shutdown listener has been told we are shutting down - starting to clean up now...");
         stopScheduler();
         updateServerOperationMode();
         stopEmbeddedDatabase();
+        log.info("Shutdown listener completed its shutdown tasks. It is safe to shutdown now.");
     }
 
     /**
@@ -75,7 +90,7 @@ public class ShutdownListener {
     private void stopScheduler() {
         try {
             log.info("Shutting down the scheduler gracefully - currently running jobs will be allowed to finish...");
-            LookupUtil.getSchedulerBean().shutdown(true);
+            schedulerBean.shutdown(true);
             log.info("The scheduler has been shutdown and all jobs are done.");
         } catch (Throwable t) {
             // only show ugly stack traces if the user runs the server in debug mode
@@ -90,9 +105,9 @@ public class ShutdownListener {
     private void updateServerOperationMode() {
         try {
             // Set the server operation mode to DOWN unless in MM
-            Server server = LookupUtil.getServerManager().getServer();
+            Server server = serverManager.getServer();
             if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-                LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+                cloudManager.updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
             }
         } catch (Throwable t) {
             // only show ugly stack traces if the user runs the server in debug mode
@@ -113,8 +128,7 @@ public class ShutdownListener {
         Connection connection = null;
         Statement statement = null;
         try {
-            DataSource ds = LookupUtil.getDataSource();
-            connection = ds.getConnection();
+            connection = dataSource.getConnection();
             statement = connection.createStatement();
             statement.execute("shutdown");
             log.info("Embedded database closed cleanly");

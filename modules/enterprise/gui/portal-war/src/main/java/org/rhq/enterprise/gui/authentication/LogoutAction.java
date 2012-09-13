@@ -37,7 +37,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class LogoutAction extends Action {
@@ -72,7 +71,7 @@ public class LogoutAction extends Action {
         if (webUser != null) {
             Subject subject = webUser.getSubject();
             if (subject != null) {
-                SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
+                LookupUtil.getSubjectPreferencesCache().clearConfiguration(subject.getId());
             }
         }
     }

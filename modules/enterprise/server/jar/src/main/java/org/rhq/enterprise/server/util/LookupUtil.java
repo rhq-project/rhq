@@ -53,6 +53,8 @@ import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerBean;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCacheBean;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCacheLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
@@ -604,7 +606,11 @@ public final class LookupUtil {
     public static PlatformUtilizationManagerLocal getPlatformUtilizationManager() {
         return lookupLocal(PlatformUtilizationManagerBean.class);
     }
-    
+
+    public static SubjectPreferencesCacheLocal getSubjectPreferencesCache() {
+        return lookupLocal(SubjectPreferencesCacheBean.class);
+    }
+
     public static CoreServerMBean getCoreServer() {
         CoreServerMBean rhqServer;
         try {

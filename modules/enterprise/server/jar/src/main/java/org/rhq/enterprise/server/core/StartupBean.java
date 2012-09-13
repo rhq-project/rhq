@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -49,10 +50,10 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -84,6 +85,8 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * This startup singleton EJB performs the rest of the RHQ Server startup initialization.
  * In order for it to do its work properly, we must ensure everything has been deployed and started;
  * specifically, all EJBs must have been deployed and available.
+ * 
+ * This bean is not meant for client consumption - it is only for startup initialization.
  */
 @Singleton
 @Startup
@@ -116,6 +119,9 @@ public class StartupBean {
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
+
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
      *
@@ -133,7 +139,6 @@ public class StartupBean {
         // get singletons right now so we load the classes immediately into our classloader
         AlertConditionCacheCoordinator.getInstance();
         SessionManager.getInstance();
-        SubjectPreferencesCache.getInstance();
         AlertSerializer.getSingleton();
         AvailabilityReportSerializer.getSingleton();
 
@@ -179,8 +184,7 @@ public class StartupBean {
         // Ensure the class is loaded and the dbType is set for our current db
         Connection conn = null;
         try {
-            DataSource ds = LookupUtil.getDataSource();
-            conn = ds.getConnection();
+            conn = dataSource.getConnection();
             DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
         } catch (Exception e) {
             log.error("Could not initialize server.", e);
@@ -683,24 +687,17 @@ public class StartupBean {
     }
 
     /**
-     * Registers a listener to the JBoss server's shutdown notification so some components can be cleaned up in an
+     * Registers a listener to the system shutdown notification so some components can be cleaned up in an
      * orderly fashion when the server is shutdown.
      *
-     * @throws RuntimeException if cannot register this service as a shutdown listener
+     * @throws RuntimeException if cannot register a shutdown listener
      */
     private void registerShutdownListener() throws RuntimeException {
         // as of JBossAS 4.0.5, this is the known MBean name of the service that notifies when the server is shutting down
-        // TODO: find out how AS7 can notify us when its going down - right now, this code won't work on AS7 
-        /*
-        try {
-            ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");
-            MBeanServer jbossServer = ManagementFactory.getPlatformMBeanServer();
-            jbossServer.addNotificationListener(jbossServerName, new ShutdownListener(), null, null);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to register the Server Shutdown Listener", e);
-        }
-        */
-        log.warn("!!! TODO: REGISTER OUR SHUTDOWN LISTENER!!!");
+        // AS7 today does not have notifications like this. So we have a new EJB singleton ShutdownListener with a PreDestroy method.
+        // If that doesn't work, we can try to create a system shutdown hook in here. Thus I'm leaving this method in here in case
+        // we need it later. Just add a Runtime.addShutdownHook call in here that calls our ShutdownListener.
+        return;
     }
 
     /**

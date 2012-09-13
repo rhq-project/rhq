@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,9 +20,7 @@ package org.rhq.enterprise.server.auth.prefs;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.util.StringUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class SubjectPreferencesBase {
 
@@ -41,11 +40,9 @@ public abstract class SubjectPreferencesBase {
     protected static final String PREF_ITEM_DELIM_REGEX = "\\|";
 
     private int subjectId;
-    private Set<String> changed;
 
     public SubjectPreferencesBase(Subject subject) {
         this.subjectId = subject.getId();
-        this.changed = new HashSet<String>();
     }
 
     /**
@@ -117,7 +114,7 @@ public abstract class SubjectPreferencesBase {
     }
 
     protected String getPreference(String key) throws IllegalArgumentException {
-        PropertySimple prop = SubjectPreferencesCache.getInstance().getUserProperty(subjectId, key);
+        PropertySimple prop = LookupUtil.getSubjectPreferencesCache().getUserProperty(subjectId, key);
 
         if (prop == null) {
             if (this.subjectId == 0) {
@@ -239,10 +236,10 @@ public abstract class SubjectPreferencesBase {
             val = value.toString();
         }
 
-        SubjectPreferencesCache.getInstance().setUserProperty(subjectId, key, val);
+        LookupUtil.getSubjectPreferencesCache().setUserProperty(subjectId, key, val);
     }
 
     protected void unsetPreference(String key) {
-        SubjectPreferencesCache.getInstance().unsetUserProperty(subjectId, key);
+        LookupUtil.getSubjectPreferencesCache().unsetUserProperty(subjectId, key);
     }
 }

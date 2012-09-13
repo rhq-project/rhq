@@ -1,7 +1,32 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.auth.prefs;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.EJB;
+import javax.ejb.Lock;
+import javax.ejb.LockType;
+import javax.ejb.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,29 +38,26 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
-public class SubjectPreferencesCache {
+@ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
+@Singleton
+public class SubjectPreferencesCacheBean implements SubjectPreferencesCacheLocal {
 
-    protected final Log log = LogFactory.getLog(SubjectPreferencesCache.class);
+    protected final Log log = LogFactory.getLog(SubjectPreferencesCacheBean.class);
 
     private Map<Integer, Configuration> subjectPreferences;
 
-    private static final SubjectPreferencesCache instance = new SubjectPreferencesCache();
-
+    @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
     private EntityManagerFacadeLocal entityManagerFacade;
+
+    @EJB
     private ConfigurationManagerLocal configurationManager;
 
-    private SubjectPreferencesCache() {
+    private SubjectPreferencesCacheBean() {
         subjectPreferences = new HashMap<Integer, Configuration>();
-        subjectManager = LookupUtil.getSubjectManager();
-        entityManagerFacade = LookupUtil.getEntityManagerFacade();
-        configurationManager = LookupUtil.getConfigurationManager();
-    }
-
-    public static SubjectPreferencesCache getInstance() {
-        return instance;
     }
 
     private void load(int subjectId) {
@@ -51,7 +73,9 @@ public class SubjectPreferencesCache {
         }
     }
 
-    public synchronized PropertySimple getUserProperty(int subjectId, String propertyName) {
+    @Override
+    @Lock(LockType.READ)
+    public PropertySimple getUserProperty(int subjectId, String propertyName) {
         load(subjectId);
 
         Configuration config = subjectPreferences.get(subjectId);
@@ -67,7 +91,9 @@ public class SubjectPreferencesCache {
         return new PropertySimple(propertyName, prop.getStringValue());
     }
 
-    public synchronized void setUserProperty(int subjectId, String propertyName, String value) {
+    @Override
+    @Lock(LockType.WRITE)
+    public void setUserProperty(int subjectId, String propertyName, String value) {
         load(subjectId);
 
         Configuration config = subjectPreferences.get(subjectId);
@@ -95,7 +121,9 @@ public class SubjectPreferencesCache {
         }
     }
 
-    public synchronized void unsetUserProperty(int subjectId, String propertyName) {
+    @Override
+    @Lock(LockType.WRITE)
+    public void unsetUserProperty(int subjectId, String propertyName) {
         load(subjectId);
 
         Configuration config = subjectPreferences.get(subjectId);
@@ -119,7 +147,9 @@ public class SubjectPreferencesCache {
      * @return the <b>COPY</b> of the configuration object - changes done to that instance will not be reflected in the persisted
      * preferences
      */
-    public synchronized Configuration getPreferences(int subjectId) {
+    @Override
+    @Lock(LockType.READ)
+    public Configuration getPreferences(int subjectId) {
         load(subjectId);
         
         Configuration config = subjectPreferences.get(subjectId);
@@ -129,8 +159,10 @@ public class SubjectPreferencesCache {
             return config.deepCopy();
         }
     }
-    
-    public synchronized void clearConfiguration(int subjectId) {
+
+    @Override
+    @Lock(LockType.WRITE)
+    public void clearConfiguration(int subjectId) {
         if (log.isTraceEnabled()) {
             log.trace("Removing PreferencesCache For " + subjectId);
         }

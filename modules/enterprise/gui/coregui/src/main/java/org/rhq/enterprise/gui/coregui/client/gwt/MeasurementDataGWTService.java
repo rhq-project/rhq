@@ -33,7 +33,6 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -58,9 +57,6 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException;
-
-    PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
-        PageControl pageControl) throws RuntimeException;
 
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
         throws RuntimeException;

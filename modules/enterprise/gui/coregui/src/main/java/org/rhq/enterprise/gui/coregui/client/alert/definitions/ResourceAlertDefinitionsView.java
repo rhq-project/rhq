@@ -194,7 +194,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals, final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
                 Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {
@@ -204,11 +204,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
                         ResourceAlertDefinitionsView.this.refresh();
+                        resultReceiver.onSuccess(alertDefinition);
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_create_failure(), caught);
+                        resultReceiver.onFailure(caught);
                     }
                 });
         } else {
@@ -219,11 +221,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
                         ResourceAlertDefinitionsView.this.refresh();
+                        resultReceiver.onSuccess(result);
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
+                        resultReceiver.onFailure(caught);
                     }
                 });
         }

@@ -19,6 +19,7 @@
 
    <properties>
       <augeas-bindings.version>0.0.2</augeas-bindings.version>
+      <rhq.internal>false</rhq.internal>
    </properties>
 
    <dependencies>
@@ -207,7 +208,6 @@
             </plugins>
          </build>
       </profile>
-
 
      <profile>
       <id>cobertura-plugins</id>

@@ -33,7 +33,7 @@ public class Postgresql91DatabaseType extends Postgresql90DatabaseType {
      */
     @Override
     public String getName() {
-        return PostgresqlDatabaseType.VENDOR_NAME + "9.1";
+        return PostgresqlDatabaseType.VENDOR_NAME + " 9.1+";
     }
 
     /**
@@ -41,11 +41,11 @@ public class Postgresql91DatabaseType extends Postgresql90DatabaseType {
      */
     @Override
     public String getVersion() {
-        return "9.1";
+        return "9.1+";
     }
 
     /**
-     * Postgres 9.1 is using a standard conforming escape character out of the box
+     * Postgres 9.1 and later is using a standard conforming escape character out of the box
      * unlike earlier versions of Postgres, which means we need to follow this convention
      * here.
      * @return escape char

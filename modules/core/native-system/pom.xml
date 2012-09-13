@@ -17,6 +17,10 @@
   <description>
      Java API that wraps the native library used to access low-level system resources natively.
   </description>
+  
+  <properties>
+     <rhq.internal>false</rhq.internal>
+  </properties>
 
   <dependencies>
 

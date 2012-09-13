@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
@@ -211,7 +212,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         record.setAttribute("severity", from.getSeverity().name());
         record.setAttribute("source", from.getSourceLocation());
 
-        // for ancestry handling       
+        // for ancestry handling
         record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResourceId());
         record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getResourceAncestry());
@@ -276,7 +277,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
                 @Override
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
                     AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                     Record[] records = buildRecords(result);
@@ -284,7 +285,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
                     for (Record record : records) {
                         // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        // Store the types map off the records so we can build a detailed hover string as needed.
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
@@ -311,7 +312,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         EventCriteria criteria = new EventCriteria();
 
         // This code is unlikely to be necessary as the encompassing view should be using an initial
-        // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to 
+        // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to
         // manipulate the PageControl directly as per the restrictions on getFetchCriteria() (see jdoc).
         PageControl pageControl = getPageControl(request);
         if (pageControl.getOrderingFields().isEmpty()) {
@@ -324,6 +325,14 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
         criteria.addFilterSourceName((String) criteriaMap.get("source"));
         criteria.addFilterDetail((String) criteriaMap.get("detail"));
+        if (criteriaMap.get("startTime")!=null) {
+            Date tmp = (Date) criteriaMap.get("startTime");
+            criteria.addFilterStartTime(tmp.getTime());
+        }
+        if (criteriaMap.get("endTime")!=null) {
+            Date tmp = (Date) criteriaMap.get("endTime");
+            criteria.addFilterEndTime(tmp.getTime());
+        }
         // There's no need to add a severities filter to the criteria if the user specified all severities.
         if (severities.length != EventSeverity.values().length) {
             criteria.addFilterSeverities(severities);

@@ -56,47 +56,27 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 
 
 .OddRow {
-    background-color: white;
-    border-bottom-color: rgb(230, 234, 239);
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    border-right-color: rgb(217, 224, 227);
-    border-right-style: solid;
-    border-right-width: 1px;
-
+    background-color: #ffffff;
+    border-right: 1px solid rgb(217, 224, 227);
+    border-bottom: 1px solid rgb(230, 234, 239);
 }
 
 .OddRowDisabled {
-    background-color: white;
-    border-bottom-color: rgb(230, 234, 239);
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    border-right-color: rgb(217, 224, 227);
-    border-right-style: solid;
-    border-right-width: 1px;
-
+    background-color: #ffffff;
+    border-right: 1px solid rgb(217, 224, 227);
+    border-bottom: 1px solid rgb(230, 234, 239);
 }
 
 .EvenRow {
     background-color: rgb(246, 246, 246);
-    border-bottom-color: rgb(230, 234, 239);
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    border-right-color: rgb(217, 224, 227);
-    border-right-style: solid;
-    border-right-width: 1px;
-
+    border-right: 1px solid rgb(217, 224, 227);
+    border-bottom: 1px solid rgb(230, 234, 239);
 }
 
 .EvenRowDisabled {
     background-color: rgb(246, 246, 246);
-    border-bottom-color: rgb(230, 234, 239);
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    border-right-color: rgb(217, 224, 227);
-    border-right-style: solid;
-    border-right-width: 1px;
-
+    border-right: 1px solid rgb(217, 224, 227);
+    border-bottom: 1px solid rgb(230, 234, 239);
 }
 
 .inheritColor {
@@ -170,8 +150,7 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 }
 
 .availBarDown {
-    background-image: url("images/availBar/down.png");
-    background-repeat: repeat-x;
+    background: url("images/availBar/down.png") repeat-x;
     height: 28px;
 }
 
@@ -317,9 +296,8 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 
 /** Not used right now **/
 .gwtMenuBar {
-    background-image: url('images/header/header_bg.png');
+    background: url('images/header/header_bg.png') repeat-x;
     /*background-image: url("http://localhost:7080/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/SectionHeader/header_opened_stretch.png");*/
-    background-repeat: repeat-x;
     padding: 0px;
     -moz-box-sizing: border-box;
     overflow: hidden;
@@ -366,10 +344,7 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 }
 
 .InfoBlock,.ConfirmationBlock,.WarnBlock,.ErrorBlock,.FatalBlock {
-    /*padding: 4px;*/
-    border-width: 1px;
-    border-style: solid;
-    /*font-size: 10px;*/
+    border: 1px solid;
     color: #000000;
 }
 
@@ -407,8 +382,7 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 }
 
 .configurationEditorHeaderCell {
-    border-style: solid;
-    border-width: 1px;
+    border: 1px solid;
     background-color: #EEE; /* light gray */
     font-weight: bolder;
 }

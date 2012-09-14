@@ -26,9 +26,12 @@
 package org.rhq.plugins.cassandra;
 
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -56,5 +59,21 @@ public class StorageServiceComponent extends MBeanResourceComponent {
         operation.invoke(snapshotName, new String[] {keyspaceName});
 
         return new OperationResult();
+    }
+
+    @Override
+    public Configuration loadResourceConfiguration() {
+        Configuration config = super.loadResourceConfiguration();
+        EmsBean emsBean = getEmsBean();
+        EmsAttribute attribute = emsBean.getAttribute("AllDataFileLocations");
+
+        PropertyList list = new PropertyList("dataFileLocations");
+        String[] dirs = (String[]) attribute.getValue();
+        for (String dir : dirs) {
+            list.add(new PropertySimple("directory", dir));
+        }
+        config.put(list);
+
+        return config;
     }
 }

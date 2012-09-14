@@ -27,6 +27,8 @@ import javax.ejb.EJB;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
 import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +43,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 
 @ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
 @Singleton
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class SubjectPreferencesCacheBean implements SubjectPreferencesCacheLocal {
 
     protected final Log log = LogFactory.getLog(SubjectPreferencesCacheBean.class);

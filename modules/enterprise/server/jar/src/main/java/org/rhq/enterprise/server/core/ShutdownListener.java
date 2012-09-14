@@ -27,6 +27,8 @@ import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -50,6 +52,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
  */
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ShutdownListener {
     private final Log log = LogFactory.getLog(ShutdownListener.class);
 

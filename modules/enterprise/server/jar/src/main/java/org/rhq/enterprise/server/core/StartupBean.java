@@ -31,6 +31,8 @@ import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -128,6 +130,7 @@ public class StartupBean {
      * @throws RuntimeException
      */
     @PostConstruct
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void init() throws RuntimeException {
         initialized = false;
 

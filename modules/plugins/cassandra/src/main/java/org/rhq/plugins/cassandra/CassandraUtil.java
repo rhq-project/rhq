@@ -25,31 +25,27 @@
 
 package org.rhq.plugins.cassandra;
 
-import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinitions;
+import java.util.List;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-
+import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
+import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * @author John Sanda
  */
-public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent {
+public class CassandraUtil {
 
-    @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
-        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
+    private static Cluster getCluster() {
+        // TODO Cannot hard code the port
+        return HFactory.getOrCreateCluster("rhq", "localhost:9160");
+    }
 
-        for (KeyspaceDefinition keyspaceDef : getKeyspaceDefinitions()) {
-            details.add(new DiscoveredResourceDetails(context.getResourceType(), keyspaceDef.getName(),
-                keyspaceDef.getName(), null, null, null, null));
-        }
+    public static KeyspaceDefinition getKeyspaceDefinition(String keyspace) {
+        return getCluster().describeKeyspace(keyspace);
+    }
 
-        return details;
+    public static List<KeyspaceDefinition> getKeyspaceDefinitions() {
+        return getCluster().describeKeyspaces();
     }
 }

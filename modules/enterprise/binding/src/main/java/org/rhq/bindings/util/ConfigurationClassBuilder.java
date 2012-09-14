@@ -35,6 +35,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  */
 public class ConfigurationClassBuilder {
 
+    /**
+     * @param def
+     * @return Map of propertyName to types for the config def
+     * @throws NotFoundException
+     */
     public static LinkedHashMap<String, CtClass> translateParameters(ConfigurationDefinition def)
         throws NotFoundException {
         LinkedHashMap<String, CtClass> result = new LinkedHashMap<String, CtClass>();
@@ -45,7 +50,7 @@ public class ConfigurationClassBuilder {
         for (PropertyDefinition pd : def.getPropertyDefinitions().values()) {
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple simple = (PropertyDefinitionSimple) pd;
-                String name = simpleName(simple.getDisplayName());
+                String name = pd.getName();
                 CtClass paramType = getSimpleTypeClass(simple);
                 result.put(name, paramType);
             }

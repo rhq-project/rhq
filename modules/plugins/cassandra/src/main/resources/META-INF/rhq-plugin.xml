@@ -81,15 +81,32 @@
       </operation>
     </service>
 
-    <service name="ColumnFamily"
-             discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
-             class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
-      <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true"/>
-      </plugin-configuration>
-      <!--<resource-configuration>-->
+    <service name="Keyspace"
+             discovery="org.rhq.plugins.cassandra.KeyspaceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.KeyspaceComponent">
+      <resource-configuration>
+        <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
+        <c:simple-property name="replicationFactor" type="integer" readOnly="true"/>
+        <c:simple-property name="strategyClass" type="string" readOnly="true"/>
+        <c:simple-property name="durableWrites" type="boolean" readOnly="true"/>
+        <c:list-property name="strategyOptions" readOnly="true">
+          <c:map-property name="strategyOptionsMap">
+            <c:simple-property name="strategyOptionName" type="string" readOnly="true"/>
+            <c:simple-property name="strategyOptionValue" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+
+      <service name="ColumnFamily"
+               discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
+               class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
+        <plugin-configuration>
+          <c:simple-property name="objectName" readOnly="true" type="string"/>
+        </plugin-configuration>
+        <!--<resource-configuration>-->
         <!--<c:simple-property name="columnFamilyName" type="string" readOnly="true"/>-->
-      <!--</resource-configuration>-->
+        <!--</resource-configuration>-->
+      </service>
     </service>
   </server>
 </plugin>

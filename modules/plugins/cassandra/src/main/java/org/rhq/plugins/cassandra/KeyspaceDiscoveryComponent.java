@@ -28,38 +28,28 @@ package org.rhq.plugins.cassandra;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * @author John Sanda
  */
-public class ColumnFamilyDiscoveryComponent implements ResourceDiscoveryComponent {
+public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
+        throws Exception {
         Cluster cluster = HFactory.getOrCreateCluster("rhq", "localhost:9160");
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
-        String keyspace = context.getParentResourceContext().getResourceKey();
-        KeyspaceDefinition keyspaceDef = cluster.describeKeyspace(keyspace);
-
-        for (ColumnFamilyDefinition columnFamilyDef : keyspaceDef.getCfDefs()) {
-            String resourceKey = keyspace + "." + columnFamilyDef.getName();
-            Configuration pluginConfig = new Configuration();
-            pluginConfig.put(new PropertySimple("objectName",
-                "org.apache.cassandra.db:type=ColumnFamilies,keyspace=" + keyspaceDef.getName() +
-                    ",columnfamily=" + columnFamilyDef.getName()));
-            details.add(new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                columnFamilyDef.getName(), null, null, pluginConfig, null));
+        for (KeyspaceDefinition keyspaceDef : cluster.describeKeyspaces()) {
+            details.add(new DiscoveredResourceDetails(context.getResourceType(), keyspaceDef.getName(),
+                keyspaceDef.getName(), null, null, null, null));
         }
 
         return details;

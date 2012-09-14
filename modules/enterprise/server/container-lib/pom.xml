@@ -19,9 +19,9 @@
    <dependencies>
 
       <dependency>
-         <groupId>org.jboss.transaction</groupId>
-         <artifactId>jboss-jta</artifactId>
-         <version>4.2.3.SP5</version>
+         <groupId>org.jboss.jbossts</groupId>
+         <artifactId>jbossjts</artifactId>
+         <version>4.16.2.Final</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

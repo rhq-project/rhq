@@ -82,7 +82,7 @@
     </dependency>
  
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>org.rhq</groupId>
       <artifactId>rhq-container-lib</artifactId>
       <version>${project.version}</version>
     </dependency>

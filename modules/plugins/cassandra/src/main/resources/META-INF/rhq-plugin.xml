@@ -5,7 +5,6 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
-        version="5.0.3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -126,20 +125,37 @@
         <plugin-configuration>
           <c:simple-property name="objectName" readOnly="true" type="string"/>
         </plugin-configuration>
-        <!--<resource-configuration>-->
-        <!--<c:simple-property name="columnFamilyName" type="string" readOnly="true"/>-->
-        <!--</resource-configuration>-->
 
+        <metric property="TotalReadLatencyMicros"
+                displayName="Total Read Latency (in micro seconds)"
+                measurementType="trendsup"
+                displayType="detail"
+                description="The latency all of read operations since execution start"/>
+        <metric property="RecentReadLatencyMicros"
+                displayName="Recent Read Latency (in micro seconds)"
+                measurementType="trendsup"
+                displayType="detail"
+                description="The latency of read operations since this metric was last sampled"/>
+        <metric property="TotalWriteLatencyMicros"
+                displayName="Total Write Latency (in micro seconds)"
+                measurementType="trendsup"
+                displayType="detail"
+                description="The latency of all write operations since execution start"/>
+        <metric property="RecentWriteLatencyMicros"
+                displayName="Recent Write Latency (in micro seconds)"
+                measurementType="trendsup"
+                displayType="detail"
+                description="The latency of write operations since this metric was last sampled"/>
         <metric displayName="Read Count"
-                property="readCount"
+                property="ReadCount"
                 measurementType="trendsup"
-                displayType="summary"/>
-
+                displayType="summary"
+                description="The number of read operations since execution start"/>
         <metric displayName="Write Count"
-                property="writeCount"
+                property="WriteCount"
                 measurementType="trendsup"
-                displayType="summary"/>
-
+                displayType="summary"
+                description="The number of write operations since execution start"/>
         <metric property="TotalDiskSpaceUsed"
                 measurementType="dynamic"
                 displayType="summary"/>

@@ -5,6 +5,7 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
+        version="5.0.3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -61,7 +62,7 @@
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
       </plugin-configuration>
-      
+
       <operation name="startRPCServer" description="Start the Thrift server"/>
 
       <operation name="stopRPCServer" description="Stop the Thrift server"/>
@@ -79,6 +80,28 @@
           <c:simple-property name="keyspaceName" required="true" type="string"/>
         </parameters>
       </operation>
+
+      <metric property="ReleaseVersion"
+              dataType="trait"
+              description="The Cassandra version"/>
+      <metric property="SchemaVersion"
+              dataType="trait"
+              description="The current schema version"/>
+      <metric property="Load"
+              dataType="measurement"
+              units="bytes"
+              displayType="summary"
+              description="The amount of load in disk usage on the node being queried"/>
+
+      <resource-configuration>
+        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true"
+                           description="The location of the saved caches directory"/>
+        <c:simple-property name="CommitLogLocation" type="string" readOnly="true"
+                           default="The location of the commit log directory"/>
+        <c:list-property name="dataFileLocations" readOnly="true" description="A list of data file locations">
+          <c:simple-property name="directory" type="string" readOnly="true"/>
+        </c:list-property>
+      </resource-configuration>
     </service>
 
     <service name="Keyspace"
@@ -106,6 +129,20 @@
         <!--<resource-configuration>-->
         <!--<c:simple-property name="columnFamilyName" type="string" readOnly="true"/>-->
         <!--</resource-configuration>-->
+
+        <metric displayName="Read Count"
+                property="readCount"
+                measurementType="trendsup"
+                displayType="summary"/>
+
+        <metric displayName="Write Count"
+                property="writeCount"
+                measurementType="trendsup"
+                displayType="summary"/>
+
+        <metric property="TotalDiskSpaceUsed"
+                measurementType="dynamic"
+                displayType="summary"/>
       </service>
     </service>
   </server>

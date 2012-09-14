@@ -134,7 +134,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         ResourcePackageDetails detail = packages.iterator().next();
 
         ASUploadConnection uploadConnection = new ASUploadConnection(getASConnection());
-        OutputStream out = uploadConnection.getOutputStream(detail.getFileName());
+        OutputStream out = uploadConnection.getOutputStream(detail.getKey().getName());
         ResourceType resourceType = context.getResourceType();
 
         log.info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() +"]...");

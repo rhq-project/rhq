@@ -25,6 +25,8 @@
 
 package org.rhq.plugins.cassandra;
 
+import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinition;
+
 import java.util.Map;
 
 import org.mc4j.ems.connection.EmsConnection;
@@ -40,9 +42,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.JMXComponent;
 
-import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * @author John Sanda
@@ -73,8 +73,7 @@ public class KeyspaceComponent implements ResourceComponent, ConfigurationFacet,
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        Cluster cluster = HFactory.getOrCreateCluster("rhq", "localhost:9160");
-        KeyspaceDefinition keyspaceDef = cluster.describeKeyspace(context.getResourceKey());
+        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition(context.getResourceKey());
 
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", keyspaceDef.getName()));

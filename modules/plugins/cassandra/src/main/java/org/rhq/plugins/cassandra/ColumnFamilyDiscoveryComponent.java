@@ -25,6 +25,8 @@
 
 package org.rhq.plugins.cassandra;
 
+import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinition;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,10 +36,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
-import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * @author John Sanda
@@ -46,11 +46,10 @@ public class ColumnFamilyDiscoveryComponent implements ResourceDiscoveryComponen
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
-        Cluster cluster = HFactory.getOrCreateCluster("rhq", "localhost:9160");
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
         String keyspace = context.getParentResourceContext().getResourceKey();
-        KeyspaceDefinition keyspaceDef = cluster.describeKeyspace(keyspace);
+        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition(keyspace);
 
         for (ColumnFamilyDefinition columnFamilyDef : keyspaceDef.getCfDefs()) {
             String resourceKey = keyspace + "." + columnFamilyDef.getName();

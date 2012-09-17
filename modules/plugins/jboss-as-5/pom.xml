@@ -23,6 +23,7 @@
     <jbossas.version>6.0.0.M1</jbossas.version>
     <as5.version>6.1.0.Final</as5.version>
     <as5.url>http://download.jboss.org/jbossas/6.1/jboss-as-distribution-6.1.0.Final.zip</as5.url>
+    <rhq.internal>false</rhq.internal>
   </properties>
 
   <dependencyManagement>
@@ -659,7 +660,7 @@
         </plugins>
       </build>
     </profile>
-
+    
     <profile>
       <id>cobertura-plugins</id>
       <activation>

@@ -390,7 +390,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
         ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
                 serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        OutputStream out = uploadConnection.getOutputStream(details.getFileName());
+        OutputStream out = uploadConnection.getOutputStream(details.getKey().getName());
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
         JsonNode uploadResult = uploadConnection.finishUpload();

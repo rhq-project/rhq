@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -29,7 +30,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
-import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -107,6 +107,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             Subject user = getSessionSubject();
             group = groupManager.createResourceGroup(user, group);
             groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
+            // we need the group.groupCategory to be set
+            group = groupManager.getResourceGroup(user, group.getId());
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

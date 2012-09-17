@@ -44,20 +44,24 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
     private static final Log LOG = LogFactory.getLog(RhqDownloadsScriptSourceProvider.class);
 
-    private static final String PREFIX = "//downloads/";
+    private static final String AUTHORITY = "downloads";
 
-    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-    private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+    private SystemManagerLocal systemManager;
+    private SubjectManagerLocal subjectManager;
 
+    public RhqDownloadsScriptSourceProvider() {
+        this(LookupUtil.getSystemManager(), LookupUtil.getSubjectManager());
+    }
+    
+    public RhqDownloadsScriptSourceProvider(SystemManagerLocal systemManager, SubjectManagerLocal subjectManager) {
+        super(AUTHORITY);
+        this.systemManager = systemManager;
+        this.subjectManager = subjectManager;
+    }
+    
     @Override
     protected Reader doGetScriptSource(URI scriptUri) {
-        String path = scriptUri.getSchemeSpecificPart();
-
-        if (!path.startsWith(PREFIX)) {
-            return null;
-        }
-
-        path = path.substring(PREFIX.length());
+        String path = scriptUri.getPath().substring(1); //remove the leading /
 
         Subject overlord = subjectManager.getOverlord();
 
@@ -65,7 +69,7 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
         String serverHomeDir = serverDetails.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR);
 
-        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
+        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/script-modules");
 
         File file = new File(downloads, path);
 

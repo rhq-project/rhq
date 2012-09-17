@@ -46,6 +46,12 @@ import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+import org.mc4j.ems.connection.support.ConnectionProvider;
+import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
@@ -62,12 +68,6 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
 import org.rhq.plugins.jmx.util.JvmResourceKey;
 import org.rhq.plugins.jmx.util.JvmUtility;
-
-import org.mc4j.ems.connection.EmsConnection;
-import org.mc4j.ems.connection.bean.EmsBean;
-import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
-import org.mc4j.ems.connection.support.ConnectionProvider;
-import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 
 /**
  * This component will discover JVM processes that appear to be long-running (i.e. "servers"). Specifically, it will
@@ -131,6 +131,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 ProcessInfo processInfo = process.getProcessInfo();
                 DiscoveredResourceDetails details = discoverResourceDetails(context, processInfo);
                 if (details != null) {
+                    //detect discovered jmx resources that are erroneously using the same key 
                     if (discoveredResources.contains(details)) {                        
                         List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(details.getResourceKey());
                         if (duplicates == null) {
@@ -151,6 +152,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             }
         }
         
+        //Log the erroneous collisions and take them out of the discoveredResource list.
         for (String duplicateKey : duplicatesByKey.keySet()) {
             List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(duplicateKey);
             log.error("Multiple Resources with the same key (" + duplicateKey
@@ -511,13 +513,22 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             }
         }
 
+        //build the resource names from supported JvmResourceKey instances. See JvmResourceKey.Type for more details.
         switch (key.getType()) {
-            case JmxRemotingPort:
-                name.append(':').append(key.getJmxRemotingPort()); break;
-            case Explicit:
-                name.append(' ').append(key.getExplicitValue()); break;
-            default:
-                throw new IllegalStateException("Unsupported key type: " + key.getType());
+        case Legacy: // implies main classname was not found. Include earlier naming format as well.
+            name.append("JMX Server (" + key.getJmxRemotingPort() + ")");
+            break;
+        case ConnectorAddress:
+            name.append(key.getConnectorAddress());
+            break;
+        case JmxRemotingPort:
+            name.append(':').append(key.getJmxRemotingPort());
+            break;
+        case Explicit:
+            name.append(' ').append(key.getExplicitValue());
+            break;
+        default:
+            throw new IllegalStateException("Unsupported key type: " + key.getType());
         }
 
         return name.toString();

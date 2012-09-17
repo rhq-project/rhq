@@ -17,6 +17,7 @@
    <properties>
      <!-- dependency versions -->
      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+     <rhq.internal>false</rhq.internal>
    </properties>
 
 

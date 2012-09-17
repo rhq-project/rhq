@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -240,8 +241,10 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         LocatableDynamicForm row = new LocatableDynamicForm(
                                                             recentMeasurementsContent.extendLocatorId(md.getName()));
                                                         row.setNumCols(3);
-                                                        row.setColWidths(65,"*","*");
+                                                        row.setColWidths(65, "*", 100);
                                                         row.setWidth100();
+                                                        row.setAutoHeight();
+                                                        row.setOverflow(Overflow.VISIBLE);
                                                         HTMLFlow graph = new HTMLFlow();
                                                         String contents = "<span id='sparkline_" + index
                                                             + "' class='dynamicsparkline' width='0' " + "values='"
@@ -265,9 +268,13 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         //have link launch modal window on click
                                                         LinkItem link = AbstractActivityView.newLinkItem(title,
                                                             destination);
+                                                        link.setTooltip(title);
                                                         link.setTitleVAlign(VerticalAlignment.TOP);
                                                         link.setAlign(Alignment.LEFT);
-                                                        link.setClipValue(false);
+                                                        link.setClipValue(true);
+                                                        link.setWrap(true);
+                                                        link.setHeight(26);
+                                                        link.setWidth("100%");
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -284,7 +291,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         });
 
                                                         //Value
-                                                        String convertedValue = lastValue + " " + md.getUnits();
+                                                        String convertedValue;
                                                         convertedValue = AbstractActivityView
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView

@@ -334,11 +334,11 @@ public class LinkManager {
     }
 
     public static String getHubCompatibleGroupsLink() {
-        return "/rhq/inventory/browseGroups.xhtml?subtab=compatible";
+        return "#Inventory/Groups/CompatibleGroups";
     }
 
     public static String getHubMixedGroupsLink() {
-        return "/rhq/inventory/browseGroups.xhtml?subtab=mixed";
+        return "#Inventory/Groups/MixedGroups";
     }
 
     public static String getHubGroupDefinitionsLink() {

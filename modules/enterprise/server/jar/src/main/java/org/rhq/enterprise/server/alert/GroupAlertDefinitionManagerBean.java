@@ -146,12 +146,15 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
         int groupAlertDefinitionId = 0;
         try {
-            groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null);
+            groupAlertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, groupAlertDefinition, null, true);
         } catch (Throwable t) {
             throw new AlertDefinitionCreationException("Could not create groupAlertDefinitions for " + group
                 + " with data " + groupAlertDefinition.toSimpleString(), t);
         }
 
+        //get the alert definition we just created.. this is so that we can create copies of it
+        AlertDefinition persistedDefinition = alertDefinitionManager.getAlertDefinition(subject, groupAlertDefinitionId);
+        
         Throwable firstThrowable = null;
 
         List<Integer> resourceIdsForGroup = getCommittedResourceIdsNeedingGroupAlertDefinitionApplication(subject,
@@ -160,7 +163,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer resourceId : resourceIdsForGroup) {
             try {
                 // construct the child
-                AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
+                AlertDefinition childAlertDefinition = new AlertDefinition(persistedDefinition);
                 childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
                 // persist the child
@@ -241,9 +244,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
             LOG.debug("Need to update the following children alert definition ids: " + alertDefinitions);
         }
         List<Integer> alertDefinitionIdsInError = new ArrayList<Integer>();
+        
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
-                alertDefinitionManager.updateAlertDefinition(overlord, alertDefinitionId, groupAlertDefinition,
+                alertDefinitionManager.updateDependentAlertDefinition(subject, alertDefinitionId, updated,
                     resetMatching);
             } catch (Throwable t) {
                 // continue on error, update as many as possible
@@ -261,11 +265,11 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer resourceId : resourceIds) {
             try {
                 // construct the child
-                AlertDefinition childAlertDefinition = new AlertDefinition(groupAlertDefinition);
+                AlertDefinition childAlertDefinition = new AlertDefinition(updated);
                 childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
                 // persist the child
-                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+                alertDefinitionManager.createAlertDefinition(subject, childAlertDefinition, resourceId, false);
             } catch (Throwable t) {
                 // continue on error, update as many as possible
                 if (firstThrowable == null) {
@@ -308,7 +312,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
                     childAlertDefinition.setGroupAlertDefinition(groupAlertDefinition);
 
                     // persist the child
-                    alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId);
+                    alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId, false);
                 } catch (Throwable t) {
                     // continue on error, create as many as possible
                     if (firstThrowable == null) {

@@ -31,7 +31,6 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -111,16 +110,6 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                     beginTime, endTime, numPoints));
             }
             return SerialUtility.prepare(results, "MeasurementDataService.findDataForCompatibleGroup");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
-        PageControl pageControl) throws RuntimeException {
-        try {
-            return SerialUtility.prepare(callTimeDataManager.findCallTimeDataForResource(getSessionSubject(),
-                scheduleId, start, end, pageControl), "MeasurementDataService.findCallTimeDataForResource");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

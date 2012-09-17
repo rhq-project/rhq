@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,21 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.search;
 
-import com.google.gwt.user.client.ui.Composite;
-import org.rhq.core.domain.search.SearchSubsystem;
+package org.rhq.enterprise.server;
+
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 
 /**
- * Abstract class for SearchBar, so that a separate implementation can be written alongside the original. 
- * @author Joseph Marques
+ * 
+ *
+ * @author Lukas Krejci
  */
-@Deprecated
-public abstract class AbstractSearchBar extends Composite {
+public interface TestServerPluginServiceMBean extends ServerPluginServiceManagement {
 
-    public abstract SearchSubsystem getSearchSubsystem();
-
-    public abstract String getSelectedTab();
-
-    public abstract void activateSavedSearch(String savedSearchName);
 }

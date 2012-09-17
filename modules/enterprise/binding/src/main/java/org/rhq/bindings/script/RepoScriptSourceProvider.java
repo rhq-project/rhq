@@ -55,10 +55,14 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
 
     private static final Log LOG = LogFactory.getLog(RepoScriptSourceProvider.class);
 
-    private static final String PREFIX = "//repositories/";
+    private static final String AUTHORITY = "repositories";
 
     private RhqFacade rhqFacade;
 
+    public RepoScriptSourceProvider() {
+        super(AUTHORITY);
+    }
+    
     @Override
     public void rhqFacadeChanged(StandardBindings bindings) {
         this.rhqFacade = bindings.getAssociatedRhqFacade();
@@ -70,13 +74,7 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
             return null;
         }
 
-        String path = scriptUri.getSchemeSpecificPart();
-
-        if (!path.startsWith(PREFIX)) {
-            return null;
-        }
-
-        path = path.substring(PREFIX.length());
+        String path = scriptUri.getPath().substring(1); //remove the leading / from the path
 
         int slashIdx = path.indexOf('/');
 

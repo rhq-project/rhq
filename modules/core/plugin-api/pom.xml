@@ -15,6 +15,10 @@
    <name>RHQ Plugin API</name>
    <description>RHQ Plugin API used to write custom plugins</description>
 
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
+   
    <dependencies>
 
       <!-- Internal Deps -->

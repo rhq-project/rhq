@@ -141,6 +141,18 @@
          <scope>test</scope>
       </dependency>
 
+      <!-- Shrinkwrap to build up test plugins etc. -->
+      <dependency>
+          <groupId>org.jboss.shrinkwrap</groupId>
+          <artifactId>shrinkwrap-api</artifactId>
+      </dependency>
+ 
+      <dependency>
+          <groupId>org.jboss.shrinkwrap</groupId>
+          <artifactId>shrinkwrap-impl-base</artifactId>
+          <scope>compile</scope>
+      </dependency>
+      
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
@@ -274,7 +286,29 @@
         <version>${resteasy.version}</version>
      </dependency>
   
+     <!-- Dependencies for RHQ components needed for integration tests -->
+     <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>rhq-serverplugin-drift</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+     </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-testng</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
 
   <build>
     <testResources>

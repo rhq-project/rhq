@@ -26,11 +26,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.management.Attribute;
@@ -91,7 +89,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * This bean is not meant for client consumption - it is only for startup initialization.
  */
 @Singleton
-@Startup
+//@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
 public class StartupBean {
     private Log log = LogFactory.getLog(this.getClass());
 
@@ -129,7 +127,7 @@ public class StartupBean {
      *
      * @throws RuntimeException
      */
-    @PostConstruct
+    //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void init() throws RuntimeException {
         initialized = false;

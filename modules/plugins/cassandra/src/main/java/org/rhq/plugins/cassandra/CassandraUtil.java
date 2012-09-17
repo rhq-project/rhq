@@ -36,7 +36,7 @@ import me.prettyprint.hector.api.factory.HFactory;
  */
 public class CassandraUtil {
 
-    private static Cluster getCluster() {
+    public static Cluster getCluster() {
         // TODO Cannot hard code the port
         return HFactory.getOrCreateCluster("rhq", "localhost:9160");
     }

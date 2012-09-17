@@ -22,14 +22,22 @@
  */
 package org.rhq.plugins.cassandra;
 
+import java.util.Set;
+
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
  * @author John Sanda
  */
 public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
+    @Override
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+        return super.discoverResources(context);
+    }
 
-//    @Override
+    //    @Override
 //    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
 //        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 //        List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();

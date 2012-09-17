@@ -65,6 +65,11 @@
       <artifactId>hector-core</artifactId>
       <version>1.1-1</version>
     </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.10</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -92,6 +97,10 @@
                 <artifactItem>
                   <groupId>org.apache.thrift</groupId>
                   <artifactId>libthrift</artifactId>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.yaml</groupId>
+                  <artifactId>snakeyaml</artifactId>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.slf4j</groupId>

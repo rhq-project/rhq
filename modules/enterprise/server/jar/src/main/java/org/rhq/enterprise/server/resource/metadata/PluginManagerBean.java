@@ -80,14 +80,19 @@ public class PluginManagerBean implements PluginManagerLocal {
     /**
      * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin
-     * @return the plugin with the specified name
-     * @throws javax.persistence.NoResultException when no plugin with that name exists
+     * @return the plugin with the specified name, or null if not found
      */
     public Plugin getPlugin(String name) {
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
         query.setParameter("name", name);
-        Plugin plugin = (Plugin) query.getSingleResult();
-        return plugin;
+        Plugin result = null;
+        try {
+            result = (Plugin) query.getSingleResult();
+        } catch (NoResultException e) {
+            result = null;
+        }
+
+        return result;
     }
 
     @Override
@@ -379,14 +384,9 @@ public class PluginManagerBean implements PluginManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
             throws Exception {
-        Plugin existingPlugin = null;
-        boolean newOrUpdated = false;
 
-        try {
-            existingPlugin = getPlugin(newPlugin.getName());
-        } catch (NoResultException nre) {
-            newOrUpdated = true; // this is expected for new plugins
-        }
+        Plugin existingPlugin = getPlugin(newPlugin.getName());
+        boolean newOrUpdated = (null == existingPlugin);
 
         if (existingPlugin != null) {
             Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(newPlugin, existingPlugin);

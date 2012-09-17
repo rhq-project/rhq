@@ -379,6 +379,10 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
         try {
             Plugin plugin = LookupUtil.getPluginManager().getPlugin(selectedPlugin);
+            if (null == plugin) {
+                return;
+            }
+
             List<ResourceType> types = LookupUtil.getResourceTypeManager().getResourceTypesByPlugin(plugin.getName());
 
             List<String> typeNames = new ArrayList<String>();

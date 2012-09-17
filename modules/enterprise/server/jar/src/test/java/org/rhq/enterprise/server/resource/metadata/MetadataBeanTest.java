@@ -308,13 +308,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * @param pluginName
      */
     protected void pluginDeployed(String pluginName) {
-        try {
-            PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-            Plugin plugin = pluginMgr.getPlugin(pluginName);
-            if (plugin != null) {
-                this.pluginIds.add(plugin.getId());
-            }
-        } catch (Exception ignore) {
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        Plugin plugin = pluginMgr.getPlugin(pluginName);
+        if (plugin != null) {
+            this.pluginIds.add(plugin.getId());
         }
     }
 }

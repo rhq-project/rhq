@@ -91,6 +91,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         pluginMgr.disablePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
         plugin = pluginMgr.getPlugin("PluginManagerBeanTestPlugin3");
 
+        assertNotNull(plugin);
         assertFalse("Failed to disable plugin", plugin.isEnabled());
     }
 

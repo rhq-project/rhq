@@ -313,10 +313,8 @@ public class ProductPluginDeployer {
         }
 
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-        Plugin plugin;
-        try {
-            plugin = pluginMgr.getPlugin(pluginName);
-        } catch (RuntimeException e) {
+        Plugin plugin = pluginMgr.getPlugin(pluginName);
+        if (null == plugin) {
             log.debug("New plugin [" + pluginName + "] detected.");
             return true;
         }

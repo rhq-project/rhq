@@ -130,7 +130,7 @@ public class StartupBean {
      * @throws RuntimeException
      */
     @PostConstruct
-    @TransactionAttribute(TransactionAttributeType.NEVER)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void init() throws RuntimeException {
         initialized = false;
 

@@ -16,11 +16,9 @@ public interface PluginManagerLocal {
     /**
      * Given the plugin name, will return that plugin.  The name is defined in the plugin descriptor.
      *
-     * @param  name name of plugin as defined in plugin descriptor.
+     * @param  name of plugin as defined in plugin descriptor.
      *
-     * @return the plugin
-     *
-     * @throws javax.persistence.NoResultException when no plugin with that name exists
+     * @return the plugin, or null if the plugin does not exist.
      */
     Plugin getPlugin(String name);
 

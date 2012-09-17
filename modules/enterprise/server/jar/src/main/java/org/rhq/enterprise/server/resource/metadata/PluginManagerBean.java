@@ -77,11 +77,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private SubjectManagerLocal subjectMgr;
 
-    /**
-     * Returns the information on the given plugin as found in the database.
-     * @param  name the name of a plugin
-     * @return the plugin with the specified name, or null if not found
-     */
+    @Override
     public Plugin getPlugin(String name) {
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
         query.setParameter("name", name);
@@ -125,6 +121,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public List<Plugin> getInstalledPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
@@ -141,6 +138,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<Plugin>(); // nothing to do
@@ -151,6 +149,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory) {
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY);
         query.setParameter("resourceTypeName", resourceTypeName);
@@ -160,6 +159,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Override
     public void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
@@ -303,6 +303,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
     public void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
         Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGIN_ENABLED_BY_ID);
         q.setParameter("id", pluginId);
@@ -345,6 +346,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     // need to avoid an umbrella transaction for the type removal because large inventories of obsolete resources
     // will generate very large transactions. Potentially resulting in timeouts or other issues.
     @TransactionAttribute(TransactionAttributeType.NEVER)
+    @Override
     public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
                                boolean forceUpdate) throws Exception {
         log.debug("Registering " + plugin + "...");
@@ -382,6 +384,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
     public boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
             throws Exception {
 

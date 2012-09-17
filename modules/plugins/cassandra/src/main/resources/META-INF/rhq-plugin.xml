@@ -21,7 +21,9 @@
 
   <depends plugin="JMX" useClasses="true"/>
 
-  <server name="Cassandra Node" discovery="CassandraNodeDiscoveryComponent" class="CassandraNodeComponent">
+  <server name="Cassandra Node"
+          discovery="CassandraNodeDiscoveryComponent"
+          class="CassandraNodeComponent">
     <plugin-configuration>
       <c:simple-property
           name="connectorAddress"
@@ -42,6 +44,30 @@
 
     <process-scan name="CassandraDaemon"
                   query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
+
+    <operation name="shutdown"
+               description="Shuts down the Cassandra node">
+      <results>
+        <c:simple-property name="shutdownResult" description="Results of Cassandra node shutdown"/>
+      </results>
+    </operation>
+
+    <metric property="cluster"
+            dataType="trait"
+            description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another."/>
+
+    <server name="Cassandra Server JVM"
+            description="The JVM of the Cassandra node"
+            sourcePlugin="JMX"
+            sourceType="JMX Server"
+            discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+            class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
+            singleton="true">
+      <plugin-configuration>
+        <c:simple-property name="type" type="string" default="PARENT" readOnly="true"
+                           description="The EMS connection type for this JVM (cannot be modified)"/>
+      </plugin-configuration>
+    </server>
 
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

@@ -236,7 +236,8 @@
         <mkdir dir="${jboss.deploy.dir}/${rhq.earName}" />
         <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
                dest="${jboss.deploy.dir}/${rhq.earName}" />
-        <touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
+        <delete file="${jboss.deploy.dir}/${rhq.earName}.dodeploy" quiet="true" />
+    	<touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
 
         <echo>Deploying installer webapp ...</echo>
         <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />

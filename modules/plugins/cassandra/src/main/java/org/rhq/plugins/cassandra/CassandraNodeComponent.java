@@ -25,6 +25,7 @@ package org.rhq.plugins.cassandra;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
 
 import java.io.File;
@@ -132,7 +133,7 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
         Configuration pluginConfig = context.getPluginConfiguration();
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         File binDir = new File(baseDir, "bin");
-        File startScript = new File(binDir, "cassandra");
+        File startScript = new File(binDir, getStartScript());
 
         ProcessExecution scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
         SystemInfo systemInfo = context.getSystemInformation();
@@ -144,6 +145,17 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
             OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
             failure.setErrorMessage(ThrowableUtil.getAllMessages(results.getError()));
             return failure;
+        }
+    }
+
+    private String getStartScript() {
+        ResourceContext context = getResourceContext();
+        SystemInfo systemInfo = context.getSystemInformation();
+
+        if (systemInfo.getOperatingSystemType() == WINDOWS) {
+            return "cassandra.bat";
+        } else {
+            return "cassandra";
         }
     }
 

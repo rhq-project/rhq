@@ -79,4 +79,22 @@ public class Address implements Cloneable {
     public String toString() {
         return addressNode.asString();
     }
+
+    @Override
+    public int hashCode() {
+        return addressNode.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof Address)) {
+            return false;
+        }
+
+        return this.addressNode.equals(((Address) obj).addressNode);
+    }
 }

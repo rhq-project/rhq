@@ -22,64 +22,71 @@
  */
 package org.rhq.plugins.cassandra;
 
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
  * @author John Sanda
  */
 public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
+
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        return super.discoverResources(context);
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)  {
+        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
+        List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();
+
+        for (ProcessScanResult processScanResult : processScanResults) {
+            DiscoveredResourceDetails discoveredDetails = getDetails(context, processScanResult);
+            if (discoveredDetails != null) {
+                details.add(discoveredDetails);
+            }
+        }
+
+        return details;
     }
 
-    //    @Override
-//    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
-//        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
-//        List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();
-//
-//        for (ProcessScanResult processScanResult : processScanResults) {
-//            DiscoveredResourceDetails discoveredDetails = getDetails(context, processScanResult);
-//            if (discoveredDetails != null) {
-//                details.add(discoveredDetails);
-//            }
-//        }
-//
-//        return details;
-//    }
-//
-//    private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext context,
-//        ProcessScanResult processScanResult) {
-//        ProcessInfo processInfo = processScanResult.getProcessInfo();
-//        String jmxPort = null;
-//
-//        for (String arg : processInfo.getCommandLine()) {
-//            if (arg.startsWith("-Dcom.sun.management.jmxremote.port")) {
-//                String[] jmxPortArg = arg.split("=");
-//                jmxPort = jmxPortArg[1];
-//                break;
-//            }
-//        }
-//
-//        if (jmxPort == null) {
-//            return null;
-//        }
-//
-//        String resourceKey = "CassandraDaemon:" + jmxPort;
-//        String resourceName = "CassandraDaemon";
-//
-//        Configuration pluginConfig = new Configuration();
-//        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-//            J2SE5ConnectionTypeDescriptor.class.getName()));
-//        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
-//            //service:jmx:rmi:///jndi/rmi://127.0.0.1:7199/jmxrmi
-//            "service:jmx:rmi:///jndi/rmi://127.0.0.1:" + jmxPort + "/jmxrmi"));
-//
-//        return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
-//            pluginConfig, processInfo);
-//    }
+    private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext context,
+        ProcessScanResult processScanResult) {
+        ProcessInfo processInfo = processScanResult.getProcessInfo();
+        String jmxPort = null;
+
+        for (String arg : processInfo.getCommandLine()) {
+            if (arg.startsWith("-Dcom.sun.management.jmxremote.port")) {
+                String[] jmxPortArg = arg.split("=");
+                jmxPort = jmxPortArg[1];
+                break;
+            }
+        }
+
+        if (jmxPort == null) {
+            return null;
+        }
+
+        String resourceKey = "CassandraDaemon:" + jmxPort;
+        String resourceName = "CassandraDaemon";
+
+        Configuration pluginConfig = new Configuration();
+        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+            J2SE5ConnectionTypeDescriptor.class.getName()));
+        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
+            "service:jmx:rmi:///jndi/rmi://127.0.0.1:" + jmxPort + "/jmxrmi"));
+
+        String path = processInfo.getExecutable().getCwd();
+        pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
+
+        return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
+            pluginConfig, processInfo);
+    }
 }

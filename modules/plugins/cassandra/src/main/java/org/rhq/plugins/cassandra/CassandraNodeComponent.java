@@ -22,8 +22,12 @@
  */
 package org.rhq.plugins.cassandra;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
 
+import java.io.File;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -31,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarException;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -38,7 +43,12 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
 import me.prettyprint.hector.api.Cluster;
@@ -50,71 +60,26 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
 
     private Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
-//    private ResourceContext context;
-//
-//    private EmsConnection emsConnection;
-//
-//    @Override
-//    public void start(ResourceContext context) throws Exception {
-//        this.context = context;
-//    }
-//
-//    @Override
-//    public void stop() {
-//        emsConnection = null;
-//    }
-//
-//    @Override
-//    public AvailabilityType getAvailability() {
-//        if (emsConnection == null) {
-//            getEmsConnection();
-//        }
-//        return AvailabilityType.UP;
-//    }
-//
-//    @Override
-//    public EmsConnection getEmsConnection() {
-//        if (emsConnection != null) {
-//            return emsConnection;
-//        }
-//
-//        try {
-//            Configuration pluginConfig = context.getPluginConfiguration();
-//
-//            ConnectionSettings connectionSettings = new ConnectionSettings();
-//
-//            String connectionTypeDescriptorClass = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
-//                .getStringValue();
-//            PropertySimple serverUrl = pluginConfig
-//                .getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
-//
-//            connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(
-//                connectionTypeDescriptorClass).newInstance());
-//            // if not provided use the default serverUrl
-//            if (null != serverUrl) {
-//                connectionSettings.setServerUrl(serverUrl.getStringValue());
-//            }
-//
-//            ConnectionFactory connectionFactory = new ConnectionFactory();
-//            ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
-//            emsConnection = connectionProvider.connect();
-//            emsConnection.loadSynchronous(false);
-//
-//            return emsConnection;
-//        } catch (InstantiationException e) {
-//            throw new RuntimeException("Failed to get EMS connection", e);
-//        } catch (IllegalAccessException e) {
-//            throw new RuntimeException("Failed to get EMS connection", e);
-//        } catch (ClassNotFoundException e) {
-//            throw new RuntimeException("Failed to get EMS connection", e);
-//        }
-//    }
+    @Override
+    public AvailabilityType getAvailability() {
+        ResourceContext context = getResourceContext();
+        ProcessInfo processInfo = context.getNativeProcess();
 
+        if (processInfo == null) {
+            return UNKNOWN;
+        } else if (processInfo.isRunning()) {
+            return UP;
+        } else {
+            return DOWN;
+        }
+    }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("shutdown")) {
             return shutdown(parameters);
+        } else if (name.equals("start")) {
+            return start(parameters);
         }
         return null;
     }
@@ -125,11 +90,30 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
         long pid = process.getPid();
         try {
             process.kill("KILL");
-            context.getAvailabilityContext().requestAvailabilityCheck();
-            return new OperationResult("Successfully shut down Cassandra node with pid " + pid);
+            return new OperationResult("Successfully shut down Cassandra daemon with pid " + pid);
         } catch (SigarException e) {
             log.warn("Failed to shut down Cassandra node with pid " + pid, e);
             return new OperationResult("Failed to shut down Cassandra node with pid " + pid + ": " + e.getMessage());
+        }
+    }
+
+    private OperationResult start(Configuration params) {
+        ResourceContext context = getResourceContext();
+        Configuration pluginConfig = context.getPluginConfiguration();
+        String baseDir = pluginConfig.getSimpleValue("baseDir");
+        File binDir = new File(baseDir, "bin");
+        File startScript = new File(binDir, "cassandra");
+
+        ProcessExecution scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        SystemInfo systemInfo = context.getSystemInformation();
+        ProcessExecutionResults results = systemInfo.executeProcess(scriptExe);
+
+        if  (results.getError() == null) {
+            return new OperationResult("Successfully started Cassandra daemon");
+        } else {
+            OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
+            failure.setErrorMessage(ThrowableUtil.getAllMessages(results.getError()));
+            return failure;
         }
     }
 

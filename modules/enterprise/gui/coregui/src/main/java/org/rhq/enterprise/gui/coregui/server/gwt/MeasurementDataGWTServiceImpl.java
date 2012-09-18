@@ -39,11 +39,11 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -55,7 +55,6 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     private static final long serialVersionUID = 1L;
 
     private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-    private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
     private MeasurementOOBManagerLocal measurementOOBManager = LookupUtil.getOOBManager();
 
     private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
@@ -99,6 +98,12 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
+    
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResourceForLast(int resourceId, int[] definitionIds,
+        int lastN, int unit, int numPoints) throws RuntimeException {
+        List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
+        return findDataForResource(resourceId, definitionIds, beginEnd.get(0), beginEnd.get(1), numPoints);
+    }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId,
         int[] definitionIds, long beginTime, long endTime, int numPoints) throws RuntimeException {
@@ -114,7 +119,13 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw getExceptionToThrowToClient(t);
         }
     }
-
+    
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroupForLast(int groupId,
+        int[] definitionIds, int lastN, int unit, int numPoints) throws RuntimeException {
+        List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
+        return findDataForCompatibleGroup(groupId, definitionIds, beginEnd.get(0), beginEnd.get(1), numPoints);
+    }
+    
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
         throws RuntimeException {
         try {

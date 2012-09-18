@@ -804,9 +804,12 @@
           <processors>
             <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
           </processors>
-          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
-            <!-- Comment the next line in to get more verbose output for debugging -->
-            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
+          <compilerArguments>
+            -AtargetDirectory=${project.build.directory}/docs/xml
+            -AmodelPkg=org.rhq.enterprise.server.rest.domain
+          </compilerArguments>
+            <!-- Add the next line in to get more verbose output for debugging -->
+            <!-- -Averbose=true -->
         </configuration>
         <executions>
           <execution>

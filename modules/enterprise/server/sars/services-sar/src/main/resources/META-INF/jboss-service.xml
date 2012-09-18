@@ -3,13 +3,10 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:jboss:service:7.0 jboss-service_7_0.xsd">
 
-    <!-- TODO: need to figure out how to port this to AS7
     <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
            name="rhq:service=CustomJaasDeployment">
-        <depends>jboss.jca:service=XATxCM,name=RHQDS</depends>
-    </mbean>
-    -->
-
+    </mbean>    
+    
     <mbean code="org.rhq.enterprise.server.core.CoreServer"
            name="rhq:service=CoreServer" />
 

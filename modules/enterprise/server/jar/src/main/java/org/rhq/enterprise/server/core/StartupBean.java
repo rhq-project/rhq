@@ -96,10 +96,10 @@ public class StartupBean {
     private boolean initialized = false;
 
     @EJB
-    private SystemManagerLocal systemManager;
+    private AgentManagerLocal agentManager;
 
     @EJB
-    private ServerManagerLocal serverManager;
+    private CacheConsistencyManagerLocal cacheConsistencyManager;
 
     @EJB
     private CloudManagerLocal cloudManager;
@@ -111,13 +111,14 @@ public class StartupBean {
     private SchedulerLocal schedulerBean;
 
     @EJB
-    private CacheConsistencyManagerLocal cacheConsistencyManager;
-
-    @EJB
-    private AgentManagerLocal agentManager;
+    private ServerManagerLocal serverManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private SystemManagerLocal systemManager;
+
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;

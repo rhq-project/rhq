@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.common.jbossas.client.controller;
+package org.rhq.enterprise.installer.client.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,6 +32,8 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
 
+import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
+import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.enterprise.gui.installer.client.shared.ServerProperties;
 import org.rhq.enterprise.gui.installer.server.servlet.ServerInstallUtil;
 

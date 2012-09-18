@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/installer/src/test/java"/>
+	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/test/java"/>
+	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/api/src/main/java"/>
 	<classpathentry kind="src" path="modules/cli-tests/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/jeeGen/src/main/java"/>

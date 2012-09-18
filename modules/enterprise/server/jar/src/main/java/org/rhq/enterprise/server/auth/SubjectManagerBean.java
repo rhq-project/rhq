@@ -372,7 +372,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         try {
             UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
             LoginContext loginContext;
-            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
+            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.RHQ_USER_SECURITY_DOMAIN, handler);
 
             loginContext.login();
             loginContext.getSubject().getPrincipals().iterator().next();

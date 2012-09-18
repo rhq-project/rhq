@@ -21,9 +21,6 @@
         <!-- dependency versions -->
         <gwt.version>2.4.0</gwt.version>
         <smartgwt.version>3.0</smartgwt.version>
-        <jboss.as.version>7.1.1.Final</jboss.as.version> <!-- our AS7 container -->
-        <jboss.msc.version>1.0.2.GA</jboss.msc.version> <!-- this ships with our AS7 container -->
-        <jboss.dmr.version>1.1.1.Final</jboss.dmr.version> <!-- this ships with our AS7 container -->
 
         <installerGuiParams />
         <installerGuiRunTarget>'http://localhost:7080/rhq-installer/index.html${installerGuiParams}'</installerGuiRunTarget>
@@ -79,6 +76,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-jboss-as-dmr-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- dbutils has transitive dep on ant-launcher but with test scope - installer needs it for real -->
         <dependency>
             <groupId>ant</groupId>
@@ -123,46 +126,11 @@
             <scope>provided</scope> <!-- provided by AS7 -->
         </dependency>
 
-        <!-- we need these so we can have our own service to provide a co-located management client -->
-        <dependency>
-            <groupId>org.jboss.msc</groupId>
-            <artifactId>jboss-msc</artifactId>
-            <version>${jboss.msc.version}</version>
-            <scope>provided</scope> <!-- provided by AS7 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-dmr</artifactId>
-            <version>${jboss.dmr.version}</version>
-            <scope>provided</scope> <!-- provided by AS7 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-naming</artifactId>
-            <version>${jboss.as.version}</version>
-            <scope>provided</scope> <!-- provided by AS7 -->
-        </dependency>
 
         <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-server</artifactId>
-            <version>${jboss.as.version}</version>
-            <scope>provided</scope> <!-- provided by AS7 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-controller</artifactId>
-            <version>${jboss.as.version}</version>
-            <scope>provided</scope> <!-- provided by AS7 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-controller-client</artifactId>
-            <version>${jboss.as.version}</version>
+            <version>${jboss.version}</version>
             <scope>provided</scope> <!-- provided by AS7 -->
         </dependency>
 

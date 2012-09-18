@@ -86,12 +86,25 @@
       <artifactId>rhq-container-lib</artifactId>
       <version>${project.version}</version>
     </dependency>
- 
+   
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
       <artifactId>diffutils</artifactId>
       <version>1.2.1</version>
     </dependency>
+
+  <dependency>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-jboss-as-dmr-client</artifactId>
+    <version>${project.version}</version>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-server</artifactId>
+    <version>${jboss.version}</version>
+    <scope>provided</scope> <!-- provided by AS7 -->
+  </dependency>
 
 
       <!--================ Test Deps ================-->

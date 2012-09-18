@@ -29,5 +29,6 @@
       <module>filetemplate-bundle</module>
       <module>ant-bundle</module>
       <module>drift</module>      
+      <module>jboss-as-dmr-client</module>
    </modules>
 </project>

@@ -18,8 +18,13 @@
  */
 package org.rhq.common.jbossas.client.controller;
 
+import java.util.Map;
+
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+
+import org.rhq.common.jbossas.client.controller.FailureException;
+import org.rhq.common.jbossas.client.controller.JBossASClient;
 
 /**
  * Provides convenience methods associated with security domain management.
@@ -134,6 +139,48 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         moduleOptions.add(ROLES_QUERY, rolesQuery);
         moduleOptions.add(HASH_ALGORITHM, (null == hashAlgorithm ? "MD5" : hashAlgorithm));
         moduleOptions.add(HASH_ENCODING, (null == hashEncoding ? "base64" : hashEncoding));
+        loginModulesNode.add(loginModule);
+
+        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
+        ModelNode results = execute(batch);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
+    /**
+     * Convenience method that builds a request which can create a new security domain
+     * using the database server authentication method. This is used when you want to directly
+     * authenticate against a db entry. 
+     *
+     * @param securityDomainName the name of the new security domain
+     * @param loginModuleFQCN fully qualified class name to be set as the login-module "code".
+     * @param moduleOptionProperties map of propName->propValue mappings to to bet as module options
+     * @throws Exception if failed to create security domain
+     */
+    public void createNewCustomSecurityDomainRequest(String securityDomainName, String loginModuleFQCN,
+        Map<String, String> moduleOptionProperties) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
+
+        ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
+        ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
+        ModelNode loginModule = new ModelNode();
+        loginModule.get(CODE).set(loginModuleFQCN);
+        loginModule.get(FLAG).set("required");
+        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+        moduleOptions.setEmptyList();
+
+        if (null != moduleOptionProperties) {
+            for (String key : moduleOptionProperties.keySet()) {
+                moduleOptions.add(key, moduleOptionProperties.get(key));
+            }
+        }
+
         loginModulesNode.add(loginModule);
 
         ModelNode batch = createBatchRequest(addTopNode, addAuthNode);

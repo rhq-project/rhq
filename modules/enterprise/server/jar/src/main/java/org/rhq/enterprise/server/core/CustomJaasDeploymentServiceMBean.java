@@ -19,21 +19,23 @@
 package org.rhq.enterprise.server.core;
 
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
 
 /**
  * MBean interface to the service that is responsible for installing JON's JAAS login handlers.
  */
 public interface CustomJaasDeploymentServiceMBean {
-    /**
-     * The name of this service when deployed.
-     */
-    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=CustomJaasDeployment");
 
     /**
      * The name used to identify the security domain where this service registers the login modules.
      */
-    String SECURITY_DOMAIN_NAME = "JON";
+    String RHQ_USER_SECURITY_DOMAIN = "RHQUserSecurityDomain";
+
+    /**
+     * The name of this service when deployed.
+     */
+    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=CustomJaasDeployment");
 
     /**
      * Installs the JAAS Modules that JON Server uses to allow users to log in.

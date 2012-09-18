@@ -33,6 +33,9 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarException;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -86,6 +89,33 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
 
     private OperationResult shutdown(Configuration params) {
         ResourceContext context = getResourceContext();
+
+        if (log.isInfoEnabled()) {
+            log.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
+                " with resource key " + context.getResourceKey());
+        }
+        EmsConnection emsConnection = getEmsConnection();
+        EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+        Class[] emptyParams = new Class[0];
+
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling thrift...");
+        }
+        EmsOperation operation = storageService.getOperation("stopRPCServer", emptyParams);
+        operation.invoke(emptyParams);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling gossip...");
+        }
+        operation = storageService.getOperation("stopGossiping", emptyParams);
+        operation.invoke(emptyParams);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Initiating drain...");
+        }
+        operation = storageService.getOperation("drain", emptyParams);
+        operation.invoke(emptyParams);
+
         ProcessInfo process = context.getNativeProcess();
         long pid = process.getPid();
         try {

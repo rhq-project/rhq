@@ -25,6 +25,12 @@
 
 package org.rhq.plugins.cassandra;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
@@ -32,6 +38,8 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -39,6 +47,47 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author John Sanda
  */
 public class StorageServiceComponent extends MBeanResourceComponent {
+
+    private Log log = LogFactory.getLog(StorageServiceComponent.class);
+
+    @Override
+    public AvailabilityType getAvailability() {
+        ResourceContext context = getResourceContext();
+        try {
+            EmsBean emsBean = loadBean();
+            if (emsBean == null) {
+                log.warn("Unable to establish JMX connection to " + context.getResourceKey());
+                return DOWN;
+            }
+
+            AvailabilityType availability = UP;
+
+            EmsAttribute thriftEnabledAttr = emsBean.getAttribute("RPCServerRunning");
+            Boolean thriftEnabled = (Boolean) thriftEnabledAttr.getValue();
+
+            if (!thriftEnabled) {
+                if (log.isWarnEnabled()) {
+                    log.warn("Thrift RPC server is disabled for " + context.getResourceKey());
+                }
+                availability = DOWN;
+            }
+
+            EmsAttribute initializedAttr = emsBean.getAttribute("Initialized");
+            Boolean initialized = (Boolean) initializedAttr.getValue();
+
+            if (!initialized) {
+                if (log.isWarnEnabled()) {
+                    log.warn(context.getResourceKey() + " is not initialized");
+                }
+                availability = DOWN;
+            }
+
+            return availability;
+        } catch (Exception e) {
+            log.error("Unable to determine availability for " + context.getResourceKey(), e);
+            return UNKNOWN;
+        }
+    }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

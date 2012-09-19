@@ -5,7 +5,6 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
-        version="5.0.2"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -248,6 +247,7 @@
                class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
         <plugin-configuration>
           <c:simple-property name="objectName" readOnly="true" type="string"/>
+          <c:simple-property name="name" type="string" description="The column family name"/>
         </plugin-configuration>
 
         <metric property="TotalReadLatencyMicros"
@@ -283,6 +283,18 @@
         <metric property="TotalDiskSpaceUsed"
                 measurementType="dynamic"
                 displayType="summary"/>
+
+        <resource-configuration>
+          <c:simple-property name="gc_grace_seconds"
+                             displayName="gc_grace_seconds"
+                             required="false"
+                             default="864000"
+                             type="integer"
+                             description="Specifies the time to wait before garbage collecting tombstones (deletion
+                             markers). The value, specified in seconds, defaults to 10 days and allows for a large
+                             amount of time for consistency to be achived prior to deletion. In a single node cluster
+                             this can be reduced to zero."/>
+        </resource-configuration>
       </service>
     </service>
   </server>

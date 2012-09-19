@@ -25,8 +25,6 @@
 
 package org.rhq.plugins.cassandra;
 
-import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinition;
-
 import java.util.Map;
 
 import org.mc4j.ems.connection.EmsConnection;
@@ -73,7 +71,7 @@ public class KeyspaceComponent implements ResourceComponent, ConfigurationFacet,
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition(context.getResourceKey());
+        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition();
 
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", keyspaceDef.getName()));
@@ -92,6 +90,10 @@ public class KeyspaceComponent implements ResourceComponent, ConfigurationFacet,
         config.put(list);
 
         return config;
+    }
+
+    public KeyspaceDefinition getKeyspaceDefinition() {
+        return CassandraUtil.getKeyspaceDefinition(context.getResourceKey());
     }
 
     @Override

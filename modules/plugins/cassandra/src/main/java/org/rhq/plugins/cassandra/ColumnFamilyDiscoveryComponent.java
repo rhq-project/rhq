@@ -57,6 +57,7 @@ public class ColumnFamilyDiscoveryComponent implements ResourceDiscoveryComponen
             pluginConfig.put(new PropertySimple("objectName",
                 "org.apache.cassandra.db:type=ColumnFamilies,keyspace=" + keyspaceDef.getName() +
                     ",columnfamily=" + columnFamilyDef.getName()));
+            pluginConfig.put(new PropertySimple("name", columnFamilyDef.getName()));
             details.add(new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
                 columnFamilyDef.getName(), null, null, pluginConfig, null));
         }

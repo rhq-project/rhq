@@ -95,6 +95,10 @@ public class StorageServiceComponent extends MBeanResourceComponent {
             return takeSnapshot(parameters);
         }
 
+        if (name.equals("setLog4jLevel")) {
+            return setLog4jLevel(parameters);
+        }
+
         return super.invokeOperation(name, parameters);
     }
 
@@ -106,6 +110,18 @@ public class StorageServiceComponent extends MBeanResourceComponent {
         String keyspaceName = params.getSimpleValue("keyspaceName");
 
         operation.invoke(snapshotName, new String[] {keyspaceName});
+
+        return new OperationResult();
+    }
+
+    private OperationResult setLog4jLevel(Configuration params) {
+        EmsBean emsBean = getEmsBean();
+        EmsOperation operation = emsBean.getOperation("setLog4jLevel", String.class, String.class);
+
+        String classQualifier = params.getSimpleValue("classQualifier");
+        String level = params.getSimpleValue("level");
+
+        operation.invoke(classQualifier, level);
 
         return new OperationResult();
     }

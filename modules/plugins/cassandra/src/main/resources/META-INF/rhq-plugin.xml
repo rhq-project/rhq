@@ -5,6 +5,7 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
+        version="5.0.2"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -63,7 +64,8 @@
 
     <metric property="cluster"
             dataType="trait"
-            description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another."/>
+            description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another."
+            displayType="summary"/>
 
     <server name="Cassandra Server JVM"
             description="The JVM of the Cassandra node"
@@ -163,12 +165,21 @@
         </parameters>
       </operation>
 
+      <metric property="Token"
+              dataType="trait"
+              description="A string representation of this node's token"
+              defaultOn="true"/>
+
       <metric property="ReleaseVersion"
               dataType="trait"
               description="The Cassandra version"/>
       <metric property="SchemaVersion"
               dataType="trait"
-              description="The current schema version"/>
+              description="The current schema version for this node. The value is calculated as a checksum of all rows
+              in the system.schema_* column families. This value is used in an algorithm to compare schema versions
+              between nodes and apply updates as necessary. This value should be the same for all fully initialized
+              nodes in the cluster."
+              displayType="summary"/>
       <metric property="ReleaseVersion"
               dataType="trait"
               description="The Cassandra version"/>
@@ -190,6 +201,30 @@
           <c:simple-property name="directory" type="string" readOnly="true"/>
         </c:list-property>
       </resource-configuration>
+    </service>
+
+    <service name="CommitLog"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent">
+      <plugin-configuration>
+        <c:simple-property name="objectName"
+                           readOnly="true"
+                           type="string"
+                           default="org.apache.cassandra.db:type=Commitlog"/>
+      </plugin-configuration>
+      
+      <metric property="TotalCommitLogSize"
+              measurementType="trendsup"
+              displayType="summary"
+              description="The size of all commit log segments"/>
+      <metric property="PendingTasks"
+              measurementType="dynamic"
+              displayType="detail"
+              description="The number of tasks waiting to be executed"/>
+      <metric property="CompletedTasks"
+              measurementType="trendsup"
+              displayType="detail"
+              description="The number of completed tasks"/>
     </service>
 
     <service name="Keyspace"

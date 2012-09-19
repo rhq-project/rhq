@@ -83,14 +83,14 @@ public class ManagedHive extends JFrame {
 
     /******************* UI Logic & Components **************************/
     private int space = 7;//horizontal spacing between components
-    protected static int basePopulation = 50;
+    protected static int basePopulation = 50;//resident hive population
     private int swarmTime = 10000;//ms.
     protected static Hive hiveComponent;
     protected static Random generator = new Random(System.currentTimeMillis());
     protected static int beeWidth = 15;
     protected static int beeHeight = 15;
     protected static JTextField currentPopulation;
-    protected static ManagedHive THE_HIVE = null;
+    protected static ManagedHive CONTROLLER = null;
 
     /** Responsible for putting together the layout components.
      * 
@@ -146,7 +146,6 @@ public class ManagedHive extends JFrame {
         shake.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //                addBee();
                 for (int i = 0; i < 10; i++) {
                     addBee();
                 }
@@ -172,7 +171,7 @@ public class ManagedHive extends JFrame {
         setVisible(true);
 
         //assigned shared reference.
-        THE_HIVE = this;
+        CONTROLLER = this;
     }
 
     private void buildCenterPanel(final JPanel center) {
@@ -211,34 +210,41 @@ class Hive extends JComponent {
     }
 
     public void add(Bee b) {
-        population.add(b);
+        synchronized (population) {
+            population.add(b);
+        }
     }
 
     public void removeBee() {
-        if (population.size() > 0){
-            population.remove(0);
-        }
-        //if population falls below basePopulation level then add another bee
-        if (population.size() < ManagedHive.THE_HIVE.basePopulation) {
-            int delta = ManagedHive.THE_HIVE.basePopulation - population.size();
-            for (int i = 0; i <= delta; i++) {//replenish
-                ManagedHive.THE_HIVE.addBee();
+        synchronized (population) {
+            if (population.size() > 0) {
+                population.remove(0);
+            }
+            //if population falls below basePopulation level then add another bee
+            if (population.size() < ManagedHive.CONTROLLER.basePopulation) {
+                int delta = ManagedHive.CONTROLLER.basePopulation - population.size();
+                for (int i = 0; i <= delta; i++) {//replenish
+                    ManagedHive.CONTROLLER.addBee();
+                }
             }
         }
     }
 
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        for (Bee b : population) {
-            g2.fill(b.getShape());
-        }
-        //update the fields
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ManagedHive.currentPopulation.setText(ManagedHive.hiveComponent.getCurrentPopulation() + "");
+        synchronized (population) {
+
+            for (Bee b : population) {
+                g2.fill(b.getShape());
             }
-        });
+            //update the fields
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ManagedHive.currentPopulation.setText(ManagedHive.hiveComponent.getCurrentPopulation() + "");
+                }
+            });
+        }
     }
 }
 

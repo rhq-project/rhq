@@ -143,6 +143,25 @@
           <c:simple-property name="keyspaceName" required="true" type="string"/>
         </parameters>
       </operation>
+      
+      <operation name="setLog4jLevel"
+                 description="Sets the logging level for classes under the clas qualifier.">
+        <parameters>
+          <c:simple-property name="classQualifier" type="string" required="false" default="org.apache.cassandra"/>
+          <c:simple-property name="level" required="false" default="DEBUG">
+            <c:property-options>
+              <c:option name="ALL" value="ALL"/>
+              <c:option name="DEBUG" value="DEBUG"/>
+              <c:option name="INFO" value="INFO"/>
+              <c:option name="FATAL" value="FATAL"/>
+              <c:option name="WARN" value="WARN"/>
+              <c:option name="ERROR" value="ERROR"/>
+              <c:option name="TRACE" value="TRACE"/>
+              <c:option name="OFF" value="OFF"/>
+            </c:property-options>
+          </c:simple-property>
+        </parameters>
+      </operation>
 
       <metric property="ReleaseVersion"
               dataType="trait"
@@ -150,11 +169,17 @@
       <metric property="SchemaVersion"
               dataType="trait"
               description="The current schema version"/>
+      <metric property="ReleaseVersion"
+              dataType="trait"
+              description="The Cassandra version"/>
       <metric property="Load"
               dataType="measurement"
               units="bytes"
               displayType="summary"
               description="The amount of load in disk usage on the node being queried"/>
+      <metric property="OperationMode"
+              dataType="trait"
+              description="The current operation mode"/>
 
       <resource-configuration>
         <c:simple-property name="SavedCachesLocation" type="string" readOnly="true"

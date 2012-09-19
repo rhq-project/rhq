@@ -74,21 +74,23 @@ public class ManagedHive extends JFrame {
         //create ui layout
         initializeUi();
         //initial hive setup
-        //        initializeHive();
+        for (int i = 0; i < basePopulation; i++) {
+            addBee();
+        }
     }
 
     /******************* Management capabilities **************************/
 
     /******************* UI Logic & Components **************************/
-    //    private JTextField hiveDirectory;
     private int space = 7;//horizontal spacing between components
-    private int initialPopulation = 50;
+    protected static int basePopulation = 50;
     private int swarmTime = 10000;//ms.
     protected static Hive hiveComponent;
     protected static Random generator = new Random(System.currentTimeMillis());
     protected static int beeWidth = 15;
     protected static int beeHeight = 15;
     protected static JTextField currentPopulation;
+    protected static ManagedHive THE_HIVE = null;
 
     /** Responsible for putting together the layout components.
      * 
@@ -118,7 +120,7 @@ public class ManagedHive extends JFrame {
             JLabel currentPopulationLabel = new JLabel("Bee count");
             monitorRow.add(currentPopulationLabel);
             monitorRow.add(Box.createHorizontalStrut(space));
-            currentPopulation = new JTextField("" + initialPopulation);
+            currentPopulation = new JTextField("" + basePopulation);
             currentPopulation.setEditable(false);
             monitorRow.add(currentPopulation);
             monitorRow.add(Box.createHorizontalStrut(space));
@@ -168,6 +170,9 @@ public class ManagedHive extends JFrame {
             }
         });
         setVisible(true);
+
+        //assigned shared reference.
+        THE_HIVE = this;
     }
 
     private void buildCenterPanel(final JPanel center) {
@@ -183,7 +188,7 @@ public class ManagedHive extends JFrame {
     /**
      * Adds a bouncing ball to the canvas and starts a thread to make it bounce
      */
-    public void addBee() {
+    public static void addBee() {
         //      Bee b = new Bee();
         Bee b = null;
         //tweak the start position
@@ -210,8 +215,16 @@ class Hive extends JComponent {
     }
 
     public void removeBee() {
-        if (population.size() > 0)
+        if (population.size() > 0){
             population.remove(0);
+        }
+        //if population falls below basePopulation level then add another bee
+        if (population.size() < ManagedHive.THE_HIVE.basePopulation) {
+            int delta = ManagedHive.THE_HIVE.basePopulation - population.size();
+            for (int i = 0; i <= delta; i++) {//replenish
+                ManagedHive.THE_HIVE.addBee();
+            }
+        }
     }
 
     public void paintComponent(Graphics g) {

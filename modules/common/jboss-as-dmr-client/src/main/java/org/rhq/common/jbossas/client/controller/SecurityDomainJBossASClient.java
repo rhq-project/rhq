@@ -23,9 +23,6 @@ import java.util.Map;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
-import org.rhq.common.jbossas.client.controller.FailureException;
-import org.rhq.common.jbossas.client.controller.JBossASClient;
-
 /**
  * Provides convenience methods associated with security domain management.
  * 

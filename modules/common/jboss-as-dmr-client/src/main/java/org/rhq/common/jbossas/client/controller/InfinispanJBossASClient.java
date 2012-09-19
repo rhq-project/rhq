@@ -52,6 +52,7 @@ public class InfinispanJBossASClient extends JBossASClient {
     /**
      * Checks to see if there is already a local cache with the given name.
      *
+     * @param cacheContainerName the parent container
      * @param localCacheName the name to check
      * @return true if there is a local cache with the given name already in existence
      */

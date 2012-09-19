@@ -99,6 +99,10 @@ public class StorageServiceComponent extends MBeanResourceComponent {
             return setLog4jLevel(parameters);
         }
 
+        if (name.equals("repair")) {
+            return runRepair(parameters);
+        }
+
         return super.invokeOperation(name, parameters);
     }
 
@@ -122,6 +126,16 @@ public class StorageServiceComponent extends MBeanResourceComponent {
         String level = params.getSimpleValue("level");
 
         operation.invoke(classQualifier, level);
+
+        return new OperationResult();
+    }
+
+    private OperationResult repair(Configuration params) {
+        String keyspace = params.getSimpleValue("keyspace");
+        EmsBean emsBean = getEmsBean();
+        EmsOperation operation = emsBean.getOperation("forceTableRepair", String.class, boolean.class, String[].class);
+
+        operation.invoke(keyspace, true, new String[] {});
 
         return new OperationResult();
     }

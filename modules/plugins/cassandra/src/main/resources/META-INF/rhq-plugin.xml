@@ -5,6 +5,7 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
+        version="5.0.3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -161,6 +162,18 @@
               <c:option name="OFF" value="OFF"/>
             </c:property-options>
           </c:simple-property>
+        </parameters>
+      </operation>
+
+      <operation name="repair"
+                 description="Cassandra compares data on this node with the versions on other replicas to update any
+                 out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                 operation. All data for each column that is being repaired is read. Unless you are not performing any
+                 deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                 The frequency that this should be run should be less than the gc_grace_period for each column family.
+                 The current implementation runs repair on all column families in the specified keyspace.">
+        <parameters>
+          <c:simple-property name="keyspace" required="true" type="string"/>
         </parameters>
       </operation>
 

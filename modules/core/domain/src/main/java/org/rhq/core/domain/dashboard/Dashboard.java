@@ -64,7 +64,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Jay Shaughnessy
  */
 @Entity
-@SequenceGenerator(name = "RHQ_DASHBOARD_ID_SEQ", sequenceName = "RHQ_DASHBOARD_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DASHBOARD_ID_SEQ", sequenceName = "RHQ_DASHBOARD_ID_SEQ")
 @Table(name = "RHQ_DASHBOARD")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

@@ -768,7 +768,7 @@ import org.rhq.core.domain.util.Summary;
         + "      0 < ( SELECT COUNT(defs) FROM r.driftDefinitions defs WHERE defs.complianceStatus <> 0) "
         + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version "
         + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ") })
-@SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = Resource.TABLE_NAME)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

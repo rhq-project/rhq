@@ -210,7 +210,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND s.factive = TRUE"), //
     @NamedQuery(name = Subject.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
         + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false") })
-@SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
 public class Subject implements Serializable {

@@ -88,7 +88,7 @@ import org.rhq.core.domain.alert.Alert;
         + "                       FROM Alert a " //
         + "                       JOIN a.alertNotificationLogs an " //
         + "                      WHERE a.ctime BETWEEN :begin AND :end )") })
-@SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertNotificationLog implements Serializable {

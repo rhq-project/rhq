@@ -132,7 +132,7 @@ import org.rhq.core.domain.resource.Resource;
         + "   ( SELECT res.id FROM Resource res " //
         + "      WHERE res.agent.id = :agentId " //
         + "        AND res.parentResource.id IS NULL )") })
-@SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 @XmlRootElement
 public class Availability implements Serializable {

@@ -38,7 +38,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "RHQ_DRIFT_SET")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_SET_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_SET_ID_SEQ")
 public class JPADriftSet implements Serializable {
     private static final long serialVersionUID = 1L;
 

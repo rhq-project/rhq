@@ -199,7 +199,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "                          JOIN rg.explicitResources explicitRes " //
         + "                         WHERE rg.id = :groupId ) " //
         + "    AND res.inventoryStatus = 'COMMITTED' ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceGroup extends Group {

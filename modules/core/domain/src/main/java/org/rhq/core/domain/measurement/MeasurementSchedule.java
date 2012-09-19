@@ -112,7 +112,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "" //
         + "DELETE MeasurementSchedule ms " //
         + " WHERE ms.resource.id IN ( :resourceIds )") })
-@SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
 public class MeasurementSchedule implements Serializable {

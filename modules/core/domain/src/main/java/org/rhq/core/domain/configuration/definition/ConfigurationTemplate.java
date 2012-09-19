@@ -54,7 +54,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  */
 @Entity
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_TEMPLATE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_TEMPLATE_ID_SEQ")
 @Table(name = "RHQ_CONFIG_TEMPLATE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ConfigurationTemplate implements Serializable {

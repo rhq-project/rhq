@@ -232,7 +232,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                       AND ad.resource.id = res.id " // correlated to the resource
         + "                       AND ad.deleted = false ) ") // and not deleted
 })
-@SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_DEFINITION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertDefinition implements Serializable {

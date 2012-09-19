@@ -100,7 +100,7 @@ import org.rhq.core.domain.resource.Resource;
         + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftDefinitionName)" //
     ) })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
 public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 

@@ -62,7 +62,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
         + "       LEFT JOIN FETCH d.templates " + " WHERE cst.name = :name"),
     @NamedQuery(name = ContentSourceType.QUERY_FIND_BY_NAME, query = "SELECT cst " + "  FROM ContentSourceType cst "
         + " WHERE cst.name = :name") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE_TYPE")
 public class ContentSourceType implements Serializable {
 

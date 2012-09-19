@@ -76,7 +76,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "       ( SELECT ccs.contentSource.id " // 
         + "           FROM RepoContentSource ccs " //
         + "          WHERE ccs.repo.id = :repoId ) ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
 public class ContentSource implements Serializable {
     public static final String QUERY_FIND_ALL = "ContentSource.findAll";

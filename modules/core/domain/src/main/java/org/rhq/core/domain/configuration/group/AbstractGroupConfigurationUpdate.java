@@ -42,7 +42,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @DiscriminatorColumn(name = "DTYPE")
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_GROUP_UPDATE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_GROUP_UPDATE_ID_SEQ")
 @Table(name = "RHQ_CONFIG_GROUP_UPDATE")
 public abstract class AbstractGroupConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
 

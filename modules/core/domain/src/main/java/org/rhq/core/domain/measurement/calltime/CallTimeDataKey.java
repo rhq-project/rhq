@@ -50,7 +50,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
  */
 @Entity
 @NamedQueries( { @NamedQuery(name = CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataKey ctdk WHERE ctdk.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_KEY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_KEY_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_KEY")
 public class CallTimeDataKey implements Serializable {
     private static final long serialVersionUID = 1L;

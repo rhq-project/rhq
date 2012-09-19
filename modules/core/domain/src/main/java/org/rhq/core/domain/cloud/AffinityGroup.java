@@ -92,7 +92,7 @@ import org.rhq.core.domain.resource.Agent;
         + "DELETE FROM AffinityGroup ag " //
         + " WHERE ag.id IN ( :affinityGroupIds ) ") // 
 })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_AFFINITY_GROUP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_AFFINITY_GROUP_ID_SEQ")
 @Table(name = "RHQ_AFFINITY_GROUP")
 public class AffinityGroup implements Serializable {
 

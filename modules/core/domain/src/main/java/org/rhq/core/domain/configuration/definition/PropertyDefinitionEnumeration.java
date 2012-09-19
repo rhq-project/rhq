@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Jason Dobies
  */
 @Entity
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONF_PROP_DEF_ENUM_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONF_PROP_DEF_ENUM_ID_SEQ")
 @Table(name = "RHQ_CONF_PROP_DEF_ENUM")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyDefinitionEnumeration implements Serializable {

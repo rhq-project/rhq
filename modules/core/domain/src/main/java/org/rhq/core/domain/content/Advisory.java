@@ -39,7 +39,7 @@ import javax.persistence.Table;
         + "       ) "
         + "  FROM Advisory a "
         + "  WHERE a.id = :id ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
 

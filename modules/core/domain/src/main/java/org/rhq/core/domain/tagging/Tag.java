@@ -62,7 +62,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
                         "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
                         "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
 })
-@SequenceGenerator(name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ", allocationSize = 10)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ")
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Tag implements Serializable {

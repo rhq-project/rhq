@@ -114,7 +114,7 @@ import javax.persistence.Table;
         + "  JOIN r.subjects s " //
         + " WHERE go.nextFireTime IS NOT NULL " //
         + "   AND s = :subject ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_OPERATION_SCHEDULE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_OPERATION_SCHEDULE_ID_SEQ")
 @Table(name = "RHQ_OPERATION_SCHEDULE")
 public abstract class OperationScheduleEntity implements Serializable {
 

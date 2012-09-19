@@ -83,7 +83,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                         WHERE ss.id = :subjectId )"), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
         + "SELECT r.name, r.name FROM Role AS r") })
-@SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {
     public static final String QUERY_FIND_ALL = "Role.findAll";

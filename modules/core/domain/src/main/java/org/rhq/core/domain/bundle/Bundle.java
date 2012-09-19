@@ -65,7 +65,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "(:type = b.bundleType.name OR :type IS NULL) AND (:name = b.name OR :name IS NULL)")
 
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_ID_SEQ")
 @Table(name = "RHQ_BUNDLE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Bundle implements Serializable {

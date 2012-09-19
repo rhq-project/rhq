@@ -211,7 +211,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "                       JOIN aacl.condition ac " //
         + "                      WHERE ac.category = :category ) " //
         + "           OR :category IS NULL) ") })
-@SequenceGenerator(name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ", allocationSize = 100)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ")
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID = "Alert.findByMeasurementDefinitionId";

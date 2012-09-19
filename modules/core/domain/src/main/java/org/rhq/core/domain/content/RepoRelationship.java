@@ -52,7 +52,7 @@ import javax.persistence.NamedQuery;
 @NamedQueries({
     @NamedQuery(name = RepoRelationship.DELETE_BY_RELATED_REPO_ID, query = "DELETE RepoRelationship rr WHERE rr.relatedRepo.id = :relatedRepoId")
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
 @Table(name = "RHQ_REPO_RELATION")
 public class RepoRelationship implements Serializable {
     // Constants  --------------------------------------------

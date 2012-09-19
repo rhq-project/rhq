@@ -111,23 +111,30 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public String getInstallationResults() throws Exception {
-        // use JBossAS's marker files to determine the status of the application EAR
-        CoreJBossASClient client = new CoreJBossASClient(getClient());
-        String deployDir = client.getAppServerDefaultDeploymentDir();
-        boolean deployedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.DEPLOYED);
-        boolean failedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.FAILED);
-        if (!failedExists) {
-            if (deployedExists) {
-                return ""; // everything looks OK and the ear has been successfully deployed
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+
+            // use JBossAS's marker files to determine the status of the application EAR
+            CoreJBossASClient client = new CoreJBossASClient(mcc);
+            String deployDir = client.getAppServerDefaultDeploymentDir();
+            boolean deployedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.DEPLOYED);
+            boolean failedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.FAILED);
+            if (!failedExists) {
+                if (deployedExists) {
+                    return ""; // everything looks OK and the ear has been successfully deployed
+                } else {
+                    return null; // installer hasn't done anything yet
+                }
             } else {
-                return null; // installer hasn't done anything yet
+                String error = slurpFile(ServerInstallUtil.getMarkerFile(deployDir, EAR_NAME, Marker.FAILED));
+                if (error.length() == 0) {
+                    error = "Unknown installation error";
+                }
+                return error;
             }
-        } else {
-            String error = slurpFile(ServerInstallUtil.getMarkerFile(deployDir, EAR_NAME, Marker.FAILED));
-            if (error.length() == 0) {
-                error = "Unknown installation error";
-            }
-            return error;
+        } finally {
+            safeClose(mcc);
         }
     }
 
@@ -317,7 +324,13 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
 
         // Make sure our deployment scanner is configured to be ready for deploy our services and application
-        ServerInstallUtil.configureDeploymentScanner(getClient());
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            ServerInstallUtil.configureDeploymentScanner(mcc);
+        } finally {
+            safeClose(mcc);
+        }
 
         // now create our deployment services and our main EAR
         deployServices(serverProperties);
@@ -438,34 +451,64 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
     @Override
     public String getAppServerVersion() throws Exception {
-        final CoreJBossASClient client = new CoreJBossASClient(getClient());
-        final String version = client.getAppServerVersion();
-        return version;
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String version = client.getAppServerVersion();
+            return version;
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     @Override
     public String getOperatingSystem() throws Exception {
-        final CoreJBossASClient client = new CoreJBossASClient(getClient());
-        final String osName = client.getOperatingSystem();
-        return osName;
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String osName = client.getOperatingSystem();
+            return osName;
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     private String getAppServerHomeDir() throws Exception {
-        final CoreJBossASClient client = new CoreJBossASClient(getClient());
-        final String dir = client.getAppServerHomeDir();
-        return dir;
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String dir = client.getAppServerHomeDir();
+            return dir;
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     private String getAppServerConfigDir() throws Exception {
-        final CoreJBossASClient client = new CoreJBossASClient(getClient());
-        final String dir = client.getAppServerConfigDir();
-        return dir;
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String dir = client.getAppServerConfigDir();
+            return dir;
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     private String getLogDir() throws Exception {
-        final CoreJBossASClient client = new CoreJBossASClient(getClient());
-        final String dir = client.getAppServerLogDir();
-        return dir;
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String dir = client.getAppServerLogDir();
+            return dir;
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     private File getServerPropertiesFile() throws Exception {
@@ -559,48 +602,63 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         return serverDetails;
     }
 
-    private ModelControllerClient getClient() {
+    private ModelControllerClient getModelControllerClient() {
         final ModelControllerClient client = ManagementService.getClient();
         return client;
     }
 
     private void deployServices(HashMap<String, String> serverProperties) throws Exception {
+
+        ModelControllerClient mcc = null;
         try {
-            ModelControllerClient client = getClient();
+            mcc = getModelControllerClient();
 
             // create the security domain needed by the datasources
-            ServerInstallUtil.createDatasourceSecurityDomain(client, serverProperties);
+            ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
 
             // create the security domain needed by REST
-            ServerInstallUtil.createRESTSecurityDomain(client, serverProperties);
+            ServerInstallUtil.createRESTSecurityDomain(mcc, serverProperties);
 
             // set up REST cache
-            ServerInstallUtil.createNewCaches(client, serverProperties);
+            ServerInstallUtil.createNewCaches(mcc, serverProperties);
 
             // create the JDBC driver configurations for use by datasources
-            ServerInstallUtil.createNewJdbcDrivers(client, serverProperties);
+            ServerInstallUtil.createNewJdbcDrivers(mcc, serverProperties);
 
             // create the datasources
-            ServerInstallUtil.createNewDatasources(client, serverProperties);
+            ServerInstallUtil.createNewDatasources(mcc, serverProperties);
 
             // create the JMS queues
-            ServerInstallUtil.createNewJMSQueues(client, serverProperties);
+            ServerInstallUtil.createNewJMSQueues(mcc, serverProperties);
 
             // setup the email service
-            ServerInstallUtil.setupMailService(client, serverProperties);
+            ServerInstallUtil.setupMailService(mcc, serverProperties);
 
             // we don't want to the JBossAS welcome screen; turn it off
-            new WebJBossASClient(client).setEnableWelcomeRoot(false);
+            new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
 
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private static void safeClose(final ModelControllerClient mcc) {
+        if (null != mcc) {
+            try {
+                mcc.close();
+            } catch (Exception e) {
+            }
         }
     }
 
     private void deployApp() throws Exception {
+        ModelControllerClient mcc = null;
         try {
-            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String deployDir = client.getAppServerDefaultDeploymentDir();
             if (deployDir == null) {
                 throw new IllegalStateException("Missing the deployment scanner - cannot finish install");
@@ -620,22 +678,30 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         } catch (Exception e) {
             log("deployApp failed", e);
             throw new Exception("Failed to deploy the app: " + ThrowableUtil.getAllMessages(e));
+        } finally {
+            safeClose(mcc);
         }
     }
 
     private void reloadConfiguration() throws Exception {
+        ModelControllerClient mcc = null;
         try {
-            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
             client.reload();
         } catch (Exception e) {
             log("reloadConfiguration failed - restart the server to complete the installation", e);
+        } finally {
+            safeClose(mcc);
         }
     }
 
     // left this here in case we want to undeploy the installer in the future; for now, we don't use this
     private void undeployInstaller() throws Exception {
+        ModelControllerClient mcc = null;
         try {
-            final CoreJBossASClient client = new CoreJBossASClient(getClient());
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String deployDir = client.getAppServerDefaultDeploymentDir();
             if (deployDir == null) {
                 throw new IllegalStateException("Missing the deployment scanner - cannot undeploy installer");
@@ -663,6 +729,8 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         } catch (Exception e) {
             log("undeployInstaller failed", e);
             throw new Exception("Failed to undeploy the installer: " + ThrowableUtil.getAllMessages(e));
+        } finally {
+            safeClose(mcc);
         }
     }
 

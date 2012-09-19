@@ -50,8 +50,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
  * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
-    private static final String AUTH_METHOD = "addAppConfig";
-    private static final String AUTH_OBJECTNAME = "jboss.security:service=XMLLoginConfig";
 
     private Log log = LogFactory.getLog(CustomJaasDeploymentService.class.getName());
     private MBeanServer mbeanServer = null;
@@ -105,8 +103,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
     private void registerJaasModules(Properties systemConfig) throws Exception {
 
+        ModelControllerClient mcc = null;
         try {
-            final ModelControllerClient mcc = ManagementService.getClient();
+            mcc = ManagementService.getClient();
             final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
             final String securityDomain = RHQ_USER_SECURITY_DOMAIN;
 
@@ -163,6 +162,17 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             }
         } catch (Exception e) {
             throw new Exception("Error registering RHQ JAAS modules", e);
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private static void safeClose(final ModelControllerClient mcc) {
+        if (null != mcc) {
+            try {
+                mcc.close();
+            } catch (Exception e) {
+            }
         }
     }
 

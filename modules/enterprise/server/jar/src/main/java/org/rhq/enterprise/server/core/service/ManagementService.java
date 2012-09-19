@@ -50,6 +50,11 @@ public class ManagementService implements ServiceActivator {
     private static volatile ModelController controller;
     private static volatile ExecutorService executor;
 
+    /**
+     * The caller should call ModelControllerClient.close() when finished with the client.
+     * 
+     * @return the ModelControllerClient
+     */
     public static ModelControllerClient getClient() {
         return controller.createClient(executor);
     }

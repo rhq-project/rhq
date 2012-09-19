@@ -79,7 +79,7 @@ public class MessageCenter {
         this.messages.clear();
     }
 
-    public interface MessageListener {
+    interface MessageListener {
         void onMessage(Message message);
     }
 

@@ -29,9 +29,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * 
- *
+ * @deprecated  Should be replaced now with GWT graphs and not portal war JSF graphs.
  * @author Lukas Krejci
  */
+@Deprecated
 public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout implements RefreshableView {
 
     UserPreferencesMeasurementRangeEditor editor;

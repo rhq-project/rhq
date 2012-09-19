@@ -20,9 +20,6 @@ package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
 import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,11 +31,13 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.enterprise.server.util.LoggingThreadFactory;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 
 /**
  * This looks at both the file system and the database for new agent and server plugins.
+ * This does not perform any polling - it only performs scanning on-demand. It provides
+ * some configuration settings that a timer could use to determine when to periodically
+ * scan (see {@link #getScanPeriod()} for example.
  *
  * @author John Mazzitelli
  */
@@ -48,9 +47,6 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
     /** time, in millis, between each scans */
     private long scanPeriod = 300000L;
-
-    /** handles the scheduled scanning */
-    private ScheduledExecutorService poller;
 
     /** where the user can copy agent or server plugins */
     private File userPluginDir = null;
@@ -152,51 +148,31 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         this.agentPluginScanner.fixMissingAgentPluginContent();
         this.agentPluginScanner.getAgentPluginDeployer().start();
 
-        shutdownPoller(); // paranoia - just in case somehow one is still running
-        this.poller = Executors.newSingleThreadScheduledExecutor(new LoggingThreadFactory("PluginScanner", true));
         return;
     }
 
     public void stop() {
         this.agentPluginScanner.getAgentPluginDeployer().stop();
-        shutdownPoller();
-        return;
-    }
-
-    private void shutdownPoller() {
-        if (this.poller != null) {
-            this.poller.shutdownNow();
-            this.poller = null;
-        }
         return;
     }
 
     public void startDeployment() {
-        // We are being called by the server's startup servlet which essentially informs us that
+        // We are being called by the server's startup bean which essentially informs us that
         // the server's internal EJB/SLSBs are ready and can be called. This means we are allowed to start.
         // NOTE: Make sure we are called BEFORE the master plugin container is started!
 
         this.agentPluginScanner.getAgentPluginDeployer().startDeployment();
 
-        // this is the runnable task that executes each scan period - it runs in our thread pool
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    scanAndRegister();
-                } catch (Throwable t) {
-                    log.error("Scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
-                    if (log.isDebugEnabled()) {
-                        log.debug("Scan failure stack trace follows:", t);
-                    }
-                }
-            }
-        };
-
         // do the initial scan now
-        runnable.run();
+        try {
+            scanAndRegister();
+        } catch (Throwable t) {
+            log.error("Scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
+            if (log.isDebugEnabled()) {
+                log.debug("Scan failure stack trace follows:", t);
+            }
+        }
 
-        // schedule it to run periodically from here on out
-        this.poller.scheduleWithFixedDelay(runnable, this.scanPeriod, this.scanPeriod, TimeUnit.MILLISECONDS);
         return;
     }
 

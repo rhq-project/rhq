@@ -29,6 +29,10 @@ import java.util.Properties;
 import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.management.Attribute;
@@ -48,6 +52,7 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -119,6 +124,8 @@ public class StartupBean {
     @EJB
     private SystemManagerLocal systemManager;
 
+    @Resource
+    private TimerService timerService; // needed to schedule our plugin scanner
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
@@ -175,6 +182,7 @@ public class StartupBean {
         startAgentClients();
         startEmbeddedAgent();
         registerShutdownListener();
+        registerPluginDeploymentScannerJob();
 
         logServerStartedMessage();
 
@@ -279,18 +287,62 @@ public class StartupBean {
      */
     private void startPluginDeployer() throws RuntimeException {
         log.info("Starting the agent/server plugin deployer...");
-
         try {
-            PluginDeploymentScannerMBean deployer_mbean;
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-            ObjectName name = PluginDeploymentScannerMBean.OBJECT_NAME;
-            Class<?> iface = PluginDeploymentScannerMBean.class;
-            deployer_mbean = (PluginDeploymentScannerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                iface, false);
-            deployer_mbean.startDeployment();
+            PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
+            deployer.startDeployment();
         } catch (Exception e) {
             throw new RuntimeException("Cannot start the agent/server plugin deployer!", e);
         }
+    }
+
+    /**
+     * Creates the timer that will trigger periodic scans for new plugins.
+     * @throws RuntimeException
+     */
+    private void registerPluginDeploymentScannerJob() throws RuntimeException {
+        log.info("Creating timer to begin scanning for plugins...");
+
+        try {
+            PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
+
+            long scanPeriod = 5 * 60000L;
+            try {
+                String scanPeriodString = deployer.getScanPeriod();
+                scanPeriod = Long.parseLong(scanPeriodString);
+            } catch (Exception e) {
+                log.warn("could not determine plugin scanner scan period - using: " + scanPeriod, e);
+            }
+
+            // create a non-persistent periodic timer (we'll reset it ever startup) with the scan period as configured in our scanner object
+            timerService.createIntervalTimer(scanPeriod, scanPeriod, new TimerConfig(null, false));
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot schedule plugin scanning timer - new plugins will not be detected!", e);
+        }
+    }
+
+    @Timeout
+    // does AS7 EJB3 container allow this? We do not want a tx here!
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void scanForPlugins(final Timer timer) {
+        try {
+            PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
+            deployer.scanAndRegister();
+        } catch (Throwable t) {
+            log.error("Plugin scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
+            if (log.isDebugEnabled()) {
+                log.debug("Plugin scan failure stack trace follows:", t);
+            }
+        }
+    }
+
+    private PluginDeploymentScannerMBean getPluginDeploymentScanner() {
+        PluginDeploymentScannerMBean deployer;
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = PluginDeploymentScannerMBean.OBJECT_NAME;
+        Class<?> iface = PluginDeploymentScannerMBean.class;
+        deployer = (PluginDeploymentScannerMBean) MBeanServerInvocationHandler
+            .newProxyInstance(mbs, name, iface, false);
+        return deployer;
     }
 
     /**

@@ -76,6 +76,11 @@ public class ManagedHive extends JFrame {
         //initial hive setup
         for (int i = 0; i < basePopulation; i++) {
             addBee();
+            try {
+                Thread.sleep(3);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -84,13 +89,17 @@ public class ManagedHive extends JFrame {
     /******************* UI Logic & Components **************************/
     private int space = 7;//horizontal spacing between components
     protected static int basePopulation = 50;//resident hive population
-    private int swarmTime = 10000;//ms.
+    //swarm time should be (2 or 3)* 30s to allow RHQ to clearly collect angry status.
+    protected static int swarmTime = 60 * 1000;//ms. 
     protected static Hive hiveComponent;
     protected static Random generator = new Random(System.currentTimeMillis());
     protected static int beeWidth = 15;
     protected static int beeHeight = 15;
     protected static JTextField currentPopulation;
     protected static ManagedHive CONTROLLER = null;
+    protected static Runnable angryTimer = null;
+    protected static int angryPackSize = 50;
+    protected static JLabel mood = null;
 
     /** Responsible for putting together the layout components.
      * 
@@ -117,7 +126,7 @@ public class ManagedHive extends JFrame {
 
         {
             //monitor row shows current state of the hive
-            JLabel currentPopulationLabel = new JLabel("Bee count");
+            JLabel currentPopulationLabel = new JLabel("Current Bee count");
             monitorRow.add(currentPopulationLabel);
             monitorRow.add(Box.createHorizontalStrut(space));
             currentPopulation = new JTextField("" + basePopulation);
@@ -133,7 +142,7 @@ public class ManagedHive extends JFrame {
             monitorRow.add(maxPopulation);
             monitorRow.add(Box.createHorizontalStrut(space));//spacer
 
-            JLabel mood = new JLabel();
+            mood = new JLabel();
             mood.setOpaque(true);
             mood.setBackground(Color.green);
             mood.setText("Calm");
@@ -146,8 +155,27 @@ public class ManagedHive extends JFrame {
         shake.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < angryPackSize; i++) {
                     addBee();
+                }
+                //kick the hive into angry mode and set angry timer
+                if (angryTimer == null) {
+                    angryTimer = new SwarmTimer();
+                    Thread t = new Thread(angryTimer);
+                    t.start();
+                    //speed up the bees.
+                    BeeFlight.setDelay(2);
+                    //update the ui to reflect hive mood.
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ManagedHive.mood.setText("Angry!");
+                            ManagedHive.mood.setBackground(Color.red);
+                        }
+                    });
+                } else {//reset angry timer
+                    SwarmTimer swarmResponseManager = (SwarmTimer) angryTimer;
+                    swarmResponseManager.setExpireTime(swarmTime);
                 }
             }
         });
@@ -188,7 +216,6 @@ public class ManagedHive extends JFrame {
      * Adds a bouncing ball to the canvas and starts a thread to make it bounce
      */
     public static void addBee() {
-        //      Bee b = new Bee();
         Bee b = null;
         //tweak the start position
         int newX = generator.nextInt(BeeFlight.delta);
@@ -335,7 +362,17 @@ class BeeFlight implements Runnable {
 
     public static final int STEPS = 10000;
 
-    public static final int DELAY = 5;
+    public static int DELAY = 5;
+
+    public static int getDelay() {
+        return DELAY;
+    }
+
+    public static void setDelay(int delay) {
+        if ((delay >= 2) || (delay <= 6)) {//2 <delay <= 6  >
+            DELAY = delay;
+        }//otherwise ignore
+    }
 
     public static int delta = 300;
 
@@ -358,5 +395,45 @@ class BeeFlight implements Runnable {
 
         } catch (InterruptedException e) {
         }
+    }
+}
+
+//swarm anger timer
+class SwarmTimer implements Runnable {
+    private static int timeToLive;
+
+    public SwarmTimer() {
+        timeToLive = ManagedHive.swarmTime;//default to 1 minute
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (timeToLive > 0) {
+                Thread.sleep(1000);//sleep for a second
+                timeToLive = timeToLive - 1000;
+            }
+            //reset visual hive state flags
+            //update the fields
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ManagedHive.mood.setText("Calm");
+                    ManagedHive.mood.setBackground(Color.green);
+                    //speed up the bees.
+                    BeeFlight.setDelay(5);
+                }
+            });
+            //null out angrySwarm
+            ManagedHive.angryTimer = null;
+        } catch (InterruptedException e) {
+        }
+    }
+
+    public void setExpireTime(int swarmTime) {
+        //only accept swarm times less than 10 mins and greater then 1 min(s).
+        if ((swarmTime >= 1000 * 60) || (swarmTime <= 1000 * 60 * 10)) {
+            timeToLive = swarmTime;
+        }//otherwise ignore.
     }
 }

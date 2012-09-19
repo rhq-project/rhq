@@ -30,8 +30,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
 import java.util.Random;
+import java.util.Vector;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -41,6 +41,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
 /** Is a basic ui that generates a very simple managed
@@ -83,7 +84,11 @@ public class ManagedHive extends JFrame {
     private int space = 7;//horizontal spacing between components
     private int initialPopulation = 50;
     private int swarmTime = 10000;//ms.
-    private Hive hiveComponent;
+    protected static Hive hiveComponent;
+    protected static Random generator = new Random(System.currentTimeMillis());
+    protected static int beeWidth = 15;
+    protected static int beeHeight = 15;
+    protected static JTextField currentPopulation;
 
     /** Responsible for putting together the layout components.
      * 
@@ -113,7 +118,7 @@ public class ManagedHive extends JFrame {
             JLabel currentPopulationLabel = new JLabel("Bee count");
             monitorRow.add(currentPopulationLabel);
             monitorRow.add(Box.createHorizontalStrut(space));
-            JTextField currentPopulation = new JTextField("" + initialPopulation);
+            currentPopulation = new JTextField("" + initialPopulation);
             currentPopulation.setEditable(false);
             monitorRow.add(currentPopulation);
             monitorRow.add(Box.createHorizontalStrut(space));
@@ -139,7 +144,10 @@ public class ManagedHive extends JFrame {
         shake.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                addBee();
+                //                addBee();
+                for (int i = 0; i < 10; i++) {
+                    addBee();
+                }
             }
         });
         interactionRow.add(shake);
@@ -179,13 +187,10 @@ public class ManagedHive extends JFrame {
         //      Bee b = new Bee();
         Bee b = null;
         //tweak the start position
-        Random generator = new Random(System.currentTimeMillis());
         int newX = generator.nextInt(BeeFlight.delta);
         int newY = generator.nextInt(BeeFlight.delta);
         b = new Bee(newX, newY);
-        //      comp.add(b);
         hiveComponent.add(b);
-        //      Runnable r = new BeeFlight(b, comp);
         Runnable r = new BeeFlight(b, hiveComponent);
         Thread t = new Thread(r);
         t.start();
@@ -194,10 +199,19 @@ public class ManagedHive extends JFrame {
 
 class Hive extends JComponent {
     //entire hive population.
-    private static ArrayList<Bee> population = new ArrayList<Bee>();
+    private static Vector<Bee> population = new Vector<Bee>();
+
+    public int getCurrentPopulation() {
+        return population.size();
+    }
 
     public void add(Bee b) {
         population.add(b);
+    }
+
+    public void removeBee() {
+        if (population.size() > 0)
+            population.remove(0);
     }
 
     public void paintComponent(Graphics g) {
@@ -205,6 +219,13 @@ class Hive extends JComponent {
         for (Bee b : population) {
             g2.fill(b.getShape());
         }
+        //update the fields
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                ManagedHive.currentPopulation.setText(ManagedHive.hiveComponent.getCurrentPopulation() + "");
+            }
+        });
     }
 }
 
@@ -214,8 +235,8 @@ class Hive extends JComponent {
 class Bee {
 
     //properties of typical cartesion component. 
-    private int xWidth = 15;
-    private int yWidth = 15;
+    private int xWidth = ManagedHive.beeWidth;
+    private int yWidth = ManagedHive.beeHeight;
 
     //cartesion components
     private double x = 0;
@@ -234,14 +255,25 @@ class Bee {
      * Defines the shape of the bee at each call.
      */
     public Ellipse2D getShape() {
-        //todo: randomly change dimensions to simulate busy 
-        return new Ellipse2D.Double(x, y, xWidth, yWidth);
+        //randomly change dimensions to simulate flying bee
+        int nextX = ManagedHive.generator.nextInt(ManagedHive.beeWidth);
+        int nextY = ManagedHive.generator.nextInt(ManagedHive.beeHeight);
+        if (nextX < 1)
+            nextX = 1;
+        if (nextY < 1)
+            nextY = 1;
+        if ((x > 0) && (y > 0)) {
+            return new Ellipse2D.Double(x, y, nextX, nextY);
+        } else {
+            return new Ellipse2D.Double(x, y, 0, 0);
+        }
     }
 
     //return to invisible
     public void clear() {
         xWidth = 0;
         xWidth = 0;
+        ManagedHive.hiveComponent.removeBee();
     }
 
     /**

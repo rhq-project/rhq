@@ -105,8 +105,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public ServerPlugin getServerPlugin(PluginKey key) {
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
         query.setParameter("name", key.getPluginName());
-        ServerPlugin plugin = (ServerPlugin) query.getSingleResult();
-        return plugin;
+        try {
+            ServerPlugin plugin = (ServerPlugin) query.getSingleResult();
+            return plugin;
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
 
     public ServerPlugin getServerPluginRelationships(ServerPlugin plugin) {
@@ -167,6 +171,10 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     public ServerPluginDescriptorType getServerPluginDescriptor(PluginKey pluginKey) throws Exception {
         ServerPlugin plugin = getServerPlugin(pluginKey);
+        if (plugin == null) {
+            throw new IllegalArgumentException("Unknown plugin key: " + pluginKey);
+        }
+
         File pluginsDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();
         File pluginJar = new File(pluginsDir, plugin.getPath());
         URL url = pluginJar.toURI().toURL();
@@ -431,9 +439,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPlugin existingPlugin = null;
         boolean newOrUpdated = false;
 
-        try {
-            existingPlugin = getServerPlugin(pluginKey);
-        } catch (NoResultException nre) {
+        existingPlugin = getServerPlugin(pluginKey);
+        if (existingPlugin == null) {
             newOrUpdated = true; // this is expected for new plugins
         }
 

@@ -1,0 +1,14 @@
+<differences>
+   <difference>
+      <className>org/rhq/enterprise/server/content/RepoManagerRemote</className>
+      <differenceType>7012</differenceType><!-- method added to an interface -->
+      <method>byte[] getPackageVersionBytes(org.rhq.core.domain.auth.Subject, int, int)</method>
+      <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+   </difference>
+   <difference>
+      <className>org/rhq/enterprise/server/measurement/MeasurementDataManagerRemote</className>
+      <differenceType>7012</differenceType><!-- method added to an interface -->
+      <method>java.util.Set findLiveDataForGroup(org.rhq.core.domain.auth.Subject, int, int[], int[])</method>
+      <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+   </difference>   
+</differences>

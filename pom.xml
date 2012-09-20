@@ -191,6 +191,10 @@
     <!-- a default value for the child modules indicating that the module is not
          part of our public API and is therefore not API-checked. -->
     <rhq.internal>true</rhq.internal>
+
+    <!-- The name of the file in the module's root dir that contains the intentional
+         api changes to be ignored by Clirr api checks -->
+    <intentional-api-changes-file>intentional-api-changes-since-${signature-check-base-version}.xml</intentional-api-changes-file>
   </properties>
 
 
@@ -1333,8 +1337,12 @@
                        </comparisonArtifacts>
                        <logResults>true</logResults>
                        <xmlOutputFile>${project.build.directory}/${project.build.finalName}.signature-check.xml</xmlOutputFile>
-                       <failOnError>false</failOnError>
+                       <failOnError>true</failOnError>
+                       <failOnWarning>true</failOnWarning>
                        <skip>${rhq.internal}</skip>
+                       <!-- note that this is only available in clirr maven plugin 2.5, but internally we use a patched version for our CI builds.
+                            Once new Clirr maven plugin is released, this will work for you, too. -->
+                       <ignoredDifferencesFile>${intentional-api-changes-file}</ignoredDifferencesFile>
                     </configuration>
                  </execution>
               </executions>

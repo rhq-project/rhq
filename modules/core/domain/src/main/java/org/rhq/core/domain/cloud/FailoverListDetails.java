@@ -50,7 +50,7 @@ import javax.persistence.Table;
 @NamedQueries( //
 {
     @NamedQuery(name = FailoverListDetails.QUERY_GET_VIA_AGENT_ID, query = "SELECT fld FROM FailoverListDetails fld WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE fl.agent.id = :agentId )"),
-    @NamedQuery(name = FailoverListDetails.QUERY_GET_VIA_AGENT_ID_WITH_SERVERS, query = "SELECT fld FROM FailoverListDetails fld JOIN FETCH fld.server WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE fl.agent.id = :agentId )"),
+    @NamedQuery(name = FailoverListDetails.QUERY_GET_VIA_AGENT_ID_WITH_SERVERS, query = "SELECT fld FROM FailoverListDetails fld JOIN FETCH fld.server server WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE fl.agent.id = :agentId )"),
     @NamedQuery(name = FailoverListDetails.QUERY_DELETE_VIA_AGENT, query = "DELETE FROM FailoverListDetails fld WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE fl.agent = :agent )"),
     @NamedQuery(name = FailoverListDetails.QUERY_DELETE_VIA_SERVER, query = "DELETE FROM FailoverListDetails fld WHERE fld.server.id = :serverId"),
     @NamedQuery(name = FailoverListDetails.QUERY_GET_ASSIGNED_LOADS, query = "SELECT new org.rhq.core.domain.cloud.composite.FailoverListDetailsComposite(fld.ordinal, fld.serverId, COUNT(fld.serverId)) FROM FailoverListDetails fld GROUP BY fld.ordinal, fld.serverId ORDER BY fld.ordinal ASC"),

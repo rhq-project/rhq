@@ -73,14 +73,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " //
-        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -99,14 +99,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
         + "  WHERE p.id IN (:ids) "), //
 
     // this query does not load the content blob, but loads everything else
@@ -123,15 +123,15 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " //
-        + "        LEFT JOIN p.scheduledJobsConfiguration " //
-        + "  WHERE p.name=:name " //
+        + "   FROM ServerPlugin AS p" //
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
+        + "  WHERE p.name = :name " //
         + "        AND p.status = 'INSTALLED' "), //
 
     // gets the plugin, even if it is deleted
@@ -149,14 +149,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " //
-        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
         + "  WHERE p.name=:name "), //
 
     // finds all installed AND deleted
@@ -174,14 +174,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration "),
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig "),
 
     // finds all installed - ignores those plugins marked as deleted
     // this query does not load the content blob, but loads everything else
@@ -198,14 +198,14 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
+        + "        pluginConfig, " //
+        + "        jobsConfig, " //
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " //
-        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "        LEFT JOIN p.pluginConfiguration AS pluginConfig " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
     // returns all installed plugins, both enabled and disabled

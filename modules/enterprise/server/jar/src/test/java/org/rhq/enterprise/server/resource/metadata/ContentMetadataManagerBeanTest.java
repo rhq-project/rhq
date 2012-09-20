@@ -111,7 +111,7 @@ public class ContentMetadataManagerBeanTest extends MetadataBeanTest {
     PackageType loadPackageType(String resourceType, String plugin, String packageType) {
         return (PackageType) getEntityManager()
             .createQuery(
-                "from PackageType p left join fetch p.deploymentConfigurationDefinition "
+                "from PackageType p left join fetch p.deploymentConfigurationDefinition pdcd "
                     + "where p.name = :packageType and " + "p.resourceType.name = :resourceType and "
                     + "p.resourceType.plugin = :plugin").setParameter("packageType", packageType)
             .setParameter("plugin", plugin).setParameter("resourceType", resourceType).getSingleResult();
@@ -120,7 +120,7 @@ public class ContentMetadataManagerBeanTest extends MetadataBeanTest {
     ResourceType loadResourceTypeWithBundleType(String resourceType, String plugin) {
         return (ResourceType) getEntityManager()
             .createQuery(
-                "from  ResourceType t left join fetch t.bundleType where t.name = :resourceType and t.plugin = :plugin")
+                "from  ResourceType t left join fetch t.bundleType tbt where t.name = :resourceType and t.plugin = :plugin")
             .setParameter("resourceType", resourceType).setParameter("plugin", plugin).getSingleResult();
     }
 

@@ -78,7 +78,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
             em = getEntityManager();
 
             Query q = em
-                .createQuery("SELECT p FROM ServerPlugin p LEFT JOIN FETCH p.pluginConfiguration LEFT JOIN FETCH p.scheduledJobsConfiguration WHERE p.name LIKE 'serverplugintest%'");
+                .createQuery("SELECT p FROM ServerPlugin p LEFT JOIN FETCH p.pluginConfiguration ppc LEFT JOIN FETCH p.scheduledJobsConfiguration psjc WHERE p.name LIKE 'serverplugintest%'");
             List<ServerPlugin> doomed = q.getResultList();
             for (ServerPlugin plugin : doomed) {
                 em.remove(em.getReference(ServerPlugin.class, plugin.getId()));

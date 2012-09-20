@@ -169,8 +169,8 @@ import org.rhq.core.domain.util.Summary;
         + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
-        + "LEFT JOIN FETCH def.parametersConfigurationDefinition "
-        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id AND rt.deleted = false"),
+        + "LEFT JOIN FETCH def.parametersConfigurationDefinition psDef "
+        + "LEFT JOIN FETCH def.resultsConfigurationDefinition rcDef " + "WHERE rt.id = :id AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_RESOURCE_FACETS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
         + "       ( " //

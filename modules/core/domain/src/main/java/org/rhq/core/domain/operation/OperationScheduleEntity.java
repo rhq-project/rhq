@@ -105,9 +105,9 @@ import javax.persistence.Table;
         + "    go.jobGroup, " //
         + "    '', " //
         + "    go.nextFireTime, " //
-        + "    go.group.id, " //
-        + "    go.group.name, " //
-        + "    go.group.resourceType.name) " //
+        + "    g.id, " //
+        + "    g.name, " //
+        + "    g.resourceType.name) " //
         + "  FROM GroupOperationScheduleEntity go " //
         + "  JOIN go.group g " //
         + "  JOIN g.roles r " //

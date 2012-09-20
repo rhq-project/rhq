@@ -97,7 +97,7 @@ public class ResourceTypeCriteria extends Criteria {
         filterOverrides.put("categories", "category in ( ? )");
         filterOverrides.put("parentResourceTypesEmpty", "" //
             + "id IN ( SELECT innerRt.id FROM ResourceType innerRt " //
-            + "        LEFT JOIN innerRt.parentResourceTypes " //
+            + "        LEFT JOIN innerRt.parentResourceTypes innerParentRt" //
             + "        WHERE ( ? = true  AND innerRt.parentResourceTypes IS EMPTY ) " //
             + "           OR ( ? = false AND innerRt.parentResourceTypes IS NOT EMPTY ) )");
 

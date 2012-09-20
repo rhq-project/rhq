@@ -1,7 +1,9 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.EMPTY_LIST;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -9,9 +11,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.EMPTY_LIST;
 
 public class OperationMetadataManagerBeanTest extends MetadataBeanTest {
 
@@ -114,7 +113,8 @@ public class OperationMetadataManagerBeanTest extends MetadataBeanTest {
 
     ResourceType loadResourceTypeWithOperationDefs(String resourceType, String plugin) {
         return (ResourceType) getEntityManager().createQuery(
-            "from  ResourceType t left join fetch t.operationDefinitions " +
+                "from  ResourceType t left join fetch t.operationDefinitions tod "
+                    +
             "where t.name = :resourceType and t.plugin = :plugin")
             .setParameter("resourceType", resourceType)
             .setParameter("plugin", plugin)

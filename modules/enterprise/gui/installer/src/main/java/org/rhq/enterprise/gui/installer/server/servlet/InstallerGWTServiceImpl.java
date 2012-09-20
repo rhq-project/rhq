@@ -120,9 +120,10 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
             String deployDir = client.getAppServerDefaultDeploymentDir();
             boolean deployedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.DEPLOYED);
             boolean failedExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.FAILED);
+            boolean isDeployingExists = ServerInstallUtil.markerFileExists(deployDir, EAR_NAME, Marker.ISDEPLOYING);
             if (!failedExists) {
-                if (deployedExists) {
-                    return ""; // everything looks OK and the ear has been successfully deployed
+                if (deployedExists || isDeployingExists) {
+                    return ""; // everything looks OK and the ear either has been successfully deployed or is deploying
                 } else {
                     return null; // installer hasn't done anything yet
                 }

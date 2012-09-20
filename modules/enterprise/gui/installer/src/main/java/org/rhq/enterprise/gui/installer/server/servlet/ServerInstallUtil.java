@@ -83,7 +83,8 @@ public class ServerInstallUtil {
     };
 
     public enum Marker {
-        DO_DEPLOY(".dodeploy"), SKIP_DEPLOY(".skipdeploy"), DEPLOYED(".deployed"), FAILED(".failed");
+        DO_DEPLOY(".dodeploy"), SKIP_DEPLOY(".skipdeploy"), DEPLOYED(".deployed"), FAILED(".failed"), ISDEPLOYING(
+            ".isdeploying");
 
         private String extension;
 
@@ -117,7 +118,7 @@ public class ServerInstallUtil {
         CoreJBossASClient client = new CoreJBossASClient(mcc);
 
         // the EAR could take a long time to deploy, increase the deployment timeout
-        client.setAppServerDefaultDeploymentTimeout(240); // 30 minutes should be plenty of time
+        client.setAppServerDefaultDeploymentTimeout(1800); // 30 minutes should be plenty of time
 
         // We don't need to scan the deployment directory after everything is installed.
         // TODO: We would like this to be 0, so it only scans at startup, but the installer

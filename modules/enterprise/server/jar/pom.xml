@@ -722,6 +722,16 @@ Build-OS-Version=${os.version}
                <include>**/*Remote</include>
                <include>**/ServerVersion</include>
             </includes>
+            <ignored>
+               <!-- This is intentionally ignored in any version of RHQ. We never
+                  even report it. -->
+               <difference>
+                  <className>**/ServerVersion</className>
+                  <differenceType>6003</differenceType> <!-- Constant field value changed -->
+                  <field>namespace</field>
+                  <justification>The namespace changes with every version, so this is definitely an intentional change.</justification>
+               </difference>
+            </ignored>   
          </configuration>
       </plugin>
 

@@ -64,10 +64,6 @@ org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandler
     <mbean code="org.rhq.enterprise.server.core.comm.ServerCommunicationsService"
            name="rhq:service=ServerCommunications">
 
-        <!--
-        <attribute name="ConfigurationFile">.../server-comm-configuration.xml</attribute>
-        -->
-
         <!-- see https://issues.jboss.org/browse/AS7-5342 for why we have two attributes instead of just one-->
         <attribute name="ConfigurationOverrides">
 # location of the plugin jars and other files agents can download directly from sever

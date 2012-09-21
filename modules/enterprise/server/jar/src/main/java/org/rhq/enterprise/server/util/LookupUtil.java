@@ -668,9 +668,10 @@ public final class LookupUtil {
 
     // Private Methods
 
-    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : ("java:app/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName() + "!"
-            + beanClass.getName().replace("Bean", "Local");
+    private static <T> String getLocalJNDIName(@NotNull
+    Class<? super T> beanClass) {
+        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName()
+            + "!" + beanClass.getName().replace("Bean", "Local");
     }
 
     /**
@@ -680,9 +681,10 @@ public final class LookupUtil {
      *
      * @return JNDI name that the remote interface is registered as
      */
-    private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : ("java:app/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName() + "!"
-            + beanClass.getName().replace("Bean", "Remote");
+    private static <T> String getRemoteJNDIName(@NotNull
+    Class<? super T> beanClass) {
+        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName()
+            + "!" + beanClass.getName().replace("Bean", "Remote");
     }
 
     @SuppressWarnings("unchecked")

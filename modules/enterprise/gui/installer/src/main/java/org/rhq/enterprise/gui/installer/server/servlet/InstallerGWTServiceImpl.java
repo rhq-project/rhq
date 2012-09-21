@@ -70,7 +70,14 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
 
         try {
             // If we are already fully installed, we don't have to do anything. Just return immediately.
-            if (getInstallationResults() != null) {
+            String installationResults = getInstallationResults();
+            if (installationResults != null) {
+                if (installationResults.length() == 0) {
+                    log("The installer has already been told to perform its work. The server should be ready soon.");
+                } else {
+                    log("The installer has already attempted to install the server but errors occurred:\n"
+                        + installationResults);
+                }
                 return;
             }
         } catch (Throwable t) {

@@ -24,7 +24,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -82,16 +81,6 @@ public class JDBCLoginModule extends UsernamePasswordLoginModule {
         log.debug("prinipalsQuery=" + principalsQuery);
     }
 
-    private Properties getProperties() {
-        Properties props = new Properties();
-
-        props.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-        props.put("java.naming.provider.url", "jnp://localhost:1099");
-        props.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
-
-        return props;
-    }
-
     /**
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#getUsersPassword()
      */
@@ -107,8 +96,7 @@ public class JDBCLoginModule extends UsernamePasswordLoginModule {
         ResultSet rs = null;
 
         try {
-            Properties props = getProperties();
-            InitialContext ctx = new InitialContext(props);
+            InitialContext ctx = new InitialContext();
             DataSource ds = (DataSource) ctx.lookup(dsJndiName);
             conn = ds.getConnection();
 

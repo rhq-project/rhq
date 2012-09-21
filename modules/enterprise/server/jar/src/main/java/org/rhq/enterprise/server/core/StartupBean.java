@@ -761,9 +761,8 @@ public class StartupBean {
     private long getElapsedTimeSinceStartup() throws RuntimeException {
         long elapsed;
         try {
-            ObjectName jbossServerName = new ObjectName("jboss.system:type=Server");
-            MBeanServer jbossServer = ManagementFactory.getPlatformMBeanServer();
-            Date startTime = (Date) jbossServer.getAttribute(jbossServerName, "StartDate");
+            CoreServerMBean coreServer = LookupUtil.getCoreServer();
+            Date startTime = coreServer.getBootTime();
             long currentTime = System.currentTimeMillis();
             elapsed = currentTime - startTime.getTime();
         } catch (Exception e) {

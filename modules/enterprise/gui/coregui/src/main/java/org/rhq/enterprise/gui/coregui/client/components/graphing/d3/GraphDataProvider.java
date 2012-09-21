@@ -116,7 +116,6 @@ public class GraphDataProvider implements Locatable, MetricProvider
     }
 
     @Override
-    //@todo: use generics
     public String getMetricsAsJson(List<MetricDisplaySummary> metrics)
     {
         String s = "[";

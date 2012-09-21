@@ -43,9 +43,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
+ * @deprecated should be replaced with new d3 graph views
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
+@Deprecated
 public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceTitle;
@@ -64,10 +66,12 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
         super(locatorId, resourceId, def, data);
     }
 
+    @Override
     protected HTMLFlow getEntityTitle() {
         return resourceTitle;
     }
 
+    @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
 
@@ -141,10 +145,12 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
         }
     }
 
+    @Override
     protected boolean supportsLiveGraphViewDialog() {
         return true;
     }
 
+    @Override
     protected void displayLiveGraphViewDialog() {
         LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }

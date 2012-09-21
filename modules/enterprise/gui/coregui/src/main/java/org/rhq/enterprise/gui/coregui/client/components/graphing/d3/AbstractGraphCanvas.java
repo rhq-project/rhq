@@ -57,7 +57,6 @@ public abstract class AbstractGraphCanvas extends Canvas implements GraphCanvasP
     private void init()
     {
         copyShadowProperties();
-        //@todo: we might even be able to get rid of the HTMLFlow altogether
         flow = new HTMLFlow();
         flow.setContents("<div id = \"" + parentChartId + "\" />");
         this.setHeight100();

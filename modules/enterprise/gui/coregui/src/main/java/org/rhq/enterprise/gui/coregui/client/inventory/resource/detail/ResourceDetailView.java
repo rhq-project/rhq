@@ -65,6 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.D3GraphMonitoringView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphMonitoringView;
@@ -133,6 +134,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab monitorGraphs;
     private SubTab monitorCubismGraphs;
     private SubTab monitorD3Graphs;
+    private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
     private SubTab monitorAvail;
@@ -215,6 +217,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         //@todo: i18n
         monitorD3Graphs = new SubTab(monitoringTab.extendLocatorId("D3Graphs"), new ViewName("D3Graphs",
                 "D3 Graphs"), null);
+        monitorNewGraphs = new SubTab(monitoringTab.extendLocatorId("NewGraphs"), new ViewName("NewGraphs",
+                "New Graphs"), null);
 
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
             MSG.view_tabs_common_tables()), null);
@@ -227,7 +231,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
         monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorCubismGraphs, monitorD3Graphs,
-                monitorTraits, monitorAvail, monitorSched, monitorCallTime);
+                monitorNewGraphs, monitorTraits, monitorAvail, monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events",
@@ -446,6 +450,15 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             }
         };
         updateSubTab(this.monitoringTab, this.monitorD3Graphs, visible, true, viewFactory);
+
+
+        viewFactory = (!visible) ? null : new ViewFactory() {
+            @Override
+            public Canvas createView() {
+                return new D3GraphListView(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource());
+            }
+        };
+        updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, true, viewFactory);
 
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {

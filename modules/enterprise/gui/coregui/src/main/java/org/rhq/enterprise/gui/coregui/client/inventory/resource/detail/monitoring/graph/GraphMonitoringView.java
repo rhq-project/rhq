@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas;
+import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphDataProvider;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.MetricProvider;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -33,7 +33,6 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
 {
     private ResourceComposite resourceComposite;
     private MetricProvider metricProvider;
-    private GraphCanvas graphCanvas;
 
     final private static int MARGIN = 20;
     final private static int SERVER_DELAY_IN_MILLIS = 5 * 1000;
@@ -61,9 +60,9 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
         form.setWidth100();
         form.setAutoHeight();
 
-        graphCanvas = new GraphCanvas("cubism_chart", SERVER_DELAY_IN_MILLIS, CLIENT_DELAY_IN_MILLIS, STEP_IN_MILLIS);
-        graphCanvas.setWidth(getWidth()-MARGIN);
-        graphCanvas.setHeight(getHeight()-MARGIN);
+        CubismGraphCanvas graphCanvas = new CubismGraphCanvas("cubism_chart", SERVER_DELAY_IN_MILLIS, CLIENT_DELAY_IN_MILLIS, STEP_IN_MILLIS);
+        graphCanvas.setWidth(getWidth() - MARGIN);
+        graphCanvas.setHeight(getHeight() - MARGIN);
         form.addChild(graphCanvas);
         metricProvider = new GraphDataProvider(getLocatorId(), resourceComposite.getResource().getId());
         graphCanvas.setDataProvider(metricProvider);

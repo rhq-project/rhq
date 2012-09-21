@@ -19,13 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
 
 
-import com.google.gwt.core.client.JavaScriptObject;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Denis Krusko
  */
-public class GraphCanvas extends AbstractGraphCanvas
+public class CubismGraphCanvas extends AbstractGraphCanvas
 {
     String chartId;
     public int serverDelay = 5000;
@@ -34,7 +33,7 @@ public class GraphCanvas extends AbstractGraphCanvas
     protected int width = 900;
     protected int height = 700;
 
-    public GraphCanvas(String chartId)
+    public CubismGraphCanvas(String chartId)
     {
         super(chartId);
     }
@@ -49,7 +48,7 @@ public class GraphCanvas extends AbstractGraphCanvas
         chartId = parentChartId;
     }
 
-    public GraphCanvas(String chartId, int serverDelay, int clientDelay, int step)
+    public CubismGraphCanvas(String chartId, int serverDelay, int clientDelay, int step)
     {
         this(chartId);
         this.serverDelay = serverDelay;
@@ -113,7 +112,7 @@ public class GraphCanvas extends AbstractGraphCanvas
     public native void loadJson() /*-{
         var context = $wnd.cubism.context();
         var metrics = [];
-        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetricsAsJson()());
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getMetricsAsJson()());
         for (var i = 0; i < jsonMetrics.length; i++)
         {
             var jsonMetric = jsonMetrics[i];
@@ -121,7 +120,7 @@ public class GraphCanvas extends AbstractGraphCanvas
             var metric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
             //var metric = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::createMetric(Ljava/lang/String;I)(jsonMetric.label, jsonMetric.metricIndex);
             var horizonContext;
-            var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
+            var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::chartId;
             var selection = $wnd.d3.select(chartDiv);
 
             // this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::determineAxisLabels(Ljava/lang/String;)(jsonMetric.metricUnit);
@@ -149,7 +148,7 @@ public class GraphCanvas extends AbstractGraphCanvas
             {
                 console.log('Creating metrics');
                 // query for metrics matching time
-                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
+                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
                 console.log('Creating metrics 1' + jsonPoints);
 
                 try
@@ -174,13 +173,13 @@ public class GraphCanvas extends AbstractGraphCanvas
     @Override
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::serverDelay)// allow seconds of collection lag
-                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::clientDelay)
-                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::step)
-                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::width);
+                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::serverDelay)// allow seconds of collection lag
+                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::clientDelay)
+                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::step)
+                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::width);
 
-        var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::chartId;
-        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getMetricsAsJson()());
+        var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::chartId;
+        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getMetricsAsJson()());
 
 
         var metrics = [];
@@ -191,7 +190,7 @@ public class GraphCanvas extends AbstractGraphCanvas
             var metric = context.metric(function (start, stop, step, callback)
             {
 
-                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
+                var jsonPoints = self.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
 
                 try
                 {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,16 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -44,16 +39,21 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+
 /**
- * @author Greg Hinkle
+ * @author Mike Thompson
  */
-@Deprecated
-public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
+public class D3GraphListView extends LocatableVLayout implements ResourceSelectListener {
 
     private Resource resource;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
 
-    public GraphListView(String locatorId, Resource resource) {
+    public D3GraphListView(String locatorId, Resource resource) {
         super(locatorId);
 
         this.resource = resource;
@@ -66,10 +66,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
 
         destroyMembers();
 
-        addMember(new AvailabilityBarView(resource));
-
-        //        addMember(loadingLabel);
-
+        addMember(new Label("D3 Graphs"));
         addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {
@@ -106,12 +103,14 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
                     GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(), measDefIdArray,
                         8, MeasurementUtils.UNIT_HOURS, 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                            @Override
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
                                     caught);
                                 loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
                             }
 
+                            @Override
                             public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
                                 if (result.isEmpty()) {
                                     loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
@@ -130,14 +129,18 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
+
         ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(),
             def, data);
+
+
         graph.setWidth("95%");
         graph.setHeight(220);
 
         addMember(graph);
     }
 
+    @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resource = resourceComposite.getResource();
 

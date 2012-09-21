@@ -161,8 +161,13 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         Map<String, String> moduleOptionProperties) throws Exception {
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
-        ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(CACHE_TYPE).set("default");
+        ModelNode addTopNode = null;
+
+        // If necessary create the security domain, otherwise just add the loginModule
+        if (!isSecurityDomain(securityDomainName)) {
+            addTopNode = createRequest(ADD, addr);
+            addTopNode.get(CACHE_TYPE).set("default");
+        }
 
         ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
         ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
@@ -180,7 +185,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
 
         loginModulesNode.add(loginModule);
 
-        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
+        ModelNode batch = (null != addTopNode) ? createBatchRequest(addTopNode, addAuthNode)
+            : createBatchRequest(addAuthNode);
         ModelNode results = execute(batch);
         if (!isSuccess(results)) {
             throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");

@@ -35,6 +35,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -113,9 +114,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private SystemInfoManagerLocal systemInfoManager;
 
     private static SystemSettings cachedSystemSettings = null;
-    private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
-    @SuppressWarnings("unchecked")
     public void scheduleConfigCacheReloader() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
@@ -128,8 +127,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
         }
 
-        // single-action timer that will trigger in 60 seconds
-        timerService.createTimer(60000L, TIMER_DATA);
+        // timer that will trigger every 60 seconds
+        timerService.createIntervalTimer(60000L, 60000L, new TimerConfig(null, false));
     }
 
     @Timeout
@@ -145,14 +144,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             systemManager.loadSystemConfigurationCacheInNewTx();
         } catch (Throwable t) {
             log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
-        } finally {
-            // reschedule ourself to trigger in another 60 seconds
-            try {
-                timerService.createTimer(60000L, TIMER_DATA);
-            } catch (Throwable t) {
-                log.error("Failed to reschedule system config cache reload timer! System config cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
-                    + t);
-            }
         }
     }
 

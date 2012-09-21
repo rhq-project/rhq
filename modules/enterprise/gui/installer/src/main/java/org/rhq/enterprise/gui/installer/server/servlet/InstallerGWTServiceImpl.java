@@ -692,11 +692,13 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
     }
 
     private void reloadConfiguration() throws Exception {
+        log("Will now ask the app server to reload its configuration");
         ModelControllerClient mcc = null;
         try {
             mcc = getModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             client.reload();
+            log("App server has been successfully asked to reload its configuration");
         } catch (Exception e) {
             log("reloadConfiguration failed - restart the server to complete the installation", e);
         } finally {

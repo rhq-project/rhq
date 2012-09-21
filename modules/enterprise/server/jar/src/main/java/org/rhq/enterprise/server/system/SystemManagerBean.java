@@ -625,16 +625,17 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Ensures the installer is no longer deployed.
      */
     public void undeployInstaller() {
-        // TODO: call the mgmt api to undeploy the installer so a rogue user won't mess with it
-        try {
-            log.warn("!!!!!!!!TODO: UNDEPLOY THE INSTALLER HERE!!!!!");
-        } catch (Exception e) {
-            log.warn("Please manually remove installer war to secure your deployment: " + e);
-            return;
-        }
-
-        // we only get here if we are SURE we removed it!
-        log.info("Confirmed that the installer has been undeployed");
+        // No need for this anymore - the new RHQ installer in AS7 detects it already installed things and will point the user to login screen
+        // We leave this in here in case we want to re-introduce the ability to uninstall the installer.
+        //        try {
+        //            log.warn("!!!!!!!!TODO: UNDEPLOY THE INSTALLER HERE!!!!!");
+        //        } catch (Exception e) {
+        //            log.warn("Please manually remove installer war to secure your deployment: " + e);
+        //            return;
+        //        }
+        //
+        //        // we only get here if we are SURE we removed it!
+        //        log.info("Confirmed that the installer has been undeployed");
         return;
     }
 

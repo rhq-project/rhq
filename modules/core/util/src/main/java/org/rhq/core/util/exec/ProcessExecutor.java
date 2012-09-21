@@ -104,7 +104,8 @@ public class ProcessExecutor {
 
         // wait if told to - note that the default is not to wait
         if (process.getWaitForExit().intValue() > 0) {
-            Callable<Integer> call = new Callable() {
+            Callable<Integer> call = new Callable<Integer>() {
+                @Override
                 public Integer call() throws Exception {
                     Thread.currentThread().setName("ExecuteProcess-" + process.getProgramTitle());
                     try {

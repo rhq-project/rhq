@@ -43,6 +43,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /** Is a basic ui that generates a very simple managed
  *  graphical resource that can be managed/monitored
@@ -100,7 +103,48 @@ public class ManagedHive extends JFrame {
     protected static Runnable angryTimer = null;
     protected static int angryPackSize = 50;
     protected static JLabel mood = null;
-    protected static JTextField swarmTimeField;
+    protected static JTextField swarmTimeDisplayField;
+    protected static JTextField populationBaseField;
+    protected static JTextField swarmTimeUpdateField;
+    protected static JButton updateConfiguration;
+
+    public enum Validation {
+        POPULATION_BASE(50, 2500), SWARM_TIME(30000, (60000 * 30)), BEES_TO_ADD(5, 150);
+        private int lowest;
+        private int highest;
+        private static JTextField field_value = null;
+
+        //
+        public int getLowest() {
+            return lowest;
+        }
+
+        public int getHighest() {
+            return highest;
+        }
+
+        public JTextField getField() {
+            return field_value;
+        }
+
+        public void setField(JTextField field) {
+            field_value = field;
+        }
+
+        private Validation(int lowest, int highest) {
+            this.lowest = lowest;
+            this.highest = highest;
+        }
+    };
+
+    protected static Vector<Validation> validationList = new Vector<Validation>();
+    static {
+        //        for (Validation v : Validation.values()) {
+        //            validationList.add(v);
+        //        }
+        validationList.add(Validation.POPULATION_BASE);
+        validationList.add(Validation.SWARM_TIME);
+    }
 
     /** Responsible for putting together the layout components.
      * 
@@ -118,12 +162,18 @@ public class ManagedHive extends JFrame {
         //monitor row
         JPanel monitorRow = new JPanel();
         monitorRow.setLayout(new BoxLayout(monitorRow, BoxLayout.X_AXIS));
+        TitledBorder titledBorder1 = new TitledBorder("Current Values:");
+        titledBorder1.setTitleColor(Color.gray);
+        monitorRow.setBorder(titledBorder1);
         top.add(monitorRow);
 
-        //configuration/operation row
-        JPanel interactionRow = new JPanel();
-        interactionRow.setLayout(new BoxLayout(interactionRow, BoxLayout.X_AXIS));
-        top.add(interactionRow);
+        //operation row
+        JPanel operationsRow = new JPanel();
+        operationsRow.setLayout(new BoxLayout(operationsRow, BoxLayout.X_AXIS));
+        TitledBorder titledBorder2 = new TitledBorder("Operations:");
+        titledBorder2.setTitleColor(Color.gray);
+        operationsRow.setBorder(titledBorder2);
+        top.add(operationsRow);
 
         {
             //monitor row shows current state of the hive
@@ -135,12 +185,12 @@ public class ManagedHive extends JFrame {
             monitorRow.add(currentPopulation);
             monitorRow.add(Box.createHorizontalStrut(space));
 
-            JLabel maxPopulationLabel = new JLabel("Swarm Time(ms)");
+            JLabel maxPopulationLabel = new JLabel("Swarm Time Left(ms)");
             monitorRow.add(maxPopulationLabel);
             monitorRow.add(Box.createHorizontalStrut(space));
-            swarmTimeField = new JTextField("" + swarmTime);
-            swarmTimeField.setEditable(false);
-            monitorRow.add(swarmTimeField);
+            swarmTimeDisplayField = new JTextField("" + swarmTime);
+            swarmTimeDisplayField.setEditable(false);
+            monitorRow.add(swarmTimeDisplayField);
             monitorRow.add(Box.createHorizontalStrut(space));//spacer
 
             mood = new JLabel();
@@ -180,7 +230,118 @@ public class ManagedHive extends JFrame {
                 }
             }
         });
-        interactionRow.add(shake);
+
+        {//populate the operations row.
+            operationsRow.add(shake);
+            operationsRow.add(Box.createHorizontalStrut(400));
+        }
+
+        //configuration row
+        JPanel configurationRow = new JPanel();
+        configurationRow.setLayout(new BoxLayout(configurationRow, BoxLayout.X_AXIS));
+        TitledBorder configurationBorder = new TitledBorder("Configuration:");
+        configurationBorder.setTitleColor(Color.gray);
+        configurationRow.setBorder(configurationBorder);
+        top.add(configurationRow);
+        
+        {//populate the configuration row.
+         //population base
+            JLabel basePopulationLabel = new JLabel("Base population");
+            configurationRow.add(basePopulationLabel);
+            configurationRow.add(Box.createHorizontalStrut(space));
+            populationBaseField = new JTextField("" + basePopulation);
+            populationBaseField.getDocument().addDocumentListener(new ConfigurationFieldsListener());
+            for (Validation v : validationList) {
+                if (v.compareTo(Validation.POPULATION_BASE) == 0) {
+                    //replace the component
+                    int index = validationList.indexOf(v);
+                    v.setField(populationBaseField);
+                    validationList.set(index, v);
+                }
+            }
+            configurationRow.add(populationBaseField);
+
+            //swarm time
+            JLabel swarmTimeLabel = new JLabel("Swarm Time length");
+            configurationRow.add(swarmTimeLabel);
+            configurationRow.add(Box.createHorizontalStrut(space));
+            swarmTimeUpdateField = new JTextField("" + swarmTime);
+            swarmTimeUpdateField.getDocument().addDocumentListener(new ConfigurationFieldsListener());
+            for (Validation v : validationList) {
+                if (v.compareTo(Validation.SWARM_TIME) == 0) {
+                    //replace the component
+                    int index = validationList.indexOf(v);
+                    v.setField(swarmTimeUpdateField);
+                    validationList.set(index, v);
+                }
+            }
+            configurationRow.add(swarmTimeUpdateField);
+
+            //update button
+            updateConfiguration = new JButton("Update configuration");
+            updateConfiguration.setEnabled(false);
+            updateConfiguration.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    //validate defaults and apply updates if possible.
+                    for (Validation rule : validationList) {
+                        JTextField field = rule.getField();
+                        if (rule.getField() == null)
+                            return;//bail if field not set
+                        String newValueString = field.getText();
+                        int newValue = -1;
+                        try {
+                            newValue = Integer.valueOf(newValueString);
+                            //apply rules
+                            if ((newValue >= rule.getLowest()) && (newValue <= rule.getHighest())) {
+                                switch (rule) {
+                                case POPULATION_BASE:
+                                    basePopulation = newValue;
+                                    break;
+                                case SWARM_TIME:
+                                    swarmTime = newValue;
+                                    break;
+                                case BEES_TO_ADD:
+                                    basePopulation = newValue;
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                        } catch (NumberFormatException nfe) {
+                            String message = "";
+                            switch (rule) {
+                            case POPULATION_BASE:
+                                message += "Population Base values must be >= '" + rule.getLowest() + "' and <= '"
+                                    + rule.getHighest() + "'.";
+                                break;
+                            case SWARM_TIME:
+                                message += "Swarm Time values must be >= '" + rule.getLowest() + "' and <= '"
+                                    + rule.getHighest() + "'.";
+                                break;
+                            case BEES_TO_ADD:
+                                message += "Number of bees to add must be >= '" + rule.getLowest() + "' and <= '"
+                                    + rule.getHighest() + "'.";
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported validation type: " + rule + " "
+                                    + nfe.getMessage());
+                            }
+                        }
+                    }
+                    //kick off population adjustments if any
+                    ManagedHive.hiveComponent.removeBee();
+                    //disable the update configuration button.
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateConfiguration.setEnabled(false);
+                        }
+                    });
+                }
+            });
+            configurationRow.add(updateConfiguration);
+        }
 
         // center
         JPanel center = new JPanel();
@@ -271,9 +432,9 @@ class Hive extends JComponent {
                 public void run() {
                     ManagedHive.currentPopulation.setText(ManagedHive.hiveComponent.getCurrentPopulation() + "");
                     if (ManagedHive.angryTimer != null) {
-                        ManagedHive.swarmTimeField.setText(((SwarmTimer) ManagedHive.angryTimer).getExpireTime() + "");
+                        ManagedHive.swarmTimeDisplayField.setText(((SwarmTimer) ManagedHive.angryTimer).getExpireTime() + "");
                     } else {
-                        ManagedHive.swarmTimeField.setText("0");
+                        ManagedHive.swarmTimeDisplayField.setText("0");
                     }
                 }
             });
@@ -438,6 +599,7 @@ class SwarmTimer implements Runnable {
 
     public void setExpireTime(int swarmTime) {
         //only accept swarm times less than 10 mins and greater then 1 min(s).
+        //todo: spinder 9/24/12 relace this check with Validation.* checks
         if ((swarmTime >= 1000 * 60) || (swarmTime <= 1000 * 60 * 10)) {
             timeToLive = swarmTime;
         }//otherwise ignore.
@@ -445,5 +607,22 @@ class SwarmTimer implements Runnable {
 
     public static int getExpireTime() {
         return timeToLive;
+    }
+}
+
+class ConfigurationFieldsListener implements DocumentListener {
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        ManagedHive.updateConfiguration.setEnabled(true);
+    }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        ManagedHive.updateConfiguration.setEnabled(true);
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        ManagedHive.updateConfiguration.setEnabled(true);
     }
 }

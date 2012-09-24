@@ -30,5 +30,6 @@
       <module>ant-bundle</module>
       <module>drift</module>      
       <module>jboss-as-dmr-client</module>
+      <module>cassandra-bundle</module>
    </modules>
 </project>

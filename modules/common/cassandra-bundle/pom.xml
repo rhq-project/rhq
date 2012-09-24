@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-common-parent</artifactId>
+    <version>4.5.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>rhq-cassandra-bundle</artifactId>
+  <name>RHQ Cassandra Bundle</name>
+  <description>Provides a bundle recipe for Cassandra 1.1.5 for use as an RHQ back end</description>
+
+  <properties>
+    <cassandra.version>1.1.5</cassandra.version>
+  </properties>
+ 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>create-cassandra-pkg</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <zip basedir="${project.build.outputDirectory}/cassandra-${cassandra.version}"
+                     destfile="${project.build.outputDirectory}/cassandra-${cassandra.version}.zip"/>
+                <delete dir="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

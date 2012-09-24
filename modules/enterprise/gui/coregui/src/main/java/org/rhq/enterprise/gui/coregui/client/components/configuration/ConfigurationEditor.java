@@ -1703,6 +1703,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     summaryTable.redraw();
                 }
 
+                //reset the custom blur event handling - we're destroying the new form here
+                blurUnsetItem = null;
+                blurValueItem = null;
+
                 layout.destroy();
                 popup.destroy();
             }
@@ -1730,6 +1734,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
             buttonBar.addMember(cancelButton);
         }
+
+        //reset the custom blur event handling - we're creating a new form here
+        blurUnsetItem = null;
+        blurValueItem = null;
 
         layout.addMember(buttonBar);
         popup.addItem(layout);

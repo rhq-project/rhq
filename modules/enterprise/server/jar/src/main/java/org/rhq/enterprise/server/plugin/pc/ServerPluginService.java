@@ -23,7 +23,6 @@ import java.io.File;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -115,7 +114,7 @@ public class ServerPluginService implements ServerPluginServiceMBean {
 
     public File getServerPluginsDirectory() {
         File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File pluginDir = new File(serverHomeDir, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
+        File pluginDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-serverplugins");
         return pluginDir;
     }
 

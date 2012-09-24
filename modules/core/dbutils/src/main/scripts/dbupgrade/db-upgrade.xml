@@ -4035,6 +4035,14 @@
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
             </schemaSpec>
 
+            <schemaSpec version="2.124">
+                <schema-dropTable table="JMS_MESSAGES" ignoreError="true" />
+                <schema-dropTable table="JMS_TRANSACTIONS" ignoreError="true" />
+                <schema-dropTable table="JMS_USERS" ignoreError="true" />
+                <schema-dropTable table="JMS_ROLES" ignoreError="true" />
+                <schema-dropTable table="JMS_SUBSCRIPTIONS" ignoreError="true" />
+            </schemaSpec>
+        	
         </dbupgrade>
     </target>
 </project>

@@ -102,10 +102,12 @@ public class ManagedHive extends JFrame {
     protected static ManagedHive CONTROLLER = null;
     protected static Runnable angryTimer = null;
     protected static int angryPackSize = 50;
+    protected static int beeAdditionAmount = 13;
     protected static JLabel mood = null;
     protected static JTextField swarmTimeDisplayField;
     protected static JTextField populationBaseField;
     protected static JTextField swarmTimeUpdateField;
+    protected static JTextField beeCountUpdateField;
     protected static JButton updateConfiguration;
 
     public enum Validation {
@@ -139,11 +141,9 @@ public class ManagedHive extends JFrame {
 
     protected static Vector<Validation> validationList = new Vector<Validation>();
     static {
-        //        for (Validation v : Validation.values()) {
-        //            validationList.add(v);
-        //        }
-        validationList.add(Validation.POPULATION_BASE);
-        validationList.add(Validation.SWARM_TIME);
+        for (Validation v : Validation.values()) {
+            validationList.add(v);
+        }
     }
 
     /** Responsible for putting together the layout components.
@@ -162,7 +162,7 @@ public class ManagedHive extends JFrame {
         //monitor row
         JPanel monitorRow = new JPanel();
         monitorRow.setLayout(new BoxLayout(monitorRow, BoxLayout.X_AXIS));
-        TitledBorder titledBorder1 = new TitledBorder("Current Values:");
+        TitledBorder titledBorder1 = new TitledBorder("Realtime Values:");
         titledBorder1.setTitleColor(Color.gray);
         monitorRow.setBorder(titledBorder1);
         top.add(monitorRow);
@@ -170,9 +170,9 @@ public class ManagedHive extends JFrame {
         //operation row
         JPanel operationsRow = new JPanel();
         operationsRow.setLayout(new BoxLayout(operationsRow, BoxLayout.X_AXIS));
-        TitledBorder titledBorder2 = new TitledBorder("Operations:");
-        titledBorder2.setTitleColor(Color.gray);
-        operationsRow.setBorder(titledBorder2);
+        TitledBorder operationsBorder = new TitledBorder("Operations:");
+        operationsBorder.setTitleColor(Color.gray);
+        operationsRow.setBorder(operationsBorder);
         top.add(operationsRow);
 
         {
@@ -231,9 +231,29 @@ public class ManagedHive extends JFrame {
             }
         });
 
+        //add some more bees operation
+        JButton addNBees = new JButton("Add Bees");
+        addNBees.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //retrieve addition amount
+                int addAmount = beeAdditionAmount;
+                for (int i = 0; i < addAmount; i++) {
+                    addBee();
+                }
+            }
+        });
+
         {//populate the operations row.
+            JTextField instructions = new JTextField(
+                "*Use these operations to modify the number of bees protecting the hive.*");
+            instructions.setEditable(false);
+            //            operationsRow.add(Box.createHorizontalStrut(100));
+            operationsRow.add(instructions);
+            operationsRow.add(Box.createHorizontalStrut(space));
             operationsRow.add(shake);
-            operationsRow.add(Box.createHorizontalStrut(400));
+            monitorRow.add(Box.createHorizontalStrut(space));
+            operationsRow.add(addNBees);
         }
 
         //configuration row
@@ -262,7 +282,7 @@ public class ManagedHive extends JFrame {
             configurationRow.add(populationBaseField);
 
             //swarm time
-            JLabel swarmTimeLabel = new JLabel("Swarm Time length");
+            JLabel swarmTimeLabel = new JLabel("Swarm Time(ms)");
             configurationRow.add(swarmTimeLabel);
             configurationRow.add(Box.createHorizontalStrut(space));
             swarmTimeUpdateField = new JTextField("" + swarmTime);
@@ -276,6 +296,22 @@ public class ManagedHive extends JFrame {
                 }
             }
             configurationRow.add(swarmTimeUpdateField);
+
+            //add bee amount 
+            JLabel beeAdditionAmountLabel = new JLabel("Bees to add");
+            configurationRow.add(beeAdditionAmountLabel);
+            configurationRow.add(Box.createHorizontalStrut(space));
+            beeCountUpdateField = new JTextField("" + beeAdditionAmount);
+            beeCountUpdateField.getDocument().addDocumentListener(new ConfigurationFieldsListener());
+            for (Validation v : validationList) {
+                if (v.compareTo(Validation.BEES_TO_ADD) == 0) {
+                    //replace the component
+                    int index = validationList.indexOf(v);
+                    v.setField(beeCountUpdateField);
+                    validationList.set(index, v);
+                }
+            }
+            configurationRow.add(beeCountUpdateField);
 
             //update button
             updateConfiguration = new JButton("Update configuration");
@@ -302,7 +338,7 @@ public class ManagedHive extends JFrame {
                                     swarmTime = newValue;
                                     break;
                                 case BEES_TO_ADD:
-                                    basePopulation = newValue;
+                                    beeAdditionAmount = newValue;
                                     break;
                                 default:
                                     break;

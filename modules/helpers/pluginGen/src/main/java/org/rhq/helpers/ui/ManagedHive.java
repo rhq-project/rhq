@@ -100,6 +100,7 @@ public class ManagedHive extends JFrame {
     protected static Runnable angryTimer = null;
     protected static int angryPackSize = 50;
     protected static JLabel mood = null;
+    protected static JTextField swarmTimeField;
 
     /** Responsible for putting together the layout components.
      * 
@@ -137,9 +138,9 @@ public class ManagedHive extends JFrame {
             JLabel maxPopulationLabel = new JLabel("Swarm Time(ms)");
             monitorRow.add(maxPopulationLabel);
             monitorRow.add(Box.createHorizontalStrut(space));
-            JTextField maxPopulation = new JTextField("" + swarmTime);
-            maxPopulation.setEditable(false);
-            monitorRow.add(maxPopulation);
+            swarmTimeField = new JTextField("" + swarmTime);
+            swarmTimeField.setEditable(false);
+            monitorRow.add(swarmTimeField);
             monitorRow.add(Box.createHorizontalStrut(space));//spacer
 
             mood = new JLabel();
@@ -269,6 +270,11 @@ class Hive extends JComponent {
                 @Override
                 public void run() {
                     ManagedHive.currentPopulation.setText(ManagedHive.hiveComponent.getCurrentPopulation() + "");
+                    if (ManagedHive.angryTimer != null) {
+                        ManagedHive.swarmTimeField.setText(((SwarmTimer) ManagedHive.angryTimer).getExpireTime() + "");
+                    } else {
+                        ManagedHive.swarmTimeField.setText("0");
+                    }
                 }
             });
         }
@@ -435,5 +441,9 @@ class SwarmTimer implements Runnable {
         if ((swarmTime >= 1000 * 60) || (swarmTime <= 1000 * 60 * 10)) {
             timeToLive = swarmTime;
         }//otherwise ignore.
+    }
+
+    public static int getExpireTime() {
+        return timeToLive;
     }
 }

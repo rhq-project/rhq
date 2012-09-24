@@ -1,0 +1,158 @@
+<project name="rhq_cassandra_bundle"
+         default="main"
+         xmlns:rhq="antlib:org.rhq.bundle">
+  <rhq:bundle name="RHQ Cassandra Bundle"
+              version="1.0"
+              description="A bundle for deploying RHQ Cassandra nodes.">
+
+    <rhq:input-property name="cluster.name"
+                        description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another"
+                        required="true"
+                        defaultValue="rhqdev"
+                        type="string"/>
+
+    <rhq:input-property name="cluster.dir"
+                        description="The directory in which Cassandra nodes will be installed"
+                        required="true"
+                        type="string"/>
+
+    <rhq:input-property name="auto.bootstrap"
+                        description="Set to true to make new (non-seed) node that automatically migrates the right data to itself. If no initial token is specified, the node will pick one such that it will get half the range of the most loaded node. If a node starts up without boostrapping, it will mark itself bootstrapped so that you cannot subsequently accidently boostrap a node with data on it."
+                        required="true"
+                        defaultValue="false"
+                        type="boolean"/>
+ 
+    <rhq:input-property name="data.dir"
+                        description="The directory where Cassandra should store data files. This should be a path relative to the base deployment directory."
+                        required="true"
+                        defaultValue="data"
+                        type="string"/>
+  
+    <rhq:input-property name="commitlog.dir"
+                        description="The directory where Cassandra stores its commit logs. This should be a path relative to the base deployment directory."
+                        required="true"
+                        defaultValue="commit_log"
+                        type="string"/>
+
+    <rhq:input-property name="saved.caches.dir"
+                        description="The directory where Cassandra stores saved caches. This should be a path relative to the base deployment directory."
+                        required="true"
+                        defaultValue="saved_caches"
+                        type="string"/>
+
+    <rhq:input-property name="log.dir"
+                        description="The directory where Cassandra stores log files. This should be a path relative to the base deployment directory."
+                        required="false"
+                        defaultValue="logs"
+                        type="string"/>
+
+    <rhq:input-property name="hostname"
+                        description="The host name of the node. This normally does not need to be set as Cassandra will resolve the host name/IP address. It needs to be set though for a local, development cluster running on a single machine."
+                        required="true"
+                        defaultValue="127.0.0.1"
+                        type="string"/>
+
+    <rhq:input-property name="seeds"
+                        description="A comma-delimited list of IP addresses/host names that are deemed contact points. Cassandra nodes use this list of hosts to find each other and learn the topology of the ring. If you are running a local development cluster, be sure to have aliases set up for localhost."
+                        required="false"
+                        defaultValue="127.0.0.1"
+                        type="string"/>
+
+    <rhq:input-property name="initial.token"
+                        description="Each Cassandra node is assigned a unique token that determines what keys it is the first replica for. If you sort all nodes' token, the range of keys each is responsible for is (PreviousToken, MyToken], that is, from the previous token (exclusive) to the node's token (inclusive). The machine with the lowest Token gets both all keys less than that token, and all keys greater than the largest token; this is called a wrapping range."
+                        required="false"
+                        defaultValue=""
+                        type="string"/>
+
+    <rhq:input-property name="jmx.port"
+                        description="The port over which Cassandra listens for JMX connections. Each node should be assigned a unique port."
+                        required="false"
+                        defaultValue="7200"
+                        type="string"/>
+
+<!--
+  The next two properties, install.schema and replication.factor deal with
+  running a CLI or CQL script to install and configure a keyspace.
+
+    <rhq:input-property name="install.schema"
+                        description="If set to true, executes the dbsetup script to install the rhq schema."
+                        required="false"
+                        defaultValue="false"
+                        type="boolean"/>
+
+    <rhq:input-property name="replication.factor"
+                        description="This sets the replication_factor setting in the RHQ keyspace definition. The
+                           replication factor indicates the total number of replicas; so, a replication factor of 2
+                           means that there will a total of two copies of data."
+                        required="false"
+                        defaultValue="1"
+                        type="integer"/>
+-->
+
+    <rhq:deployment-unit name="cassandra" preinstallTarget="pre-install" postinstallTarget="post-install">
+<!--
+      <rhq:file name="dbsetup.script" destinationFile="scripts/dbsetup.script" replace="true"/>
+-->
+      <rhq:archive name="cassandra-1.1.5.zip">
+        <rhq:replace>
+          <rhq:fileset dir="conf">
+            <include name="cassandra.yaml"/>
+          </rhq:fileset>
+          <rhq:fileset dir="conf">
+            <include name="cassandra-env.sh"/>
+          </rhq:fileset>
+          <rhq:fileset dir="conf">
+            <include name="log4j-server.properties"/>
+          </rhq:fileset>
+<!--
+          <rhq:fileset dir="scripts">
+            <include name="dbsetup.script"/>
+          </rhq:fileset>
+-->
+        </rhq:replace>
+      </rhq:archive>
+    </rhq:deployment-unit>
+  </rhq:bundle>
+
+  <target name="main"/>
+
+  <target name="pre-install">
+    <mkdir dir="${cluster.dir}"/>
+  </target>
+
+  <target name="post-install">
+    <property name="bin.dir" value="${rhq.deploy.dir}/bin"/>
+
+    <mkdir dir="${rhq.deploy.dir}/${data.dir}"/>
+    <mkdir dir="${rhq.deploy.dir}/${commitlog.dir}"/>
+    <mkdir dir="${rhq.deploy.dir}/${saved.caches.dir}"/>
+    <mkdir dir="${rhq.deploy.dir}/${log.dir}"/>
+
+    <chmod file="${bin.dir}/cassandra" perm="+x"/>
+    <chmod file="${bin.dir}/cqlsh" perm="+x"/>
+    <chmod file="${bin.dir}/cassandra-cli" perm="+x"/>
+    <chmod file="${bin.dir}/nodetool" perm="+x"/>
+
+<!--
+    <exec dir="${bin.dir}" executable="cassandra" spawn="true" resolveexecutable="true"/>
+
+    <script manager="javax" language="javascript"><![CDATA[
+      if (project.getProperty("install.schema") == "true") {
+        java.lang.Thread.sleep(1000 * 10);
+
+        exec = project.createTask("exec");
+        args = exec.createArg();
+        args.setLine("-f ../scripts/dbsetup.script");
+        exec.setDir(java.io.File(project.getProperty("bin.dir")));
+        exec.setExecutable("cassandra-cli");
+        exec.setResolveExecutable(true);
+        exec.setError(java.io.File("/home/jsanda/cassandra.log"));
+        exec.setOutput(java.io.File("/home/jsanda/cassandra.log"));
+
+        exec.execute();
+      }
+    ]]></script>
+-->
+  </target>
+
+</project>

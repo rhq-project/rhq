@@ -57,5 +57,6 @@
       <module>filetemplate-bundle</module>
       <module>ant-bundle</module>
       <module>drift</module>      
+      <module>cassandra-bundle</module>
    </modules>
 </project>

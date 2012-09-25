@@ -57,6 +57,8 @@ import org.rhq.enterprise.gui.configuration.DatabaseDynamicPropertyRetriever;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
+import org.rhq.enterprise.server.cassandra.CassandraClusterManagerLocal;
+import org.rhq.enterprise.server.cassandra.CassandraException;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -163,6 +165,7 @@ public class StartupServlet extends HttpServlet {
         startAgentClients();
         startEmbeddedAgent();
         registerShutdownListener();
+        installCassandraBundle();
 
         // Configures the configuration rendering to be able to support database backed dynamic configuration properties
         PropertyRenderingUtility.putDynamicPropertyRetriever(PropertyDynamicType.DATABASE,
@@ -700,6 +703,15 @@ public class StartupServlet extends HttpServlet {
             jbossServer.addNotificationListener(jbossServerName, new ShutdownListener(), null, null);
         } catch (Exception e) {
             throw new ServletException("Failed to register the Server Shutdown Listener", e);
+        }
+    }
+
+    private void installCassandraBundle() {
+        CassandraClusterManagerLocal clusterManager =  LookupUtil.getCassnandraClusterManager();
+        try {
+            clusterManager.installBundle();
+        } catch (CassandraException e) {
+            log.warn("Failed to install Cassandra bundle: " + e.getMessage());
         }
     }
 

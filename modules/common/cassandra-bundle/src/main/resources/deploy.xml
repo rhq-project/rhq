@@ -1,8 +1,8 @@
 <project name="rhq_cassandra_bundle"
          default="main"
          xmlns:rhq="antlib:org.rhq.bundle">
-  <rhq:bundle name="RHQ Cassandra Bundle"
-              version="1.0"
+  <rhq:bundle name="${rhq.cassandra.bundle.name}"
+              version="${rhq.cassandra.bundle.version}"
               description="A bundle for deploying RHQ Cassandra nodes.">
 
     <rhq:input-property name="cluster.name"

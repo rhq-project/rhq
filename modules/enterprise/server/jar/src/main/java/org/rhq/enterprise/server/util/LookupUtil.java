@@ -57,6 +57,8 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.cassandra.CassandraClusterManagerBean;
+import org.rhq.enterprise.server.cassandra.CassandraClusterManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerBean;
@@ -609,6 +611,10 @@ public final class LookupUtil {
 
     public static PlatformUtilizationManagerLocal getPlatformUtilizationManager() {
         return lookupLocal(PlatformUtilizationManagerBean.class);
+    }
+
+    public static CassandraClusterManagerLocal getCassnandraClusterManager() {
+        return lookupLocal(CassandraClusterManagerBean.class);
     }
     
     public static CoreServerMBean getCoreServer() {

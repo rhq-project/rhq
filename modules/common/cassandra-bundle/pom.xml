@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -15,8 +16,19 @@
   <properties>
     <cassandra.version>1.1.5</cassandra.version>
   </properties>
- 
+
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
+    <filters>
+      <filter>src/main/resources/cassandra.properties</filter>
+    </filters>
+
     <plugins>
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -29,9 +41,19 @@
             </goals>
             <configuration>
               <target>
-                <zip basedir="${project.build.outputDirectory}/cassandra-${cassandra.version}"
-                     destfile="${project.build.outputDirectory}/cassandra-${cassandra.version}.zip"/>
-                <delete dir="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                <property name="cassandra.dir"
+                          value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                <property name="cassandra.distro.filename"
+                          value="cassandra=${cassandra.version}.zip"/>
+                <property name="cassandra.distro.zip"
+                          value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
+                <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
+                <delete dir="${cassandra.dir}"/>
+                <zip basedir="${project.build.outputDirectory}"
+                     destfile="${project.build.outputDirectory}/cassandra-bundle.zip"
+                     includes="${cassandra.distro.filename},deploy.xml"/>
+                <delete file="${project.build.outputDirectory}/deploy.xml"/>
+                <delete file="${cassandra.distro.zip}"/>
               </target>
             </configuration>
           </execution>
@@ -39,4 +61,56 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <properties>
+        <rhq.rootDir>../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>deploy</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}"/>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

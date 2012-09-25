@@ -77,6 +77,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.TimelineView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -117,7 +118,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     private ResourceComposite resourceComposite;
 
-    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+    //private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -216,9 +217,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         //@todo: i18n
         monitorD3Graphs = new SubTab(monitoringTab.extendLocatorId("D3Graphs"), new ViewName("D3Graphs",
-                "D3 Graphs"), null);
+                "D3Graphs"), null);
         monitorNewGraphs = new SubTab(monitoringTab.extendLocatorId("NewGraphs"), new ViewName("NewGraphs",
-                "New Graphs"), null);
+                "NewGraphs"), null);
 
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
             MSG.view_tabs_common_tables()), null);
@@ -298,9 +299,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         try {
             this.resourceComposite = resourceComposite;
-            for (ResourceSelectListener selectListener : this.selectListeners) {
-                selectListener.onResourceSelected(this.resourceComposite);
-            }
+//            for (ResourceSelectListener selectListener : this.selectListeners) {
+//                selectListener.onResourceSelected(this.resourceComposite);
+//            }
             Resource resource = this.resourceComposite.getResource();
             getTitleBar().setResource(this.resourceComposite, isRefresh);
 
@@ -435,30 +436,33 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-        viewFactory = (!visible) ? null : new ViewFactory() {
+        boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+
+        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
                 return new GraphMonitoringView(monitoringTab.extendLocatorId("CubismGraphs"), resourceComposite);
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorCubismGraphs, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorCubismGraphs, visible, visibleToIE8, viewFactory);
 
-        viewFactory = (!visible) ? null : new ViewFactory() {
+        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
                 return new D3GraphMonitoringView(monitoringTab.extendLocatorId("D3Graphs"), resourceComposite);
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorD3Graphs, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorD3Graphs, visible, visibleToIE8, viewFactory);
 
 
-        viewFactory = (!visible) ? null : new ViewFactory() {
+        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
                 return new D3GraphListView(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource());
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, visibleToIE8, viewFactory);
+
 
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {
@@ -629,9 +633,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return this.resourceId;
     }
 
-//    public void addResourceSelectListener(ResourceSelectListener listener) {
-//        this.selectListeners.add(listener);
-//    }
 
     @Override
     protected ResourceComposite getSelectedItem() {

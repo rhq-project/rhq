@@ -331,10 +331,15 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // create a keystore whose cert has a CN of this server's public endpoint address
         ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
 
-        // Make sure our deployment scanner is configured to be ready for deploy our services and application
+        // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
         try {
             mcc = getModelControllerClient();
+
+            // ensure the server info is up to date and stored in the DB
+            ServerInstallUtil.setSocketBindings(mcc, serverProperties);
+
+            // Make sure our deployment scanner is configured to be ready for deploy our services and application
             ServerInstallUtil.configureDeploymentScanner(mcc);
         } finally {
             safeClose(mcc);

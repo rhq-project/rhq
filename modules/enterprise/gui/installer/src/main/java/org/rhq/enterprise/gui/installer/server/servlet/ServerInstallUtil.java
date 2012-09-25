@@ -54,6 +54,7 @@ import org.rhq.common.jbossas.client.controller.InfinispanJBossASClient;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
+import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
@@ -95,6 +96,53 @@ public class ServerInstallUtil {
         public String getExtenstion() {
             return extension;
         }
+    }
+
+    private static class SocketBindingInfo {
+        public String name;
+        public String sysprop;
+        public int port;
+
+        public SocketBindingInfo(String n, String s, int p) {
+            name = n;
+            sysprop = s;
+            port = p;
+        }
+    }
+
+    private static final ArrayList<SocketBindingInfo> defaultSocketBindings;
+    static {
+        // all ports are -1000 from out-of-box AS7 defaults
+        // except for the jboss.management ones - those are -3000 from their out-of-box defaults
+        defaultSocketBindings = new ArrayList<SocketBindingInfo>();
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_AJP,
+            "rhq.server.socket.binding.port.ajp", 7009));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_HTTP,
+            "rhq.server.socket.binding.port.http", 7080));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_HTTPS,
+            "rhq.server.socket.binding.port.https", 7443));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_JACORB,
+            "rhq.server.socket.binding.port.jacorb", 2528));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_JACORB_SSL,
+            "rhq.server.socket.binding.port.jacorb-ssl", 2529));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING,
+            "rhq.server.socket.binding.port.messaging", 4445));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING_THRUPUT,
+            "rhq.server.socket.binding.port.messaging-throughput", 4455));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_HTTP,
+            "jboss.management.http.port", 6990));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_HTTPS,
+            "jboss.management.https.port", 6443));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_NATIVE,
+            "jboss.management.native.port", 6999));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_OSGI_HTTP,
+            "rhq.server.socket.binding.port.osgi-http", 7090));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_REMOTING,
+            "rhq.server.socket.binding.port.remoting", 3447));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_RECOVERY_ENV,
+            "rhq.server.socket.binding.port.txn-recovery-environment", 3712));
+        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_STATUS_MGR,
+            "rhq.server.socket.binding.port.txn-status-manager", 3713));
     }
 
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
@@ -1201,6 +1249,25 @@ public class ServerInstallUtil {
     public static boolean markerFileExists(String dir, String artifact, Marker marker) {
         File markerFile = getMarkerFile(dir, artifact, marker);
         return markerFile.exists();
+    }
+
+    public static void setSocketBindings(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+        final SocketBindingJBossASClient client = new SocketBindingJBossASClient(mcc);
+        for (SocketBindingInfo binding : defaultSocketBindings) {
+            // use the port defined by the server's properties if set, otherwise, just use our hardcoded default
+            int newPort = binding.port;
+            String overrideValue = serverProperties.get(binding.sysprop);
+            if (overrideValue != null) {
+                try {
+                    newPort = Integer.parseInt(overrideValue);
+                } catch (Exception e) {
+                    LOG.warn("Invalid port in system property [" + binding.sysprop + "]: " + overrideValue);
+                }
+            }
+            LOG.info(String.format("Setting socket binding [%s] to [${%s:%d}]", binding.name, binding.sysprop, newPort));
+            client.setStandardSocketBindingPortExpression(binding.name, binding.sysprop, newPort);
+        }
     }
 
 }

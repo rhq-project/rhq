@@ -356,28 +356,37 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 rhq.server.quartz.selectWithLockSQL=${rhq.server.quartz.selectWithLockSQL}
 rhq.server.quartz.lockHandlerClass=${rhq.server.quartz.lockHandlerClass}
 
-# Container configuration
+# Host and Port Bindings
+jboss.bind.address=0.0.0.0
+jboss.bind.address.management=127.0.0.1
+
+jboss.socket.binding.port-offset=0
+
+jboss.management.native.port=6999
+jboss.management.http.port=6990
+jboss.management.https.port=6443
+
+rhq.server.socket.binding.port.ajp=7009
+rhq.server.socket.binding.port.http=7080
+rhq.server.socket.binding.port.https=7443
+rhq.server.socket.binding.port.jacorb=2528
+rhq.server.socket.binding.port.jacorb-ssl=2529
+rhq.server.socket.binding.port.messaging=4445
+rhq.server.socket.binding.port.messaging-throughput=4455
+rhq.server.socket.binding.port.osgi-http=7090
+rhq.server.socket.binding.port.remoting=3447
+rhq.server.socket.binding.port.txn-recovery-environment=3712
+rhq.server.socket.binding.port.txn-status-manager=3713
+
 # ********************************** NOTE ************************************
 # If the jboss.bind.address property is set to anything besides 0.0.0.0,
 # uncomment the java.rmi.server.hostname property below and set it to the same
 # value - setting it to ${jboss.bind.address} will *not* work.
-jboss.bind.address=0.0.0.0
 #java.rmi.server.hostname=0.0.0.0
 
 # High Availability (HA)
 rhq.server.high-availability.name=
 rhq.server.maintenance-mode-at-startup=false
-
-# General Properties
-rhq.server.startup.web.http.port=${rhq.server.http.port}
-rhq.server.startup.web.https.port=${rhq.server.https.port}
-rhq.server.startup.namingservice.port=2099
-rhq.server.startup.namingservice.rmiport=2098
-rhq.server.startup.jrmpinvoker.rmiport=7444
-rhq.server.startup.pooledinvoker.rmiport=7445
-rhq.server.startup.ajp.port=9009
-rhq.server.startup.unifiedinvoker.port=5446
-rhq.server.startup.aspectdeployer.bind-port=4873
 
 # RHQ Server's remote endpoint for agents to talk to
 # bind-address and bind-port are derived from the HA server definition,

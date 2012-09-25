@@ -83,7 +83,7 @@
          systemManager.analyze(subjectManager.getOverlord());
          result += "DB analyze done";
       }
-      else if ("errorCorrectSchedules".equals("mode"))
+      else if ("errorCorrectSchedules".equals(mode))
       {
          measurementScheduleManager.errorCorrectSchedules();
          result = "Measurement schedules checked for invalid (too low) intervals and corrected if need be";
@@ -99,7 +99,7 @@
       else if ("getMeasurementTableStats".equals(mode))
       {
          resultNoEscape = "<table>";
-         Map<String, Long> tableCounts = coreTestBean.getMeasurementTableStats()();
+         Map<String, Long> tableCounts = coreTestBean.getMeasurementTableStats();
          for (Map.Entry<String, Long> nextCount : tableCounts.entrySet()) {
              String tableAlias = nextCount.getKey();
              Long tableCount = nextCount.getValue();

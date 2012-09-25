@@ -40,8 +40,8 @@ public class ServerProperties {
     public static final String PROP_QUARTZ_SELECT_WITH_LOCK_SQL = "rhq.server.quartz.selectWithLockSQL";
     public static final String PROP_QUARTZ_LOCK_HANDLER_CLASS = "rhq.server.quartz.lockHandlerClass";
 
-    public static final String PROP_WEB_HTTP_PORT = "rhq.server.startup.web.http.port";
-    public static final String PROP_WEB_HTTPS_PORT = "rhq.server.startup.web.https.port";
+    public static final String PROP_WEB_HTTP_PORT = "rhq.server.socket.binding.port.http";
+    public static final String PROP_WEB_HTTPS_PORT = "rhq.server.socket.binding.port.https";
 
     public static final String PROP_EMBEDDED_AGENT_ENABLED = "rhq.server.embedded-agent.enabled";
     public static final String PROP_EMBEDDED_AGENT_NAME = "rhq.server.embedded-agent.name";

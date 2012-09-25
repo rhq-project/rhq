@@ -560,14 +560,17 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // if nothing was specified, we'll default to the canonical host name.
         if (ServerInstallUtil.isEmpty(publicEndpoint)) {
             String connBindAddress = serverProperties.get(ServerProperties.PROP_CONNECTOR_BIND_ADDRESS);
+
             if ((!ServerInstallUtil.isEmpty(connBindAddress)) && (!"0.0.0.0".equals(connBindAddress.trim()))) {
                 // the server-side connector bind address is explicitly set, use that
                 publicEndpoint = connBindAddress.trim();
+
             } else {
                 String serverBindAddress = serverProperties.get(ServerProperties.PROP_JBOSS_BIND_ADDRESS);
                 if ((!ServerInstallUtil.isEmpty(serverBindAddress)) && (!"0.0.0.0".equals(serverBindAddress.trim()))) {
                     // the main JBossAS server bind address is set and it isn't 0.0.0.0, use that
                     publicEndpoint = serverBindAddress.trim();
+
                 } else {
                     try {
                         publicEndpoint = InetAddress.getLocalHost().getCanonicalHostName();

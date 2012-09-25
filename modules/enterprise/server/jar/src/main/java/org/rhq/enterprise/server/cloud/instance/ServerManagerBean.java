@@ -125,11 +125,18 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public String getIdentity() {
-        String identity = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
-        if (identity.equals("")) {
-            return "localhost";
+
+        // The property may return "" so also use "" as the default to ensure we set it to something useful
+        String result = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
+
+        if ("".equals(result)) {
+            try {
+                result = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                result = "localhost";
+            }
         }
-        return identity;
+        return result;
     }
 
     public List<Agent> getAgents() {
@@ -201,16 +208,16 @@ public class ServerManagerBean implements ServerManagerLocal {
                     printWithTrace("establishCurrentServerMode: MAINTENANCE->NORMAL, clearing agent references");
                     clearAgentReferences(server);
 
-                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().removeCommandListener(
-                        getMaintenanceModeListener());
+                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                        .removeCommandListener(getMaintenanceModeListener());
 
                     log.info("Notified communication layer of server operation mode " + serverMode);
                 }
             } else if (Server.OperationMode.MAINTENANCE == serverMode) {
 
                 // If moving into Maintenance Mode from any other mode then stop processing agent commands
-                ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().addCommandListener(
-                    getMaintenanceModeListener());
+                ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                    .addCommandListener(getMaintenanceModeListener());
 
                 log.info("Notified communication layer of server operation mode " + serverMode);
 

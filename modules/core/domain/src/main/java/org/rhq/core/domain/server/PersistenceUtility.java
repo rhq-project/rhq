@@ -381,8 +381,9 @@ public class PersistenceUtility {
      * @param flag          true if the stats are to be enabled; false to disable the stats
      */
     public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server, boolean flag) {
+        SessionFactory sessionFactory = null;
         try {
-            SessionFactory sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
+            sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
 
             if (server == null) {
                 ArrayList<MBeanServer> list = MBeanServerFactory.findMBeanServer(null);
@@ -393,11 +394,19 @@ public class PersistenceUtility {
             StatisticsService mBean = new StatisticsService();
             mBean.setSessionFactory(sessionFactory);
             server.registerMBean(mBean, objectName);
-            sessionFactory.getStatistics().setStatisticsEnabled(flag);
         } catch (InstanceAlreadyExistsException iaee) {
             LOG.info("Duplicate mbean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
         } catch (Exception e) {
             LOG.warn("Couldn't register hibernate statistics mbean", e);
+        }
+
+        try {
+            if (sessionFactory != null) {
+                sessionFactory.getStatistics().setStatisticsEnabled(flag);
+                LOG.info("Hibernate statistics enable flag set to [" + flag + "]");
+            }
+        } catch (Exception e) {
+            LOG.warn("Couldn't set the statistics enable flag to [" + flag + "]", e);
         }
     }
 

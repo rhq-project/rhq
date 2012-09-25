@@ -625,6 +625,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
 
                 Map<Detail, String> details = result.getDetails();
+                form.setValue(serverName.getName(), details.get(ServerDetails.Detail.SERVER_IDENTITY));
                 form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));
                 form.setValue(serverTime.getName(), details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
                 form.setValue(serverInstallDir.getName(), details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));

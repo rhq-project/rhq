@@ -9,7 +9,7 @@ Alert Name       : @@@ALERT_NAME@@@
 Alert Severity   : @@@PRIORITY@@@
 Alert Date/Time  : @@@TIMESTAMP@@@
 Conditions: @@@CONDITIONS@@@
-  
+
 ------------------------------------------
 
 Resource Ancestry:

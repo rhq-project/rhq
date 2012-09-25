@@ -26,7 +26,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.enterprise.server.RHQConstants;
 
 @Stateless
-public class SubjectRoleTestBean implements SubjectRoleTestBeanLocal {
+public class SubjectRoleTestBean implements SubjectRoleTestLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 

@@ -21,7 +21,7 @@ package org.rhq.enterprise.server.test;
 import javax.ejb.Local;
 
 @Local
-public interface ResourceGroupTestBeanLocal {
+public interface ResourceGroupTestLocal {
     public void setupUberMixedGroup();
 
     public void setupCompatibleGroups();

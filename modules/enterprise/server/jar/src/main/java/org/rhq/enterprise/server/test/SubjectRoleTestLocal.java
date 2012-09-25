@@ -21,7 +21,7 @@ package org.rhq.enterprise.server.test;
 import javax.ejb.Local;
 
 @Local
-public interface SubjectRoleTestBeanLocal {
+public interface SubjectRoleTestLocal {
     /**
      * creates roleCount*usersInRoleCount number of objects in the system
      *

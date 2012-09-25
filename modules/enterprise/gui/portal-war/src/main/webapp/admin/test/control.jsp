@@ -14,8 +14,8 @@
 <%@ page import="org.rhq.enterprise.server.test.CoreTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.DiscoveryTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
-<%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
-<%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal" %>
+<%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestLocal" %>
+<%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.AlertTemplateTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.cloud.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
@@ -50,8 +50,8 @@
    CoreTestLocal coreTestBean;
    DiscoveryTestLocal discoveryTestBean;
    MeasurementTestLocal measurementTestBean;
-   ResourceGroupTestBeanLocal resourceGroupTestBean;
-   SubjectRoleTestBeanLocal subjectRoleTestBean;
+   ResourceGroupTestLocal resourceGroupTestBean;
+   SubjectRoleTestLocal subjectRoleTestBean;
    ServerManagerLocal serverManager;
    AlertTemplateTestLocal alertTemplateTestBean;
    MeasurementBaselineManagerLocal measurementBaselineManager;

@@ -206,9 +206,9 @@ import org.rhq.enterprise.server.test.DiscoveryTestLocal;
 import org.rhq.enterprise.server.test.MeasurementTestBean;
 import org.rhq.enterprise.server.test.MeasurementTestLocal;
 import org.rhq.enterprise.server.test.ResourceGroupTestBean;
-import org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal;
+import org.rhq.enterprise.server.test.ResourceGroupTestLocal;
 import org.rhq.enterprise.server.test.SubjectRoleTestBean;
-import org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal;
+import org.rhq.enterprise.server.test.SubjectRoleTestLocal;
 
 /**
  * Methods that allow POJO objects to obtain references to EJB/JPA objects. These convenience methods attempt to
@@ -559,7 +559,7 @@ public final class LookupUtil {
         return lookupLocal(SubjectManagerBean.class);
     }
 
-    public static SubjectRoleTestBeanLocal getSubjectRoleTestBean() {
+    public static SubjectRoleTestLocal getSubjectRoleTestBean() {
         return lookupLocal(SubjectRoleTestBean.class);
     }
 
@@ -662,7 +662,7 @@ public final class LookupUtil {
         return lookupLocal(MeasurementTestBean.class);
     }
 
-    public static ResourceGroupTestBeanLocal getResourceGroupTestBean() {
+    public static ResourceGroupTestLocal getResourceGroupTestBean() {
         return lookupLocal(ResourceGroupTestBean.class);
     }
 

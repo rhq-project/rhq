@@ -29,7 +29,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 
 @Stateless
-public class ResourceGroupTestBean implements ResourceGroupTestBeanLocal {
+public class ResourceGroupTestBean implements ResourceGroupTestLocal {
     private static int compatCounter = 0;
 
     private int getNextCompat() {

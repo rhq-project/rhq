@@ -110,14 +110,14 @@
         System.out.println("hql: " + hql);
         List<String> sqlStrings = null;
         Set<String> parameterNames = null;
-        try {
+        try {            
             qt = new ASTQueryTranslatorFactory().createQueryTranslator(
-                    "test query",
+                    "Test Query",
                     hql,
-                    null,
+                    new HashMap(),
                     (SessionFactoryImplementor) s.getSessionFactory());
 
-            qt.compile(null, false);
+            qt.compile(new HashMap(), false);
             sqlStrings = qt.collectSqlStrings();
 
             for (String nextSQL : sqlStrings) {
@@ -130,6 +130,8 @@
                 request.setAttribute("parameterNames", parameterNames);
             }
         } catch (Exception e) {
+            System.out.println("ERROR in hql: " + hql + " : " + e);            
+            e.printStackTrace();
             error = getExceptionString(e);
             request.setAttribute("error", error);
         }

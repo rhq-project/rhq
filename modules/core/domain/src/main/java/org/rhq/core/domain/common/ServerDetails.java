@@ -48,7 +48,8 @@ public class ServerDetails implements Serializable {
         SERVER_INSTALL_DIR, // where RHQ is installed, the top directory where everything else is
         SERVER_HOME_DIR, // where the RHQ server's JBossAS deployment is; this is under the install dir 
         CURRENT_MEASUREMENT_TABLE, //
-        NEXT_MEASUREMENT_TABLE_ROTATION;
+        NEXT_MEASUREMENT_TABLE_ROTATION, //
+        SERVER_IDENTITY;
     };
 
     private HashMap<Detail, String> details = new HashMap<Detail, String>(Detail.values().length);

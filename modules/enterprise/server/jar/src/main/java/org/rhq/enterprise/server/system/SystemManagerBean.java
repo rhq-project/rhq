@@ -63,6 +63,7 @@ import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -104,6 +105,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    private ServerManagerLocal serverManager;
 
     @EJB
     //@IgnoreDependency
@@ -696,6 +700,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         details.put(ServerDetails.Detail.DATABASE_PRODUCT_VERSION, dbInfo.getDatabaseProductVersion());
         details.put(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE, dbInfo.getCurrentMeasurementTable());
         details.put(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION, dbInfo.getNextMeasurementTableRotation());
+
+        details.put(ServerDetails.Detail.SERVER_IDENTITY, serverManager.getServer().getName());
 
         return serverDetails;
     }

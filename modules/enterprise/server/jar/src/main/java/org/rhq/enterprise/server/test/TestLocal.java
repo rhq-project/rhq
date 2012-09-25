@@ -23,15 +23,13 @@ import java.util.Map;
 import javax.ejb.Local;
 
 /**
- * An EJB for testing the measurement subsystem - used by control.jsp
+ * An EJB for test pages. For example, used by control.jsp
  */
 @Local
-public interface MeasurementTestLocal {
-    void sendTestMeasurementReport();
+public interface TestLocal {
+    Map<String, Long> getMeasurementTableStats();
 
-    void addProblemResource();
+    void enableHibernateStatistics();
 
-    void setAgentCurrentlyScheduledMetrics(double value);
-
-    Map<String, Long> snapshotMeasurementTables();
+    void disableHibernateStatistics();
 }

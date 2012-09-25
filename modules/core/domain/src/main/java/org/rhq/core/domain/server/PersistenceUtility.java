@@ -369,6 +369,18 @@ public class PersistenceUtility {
      *                      first one in the list returned by MBeanServerFactory.findMBeanServer(null) is used
      */
     public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server) {
+        enableHibernateStatistics(entityManager, server, true);
+    }
+
+    /**
+     * Enables the hibernate statistics mbean to provide access to information on the ejb3 persistence tier.
+     *
+     * @param entityManager an inject entity manager whose session factory will be tracked with these statistics
+     * @param server        the MBeanServer where the statistics MBean should be registered; if <code>null</code>, the
+     *                      first one in the list returned by MBeanServerFactory.findMBeanServer(null) is used
+     * @param flag          true if the stats are to be enabled; false to disable the stats
+     */
+    public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server, boolean flag) {
         try {
             SessionFactory sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
 
@@ -381,7 +393,7 @@ public class PersistenceUtility {
             StatisticsService mBean = new StatisticsService();
             mBean.setSessionFactory(sessionFactory);
             server.registerMBean(mBean, objectName);
-            sessionFactory.getStatistics().setStatisticsEnabled(true);
+            sessionFactory.getStatistics().setStatisticsEnabled(flag);
         } catch (InstanceAlreadyExistsException iaee) {
             LOG.info("Duplicate mbean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
         } catch (Exception e) {

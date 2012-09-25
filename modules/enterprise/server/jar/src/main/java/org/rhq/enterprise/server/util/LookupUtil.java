@@ -195,20 +195,8 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.tagging.TagManagerBean;
 import org.rhq.enterprise.server.tagging.TagManagerLocal;
-import org.rhq.enterprise.server.test.AccessBean;
-import org.rhq.enterprise.server.test.AccessLocal;
-import org.rhq.enterprise.server.test.AlertTemplateTestBean;
-import org.rhq.enterprise.server.test.AlertTemplateTestLocal;
-import org.rhq.enterprise.server.test.CoreTestBean;
-import org.rhq.enterprise.server.test.CoreTestLocal;
-import org.rhq.enterprise.server.test.DiscoveryTestBean;
-import org.rhq.enterprise.server.test.DiscoveryTestLocal;
-import org.rhq.enterprise.server.test.MeasurementTestBean;
-import org.rhq.enterprise.server.test.MeasurementTestLocal;
-import org.rhq.enterprise.server.test.ResourceGroupTestBean;
-import org.rhq.enterprise.server.test.ResourceGroupTestLocal;
-import org.rhq.enterprise.server.test.SubjectRoleTestBean;
-import org.rhq.enterprise.server.test.SubjectRoleTestLocal;
+import org.rhq.enterprise.server.test.TestBean;
+import org.rhq.enterprise.server.test.TestLocal;
 
 /**
  * Methods that allow POJO objects to obtain references to EJB/JPA objects. These convenience methods attempt to
@@ -329,10 +317,6 @@ public final class LookupUtil {
 
     public static AlertSubsystemManagerLocal getAlertSubsystemManager() {
         return lookupLocal(AlertSubsystemManagerBean.class);
-    }
-
-    public static AlertTemplateTestLocal getAlertTemplateTestBean() {
-        return lookupLocal(AlertTemplateTestBean.class);
     }
 
     public static AuthorizationManagerLocal getAuthorizationManager() {
@@ -559,10 +543,6 @@ public final class LookupUtil {
         return lookupLocal(SubjectManagerBean.class);
     }
 
-    public static SubjectRoleTestLocal getSubjectRoleTestBean() {
-        return lookupLocal(SubjectRoleTestBean.class);
-    }
-
     public static SystemManagerLocal getSystemManager() {
         return lookupLocal(SystemManagerBean.class);
     }
@@ -642,28 +622,11 @@ public final class LookupUtil {
         return mbs;
     }
 
-    //--------------------------------------------
-    // The TEST services
-    //--------------------------------------------
-
-    public static AccessLocal getAccessLocal() {
-        return lookupLocal(AccessBean.class);
-    }
-
-    public static CoreTestLocal getCoreTest() {
-        return lookupLocal(CoreTestBean.class);
-    }
-
-    public static DiscoveryTestLocal getDiscoveryTest() {
-        return lookupLocal(DiscoveryTestBean.class);
-    }
-
-    public static MeasurementTestLocal getMeasurementTest() {
-        return lookupLocal(MeasurementTestBean.class);
-    }
-
-    public static ResourceGroupTestLocal getResourceGroupTestBean() {
-        return lookupLocal(ResourceGroupTestBean.class);
+    /**
+     * This is a test bean used only by test code or by things like control.jsp.
+     */
+    public static TestLocal getTest() {
+        return lookupLocal(TestBean.class);
     }
 
     // Private Methods

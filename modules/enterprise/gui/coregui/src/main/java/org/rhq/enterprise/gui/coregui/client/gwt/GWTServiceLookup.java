@@ -198,10 +198,6 @@ public class GWTServiceLookup {
         return secure(AgentGWTServiceAsync.Util.getInstance());
     }
 
-    public static TestGWTServiceAsync getTestService() {
-        return secure(TestGWTServiceAsync.Util.getInstance());
-    }
-
     public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService() {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }

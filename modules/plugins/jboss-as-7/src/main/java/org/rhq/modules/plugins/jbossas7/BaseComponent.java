@@ -280,6 +280,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         // Read server state
         Operation op = new Operation("whoami", getAddress());
         Result res = getASConnection().execute(op);
+
+        //:whoami might fail host controller resources, in that case use :read-resource operation
+        //which is slower due to larger content returned but more reliable since every resource has it.
+        if (!res.isSuccess()) {
+            op = new Operation("read-resource", getAddress());
+            res = getASConnection().execute(op);
+        }
+
         if (res.isReloadRequired()) {
             PropertySimple oobMessage = new PropertySimple("__OOB","The server needs a reload for the latest changes to come effective.");
             configuration.put(oobMessage);
@@ -390,7 +398,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
         ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
                 serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        OutputStream out = uploadConnection.getOutputStream(details.getFileName());
+        OutputStream out = uploadConnection.getOutputStream(details.getKey().getName());
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
         JsonNode uploadResult = uploadConnection.finishUpload();

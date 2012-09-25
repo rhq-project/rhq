@@ -246,14 +246,6 @@ public class LiveGraphView extends LocatableVLayout {
 
                             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
                             plot.redraw();
-
-                            if (d.getTimestamp() > max) {
-                                max = System.currentTimeMillis();
-                                min = max - (1000L * 60);
-
-                                //                            plotOptions.setXAxisOptions(new AxisOptions().setMinimum(min).setMaximum(max));
-                            }
-
                         }
                     });
             }
@@ -267,9 +259,6 @@ public class LiveGraphView extends LocatableVLayout {
                     return MeasurementConverterClient.format(v, definition.getUnits(), true);
                 }
             }));
-
-        min = System.currentTimeMillis();
-        max = System.currentTimeMillis() + (1000L * 60);
 
         plotOptions.addXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {

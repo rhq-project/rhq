@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.5.0-SNAPSHOT</version>
+  <version>4.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -120,7 +120,7 @@
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
     <jline.version>0.9.94</jline.version>
-    <sigar.version>1.6.5.132</sigar.version>
+    <sigar.version>1.6.5.132-3</sigar.version>
     <sigar.zip.version>1.6.5</sigar.zip.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.5</jna.version>
@@ -219,6 +219,10 @@
     <!-- a default value for the child modules indicating that the module is not
          part of our public API and is therefore not API-checked. -->
     <rhq.internal>true</rhq.internal>
+
+    <!-- The name of the file in the module's root dir that contains the intentional
+         api changes to be ignored by Clirr api checks -->
+    <intentional-api-changes-file>intentional-api-changes-since-${signature-check-base-version}.xml</intentional-api-changes-file>
   </properties>
 
 
@@ -1414,8 +1418,12 @@
                        </comparisonArtifacts>
                        <logResults>true</logResults>
                        <xmlOutputFile>${project.build.directory}/${project.build.finalName}.signature-check.xml</xmlOutputFile>
-                       <failOnError>false</failOnError>
+                       <failOnError>true</failOnError>
+                       <failOnWarning>true</failOnWarning>
                        <skip>${rhq.internal}</skip>
+                       <!-- note that this is only available in clirr maven plugin 2.5, but internally we use a patched version for our CI builds.
+                            Once new Clirr maven plugin is released, this will work for you, too. -->
+                       <ignoredDifferencesFile>${intentional-api-changes-file}</ignoredDifferencesFile>
                     </configuration>
                  </execution>
               </executions>

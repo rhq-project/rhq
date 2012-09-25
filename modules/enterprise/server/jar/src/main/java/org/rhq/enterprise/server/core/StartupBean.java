@@ -182,6 +182,7 @@ public class StartupBean {
         startAgentClients();
         startEmbeddedAgent();
         registerShutdownListener();
+        installCassandraBundle();
         registerPluginDeploymentScannerJob();
 
         logServerStartedMessage();
@@ -752,6 +753,15 @@ public class StartupBean {
         // If that doesn't work, we can try to create a system shutdown hook in here. Thus I'm leaving this method in here in case
         // we need it later. Just add a Runtime.addShutdownHook call in here that calls our ShutdownListener.
         return;
+    }
+
+    private void installCassandraBundle() {
+        CassandraClusterManagerLocal clusterManager =  LookupUtil.getCassnandraClusterManager();
+        try {
+            clusterManager.installBundle();
+        } catch (CassandraException e) {
+            log.warn("Failed to install Cassandra bundle: " + e.getMessage());
+        }
     }
 
     /**

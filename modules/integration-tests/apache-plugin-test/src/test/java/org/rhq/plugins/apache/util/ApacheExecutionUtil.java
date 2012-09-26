@@ -103,8 +103,8 @@ public class ApacheExecutionUtil {
 
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
-        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null,
-            discoveryComponent, systemInfo, null, null, null, null, null, null, null, null);
+        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null, discoveryComponent, systemInfo,
+            null, null, null, null, null, null, null, null, null);
 
         serverComponent.start(resourceContext);
     }
@@ -138,10 +138,12 @@ public class ApacheExecutionUtil {
 
             ++i;
 
-            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
+            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. "
+                + i);
         }
 
-        throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
+        throw new IllegalStateException(
+            "Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
     }
 
     public ResourceContext<PlatformComponent> getResourceContext() {

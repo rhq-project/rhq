@@ -1,7 +1,7 @@
 <differences>
     <difference>
         <className>org/rhq/modules/plugins/jbossas7/BaseServerComponent</className>
-        <differenceType>7011</differenceType>
+        <differenceType>7013</differenceType>
         <method>java.lang.String getBaseDirAttributeName()</method>
         <justification>Functionality enhancements</justification>
    </difference>

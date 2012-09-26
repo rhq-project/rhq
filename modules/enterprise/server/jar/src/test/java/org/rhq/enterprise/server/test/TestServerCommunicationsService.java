@@ -219,10 +219,11 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public void setConfigurationFile(String location) {
     }
 
-    public void setConfigurationOverrides(Properties overrides) {
+    public String getConfigurationOverridesFile() {
+        return null;
     }
 
-    public void setConfigurationOverrides2(Properties overrides) {
+    public void setConfigurationOverridesFile(String f) {
     }
 
     public void setPreferencesNodeName(String node) {

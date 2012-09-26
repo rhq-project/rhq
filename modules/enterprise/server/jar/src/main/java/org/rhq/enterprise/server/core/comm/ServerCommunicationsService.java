@@ -85,6 +85,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      */
     private static Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
 
+    private static final String DEFAULT_OVERRIDES_PROPERTIES_FILE = "server-comm-configuration-overrides.properties";
+
     /**
      * The remoting subsystem name that identifies remote API client messages.
      */
@@ -111,6 +113,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * The location of the configuration file - can be a URL, file path or path within classloader.
      */
     private String m_configFile = ServerConfigurationConstants.DEFAULT_SERVER_CONFIGURATION_FILE;
+
+    /**
+     * The location of the configuration overrides properties file - can be a URL, file path or path within classloader.
+     */
+    private String m_overridesFile = DEFAULT_OVERRIDES_PROPERTIES_FILE;
 
     /**
      * The preferences node name that identifies the configuration set used to configure the services.
@@ -269,6 +276,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_container = null;
         m_configuration = null;
         m_configFile = ServerConfigurationConstants.DEFAULT_SERVER_CONFIGURATION_FILE;
+        m_overridesFile = DEFAULT_OVERRIDES_PROPERTIES_FILE;
         m_preferencesNodeName = ServerConfigurationConstants.DEFAULT_PREFERENCE_NODE;
         m_configurationOverrides = new Properties();
         m_knownAgents.removeAllAgents();
@@ -278,16 +286,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getConfigurationFile()
-     */
+    @Override
     public String getConfigurationFile() {
         return m_configFile;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#setConfigurationFile(String)
-     */
+    @Override
     public void setConfigurationFile(String location) {
         if (location == null) {
             return;
@@ -295,67 +299,72 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_configFile = StringPropertyReplacer.replaceProperties(location);
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getPreferencesNodeName()
-     */
+    @Override
     public String getPreferencesNodeName() {
         return m_preferencesNodeName;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#setPreferencesNodeName(String)
-     */
+    @Override
     public void setPreferencesNodeName(String node) {
         m_preferencesNodeName = node;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getConfigurationOverrides()
-     */
-    public Properties getConfigurationOverrides() {
+    @Override
+    public String getConfigurationOverridesFile() {
+        return m_overridesFile;
+    }
+
+    @Override
+    public void setConfigurationOverridesFile(String location) {
+        if (location == null) {
+            m_overridesFile = null;
+        } else {
+            // substitute ${} replacement variables found in the location string
+            m_overridesFile = StringPropertyReplacer.replaceProperties(location);
+        }
+    }
+
+    private void loadConfigurationOverridesFromFile() throws Exception {
+        if (m_overridesFile == null) {
+            return; // nothing to do
+        }
+
+        InputStream is = getFileInputStream(m_overridesFile);
+        try {
+            Properties props = new Properties();
+            props.load(is);
+            setConfigurationOverrides(props);
+        } finally {
+            is.close(); // if we got here, "is" will never be null
+        }
+
+        return;
+    }
+
+    private Properties getConfigurationOverrides() {
         return m_configurationOverrides;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#setConfigurationOverrides(Properties)
-     */
-    public void setConfigurationOverrides(Properties overrides) {
+    private void setConfigurationOverrides(Properties overrides) {
         if (overrides == null) {
             return;
         }
         m_configurationOverrides.putAll(overrides);
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#setConfigurationOverrides2(Properties)
-     */
-    // for why we need to split our overrides into two attributes - see https://issues.jboss.org/browse/AS7-5342
-    public void setConfigurationOverrides2(Properties overrides) {
-        if (overrides == null) {
-            return;
-        }
-        m_configurationOverrides.putAll(overrides);
-    }
-
-    /*
-     * @see ServerCommunicationsServiceMBean#reloadConfiguration()
-     */
+    @Override
     public ServerConfiguration reloadConfiguration() throws Exception {
         getPreferencesNode().clear();
 
         return prepareConfigurationPreferences();
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getConfiguration()
-     */
+    @Override
     public ServerConfiguration getConfiguration() {
         return m_configuration;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#safeGetServiceContainer()
-     */
+    @Override
     public synchronized ServiceContainer safeGetServiceContainer() {
         if (null == m_container) {
             m_container = new ServiceContainer();
@@ -364,16 +373,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return m_container;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getServiceContainer()
-     */
+    @Override
     public ServiceContainer getServiceContainer() {
         return m_container;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getStartedServerEndpoint()
-     */
+    @Override
     public String getStartedServerEndpoint() {
         if (m_container == null) {
             return null;
@@ -382,9 +387,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return m_container.getServerEndpoint();
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getKnownAgentClient(org.jboss.on.domain.resource.Agent)
-     */
+    @Override
     public AgentClient getKnownAgentClient(Agent agent) {
         AgentClient agent_client;
 
@@ -425,9 +428,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return agent_client;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#destroyKnownAgentClient(Agent)
-     */
+    @Override
     public void destroyKnownAgentClient(Agent agent) {
         AgentClient agent_client;
 
@@ -464,16 +465,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#getAllKnownAgents()
-     */
+    @Override
     public List<InvokerLocator> getAllKnownAgents() {
         return m_knownAgents.getAllAgents();
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#addStartedAgent(Agent)
-     */
+    @Override
     public void addStartedAgent(Agent agent) {
         String endpoint = agent.getRemoteEndpoint();
 
@@ -488,9 +485,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#removeDownedAgent(String)
-     */
+    @Override
     public void removeDownedAgent(String endpoint) {
         m_knownAgents.removeAgent(endpoint);
 
@@ -517,9 +512,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return;
     }
 
-    /*
-     * @see ServerCommunicationsServiceMBean#pingEndpoint(java.lang.String)
-     */
+    @Override
     public boolean pingEndpoint(String endpoint, long timeoutMillis) {
         ClientCommandSender sender = null;
         boolean pinged = false;
@@ -555,10 +548,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return pinged;
     }
 
+    @Override
     public Integer getGlobalConcurrencyLimit() {
         return getServiceContainer().getConfiguration().getGlobalConcurrencyLimit();
     }
 
+    @Override
     public void setGlobalConcurrencyLimit(Integer maxConcurrency) {
         if (maxConcurrency == null) {
             maxConcurrency = Integer.valueOf(-1);
@@ -571,70 +566,85 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             ServiceContainerConfigurationConstants.GLOBAL_CONCURRENCY_LIMIT, maxConcurrency);
     }
 
+    @Override
     public Integer getInventoryReportConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             DiscoveryServerService.CONCURRENCY_LIMIT_INVENTORY_REPORT);
     }
 
+    @Override
     public void setInventoryReportConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(DiscoveryServerService.CONCURRENCY_LIMIT_INVENTORY_REPORT, maxConcurrency, true);
     }
 
+    @Override
     public Integer getAvailabilityReportConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             DiscoveryServerService.CONCURRENCY_LIMIT_AVAILABILITY_REPORT);
     }
 
+    @Override
     public void setAvailabilityReportConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(DiscoveryServerService.CONCURRENCY_LIMIT_AVAILABILITY_REPORT, maxConcurrency, true);
     }
 
+    @Override
     public Integer getInventorySyncConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             DiscoveryServerService.CONCURRENCY_LIMIT_INVENTORY_SYNC);
     }
 
+    @Override
     public void setInventorySyncConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(DiscoveryServerService.CONCURRENCY_LIMIT_INVENTORY_SYNC, maxConcurrency, true);
     }
 
+    @Override
     public Integer getContentReportConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             ContentServerService.CONCURRENCY_LIMIT_CONTENT_REPORT);
     }
 
+    @Override
     public void setContentReportConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(ContentServerService.CONCURRENCY_LIMIT_CONTENT_REPORT, maxConcurrency, true);
     }
 
+    @Override
     public Integer getContentDownloadConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             ContentServerService.CONCURRENCY_LIMIT_CONTENT_DOWNLOAD);
     }
 
+    @Override
     public void setContentDownloadConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(ContentServerService.CONCURRENCY_LIMIT_CONTENT_DOWNLOAD, maxConcurrency, true);
     }
 
+    @Override
     public Integer getMeasurementReportConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             MeasurementServerService.CONCURRENCY_LIMIT_MEASUREMENT_REPORT);
     }
 
+    @Override
     public void setMeasurementReportConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(MeasurementServerService.CONCURRENCY_LIMIT_MEASUREMENT_REPORT, maxConcurrency, true);
     }
 
+    @Override
     public Integer getMeasurementScheduleRequestConcurrencyLimit() {
         return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
             MeasurementServerService.CONCURRENCY_LIMIT_MEASUREMENT_SCHEDULE_REQUEST);
     }
 
+    @Override
     public void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(MeasurementServerService.CONCURRENCY_LIMIT_MEASUREMENT_SCHEDULE_REQUEST, maxConcurrency,
             true);
     }
 
+    @Override
     public Boolean getMaintenanceModeAtStartup() {
         InputStream inputStream = null;
         Boolean flag;
@@ -659,10 +669,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return flag;
     }
 
+    @Override
     public Boolean isMaintenanceModeAtStartup() {
         return getMaintenanceModeAtStartup();
     }
 
+    @Override
     public void setMaintenanceModeAtStartup(Boolean flag) {
         if (flag == null) {
             flag = Boolean.FALSE;
@@ -672,58 +684,42 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return;
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#clear()
-     */
+    @Override
     public void clear() {
         getServiceContainerMetricsMBean().clear();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getNumberDroppedCommandsReceived()
-     */
+    @Override
     public long getNumberDroppedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberDroppedCommandsReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getNumberNotProcessedCommandsReceived()
-     */
+    @Override
     public long getNumberNotProcessedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberNotProcessedCommandsReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getNumberFailedCommandsReceived()
-     */
+    @Override
     public long getNumberFailedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberFailedCommandsReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getNumberSuccessfulCommandsReceived()
-     */
+    @Override
     public long getNumberSuccessfulCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberSuccessfulCommandsReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getNumberTotalCommandsReceived()
-     */
+    @Override
     public long getNumberTotalCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberTotalCommandsReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getAverageExecutionTimeReceived()
-     */
+    @Override
     public long getAverageExecutionTimeReceived() {
         return getServiceContainerMetricsMBean().getAverageExecutionTimeReceived();
     }
 
-    /*
-     * @see ServiceContainerMetricsMBean#getCallTimeDataReceived()
-     */
+    @Override
     public Map<String, Calltime> getCallTimeDataReceived() {
         return getServiceContainerMetricsMBean().getCallTimeDataReceived();
     }
@@ -802,6 +798,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         }
 
         // now that the configuration preferences are loaded, we need to override them with any bootstrap override properties
+        loadConfigurationOverridesFromFile();
         Properties overrides = getConfigurationOverrides();
         if (overrides != null) {
             for (Map.Entry<Object, Object> entry : overrides.entrySet()) {
@@ -873,41 +870,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     private ServerConfiguration loadConfigurationFile() throws Exception {
         String file_name = getConfigurationFile();
         String preferences_node_name = getPreferencesNodeName();
-        InputStream config_file_input_stream = null;
 
         LOG.debug(ServerI18NResourceKeys.PREFERENCES_NODE_NAME, preferences_node_name);
         LOG.debug(ServerI18NResourceKeys.LOADING_CONFIG_FILE, file_name);
 
-        // first see if the file was specified as a path on the local file system
-        try {
-            File config_file = new File(file_name);
-
-            if (config_file.exists()) {
-                config_file_input_stream = new FileInputStream(config_file);
-            }
-        } catch (Exception e) {
-            // isn't really an error - this just isn't a file on the local file system
-        }
-
-        // see if the file was specified as a URL
-        if (config_file_input_stream == null) {
-            try {
-                URL config_file = new URL(file_name);
-
-                config_file_input_stream = config_file.openStream();
-            } catch (Exception e) {
-                // isn't really an error - this just isn't a URL
-            }
-        }
-
-        // if neither a file path or URL, assume the config file can be found in the classloader
-        if (config_file_input_stream == null) {
-            config_file_input_stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file_name);
-        }
-
-        if (config_file_input_stream == null) {
-            throw new IOException(LOG.getMsgString(ServerI18NResourceKeys.CANNOT_FIND_CONFIG_FILE, file_name));
-        }
+        InputStream config_file_input_stream = getFileInputStream(file_name);
 
         // We need to clear out any previous configuration in case the current config file doesn't specify a preference
         // that already exists in the preferences node.  In this case, the configuration file wants to fall back on the
@@ -951,6 +918,48 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             // we know this is not null; if it was, we would have thrown the IOException earlier.
             config_file_input_stream.close();
         }
+    }
+
+    /**
+     * Loads a file either from file system, from URL or from classloader. If file
+     * can't be found, exception is thrown.
+     * @param file_name the file whose input stream is to be returned
+     * @return input stream of the file - will never be null
+     * @throws IOException if the file input stream cannot be obtained
+     */
+    private InputStream getFileInputStream(String file_name) throws IOException {
+        // first see if the file was specified as a path on the local file system
+        InputStream config_file_input_stream = null;
+        try {
+            File config_file = new File(file_name);
+
+            if (config_file.exists()) {
+                config_file_input_stream = new FileInputStream(config_file);
+            }
+        } catch (Exception e) {
+            // isn't really an error - this just isn't a file on the local file system
+        }
+
+        // see if the file was specified as a URL
+        if (config_file_input_stream == null) {
+            try {
+                URL config_file = new URL(file_name);
+
+                config_file_input_stream = config_file.openStream();
+            } catch (Exception e) {
+                // isn't really an error - this just isn't a URL
+            }
+        }
+
+        // if neither a file path or URL, assume the config file can be found in the classloader
+        if (config_file_input_stream == null) {
+            config_file_input_stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file_name);
+        }
+
+        if (config_file_input_stream == null) {
+            throw new IOException(LOG.getMsgString(ServerI18NResourceKeys.CANNOT_FIND_CONFIG_FILE, file_name));
+        }
+        return config_file_input_stream;
     }
 
     /**
@@ -1005,11 +1014,5 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         getServiceContainer().setConcurrencyManager(new ConcurrencyManager(limits));
 
         LOG.info(ServerI18NResourceKeys.NEW_CONCURRENCY_LIMIT, limitName, maxConcurrency);
-    }
-
-    // for why we need this in RHQ - see https://issues.jboss.org/browse/AS7-5336
-    static {
-        java.beans.PropertyEditorManager.registerEditor(Properties.class,
-            org.jboss.util.propertyeditor.PropertiesEditor.class);
     }
 }

@@ -22,8 +22,8 @@
     <mbean code="org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner"
            name="rhq:service=PluginDeploymentScanner">
         <attribute name="ScanPeriod">${rhq.server.plugin-scan-period-ms:300000}</attribute>
-        <attribute name="AgentPluginDir">${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
-        <attribute name="ServerPluginDir">${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-serverplugins</attribute>
+        <attribute name="AgentPluginDir">${jboss.home.dir}/standalone/deployments/rhq.ear/rhq-downloads/rhq-plugins</attribute>
+        <attribute name="ServerPluginDir">${jboss.home.dir}/standalone/deployments/rhq.ear/rhq-serverplugins</attribute>
         <attribute name="UserPluginDir">${jboss.home.dir}/../plugins</attribute>
     </mbean>
 
@@ -67,7 +67,7 @@ org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandler
         <!-- see https://issues.jboss.org/browse/AS7-5342 for why we have two attributes instead of just one-->
         <attribute name="ConfigurationOverrides">
 # location of the plugin jars and other files agents can download directly from sever
-rhq.server.agent-files-directory=${jboss.home.dir}/standalone/deployments/${rhq.earName}/rhq-downloads
+rhq.server.agent-files-directory=${jboss.home.dir}/standalone/deployments/rhq.ear/rhq-downloads
 # location where data files can be stored
 rhq.communications.data-directory=${jboss.server.data.dir}
 # global limit on number of concurrent incoming messages allowed

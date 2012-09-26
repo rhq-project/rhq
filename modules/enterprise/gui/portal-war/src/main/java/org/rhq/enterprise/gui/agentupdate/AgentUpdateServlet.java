@@ -188,7 +188,7 @@ public class AgentUpdateServlet extends HttpServlet {
         // if the server cloud was configured to disallow updates, return 0
         SystemSettings systemConfig = LookupUtil.getSystemManager().getSystemSettings(
             LookupUtil.getSubjectManager().getOverlord());
-        if (!Boolean.parseBoolean(systemConfig.get(SystemSetting.AGENT_AUTO_UPDATE_ENABLED.getInternalName()))) {
+        if (!Boolean.parseBoolean(systemConfig.get(SystemSetting.AGENT_AUTO_UPDATE_ENABLED))) {
             return 0;
         }
 

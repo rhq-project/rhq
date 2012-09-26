@@ -39,8 +39,7 @@ import java.util.prefs.Preferences;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.util.StringPropertyReplacer;
-
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;

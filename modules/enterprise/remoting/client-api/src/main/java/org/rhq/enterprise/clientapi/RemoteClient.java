@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -108,7 +107,7 @@ public class RemoteClient implements RhqFacade {
     public <T> T remoteInvoke(RhqManager manager, Method method, Class<T> expectedReturnType, Object... parameters)
         throws Throwable {
 
-        String methodSig = manager.beanName() + ":" + method.getName();
+        String methodSig = manager.remote().getName() + ":" + method.getName();
 
         Class<?>[] paramTypes = method.getParameterTypes();
         String[] paramSig = new String[paramTypes.length];

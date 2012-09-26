@@ -30,8 +30,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -39,6 +42,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -46,6 +50,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import org.rhq.helpers.ui.ManagedHive.Validation;
 
 /** Is a basic ui that generates a very simple managed
  *  graphical resource that can be managed/monitored
@@ -58,6 +64,7 @@ import javax.swing.event.DocumentListener;
  *  -              ii)whether hive is angry
  *  - can execute operations and 
  *  -              i)shake the hive to upset the bees
+ *  -              ii)temporarily adds a few more bees
  *   
  *  PIQL for process identification used in discovery
  *  
@@ -65,6 +72,7 @@ import javax.swing.event.DocumentListener;
  */
 public class ManagedHive extends JFrame {
 
+    static Logger LOG = Logger.getLogger(ManagedHive.class.getName());
     /******************* Startup/initialization & Components *************/
     /** Simple command line launch mechanism
      * @param args
@@ -111,12 +119,13 @@ public class ManagedHive extends JFrame {
     protected static JButton updateConfiguration;
 
     public enum Validation {
-        POPULATION_BASE(50, 2500), SWARM_TIME(30000, (60000 * 30)), BEES_TO_ADD(5, 150);
+        POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
+            150, "Number of bees");
         private int lowest;
         private int highest;
-        private static JTextField field_value = null;
+        private String name;
+        private JTextField field_value = null;
 
-        //
         public int getLowest() {
             return lowest;
         }
@@ -133,9 +142,17 @@ public class ManagedHive extends JFrame {
             field_value = field;
         }
 
-        private Validation(int lowest, int highest) {
+        public String getValidationDetails() {
+            String validationErrorMessage = name + " values must be an integer >= '" + getLowest() + "' and <= '"
+                + getHighest()
+                + "'.";
+            return validationErrorMessage;
+        }
+
+        private Validation(int lowest, int highest, String name) {
             this.lowest = lowest;
             this.highest = highest;
+            this.name = name;
         }
     };
 
@@ -248,7 +265,6 @@ public class ManagedHive extends JFrame {
             JTextField instructions = new JTextField(
                 "*Use these operations to modify the number of bees protecting the hive.*");
             instructions.setEditable(false);
-            //            operationsRow.add(Box.createHorizontalStrut(100));
             operationsRow.add(instructions);
             operationsRow.add(Box.createHorizontalStrut(space));
             operationsRow.add(shake);
@@ -319,7 +335,9 @@ public class ManagedHive extends JFrame {
             updateConfiguration.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+
                     //validate defaults and apply updates if possible.
+                    final ArrayList<String> validationMessages = new ArrayList<String>();
                     for (Validation rule : validationList) {
                         JTextField field = rule.getField();
                         if (rule.getField() == null)
@@ -343,26 +361,13 @@ public class ManagedHive extends JFrame {
                                 default:
                                     break;
                                 }
+                            } else {
+                                //generate validation message.
+                                validationMessages.add(rule.getValidationDetails());
                             }
                         } catch (NumberFormatException nfe) {
-                            String message = "";
-                            switch (rule) {
-                            case POPULATION_BASE:
-                                message += "Population Base values must be >= '" + rule.getLowest() + "' and <= '"
-                                    + rule.getHighest() + "'.";
-                                break;
-                            case SWARM_TIME:
-                                message += "Swarm Time values must be >= '" + rule.getLowest() + "' and <= '"
-                                    + rule.getHighest() + "'.";
-                                break;
-                            case BEES_TO_ADD:
-                                message += "Number of bees to add must be >= '" + rule.getLowest() + "' and <= '"
-                                    + rule.getHighest() + "'.";
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unsupported validation type: " + rule + " "
-                                    + nfe.getMessage());
-                            }
+                            //generate validation message.
+                            validationMessages.add(rule.getValidationDetails());
                         }
                     }
                     //kick off population adjustments if any
@@ -371,6 +376,23 @@ public class ManagedHive extends JFrame {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
+
+                            //display validation messages and reset fields
+                            if (!validationMessages.isEmpty()) {
+                                String message = "The following validation errors were detected:";
+                                for (String m : validationMessages) {
+                                    message += m;
+                                }
+                                message += "Resetting fields to previous selections.";
+                                //custom title, warning icon
+                                JOptionPane.showMessageDialog(CONTROLLER, message, "Input validation:",
+                                    JOptionPane.WARNING_MESSAGE);
+                                //reset
+                                populationBaseField.setText(basePopulation + "");
+                                swarmTimeUpdateField.setText(swarmTime + "");
+                                beeCountUpdateField.setText(beeAdditionAmount + "");
+                            }
+                            //disable edit button
                             updateConfiguration.setEnabled(false);
                         }
                     });
@@ -388,7 +410,7 @@ public class ManagedHive extends JFrame {
         // final component layout
         getContentPane().add(top, BorderLayout.NORTH);
         getContentPane().add(center, BorderLayout.CENTER);
-        this.setSize(500, 500);
+        this.setSize(650, 500);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
@@ -446,10 +468,10 @@ class Hive extends JComponent {
                 population.remove(0);
             }
             //if population falls below basePopulation level then add another bee
-            if (population.size() < ManagedHive.CONTROLLER.basePopulation) {
-                int delta = ManagedHive.CONTROLLER.basePopulation - population.size();
+            if (population.size() < ManagedHive.basePopulation) {
+                int delta = ManagedHive.basePopulation - population.size();
                 for (int i = 0; i <= delta; i++) {//replenish
-                    ManagedHive.CONTROLLER.addBee();
+                    ManagedHive.addBee();
                 }
             }
         }
@@ -635,10 +657,12 @@ class SwarmTimer implements Runnable {
 
     public void setExpireTime(int swarmTime) {
         //only accept swarm times less than 10 mins and greater then 1 min(s).
-        //todo: spinder 9/24/12 relace this check with Validation.* checks
-        if ((swarmTime >= 1000 * 60) || (swarmTime <= 1000 * 60 * 10)) {
+        if ((swarmTime >= Validation.SWARM_TIME.getLowest()) || (swarmTime <= Validation.SWARM_TIME.getHighest())) {
             timeToLive = swarmTime;
-        }//otherwise ignore.
+        } else {
+            ManagedHive.LOG.log(Level.WARNING, "New value '" + swarmTime + "' is not acceptable. "
+                + Validation.SWARM_TIME.getValidationDetails());
+        }
     }
 
     public static int getExpireTime() {
@@ -646,6 +670,8 @@ class SwarmTimer implements Runnable {
     }
 }
 
+/* Listener for JTextFields that re-enable the JButton on chance.
+ */
 class ConfigurationFieldsListener implements DocumentListener {
     @Override
     public void removeUpdate(DocumentEvent e) {

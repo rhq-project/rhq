@@ -27,10 +27,10 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 public class CubismGraphCanvas extends AbstractGraphCanvas
 {
     String chartId;
-    public int serverDelay = 5000;
-    public int clientDelay = 5000;
-    public int step = 3000;
-    protected int width = 900;
+    public int serverDelay = 1000;
+    public int clientDelay = 1000;
+    public int step = 400;
+    protected int width = 600;
     protected int height = 700;
 
     public CubismGraphCanvas(String chartId)
@@ -109,66 +109,69 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
 //        //}
 //     }-*/;
 
-    public native void loadJson() /*-{
-        var context = $wnd.cubism.context();
-        var metrics = [];
-        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getMetricsAsJson()());
-        for (var i = 0; i < jsonMetrics.length; i++)
-        {
-            var jsonMetric = jsonMetrics[i];
-            console.log('Label: '+jsonMetric.label + ':'+jsonMetric.metricIndex);
-            var metric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
-            //var metric = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::createMetric(Ljava/lang/String;I)(jsonMetric.label, jsonMetric.metricIndex);
-            var horizonContext;
-            var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::chartId;
-            var selection = $wnd.d3.select(chartDiv);
-
-            // this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::determineAxisLabels(Ljava/lang/String;)(jsonMetric.metricUnit);
-            if (jsonMetric.metricUnit != 'PERCENTAGE')
-            {
-                horizonContext = context.horizon();
-            }
-            else
-            {
-                horizonContext = context.horizon()
-                        .format($wnd.d3.format(".2%"));
-            }
-            selection.call(function (div)
-            {
-                div.datum(metric);
-                div.append("div")
-                        .attr("class", "horizon")
-                        .call(horizonContext);
-            });
-        }
-
-        function createMetric(name, metricIndex)
-        {
-            var metric = context.metric(function (start, stop, step, callback)
-            {
-                console.log('Creating metrics');
-                // query for metrics matching time
-                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
-                console.log('Creating metrics 1' + jsonPoints);
-
-                try
-                {
-                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
-                    console.log('Creating metrics 2');
-                }
-                catch (e)
-                {
-                    console.log(e + jsonPoints);
-                }
-                callback(null, json);
-            }, name);
-            // push onto the stack of previously graphed metrics
-            metrics.push(metric);
-            return metric;
-        }
-
-
-    }-*/;
+//    public native void loadJson() /*-{
+//        var context = $wnd.cubism.context();
+//        var metrics = [];
+//        var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getMetricsAsJson()());
+//        for (var i = 0; i < jsonMetrics.length; i++)
+//        {
+//            var jsonMetric = jsonMetrics[i];
+//            console.log('Label: '+jsonMetric.label + ':'+jsonMetric.metricIndex);
+//            var metric = createMetric(jsonMetric.label, jsonMetric.metricIndex);
+//            //var metric = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::createMetric(Ljava/lang/String;I)(jsonMetric.label, jsonMetric.metricIndex);
+//            var horizonContext;
+//            var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::chartId;
+//            var selection = $wnd.d3.select(chartDiv);
+//
+//            // this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphCanvas::determineAxisLabels(Ljava/lang/String;)(jsonMetric.metricUnit);
+//            if (jsonMetric.metricUnit != 'PERCENTAGE')
+//            {
+//                horizonContext = context.horizon();
+//            }
+//            else
+//            {
+//                horizonContext = context.horizon()
+//                        .format($wnd.d3.format(".2%"));
+//            }
+//            horizonContext.height(90);
+//            horizonContext.mode("mirror");
+//
+//            selection.call(function (div)
+//            {
+//                div.datum(metric);
+//                div.append("div")
+//                        .attr("class", "horizon")
+//                        .call(horizonContext);
+//            });
+//        }
+//
+//        function createMetric(name, metricIndex)
+//        {
+//            var metric = context.metric(function (start, stop, step, callback)
+//            {
+//                console.log('Creating metrics');
+//                // query for metrics matching time
+//                var jsonPoints = this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getPointsAsJson(IDD)(metricIndex, start.getTime(), stop.getTime());
+//                console.log('Creating metrics 1' + jsonPoints);
+//
+//                try
+//                {
+//                    var json = jsonPoints ? eval("json=" + jsonPoints) : null;
+//                    console.log('Creating metrics 2');
+//                }
+//                catch (e)
+//                {
+//                    console.log(e + jsonPoints);
+//                }
+//                callback(null, json);
+//            }, name);
+//            // push onto the stack of previously graphed metrics
+//            metrics.push(metric);
+//            return metric;
+//        }
+//
+//
+//    }-*/;
 
     @Override
     public native void drawCharts() /*-{
@@ -211,7 +214,7 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
                 {
                     div.append("div")
                             .attr("class", "axis")
-                            .call(context.axis().orient("top"));
+                            .call(context.axis().orient("bottom"));
                     div.append("div")
                             .attr("class", "rule")
                             .call(context.rule());
@@ -231,6 +234,8 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
                 horizonContext = context.horizon()
                         .format($wnd.d3.format(".2%"));
             }
+            horizonContext.height(90);
+
             selection.call(function (div)
             {
                 div.datum(graphMetric);
@@ -242,7 +247,7 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
         // On mousemove, reposition the chart values to match the rule.
         context.on("focus", function (i)
         {
-            $wnd.d3.selectAll(".value").style("right", i == null ? null : context.size() - i + "px");
+            $wnd.d3.selectAll(".value").style("left", i == null ? null : context.size() - i + "px");
         });
     }-*/;
 }

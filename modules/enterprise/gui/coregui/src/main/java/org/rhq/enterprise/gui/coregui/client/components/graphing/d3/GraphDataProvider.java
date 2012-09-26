@@ -65,12 +65,13 @@ public class GraphDataProvider implements Locatable, MetricProvider
     {
         this.graphCanvas = graphCanvas;
         this.step = step;
-        fetchAndGraphMetrics();
+        retrieveDisplaySummariesForResource();
         end = System.currentTimeMillis();
         begin = end - INITIAL_8_HOURS;
 
         graphTimer = new Timer()
         {
+            @Override
             public void run()
             {
                 end = System.currentTimeMillis();
@@ -89,7 +90,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
         graphTimer.cancel();
     }
 
-    private void fetchAndGraphMetrics()
+    private void retrieveDisplaySummariesForResource()
     {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId, locatorId, new AsyncCallback<ArrayList<MetricDisplaySummary>>()
         {
@@ -123,7 +124,6 @@ public class GraphDataProvider implements Locatable, MetricProvider
         for (int i = 0; i < metrics.size(); i++)
         {
             metric = metrics.get(i);
-            //@todo:optimize
             s += " {label:'" + metric.getLabel() + "',metricIndex:" + i + ",metricName:'" + metric.getMetricName() + "',metricUnit:'" + metric.getUnits() + "'},";
         }
         s += "]";

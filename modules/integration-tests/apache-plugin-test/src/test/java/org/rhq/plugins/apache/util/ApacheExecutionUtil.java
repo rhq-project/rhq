@@ -28,9 +28,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -104,7 +108,31 @@ public class ApacheExecutionUtil {
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
         resourceContext = new ResourceContext<PlatformComponent>(resource, null, null, discoveryComponent, systemInfo,
-            null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, new AvailabilityContext() {
+
+                @Override
+                public void requestAvailabilityCheck() {
+                }
+
+                @Override
+                public AvailabilityType getLastReportedAvailability() {
+                    return AvailabilityType.UP;
+                }
+
+                @Override
+                public void enable() {
+                }
+
+                @Override
+                public void disable() {
+                }
+
+                @Override
+                public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(
+                    AvailabilityFacet availChecker, long interval) {
+                    return null;
+                }
+            }, null, null);
 
         serverComponent.start(resourceContext);
     }

@@ -42,7 +42,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
     private static final int VALUES_TO_LOAD = 60;
     private static final long INITIAL_8_HOURS = 1000L * 60 * 60 * 8;
     private static final int FIVE_SECONDS = 1000 * 60 * 5;
-    private List<MetricDisplaySummary> metricsList;
+    //private List<MetricDisplaySummary> metricsList;
     private String jsonMetrics;
     private int[] definitions;
     private int resourceId;
@@ -103,7 +103,7 @@ public class GraphDataProvider implements Locatable, MetricProvider
             @Override
             public void onSuccess(ArrayList<MetricDisplaySummary> metricSummaryList)
             {
-                metricsList = metricSummaryList;
+                //metricsList = metricSummaryList;
                 definitions = new int[metricSummaryList.size()];
                 for (int i = 0; i < metricSummaryList.size(); i++)
                 {
@@ -213,14 +213,14 @@ public class GraphDataProvider implements Locatable, MetricProvider
         return this.locatorId + "_" + extension;
     }
 
-    /**
-     *
-     * @return
-     */
-    public List<MetricDisplaySummary> getMetricsList()
-    {
-        return metricsList;
-    }
+//    /**
+//     *
+//     * @return
+//     */
+//    public List<MetricDisplaySummary> getMetricsList()
+//    {
+//        return metricsList;
+//    }
 
     /**
      * Get the list of metrics as a Json structure.

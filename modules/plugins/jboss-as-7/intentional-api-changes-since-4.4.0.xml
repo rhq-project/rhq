@@ -1,49 +1,49 @@
 <differences>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.BaseServerComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/BaseServerComponent</className>
         <differenceType>7011</differenceType>
         <method>java.lang.String getBaseDirAttributeName()</method>
         <justification>Functionality enhancements</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.BaseServerComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/BaseServerComponent</className>
         <differenceType>7004</differenceType>
         <method>boolean waitUntilDown(org.rhq.core.pluginapi.operation.OperationResult)</method>
         <justification>Functionality enhancements</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.helper.HostConfiguration</className>
+        <className>org/rhq/modules/plugins/jbossas7/helper/HostConfiguration</className>
         <differenceType>7002</differenceType>
         <method>org.rhq.modules.plugins.jbossas7.helper.HostPort getHostPort(org.rhq.modules.plugins.jbossas7.AS7CommandLine)</method>
         <justification>Method no longer needed</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.IspnCContainerComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/IspnCContainerComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.IspnCacheComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/IspnCacheComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.IspnComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/IspnComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.ThreadPoolComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/ThreadPoolComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.ThreadsComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/ThreadsComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>
     <difference>
-        <className>org.rhq.modules.plugins.jbossas7.WebservicesComponent</className>
+        <className>org/rhq/modules/plugins/jbossas7/WebservicesComponent</className>
         <differenceType>8001</differenceType>
         <justification>Class no longer needed, functionality already implemented in other classes.</justification>
    </difference>

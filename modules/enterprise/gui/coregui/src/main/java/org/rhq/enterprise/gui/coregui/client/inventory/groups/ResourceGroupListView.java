@@ -212,7 +212,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     GroupCategory category = null;
-                    String categoryString = getInitialCriteria().getAttribute(ResourceGroupDataSourceField.CATEGORY.propertyName());
+                    String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName());
                     if (categoryString != null) {
                         category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE : GroupCategory.MIXED;
                     }

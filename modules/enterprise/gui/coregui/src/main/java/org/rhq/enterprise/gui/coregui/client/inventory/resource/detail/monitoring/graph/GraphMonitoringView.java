@@ -23,6 +23,7 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.GraphDataProvider;
 import org.rhq.enterprise.gui.coregui.client.components.graphing.d3.MetricProvider;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -33,6 +34,7 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
 {
     private ResourceComposite resourceComposite;
     private MetricProvider metricProvider;
+    //private CustomConfigMeasurementRangeEditor measurementRangeEditor;
 
     final private static int MARGIN = 20;
     final private static int SERVER_DELAY_IN_MILLIS = 5 * 1000;
@@ -80,6 +82,8 @@ public class GraphMonitoringView extends LocatableVLayout implements Refreshable
     {
         removeMembers(getMembers());
         addMember(createGraphForm());
+        //measurementRangeEditor = new CustomConfigMeasurementRangeEditor();
+        //addMember(measurementRangeEditor);
     }
 }
 

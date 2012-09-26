@@ -39,7 +39,7 @@ public interface MetricProvider
      * @param metrics List of MetricDisplaySummary
      * @return metrics in JSON format
      */
-    String getMetricsAsJson(List<MetricDisplaySummary> metrics);
+    String getMetricsDisplaySummaryAsJson(List<MetricDisplaySummary> metrics);
 
     /**
      * @param metricIndex

@@ -110,14 +110,14 @@ public class GraphDataProvider implements Locatable, MetricProvider
                     definitions[i] = metricSummaryList.get(i).getDefinitionId();
                     pointsStorage.add(new GraphDataStorage(MAX_OLD_VALUES));
                 }
-                jsonMetrics = getMetricsAsJson(metricSummaryList);
+                jsonMetrics = getMetricsDisplaySummaryAsJson(metricSummaryList);
                 graphCanvas.drawCharts();
             }
         });
     }
 
     @Override
-    public String getMetricsAsJson(List<MetricDisplaySummary> metrics)
+    public String getMetricsDisplaySummaryAsJson(List<MetricDisplaySummary> metrics)
     {
         String s = "[";
         MetricDisplaySummary metric;

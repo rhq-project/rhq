@@ -14,6 +14,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -63,7 +64,8 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
         // Don't use putAll(), as we need to filter out passwords
         for (Map.Entry<String,String> detail : settingsMap.entrySet()) {
             String key = detail.getKey();
-            if (key.equals("CAM_LDAP_BIND_PW") || key.equals("CAM_HELP_PASSWORD")) {
+            if (key.equals(SystemSetting.LDAP_BIND_PW.getInternalName())
+                || key.equals(SystemSetting.HELP_PASSWORD.getInternalName())) {
                 if (detail.getValue()==null)
                     result.put(key,"- null -");
                 else

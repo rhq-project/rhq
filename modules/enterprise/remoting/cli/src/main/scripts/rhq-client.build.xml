@@ -6,7 +6,6 @@
    <property name="bin.home" location="${output.dir}/bin" />
    <property name="cli.home" location="${output.dir}/cli" />
    <property name="conf.home" location="${output.dir}/conf" />
-   <property name="jboss.home" location="${basedir}/target/jboss-${jboss.version}" />
    <property name="lib.home" location="${output.dir}/lib" />
    <property name="samples.home" location="${output.dir}/samples"/>
 
@@ -58,6 +57,7 @@
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}-client.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}-client.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-comm-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/jboss/jboss-common-core/${jboss-common-core.version}/jboss-common-core-${jboss-common-core.version}.jar" tofile="${lib.home}/jboss-common-core-${jboss-common-core.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/jboss/logging/jboss-logging/${jboss-logging.version}/jboss-logging-${jboss-logging.version}.jar" tofile="${lib.home}/jboss-logging-${jboss-logging.version}.jar" verbose="true" />   	
       <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/javassist/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />

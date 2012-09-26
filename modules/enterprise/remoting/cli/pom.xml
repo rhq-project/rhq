@@ -120,7 +120,7 @@
                            <property name="getopt.version" value="${getopt.version}" />
                            <property name="i18nlog.version" value="${i18nlog.version}" />
                            <property name="jboss-common-core.version" value="${jboss-common-core.version}" />
-                           <property name="jboss.version" value="${jboss.version}" />
+                           <property name="jboss-logging.version" value="${jboss-logging.version}" />
                            <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                            <property name="jboss-javassist.version" value="${javassist.version}" />
                            <property name="jline.version" value="${jline.version}" />

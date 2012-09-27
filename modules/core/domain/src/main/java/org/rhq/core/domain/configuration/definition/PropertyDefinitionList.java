@@ -86,15 +86,24 @@ public class PropertyDefinitionList extends PropertyDefinition {
         return max;
     }
 
-    public void setMax(int max) {
-        this.max = max;
+    public void setMax(Integer max){
+        if(null == max){
+            this.max = 0;
+        }else {
+            this.max = max;
+        }
     }
 
     public int getMin() {
         return min;
     }
 
-    public void setMin(int min) {
-        this.min = min;
+    public void setMin(Integer min){
+        if(null == min){
+            this.min = 0;
+        }else {
+            this.min = min;
+        }
     }
+
 }

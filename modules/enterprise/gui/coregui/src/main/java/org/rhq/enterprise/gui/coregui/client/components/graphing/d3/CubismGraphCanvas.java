@@ -57,9 +57,11 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
     }
 
 
+
     public String getPointsAsJson(int metricIndex, double start, double stop)
     {
         Log.info(" *** GraphCanvas.getPoints");
+        // @todo: this guy is not returning data
         return dataProvider.getPointsAsJson(metricIndex, Math.round(start), Math.round(stop));
     }
 
@@ -179,7 +181,8 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
                 .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::serverDelay)// allow seconds of collection lag
                 .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::clientDelay)
                 .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::step)
-                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::width);
+                .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::width)
+                .stop();
 
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::chartId;
         var jsonMetrics = eval(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::getMetricsAsJson()());
@@ -198,6 +201,7 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
                 try
                 {
                     var json = jsonPoints ? eval("tmp=" + jsonPoints) : null;
+                    console.log("JsonPoints :"+json);
                 }
                 catch (e)
                 {
@@ -214,7 +218,7 @@ public class CubismGraphCanvas extends AbstractGraphCanvas
                 {
                     div.append("div")
                             .attr("class", "axis")
-                            .call(context.axis().orient("bottom"));
+                            .call(context.axis().orient("top"));
                     div.append("div")
                             .attr("class", "rule")
                             .call(context.rule());

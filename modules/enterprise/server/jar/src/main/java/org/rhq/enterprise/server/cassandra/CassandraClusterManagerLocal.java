@@ -27,6 +27,8 @@ package org.rhq.enterprise.server.cassandra;
 
 import javax.ejb.Local;
 
+import org.rhq.cassandra.CassandraException;
+
 /**
  * @author John Sanda
  */

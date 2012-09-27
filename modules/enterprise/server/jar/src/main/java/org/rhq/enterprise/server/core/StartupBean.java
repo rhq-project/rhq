@@ -61,6 +61,8 @@ import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
+import org.rhq.enterprise.server.cassandra.CassandraClusterManagerLocal;
+import org.rhq.cassandra.CassandraException;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;

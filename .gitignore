@@ -4,6 +4,7 @@ eclipse-classes/
 logs/
 antlr-generated/
 gwt-tmp/
+./cassandra/
 dev-container/
 dev-agent/
 dev-cli/

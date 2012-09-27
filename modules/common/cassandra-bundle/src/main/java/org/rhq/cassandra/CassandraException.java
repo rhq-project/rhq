@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.enterprise.server.cassandra;
+package org.rhq.cassandra;
 
 /**
  * @author John Sanda

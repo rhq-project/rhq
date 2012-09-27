@@ -44,6 +44,9 @@ import javax.ejb.TransactionAttribute;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.cassandra.CassandraException;
+import org.rhq.cassandra.bundle.DeploymentOptions;
+import org.rhq.cassandra.bundle.EmbeddedDeployer;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDestination;
@@ -97,7 +100,6 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
             logException(msg, e);
             throw new CassandraException(msg, e);
         }
-
         File deployBaseDir = getDeployBaseDir();
         Subject overlord = subjectManager.getOverlord();
         String bundleName = deploymentProps.getProperty("rhq.cassandra.bundle.name");
@@ -121,52 +123,11 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
             throw new CassandraException(msg, e);
         }
 
-//        Configuration bundleConfig = new Configuration();
-//        File clusterDir = getClusterDir(); //new File(params.getSimpleValue("clusterDirectory"));
-//        int numNodes = 2; //Integer.parseInt(params.getSimpleValue("numberOfNodes"));
-//        int replicationFactor = 1; //Integer.parseInt(params.getSimpleValue("replicationFactor", "1"));
-//        String hostname = "localhost"; //params.getSimpleValue("host");
+        EmbeddedDeployer deployer = new EmbeddedDeployer();
+        deployer.deploy(new DeploymentOptions(deploymentProps));
+
 //        Resource platform = getPlatform(overlord, hostname);
 //        ResourceGroup group = getPlatformGroup(overlord, platform, hostname);
-//
-//        Set<String> ipAddresses = calculateLocalIPAddresses(numNodes);
-//        for (int i = 0; i < numNodes; ++i) {
-//            Set<String> seeds = getSeeds(ipAddresses, i + 1);
-//            int jmxPort = 7200 + i;
-//
-//            Configuration deploymentConfig = new Configuration();
-//            deploymentConfig.put(new PropertySimple("cluster.name", "rhqdev"));
-//            deploymentConfig.put(new PropertySimple("cluster.dir", clusterDir.getAbsolutePath()));
-//            deploymentConfig.put(new PropertySimple("auto.bootstrap", "false"));
-//            deploymentConfig.put(new PropertySimple("data.dir", "data"));
-//            deploymentConfig.put(new PropertySimple("commitlog.dir", "commit_log"));
-//            deploymentConfig.put(new PropertySimple("log.dir", "logs"));
-//            deploymentConfig.put(new PropertySimple("saved.caches.dir", "saved_caches"));
-//            deploymentConfig.put(new PropertySimple("hostname", getLocalIPAddress(i + 1)));
-//            deploymentConfig.put(new PropertySimple("seeds", collectionToString(seeds)));
-//            deploymentConfig.put(new PropertySimple("jmx.port", Integer.toString(jmxPort)));
-//            deploymentConfig.put(new PropertySimple("initial.token", generateToken(i, numNodes)));
-//            deploymentConfig.put(new PropertySimple("install.schema", i == 0));
-//            deploymentConfig.put(new PropertySimple("replication.factor", replicationFactor));
-//
-//            String destinationName = "cassandra-node[" + i + "]-deployment";
-//            String deployDir = new File(clusterDir, "node" + i).getAbsolutePath();
-//
-//            BundleDestination bundleDestination = null;
-//            try {
-//                bundleDestination = getBundleDestination(overlord, bundleVersion, destinationName, group,
-//                    deployDir);
-//            } catch (Exception e) {
-//                String msg = "Failed to create bundle destination [" + destinationName + "]";
-//                logException(msg, e);
-//                throw new CassandraException(msg, e);
-//            }
-//
-////            BundleDeployment bundleDeployment = bundleManager.createBundleDeployment(overlord, bundleVersion.getId(),
-////                bundleDestination.getId(), destinationName, deploymentConfig);
-//
-////            bundleManager.scheduleBundleDeployment(overlord, bundleDeployment.getId(), true);
-//        }
     }
 
     private Properties loadDeploymentProps() throws IOException {
@@ -187,10 +148,6 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
                 }
             }
         }
-    }
-
-    public void deployBundle() {
-
     }
 
     private void logException(String msg, Exception e) {
@@ -310,7 +267,7 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
     }
 
     private ResourceGroup getPlatformGroup(Subject overlord, Resource platform, String hostname) {
-        String groupName = hostname + " [Local Cassandra Cluster]";
+        String groupName = "RHQ Cassandra Cluster";
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterExplicitResourceCategory(ResourceCategory.PLATFORM);

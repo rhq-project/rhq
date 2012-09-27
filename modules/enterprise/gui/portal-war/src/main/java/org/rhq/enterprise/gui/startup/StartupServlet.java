@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.cassandra.CassandraClusterManagerLocal;
-import org.rhq.enterprise.server.cassandra.CassandraException;
+import org.rhq.cassandra.CassandraException;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;

@@ -85,7 +85,6 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-cassandra-bundle</artifactId>
       <version>${project.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
     <dependency>

@@ -128,8 +128,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
     @Parameters("jnp.port")
     public void testRemoteConnectionWorkingFromJava(int jnpPort) throws Exception {
         Properties env = new Properties();
-        env.put("java.naming.factory.initial", "org.jboss.naming.NamingContextFactory");
-        env.put("java.naming.provider.url", "jnp://localhost:" + jnpPort);
+        env.put("java.naming.factory.initial", "org.jboss.as.naming.InitialContextFactory");
+        //env.put("java.naming.provider.url", "jnp://localhost:" + jnpPort);
         InitialContext ctx = new InitialContext(env);
         Object kachny = ctx.lookup("kachny");
         
@@ -163,8 +163,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         try {
             engine.eval(""
                 + "var env = new java.util.Hashtable();"
-                + "env.put('java.naming.factory.initial', 'org.jboss.naming.NamingContextFactory');"
-                + "env.put('java.naming.provider.url', 'jnp://localhost:" + jnpPort + "');"
+                + "env.put('java.naming.factory.initial', 'org.jboss.as.naming.InitialContextFactory');"
+                //+ "env.put('java.naming.provider.url', 'jnp://localhost:" + jnpPort + "');"
                 + "var ctx = new javax.naming.InitialContext(env);\n"
                 + "var kachny = ctx.lookup('kachny');\n"
                 + "assertNotNull(kachny);\n");

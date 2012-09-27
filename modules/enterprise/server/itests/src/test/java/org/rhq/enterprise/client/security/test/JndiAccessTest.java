@@ -172,8 +172,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         try {
             engine.eval(""
                 + "var env = new java.util.Hashtable();"
-                + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.LocalOnlyContextFactory');"
-                + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');"
+                + "env.put('java.naming.factory.initial', 'org.jboss.as.naming.InitialContextFactory');"
+                //+ "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');"
                 + "var ctx = new javax.naming.InitialContext(env);\n"
                 + "var entityManagerFactory = ctx.lookup('" + RHQConstants.ENTITY_MANAGER_JNDI_NAME + "');\n"
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"

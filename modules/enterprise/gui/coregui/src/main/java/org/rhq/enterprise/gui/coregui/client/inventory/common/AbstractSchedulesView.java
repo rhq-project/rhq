@@ -135,8 +135,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
         int[] measurementDefinitionIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            Integer measurementDefinitionId = record
-                .getAttributeAsInt(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID);
+            Integer measurementDefinitionId = record.getAttributeAsInt(SchedulesDataSource.ATTR_DEFINITION_ID);
             measurementDefinitionIds[i] = measurementDefinitionId;
         }
         return measurementDefinitionIds;
@@ -146,7 +145,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
         ListGridRecord[] records = getListGrid().getSelectedRecords();
         List<String> displayNames = new ArrayList<String>(records.length);
         for (ListGridRecord record : records) {
-            String displayName = record.getAttributeAsString(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME);
+            String displayName = record.getAttributeAsString(SchedulesDataSource.ATTR_DISPLAY_NAME);
             displayNames.add(displayName);
         }
         return displayNames;

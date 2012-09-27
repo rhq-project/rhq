@@ -36,6 +36,8 @@ import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
@@ -65,10 +67,13 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         ScriptEngine engine = getEngine(overlord);
         
+        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/" + SubjectManagerBean.class.getSimpleName()
+            + "!" + SubjectManagerBean.class.getName().replace("Bean", "Local");
+
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var subjectManager = ctx.lookup('SubjectManagerBean/local');\n"
+                + "var subjectManager = ctx.lookup('" + jndiName + "');\n"
                 + "subjectManager.getOverlord();");
             
             Assert.fail("The script shouldn't have been able to call local SLSB method.");
@@ -81,11 +86,14 @@ public class JndiAccessTest extends AbstractEJB3Test {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         
         ScriptEngine engine = getEngine(overlord);
-        
+
+        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/" + SubjectManagerBean.class.getSimpleName()
+            + "!" + SubjectManagerBean.class.getName().replace("Bean", "Remote");
+
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var subjectManager = ctx.lookup('SubjectManagerBean/remote');\n"
+                + "var subjectManager = ctx.lookup('" + jndiName + "');\n"
                 + "subjectManager.getSubjectByName('rhqadmin');");
             
             Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
@@ -134,7 +142,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var datasource = ctx.lookup('java:/RHQDS');\n"
+                + "var datasource = ctx.lookup('" + RHQConstants.DATASOURCE_JNDI_NAME + "');\n"
                 + "con = datasource.getConnection();");
             
             Assert.fail("The script shouldn't have been able to obtain the datasource from the JNDI.");
@@ -151,7 +159,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
+                + "var entityManagerFactory = ctx.lookup('" + RHQConstants.ENTITY_MANAGER_JNDI_NAME + "');\n"
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
             
@@ -167,7 +175,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
                 + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.LocalOnlyContextFactory');"
                 + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');"
                 + "var ctx = new javax.naming.InitialContext(env);\n"
-                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
+                + "var entityManagerFactory = ctx.lookup('" + RHQConstants.ENTITY_MANAGER_JNDI_NAME + "');\n"
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
             

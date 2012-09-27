@@ -4,8 +4,7 @@
       xsi:schemaLocation="urn:jboss:service:7.0 jboss-service_7_0.xsd">
 
     <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
-           name="rhq:service=CustomJaasDeployment">
-    </mbean>    
+           name="rhq:service=CustomJaasDeployment" />
     
     <mbean code="org.rhq.enterprise.server.core.CoreServer"
            name="rhq:service=CoreServer" />
@@ -62,10 +61,13 @@ org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandler
     </mbean>
 
     <mbean code="org.rhq.enterprise.server.core.comm.ServerCommunicationsService"
-           name="rhq:service=ServerCommunications">
-    </mbean>
+           name="rhq:service=ServerCommunications" />
     
     <mbean code="org.rhq.enterprise.server.plugin.pc.ServerPluginService"
            name="rhq:service=ServerPluginService" />
     
+    <!-- TODO: first, see if we need this and if so we need to refactor this to work inside AS7
+    <mbean code="org.rhq.jndi.mbean.AccessCheckingInitialContextFactoryBuilderInstaller"
+           name="org.rhq:service=AccessCheckingInitialContextFactoryBuilderInstaller" />
+    -->
 </server>

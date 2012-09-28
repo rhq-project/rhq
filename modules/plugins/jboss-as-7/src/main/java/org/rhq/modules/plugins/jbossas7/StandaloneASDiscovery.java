@@ -18,10 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.File;
-
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
@@ -69,7 +65,8 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType) {
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType) {
         return String.format("%s (%s:%d)", productType.SHORT_NAME, managementHostPort.host, managementHostPort.port);
     }
 
@@ -80,9 +77,15 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                             ProcessInfo process, AS7CommandLine commandLine) throws Exception {
+        ProcessInfo process, AS7CommandLine commandLine) throws Exception {
+
         DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);
-        Configuration pluginConfig = resourceDetails.getPluginConfiguration();
+
+        // Do RHQ Server specific work
+        if (isRhqServer(process)) {
+            String name = resourceDetails.getResourceName();
+            resourceDetails.setResourceName(name + " RHQ Server");
+        }
 
         return resourceDetails;
     }
@@ -91,6 +94,13 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     protected ProcessInfo getPotentialStartScriptProcess(ProcessInfo process) {
         // If the server was started via standalone.sh/bat, its parent process will be standalone.sh/bat.
         return process.getParentProcess();
+    }
+
+    private boolean isRhqServer(ProcessInfo process) {
+
+        String javaOpts = process.getEnvironmentVariable("JAVA_OPTS");
+
+        return (null != javaOpts && javaOpts.contains("-Dapp.name=rhq-server"));
     }
 
 }

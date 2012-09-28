@@ -14,7 +14,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -98,7 +98,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -160,7 +160,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -206,7 +206,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -283,7 +283,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>
@@ -328,7 +328,7 @@
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
       </runs-inside>
 
       <plugin-configuration>

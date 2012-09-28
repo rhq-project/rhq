@@ -328,8 +328,14 @@ public class InstallerGWTServiceImpl extends RemoteServiceServlet implements Ins
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
 
+        String appServerConfigDir = getAppServerConfigDir();
+
         // create a keystore whose cert has a CN of this server's public endpoint address
-        ServerInstallUtil.createKeystore(serverDetails, getAppServerConfigDir());
+        ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
+
+        // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
+        // connect to the RHQ Server.
+        ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
 
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;

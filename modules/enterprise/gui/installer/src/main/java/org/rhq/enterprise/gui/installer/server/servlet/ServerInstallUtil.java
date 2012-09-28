@@ -1230,6 +1230,36 @@ public class ServerInstallUtil {
         }
     }
 
+    /**
+     * Create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
+     * connect to the RHQ Server.
+     * 
+     * @param serverDetails details of the server being installed
+     * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
+     */
+    public static void createDefaultManagementUser(ServerDetails serverDetails, String configDirStr) {
+        File confDir = new File(configDirStr);
+        File mgmtUsers = new File(confDir, "mgmt-users.properties");
+
+        // Add the default admin user, or if for some reason this file does not exist, just log the issue
+        if (mgmtUsers.exists()) {
+            FileOutputStream fos = null;
+
+            try {
+                fos = new FileOutputStream(mgmtUsers, true);
+                fos.write("\nrhqadmin=35c160c1f841a889d4cda53f0bfc94b6\n".getBytes());
+
+            } catch (Exception e) {
+                LOG.warn("Could not create default management user in file: [" + mgmtUsers.getPath() + "] : ", e);
+
+            } finally {
+                StreamUtil.safeClose(fos);
+            }
+        } else {
+            LOG.warn("Could not create default management user. Could not find file: [" + mgmtUsers.getPath() + "]");
+        }
+    }
+
     public static File getMarkerFile(String dir, String artifact, Marker marker) {
         File markerFile = new File(dir, artifact + marker.getExtenstion());
         return markerFile;

@@ -4031,32 +4031,23 @@
 <!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->            
 
             <schemaSpec version="2.123">
+
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN_ENTRIES" columnType="INTEGER"/>
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
-                <schema-directSQL>
-                    <statement desc="Update the NULL to 0 for MIN_ENTRIES">
-                        UPDATE RHQ_CONFIG_PROP_DEF
-                        SET MIN_ENTRIES = 0
-                        WHERE MIN_ENTRIES IS NULL
-                    </statement>
-                    <statement desc="Update the NULL to 0 for MAX_ENTRIES">
-                        UPDATE RHQ_CONFIG_PROP_DEF
-                        SET MAX_ENTRIES = 0
-                        WHERE MAX_ENTRIES IS NULL
-                    </statement>
-                </schema-directSQL>
+
             </schemaSpec>
 
-            <schemaSpec version="2.124">
+<!-- RHQ 4.5.0 uses DB Schema 2.125 -->
+            <schemaSpec version="2.125">
                 <schema-directSQL>
                     <statement desc="Update the NULL to 0 for MIN_ENTRIES">
                         UPDATE RHQ_CONFIG_PROP_DEF
                         SET MIN_ENTRIES = 0
                         WHERE MIN_ENTRIES IS NULL
                     </statement>
-                    <statement desc="Update the NULL to 0 for MAX_ENTRIES">
+                    <statement desc="Update the NULL to 32767 for MAX_ENTRIES">
                         UPDATE RHQ_CONFIG_PROP_DEF
-                        SET MAX_ENTRIES = 0
+                        SET MAX_ENTRIES = 32767
                         WHERE MAX_ENTRIES IS NULL
                     </statement>
                 </schema-directSQL>

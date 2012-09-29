@@ -71,6 +71,18 @@
                         defaultValue="7200"
                         type="string"/>
 
+    <rhq:input-property name="listen.address"
+                        description="Address used for inter-node communication. Defaults to value of hostname property."
+                        required="true"
+                        defaultValue=""
+                        type="string"/>
+
+    <rhq:input-property name="rpc.address"
+                        description="Address used for Thrift RPC client communication. Defaults to value of hostname property."
+                        required="true"
+                        defaultValue=""
+                        type="string"/>
+
 <!--
   The next two properties, install.schema and replication.factor deal with
   running a CLI or CQL script to install and configure a keyspace.

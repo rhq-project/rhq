@@ -84,6 +84,7 @@ public class EmbeddedDeployer {
             for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
                 Set<String> seeds = getSeeds(ipAddresses, i + 1);
                 int jmxPort = 7200 + i;
+                String address = getLocalIPAddress(i + i);
 
                 Properties props = new Properties();
                 props.put("cluster.name", "rhq");
@@ -93,13 +94,15 @@ public class EmbeddedDeployer {
                 props.put("commitlog.dir", "commit_log");
                 props.put("log.dir", "logs");
                 props.put("saved.caches.dir", "saved_caches");
-                props.put("hostname", getLocalIPAddress(i + 1));
+                props.put("hostname", address);
                 props.put("seeds", collectionToString(seeds));
                 props.put("jmx.port", Integer.toString(jmxPort));
                 props.put("initial.token", generateToken(i, deploymentOptions.getNumNodes()));
                 props.put("rhq.deploy.dir", new File(clusterDir, "node" + i).getAbsolutePath());
                 props.put("rhq.deploy.id", i);
                 props.put("rhq.deploy.phase", "install");
+                props.put("listen.address", address);
+                props.put("rpc.address", address);
 
                 doLocalDeploy(props, bundleDir);
             }

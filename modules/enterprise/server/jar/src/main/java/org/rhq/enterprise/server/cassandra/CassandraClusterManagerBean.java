@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -43,6 +44,8 @@ import javax.ejb.TransactionAttribute;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDataMap;
+import org.quartz.SchedulerException;
 
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.bundle.DeploymentOptions;
@@ -67,6 +70,7 @@ import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 
 /**
  * @author John Sanda
@@ -87,6 +91,9 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private SchedulerLocal scheduler;
 
     @Override
     @TransactionAttribute(NEVER)
@@ -124,7 +131,24 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
         }
 
         EmbeddedDeployer deployer = new EmbeddedDeployer();
-        deployer.deploy(new DeploymentOptions(deploymentProps));
+        deployer.setDeploymentOptions(new DeploymentOptions(deploymentProps));
+        deployer.deploy();
+
+        String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
+        String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CONNECTION_TIMEOUT, "100");
+        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, deployer.getCassandraHosts());
+
+        try {
+            scheduler.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
+                CassandraClusterHeartBeatJob.class, true, true, 3000, 5000);
+        } catch (SchedulerException e) {
+            String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The " +
+                "server will reamin in maintenance mode without a manual override.";
+            log.error(msg, e);
+        }
 
 //        Resource platform = getPlatform(overlord, hostname);
 //        ResourceGroup group = getPlatformGroup(overlord, platform, hostname);

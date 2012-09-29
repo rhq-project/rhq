@@ -48,7 +48,22 @@ import org.rhq.core.util.stream.StreamUtil;
  */
 public class EmbeddedDeployer {
 
-    public void deploy(DeploymentOptions deploymentOptions) throws CassandraException {
+    private DeploymentOptions deploymentOptions;
+
+    public void setDeploymentOptions(DeploymentOptions deploymentOptions) {
+        this.deploymentOptions = deploymentOptions;
+    }
+
+    public String getCassandraHosts() {
+        StringBuilder hosts = new StringBuilder();
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            hosts.append(getLocalIPAddress(i + 1)).append(":9160,");
+        }
+        hosts.deleteCharAt(hosts.length() - 1);
+        return hosts.toString();
+    }
+
+    public void deploy() throws CassandraException {
         Set<String> ipAddresses = calculateLocalIPAddresses(deploymentOptions.getNumNodes());
         File clusterDir = new File(deploymentOptions.getClusterDir());
         File installedMarker = new File(clusterDir, ".installed");

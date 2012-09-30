@@ -103,6 +103,12 @@ public class DBInstallationTest {
     }
 
     @Test
+    public void upgradeJON311Schema() throws Exception {
+        installSchemaAndData("3.1.1");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
+    @Test
     public void upgradeRHQ420Schema() throws Exception {
         installSchemaAndData("rhq-4.2.0");
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
@@ -111,6 +117,18 @@ public class DBInstallationTest {
     @Test
     public void upgradeRHQ430Schema() throws Exception {
         installSchemaAndData("rhq-4.3.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
+    @Test
+    public void upgradeRHQ440Schema() throws Exception {
+        installSchemaAndData("rhq-4.4.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
+     @Test
+    public void upgradeRHQ450Schema() throws Exception {
+        installSchemaAndData("rhq-4.5.0");
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
     
@@ -202,7 +220,7 @@ public class DBInstallationTest {
         ByteArrayInputStream contentInStream = new ByteArrayInputStream(content.getBytes());
         StreamUtil.copy(contentInStream, xmlFileOutStream);
 
-        return xmlFile.getAbsoluteFile();
+        return filteredXmlFile.getAbsoluteFile();
     }
     
 }

@@ -38,7 +38,7 @@ public class DeploymentOptions {
     private String clusterDir;
     private Integer numNodes;
     private Boolean autoDeploy;
-    private String clusterType;
+    private Boolean embedded;
 
     public DeploymentOptions(Properties properties) {
         setBundleFileName(properties.getProperty("rhq.cassandra.bundle.filename"));
@@ -47,7 +47,7 @@ public class DeploymentOptions {
         setClusterDir(properties.getProperty("rhq.cassandra.cluster.dir"));
         setNumNodes(Integer.parseInt(properties.getProperty("rhq.cassandra.cluster.num-nodes")));
         setAutoDeploy(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.auto-deploy")));
-        setClusterType(properties.getProperty("rhq.cassandra.cluster.type"));
+        setEmbedded(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.is-embedded")));
     }
 
     public String getBundleFileName() {
@@ -110,13 +110,13 @@ public class DeploymentOptions {
         }
     }
 
-    public String getClusterType() {
-        return clusterType;
+    public boolean isEmbedded() {
+        return embedded;
     }
 
-    public void setClusterType(String clusterType) {
-        if (this.clusterType == null) {
-            this.clusterType = clusterType;
+    public void setEmbedded(boolean embedded) {
+        if (this.embedded == null) {
+            this.embedded = embedded;
         }
     }
 

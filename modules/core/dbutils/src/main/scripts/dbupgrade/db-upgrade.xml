@@ -4013,7 +4013,7 @@
                 <schema-directSQL>                
                    <statement desc="Updating DOWN Alert Conditions to new format">
                       UPDATE RHQ_ALERT_CONDITION
-                         SET NAME = 'AVAIL_GOES_DOWN', OPTION_STATUS = NULL 
+                         SET NAME = 'AVAIL_GOES_DOWN', OPTION_STATUS = NULL
                        WHERE TYPE = 'AVAILABILITY' 
                          AND NAME IS NULL
                          AND OPTION_STATUS = 'DOWN'
@@ -4031,11 +4031,29 @@
 <!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->            
 
             <schemaSpec version="2.123">
+
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN_ENTRIES" columnType="INTEGER"/>
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
+
             </schemaSpec>
 
-            <schemaSpec version="2.124">
+<!-- RHQ 4.5.0 uses DB Schema 2.125 -->
+            <schemaSpec version="2.125">
+                <schema-directSQL>
+                    <statement desc="Update the NULL to 0 for MIN_ENTRIES">
+                        UPDATE RHQ_CONFIG_PROP_DEF
+                        SET MIN_ENTRIES = 0
+                        WHERE MIN_ENTRIES IS NULL
+                    </statement>
+                    <statement desc="Update the NULL to 32767 for MAX_ENTRIES">
+                        UPDATE RHQ_CONFIG_PROP_DEF
+                        SET MAX_ENTRIES = 32767
+                        WHERE MAX_ENTRIES IS NULL
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.126">
                 <schema-dropTable table="JMS_MESSAGES" ignoreError="true" />
                 <schema-dropTable table="JMS_TRANSACTIONS" ignoreError="true" />
                 <schema-dropTable table="JMS_USERS" ignoreError="true" />

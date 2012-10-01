@@ -162,11 +162,14 @@
                <module>enterprise/agent</module>
                <module>enterprise/comm</module>
                
-               <!-- These 6 are needed for the JNDI intergration tests -->
+               <!-- These are needed for the JNDI intergration tests -->
                <module>enterprise/server/container-lib</module>
                <module>enterprise/server/xml-schemas</module>
                <module>enterprise/server/safe-invoker</module>
                <module>enterprise/server/jar</module>
+               <module>enterprise/scripting/api</module>
+               <module>enterprise/scripting/javascript</module>
+               <module>enterprise/scripting/python</module>
                <module>enterprise/binding</module>
                <module>enterprise/server/client-api</module>
                

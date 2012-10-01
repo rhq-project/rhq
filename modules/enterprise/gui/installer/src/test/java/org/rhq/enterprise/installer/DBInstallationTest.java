@@ -116,6 +116,12 @@ public class DBInstallationTest {
         ServerInstallUtil.upgradeExistingDatabaseSchema(getInstallProperties(), serverDetails, PASSWORD, logDir);
     }
     
+    @Test
+    public void upgradeRHQ440Schema() throws Exception {
+        installSchemaAndData("rhq-4.4.0");
+        ServerInstallUtil.upgradeExistingDatabaseSchema(getInstallProperties(), serverDetails, PASSWORD, logDir);
+    }
+    
     private void initLogDirectory() {
         File logDirFile = new File(LOG_DIRECTORY);
         if (logDirFile.exists()) {

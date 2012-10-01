@@ -170,6 +170,7 @@
                 </property>
             </activation>
             
+            <!-- these are defined in the dev profile also - see below in that profile for why -->
             <properties>
                 <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
                 <rhq.ds.server-name>${rhq.dev.ds.server-name}</rhq.ds.server-name>
@@ -368,6 +369,18 @@
                 <rhq.rootDir>../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
+
+                <!-- these are defined in the db.dev profile also - but if you just use -Pdev without -Ddb=dev or -Pdb.dev
+                     then you won't be using the dev DB. These properties allow -Pdev -Ddbsetup to do what you'd expect
+                     (that is, setup the dev DB)
+                 -->
+                <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
+                <rhq.ds.server-name>${rhq.dev.ds.server-name}</rhq.ds.server-name>
+                <rhq.ds.db-name>${rhq.dev.ds.db-name}</rhq.ds.db-name>
+                <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
+                <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
+                <rhq.ds.password>${rhq.dev.ds.password}</rhq.ds.password>
+                <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
             <build>
                 <plugins>

@@ -25,6 +25,7 @@
 
 package org.rhq.cassandra.bundle;
 
+import static java.util.Arrays.asList;
 import static org.rhq.core.util.StringUtil.collectionToString;
 
 import java.io.ByteArrayInputStream;
@@ -39,6 +40,12 @@ import java.util.Set;
 
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.cassandra.CassandraException;
+import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -84,7 +91,8 @@ public class EmbeddedDeployer {
             for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
                 Set<String> seeds = getSeeds(ipAddresses, i + 1);
                 int jmxPort = 7200 + i;
-                String address = getLocalIPAddress(i + i);
+                String address = getLocalIPAddress(i + 1);
+                File nodeBasedir = new File(clusterDir, "node" + i);
 
                 Properties props = new Properties();
                 props.put("cluster.name", "rhq");
@@ -98,13 +106,14 @@ public class EmbeddedDeployer {
                 props.put("seeds", collectionToString(seeds));
                 props.put("jmx.port", Integer.toString(jmxPort));
                 props.put("initial.token", generateToken(i, deploymentOptions.getNumNodes()));
-                props.put("rhq.deploy.dir", new File(clusterDir, "node" + i).getAbsolutePath());
+                props.put("rhq.deploy.dir", nodeBasedir.getAbsolutePath());
                 props.put("rhq.deploy.id", i);
                 props.put("rhq.deploy.phase", "install");
                 props.put("listen.address", address);
                 props.put("rpc.address", address);
 
                 doLocalDeploy(props, bundleDir);
+                startNode(nodeBasedir);
             }
             FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
         } catch (IOException e) {
@@ -130,6 +139,23 @@ public class EmbeddedDeployer {
             //logException(msg, e);
             throw new CassandraException(msg, e);
         }
+    }
+
+    private void startNode(File basedir) {
+        File binDir = new File(basedir, "bin");
+        File startScript;
+        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+
+        if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+            startScript = new File(binDir, "cassandra.bat");
+        } else {
+            startScript = new File(binDir, "cassandra");
+        }
+
+        ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        startScriptExe.setArguments(asList("-p", "cassandra.pid"));
+
+        ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
     }
 
     private File unpackBundleZipFile() throws IOException {

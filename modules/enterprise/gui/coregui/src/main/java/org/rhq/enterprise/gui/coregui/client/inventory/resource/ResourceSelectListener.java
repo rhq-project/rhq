@@ -23,6 +23,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public interface ResourceSelectListener {
 
     /**

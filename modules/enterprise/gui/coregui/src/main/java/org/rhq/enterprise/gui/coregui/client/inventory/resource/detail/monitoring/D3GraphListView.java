@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * @author Mike Thompson
  */
-public class D3GraphListView extends LocatableVLayout implements ResourceSelectListener {
+public class D3GraphListView extends LocatableVLayout {
 
     private Resource resource;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
@@ -141,12 +141,4 @@ public class D3GraphListView extends LocatableVLayout implements ResourceSelectL
         addMember(graph);
     }
 
-    @Override
-    public void onResourceSelected(ResourceComposite resourceComposite) {
-        this.resource = resourceComposite.getResource();
-        Log.debug("OnResourceSelected:"+resource.getName());
-
-        buildGraphs();
-        markForRedraw();
-    }
 }

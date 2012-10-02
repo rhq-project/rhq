@@ -18,32 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Label;
+
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
+
 /**
+ * Build the View that shows the individual graph views.
  * @author Mike Thompson
  */
 public class D3GraphListView extends LocatableVLayout {
@@ -134,9 +133,8 @@ public class D3GraphListView extends LocatableVLayout {
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resource.getId(),
             measurementDefinition, data);
 
-
         graph.setWidth("95%");
-        graph.setHeight(220);
+        graph.setHeight(120);
 
         addMember(graph);
     }

@@ -20,9 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -34,8 +32,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityBarView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
@@ -74,6 +72,9 @@ public class D3GraphListView extends LocatableVLayout implements ResourceSelectL
         }
     }
 
+    /**
+     * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
+     */
     private void buildGraphs() {
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
@@ -118,7 +119,7 @@ public class D3GraphListView extends LocatableVLayout implements ResourceSelectL
                                     loadingLabel.hide();
                                     int i = 0;
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
-                                        buildGraph(measurementDefinitions.get(i++), data);
+                                        buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
                                 }
                             }
@@ -128,10 +129,10 @@ public class D3GraphListView extends LocatableVLayout implements ResourceSelectL
             });
     }
 
-    private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
 
-        ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(),
-            def, data);
+        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resource.getId(),
+            measurementDefinition, data);
 
 
         graph.setWidth("95%");
@@ -143,6 +144,7 @@ public class D3GraphListView extends LocatableVLayout implements ResourceSelectL
     @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resource = resourceComposite.getResource();
+        Log.debug("OnResourceSelected:"+resource.getName());
 
         buildGraphs();
         markForRedraw();

@@ -79,6 +79,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
     private final Label positionLabel = new Label();
     private final Label hoverLabel = new Label();
 
+    private HTMLFlow resourceTitle;
+
     private int entityId;
     private int definitionId;
 
@@ -112,7 +114,9 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     protected abstract void renderGraph();
 
-    protected abstract HTMLFlow getEntityTitle();
+    protected HTMLFlow getEntityTitle(){
+        return resourceTitle;
+    }
 
     public int getEntityId() {
         return this.entityId;

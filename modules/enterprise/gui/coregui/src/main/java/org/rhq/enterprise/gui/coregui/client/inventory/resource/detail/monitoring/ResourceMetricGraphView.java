@@ -56,9 +56,6 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
         super(locatorId);
     }
 
-    public ResourceMetricGraphView(String locatorId, int resourceId, int definitionId) {
-        super(locatorId, resourceId, definitionId);
-    }
 
     public ResourceMetricGraphView(String locatorId, int resourceId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {

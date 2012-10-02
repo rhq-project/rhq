@@ -28,9 +28,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -103,8 +107,32 @@ public class ApacheExecutionUtil {
 
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
-        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null,
-            discoveryComponent, systemInfo, null, null, null, null, null, null, null, null);
+        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null, discoveryComponent, systemInfo,
+            null, null, null, null, null, null, new AvailabilityContext() {
+
+                @Override
+                public void requestAvailabilityCheck() {
+                }
+
+                @Override
+                public AvailabilityType getLastReportedAvailability() {
+                    return AvailabilityType.UP;
+                }
+
+                @Override
+                public void enable() {
+                }
+
+                @Override
+                public void disable() {
+                }
+
+                @Override
+                public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(
+                    AvailabilityFacet availChecker, long interval) {
+                    return null;
+                }
+            }, null, null);
 
         serverComponent.start(resourceContext);
     }
@@ -138,10 +166,12 @@ public class ApacheExecutionUtil {
 
             ++i;
 
-            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
+            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. "
+                + i);
         }
 
-        throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
+        throw new IllegalStateException(
+            "Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
     }
 
     public ResourceContext<PlatformComponent> getResourceContext() {

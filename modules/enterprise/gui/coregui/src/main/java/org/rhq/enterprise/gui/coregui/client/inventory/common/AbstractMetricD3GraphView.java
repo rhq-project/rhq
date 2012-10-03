@@ -23,7 +23,6 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -40,6 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     private HTMLFlow resourceTitle;
+
+    private HTMLFlow graph;
 
     private int entityId;
     private int definitionId;
@@ -135,10 +136,14 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
+            graph = new HTMLFlow("<div id=\"rchart\" />");
+            graph.setWidth100();
+            graph.setHeight(500);
+            addMember(graph);
 
             //@todo: Draw graph
 
-
+            drawCharts();
 
         }
 
@@ -166,5 +171,24 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         //hoverLabel.hide();
     }
 
+    public native void drawCharts() /*-{
+        console.log("Starting Rickshaw graph");
+        var data = [ { x: 0, y: 40 }, { x: 1, y: 49 }, { x: 2, y: 17 }, { x: 3, y: 42 } ];
+
+        var graph = new $wnd.Rickshaw.Graph( {
+            element: $wnd.document.querySelector("#rchart"),
+            width: 580,
+            height: 250,
+            series: [ {
+                color: 'steelblue',
+                data: data
+            } ]
+        } );
+
+
+        console.log("Rendering Rickshaw graph");
+        graph.render();
+
+    }-*/;
 
 }

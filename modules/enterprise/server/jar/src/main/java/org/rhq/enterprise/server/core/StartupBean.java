@@ -180,7 +180,7 @@ public class StartupBean {
         startScheduler();
         scheduleJobs();
         startAgentClients();
-        startEmbeddedAgent();
+        //startEmbeddedAgent();
         registerShutdownListener();
         registerPluginDeploymentScannerJob();
 
@@ -619,6 +619,8 @@ public class StartupBean {
      * Starts the embedded agent, but only if the embedded agent is installed and it is enabled.
      *
      * @throws RuntimeException if the agent is installed and enabled but failed to start
+     * 
+     * @deprecated we don't have an embedded agent anymore, leaving this in case we resurrect it
      */
     private void startEmbeddedAgent() throws RuntimeException {
         // we can't use EmbeddedAgentBootstrapServiceMBean because if the embedded agent

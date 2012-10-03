@@ -15,6 +15,7 @@
 
   <properties>
     <cassandra.version>1.1.5</cassandra.version>
+    <local.repo>${settings.localRepository}</local.repo>
   </properties>
 
   <dependencies>
@@ -68,6 +69,14 @@
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
+          <execution>
+            <!--
+              This execution is a place holder or stub to do some pre-processing before
+              packaging up the bundle. See the snappy-mac-workaround profile below for more
+              details.
+            -->
+            <id>setup-pkg</id>
+          </execution>
           <execution>
             <id>create-cassandra-pkg</id>
             <phase>prepare-package</phase>
@@ -142,6 +151,66 @@
                 </goals>
               </execution>
 
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+      Cassandra uses the snappy-java compression library, and it uses a native library that
+      is packaged in the snappy-java JAR. Running on Mac OS X with Java 7 will result in,
+
+        NoClassDefFoundError Could not initialize class org.xerial.snappy.Snappy
+
+      due to the file name extension that the Java 7 JVM looks for on Mac OS X. This issue
+      was logged and fixed under https://github.com/xerial/snappy-java/issues/6. Cassandra
+      however does not yet bundle a newer version of snappy-java. This profile is activated
+      when running on Mac OS X and replaces the packaged version of snappy-java with a newer
+      version so that snappy compression can still be used during development. Note that
+      this is **not** an issue when running on Java 6.
+
+      - jsanda 10/03/2012
+    -->
+    <profile>
+      <id>snappy-mac-workaround</id>
+      <activation>
+        <os>
+          <family>Mac</family>
+        </os>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <inherited>false</inherited>
+            <dependencies>
+              <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>1.0.5-M3</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>setup-pkg</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <property name="cassandra.dir"
+                              value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                    <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>
+                    <property name="snappy.jar.original" value="${cassandra.lib.dir}/snappy-java-1.0.4.1.jar"/>
+                    <property name="snappy.jar.updated"
+                              value="${local.repo}/org/xerial/snappy/snappy-java/1.0.5-M3/snappy-java-1.0.5-M3.jar"/>
+                    <delete file="${snappy.jar.original}"/>
+                    <copy file="${snappy.jar.updated}" todir="${cassandra.lib.dir}"/>
+                  </target>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>

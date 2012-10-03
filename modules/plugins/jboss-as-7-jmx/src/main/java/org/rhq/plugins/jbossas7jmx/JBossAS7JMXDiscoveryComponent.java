@@ -20,9 +20,12 @@
 
 package org.rhq.plugins.jbossas7jmx;
 
+import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -33,7 +36,17 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * 
  * @author Jay Shaughnessy
  */
-public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
+public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T>,
+    ClassLoaderFacet<ResourceComponent<?>> {
+
+    @Override
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext<ResourceComponent<?>> context,
+        DiscoveredResourceDetails details) throws Exception {
+        // TODO we need to get the AS7's install directory so we can find the client jars
+        //      the parent component is the JBossAS7JMX server resource, see if it can somehow ask its parent
+        //      for this information which can then be passed down to us. Not sure how to do this - via plugin config perhaps?
+        return null;
+    }
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
@@ -42,7 +55,7 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<?>> imple
 
         String key = "JBossAS7JMX";
         String name = "jmx mbeans";
-        String version = this.getClass().getPackage().getImplementationVersion();
+        String version = "7"; // this should probably be the actual version of the remote AS7 server being monitored
         String description = "JMX MBeans Deployed to AS 7.x";
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,

@@ -43,8 +43,9 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
- * @author Jay Shaughnessy
+ * Provides a class you can subclass to discover JMX MBeans from within an AS7 app server.
  *
+ * @author Jay Shaughnessy
  */
 public abstract class AbstractDiscoveryComponent<T extends ResourceComponent<?>> implements
     ResourceDiscoveryComponent<T> {
@@ -214,20 +215,5 @@ public abstract class AbstractDiscoveryComponent<T extends ResourceComponent<?>>
                 throw e;
             }
         }
-
-        /**
-         * Same as {@link #discoverResources(ResourceDiscoveryContext<T>)} with additional param.
-         *
-         * @param skipUnknownProps         if true, skip over MBeans that have unknown properties in their ObjectName
-
-        public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
-            boolean skipUnknownProps) {
-
-            this.discoveryContext = context;
-            return super.performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(),
-                context.getResourceType(), skipUnknownProps);
-        }
-         */
-
     }
 }

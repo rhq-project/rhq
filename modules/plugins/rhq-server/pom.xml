@@ -8,8 +8,8 @@
       <version>4.6.0-SNAPSHOT</version>
    </parent>
 
-   <groupId>org.jboss.on</groupId>
-   <artifactId>jopr-rhq-server-plugin</artifactId>
+   <groupId>${rhq.groupId}</groupId>
+   <artifactId>rhq-rhqserver-plugin</artifactId>
    <packaging>jar</packaging>
 
    <name>RHQ Server Plugin</name>
@@ -36,16 +36,6 @@
           <version>${project.version}</version>
           <scope>provided</scope> <!-- to be bundled in the plugin -->
         </dependency>
-        
-        <!-- The remoting-jmx jar is required but we also need to package its maven deps.
-             Declare them below as well, so we can easily copy them to the lib dir -->
-        <dependency>
-          <groupId>org.jboss.remotingjmx</groupId>
-          <artifactId>remoting-jmx</artifactId>
-          <version>${jboss-remotingjmx.version}</version>
-          <scope>provided</scope> <!-- to be bundled in the plugin -->
-        </dependency>
-        
    </dependencies>
 
    <build>
@@ -53,20 +43,6 @@
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
-               <execution>
-                  <id>copy-transitive-deps</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy-dependencies</goal>
-                  </goals>
-                  <configuration>
-                     <excludeTransitive>false</excludeTransitive>
-<!--                     <includeGroupIds>org.jboss.remoting3,org.jboss.remotingjmx,org.jboss.logging,org.jboss.xnio,org.jboss.xnio.nio,org.jboss.sasl,org.jboss.marshalling,org.jboss.marshalling.river,org.jboss.as.cli,org.jboss.staxmapper,org.jboss.as.protocol,org.jboss.dmr,org.jboss.as.controller-client,org.jboss.threads,org.jboss.as.controller</includeGroupIds>   -->
-                     <includeGroupIds>org.jboss</includeGroupIds>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            
                <execution>
                   <id>copy-deps</id>
                   <phase>process-resources</phase>
@@ -83,7 +59,7 @@
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
-               </execution>               
+               </execution>
             </executions>
          </plugin>
       </plugins>
@@ -119,9 +95,10 @@
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
                                     <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-jboss-as-7-jmx-plugin/${project.version}/rhq-jboss-as-7-jmx-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
-                                    <include name="rhq-server-plugin-${project.version}.jar" />
+                                    <include name="rhq-rhqserver-plugin-${project.version}.jar" />
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">

@@ -25,10 +25,27 @@
 
         <dependency>
           <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-jboss-as-7-jmx-plugin</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-enterprise-comm</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope> <!-- to be bundled in the plugin -->
         </dependency>
+        
+        <!-- The remoting-jmx jar is required but we also need to package its maven deps.
+             Declare them below as well, so we can easily copy them to the lib dir -->
+        <dependency>
+          <groupId>org.jboss.remotingjmx</groupId>
+          <artifactId>remoting-jmx</artifactId>
+          <version>${jboss-remotingjmx.version}</version>
+          <scope>provided</scope> <!-- to be bundled in the plugin -->
+        </dependency>
+        
    </dependencies>
 
    <build>
@@ -36,6 +53,20 @@
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
+               <execution>
+                  <id>copy-transitive-deps</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy-dependencies</goal>
+                  </goals>
+                  <configuration>
+                     <excludeTransitive>false</excludeTransitive>
+<!--                     <includeGroupIds>org.jboss.remoting3,org.jboss.remotingjmx,org.jboss.logging,org.jboss.xnio,org.jboss.xnio.nio,org.jboss.sasl,org.jboss.marshalling,org.jboss.marshalling.river,org.jboss.as.cli,org.jboss.staxmapper,org.jboss.as.protocol,org.jboss.dmr,org.jboss.as.controller-client,org.jboss.threads,org.jboss.as.controller</includeGroupIds>   -->
+                     <includeGroupIds>org.jboss</includeGroupIds>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            
                <execution>
                   <id>copy-deps</id>
                   <phase>process-resources</phase>
@@ -52,7 +83,7 @@
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
-               </execution>
+               </execution>               
             </executions>
          </plugin>
       </plugins>

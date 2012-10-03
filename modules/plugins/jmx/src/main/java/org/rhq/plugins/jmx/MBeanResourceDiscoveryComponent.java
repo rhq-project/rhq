@@ -77,7 +77,7 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent<?>> implemen
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceDiscoveryContext<T> discoveryContext;
+    protected ResourceDiscoveryContext<T> discoveryContext;
 
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 

@@ -5,21 +5,21 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX"/>
+   <depends plugin="JMX" useClasses="true" />
 
    <service name="RHQ Server Alerts Engine Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="AlertsCacheResourceComponent"
             description="RHQ Server Alerts Engine Subsystem"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq:service=AlertConditionCacheMonitor" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Alert Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Alert Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem." readOnly="true"/>
       </plugin-configuration>
 
@@ -92,18 +92,18 @@
    </service>
 
    <service name="RHQ Server Measurement Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
             description="RHQ Server Measurement Subsystem"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq:service=MeasurementMonitor" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Measurement Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Measurement Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem." readOnly="true"/>
       </plugin-configuration>
 
@@ -154,18 +154,18 @@
    </service>
 
    <service name="RHQ Server Group Definition / DynaGroups Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="GroupDefinitionResourceComponent"
             description="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq:service=GroupDefinitionRecalculationThreadMonitor" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Group Definition Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Group Definition Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem." readOnly="true"/>
       </plugin-configuration>
 
@@ -200,18 +200,18 @@
    </service>
 
    <service name="RHQ Server Communications Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="CommunicationsResourceComponent"
             description="Details on communications with agents"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq:service=ServerCommunications" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Communications Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Communications Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Details on communications with agents" readOnly="true"/>
       </plugin-configuration>
 
@@ -277,18 +277,18 @@
    </service>
 
    <service name="RHQ Server Remote API Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="RemoteAPIResourceComponent"
             description="Details on remote API communications with external clients, including the CLI"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq.remoting:type=RemoteApiMetrics" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Remote API Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Remote API Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Details on remote API communications with external clients, including the CLI" readOnly="true"/>
       </plugin-configuration>
 
@@ -322,18 +322,18 @@
    </service>
 
    <service name="RHQ Server Plugin Subsystem"
-            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
             description="Details on the server-side plugin container subsystem"
             singleton="true">
 
       <runs-inside>
-         <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+         <parent-resource-type name="JBossAS7JMX" plugin="JBossAS7JMX"/>
       </runs-inside>
 
       <plugin-configuration>
          <c:simple-property name="objectName" default="rhq.serverplugin:service=ServerPluginService" readOnly="true"/>
-         <c:simple-property name="nameTemplate" default="Plugin Subsystem" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Plugin Subsystem" readOnly="true"/>
          <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem" readOnly="true"/>
       </plugin-configuration>
 

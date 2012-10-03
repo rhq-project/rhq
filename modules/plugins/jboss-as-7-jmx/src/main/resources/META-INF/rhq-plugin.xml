@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JBossAS7JMX" displayName="JBoss Application Server 7.x JMX" package="org.rhq.plugins.jbossas7jmx"
+  description="Supports management of JMX MBeans deployed to AS 7.x servers." xmlns="urn:xmlns:rhq-plugin" xmlns:c="urn:xmlns:rhq-configuration">
+
+  <!-- This ensures that discovery classloaders for injected services (those that runs-inside this plugin) have access to 
+    the JMX plugin classes -->
+  <depends plugin="JMX" useClasses="true" />
+
+  <server name="JBossAS7JMX" 
+    discovery="org.rhq.plugins.jbossas7jmx.JBossAS7JMXDiscoveryComponent" 
+    class="JBossAS7JMXComponent"
+    description="JMX MBeans Deployed to AS 7.x" singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7" />
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="port" type="integer" required="true"
+        description="JMX Management Port. Defaults to AS7 management port + 9 (the standard offset)." />
+    </plugin-configuration>
+
+  </server>
+
+  <help>
+      <![CDATA[
+          <p>This plugin injects a singleton parent resource into an AS7 Server resource that can be used
+          to subsequently inject JMX MBean resources for JMX-based management. See the rhq-server plugin as
+          an example.</p>
+      ]]>
+  </help>
+
+</plugin>

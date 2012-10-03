@@ -175,6 +175,10 @@ public class EmbeddedDeployer {
                 socket.open();
                 return;
             } catch (TTransportException e) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                }
             }
         }
         throw new CassandraException("Could not connect to " + host + " after " + maxRetries);

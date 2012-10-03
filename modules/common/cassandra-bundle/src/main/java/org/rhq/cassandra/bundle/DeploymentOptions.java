@@ -41,6 +41,9 @@ public class DeploymentOptions {
     private Boolean embedded;
     private String loggingLevel;
 
+    public DeploymentOptions() {
+    }
+
     public DeploymentOptions(Properties properties) {
         setBundleFileName(properties.getProperty("rhq.cassandra.bundle.filename"));
         setBundleName(properties.getProperty("rhq.cassandra.bundle.name"));

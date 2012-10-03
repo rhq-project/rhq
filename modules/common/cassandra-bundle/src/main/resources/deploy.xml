@@ -47,6 +47,12 @@
                         defaultValue="logs"
                         type="string"/>
 
+    <rhq:input-property name="logging.level"
+                        description="The log4j logging level to use."
+                        required="false"
+                        defaultValue="DEBUG"
+                        type="string"/>
+
     <rhq:input-property name="hostname"
                         description="The host name of the node. This normally does not need to be set as Cassandra will resolve the host name/IP address. It needs to be set though for a local, development cluster running on a single machine."
                         required="true"

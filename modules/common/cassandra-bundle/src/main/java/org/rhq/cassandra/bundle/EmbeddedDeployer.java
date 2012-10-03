@@ -114,6 +114,7 @@ public class EmbeddedDeployer {
                 props.put("rhq.deploy.phase", "install");
                 props.put("listen.address", address);
                 props.put("rpc.address", address);
+                props.put("logging.level", deploymentOptions.getLoggingLevel());
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
@@ -200,9 +201,12 @@ public class EmbeddedDeployer {
             throw new CassandraException("Failed to load schema update script", e);
         }
         ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(cliScript);
-        cliExe.setArguments(asList("-f", dbsetupFile.getAbsolutePath(), "-h", host, "-p", Integer.toString(port)));
+        cliExe.setWaitForCompletion(30000L);
+        cliExe.setCaptureOutput(true);
+        cliExe.setArguments(asList("--debug", "-f", dbsetupFile.getAbsolutePath(), "-h", host, "-p", Integer.toString(port)));
 
         ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
+        String output = results.getCapturedOutput();
     }
 
     private File unpackBundleZipFile() throws IOException {

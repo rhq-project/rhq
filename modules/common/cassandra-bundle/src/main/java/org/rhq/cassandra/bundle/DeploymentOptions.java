@@ -39,6 +39,7 @@ public class DeploymentOptions {
     private Integer numNodes;
     private Boolean autoDeploy;
     private Boolean embedded;
+    private String loggingLevel;
 
     public DeploymentOptions(Properties properties) {
         setBundleFileName(properties.getProperty("rhq.cassandra.bundle.filename"));
@@ -48,6 +49,7 @@ public class DeploymentOptions {
         setNumNodes(Integer.parseInt(properties.getProperty("rhq.cassandra.cluster.num-nodes")));
         setAutoDeploy(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.auto-deploy")));
         setEmbedded(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.is-embedded")));
+        setLoggingLevel(properties.getProperty("rhq.cassandra.logging.level"));
     }
 
     public String getBundleFileName() {
@@ -117,6 +119,16 @@ public class DeploymentOptions {
     public void setEmbedded(boolean embedded) {
         if (this.embedded == null) {
             this.embedded = embedded;
+        }
+    }
+
+    public String getLoggingLevel() {
+        return loggingLevel;
+    }
+
+    public void setLoggingLevel(String loggingLevel) {
+        if (this.loggingLevel == null) {
+            this.loggingLevel = loggingLevel;
         }
     }
 

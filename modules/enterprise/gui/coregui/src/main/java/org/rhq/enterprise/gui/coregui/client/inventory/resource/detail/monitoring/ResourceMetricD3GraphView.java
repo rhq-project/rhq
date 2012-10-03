@@ -22,10 +22,10 @@ import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 
-public class ResourceMetricD3GraphView extends AbstractMetricGraphView {
+public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView {
 
 
     public ResourceMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
@@ -42,16 +42,16 @@ public class ResourceMetricD3GraphView extends AbstractMetricGraphView {
 
     @Override
     protected boolean supportsLiveGraphViewDialog() {
-        return false;
+        return true;
     }
 
     @Override
     protected void displayLiveGraphViewDialog() {
-        //LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
+        LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }
 
     @Override
-    public AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
         return new ResourceMetricD3GraphView(locatorId, entityId, def, data);

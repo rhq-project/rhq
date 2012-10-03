@@ -22,7 +22,6 @@ package org.rhq.enterprise.gui.coregui.client.components.graphing.d3;
  * @author Denis Krusko
  * @author Mike Thompson
  */
-//@todo: add Generics
 public class D3GraphCanvas extends AbstractGraphCanvas
 {
     String chartId;
@@ -62,9 +61,9 @@ public class D3GraphCanvas extends AbstractGraphCanvas
 
     public native void drawCharts() /*-{
         var context = $wnd.cubism.context()
-                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::serverDelay)// allow seconds of collection lag
-                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::clientDelay)
-                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::step)
+                .serverDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::serverDelay)// allow seconds of collection lag
+                .clientDelay(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::clientDelay)
+                .step(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::step)
                 .size(this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.CubismGraphCanvas::width);
 
         var chartDiv = "#" + this.@org.rhq.enterprise.gui.coregui.client.components.graphing.d3.D3GraphCanvas::chartId;

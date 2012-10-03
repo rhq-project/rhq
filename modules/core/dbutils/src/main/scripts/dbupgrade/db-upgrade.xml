@@ -4037,8 +4037,6 @@
 
             </schemaSpec>
 
-<!-- DB Schema 2.124 was bad so skipping intentionally -->
-
 <!-- RHQ 4.5.0 uses DB Schema 2.125 -->
             <schemaSpec version="2.125">
                 <schema-directSQL>

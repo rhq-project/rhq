@@ -38,6 +38,9 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransportException;
+
 import org.rhq.bundle.ant.AntLauncher;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
@@ -114,6 +117,10 @@ public class EmbeddedDeployer {
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
+                if (i == 0) {
+                    waitForNodeToStart(10, address);
+                    updateSchema(nodeBasedir, address, 9160);
+                }
             }
             FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
         } catch (IOException e) {
@@ -156,6 +163,46 @@ public class EmbeddedDeployer {
         startScriptExe.setArguments(asList("-p", "cassandra.pid"));
 
         ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
+    }
+
+    private void waitForNodeToStart(int maxRetries, String host) throws CassandraException {
+        int port = 9160;
+        int timeout = 50;
+        for (int i = 0; i < maxRetries; ++i) {
+            TSocket socket = new TSocket(host, port, timeout);
+            try {
+                socket.open();
+                return;
+            } catch (TTransportException e) {
+            }
+        }
+        throw new CassandraException("Could not connect to " + host + " after " + maxRetries);
+    }
+
+    private void updateSchema(File basedir, String host, int port) throws CassandraException {
+        File binDir = new File(basedir, "bin");
+        File cliScript;
+        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+
+        if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+            cliScript = new File(binDir, "cassandra-cli.bat");
+        } else {
+            cliScript = new File(binDir, "cassandra-cli");
+        }
+
+        File dbsetupFile = null;
+        try {
+            dbsetupFile = File.createTempFile("dbsetup.script", null);
+            InputStream inputStream = getClass().getResourceAsStream("/dbsetup.script");
+            FileOutputStream outputStream = new FileOutputStream(dbsetupFile);
+            StreamUtil.copy(inputStream, outputStream);
+        } catch (IOException e) {
+            throw new CassandraException("Failed to load schema update script", e);
+        }
+        ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(cliScript);
+        cliExe.setArguments(asList("-f", dbsetupFile.getAbsolutePath(), "-h", host, "-p", Integer.toString(port)));
+
+        ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
     }
 
     private File unpackBundleZipFile() throws IOException {

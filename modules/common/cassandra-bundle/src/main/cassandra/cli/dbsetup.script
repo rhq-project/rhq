@@ -1,0 +1,40 @@
+create keyspace rhq
+    with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and
+    strategy_options = {replication_factor:1};
+
+use rhq;
+
+create column family raw_metrics
+    with comparator = DateType and
+    default_validation_class = DoubleType and
+    key_validation_class = Int32Type;
+
+create column family one_hour_metric_data
+    with comparator = 'CompositeType(DateType, Int32Type)' and
+    default_validation_class = DoubleType and
+    key_validation_class = Int32Type;
+
+create column family six_hour_metric_data
+    with comparator = 'CompositeType(DateType, Int32Type)' and
+    default_validation_class = DoubleType and
+    key_validation_class = Int32Type;
+
+create column family twenty_four_hour_metric_data
+    with comparator = 'CompositeType(DateType, Int32Type)' and
+    default_validation_class = DoubleType and
+    key_validation_class = Int32Type;
+
+create column family metrics_work_queue
+    with comparator = 'CompositeType(DateType, Int32Type)' and
+    default_validation_class = Int32Type and
+    key_validation_class = UTF8Type;
+
+create column family resource_traits
+    with comparator = 'CompositeType(DateType, Int32Type, Int32Type, UTF8Type, UTF8Type)' and
+    default_validation_class = UTF8Type and
+    key_validation_class = Int32Type;
+
+create column family traits
+    with comparator = DateType and
+    default_validation_class = UTF8Type and
+    key_validation_class = Int32Type;

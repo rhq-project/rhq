@@ -55,6 +55,9 @@
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
       </resource>
+      <resource>
+        <directory>src/main/cassandra/cli</directory>
+      </resource>
     </resources>
 
     <filters>

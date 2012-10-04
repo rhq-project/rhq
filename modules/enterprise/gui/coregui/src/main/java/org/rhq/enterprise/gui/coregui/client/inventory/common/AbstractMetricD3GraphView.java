@@ -136,13 +136,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            graph = new HTMLFlow("<div id=\"rchart\" />");
+            graph = new HTMLFlow("<div id=\"rchart\" ><svg></svg></div>");
             graph.setWidth100();
-            graph.setHeight(500);
+            graph.setHeight(200);
             addMember(graph);
-
-            //@todo: Draw graph
-
+//
+//            //@todo: Draw graph
+//
             drawCharts();
 
         }
@@ -172,22 +172,27 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public native void drawCharts() /*-{
-        console.log("Starting Rickshaw graph");
-        var data = [ { x: 0, y: 40 }, { x: 1, y: 49 }, { x: 2, y: 17 }, { x: 3, y: 42 } ];
+        console.log("Starting NVD3 graph");
+        $wnd.nv.addGraph(function() {
+            var chart = nv.models.lineChart();
 
-        var graph = new $wnd.Rickshaw.Graph( {
-            element: $wnd.document.querySelector("#rchart"),
-            width: 580,
-            height: 250,
-            series: [ {
-                color: 'steelblue',
-                data: data
-            } ]
-        } );
+            chart.xAxis
+                    .axisLabel('Time (ms)')
+                    .tickFormat(d3.format(',r'));
 
+            chart.yAxis
+                    .axisLabel('Voltage (v)')
+                    .tickFormat(d3.format('.02f'));
 
-        console.log("Rendering Rickshaw graph");
-        graph.render();
+            d3.select('#rchart svg')
+                    .datum(data())
+                    .transition().duration(500)
+                    .call(chart);
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        });
 
     }-*/;
 

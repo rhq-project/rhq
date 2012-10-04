@@ -18,24 +18,23 @@
    <dependencies>
         <dependency>
           <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-enterprise-comm</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-jmx-plugin</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-
+        
         <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-jboss-as-7-jmx-plugin</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-enterprise-comm</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope> <!-- to be bundled in the plugin -->
-        </dependency>
+          <groupId>mc4j</groupId>
+          <artifactId>org-mc4j-ems</artifactId>
+          <scope>provided</scope>         
+        </dependency>        
    </dependencies>
 
    <build>
@@ -56,6 +55,16 @@
                            <artifactId>rhq-enterprise-comm</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+                        <artifactItem>
+                           <groupId>${rhq.groupId}</groupId>
+                           <artifactId>rhq-jmx-plugin</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>mc4j</groupId>
+                           <artifactId>org-mc4j-ems</artifactId>
+                           <version>${ems.version}</version>
+                        </artifactItem>                                               
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>

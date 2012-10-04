@@ -14,11 +14,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * Just returns the singleton jmx mbeans parent resource.
+ * Just returns the singleton RHQ Server Subsystems parent resource as a container for the
+ * subsystem resources.
  * 
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -30,8 +32,8 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
 
     @Override
     public List<URL> getAdditionalClasspathUrls(
-        ResourceDiscoveryContext<ResourceComponent<JBossAS7JMXComponent<?>>> context,
-        DiscoveredResourceDetails details) throws Exception {
+        ResourceDiscoveryContext<ResourceComponent<JBossAS7JMXComponent<?>>> context, DiscoveredResourceDetails details)
+        throws Exception {
 
         Configuration pluginConfig = details.getPluginConfiguration();
         String clientJarLocation = pluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_CLIENT_JAR_LOCATION);
@@ -61,29 +63,26 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
             return null;
         }
 
-        // XXX: hack to get the JMX plugin class in our classloader
-        File tmpDir = new File("/home/mazz/source/rhq/modules/enterprise/agent/target/rhq-agent/data/tmp");
-        File pluginsDir = new File(tmpDir, "../../plugins");
-        for (File jarFile : pluginsDir.listFiles()) {
-            if (jarFile.getName().startsWith("rhq-jmx-plugin")) {
-                clientJars.add(jarFile.toURI().toURL());
-                break;
-            }
-        }
-        clientJars
-            .add(new File("/home/mazz/.m2/repository/mc4j/org-mc4j-ems/1.3/org-mc4j-ems-1.3.jar").toURI().toURL());
-
         return clientJars;
     }
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
 
+        HashSet<DiscoveredResourceDetails> result = new HashSet<DiscoveredResourceDetails>();
+        ResourceContext<?> parentResourceContext = context.getParentResourceContext();
+        Configuration parentPluginConfig = parentResourceContext.getPluginConfiguration();
+
         // TODO: use additional methods to look around for other places where this can be find
-        // for example, we might be able to look in the /modules directory for some jars to use if the bin/client dir is gone
+        // for example, we might be able to look in the /modules directory for some jars to
+        // use if the bin/client dir is gone.  Also, if for some reason we shouldn't use this jar,
+        // we may need to instead use various additional jars required by jbossas/bin/jconsole.sh.
+        File rhqServerFile = null;
         File clientJarDir = null;
-        String homeDirStr = context.getParentResourceContext().getPluginConfiguration().getSimpleValue("homeDir");
+
+        String homeDirStr = parentPluginConfig.getSimpleValue("homeDir");
         if (homeDirStr != null) {
+
             File homeDirFile = new File(homeDirStr);
             if (homeDirFile.exists()) {
                 clientJarDir = new File(homeDirFile, "bin/client");
@@ -91,24 +90,40 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
                     log.warn("The client jar location [" + clientJarDir.getAbsolutePath()
                         + "] does not exist - will not be able to connect to the AS7 instance");
                 }
+
+                rhqServerFile = new File(homeDirFile, "../bin/rhq-server.sh");
             }
+        }
+
+        // If the parent is not an RHQ server then just return.
+        if (null == rhqServerFile || !rhqServerFile.exists()) {
+            return result;
         }
 
         String clientJarLocation = (clientJarDir != null) ? clientJarDir.getAbsolutePath() : null;
 
-        HashSet<DiscoveredResourceDetails> result = new HashSet<DiscoveredResourceDetails>();
-
-        String key = "JBossAS7JMX";
-        String name = "jmx mbeans";
-        String version = "7"; // this should probably be the actual version of the remote AS7 server being monitored
-        String description = "Container for JMX MBeans deployed to AS7";
+        String key = "RHQServerSubsystems";
+        String name = "RHQ Server Subsystems";
+        String version = parentResourceContext.getVersion();
+        String description = "Container for RHQ Server Subsystem services";
 
         Configuration pluginConfig = context.getDefaultPluginConfiguration();
-        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_HOSTNAME, "127.0.0.1"); // TODO how can we get this from the parent?
-        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT,
-            JBossAS7JMXComponent.DEFAULT_PLUGIN_CONFIG_PORT); // TODO how can we get this from the parent?
-        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_USERNAME, "rhqadmin");
-        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PASSWORD, "rhqadmin");
+
+        String hostname = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_HOSTNAME, "127.0.0.1");
+        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_HOSTNAME, hostname);
+
+        String port = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT, "9999");
+        if (!"9999".equals(port)) {
+            port = String.valueOf(Integer.valueOf(port) + 9);
+        }
+        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT, port);
+
+        String user = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_USERNAME, "rhqadmin");
+        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_USERNAME, user);
+
+        String password = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PASSWORD, "rhqadmin");
+        pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PASSWORD, password);
+
         pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_CLIENT_JAR_LOCATION, clientJarLocation);
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,

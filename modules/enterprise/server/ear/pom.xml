@@ -586,7 +586,7 @@
 
                                         <artifactItem>
                                             <groupId>org.jboss.on</groupId>
-                                            <artifactId>jopr-rhq-server-plugin</artifactId>
+                                            <artifactId>rhq-rhqserver-plugin</artifactId>
                                             <version>${project.version}</version>
                                         </artifactItem>
 

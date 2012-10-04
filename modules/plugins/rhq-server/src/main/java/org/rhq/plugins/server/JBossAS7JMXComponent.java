@@ -1,4 +1,4 @@
-package org.rhq.plugins.jbossas7jmx;
+package org.rhq.plugins.server;
 
 import java.util.Properties;
 

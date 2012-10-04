@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/jboss-as-7-jmx/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/main/java"/>

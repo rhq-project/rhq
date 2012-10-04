@@ -136,7 +136,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            graph = new HTMLFlow("<div id=\"rchart\" ><svg></svg></div>");
+            graph = new HTMLFlow("<div id=\"rchart\" ><svg style=\"height:200px;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight(200);
             addMember(graph);
@@ -172,24 +172,47 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public native void drawCharts() /*-{
+        console.log("Draw nvd3 charts");
+        var data = function() {
+            var sin = [],
+                    cos = [];
+
+            for (var i = 0; i < 100; i++) {
+                sin.push({x: i, y: Math.sin(i/10)});
+                cos.push({x: i, y: .5 * Math.cos(i/10)});
+            }
+
+            return [
+                {
+                    values: sin,
+                    key: 'Sine Wave',
+                    color: '#ff7f0e'
+                },
+                {
+                    values: cos,
+                    key: 'Cosine Wave',
+                    color: '#2ca02c'
+                }
+            ];
+        };
         console.log("Starting NVD3 graph");
         $wnd.nv.addGraph(function() {
-            var chart = nv.models.lineChart();
+            var chart = $wnd.nv.models.lineChart();
 
             chart.xAxis
                     .axisLabel('Time (ms)')
-                    .tickFormat(d3.format(',r'));
+                    .tickFormat($wnd.d3.format(',r'));
 
             chart.yAxis
                     .axisLabel('Voltage (v)')
-                    .tickFormat(d3.format('.02f'));
+                    .tickFormat($wnd.d3.format('.02f'));
 
-            d3.select('#rchart svg')
+            $wnd.d3.select('#rchart svg')
                     .datum(data())
                     .transition().duration(500)
                     .call(chart);
 
-            nv.utils.windowResize(chart.update);
+            $wnd.nv.utils.windowResize(chart.update);
 
             return chart;
         });

@@ -39,6 +39,7 @@
 
   </dependencies>
 
+<!--
   <build>
     <plugins>
 
@@ -53,7 +54,6 @@
             </goals>
             <configuration>
               <excludeTransitive>false</excludeTransitive>
-              <!-- <includeGroupIds>org.jboss.remoting3,org.jboss.remotingjmx,org.jboss.logging,org.jboss.xnio,org.jboss.xnio.nio,org.jboss.sasl,org.jboss.marshalling,org.jboss.marshalling.river,org.jboss.as.cli,org.jboss.staxmapper,org.jboss.as.protocol,org.jboss.dmr,org.jboss.as.controller-client,org.jboss.threads,org.jboss.as.controller</includeGroupIds> -->
               <includeGroupIds>org.jboss</includeGroupIds>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>
@@ -64,6 +64,7 @@
 
     </plugins>
   </build>
+-->
 
   <profiles>
 

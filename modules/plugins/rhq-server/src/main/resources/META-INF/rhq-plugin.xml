@@ -8,7 +8,7 @@
    <depends plugin="JMX" useClasses="true" />
 
    <service name="RHQ Server Alerts Engine Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="AlertsCacheResourceComponent"
             description="RHQ Server Alerts Engine Subsystem"
             singleton="true">
@@ -92,7 +92,7 @@
    </service>
 
    <service name="RHQ Server Measurement Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
             description="RHQ Server Measurement Subsystem"
             singleton="true">
@@ -154,7 +154,7 @@
    </service>
 
    <service name="RHQ Server Group Definition / DynaGroups Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="GroupDefinitionResourceComponent"
             description="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem"
             singleton="true">
@@ -200,7 +200,7 @@
    </service>
 
    <service name="RHQ Server Communications Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="CommunicationsResourceComponent"
             description="Details on communications with agents"
             singleton="true">
@@ -277,7 +277,7 @@
    </service>
 
    <service name="RHQ Server Remote API Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="RemoteAPIResourceComponent"
             description="Details on remote API communications with external clients, including the CLI"
             singleton="true">
@@ -322,7 +322,7 @@
    </service>
 
    <service name="RHQ Server Plugin Subsystem"
-            discovery="org.rhq.plugins.server.SubsystemDiscoveryComponent"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
             description="Details on the server-side plugin container subsystem"
             singleton="true">

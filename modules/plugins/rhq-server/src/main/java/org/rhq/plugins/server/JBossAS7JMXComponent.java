@@ -37,7 +37,7 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
     public static final String PLUGIN_CONFIG_HOSTNAME = "hostname"; // jboss.bind.address.management
     public static final String PLUGIN_CONFIG_USERNAME = "username";
     public static final String PLUGIN_CONFIG_PASSWORD = "password";
-    public static final String DEFAULT_PLUGIN_CONFIG_PORT = "6999";
+    public static final String DEFAULT_PLUGIN_CONFIG_PORT = "9999";
 
     private Log log = LogFactory.getLog(JBossAS7JMXComponent.class);
     private ResourceContext<T> resourceContext;
@@ -52,7 +52,13 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
 
     @Override
     public AvailabilityType getAvailability() {
-        // TODO: this should return DOWN if the jmx remote port is inaccessible
+
+        // TODO (jshaughn): Figure out why this hangs, it seems so innocuous :)
+        //EmsConnection conn = getEmsConnection();
+        //ConnectionProvider connectionProvider = (null != conn) ? conn.getConnectionProvider() : null;
+        //return (null != connectionProvider && connectionProvider.isConnected()) ? AvailabilityType.UP
+        //    : AvailabilityType.DOWN;
+
         return AvailabilityType.UP;
     }
 
@@ -74,7 +80,7 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
         try {
             emsConnection = loadConnection();
         } catch (Exception e) {
-            log.error("Component attempting to access a connection that could not be loaded");
+            log.error("Component attempting to access a connection that could not be loaded: " + e.getCause());
         }
 
         return emsConnection;
@@ -86,9 +92,6 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
         }
 
         try {
-
-            // TODO can I get the parent-parent context?????
-
             Configuration pluginConfig = resourceContext.getPluginConfiguration();
             String hostname = pluginConfig.getSimpleValue(PLUGIN_CONFIG_HOSTNAME, "127.0.0.1");
             String port = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PORT, DEFAULT_PLUGIN_CONFIG_PORT);
@@ -100,7 +103,6 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
             connectionSettings.setServerUrl("service:jmx:remoting-jmx://" + hostname + ":" + port);
             connectionSettings.setPrincipal(username);
             connectionSettings.setCredentials(password);
-            //String connectionTypeDescriptorClass = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE).getStringValue();
 
             ConnectionFactory connectionFactory = new ConnectionFactory();
             connectionFactory.discoverServerClasses(connectionSettings);
@@ -109,40 +111,12 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
                 connectionSettings.setAdvancedProperties(new Properties());
             }
 
-            // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
-            // application files (making us unable to update them)  Bug: JBNADM-670
-            // TODO GH: turn this off in the embedded case
-            //connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,  String.valueOf(Boolean.TRUE));
-
-            // But tell it to put them in a place that we clean up when shutting down the agent
-            //connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, context.getParentResourceContext().getTemporaryDirectory().getAbsolutePath());
-            //connectionSettings.getAdvancedProperties().setProperty(InternalVMTypeDescriptor.DEFAULT_DOMAIN_SEARCH, "jboss");
-
             log.info("Loading AS7 connection [" + connectionSettings.getServerUrl() + "] with install path ["
                 + connectionSettings.getLibraryURI() + "]...");
 
             ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
             this.connection = connectionProvider.connect();
 
-            //connectionSettings.getAdvancedProperties().setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
-
-            // Make sure the timeout always happens, even if the JBoss server is hung.
-            //connectionSettings.getAdvancedProperties().setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
-            //connectionSettings.getAdvancedProperties().setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
-
-            /*
-            try {
-                org.mc4j.ems.impl.JMXRemotingConnectionProvider foo;
-                JMXServiceURL serviceURL = new JMXServiceURL("service:jmx:remoting-jmx://" + hostname + ":" + port);
-                Map<String, String[]> env = new HashMap<String, String[]>();
-                env.put(JMXConnector.CREDENTIALS, new String[] { username, password });
-                RemotingConnectorProvider provider = new RemotingConnectorProvider();
-                JMXConnector connector = provider.newJMXConnector(serviceURL, env);
-                MBeanServerConnection conn = connector.getMBeanServerConnection();
-
-            } catch (Exception e) {
-            }
-            */
             if (log.isDebugEnabled()) {
                 log.debug("Successfully made connection to the AS7 instance for resource ["
                     + resourceContext.getResourceKey() + "]");

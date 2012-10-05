@@ -100,6 +100,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         this.definition = definition;
     }
 
+    public String getChartId(){
+        return entityId + "-" + definitionId;
+    }
     public List<MeasurementDataNumericHighLowComposite> getData() {
         return data;
     }
@@ -147,7 +150,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"rChart\" ><svg style=\"height:200px;\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:200px;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight(200);
             addMember(graph);
@@ -217,6 +220,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
+        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
+        var chartSelection = "#rChart-"+chartId + " svg";
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
         var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
@@ -242,9 +247,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .axisLabel(yAxisUnits)
                     .tickFormat($wnd.d3.format('.02f'));
 
-            $wnd.d3.select('#rChart svg')
+            $wnd.d3.select(chartSelection)
                     .datum(data())
-                    .transition().duration(500)
+                    .transition().duration(300)
                     .call(chart);
 
             $wnd.nv.utils.windowResize(chart.update);

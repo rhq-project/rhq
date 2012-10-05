@@ -751,6 +751,11 @@ class RemoteApi {
         Shake, Add
     };
 
+    //supported response states
+    public enum State {
+        Success, Fail
+    };
+
     public void updateServer(boolean newState) {
         continueToRun = newState;
     }
@@ -760,7 +765,7 @@ class RemoteApi {
             apiHandler = new ServerSocket(port);
         } catch (IOException ioe) {
             try {
-                apiHandler = new ServerSocket();
+                apiHandler = new ServerSocket(0);
             } catch (IOException e) {//if fails here give up, and spit out stack trace
                 e.printStackTrace();
             }//have OS select free on for us.
@@ -779,42 +784,84 @@ class RemoteApi {
                 //generate response. Empty request then return state otherwise attempt to load new state
                 clientRequest = clientRequest.trim();
                 String response = "";
+                boolean simpleReadRequest = false;
+                RequestStatus status = new RequestStatus();//to respond to non-readonly requests
                 if (clientRequest.isEmpty()) {//empty request, return state
                     ApplicationState state = new ApplicationState();
                     response = ManagedHive.mapper.writeValueAsString(state);
-                } else {//request for state update.
-                    ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
-                    //todo: apply validation 
-                    //todo: spinder apply state.
-                    //detect operations request
-                    String action = state.getAction();
-                    action = action.trim();
-                    if (!action.isEmpty()) {
-                        //attempt to locate valid action
-                        Operation operation = null;
-                        for (Operation op : Operation.values()) {
-                            if (op.name().equalsIgnoreCase(action)) {
-                                operation = op;
-                            }
-                        }
-                        //action on that action
-                        if (operation != null) {
-                            switch (operation) {
-                            case Shake:
-                                ManagedHive.executeShakeOperation();
-                                break;
+                    simpleReadRequest = true;
+                } else {//request for state update or operation execution
 
-                            case Add:
-                                ManagedHive.executeAddBeeOperation();
-                                break;
-
-                            default:
-                                break;
+                    try {
+                        ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
+                        //detect operations request
+                        String action = state.getAction();
+                        action = action.trim();
+                        if (!action.isEmpty()) {
+                            //attempt to locate valid action
+                            Operation operation = null;
+                            for (Operation op : Operation.values()) {
+                                if (op.name().equalsIgnoreCase(action)) {
+                                    operation = op;
+                                }
                             }
+                            //action on that action
+                            if (operation != null) {
+                                status.setStatus(State.Success.name());
+                                switch (operation) {
+                                case Shake:
+                                    ManagedHive.executeShakeOperation();
+                                    status.setDetail("Successfully executed " + operation.Shake.name());
+                                    break;
+                                case Add:
+                                    ManagedHive.executeAddBeeOperation();
+                                    status.setDetail("Successfully executed " + operation.Add.name() + " Bee");
+                                    break;
+                                }
+                            } else {// unknown operation.
+                                status.setStatus(State.Fail.name());
+                                status.setDetail("Unable to recognise operation '" + action
+                                    + "'. Only the following operations [" + State.values() + "] allowed.");
+                            }
+                        } else {//this is not an action but request to update configuration
+                            //look at configuration values and if within range then update otherwise don't
+                            ///beePopulationBase
+                            int value = state.getBeePopulationBase();
+                            if ((value >= Validation.POPULATION_BASE.getLowest())
+                                && (value <= Validation.POPULATION_BASE.getHighest())) {
+                                if (ManagedHive.basePopulation != value) {
+                                    ManagedHive.basePopulation = value;
+                                }
+                            }
+                            ///swarmTimeBase
+                            value = state.getSwarmTimeBase();
+                            if ((value >= Validation.SWARM_TIME.getLowest())
+                                && (value <= Validation.SWARM_TIME.getHighest())) {
+                                if (ManagedHive.basePopulation != value) {
+                                    ManagedHive.basePopulation = value;
+                                }
+                            }
+                            ///beesToAdd
+                            value = state.getBeesToAdd();
+                            if ((value >= Validation.BEES_TO_ADD.getLowest())
+                                && (value <= Validation.BEES_TO_ADD.getHighest())) {
+                                if (ManagedHive.beeAdditionAmount != value) {
+                                    ManagedHive.beeAdditionAmount = value;
+                                }
+                            }
+                            status.setStatus(State.Success.name());
+                            status.setDetail("The requested updates were applied where"
+                                + " possible and ignored when validation rules were violated.");
+                            //kick off population adjustments if any
+                            ManagedHive.hiveComponent.removeBee();
                         }
-                    } else {
-                        //todo: insert validation actions.
+                    } catch (Exception ex) {
+                        status.setStatus(State.Fail.name());
+                        status.setDetail(ex.getMessage());
                     }
+                }
+                if (!simpleReadRequest) {//not a simple read so return status to users that want to know.
+                    response = ManagedHive.mapper.writeValueAsString(status);
                 }
                 //append newLine
                 response += "\n";
@@ -907,4 +954,25 @@ class ApplicationState {
     private int swarmTimeBase;
     private int beesToAdd;
     private String action;
+}
+
+class RequestStatus {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDetail() {
+        return detail;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
+    }
+
+    private String status;
+    private String detail;
 }

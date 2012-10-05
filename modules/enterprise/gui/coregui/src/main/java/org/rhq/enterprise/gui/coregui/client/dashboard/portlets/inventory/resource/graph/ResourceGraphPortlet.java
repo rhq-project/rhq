@@ -40,12 +40,13 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public class ResourceGraphPortlet extends ResourceMetricGraphView implements CustomSettingsPortlet {
+public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceMetric";
@@ -180,6 +181,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
     @Override
     public void redraw() {
+        Log.debug(" *** Redraw Portlet");
         super.redraw();
 
         removeMembers(getMembers());

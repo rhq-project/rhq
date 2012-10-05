@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -38,9 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
-    private HTMLFlow resourceTitle;
-
-    private HTMLFlow graph;
+    protected HTMLFlow resourceTitle;
 
     private int entityId;
     private int definitionId;
@@ -80,16 +79,25 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     public void setEntityId(int entityId) {
         this.entityId = entityId;
+        this.definition = null;
+    }
+    public int getDefinitionId() {
+        return definitionId;
     }
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
+        this.definition = null;
     }
+
 
     public MeasurementDefinition getDefinition() {
         return definition;
     }
 
+    public void setDefinition(MeasurementDefinition definition) {
+        this.definition = definition;
+    }
 
     public List<MeasurementDataNumericHighLowComposite> getData() {
         return data;
@@ -114,6 +122,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     protected void drawGraph() {
+        Log.debug(" *** drawGraph   in AbstractMetricD3GraphView  *****" + definition + ","+definitionId);
 
         HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
@@ -128,14 +137,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             }
 
             if (supportsLiveGraphViewDialog()) {
-                Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
-                liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
-
-                liveGraph.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        displayLiveGraphViewDialog();
-                    }
-                });
+                Img liveGraph = createLiveGraphImage();
                 titleHLayout.addMember(liveGraph);
             }
 
@@ -144,19 +146,30 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            graph = new HTMLFlow("<div id=\"rchart\" ><svg style=\"height:200px;\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"rchart\" ><svg style=\"height:200px;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight(200);
             addMember(graph);
-//
-//            //@todo: Draw graph
-//
-            drawCharts();
 
+            // @todo: if(IE) drawIE8Charts()
+            drawJsniCharts();
         }
 
 
 
+    }
+
+    private Img createLiveGraphImage() {
+        Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
+        liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
+
+        liveGraph.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                displayLiveGraphViewDialog();
+            }
+        });
+        return liveGraph;
     }
 
     protected boolean supportsLiveGraphViewDialog() {
@@ -179,7 +192,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         //hoverLabel.hide();
     }
 
-    public native void drawCharts() /*-{
+    public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
         var data = function() {
             var sin = [],

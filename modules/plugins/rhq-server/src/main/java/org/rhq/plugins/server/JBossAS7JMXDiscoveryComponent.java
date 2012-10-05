@@ -112,8 +112,9 @@ public class JBossAS7JMXDiscoveryComponent<T extends ResourceComponent<JBossAS7J
         String hostname = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_HOSTNAME, "127.0.0.1");
         pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_HOSTNAME, hostname);
 
-        String port = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT, "9999");
-        if (!"9999".equals(port)) {
+        String port = parentPluginConfig.getSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT,
+            JBossAS7JMXComponent.DEFAULT_PLUGIN_CONFIG_PORT);
+        if (!JBossAS7JMXComponent.DEFAULT_PLUGIN_CONFIG_PORT.equals(port)) {
             port = String.valueOf(Integer.valueOf(port) + 9);
         }
         pluginConfig.setSimpleValue(JBossAS7JMXComponent.PLUGIN_CONFIG_PORT, port);

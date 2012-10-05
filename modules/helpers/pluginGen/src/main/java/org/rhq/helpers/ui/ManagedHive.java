@@ -530,6 +530,12 @@ class Hive extends JComponent {
                     } else {
                         ManagedHive.swarmTimeDisplayField.setText("0");
                     }
+                    //include updates for a few more fields as well now that not only updated by GUI
+                    ManagedHive.populationBaseField.setText(ManagedHive.basePopulation + "");
+                    ManagedHive.swarmTimeUpdateField.setText(ManagedHive.swarmTime + "");
+                    ManagedHive.beeCountUpdateField.setText(ManagedHive.beeAdditionAmount + "");
+                    //disable edit button
+                    ManagedHive.updateConfiguration.setEnabled(false);
                 }
             });
         }
@@ -837,8 +843,8 @@ class RemoteApi {
                             value = state.getSwarmTimeBase();
                             if ((value >= Validation.SWARM_TIME.getLowest())
                                 && (value <= Validation.SWARM_TIME.getHighest())) {
-                                if (ManagedHive.basePopulation != value) {
-                                    ManagedHive.basePopulation = value;
+                                if (ManagedHive.swarmTime != value) {
+                                    ManagedHive.swarmTime = value;
                                 }
                             }
                             ///beesToAdd

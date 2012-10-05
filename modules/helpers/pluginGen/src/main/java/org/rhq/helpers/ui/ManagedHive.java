@@ -30,6 +30,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Vector;
@@ -50,6 +56,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.helpers.ui.ManagedHive.Validation;
 
@@ -93,9 +101,16 @@ public class ManagedHive extends JFrame {
                 e1.printStackTrace();
             }
         }
+
+        //now start the remote api
+        initializeRemoteApi();
     }
 
     /******************* Management capabilities **************************/
+
+    private void initializeRemoteApi() {
+        RemoteApi.getRemoteApiServer(9876);
+    }
 
     /******************* UI Logic & Components **************************/
     private int space = 7;//horizontal spacing between components
@@ -112,11 +127,13 @@ public class ManagedHive extends JFrame {
     protected static int angryPackSize = 50;
     protected static int beeAdditionAmount = 13;
     protected static JLabel mood = null;
+    protected static JLabel miEnabled = null;
     protected static JTextField swarmTimeDisplayField;
     protected static JTextField populationBaseField;
     protected static JTextField swarmTimeUpdateField;
     protected static JTextField beeCountUpdateField;
     protected static JButton updateConfiguration;
+    protected static ObjectMapper mapper = new ObjectMapper();
 
     public enum Validation {
         POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
@@ -216,6 +233,12 @@ public class ManagedHive extends JFrame {
             mood.setText("Calm");
             monitorRow.add(mood);
             monitorRow.add(Box.createHorizontalStrut(space));
+            //managed interface reporting
+            miEnabled = new JLabel();
+            miEnabled.setOpaque(true);
+            miEnabled.setBackground(Color.gray);
+            miEnabled.setText("Remote Api(disabled)");
+            monitorRow.add(miEnabled);
         }
 
         //Shake hive button
@@ -687,4 +710,138 @@ class ConfigurationFieldsListener implements DocumentListener {
     public void changedUpdate(DocumentEvent e) {
         ManagedHive.updateConfiguration.setEnabled(true);
     }
+}
+
+class RemoteApi {
+    private static ServerSocket apiHandler = null;
+    private static String host = "localhost";
+    private static int port = 9876;//default port
+    private static boolean continueToRun = true;
+
+    public void updateServer(boolean newState) {
+        continueToRun = newState;
+    }
+    public static void getRemoteApiServer(int port){
+        //try to launch the requested port if not get random available one
+        try {
+            apiHandler = new ServerSocket(port);
+        } catch (IOException ioe) {
+            try {
+                apiHandler = new ServerSocket();
+            } catch (IOException e) {//if fails here give up, and spit out stack trace
+                e.printStackTrace();
+            }//have OS select free on for us.
+            port = apiHandler.getLocalPort();
+        }
+
+        while (continueToRun) {
+            Socket connectionSocket;
+            try {
+                connectionSocket = apiHandler.accept();
+                BufferedReader inFromClient = new BufferedReader(new InputStreamReader(
+                    connectionSocket.getInputStream()));
+                DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+                String clientRequest = inFromClient.readLine();
+                System.out.println("[Server] Received: " + clientRequest);
+                //generate response. Empty request then return state otherwise attempt to load new state
+                clientRequest = clientRequest.trim();
+                String response = "";
+                if (clientRequest.isEmpty()) {//empty request, return state
+                    ApplicationState state = new ApplicationState();
+                    response = ManagedHive.mapper.writeValueAsString(state);
+                } else {//request for state update.
+                    ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
+                    //todo: spinder apply state.
+                }
+                //append newLine
+                response += "\n";
+                outToClient.writeBytes(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+/**
+ * Class bundles up the current application state for serialization to JSON.
+ */
+class ApplicationState {
+    /** Constructor will query the relevant properties at instantiation.
+     */
+    public ApplicationState() {//populates current state
+        //real time
+        currentBeePopulation = ManagedHive.hiveComponent.getCurrentPopulation();
+        swarmTimeLeft = ((SwarmTimer) ManagedHive.angryTimer).getExpireTime();
+        hiveAngry = (swarmTimeLeft > 0) ? true : false;
+        //current configuration settings
+        beePopulationBase = ManagedHive.basePopulation;
+        swarmTimeBase = ManagedHive.swarmTime;
+        beesToAdd = ManagedHive.angryPackSize;
+        action = "";//empty as only useful when executing operations
+    }
+
+    public int getCurrentBeePopulation() {
+        return currentBeePopulation;
+    }
+
+    public void setCurrentBeePopulation(int currentBeePopulation) {
+        this.currentBeePopulation = currentBeePopulation;
+    }
+
+    public int getSwarmTimeLeft() {
+        return swarmTimeLeft;
+    }
+
+    public void setSwarmTimeLeft(int swarmTimeLeft) {
+        this.swarmTimeLeft = swarmTimeLeft;
+    }
+
+    public boolean isHiveAngry() {
+        return hiveAngry;
+    }
+
+    public void setHiveAngry(boolean hiveAngry) {
+        this.hiveAngry = hiveAngry;
+    }
+
+    public int getBeePopulationBase() {
+        return beePopulationBase;
+    }
+
+    public void setBeePopulationBase(int beePopulationBase) {
+        this.beePopulationBase = beePopulationBase;
+    }
+
+    public int getSwarmTimeBase() {
+        return swarmTimeBase;
+    }
+
+    public void setSwarmTimeBase(int swarmTimeBase) {
+        this.swarmTimeBase = swarmTimeBase;
+    }
+
+    public int getBeesToAdd() {
+        return beesToAdd;
+    }
+
+    public void setBeesToAdd(int beesToAdd) {
+        this.beesToAdd = beesToAdd;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    private int currentBeePopulation;
+    private int swarmTimeLeft;
+    private boolean hiveAngry;
+    private int beePopulationBase;
+    private int swarmTimeBase;
+    private int beesToAdd;
+    private String action;
 }

@@ -78,6 +78,14 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
 
+    public void setEntityId(int entityId) {
+        this.entityId = entityId;
+    }
+
+    public void setDefinitionId(int definitionId) {
+        this.definitionId = definitionId;
+    }
+
     public MeasurementDefinition getDefinition() {
         return definition;
     }

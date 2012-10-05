@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 
@@ -62,6 +63,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         setOverflow(Overflow.HIDDEN);
     }
 
+    @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
         if (null == this.portletWindow && null != portletWindow) {
@@ -89,6 +91,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
     }
 
+    @Override
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_graph());
     }
@@ -106,6 +109,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
     }
 
+    @Override
     public DynamicForm getCustomSettingsForm() {
         final DynamicForm form = new DynamicForm();
 
@@ -192,6 +196,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
+        @Override
         public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ResourceGraphPortlet(locatorId);

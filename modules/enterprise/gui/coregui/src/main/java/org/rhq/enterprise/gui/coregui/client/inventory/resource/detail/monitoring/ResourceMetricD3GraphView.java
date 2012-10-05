@@ -28,6 +28,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
 public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView {
 
 
+    public ResourceMetricD3GraphView(String locatorId){
+        super(locatorId);
+    }
+
+
     public ResourceMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data) {
 

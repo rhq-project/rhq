@@ -146,7 +146,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"rchart\" ><svg style=\"height:200px;\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"rChart\" ><svg style=\"height:200px;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight(200);
             addMember(graph);
@@ -192,27 +192,42 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         //hoverLabel.hide();
     }
 
+    public String getYAxisTitle(){
+       return definition.getName();
+    }
+    public String getYAxisUnits(){
+       return definition.getUnits().getName();
+    }
+
+    public String getXAxisTitle(){
+       return "Time";
+    }
+
     public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
+        var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
+        var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
         var data = function() {
             var sin = [],
                     cos = [];
+            var aMax = [];
 
             for (var i = 0; i < 100; i++) {
                 sin.push({x: i, y: Math.sin(i/10)});
                 cos.push({x: i, y: .5 * Math.cos(i/10)});
+                aMax.push( {x: i, y: 0.75})
             }
 
             return [
                 {
                     values: sin,
-                    key: 'Sine Wave',
+                    key: yAxisLabel ,
                     color: '#ff7f0e'
                 },
                 {
-                    values: cos,
-                    key: 'Cosine Wave',
-                    color: '#2ca02c'
+                    values: aMax,
+                    key: 'Max' ,
+                    color: '#000000'
                 }
             ];
         };
@@ -220,15 +235,14 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         $wnd.nv.addGraph(function() {
             var chart = $wnd.nv.models.lineChart();
 
-            chart.xAxis
-                    .axisLabel('Time (ms)')
+            chart.xAxis.axisLabel("Time")
                     .tickFormat($wnd.d3.format(',r'));
 
             chart.yAxis
-                    .axisLabel('Voltage (v)')
+                    .axisLabel(yAxisUnits)
                     .tickFormat($wnd.d3.format('.02f'));
 
-            $wnd.d3.select('#rchart svg')
+            $wnd.d3.select('#rChart svg')
                     .datum(data())
                     .transition().duration(500)
                     .call(chart);

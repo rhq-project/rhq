@@ -92,6 +92,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView {
                             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
                             new ResourceTypeRepository.TypesLoadedCallback() {
 
+                                @Override
                                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
                                     String url = LinkManager.getResourceLink(resource.getId());
                                     resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),

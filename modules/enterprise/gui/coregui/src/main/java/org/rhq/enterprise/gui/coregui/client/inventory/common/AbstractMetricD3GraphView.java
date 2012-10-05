@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 
 
@@ -203,37 +204,36 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
        return "Time";
     }
 
+    public String getJsonMetrics(){
+        StringBuilder sb = new StringBuilder("[");
+        for (MeasurementDataNumericHighLowComposite measurement : data) {
+            sb.append("{ x:"+measurement.getTimestamp()+",");
+            sb.append(" y:"+measurement.getValue()+"},");
+        }
+        sb.setLength(sb.length()-1); // delete the last ','
+        sb.append("]");
+        return sb.toString();
+    }
+
     public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
+        var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
+
         var data = function() {
-            var sin = [],
-                    cos = [];
-            var aMax = [];
-
-            for (var i = 0; i < 100; i++) {
-                sin.push({x: i, y: Math.sin(i/10)});
-                cos.push({x: i, y: .5 * Math.cos(i/10)});
-                aMax.push( {x: i, y: 0.75})
-            }
-
             return [
                 {
-                    values: sin,
+                    values: json,
                     key: yAxisLabel ,
                     color: '#ff7f0e'
-                },
-                {
-                    values: aMax,
-                    key: 'Max' ,
-                    color: '#000000'
                 }
             ];
         };
         console.log("Starting NVD3 graph");
         $wnd.nv.addGraph(function() {
-            var chart = $wnd.nv.models.lineChart();
+            var chart = $wnd.nv.models.multiBarChart().
+            color($wnd.d3.scale.category20().range());
 
             chart.xAxis.axisLabel("Time")
                     .tickFormat($wnd.d3.format(',r'));

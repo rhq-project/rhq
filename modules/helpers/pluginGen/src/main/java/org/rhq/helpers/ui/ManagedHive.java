@@ -134,6 +134,7 @@ public class ManagedHive extends JFrame {
     protected static JTextField beeCountUpdateField;
     protected static JButton updateConfiguration;
     protected static ObjectMapper mapper = new ObjectMapper();
+    protected static int defaultRemoteApiPort = 9876;
 
     public enum Validation {
         POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
@@ -712,10 +713,20 @@ class ConfigurationFieldsListener implements DocumentListener {
     }
 }
 
+/**
+ * Responsible for running the remote api server and defining
+ * the protocol for interacting with the management server.
+ *   -every line to server and client should postpend a newline character. Ex. \n.
+ *   -a request to server with no json body is assumed to be a request for current state
+ *   -a request with json content is assumed request to update state to values passed in.
+ *       Note: server side validation may still not accepte invalid values.
+ *   -by setting the action field to "Shake" or "Add Bee", case insensitive is assumed a 
+ *       request to execute that action. 
+ */
 class RemoteApi {
     private static ServerSocket apiHandler = null;
     private static String host = "localhost";
-    private static int port = 9876;//default port
+    private static int port = ManagedHive.defaultRemoteApiPort;//default port
     private static boolean continueToRun = true;
 
     public void updateServer(boolean newState) {

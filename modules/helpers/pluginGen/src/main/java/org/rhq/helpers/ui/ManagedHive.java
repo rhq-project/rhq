@@ -109,7 +109,7 @@ public class ManagedHive extends JFrame {
     /******************* Management capabilities **************************/
 
     private void initializeRemoteApi() {
-        RemoteApi.getRemoteApiServer(9876);
+        RemoteApi.remoteApiServer(9876);
     }
 
     /******************* UI Logic & Components **************************/
@@ -247,28 +247,7 @@ public class ManagedHive extends JFrame {
         shake.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (int i = 0; i < angryPackSize; i++) {
-                    addBee();
-                }
-                //kick the hive into angry mode and set angry timer
-                if (angryTimer == null) {
-                    angryTimer = new SwarmTimer();
-                    Thread t = new Thread(angryTimer);
-                    t.start();
-                    //speed up the bees.
-                    BeeFlight.setDelay(2);
-                    //update the ui to reflect hive mood.
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            ManagedHive.mood.setText("Angry!");
-                            ManagedHive.mood.setBackground(Color.red);
-                        }
-                    });
-                } else {//reset angry timer
-                    SwarmTimer swarmResponseManager = (SwarmTimer) angryTimer;
-                    swarmResponseManager.setExpireTime(swarmTime);
-                }
+                executeShakeOperation();
             }
         });
 
@@ -277,11 +256,7 @@ public class ManagedHive extends JFrame {
         addNBees.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //retrieve addition amount
-                int addAmount = beeAdditionAmount;
-                for (int i = 0; i < addAmount; i++) {
-                    addBee();
-                }
+                executeAddBeeOperation();
             }
         });
 
@@ -454,6 +429,43 @@ public class ManagedHive extends JFrame {
                 center.add(hiveComponent);
             }
         });
+    }
+
+    /** Bundles up the add Bee operation semantics
+     */
+    protected static void executeAddBeeOperation() {
+        //retrieve addition amount
+        int addAmount = beeAdditionAmount;
+        for (int i = 0; i < addAmount; i++) {
+            addBee();
+        }
+    }
+
+    /** Bundles up the shake operation semantics
+     */
+    protected static void executeShakeOperation() {
+        for (int i = 0; i < angryPackSize; i++) {
+            addBee();
+        }
+        //kick the hive into angry mode and set angry timer
+        if (angryTimer == null) {
+            angryTimer = new SwarmTimer();
+            Thread t = new Thread(angryTimer);
+            t.start();
+            //speed up the bees.
+            BeeFlight.setDelay(2);
+            //update the ui to reflect hive mood.
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ManagedHive.mood.setText("Angry!");
+                    ManagedHive.mood.setBackground(Color.red);
+                }
+            });
+        } else {//reset angry timer
+            SwarmTimer swarmResponseManager = (SwarmTimer) angryTimer;
+            swarmResponseManager.setExpireTime(swarmTime);
+        }
     }
 
     /**
@@ -717,11 +729,16 @@ class ConfigurationFieldsListener implements DocumentListener {
  * Responsible for running the remote api server and defining
  * the protocol for interacting with the management server.
  *   -every line to server and client should postpend a newline character. Ex. \n.
+ *      multiline json with newline characters are not supported. Use spaces or tabs.
  *   -a request to server with no json body is assumed to be a request for current state
  *   -a request with json content is assumed request to update state to values passed in.
  *       Note: server side validation may still not accepte invalid values.
- *   -by setting the action field to "Shake" or "Add Bee", case insensitive is assumed a 
- *       request to execute that action. 
+ *   -by setting the action field to "Shake" or "Add", case insensitive is assumed a 
+ *       request to execute that action.
+ *   -only ONE of following request paths is possible for each operation 
+ *      i)request for current state : (empty request)
+ *      ii)request for operation or : (non empty request WITH action field set)
+ *      iii)request to update configuration : (non empty request WITHOUT action field set)
  */
 class RemoteApi {
     private static ServerSocket apiHandler = null;
@@ -729,10 +746,15 @@ class RemoteApi {
     private static int port = ManagedHive.defaultRemoteApiPort;//default port
     private static boolean continueToRun = true;
 
+    //supported operations.
+    public enum Operation {
+        Shake, Add
+    };
+
     public void updateServer(boolean newState) {
         continueToRun = newState;
     }
-    public static void getRemoteApiServer(int port){
+    public static void remoteApiServer(int port){
         //try to launch the requested port if not get random available one
         try {
             apiHandler = new ServerSocket(port);
@@ -762,7 +784,37 @@ class RemoteApi {
                     response = ManagedHive.mapper.writeValueAsString(state);
                 } else {//request for state update.
                     ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
+                    //todo: apply validation 
                     //todo: spinder apply state.
+                    //detect operations request
+                    String action = state.getAction();
+                    action = action.trim();
+                    if (!action.isEmpty()) {
+                        //attempt to locate valid action
+                        Operation operation = null;
+                        for (Operation op : Operation.values()) {
+                            if (op.name().equalsIgnoreCase(action)) {
+                                operation = op;
+                            }
+                        }
+                        //action on that action
+                        if (operation != null) {
+                            switch (operation) {
+                            case Shake:
+                                ManagedHive.executeShakeOperation();
+                                break;
+
+                            case Add:
+                                ManagedHive.executeAddBeeOperation();
+                                break;
+
+                            default:
+                                break;
+                            }
+                        }
+                    } else {
+                        //todo: insert validation actions.
+                    }
                 }
                 //append newLine
                 response += "\n";

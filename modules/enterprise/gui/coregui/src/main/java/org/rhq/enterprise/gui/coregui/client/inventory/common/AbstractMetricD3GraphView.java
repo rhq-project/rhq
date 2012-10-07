@@ -235,10 +235,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                 }
             ];
         };
-        console.log("Starting NVD3 graph");
         $wnd.nv.addGraph(function() {
-            var chart = $wnd.nv.models.multiBarChart().
-            color($wnd.d3.scale.category20().range());
+            var chart = $wnd.nv.models.multiBarChart()
+                    .showControls(false)
+                    .tooltips(true);
 
             chart.xAxis.axisLabel("Time")
                     .tickFormat(function(d) { return $wnd.d3.time.format('%X')(new Date(d)) });

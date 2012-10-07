@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.Date;
 import java.util.List;
 
 
@@ -126,7 +125,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     protected void drawGraph() {
-        Log.debug(" *** drawGraph   in AbstractMetricD3GraphView  *****" + definition + ","+definitionId);
+        Log.debug("drawGraph in AbstractMetricD3GraphView for: "+ definition + ","+definitionId);
 
         HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
@@ -186,14 +185,12 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     @Override
     public void destroy() {
-        //hoverLabel.destroy();
         super.destroy();
     }
 
     @Override
     public void hide() {
         super.hide();
-        //hoverLabel.hide();
     }
 
     public String getYAxisTitle(){
@@ -204,6 +201,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public String getXAxisTitle(){
+       //@todo: i18n
        return "Time";
     }
 
@@ -224,6 +222,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         var chartSelection = "#rChart-"+chartId + " svg";
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
+        var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
         var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
 
         var data = function() {
@@ -240,8 +239,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .showControls(false)
                     .tooltips(true);
 
-            chart.xAxis.axisLabel("Time")
-                    .tickFormat(function(d) { return $wnd.d3.time.format('%X')(new Date(d)) });
+            chart.xAxis.axisLabel(xAxisLabel)
+                    .tickFormat(function(d) { return $wnd.d3.time.format('%H:%M')(new Date(d)) });
 
             chart.yAxis
                     .axisLabel(yAxisUnits)

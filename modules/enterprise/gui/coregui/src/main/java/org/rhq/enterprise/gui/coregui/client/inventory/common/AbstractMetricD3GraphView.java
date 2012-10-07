@@ -151,7 +151,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             addMember(title);
             HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:200px;\"></svg></div>");
             graph.setWidth100();
-            graph.setHeight(200);
+            graph.setHeight100();
             addMember(graph);
 
             // @todo: if(IE) drawIE8Charts()

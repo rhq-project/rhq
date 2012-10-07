@@ -241,7 +241,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             color($wnd.d3.scale.category20().range());
 
             chart.xAxis.axisLabel("Time")
-                    .tickFormat($wnd.d3.format(',r'));
+                    .tickFormat(function(d) { return $wnd.d3.time.format('%X')(new Date(d)) });
 
             chart.yAxis
                     .axisLabel(yAxisUnits)

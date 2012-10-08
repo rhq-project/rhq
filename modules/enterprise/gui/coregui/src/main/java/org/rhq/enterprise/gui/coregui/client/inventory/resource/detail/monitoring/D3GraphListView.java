@@ -63,7 +63,6 @@ public class D3GraphListView extends LocatableVLayout {
 
         destroyMembers();
 
-        addMember(new Label("D3 Graphs"));
         addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {

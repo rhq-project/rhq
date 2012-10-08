@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -100,7 +101,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public String getChartId(){
-        return entityId + "-" + definitionId;
+        return entityId + "-" + definition.getId();
     }
     public List<MeasurementDataNumericHighLowComposite> getData() {
         return data;
@@ -154,8 +155,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             graph.setHeight100();
             addMember(graph);
 
-            // @todo: if(IE) drawIE8Charts()
-            drawJsniCharts();
+            if(BrowserUtility.isBrowserIE8()){
+                // @todo: drawIE8Charts()
+            }else {
+                drawJsniCharts();
+            }
         }
 
 

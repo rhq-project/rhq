@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -77,7 +78,14 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
     }
 
     @Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> origReqs) throws Exception {
+        // make our own copy so, as we iterate, we can remove the item that we can process,
+        // which will leave the rest for super.getValues() to process
+        HashSet<MeasurementScheduleRequest> requests;
+        requests = new HashSet<MeasurementScheduleRequest>(origReqs.size());
+        requests.addAll(origReqs);
+
+        // now process schedule requests
         for (Iterator<MeasurementScheduleRequest> iterator = requests.iterator(); iterator.hasNext(); ) {
             MeasurementScheduleRequest request = iterator.next();
             if (request.getName().equals(RESPONSE_TIME_METRIC)) {

@@ -143,6 +143,12 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.rhq.helpers</groupId>
+            <artifactId>rhq-rtfilter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- 3rd Party Deps -->
 
         <!-- ** WARs -->
@@ -307,6 +313,12 @@
                         -->
 
                         <!-- ** JARs -->
+                        <jarModule>
+                            <groupId>org.rhq.helpers</groupId>
+                            <artifactId>rhq-rtfilter</artifactId>
+                            <bundleDir>lib</bundleDir>
+                            <includeInApplicationXml>false</includeInApplicationXml>
+                        </jarModule>
 
                     </modules>
                 </configuration>

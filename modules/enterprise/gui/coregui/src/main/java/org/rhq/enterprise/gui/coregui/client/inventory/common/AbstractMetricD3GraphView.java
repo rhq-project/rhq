@@ -240,7 +240,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .tooltips(true);
 
             chart.xAxis.axisLabel(xAxisLabel)
-                    .tickFormat(function(d) { return $wnd.d3.time.format('%H:%M')(new Date(d)) });
+                    .tickFormat(function(d) { return $wnd.d3.time.format('%I %p')(new Date(d)) });
 
             chart.yAxis
                     .axisLabel(yAxisUnits)

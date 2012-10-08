@@ -623,6 +623,18 @@ public final class LookupUtil {
     }
 
     /**
+     * Generic method to lookup an Ejb bean by name and the interface name
+     * 
+     * @param beanName the name of the EJB bean
+     * @param interfaceName the full class name of either the remote or local interface
+     * 
+     * @return the bean accessed through specified inerface
+     */
+    public static Object getEjb(String beanName, String interfaceName) {
+        return lookupByName(beanName, interfaceName);
+    }
+
+    /**
      * This is a test bean used only by test code or by things like control.jsp.
      */
     public static TestLocal getTest() {
@@ -631,10 +643,12 @@ public final class LookupUtil {
 
     // Private Methods
 
-    private static <T> String getLocalJNDIName(@NotNull
-    Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName()
-            + "!" + beanClass.getName().replace("Bean", "Local");
+    private static String getLocalJNDIName(String beanName, String interfaceName) {
+        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanName + "!" + interfaceName;
+    }
+
+    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
+        return getLocalJNDIName(beanClass.getSimpleName(), beanClass.getName().replace("Bean", "Local"));
     }
 
     /**
@@ -658,6 +672,17 @@ public final class LookupUtil {
             return (T) lookup(localJNDIName);
         } catch (NamingException e) {
             throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=["
+                + localJNDIName + "]", e);
+        }
+    }
+
+    private static Object lookupByName(String beanName, String localInterfaceName) {
+        String localJNDIName = "-not initialized-";
+        try {
+            localJNDIName = getLocalJNDIName(beanName, localInterfaceName);
+            return lookup(localJNDIName);
+        } catch (NamingException e) {
+            throw new RuntimeException("Failed to lookup local interface to EJB " + beanName + ", localJNDI=["
                 + localJNDIName + "]", e);
         }
     }

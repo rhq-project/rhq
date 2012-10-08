@@ -314,18 +314,20 @@
               failonerror="false"/>
 
         <antcall target="package-connectors" />
+
+        <!-- we don't need these in our modules directory because we deploy the rtfilter directly in the EAR
         <echo>Deploying RT filter jar ...</echo>
         <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
                dest="${jboss.modules.dir}" />
 
         <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
                dest="${jboss.modules.dir}" />
-        <!-- TODO: it is up to either the installer or our EAR's WAR to use this so JON itself can have its RT data collected -->
+        -->
 
     </target>
 
     <target name="package-connectors">
-        <echo>Deploying the response-time (RT) servlet filter connectors ...</echo>
+        <echo>Packaging the response-time (RT) servlet filter connectors ...</echo>
         <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
         <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
             <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}">

@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
@@ -67,8 +66,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.D3GraphMonitoringView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.graph.GraphMonitoringView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -133,8 +130,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
-    private SubTab monitorCubismGraphs;
-    private SubTab monitorD3Graphs;
     private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
@@ -212,12 +207,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_monitoring()), IconEnum.SUSPECT_METRICS);
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs",
             MSG.view_tabs_common_graphs()), null);
-        monitorCubismGraphs = new SubTab(monitoringTab.extendLocatorId("CubismGraphs"), new ViewName("CubismGraphs",
-                MSG.view_tabs_common_graphs_cubism()), null);
 
-        //@todo: i18n
-        monitorD3Graphs = new SubTab(monitoringTab.extendLocatorId("D3Graphs"), new ViewName("D3Graphs",
-                "D3Graphs"), null);
         monitorNewGraphs = new SubTab(monitoringTab.extendLocatorId("NewGraphs"), new ViewName("NewGraphs",
                 "NewGraphs"), null);
 
@@ -231,8 +221,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorCubismGraphs, monitorD3Graphs,
-                monitorNewGraphs, monitorTraits, monitorAvail, monitorSched, monitorCallTime);
+        monitoringTab.registerSubTabs(monitorTables, monitorGraphs,  monitorNewGraphs,
+                monitorTraits, monitorAvail, monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events",
@@ -437,22 +427,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
         boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
-
-        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new GraphMonitoringView(monitoringTab.extendLocatorId("CubismGraphs"), resourceComposite);
-            }
-        };
-        updateSubTab(this.monitoringTab, this.monitorCubismGraphs, visible, visibleToIE8, viewFactory);
-
-        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new D3GraphMonitoringView(monitoringTab.extendLocatorId("D3Graphs"), resourceComposite);
-            }
-        };
-        updateSubTab(this.monitoringTab, this.monitorD3Graphs, visible, visibleToIE8, viewFactory);
 
 
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {

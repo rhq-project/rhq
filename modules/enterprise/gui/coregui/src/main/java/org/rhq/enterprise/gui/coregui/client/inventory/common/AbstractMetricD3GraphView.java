@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.List;
 
-
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -29,6 +28,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -150,7 +150,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:200px;\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:100%;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);
@@ -167,7 +167,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     private Img createLiveGraphImage() {
-        Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
+        Img liveGraph = new LocatableImg(extendLocatorId("Live"), IconEnum.RECENT_MEASUREMENTS.getIcon16x16Path(), 16, 16);
         liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
 
         liveGraph.addClickHandler(new ClickHandler() {

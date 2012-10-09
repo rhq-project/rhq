@@ -1293,6 +1293,11 @@ public class ConfigurationEditor extends LocatableVLayout {
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
         final PropertySimple propertySimple) {
 
+        String value = propertySimple.getStringValue();
+        if (null == value && null != propertyDefinitionSimple.getDefaultValue()) {
+            value = propertyDefinitionSimple.getDefaultValue();
+        }
+
         FormItem valueItem = null;
 
         boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
@@ -1302,6 +1307,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         // to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
         if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
             valueItem = new StaticTextItem();
+            valueItem.setValue(StringUtility.escapeHtml(value));
         } else {
             List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
             if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
@@ -1361,6 +1367,12 @@ public class ConfigurationEditor extends LocatableVLayout {
             List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
             valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
+            if (isUnset(propertyDefinitionSimple, propertySimple)) {
+                setValue(valueItem, null);
+            } else {
+                valueItem.setValue(value);
+            }
+
             if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null)
                 || (propertySimple.getParentList() != null)) {
                 valueItem.addChangedHandler(new ChangedHandler() {
@@ -1402,16 +1414,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
-
-        String value = propertySimple.getStringValue();
-        if (null == value && null != propertyDefinitionSimple.getDefaultValue()) {
-            value = propertyDefinitionSimple.getDefaultValue();
-        }
-        if (valueItem instanceof StaticTextItem) {
-            // Property values are user-editable, so escape HTML when displayed as static text, to prevent XSS attacks.
-            value = StringUtility.escapeHtml(value);
-        }
-        valueItem.setValue(value);
 
         setValueAsTooltipIfAppropriate(valueItem, value);
 
@@ -1514,6 +1516,14 @@ public class ConfigurationEditor extends LocatableVLayout {
                             firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, true);
                         }
                     } else {
+                        String defaultValue = propertyDefinitionSimple.getDefaultValue();
+                        if (defaultValue != null) {
+                            setValue(valueItem, defaultValue);
+                            updatePropertySimpleValue(unsetItem, defaultValue, propertySimple, propertyDefinitionSimple);
+                            boolean isValid = valueItem.validate();
+                            firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                        }
+
                         valueItem.focusInItem();
                     }
 
@@ -1717,6 +1727,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     summaryTable.redraw();
                 }
 
+                //reset the custom blur event handling - we're destroying the new form here
+                blurUnsetItem = null;
+                blurValueItem = null;
+
                 layout.destroy();
                 popup.destroy();
             }
@@ -1744,6 +1758,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
             buttonBar.addMember(cancelButton);
         }
+
+        //reset the custom blur event handling - we're creating a new form here
+        blurUnsetItem = null;
+        blurValueItem = null;
 
         layout.addMember(buttonBar);
         popup.addItem(layout);

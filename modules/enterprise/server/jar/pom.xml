@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.6.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -24,6 +24,8 @@
     <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
 
     <clean.db>true</clean.db>
+
+    <rhq.internal>false</rhq.internal>
   </properties>
 
   <dependencies>
@@ -802,9 +804,12 @@
           <processors>
             <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
           </processors>
-          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
-            <!-- Comment the next line in to get more verbose output for debugging -->
-            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
+          <compilerArguments>
+            -AtargetDirectory=${project.build.directory}/docs/xml
+            -AmodelPkg=org.rhq.enterprise.server.rest.domain
+          </compilerArguments>
+            <!-- Add the next line in to get more verbose output for debugging -->
+            <!-- -Averbose=true -->
         </configuration>
         <executions>
           <execution>
@@ -903,6 +908,26 @@
         </configuration>
       </plugin>
 
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>clirr-maven-plugin</artifactId>
+         <configuration>
+            <includes>
+               <include>**/*Remote</include>
+               <include>**/ServerVersion</include>
+            </includes>
+            <ignored>
+               <!-- This is intentionally ignored in any version of RHQ. We never
+                  even report it. -->
+               <difference>
+                  <className>**/ServerVersion</className>
+                  <differenceType>6003</differenceType> <!-- Constant field value changed -->
+                  <field>namespace</field>
+                  <justification>The namespace changes with every version, so this is definitely an intentional change.</justification>
+               </difference>
+            </ignored>   
+         </configuration>
+      </plugin>
     </plugins>
 
   </build>
@@ -1210,4 +1235,18 @@
     </profile>
   </profiles>
 
+  <reporting>
+     <plugins>
+        <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>clirr-maven-plugin</artifactId>
+           <configuration>
+              <includes>
+                 <include>**/*Remote</include>
+                 <include>**/ServerVersion</include>
+              </includes>
+           </configuration>
+        </plugin>
+     </plugins>
+  </reporting>
 </project>

@@ -1,2 +1,3 @@
 org.rhq.enterprise.client.script.SamplesScriptSourceProvider
 org.rhq.enterprise.client.script.FileSystemScriptSourceProvider
+org.rhq.enterprise.client.script.ModulesDirectoryScriptSourceProvider

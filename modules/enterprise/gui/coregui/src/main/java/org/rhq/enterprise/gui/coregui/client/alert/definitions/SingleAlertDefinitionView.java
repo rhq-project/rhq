@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -139,7 +140,16 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                     setAlertDefinition(getAlertDefinition()); // loads data into static fields
                     makeViewOnly();
 
-                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching);
+                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching, new AsyncCallback<AlertDefinition>() {
+                        @Override
+                        public void onSuccess(AlertDefinition result) {
+                            setAlertDefinition(result);
+                        }
+                        
+                        @Override
+                        public void onFailure(Throwable caught) {
+                        }
+                    });
                 } else {
                     tabSet.selectTab(generalPropertiesTab);
                 }

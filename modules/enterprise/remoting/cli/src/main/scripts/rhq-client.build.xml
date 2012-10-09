@@ -86,7 +86,7 @@
       <mkdir dir="${samples.home}" />
       <echo>*** Populating sample scripts...</echo>
       <copy verbose="true" toDir="${samples.home}">
-         <fileset dir="${basedir}/src/main/samples/" includes="*.*" />
+         <fileset dir="${basedir}/src/main/samples/" includes="**" />
       </copy>
    </target>
 

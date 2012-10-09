@@ -323,12 +323,9 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
                 }
             }));
 
-        long max = System.currentTimeMillis();
-        long min = max - (1000L * 60 * 60 * 8);
-
         int xTicks = getDefaultWidth() / 140;
 
-        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
+        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks)
             .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double tickValue, Axis axis) {
                     com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat

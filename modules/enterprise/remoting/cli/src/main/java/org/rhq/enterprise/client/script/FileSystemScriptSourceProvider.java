@@ -37,25 +37,28 @@ import org.rhq.scripting.ScriptSourceProvider;
 public class FileSystemScriptSourceProvider implements ScriptSourceProvider {
 
     private static final Log LOG = LogFactory.getLog(FileSystemScriptSourceProvider.class);
-    private static final String SCHEME = "file";
+    private static final String DEFAULT_SCHEME = "file";
 
+    private final String scheme;
+    
+    public FileSystemScriptSourceProvider() {
+        this(DEFAULT_SCHEME);
+    }
+    
+    public FileSystemScriptSourceProvider(String scheme) {
+        this.scheme = scheme;
+    }
+    
     @Override
     public Reader getScriptSource(URI location) {
         String scheme = location.getScheme();
 
         //return early if we can't handle this URI
-        if (scheme != null && !SCHEME.equals(scheme)) {
+        if (scheme == null || !this.scheme.equals(scheme)) {
             return null;
         }
 
-        String path = location.getSchemeSpecificPart();
-
-        if (scheme != null) {
-            // leave out the leading '//';
-            path = path.substring(2);
-        }
-
-        File f = new File(path);
+        File f = getFile(location);
 
         try {
             if (f.exists() && f.isFile() && f.canRead()) {
@@ -69,4 +72,9 @@ public class FileSystemScriptSourceProvider implements ScriptSourceProvider {
         return null;
     }
 
+    protected File getFile(URI location) {
+        String path = location.getPath();
+
+        return new File(path);
+    }
 }

@@ -19,81 +19,25 @@
 
 package org.rhq.enterprise.server.drift;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
-import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.enterprise.server.TestServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
-import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
-public class DriftServerPluginService extends ServerPluginService implements DriftServerPluginServiceMBean {
-
-    public TestMasterServerPluginContainer master;
-    public MasterServerPluginContainerConfiguration masterConfig;
-
-    public DriftServerPluginService() {
-        // build the config at constructor time so tests have it even before the PC is initialized
-        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
-        this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
-    }
+public class DriftServerPluginService extends TestServerPluginService {
 
     @Override
-    public MasterServerPluginContainer createMasterPluginContainer() {
-        this.master = new TestMasterServerPluginContainer();
-        this.master.initialize(this.masterConfig);
-        return this.master;
+    protected List<AbstractTypeServerPluginContainer> createPluginContainers(MasterServerPluginContainer master) {
+        return Collections.<AbstractTypeServerPluginContainer>singletonList(new TestDriftServerPluginContainer(master));
     }
 
-    class TestMasterServerPluginContainer extends MasterServerPluginContainer {
-        @Override
-        protected ClassLoader createRootServerPluginClassLoader() {
-            return getClass().getClassLoader();
-        }
-
-        @Override
-        protected Map<URL, ? extends ServerPluginDescriptorType> preloadAllPlugins() throws Exception {
-            // if our test never setup any plugins, ignore it and just return an empty map
-            File pluginDir = getConfiguration().getPluginDirectory();
-            if (pluginDir == null || pluginDir.listFiles() == null || pluginDir.listFiles().length == 0) {
-                return new HashMap<URL, ServerPluginDescriptorType>();
-            } else {
-                return super.preloadAllPlugins();
-            }
-        }
-
-        @Override
-        protected List<PluginKey> getDisabledPluginKeys() {
-            // in the real world, the db is checked for enable flag, here we say all plugins are enabled
-            return new ArrayList<PluginKey>();
-        }
-
-        @Override
-        protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
-            ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
-            DriftServerPluginContainer driftPC = new TestDriftServerPluginContainer(this);
-            pcs.add(driftPC);
-
-            return pcs;
-        }
-    }
 
     class TestDriftServerPluginContainer extends DriftServerPluginContainer {
         public TestDriftServerPluginContainer(MasterServerPluginContainer master) {
@@ -101,9 +45,9 @@ public class DriftServerPluginService extends ServerPluginService implements Dri
         }
 
         @Override
-    protected ServerPluginManager createPluginManager() {
-        return new TestDriftServerPluginManager(this);
-    }
+        protected ServerPluginManager createPluginManager() {
+            return new TestDriftServerPluginManager(this);
+        }
     }
 
     class TestDriftServerPluginManager extends DriftServerPluginManager {
@@ -113,34 +57,7 @@ public class DriftServerPluginService extends ServerPluginService implements Dri
 
         @Override
         protected ServerPlugin getPlugin(ServerPluginEnvironment env) {
-            try {
-                Configuration pluginConfig = null;
-                Configuration scheduledJobsConfig = null;
-                ConfigurationDefinition configDef;
-
-                ServerPluginDescriptorType pluginDescriptor = env.getPluginDescriptor();
-
-                configDef = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(pluginDescriptor);
-                if (configDef != null) {
-                    pluginConfig = configDef.getDefaultTemplate().createConfiguration();
-                }
-
-                configDef = ServerPluginDescriptorMetadataParser.getScheduledJobsDefinition(pluginDescriptor);
-                if (configDef != null) {
-                    scheduledJobsConfig = configDef.getDefaultTemplate().createConfiguration();
-                }
-
-                File pluginFile = new File(env.getPluginUrl().toURI());
-                ServerPlugin plugin = new ServerPlugin(0, env.getPluginKey().getPluginName(), pluginFile.getName(),
-                    pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor
-                        .getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor
-                        .getVersion(), pluginDescriptor.getVersion(), pluginConfig, scheduledJobsConfig,
-                    new ServerPluginType(pluginDescriptor).stringify(), System.currentTimeMillis(), System
-                        .currentTimeMillis());
-                return plugin;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            return TestServerPluginService.getPlugin(env);
         }
-    }
+    }    
 }

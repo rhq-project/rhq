@@ -30,6 +30,8 @@ import org.rhq.scripting.ScriptEngineProvider;
  */
 public class JsEngineProvider implements ScriptEngineProvider {
 
+    public static final String SCRIPT_FILE_EXTENSION = "js";
+    
     @Override
     public String getSupportedLanguage() {
         return "javascript";
@@ -37,7 +39,7 @@ public class JsEngineProvider implements ScriptEngineProvider {
 
     @Override
     public String getScriptFileExtension() {
-        return "js";
+        return SCRIPT_FILE_EXTENSION;
     }
 
     @Override

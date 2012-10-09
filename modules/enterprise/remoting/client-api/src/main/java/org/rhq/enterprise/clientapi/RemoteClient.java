@@ -20,6 +20,9 @@ package org.rhq.enterprise.clientapi;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -241,6 +244,17 @@ public class RemoteClient implements RhqFacade {
         return this.subject;
     }
 
+    public URI getRemoteURI() {
+        try {
+            return new URI(getTransport(), null, getHost(), getPort(), null, null, null);
+        } catch (URISyntaxException e) {
+            //does not happen, but hey
+            LOG.error("Error creating the remote URI with transport, host and port: " + getTransport() + ", "
+                + getHost() + " and " + getPort(), e);
+            return null;
+        }
+    }
+    
     public String getHost() {
         return this.host;
     }

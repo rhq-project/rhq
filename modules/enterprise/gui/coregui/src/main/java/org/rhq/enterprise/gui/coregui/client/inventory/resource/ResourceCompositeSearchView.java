@@ -86,7 +86,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void onInit() {
-        super.onInit();
 
         // To properly filter Create Child and Import menus we need existing singleton child resources. If the
         // user has create permission and the parent type has singleton child types and creatable or importable child
@@ -99,7 +98,19 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         importableChildTypes = getImportableChildTypes(parentType);
         hasCreatableTypes = !creatableChildTypes.isEmpty();
         hasImportableTypes = !importableChildTypes.isEmpty();
-        refreshSingletons(parentResource, null);
+        refreshSingletons(parentResource, new AsyncCallback<PageList<Resource>>() {
+
+            public void onFailure(Throwable caught) {
+                ResourceCompositeSearchView.super.onInit();
+                initialized = true;
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+                ResourceCompositeSearchView.super.onInit();
+                initialized = true;
+            }
+
+        });
         
     }
     
@@ -117,7 +128,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 @Override
                 public void onSuccess(PageList<Resource> result) {
                     singletonChildren = result;
-                    initialized = true;
                     if (callback != null) {
                         callback.onSuccess(result);
                     }
@@ -126,14 +136,15 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.error("Failed to load child resources for [" + parentResource + "]", caught);
-                    initialized = true;
                     if (callback != null) {
                         callback.onFailure(caught);
                     }
                 }
             });
         } else {
-            initialized = true;
+            if (callback != null) {
+                callback.onSuccess(new PageList<Resource>());
+            }
         }
     }
 
@@ -143,7 +154,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     }
 
     // suppress unchecked warnings because the superclass has different generic types for the datasource
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     @Override
     protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
@@ -213,7 +224,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     private void addImportAndCreateButtons(boolean override) {
 
         final Resource parentResource = parentResourceComposite.getResource();
-        ResourceType parentType = parentResource.getResourceType();
 
         // Create Child Menu and Manual Import Menu
         if (canCreate && (hasCreatableTypes || hasImportableTypes)) {

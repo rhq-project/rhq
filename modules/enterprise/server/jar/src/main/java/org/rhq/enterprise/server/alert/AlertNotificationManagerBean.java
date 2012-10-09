@@ -109,6 +109,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     /**
      * @throws AlertDefinitionUpdateException if the {@link AlertNotification} is not associated with a known sender
      */
+    @Deprecated
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification)
         throws AlertDefinitionUpdateException {
@@ -123,11 +124,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         List<AlertNotification> notifications = definition.getAlertNotifications();
         notifications.add(notification);
 
-        postProcessAlertDefinition(definition);
+        postProcessAlertDefinition(user, definition);
 
         return notification;
     }
 
+    @Deprecated
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId); // permissions check first
@@ -144,9 +146,10 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             notifications.add(notification);
         }
 
-        postProcessAlertDefinition(alertDefinition);
+        postProcessAlertDefinition(subject, alertDefinition);
     }
 
+    @Deprecated
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId); // permissions check first
@@ -168,7 +171,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         alertDefinition.getAlertNotifications().removeAll(toBeRemoved);
 
-        postProcessAlertDefinition(alertDefinition);
+        postProcessAlertDefinition(subject, alertDefinition);
 
         return removed;
     }
@@ -178,16 +181,15 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return purgeQuery.executeUpdate();
     }
 
-    private AlertDefinition postProcessAlertDefinition(AlertDefinition definition) {
+    private AlertDefinition postProcessAlertDefinition(Subject subject, AlertDefinition definition) {
         AlertDefinition updated = null;
         AlertDefinitionContext context = definition.getContext();
-        Subject overlord = subjectManager.getOverlord();
         if (context == AlertDefinitionContext.Type) {
-            updated = alertTemplateManager.updateAlertTemplate(overlord, definition, true);
+            updated = alertTemplateManager.updateAlertTemplate(subject, definition, true);
         } else if (context == AlertDefinitionContext.Group) {
-            updated = groupAlertDefintionManager.updateGroupAlertDefinitions(overlord, definition, true);
+            updated = groupAlertDefintionManager.updateGroupAlertDefinitions(subject, definition, true);
         } else if (context == AlertDefinitionContext.Resource) {
-            updated = alertDefinitionManager.updateAlertDefinition(overlord, definition.getId(), definition, false);
+            updated = alertDefinitionManager.updateAlertDefinition(subject, definition.getId(), definition, false);
         } else {
             throw new IllegalStateException("No support for updating alert notifications for AlertDefinitionContext: "
                 + definition.getContext());

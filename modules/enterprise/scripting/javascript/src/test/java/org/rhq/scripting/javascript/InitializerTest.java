@@ -100,7 +100,7 @@ public class InitializerTest {
     
     public void scriptSourceProviderApplied() throws Exception {
         
-        String script = "var m = require('rhq://test-module1.js'); m.func1();";
+        String script = "var m = require('rhq:/test-module1'); m.func1();";
         
         //first let's try to find the scripts with the default source provider...
         ScriptEngine eng = new JsEngineInitializer().instantiate(Collections.<String>emptySet(), null);
@@ -118,7 +118,7 @@ public class InitializerTest {
                 if (!"rhq".equals(location.getScheme())) {
                     return null;
                 }
-                String scriptName = location.getSchemeSpecificPart().substring(2); //remove the '//'
+                String scriptName = location.getPath().substring(1); //remove the '/'
                 InputStream src = getClass().getClassLoader().getResourceAsStream(scriptName);
                 return new InputStreamReader(src);
             }

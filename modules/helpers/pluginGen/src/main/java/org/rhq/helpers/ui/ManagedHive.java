@@ -119,6 +119,13 @@ public class ManagedHive extends JFrame {
      * @param args
      */
     public static void main(String[] args) {
+        //allow way to switch between protocols at server startup
+        if (args.length > 0) {
+            String remoteApiProtocoal = args[0];
+            if (remoteApiProtocoal.trim().toUpperCase().indexOf("HTTP") > 0) {
+                ManagedHive.defaultProtocol = Protocol.HTTP_JSON;
+            }
+        }
         new ManagedHive();
     }
 
@@ -442,8 +449,11 @@ public class ManagedHive extends JFrame {
             //managed interface reporting
             miEnabled = new JLabel();
             miEnabled.setOpaque(true);
-            miEnabled.setBackground(Color.gray);
-            miEnabled.setText("Remote Api(disabled)");
+            //            miEnabled.setBackground(Color.gray);
+            //            miEnabled.setText("Remote Api(disabled)");
+            //spinder: default to on. Restart impl has unknown issue/problematic
+            miEnabled.setBackground(Color.green);
+            miEnabled.setText("Remote Api( enabled)");
             column.add(miEnabled);
             //
             remoteOptions = new JComboBox(Protocol.values());
@@ -453,12 +463,16 @@ public class ManagedHive extends JFrame {
             portRow.setLayout(new BoxLayout(portRow, BoxLayout.X_AXIS));
             JLabel label = new JLabel("Port:");
             remoteApiPort = new JTextField("" + defaultRemoteApiPort);
+            remoteApiPort.setEnabled(false);
 
             portRow.add(label);
             portRow.add(Box.createHorizontalStrut(space));
             portRow.add(remoteApiPort);
             column.add(portRow);
             remoteApiStart = new JButton("Enable");
+            //spinder 10/9/12: disabling for now as not sure how to bounce the remote server
+            // without hanging the UI.
+            remoteApiStart.setEnabled(false);
             remoteApiStart.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -488,7 +502,7 @@ public class ManagedHive extends JFrame {
                         }
                         System.out.println("Selection:" + remoteOptions.getSelectedItem());
                         miEnabled.setBackground(Color.green);
-                        miEnabled.setText("Remote Api(enabled)");
+                        miEnabled.setText("Remote Api( enabled)");
                         remoteApiStart.setText("Disable");
                     }
                 }
@@ -899,6 +913,12 @@ class RemoteApi implements HttpRequestHandler {
                 e.printStackTrace();
             }//have OS select free on for us.
             port = ManagedHive.apiHandler.getLocalPort();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ManagedHive.remoteApiPort.setText(ManagedHive.apiHandler.getLocalPort() + "");
+                }
+            });
         }
         // initialization
         SyncBasicHttpParams params = null;

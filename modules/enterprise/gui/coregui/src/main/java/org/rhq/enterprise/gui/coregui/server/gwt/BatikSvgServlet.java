@@ -72,6 +72,9 @@ public class BatikSvgServlet extends HttpServlet {
         long startTime = System.currentTimeMillis();
 
         String svg = request.getParameter("svg");
+//        String svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"300px\" height=\"300px\" >\n" +
+//                "        <circle cx=\"100\" cy=\"50\" r=\"40\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />\n" +
+//                "</svg>";
         String imageType = request.getParameter("image_type");
 
         InputStream inputStream = new ByteArrayInputStream(svg.getBytes());

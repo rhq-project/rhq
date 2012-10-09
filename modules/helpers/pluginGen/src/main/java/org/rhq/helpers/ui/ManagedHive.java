@@ -47,12 +47,15 @@ import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -162,8 +165,13 @@ public class ManagedHive extends JFrame {
     protected static JTextField beeCountUpdateField;
     protected static JButton updateConfiguration;
     protected static ObjectMapper mapper = new ObjectMapper();
+    protected static ServerSocket apiHandler = null;
     protected static int defaultRemoteApiPort = 9876;
     protected static Protocol defaultProtocol = Protocol.JSON;
+    protected static JTabbedPane tabbedPane = null;
+    protected static JComboBox remoteOptions = null;
+    protected static JTextField remoteApiPort = null;
+    protected static JButton remoteApiStart = null;
 
     public enum Validation {
         POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
@@ -263,12 +271,7 @@ public class ManagedHive extends JFrame {
             mood.setText("Calm");
             monitorRow.add(mood);
             monitorRow.add(Box.createHorizontalStrut(space));
-            //managed interface reporting
-            miEnabled = new JLabel();
-            miEnabled.setOpaque(true);
-            miEnabled.setBackground(Color.gray);
-            miEnabled.setText("Remote Api(disabled)");
-            monitorRow.add(miEnabled);
+            monitorRow.add(Box.createHorizontalStrut(70));
         }
 
         //Shake hive button
@@ -428,6 +431,73 @@ public class ManagedHive extends JFrame {
             });
             configurationRow.add(updateConfiguration);
         }
+        //create tabbed pane
+        tabbedPane = new JTabbedPane(SwingConstants.TOP);
+        tabbedPane.addTab("Manage Hive", top);
+        JPanel remote = new JPanel();
+        {//remote api panel
+            remote.setLayout(new BorderLayout());
+            JPanel column = new JPanel();
+            column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
+            //managed interface reporting
+            miEnabled = new JLabel();
+            miEnabled.setOpaque(true);
+            miEnabled.setBackground(Color.gray);
+            miEnabled.setText("Remote Api(disabled)");
+            column.add(miEnabled);
+            //
+            remoteOptions = new JComboBox(Protocol.values());
+            remoteOptions.setSize(30, 10);
+            column.add(remoteOptions);
+            JPanel portRow = new JPanel();
+            portRow.setLayout(new BoxLayout(portRow, BoxLayout.X_AXIS));
+            JLabel label = new JLabel("Port:");
+            remoteApiPort = new JTextField("" + defaultRemoteApiPort);
+
+            portRow.add(label);
+            portRow.add(Box.createHorizontalStrut(space));
+            portRow.add(remoteApiPort);
+            column.add(portRow);
+            remoteApiStart = new JButton("Enable");
+            remoteApiStart.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    //flip the switch
+                    if (miEnabled.getText().indexOf("disabled") == -1) {
+                        miEnabled.setBackground(Color.gray);
+                        miEnabled.setText("Remote Api(disabled)");
+                        remoteApiStart.setText("Enable");
+                    } else {//enable the remote api
+                        //update the remote api
+                        ///retrieve the selection
+                        String selection = remoteOptions.getSelectedItem()+"";
+                        Protocol selectedProtocol = null;
+                        for(Protocol p: Protocol.values()){
+                            if(p.name().equalsIgnoreCase(selection)){
+                                selectedProtocol = p;
+                            }
+                        }
+                        ManagedHive.defaultProtocol = selectedProtocol;
+                        ///retrieve specified port
+                        String port = remoteApiPort.getText();
+                        int selectedPort = defaultRemoteApiPort;
+                        try{
+                           selectedPort = Integer.parseInt(port);
+                        }catch(NumberFormatException nfe){
+                            //
+                        }
+                        System.out.println("Selection:" + remoteOptions.getSelectedItem());
+                        miEnabled.setBackground(Color.green);
+                        miEnabled.setText("Remote Api(enabled)");
+                        remoteApiStart.setText("Disable");
+                    }
+                }
+            });
+            column.add(remoteApiStart);
+            column.add(Box.createVerticalStrut(100));
+            remote.add(column, BorderLayout.WEST);
+        }
+        tabbedPane.addTab("Remote Api", remote);
 
         // center
         JPanel center = new JPanel();
@@ -436,7 +506,7 @@ public class ManagedHive extends JFrame {
         buildCenterPanel(center);
 
         // final component layout
-        getContentPane().add(top, BorderLayout.NORTH);
+        getContentPane().add(tabbedPane, BorderLayout.NORTH);
         getContentPane().add(center, BorderLayout.CENTER);
         this.setSize(650, 500);
         addWindowListener(new WindowAdapter() {
@@ -794,7 +864,6 @@ class ConfigurationFieldsListener implements DocumentListener {
  *      iii)request to update configuration : (non empty request WITHOUT action field set)
  */
 class RemoteApi implements HttpRequestHandler {
-    private static ServerSocket apiHandler = null;
     private static String host = "localhost";
     private static int port = ManagedHive.defaultRemoteApiPort;//default port
     private static boolean continueToRun = true;
@@ -815,21 +884,21 @@ class RemoteApi implements HttpRequestHandler {
         JSON, HTTP_JSON
     };
 
-    public void updateServer(boolean newState) {
+    public static void updateServer(boolean newState) {
         continueToRun = newState;
     }
 
     public static void remoteApiServer(int port){
         //try to launch the requested port if not get random available one
         try {
-            apiHandler = new ServerSocket(port);
+            ManagedHive.apiHandler = new ServerSocket(port);
         } catch (IOException ioe) {
             try {
-                apiHandler = new ServerSocket(0);
+                ManagedHive.apiHandler = new ServerSocket(0);
             } catch (IOException e) {//if fails here give up, and spit out stack trace
                 e.printStackTrace();
             }//have OS select free on for us.
-            port = apiHandler.getLocalPort();
+            port = ManagedHive.apiHandler.getLocalPort();
         }
         // initialization
         SyncBasicHttpParams params = null;
@@ -856,7 +925,7 @@ class RemoteApi implements HttpRequestHandler {
         while (continueToRun) {
             Socket connectionSocket;
             try {
-                connectionSocket = apiHandler.accept();
+                connectionSocket = ManagedHive.apiHandler.accept();
                 if (ManagedHive.defaultProtocol.compareTo(Protocol.HTTP_JSON) == 0) {
                     HttpContext context = new BasicHttpContext(null);
                     DefaultHttpServerConnection conn = new DefaultHttpServerConnection();

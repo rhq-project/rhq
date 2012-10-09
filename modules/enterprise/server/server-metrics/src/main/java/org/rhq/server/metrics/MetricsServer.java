@@ -75,7 +75,88 @@ public class MetricsServer {
 
     private DateTimeService dateTimeService = new DateTimeService();
 
+    // These property getters/setters are here right now primarily to facilitate
+    // testing.
 
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
+    }
+
+    public String getKeyspaceName() {
+        return keyspaceName;
+    }
+
+    public void setKeyspaceName(String keyspaceName) {
+        this.keyspaceName = keyspaceName;
+    }
+
+    public String getRawMetricsDataCF() {
+        return rawMetricsDataCF;
+    }
+
+    public void setRawMetricsDataCF(String rawMetricsDataCF) {
+        this.rawMetricsDataCF = rawMetricsDataCF;
+    }
+
+    public String getOneHourMetricsDataCF() {
+        return oneHourMetricsDataCF;
+    }
+
+    public void setOneHourMetricsDataCF(String oneHourMetricsDataCF) {
+        this.oneHourMetricsDataCF = oneHourMetricsDataCF;
+    }
+
+    public String getSixHourMetricsDataCF() {
+        return sixHourMetricsDataCF;
+    }
+
+    public void setSixHourMetricsDataCF(String sixHourMetricsDataCF) {
+        this.sixHourMetricsDataCF = sixHourMetricsDataCF;
+    }
+
+    public String getTwentyFourHourMetricsDataCF() {
+        return twentyFourHourMetricsDataCF;
+    }
+
+    public void setTwentyFourHourMetricsDataCF(String twentyFourHourMetricsDataCF) {
+        this.twentyFourHourMetricsDataCF = twentyFourHourMetricsDataCF;
+    }
+
+    public String getMetricsQueueCF() {
+        return metricsQueueCF;
+    }
+
+    public void setMetricsQueueCF(String metricsQueueCF) {
+        this.metricsQueueCF = metricsQueueCF;
+    }
+
+    public String getTraitsCF() {
+        return traitsCF;
+    }
+
+    public void setTraitsCF(String traitsCF) {
+        this.traitsCF = traitsCF;
+    }
+
+    public String getResourceTraitsCF() {
+        return resourceTraitsCF;
+    }
+
+    public void setResourceTraitsCF(String resourceTraitsCF) {
+        this.resourceTraitsCF = resourceTraitsCF;
+    }
+
+    public Keyspace getKeyspace() {
+        return keyspace;
+    }
+
+    public void setKeyspace(Keyspace keyspace) {
+        this.keyspace = keyspace;
+    }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();

@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -57,9 +59,37 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.MethodNotSupportedException;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.DefaultHttpResponseFactory;
+import org.apache.http.impl.DefaultHttpServerConnection;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.SyncBasicHttpParams;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpRequestHandler;
+import org.apache.http.protocol.HttpRequestHandlerRegistry;
+import org.apache.http.protocol.HttpService;
+import org.apache.http.protocol.ImmutableHttpProcessor;
+import org.apache.http.protocol.ResponseConnControl;
+import org.apache.http.protocol.ResponseContent;
+import org.apache.http.protocol.ResponseDate;
+import org.apache.http.protocol.ResponseServer;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.helpers.ui.ManagedHive.Validation;
+import org.rhq.helpers.ui.RemoteApi.Protocol;
 
 /** Is a basic ui that generates a very simple managed
  *  graphical resource that can be managed/monitored
@@ -108,9 +138,7 @@ public class ManagedHive extends JFrame {
 
     /******************* Management capabilities **************************/
 
-    private void initializeRemoteApi() {
-        RemoteApi.remoteApiServer(9876);
-    }
+
 
     /******************* UI Logic & Components **************************/
     private int space = 7;//horizontal spacing between components
@@ -135,6 +163,7 @@ public class ManagedHive extends JFrame {
     protected static JButton updateConfiguration;
     protected static ObjectMapper mapper = new ObjectMapper();
     protected static int defaultRemoteApiPort = 9876;
+    protected static Protocol defaultProtocol = Protocol.JSON;
 
     public enum Validation {
         POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
@@ -482,6 +511,10 @@ public class ManagedHive extends JFrame {
         Thread t = new Thread(r);
         t.start();
     }
+
+    private void initializeRemoteApi() {
+            RemoteApi.remoteApiServer(defaultRemoteApiPort);
+    }
 }
 
 class Hive extends JComponent {
@@ -531,11 +564,16 @@ class Hive extends JComponent {
                         ManagedHive.swarmTimeDisplayField.setText("0");
                     }
                     //include updates for a few more fields as well now that not only updated by GUI
-                    ManagedHive.populationBaseField.setText(ManagedHive.basePopulation + "");
-                    ManagedHive.swarmTimeUpdateField.setText(ManagedHive.swarmTime + "");
-                    ManagedHive.beeCountUpdateField.setText(ManagedHive.beeAdditionAmount + "");
-                    //disable edit button
-                    ManagedHive.updateConfiguration.setEnabled(false);
+                    //after UI edit starts do not update the UI for 7 seconds
+                    //to allow UI user to makes changes.
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime > (ConfigurationFieldsListener.getLastEditStart() + (7 * 1000))) {
+                        ManagedHive.populationBaseField.setText(ManagedHive.basePopulation + "");
+                        ManagedHive.swarmTimeUpdateField.setText(ManagedHive.swarmTime + "");
+                        ManagedHive.beeCountUpdateField.setText(ManagedHive.beeAdditionAmount + "");
+                        //disable edit button
+                        ManagedHive.updateConfiguration.setEnabled(false);
+                    }
                 }
             });
         }
@@ -715,19 +753,28 @@ class SwarmTimer implements Runnable {
 /* Listener for JTextFields that re-enable the JButton on chance.
  */
 class ConfigurationFieldsListener implements DocumentListener {
+    private static long currentTimeEditStart = -1;
+
+    public static long getLastEditStart() {
+        return currentTimeEditStart;
+    }
     @Override
     public void removeUpdate(DocumentEvent e) {
+        enableEdit();
+    }
+    private void enableEdit() {
         ManagedHive.updateConfiguration.setEnabled(true);
+        currentTimeEditStart = System.currentTimeMillis();
     }
 
     @Override
     public void insertUpdate(DocumentEvent e) {
-        ManagedHive.updateConfiguration.setEnabled(true);
+        enableEdit();
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        ManagedHive.updateConfiguration.setEnabled(true);
+        enableEdit();
     }
 }
 
@@ -746,11 +793,12 @@ class ConfigurationFieldsListener implements DocumentListener {
  *      ii)request for operation or : (non empty request WITH action field set)
  *      iii)request to update configuration : (non empty request WITHOUT action field set)
  */
-class RemoteApi {
+class RemoteApi implements HttpRequestHandler {
     private static ServerSocket apiHandler = null;
     private static String host = "localhost";
     private static int port = ManagedHive.defaultRemoteApiPort;//default port
     private static boolean continueToRun = true;
+    private static HttpService httpService = null;
 
     //supported operations.
     public enum Operation {
@@ -762,9 +810,15 @@ class RemoteApi {
         Success, Fail
     };
 
+    //supported remote api interfaces
+    public enum Protocol {
+        JSON, HTTP_JSON
+    };
+
     public void updateServer(boolean newState) {
         continueToRun = newState;
     }
+
     public static void remoteApiServer(int port){
         //try to launch the requested port if not get random available one
         try {
@@ -777,11 +831,45 @@ class RemoteApi {
             }//have OS select free on for us.
             port = apiHandler.getLocalPort();
         }
+        // initialization
+        SyncBasicHttpParams params = null;
+        if (ManagedHive.defaultProtocol.compareTo(Protocol.HTTP_JSON) == 0) {
+            // Set up the HTTP protocol processor
+            params = new SyncBasicHttpParams();
+            params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 300)
+                .setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
+                .setBooleanParameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false)
+                .setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true)
+                .setParameter(CoreProtocolPNames.ORIGIN_SERVER, "HttpComponents/1.1");
+            HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] { new ResponseDate(),
+                new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
+
+            // Set up request handlers
+            HttpRequestHandlerRegistry reqistry = new HttpRequestHandlerRegistry();
+            reqistry.register("*", new RemoteApi());
+
+            // Set up the HTTP service
+            httpService = new HttpService(httpproc, new DefaultConnectionReuseStrategy(),
+                new DefaultHttpResponseFactory(), reqistry, params);
+        }
 
         while (continueToRun) {
             Socket connectionSocket;
             try {
                 connectionSocket = apiHandler.accept();
+                if (ManagedHive.defaultProtocol.compareTo(Protocol.HTTP_JSON) == 0) {
+                    HttpContext context = new BasicHttpContext(null);
+                    DefaultHttpServerConnection conn = new DefaultHttpServerConnection();
+                    conn.bind(connectionSocket, params);
+                    try {
+                        httpService.handleRequest(conn, context);
+                    } catch (SocketTimeoutException ste) {
+                        //ignore the exception.
+                    }
+                    //bail. request processing complete.
+                    continue;
+                }
+
                 BufferedReader inFromClient = new BufferedReader(new InputStreamReader(
                     connectionSocket.getInputStream()));
                 DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
@@ -797,74 +885,7 @@ class RemoteApi {
                     response = ManagedHive.mapper.writeValueAsString(state);
                     simpleReadRequest = true;
                 } else {//request for state update or operation execution
-
-                    try {
-                        ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
-                        //detect operations request
-                        String action = state.getAction();
-                        action = action.trim();
-                        if (!action.isEmpty()) {
-                            //attempt to locate valid action
-                            Operation operation = null;
-                            for (Operation op : Operation.values()) {
-                                if (op.name().equalsIgnoreCase(action)) {
-                                    operation = op;
-                                }
-                            }
-                            //action on that action
-                            if (operation != null) {
-                                status.setStatus(State.Success.name());
-                                switch (operation) {
-                                case Shake:
-                                    ManagedHive.executeShakeOperation();
-                                    status.setDetail("Successfully executed " + operation.Shake.name());
-                                    break;
-                                case Add:
-                                    ManagedHive.executeAddBeeOperation();
-                                    status.setDetail("Successfully executed " + operation.Add.name() + " Bee");
-                                    break;
-                                }
-                            } else {// unknown operation.
-                                status.setStatus(State.Fail.name());
-                                status.setDetail("Unable to recognise operation '" + action
-                                    + "'. Only the following operations [" + State.values() + "] allowed.");
-                            }
-                        } else {//this is not an action but request to update configuration
-                            //look at configuration values and if within range then update otherwise don't
-                            ///beePopulationBase
-                            int value = state.getBeePopulationBase();
-                            if ((value >= Validation.POPULATION_BASE.getLowest())
-                                && (value <= Validation.POPULATION_BASE.getHighest())) {
-                                if (ManagedHive.basePopulation != value) {
-                                    ManagedHive.basePopulation = value;
-                                }
-                            }
-                            ///swarmTimeBase
-                            value = state.getSwarmTimeBase();
-                            if ((value >= Validation.SWARM_TIME.getLowest())
-                                && (value <= Validation.SWARM_TIME.getHighest())) {
-                                if (ManagedHive.swarmTime != value) {
-                                    ManagedHive.swarmTime = value;
-                                }
-                            }
-                            ///beesToAdd
-                            value = state.getBeesToAdd();
-                            if ((value >= Validation.BEES_TO_ADD.getLowest())
-                                && (value <= Validation.BEES_TO_ADD.getHighest())) {
-                                if (ManagedHive.beeAdditionAmount != value) {
-                                    ManagedHive.beeAdditionAmount = value;
-                                }
-                            }
-                            status.setStatus(State.Success.name());
-                            status.setDetail("The requested updates were applied where"
-                                + " possible and ignored when validation rules were violated.");
-                            //kick off population adjustments if any
-                            ManagedHive.hiveComponent.removeBee();
-                        }
-                    } catch (Exception ex) {
-                        status.setStatus(State.Fail.name());
-                        status.setDetail(ex.getMessage());
-                    }
+                    processActionableRequests(clientRequest, status);
                 }
                 if (!simpleReadRequest) {//not a simple read so return status to users that want to know.
                     response = ManagedHive.mapper.writeValueAsString(status);
@@ -875,7 +896,106 @@ class RemoteApi {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            catch (HttpException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    private static void processActionableRequests(String clientRequest, RequestStatus status) {
+        try {
+            ApplicationState state = ManagedHive.mapper.readValue(clientRequest, ApplicationState.class);
+            //detect operations request
+            String action = state.getAction();
+            action = action.trim();
+            if (!action.isEmpty()) {
+                //attempt to locate valid action
+                Operation operation = null;
+                for (Operation op : Operation.values()) {
+                    if (op.name().equalsIgnoreCase(action)) {
+                        operation = op;
+                    }
+                }
+                //action on that action
+                if (operation != null) {
+                    status.setStatus(State.Success.name());
+                    switch (operation) {
+                    case Shake:
+                        ManagedHive.executeShakeOperation();
+                        status.setDetail("Successfully executed " + operation.Shake.name());
+                        break;
+                    case Add:
+                        ManagedHive.executeAddBeeOperation();
+                        status.setDetail("Successfully executed " + operation.Add.name() + " Bee");
+                        break;
+                    }
+                } else {// unknown operation.
+                    status.setStatus(State.Fail.name());
+                    status.setDetail("Unable to recognise operation '" + action + "'. Only the following operations ["
+                        + State.values() + "] allowed.");
+                }
+            } else {//this is not an action but request to update configuration
+                //look at configuration values and if within range then update otherwise don't
+                ///beePopulationBase
+                int value = state.getBeePopulationBase();
+                if ((value >= Validation.POPULATION_BASE.getLowest())
+                    && (value <= Validation.POPULATION_BASE.getHighest())) {
+                    if (ManagedHive.basePopulation != value) {
+                        ManagedHive.basePopulation = value;
+                    }
+                }
+                ///swarmTimeBase
+                value = state.getSwarmTimeBase();
+                if ((value >= Validation.SWARM_TIME.getLowest()) && (value <= Validation.SWARM_TIME.getHighest())) {
+                    if (ManagedHive.swarmTime != value) {
+                        ManagedHive.swarmTime = value;
+                    }
+                }
+                ///beesToAdd
+                value = state.getBeesToAdd();
+                if ((value >= Validation.BEES_TO_ADD.getLowest()) && (value <= Validation.BEES_TO_ADD.getHighest())) {
+                    if (ManagedHive.beeAdditionAmount != value) {
+                        ManagedHive.beeAdditionAmount = value;
+                    }
+                }
+                status.setStatus(State.Success.name());
+                status.setDetail("The requested updates were applied where"
+                    + " possible and ignored when validation rules were violated.");
+                //kick off population adjustments if any
+                ManagedHive.hiveComponent.removeBee();
+            }
+        } catch (Exception ex) {
+            status.setStatus(State.Fail.name());
+            status.setDetail(ex.getMessage());
+        }
+    }
+
+    @Override
+    public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException,
+        IOException {
+        //filter out non GET/POST requests
+        String method = request.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
+        if (!method.equals("GET") && !method.equals("POST")) {
+            throw new MethodNotSupportedException(method + " method not supported");
+        }
+        //if request includes content, Ex Post
+        if (request instanceof HttpEntityEnclosingRequest) {
+            HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+            String received = EntityUtils.toString(entity);
+            RequestStatus status = new RequestStatus();
+            processActionableRequests(received, status);
+            String bodyText = ManagedHive.mapper.writeValueAsString(status);
+            StringEntity body = new StringEntity(bodyText);
+            response.setEntity(body);
+            return;
+        }
+
+        //otherwise handle read request
+        response.setStatusCode(HttpStatus.SC_OK);
+        ApplicationState status = new ApplicationState();
+        String bodyText = ManagedHive.mapper.writeValueAsString(status);
+        StringEntity body = new StringEntity(bodyText);
+        response.setEntity(body);
     }
 }
 

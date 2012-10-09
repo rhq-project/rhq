@@ -53,7 +53,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -179,6 +181,8 @@ public class ManagedHive extends JFrame {
     protected static JComboBox remoteOptions = null;
     protected static JTextField remoteApiPort = null;
     protected static JButton remoteApiStart = null;
+    protected static JTextArea inbound = null;
+    protected static JTextArea outbound = null;
 
     public enum Validation {
         POPULATION_BASE(50, 2500, "Population Base"), SWARM_TIME(30000, (60000 * 30), "Swarm Time"), BEES_TO_ADD(5,
@@ -458,6 +462,8 @@ public class ManagedHive extends JFrame {
             //
             remoteOptions = new JComboBox(Protocol.values());
             remoteOptions.setSize(30, 10);
+            remoteOptions.setSelectedItem(defaultProtocol);
+            remoteOptions.setEnabled(false);
             column.add(remoteOptions);
             JPanel portRow = new JPanel();
             portRow.setLayout(new BoxLayout(portRow, BoxLayout.X_AXIS));
@@ -500,7 +506,6 @@ public class ManagedHive extends JFrame {
                         }catch(NumberFormatException nfe){
                             //
                         }
-                        System.out.println("Selection:" + remoteOptions.getSelectedItem());
                         miEnabled.setBackground(Color.green);
                         miEnabled.setText("Remote Api( enabled)");
                         remoteApiStart.setText("Disable");
@@ -510,6 +515,20 @@ public class ManagedHive extends JFrame {
             column.add(remoteApiStart);
             column.add(Box.createVerticalStrut(100));
             remote.add(column, BorderLayout.WEST);
+            //create the Center panel to demonstrate UI message
+            JPanel messagingPanel = new JPanel();
+            {
+                messagingPanel.setLayout(new BoxLayout(messagingPanel, BoxLayout.Y_AXIS));
+                ManagedHive.inbound = new JTextArea();
+                ManagedHive.inbound.setBorder(new TitledBorder("Inbound"));
+                JScrollPane jspTop = new JScrollPane(inbound);
+                messagingPanel.add(jspTop);
+                ManagedHive.outbound = new JTextArea();
+                ManagedHive.outbound.setBorder(new TitledBorder("Outbound"));
+                JScrollPane jspBottom = new JScrollPane(outbound);
+                messagingPanel.add(jspBottom);
+                remote.add(messagingPanel, BorderLayout.CENTER);
+            }
         }
         tabbedPane.addTab("Remote Api", remote);
 
@@ -963,12 +982,12 @@ class RemoteApi implements HttpRequestHandler {
                     connectionSocket.getInputStream()));
                 DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
                 String clientRequest = inFromClient.readLine();
-                System.out.println("[Server] Received: " + clientRequest);
                 //generate response. Empty request then return state otherwise attempt to load new state
                 clientRequest = clientRequest.trim();
+                final String clientRequestFinal = clientRequest;
                 String response = "";
                 boolean simpleReadRequest = false;
-                RequestStatus status = new RequestStatus();//to respond to non-readonly requests
+                final RequestStatus status = new RequestStatus();//to respond to non-readonly requests
                 if (clientRequest.isEmpty()) {//empty request, return state
                     ApplicationState state = new ApplicationState();
                     response = ManagedHive.mapper.writeValueAsString(state);
@@ -981,7 +1000,20 @@ class RemoteApi implements HttpRequestHandler {
                 }
                 //append newLine
                 response += "\n";
+                final String complete = response;
                 outToClient.writeBytes(response);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        if ((status != null) && (status.getDetail() == null)) {
+                            ManagedHive.inbound.setText("(request empty - replying with current state)" + "");
+                            ManagedHive.outbound.setText(complete + "");
+                        } else {
+                            ManagedHive.inbound.setText(clientRequestFinal + "");
+                            ManagedHive.outbound.setText(complete);
+                        }
+                    }
+                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1172,6 +1204,11 @@ class ApplicationState {
 }
 
 class RequestStatus {
+    @Override
+    public String toString() {
+        return "{" + "status:" + getStatus() + ",detail:" + getDetail() + "}";
+    }
+
     public String getStatus() {
         return status;
     }
@@ -1187,6 +1224,7 @@ class RequestStatus {
     public void setDetail(String detail) {
         this.detail = detail;
     }
+
 
     private String status;
     private String detail;

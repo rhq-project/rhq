@@ -83,13 +83,14 @@
     <jaxb-api.version>1.0.4.Final</jaxb-api.version>
     <jaxb-impl.version>2.2.4</jaxb-impl.version>
     <jboss-common-core.version>2.2.17.GA</jboss-common-core.version>
-    <resteasy.version>2.3.2.Final</resteasy.version>    
-    <jboss-jts.version>4.16.2.Final</jboss-jts.version>
-    <jboss-interceptors-api.version>1.0.0.Final</jboss-interceptors-api.version>
-    <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
     <jboss-ejb3-ext-api.version>2.0.0</jboss-ejb3-ext-api.version>
-    <picketbox.version>4.0.7.Final</picketbox.version>
+    <jboss-interceptors-api.version>1.0.0.Final</jboss-interceptors-api.version>
+    <jboss-jts.version>4.16.2.Final</jboss-jts.version>
     <jboss-logging.version>3.1.0.GA</jboss-logging.version>
+    <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
+    <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
+    <picketbox.version>4.0.7.Final</picketbox.version>
+    <resteasy.version>2.3.2.Final</resteasy.version>    
 
     <!-- Not Provided - some of these are needed by the agent -->
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>    

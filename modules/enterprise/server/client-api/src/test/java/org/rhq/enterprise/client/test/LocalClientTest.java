@@ -19,11 +19,15 @@
 
 package org.rhq.enterprise.client.test;
 
+import static org.testng.Assert.assertEquals;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Hashtable;
 
 import javax.naming.Context;
@@ -63,8 +67,12 @@ public class LocalClientTest extends JMockTest {
         System.setProperty(Context.INITIAL_CONTEXT_FACTORY, FakeContextFactory.class.getName());
     }
     
-    @Test
-    public void testResilienceAgainstContextClassloaders() throws Exception {
+    /**
+     * Needs to be called from within a test method so that the "context" variable is available.
+     * 
+     * @throws NamingException
+     */
+    private void setupFakeJndiLookup() throws NamingException {
         CONTEXT_MOCK_FOR_TEST = context.mock(Context.class);
         
         context.checking(new Expectations() {{
@@ -102,6 +110,20 @@ public class LocalClientTest extends JMockTest {
             
             allowing(CONTEXT_MOCK_FOR_TEST).close();
         }});
+    }
+
+    @Test
+    public void testAllManagersInstantiable() throws Exception {
+        setupFakeJndiLookup();
+
+        LocalClient lc = new LocalClient(null);
+        assertEquals(lc.getScriptingAPI().keySet(), new HashSet<RhqManager>(Arrays.asList(RhqManager.values())),
+            "Scripting API contains different managers than expected.");
+    }
+
+    @Test
+    public void testResilienceAgainstContextClassloaders() throws Exception {
+        setupFakeJndiLookup();
         
         ClassLoader origCl = Thread.currentThread().getContextClassLoader();
         try {

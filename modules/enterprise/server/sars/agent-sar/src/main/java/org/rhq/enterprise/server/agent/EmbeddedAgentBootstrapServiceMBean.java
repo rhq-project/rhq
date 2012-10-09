@@ -18,10 +18,7 @@
  */
 package org.rhq.enterprise.server.agent;
 
-import java.io.File;
 import java.util.Properties;
-import javax.management.ObjectName;
-import org.jboss.mx.util.ObjectNameFactory;
 
 /**
  * The interface to the MBean that embeds a JON Agent in the JON Server.
@@ -32,7 +29,7 @@ public interface EmbeddedAgentBootstrapServiceMBean {
     /**
      * The object name that the MBean service will be registered under.
      */
-    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=EmbeddedAgentBootstrap");
+    String OBJECT_NAME = "rhq:service=EmbeddedAgentBootstrap";
 
     /**
      * If <code>true</code>, this indicates that the agent should be started when the JON Server is started. This
@@ -81,7 +78,7 @@ public interface EmbeddedAgentBootstrapServiceMBean {
      *
      * @return location of the embedded agent and its resources
      */
-    File getEmbeddedAgentDirectory();
+    String getEmbeddedAgentDirectory();
 
     /**
      * Indicates the location where the embedded agent and all its resources will be found. There must be a <code>
@@ -90,7 +87,7 @@ public interface EmbeddedAgentBootstrapServiceMBean {
      *
      * @param directory location of the embedded agent and its resources
      */
-    void setEmbeddedAgentDirectory(File directory);
+    void setEmbeddedAgentDirectory(String directory);
 
     /**
      * Returns the location of the configuration file where all agent preferences are defined. The file location can be
@@ -144,18 +141,29 @@ public interface EmbeddedAgentBootstrapServiceMBean {
     void setConfigurationOverrides(Properties overrides);
 
     /**
+     * This allows you to explicitly override configuration preferences found in the configuration file. If this isn't
+     * set, then the settings specified by the configuration preferences file take effect as-is. If this is set,
+     * this file is a properties file whose values will override the config file prefs.
+     *
+     * @param overrides configuration settings file that override the configuration preferences (may be<code>null</code>)
+     */
+    void setConfigurationOverridesFile(String overridesFile);
+
+    String getConfigurationOverridesFile();
+
+    /**
      * Returns the arguments that are passed to the agent's main startup method.
      *
      * @return agent arguments
      */
-    String[] getAgentArguments();
+    String getAgentArguments();
 
     /**
      * Sets the arguments that will be passed to the agent's main startup method.
      *
      * @param args
      */
-    void setAgentArguments(String[] args);
+    void setAgentArguments(String args);
 
     /**
      * This will clear any and all current configuration preferences and then reload the

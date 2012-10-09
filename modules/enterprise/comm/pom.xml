@@ -65,8 +65,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-common-core</artifactId>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-common</artifactId>
+      <version>${jboss-common.version}</version>
     </dependency>
 
     <dependency>

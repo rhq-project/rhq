@@ -143,6 +143,12 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.rhq.helpers</groupId>
+            <artifactId>rhq-rtfilter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- 3rd Party Deps -->
 
         <!-- ** WARs -->
@@ -307,6 +313,12 @@
                         -->
 
                         <!-- ** JARs -->
+                        <jarModule>
+                            <groupId>org.rhq.helpers</groupId>
+                            <artifactId>rhq-rtfilter</artifactId>
+                            <bundleDir>lib</bundleDir>
+                            <includeInApplicationXml>false</includeInApplicationXml>
+                        </jarModule>
 
                     </modules>
                 </configuration>
@@ -585,8 +597,8 @@
                                         </artifactItem>
 
                                         <artifactItem>
-                                            <groupId>org.jboss.on</groupId>
-                                            <artifactId>jopr-rhq-server-plugin</artifactId>
+                                            <groupId>org.rhq</groupId>
+                                            <artifactId>rhq-rhqserver-plugin</artifactId>
                                             <version>${project.version}</version>
                                         </artifactItem>
 

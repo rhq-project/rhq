@@ -66,17 +66,6 @@
        <version>${jline.version}</version>
     </dependency>
 
-    <dependency>
-      <!-- The only reason why this is here is so we can pull this down from the repo.
-           Its scope is provided so we don't actually put it anywhere.
-           Our assembly process will place this library in the connector directory.
-           I'm not convinced this is actually needed, but it isn't hurting anything. -->
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rhq-rtfilter</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -99,11 +88,6 @@
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging</artifactId>
       <version>${jboss-logging.version}</version> <!-- just using the one that is also used by AS7 -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-common-core</artifactId>
     </dependency>
 
   </dependencies>
@@ -173,7 +157,7 @@ Build-Number=${buildNumber}
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss-jmx.version" value="${jboss-jmx.version}" />
-                   <property name="jboss-common-core.version" value="${jboss-common-core.version}" />
+                   <property name="jboss-common.version" value="${jboss-common.version}" />
                    <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                    <property name="jboss-logging.version" value="${jboss-logging.version}" />
                    <property name="jboss-serialization.version" value="${jboss-serialization.version}" />

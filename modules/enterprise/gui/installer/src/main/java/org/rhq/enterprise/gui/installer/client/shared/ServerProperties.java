@@ -43,11 +43,6 @@ public class ServerProperties {
     public static final String PROP_WEB_HTTP_PORT = "rhq.server.socket.binding.port.http";
     public static final String PROP_WEB_HTTPS_PORT = "rhq.server.socket.binding.port.https";
 
-    public static final String PROP_EMBEDDED_AGENT_ENABLED = "rhq.server.embedded-agent.enabled";
-    public static final String PROP_EMBEDDED_AGENT_NAME = "rhq.server.embedded-agent.name";
-    public static final String PROP_EMBEDDED_AGENT_DISABLE_NATIVE = "rhq.server.embedded-agent.disable-native-system";
-    public static final String PROP_EMBEDDED_AGENT_RESET_CONFIGURATION = "rhq.server.embedded-agent.reset-configuration";
-
     public static final String PROP_EMAIL_SMTP_HOST = "rhq.server.email.smtp-host";
     public static final String PROP_EMAIL_SMTP_PORT = "rhq.server.email.smtp-port";
     public static final String PROP_EMAIL_FROM_ADDRESS = "rhq.server.email.from-address";
@@ -123,9 +118,6 @@ public class ServerProperties {
     static {
         BOOLEAN_PROPERTIES = new HashSet<String>();
         BOOLEAN_PROPERTIES.add(PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED);
-        BOOLEAN_PROPERTIES.add(PROP_EMBEDDED_AGENT_ENABLED);
-        BOOLEAN_PROPERTIES.add(PROP_EMBEDDED_AGENT_DISABLE_NATIVE);
-        BOOLEAN_PROPERTIES.add(PROP_EMBEDDED_AGENT_RESET_CONFIGURATION);
         BOOLEAN_PROPERTIES.add(PROP_MM_AT_START);
         BOOLEAN_PROPERTIES.add(PROP_AUTOINSTALL_ENABLE);
         BOOLEAN_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_ENABLED);

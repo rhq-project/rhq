@@ -321,5 +321,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-embeddable-ejb3/jboss-ejb3-all/1.0.0.Alpha9/jboss-ejb3-all-1.0.0.Alpha9.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.0.2.Final/remoting-jmx-1.0.2.Final.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -34,6 +34,11 @@
       </init-param>
     </filter>
 
+    <filter>
+        <filter-name>RhqRtFilter</filter-name>
+        <filter-class>org.rhq.helpers.rtfilter.filter.RtFilter</filter-class>
+    </filter>
+
 <!-- Simple request header dumper for debugging purposes
   <filter>
     <filter-name>DumperFilter</filter-name>
@@ -64,6 +69,11 @@
     <url-pattern>/1/*</url-pattern>
   </filter-mapping>
 -->
+
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>/1/*</url-pattern>
+    </filter-mapping>
 
     <servlet>
         <servlet-name>Resteasy</servlet-name>

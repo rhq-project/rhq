@@ -261,7 +261,7 @@ public class MetricsServer {
     }
 
     private Map<Integer, DateTime> calculateAggregates(String fromColumnFamily, String toColumnFamily,
-                                                       Minutes interval, Minutes nextInterval, int ttl) {
+        Minutes interval, Minutes nextInterval, int ttl) {
         DateTime currentHour = getCurrentHour();
         DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 

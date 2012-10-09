@@ -26,6 +26,7 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
+import static org.joda.time.DateTime.now;
 import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
 import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
 import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
@@ -184,10 +185,10 @@ public class MetricsServerTest {
     public void insertMultipleRawNumericDataForOneSchedule() {
         int scheduleId = 123;
 
-        DateTime now = new DateTime();
-        DateTime threeMinutesAgo = now.minusMinutes(3);
-        DateTime twoMinutesAgo = now.minusMinutes(2);
-        DateTime oneMinuteAgo = now.minusMinutes(1);
+        //DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime threeMinutesAgo = now().minusMinutes(3);
+        DateTime twoMinutesAgo = now().minusMinutes(2);
+        DateTime oneMinuteAgo = now().minusMinutes(1);
 
         int sevenDays = Duration.standardDays(7).toStandardSeconds().getSeconds();
 
@@ -228,7 +229,7 @@ public class MetricsServerTest {
                 "clock");
         }
 
-        DateTime theHour = now.hourOfDay().roundFloorCopy();
+        DateTime theHour = now().hourOfDay().roundFloorCopy();
         Composite expectedComposite = new Composite();
         expectedComposite.addComponent(theHour.getMillis(), LongSerializer.get());
         expectedComposite.addComponent(scheduleId, IntegerSerializer.get());
@@ -241,11 +242,12 @@ public class MetricsServerTest {
     public void calculateAggregatesForOneScheduleWhenDBIsEmpty() {
         int scheduleId = 123;
 
-        DateTime now = new DateTime();
-        DateTime lastHour = now.hourOfDay().roundFloorCopy().minusHours(1);
-        DateTime firstMetricTime = lastHour.plusMinutes(5);
-        DateTime secondMetricTime = lastHour.plusMinutes(10);
-        DateTime thirdMetricTime = lastHour.plusMinutes(15);
+        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour6 = hour0.plusHours(6);
+        DateTime lastHour = hour6.minusHours(1);
+        DateTime firstMetricTime = hour6.minusMinutes(3);
+        DateTime secondMetricTime = hour6.minusMinutes(2);
+        DateTime thirdMetricTime = hour6.minusMinutes(1);
 
         String scheduleName = getClass().getName() + "_SCHEDULE";
         long interval = MINUTE * 15;
@@ -259,6 +261,7 @@ public class MetricsServerTest {
         data.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), request, 3.9));
         data.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), request, 2.6));
 
+        metricsServer.setCurrentHour(hour6);
         metricsServer.addNumericData(data);
         metricsServer.calculateAggregates();
 
@@ -277,7 +280,16 @@ public class MetricsServerTest {
         assert1HourDataEquals(scheduleId, expected1HourData);
 
         // verify six hour metric data is calculated
-        List<HColumn<Composite, Double>> expected6HourData = expected1HourData;
+        // the ttl for 6 hour data is 31 days
+        ttl = Days.days(31).toStandardSeconds().getSeconds();
+        List<HColumn<Composite, Double>> expected6HourData = asList(
+            HFactory.createColumn(createAggregateKey(hour0, AggregateType.MAX), 3.9, ttl, CompositeSerializer.get(),
+                DoubleSerializer.get()),
+            HFactory.createColumn(createAggregateKey(hour0, AggregateType.MIN), 2.6, ttl, CompositeSerializer.get(),
+                DoubleSerializer.get()),
+            HFactory.createColumn(createAggregateKey(hour0, AggregateType.AVG), (3.9 + 3.2 + 2.6) / 3, ttl,
+                CompositeSerializer.get(), DoubleSerializer.get())
+        );
 
         assert6HourDataEquals(scheduleId, expected6HourData);
     }

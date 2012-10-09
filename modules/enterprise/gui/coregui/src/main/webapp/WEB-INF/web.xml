@@ -197,6 +197,10 @@
         <servlet-name>ReportExporter</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.reports.ReportExportServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>BatikSvgServlet</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BatikSvgServlet</servlet-class>
+    </servlet>
 
     <servlet>
         <servlet-name>Resteasy</servlet-name>
@@ -376,6 +380,10 @@
     <servlet-mapping>
         <servlet-name>ReportExporter</servlet-name>
         <url-pattern>/ReportExporter</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BatikSvgServlet</servlet-name>
+        <url-pattern>/BatikSvgServlet</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

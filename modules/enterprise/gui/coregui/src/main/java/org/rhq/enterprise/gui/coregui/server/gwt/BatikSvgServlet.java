@@ -33,6 +33,7 @@ import org.apache.batik.transcoder.Transcoder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.transcoder.image.JPEGTranscoder;
 import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
@@ -47,26 +48,12 @@ import org.w3c.dom.Document;
  */
 public class BatikSvgServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final float IMAGE_QUALITY = 0.8f; // 0 - 99 only used for JPEG images
 
     public BatikSvgServlet() {
         super();
     }
 
-    /*
-    * Example svg:
-    * <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-    *      <circle cx="100" cy="50" r="40" stroke="black" stroke-width="2" fill="red" />
-    * </svg>
-    *
-    * encode the svg to url format with http://www.motobit.com/util/url-encoder.asp
-    *
-    * http://localhost:8080/BatikService1/BatikService?image_type=png&svg=%3Csvg+xml...
-    * where the ellipsis are the escaped svg
-    *
-    * Post request has max post size limit set to 2MB (http://tomcat.apache.org/tomcat-5.5-doc/config/http.html)
-    * Fix it by changing server.xml to something like below which accepts unlimited size posts(totally dangerous):
-    * <Connector connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443" maxPostSize="0"/>
-    */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         long startTime = System.currentTimeMillis();
@@ -77,6 +64,14 @@ public class BatikSvgServlet extends HttpServlet {
 //                "</svg>";
         String imageType = request.getParameter("image_type");
 
+        if(imageType == null){
+           imageType = "png";
+        }
+
+        if(svg == null || svg.isEmpty()){
+           throw new IllegalArgumentException("svg parameter not set") ;
+        }
+
         InputStream inputStream = new ByteArrayInputStream(svg.getBytes());
         OutputStream outputStream = response.getOutputStream();
 
@@ -86,7 +81,7 @@ public class BatikSvgServlet extends HttpServlet {
         TranscoderOutput output = new TranscoderOutput(outputStream);
 
         try {
-            Transcoder transcoder = getTranscoder(imageType, 0.7f);
+            Transcoder transcoder = getTranscoder(imageType, IMAGE_QUALITY);
             transcoder.transcode(input, output);
         } catch (TranscoderException e) {
             Log.error("Error in Batik Transcoding:\n"+svg,e);
@@ -118,13 +113,16 @@ public class BatikSvgServlet extends HttpServlet {
             transcoder = getPNGTranscoder();
         }else {
            Log.error("Image type is unknown: "+ transcoderType);
+           throw new UnsupportedOperationException("Unknown Image type: "+transcoderType);
         }
+        // add any external stylesheets that are needed for rendering
+        transcoder.addTranscodingHint(ImageTranscoder.KEY_USER_STYLESHEET_URI, "http://nvd3.com/src/nv.d3.css");
         return transcoder;
     }
 
-    private JPEGTranscoder getJPEGTranscoder(float keyQuality) {
+    private JPEGTranscoder getJPEGTranscoder(float imageQuality) {
         JPEGTranscoder jpeg = new JPEGTranscoder();
-        jpeg.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(keyQuality));
+        jpeg.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, new Float(imageQuality));
         return jpeg;
     }
 

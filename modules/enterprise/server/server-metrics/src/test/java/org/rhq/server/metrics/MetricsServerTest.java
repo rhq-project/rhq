@@ -42,6 +42,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.cassandra.CassandraException;
+import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.bundle.DeploymentOptions;
 import org.rhq.cassandra.bundle.EmbeddedDeployer;
 import org.rhq.core.domain.measurement.DataType;
@@ -53,6 +54,7 @@ import me.prettyprint.cassandra.serializers.DoubleSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.CassandraHost;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.cassandra.service.KeyIterator;
 import me.prettyprint.hector.api.Cluster;
@@ -109,14 +111,11 @@ public class MetricsServerTest {
         deployer.setDeploymentOptions(deploymentOptions);
         deployer.deploy();
 
-        // wait a little bit to give the cluster time to initialize. Need to wait for nodes
-        // to start up and for schema changes to propogate. In a subsequent commit, I will
-        // add logic to wait only as long as it takes for the cluster to initialize instead
-        // of waiting for some arbitrary period which could be too long or too short.
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-        }
+        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
+        ClusterInitService initService = new ClusterInitService();
+
+        initService.waitForClusterToStart(hosts);
+        initService.waitForSchemaAgreement("rhq", hosts);
     }
 
     @BeforeMethod

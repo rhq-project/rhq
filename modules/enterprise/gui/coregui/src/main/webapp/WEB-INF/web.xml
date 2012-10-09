@@ -42,7 +42,7 @@
     </filter>
     <filter-mapping>
         <filter-name>RhqRtFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/coregui/*</url-pattern>
     </filter-mapping>
 
     <servlet>

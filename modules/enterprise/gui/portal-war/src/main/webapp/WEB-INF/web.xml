@@ -283,7 +283,19 @@
     </filter>
     <filter-mapping>
         <filter-name>RhqRtFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>*.xhtml</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.rss</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.do</url-pattern>
     </filter-mapping>
 
    <!-- This is the object that reads the /WEB-INF/rhq-server-internals.properties for internal configuration settings. -->

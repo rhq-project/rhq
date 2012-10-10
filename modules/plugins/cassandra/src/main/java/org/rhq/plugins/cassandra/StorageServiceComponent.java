@@ -41,18 +41,19 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
  * @author John Sanda
  */
-public class StorageServiceComponent extends MBeanResourceComponent {
+public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent<?>> {
 
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
 
     @Override
     public AvailabilityType getAvailability() {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
         try {
             EmsBean emsBean = loadBean();
             if (emsBean == null) {
@@ -100,7 +101,7 @@ public class StorageServiceComponent extends MBeanResourceComponent {
         }
 
         if (name.equals("repair")) {
-            return runRepair(parameters);
+            return repair(parameters);
         }
 
         return super.invokeOperation(name, parameters);

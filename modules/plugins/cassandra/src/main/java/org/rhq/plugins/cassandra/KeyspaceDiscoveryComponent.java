@@ -30,19 +30,21 @@ import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinitions;
 import java.util.HashSet;
 import java.util.Set;
 
+import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
+
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 
 /**
  * @author John Sanda
  */
-public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent {
+public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>> {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context)
+        throws Exception {
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
         for (KeyspaceDefinition keyspaceDef : getKeyspaceDefinitions()) {

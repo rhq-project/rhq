@@ -48,8 +48,8 @@ import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
 import org.rhq.cassandra.CassandraException;
-import org.rhq.cassandra.bundle.BootstrapDeployer;
-import org.rhq.cassandra.bundle.DeploymentOptions;
+import org.rhq.cassandra.BootstrapDeployer;
+import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDestination;

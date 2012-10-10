@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.cassandra.bundle;
+package org.rhq.cassandra;
 
 import java.util.Properties;
 

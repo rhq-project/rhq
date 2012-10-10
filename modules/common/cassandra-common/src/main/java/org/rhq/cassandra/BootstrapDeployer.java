@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.cassandra.bundle;
+package org.rhq.cassandra;
 
 import static java.util.Arrays.asList;
 import static org.rhq.core.util.StringUtil.collectionToString;
@@ -42,7 +42,6 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
 import org.rhq.bundle.ant.AntLauncher;
-import org.rhq.cassandra.CassandraException;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;

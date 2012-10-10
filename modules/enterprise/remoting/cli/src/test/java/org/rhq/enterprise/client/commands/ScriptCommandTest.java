@@ -61,11 +61,11 @@ public class ScriptCommandTest {
 
     void assertManagersBoundToScript() {
         ScriptEngine scriptEngine = client.getScriptEngine();
-        List<String> mgrsNotBound = new ArrayList<String>();
+        List<Class<?>> mgrsNotBound = new ArrayList<Class<?>>();
 
         for (RhqManager mgr : RhqManager.values()) {
             if (!scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(mgr.name())) {
-                mgrsNotBound.add(mgr.remoteName());
+                mgrsNotBound.add(mgr.remote());
             }
         }
 

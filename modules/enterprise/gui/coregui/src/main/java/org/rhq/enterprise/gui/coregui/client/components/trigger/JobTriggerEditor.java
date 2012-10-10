@@ -149,8 +149,8 @@ public class JobTriggerEditor extends LocatableVLayout {
                     changeCalendarType("laterAndRepeat");
 
                     DurationItem repeatIntervalItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-                    repeatIntervalItem.setValue(this.jobTrigger.getRepeatInterval().intValue(), UnitType.TIME);
-
+                    repeatIntervalItem.setAndFormatValue(this.jobTrigger.getRepeatInterval());
+                    
                     FormItem endTimeItem = this.repeatForm.getField(FIELD_END_TIME);
                     DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
                     FormItem recurrenceTypeItem = this.repeatForm.getField(FIELD_RECURRENCE_TYPE);

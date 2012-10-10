@@ -55,6 +55,14 @@ public class DurationItem extends CanvasItem {
 
     private static final String FIELD_VALUE = "value";
     private static final String FIELD_UNITS = "units";
+    
+    private static final long SECOND_IN_MILLIS = 1000L;
+    private static final long MINUTE_IN_MILLIS = 60 * SECOND_IN_MILLIS;
+    private static final long HOUR_IN_MILLIS = 60 * MINUTE_IN_MILLIS;
+    private static final long DAY_IN_MILLIS = 24 * HOUR_IN_MILLIS;
+    private static final long WEEK_IN_MILLIS = 7 * DAY_IN_MILLIS;
+    private static final long MONTH_IN_MILLIS = 30 * DAY_IN_MILLIS;
+    private static final long YEAR_IN_MILLIS = 365 * DAY_IN_MILLIS;
 
     private final DynamicForm form;
     private TimeUnit defaultTimeUnit;
@@ -214,6 +222,86 @@ public class DurationItem extends CanvasItem {
         setValue(value);
     }
 
+    /**
+     * Sets human readable time representation to the form's field "value"
+     *
+     * @param longValue the time period representation in milliseconds
+     */
+    public void setAndFormatValue(long longValue) {
+        if (longValue < 0) {
+            throw new IllegalArgumentException("negative time period " + longValue);
+        }
+        String formattedOutput = formatMilliseconds(longValue);
+        this.unitType = UnitType.TIME;
+        this.form.setValue(FIELD_VALUE, formattedOutput);
+        setValue(formattedOutput);
+    }
+
+    /**
+     * formatMilliseconds(10 * WEEK_IN_MILLIS + 2 * SECOND_IN_MILLIS) = 2 months 2 weeks 2 seconds
+     *
+     * @param longValue
+     * @return formatted string with time period representation
+     */
+    private String formatMilliseconds(long longValue) {
+        if (longValue < 0) {
+            throw new IllegalArgumentException("negative time period " + longValue);
+        }
+        String formattedOutput = null;
+        long wholeUnits = 0;
+        if (longValue < SECOND_IN_MILLIS) { //ms
+            return getTimeValue(longValue, TimeUnit.MILLISECONDS);
+        } else if (longValue < MINUTE_IN_MILLIS) { //s
+            wholeUnits = longValue / SECOND_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.SECONDS);
+            return formattedOutput
+                + ((wholeUnits * SECOND_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * SECOND_IN_MILLIS) : "");
+        } else if (longValue < HOUR_IN_MILLIS) { //m
+            wholeUnits = longValue / MINUTE_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.MINUTES);
+            return formattedOutput
+                + ((wholeUnits * MINUTE_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * MINUTE_IN_MILLIS) : "");
+        } else if (longValue < DAY_IN_MILLIS) { //h
+            wholeUnits = longValue / HOUR_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.HOURS);
+            return formattedOutput
+                + ((wholeUnits * HOUR_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * HOUR_IN_MILLIS) : "");
+        } else if (longValue < WEEK_IN_MILLIS) { //d
+            wholeUnits = longValue / DAY_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.DAYS);
+            return formattedOutput
+                + ((wholeUnits * DAY_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * DAY_IN_MILLIS) : "");
+        } else if (longValue < MONTH_IN_MILLIS) { //w
+            wholeUnits = longValue / WEEK_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.WEEKS);
+            return formattedOutput
+                + ((wholeUnits * WEEK_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * WEEK_IN_MILLIS) : "");
+        } else if (longValue < YEAR_IN_MILLIS) { //M
+            wholeUnits = longValue / MONTH_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.MONTHS);
+            return formattedOutput
+                + ((wholeUnits * MONTH_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * MONTH_IN_MILLIS) : "");
+        } else if (longValue >= YEAR_IN_MILLIS) { //y
+            wholeUnits = longValue / YEAR_IN_MILLIS;
+            formattedOutput = getTimeValue(wholeUnits, TimeUnit.YEARS);
+            return formattedOutput
+                + ((wholeUnits * YEAR_IN_MILLIS < longValue) ? " "
+                    + formatMilliseconds(longValue - wholeUnits * YEAR_IN_MILLIS) : "");
+        } else {
+            return "";
+        }
+    }
+
+    private String getTimeValue(long value, TimeUnit valueUnit) {
+        return value + " " + valueUnit.getDisplayName();
+    }
+
     private void updateValue() {
         Long value = calculateValue();
         setValue(value);
@@ -253,7 +341,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 1000;
+                        convertedValue = integerValue * SECOND_IN_MILLIS;
                         break;
                     }
                     break;
@@ -266,7 +354,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 60 * 1000;
+                        convertedValue = integerValue * MINUTE_IN_MILLIS;
                         break;
                     }
                     break;
@@ -282,7 +370,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 60 * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 60 * 60 * 1000;
+                        convertedValue = integerValue * HOUR_IN_MILLIS;
                         break;
                     }
                     break;
@@ -301,7 +389,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 24 * 60 * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 24 * 60 * 60 * 1000;
+                        convertedValue = integerValue * DAY_IN_MILLIS;
                         break;
                     }
                     break;
@@ -323,7 +411,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 7 * 24 * 60 * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 7 * 24 * 60 * 60 * 1000;
+                        convertedValue = integerValue * WEEK_IN_MILLIS;
                         break;
                     }
                     break;
@@ -348,7 +436,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 30 * 24 * 60 * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 30 * 24 * 60 * 60 * 1000;
+                        convertedValue = integerValue * MONTH_IN_MILLIS;
                         break;
                     }
                     break;
@@ -376,7 +464,7 @@ public class DurationItem extends CanvasItem {
                         convertedValue = integerValue * 365 * 24 * 60 * 60;
                         break;
                     case MILLISECONDS:
-                        convertedValue = integerValue * 365 * 24 * 60 * 60 * 1000;
+                        convertedValue = integerValue * YEAR_IN_MILLIS;
                         break;
                     }
                     break;

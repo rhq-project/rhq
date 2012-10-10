@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -41,6 +42,7 @@ import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
+import com.wordnik.swagger.annotations.ApiProperty;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,9 +56,9 @@ import org.jboss.resteasy.annotations.GZIP;
  * @author Heiko W. Rupp
  */
 
-@SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE})
+@SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE,ClassLevelProcessor.MODEL_PACKAGE_KEY})
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
-@SupportedAnnotationTypes(value = {"com.wordnik.swagger.annotations.*","javax.ws.rs.*"})
+@SupportedAnnotationTypes(value = {"com.wordnik.swagger.annotations.*","javax.ws.rs.*","javax.xml.bind.annotation.XmlRootElement"})
 public class ClassLevelProcessor extends AbstractProcessor {
 
     private static final String JAVAX_WS_RS = "javax.ws.rs";
@@ -66,6 +68,8 @@ public class ClassLevelProcessor extends AbstractProcessor {
     public static final String TARGET_DIRECTORY = "targetDirectory";
     public static final String VERBOSE = "verbose";
     private static final String BODY_INDICATOR = "-body-";
+    public static final String MODEL_PACKAGE_KEY  = "modelPkg";
+    public String modelPackage = "org.rhq.enterprise.server.rest.domain";
 
     Log log = LogFactory.getLog(getClass().getName());
 
@@ -78,9 +82,14 @@ public class ClassLevelProcessor extends AbstractProcessor {
         Map<String,String>options =  processingEnv.getOptions();
         if (options.containsKey(TARGET_DIRECTORY)) {
             targetDirectory = options.get(TARGET_DIRECTORY);
+            System.out.println("== Target directory is set to " + targetDirectory);
         }
         if (options.containsKey(VERBOSE))
             verbose=true;
+        if (options.containsKey(MODEL_PACKAGE_KEY)) {
+            modelPackage = options.get(MODEL_PACKAGE_KEY);
+            System.out.println("== Found a model package of " + modelPackage);
+        }
     }
 
     @Override
@@ -160,6 +169,13 @@ public class ClassLevelProcessor extends AbstractProcessor {
     private void processClass(Document doc, Element xmlRoot, TypeElement classElementIn) {
 
         log.debug("Looking at " + classElementIn.getQualifiedName().toString());
+        // Process the data classes
+        if (classElementIn.getAnnotation(XmlRootElement.class)!=null) {
+            processDataClass(doc, classElementIn, xmlRoot);
+            return;
+        }
+
+        // NO data class, so it is the api.
         Path basePath = classElementIn.getAnnotation(Path.class);
         if (basePath==null || basePath.value().isEmpty()) {
             log.debug("No @Path found on " + classElementIn.getQualifiedName() + " - skipping");
@@ -337,6 +353,65 @@ public class ClassLevelProcessor extends AbstractProcessor {
         parent.appendChild(element);
         element.setAttribute("code", String.valueOf(ae.code()));
         element.setAttribute("reason",ae.reason());
+    }
+
+    private void processDataClass(Document doc, TypeElement classElementIn, Element xmlRoot) {
+
+        String pkg = classElementIn.toString();
+        log.debug("Looking at " + pkg);
+        if (!pkg.startsWith(modelPackage)) {
+            log.debug(" skipping as it does not meet the required package");
+            return;
+        }
+
+        Element elem = doc.createElement("data");
+        xmlRoot.appendChild(elem);
+        elem.setAttribute("name",classElementIn.getSimpleName().toString());
+        Api api = classElementIn.getAnnotation(Api.class);
+        if (api!=null) {
+            elem.setAttribute("abstract",api.value());
+            if (api.description()!=null && !api.description().isEmpty()) {
+                elem.setAttribute("description",api.description());
+            }
+        }
+        processDataClassProperties(doc, classElementIn, elem);
+
+    }
+
+    private void processDataClassProperties(Document doc, TypeElement classElementIn, Element elem) {
+        // Now look at the properties by processing the getters
+        for (ExecutableElement m : ElementFilter.methodsIn(classElementIn.getEnclosedElements())) {
+
+            String mName = m.getSimpleName().toString();
+            if (mName.startsWith("get") || mName.startsWith("is")) {
+                Element mElem = doc.createElement("property");
+                elem.appendChild(mElem);
+                String pName;
+                if (mName.startsWith("get")) {
+                    pName = mName.substring(3);
+                } else {
+                    pName = mName.substring(2);
+                }
+                pName = pName.substring(0,1).toLowerCase() + pName.substring(1);
+
+                mElem.setAttribute("name",pName);
+                ApiProperty ap = m.getAnnotation(ApiProperty.class);
+                if (ap!=null) {
+                    mElem.setAttribute("description",ap.value());
+                }
+                TypeMirror returnTypeMirror = m.getReturnType();
+                //  for types in the modelPackage or java.lang, remove the fqdn
+                String typeName = returnTypeMirror.toString();
+                if (typeName.startsWith(modelPackage)) {
+                    typeName = typeName.substring(modelPackage.length()+1);
+                }
+                else if (typeName.startsWith("java.lang")) {
+                    typeName = typeName.substring("java.lang".length()+1);
+                }
+                // TODO for collection<type> remove the collection expression and set some collection attribute
+                mElem.setAttribute("type", typeName);
+            }
+        }
     }
 
     /**

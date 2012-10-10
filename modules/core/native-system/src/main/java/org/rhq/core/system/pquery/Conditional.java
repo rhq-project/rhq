@@ -33,7 +33,7 @@ package org.rhq.core.system.pquery;
  * @author John Mazzitelli
  */
 class Conditional {
-    char separator = '|';
+    private char separator = '|';
 
     enum Category {
         process, arg
@@ -47,10 +47,10 @@ class Conditional {
         unspecified, parent
     }
 
-    private Category category;
-    private Attribute attribute;
-    private Operator operator;
-    private Qualifier qualifier;
+    private final Category category;
+    private final Attribute attribute;
+    private final Operator operator;
+    private final Qualifier qualifier;
 
     Conditional(String conditional) {
         char possibleSeparator = conditional.charAt(0);
@@ -74,9 +74,6 @@ class Conditional {
         try {
             this.category = Category.valueOf(categoryString);
         } catch (Exception e) {
-        }
-
-        if (this.category == null) {
             throw new IllegalArgumentException("Invalid category: " + conditional);
         }
 
@@ -85,9 +82,6 @@ class Conditional {
         try {
             this.operator = Operator.valueOf(operatorString);
         } catch (Exception e) {
-        }
-
-        if (this.operator == null) {
             throw new IllegalArgumentException("Invalid operator: " + conditional);
         }
 
@@ -95,10 +89,7 @@ class Conditional {
             try {
                 this.qualifier = Qualifier.valueOf(qualifierString);
             } catch (Exception e) {
-            }
-
-            if (this.qualifier == null) {
-                throw new IllegalArgumentException("Invalid qualifier: " + conditional);
+                throw new IllegalArgumentException("Invalid qualifier: " + qualifierString);
             }
         } else {
             this.qualifier = Qualifier.unspecified;

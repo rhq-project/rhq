@@ -56,6 +56,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private String filterAlertTemplateResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
+    private Integer filterGroupAlertDefinitionId;
     private Boolean filterEnabled;
     private Boolean filterDeleted = false; // find enabled definitions by default
     private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
@@ -80,6 +81,7 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
+        filterOverrides.put("groupAlertDefinitionId", "groupAlertDefinition.id = ?");
         filterOverrides.put("resourceOnly", "resource IS NOT NULL");
         filterOverrides.put("notificationSenderNames", "id IN ("
             + "SELECT notif.alertDefinition.id FROM AlertNotification notif " + "WHERE notif.senderName IN ( ? ))");
@@ -158,6 +160,10 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterNotificationSenderNames = Arrays.asList(notificationNames);
     }
 
+    public void addFilterGroupAlertDefinitionId(Integer groupAlertDefinitionId) {
+        this.filterGroupAlertDefinitionId = groupAlertDefinitionId;
+    }
+    
     public void fetchAlerts(boolean fetchAlerts) {
         this.fetchAlerts = fetchAlerts;
     }

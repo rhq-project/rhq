@@ -127,7 +127,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
 
     @Override
     public boolean isNextButtonEnabled() {
-        return (editor != null) && editor.isValid();
+        return (editor == null) || ((editor != null) && editor.isValid());
     }
 
     public boolean nextPage() {

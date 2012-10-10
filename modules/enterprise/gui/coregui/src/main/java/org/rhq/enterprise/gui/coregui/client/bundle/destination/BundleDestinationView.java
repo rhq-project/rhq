@@ -37,7 +37,9 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -235,6 +237,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 });
             }
         });
+        checkIfDisabled(purgeButton);
         actionLayout.addMember(purgeButton);
 
         IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
@@ -275,6 +278,27 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         }
 
         return actionLayout;
+    }
+
+    private void checkIfDisabled(final IButton purgeButton) {
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+        BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+        criteria.addFilterDestinationId(destination.getId());
+        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            public void onFailure(Throwable caught) {
+                purgeButton.setDisabled(false);
+            }
+
+            public void onSuccess(PageList<BundleDeployment> result) {
+                for (BundleDeployment deployment : result) {
+                    if (deployment.isLive()) {
+                        purgeButton.setDisabled(false);
+                        return;
+                    }
+                }
+                purgeButton.setDisabled(true);
+            }
+        });
     }
 
     private Table createDeploymentsTable() {

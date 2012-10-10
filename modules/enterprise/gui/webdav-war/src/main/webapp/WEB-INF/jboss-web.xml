@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-
-<jboss-web>
-    <context-root>webdav</context-root>
-</jboss-web>

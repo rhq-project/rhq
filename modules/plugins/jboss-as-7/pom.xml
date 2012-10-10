@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-plugins-parent</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.6.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -27,6 +27,7 @@
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
+    <rhq.internal>false</rhq.internal>
   </properties>
 
 
@@ -611,6 +612,7 @@
       </build>
 
     </profile>
+    
   </profiles>
 
 </project>

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,6 @@ import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClientExecutor;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
@@ -58,7 +57,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SmsSender extends AlertSender {
 
     private final Log log = LogFactory.getLog(SmsSender.class);
-    private long TWO_MINUTES = 1000L * 60L * 2L;
     private static final String DEVGARDEN_SMS_GW = "https://gateway.developer.telekom.com/p3gw-mod-odg-sms/rest";
     private static final String DEVGARDEN_SECURE_TOKEN_SERVER = "https://sts.idm.telekom.com/rest-v1/tokens/odg";
     private static final String TOKEN_EXPIRY_TIME = "token-expiry-time";
@@ -67,11 +65,13 @@ public class SmsSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        String token = null;
+        String token;
         try {
             token = getToken();
         } catch (Exception e) {
-            return new SenderResult(ResultState.FAILURE, "Can not obtain token: " + e.getMessage());
+            SenderResult senderResult = new SenderResult();
+            senderResult.addFailureMessage("Can not obtain token: " + e.getMessage());
+            return senderResult;
         }
 
         Resource res = alert.getAlertDefinition().getResource();
@@ -87,10 +87,15 @@ public class SmsSender extends AlertSender {
         try {
             sendAlertSms(token,b.toString());
         } catch (Exception e) {
-            return new SenderResult(ResultState.FAILURE, "Failed to send SMS: " + e.getMessage());
+            SenderResult senderResult = new SenderResult();
+            senderResult.addFailureMessage("Failed to send SMS: " + e.getMessage());
+            return senderResult;
         }
 
-        return new SenderResult(ResultState.SUCCESS, "SMS sent");
+        SenderResult senderResult = new SenderResult();
+        String tel = alertParameters.getSimpleValue("tel",null);
+        senderResult.addSuccessMessage("SMS to " + tel + " sent");
+        return senderResult;
     }
 
     /**
@@ -118,15 +123,14 @@ public class SmsSender extends AlertSender {
         try {
             ClientResponse resp = req.post(String.class);
             if (resp.getStatus()==200) {
-                System.out.println(resp.getEntity());
+                log.debug(resp.getEntity());
             }
             else {
-                System.out.println("Fehler " + resp.getStatus());
-                System.out.println(resp.getEntity());
+                log.warn("Error while sending SMS " + resp.getStatus());
+                log.debug(resp.getEntity());
                 throw new RuntimeException((String) resp.getEntity());
             }
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
             throw (e);
         }
 
@@ -146,7 +150,8 @@ public class SmsSender extends AlertSender {
         if (tokenTimeProp!=null)
             tokenExpTime = tokenTimeProp.getLongValue();
 
-        if (token == null || tokenExpTime == null || tokenExpTime < System.currentTimeMillis() + TWO_MINUTES ) {
+        long TWO_MINUTES = 1000L * 60L * 2L;
+        if (token == null || tokenExpTime == null || tokenExpTime < System.currentTimeMillis() + TWO_MINUTES) {
 
             String userId = preferences.getSimpleValue("login",null);
             String password = preferences.getSimpleValue("password",null);
@@ -172,7 +177,7 @@ public class SmsSender extends AlertSender {
                 ClientResponse resp = request.get(String.class);
 
                 // TODO check status
-                System.out.println(resp.getStatus());
+                log.debug(resp.getStatus());
                 String response = (String) resp.getEntity();
                 BufferedReader reader = new BufferedReader(new StringReader(response));
                 while (reader.ready()) {
@@ -182,7 +187,7 @@ public class SmsSender extends AlertSender {
                         break;
                     }
                 }
-                System.out.println("Token: " + token);
+                log.debug("Token: " + token);
                 MultivaluedMap<String, List> headers = resp.getHeaders();
                 List expiresList = headers.get("Expires");
                 String expires = (String) expiresList.get(0);
@@ -207,7 +212,7 @@ public class SmsSender extends AlertSender {
                 mgr.mergeConfiguration(preferences);
 
             } catch (Exception e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+                log.error("Error while retrieving a token: " + e.getMessage());
                 throw e;
             }
         }

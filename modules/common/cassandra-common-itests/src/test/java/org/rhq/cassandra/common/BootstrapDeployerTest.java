@@ -44,7 +44,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 /**
  * @author John Sanda
  */
-public class EmbeddedDeployerTest {
+public class BootstrapDeployerTest {
 
     @Test
     public void installSchema() throws CassandraException {

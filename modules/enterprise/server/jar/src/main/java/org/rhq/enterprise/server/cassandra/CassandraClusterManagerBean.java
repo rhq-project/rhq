@@ -48,8 +48,8 @@ import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
 import org.rhq.cassandra.CassandraException;
+import org.rhq.cassandra.bundle.BootstrapDeployer;
 import org.rhq.cassandra.bundle.DeploymentOptions;
-import org.rhq.cassandra.bundle.EmbeddedDeployer;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDestination;
@@ -130,7 +130,7 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
             throw new CassandraException(msg, e);
         }
 
-        EmbeddedDeployer deployer = new EmbeddedDeployer();
+        BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(new DeploymentOptions(deploymentProps));
         deployer.deploy();
 

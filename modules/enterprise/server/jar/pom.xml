@@ -83,7 +83,7 @@
  
     <dependency>
       <groupId>org.rhq</groupId>
-      <artifactId>rhq-cassandra-bundle</artifactId>
+      <artifactId>rhq-cassandra-common</artifactId>
       <version>${project.version}</version>
     </dependency>
 

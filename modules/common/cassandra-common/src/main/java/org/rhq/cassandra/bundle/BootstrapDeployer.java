@@ -56,7 +56,7 @@ import org.rhq.core.util.stream.StreamUtil;
 /**
  * @author John Sanda
  */
-public class EmbeddedDeployer {
+public class BootstrapDeployer {
 
     private DeploymentOptions deploymentOptions;
 

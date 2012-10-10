@@ -28,6 +28,9 @@ package org.rhq.plugins.cassandra;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
+import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
+import me.prettyprint.hector.api.exceptions.HectorException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,23 +39,20 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
-import me.prettyprint.hector.api.exceptions.HectorException;
 
 /**
  * @author John Sanda
  */
-public class ColumnFamilyComponent extends MBeanResourceComponent {
+public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?>> {
 
     private Log log = LogFactory.getLog(ColumnFamilyComponent.class);
 
     @Override
     public Configuration loadResourceConfiguration() {
         if (log.isDebugEnabled()) {
-            ResourceContext context = getResourceContext();
+            ResourceContext<?> context = getResourceContext();
             log.debug("Loading resource context for column family " + context.getResourceKey());
         }
 
@@ -66,7 +66,7 @@ public class ColumnFamilyComponent extends MBeanResourceComponent {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
 
         if (log.isDebugEnabled()) {
             log.debug("Updating resource configuration for column family " + context.getResourceKey());
@@ -95,10 +95,10 @@ public class ColumnFamilyComponent extends MBeanResourceComponent {
     }
 
     private ColumnFamilyDefinition getColumnFamilyDefinition() {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
         Configuration pluginConfig = context.getPluginConfiguration();
         String cfName = pluginConfig.getSimpleValue("name");
-        KeyspaceComponent keyspaceComponent = (KeyspaceComponent) context.getParentResourceComponent();
+        KeyspaceComponent<?> keyspaceComponent = (KeyspaceComponent<?>) context.getParentResourceComponent();
 
         for (ColumnFamilyDefinition cfDef : keyspaceComponent.getKeyspaceDefinition().getCfDefs()) {
             if (cfName.equals(cfDef.getName())) {

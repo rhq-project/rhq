@@ -27,6 +27,8 @@ package org.rhq.plugins.cassandra;
 
 import java.util.Map;
 
+import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
+
 import org.mc4j.ems.connection.EmsConnection;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,17 +42,16 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.JMXComponent;
 
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-
 /**
  * @author John Sanda
  */
-public class KeyspaceComponent implements ResourceComponent, ConfigurationFacet, JMXComponent {
+public class KeyspaceComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet,
+    JMXComponent<T> {
 
-    private ResourceContext context;
+    private ResourceContext<T> context;
 
     @Override
-    public void start(ResourceContext context) throws Exception {
+    public void start(ResourceContext<T> context) throws Exception {
         this.context = context;
     }
 
@@ -65,7 +66,7 @@ public class KeyspaceComponent implements ResourceComponent, ConfigurationFacet,
 
     @Override
     public EmsConnection getEmsConnection() {
-        JMXComponent parent = (JMXComponent) context.getParentResourceComponent();
+        JMXComponent<?> parent = (JMXComponent<?>) context.getParentResourceComponent();
         return parent.getEmsConnection();
     }
 

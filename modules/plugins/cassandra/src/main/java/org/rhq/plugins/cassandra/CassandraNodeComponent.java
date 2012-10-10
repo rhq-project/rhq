@@ -31,6 +31,8 @@ import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
 import java.io.File;
 import java.util.Set;
 
+import me.prettyprint.hector.api.Cluster;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarException;
@@ -43,6 +45,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -55,18 +58,17 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
-import me.prettyprint.hector.api.Cluster;
-
 /**
  * @author John Sanda
  */
-public class CassandraNodeComponent extends JMXServerComponent implements MeasurementFacet, OperationFacet {
+public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements MeasurementFacet,
+    OperationFacet {
 
     private Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
     @Override
     public AvailabilityType getAvailability() {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
         ProcessInfo processInfo = context.getNativeProcess();
 
         if (processInfo == null) {
@@ -88,8 +90,9 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
         return null;
     }
 
+    @SuppressWarnings("rawtypes")
     private OperationResult shutdown(Configuration params) {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
 
         if (log.isInfoEnabled()) {
             log.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
@@ -103,19 +106,19 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
             log.debug("Disabling thrift...");
         }
         EmsOperation operation = storageService.getOperation("stopRPCServer", emptyParams);
-        operation.invoke(emptyParams);
+        operation.invoke((Object[]) emptyParams);
 
         if (log.isDebugEnabled()) {
             log.debug("Disabling gossip...");
         }
         operation = storageService.getOperation("stopGossiping", emptyParams);
-        operation.invoke(emptyParams);
+        operation.invoke((Object[]) emptyParams);
 
         if (log.isDebugEnabled()) {
             log.debug("Initiating drain...");
         }
         operation = storageService.getOperation("drain", emptyParams);
-        operation.invoke(emptyParams);
+        operation.invoke((Object[]) emptyParams);
 
         ProcessInfo process = context.getNativeProcess();
         long pid = process.getPid();
@@ -129,7 +132,7 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
     }
 
     private OperationResult start(Configuration params) {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
         Configuration pluginConfig = context.getPluginConfiguration();
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         File binDir = new File(baseDir, "bin");
@@ -149,7 +152,7 @@ public class CassandraNodeComponent extends JMXServerComponent implements Measur
     }
 
     private String getStartScript() {
-        ResourceContext context = getResourceContext();
+        ResourceContext<?> context = getResourceContext();
         SystemInfo systemInfo = context.getSystemInformation();
 
         if (systemInfo.getOperatingSystemType() == WINDOWS) {

@@ -42,8 +42,9 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  */
 public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)  {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
         List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();
 
@@ -57,7 +58,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         return details;
     }
 
-    private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext context,
+    private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext<?> context,
         ProcessScanResult processScanResult) {
         ProcessInfo processInfo = processScanResult.getProcessInfo();
         String jmxPort = null;

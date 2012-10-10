@@ -35,6 +35,9 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,19 +51,24 @@ import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.chrono.GregorianChronology;
 import org.joda.time.field.DividedDateTimeField;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.CLibrary;
+import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.ClusterInitService;
-import org.rhq.cassandra.bundle.DeploymentOptions;
-import org.rhq.cassandra.bundle.EmbeddedDeployer;
+import org.rhq.cassandra.DeployCluster;
+import org.rhq.cassandra.ShutdownCluster;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.util.stream.StreamUtil;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.DoubleSerializer;
@@ -85,6 +93,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
 /**
  * @author John Sanda
  */
+@Listeners({CassandraClusterManager.class})
 public class MetricsServerTest {
 
     private final long SECOND = 1000;
@@ -126,25 +135,51 @@ public class MetricsServerTest {
     }
 
     @BeforeClass
+    @DeployCluster
     public void deployCluster() throws CassandraException {
-        File basedir = new File("target");
-        File clusterDir = new File(basedir, "cassandra");
-        int numNodes = 2;
-
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
-        deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
-        deploymentOptions.setNumNodes(numNodes);
-        deploymentOptions.setLoggingLevel("DEBUG");
-
-        EmbeddedDeployer deployer = new EmbeddedDeployer();
-        deployer.setDeploymentOptions(deploymentOptions);
-        deployer.deploy();
+//        File basedir = new File("target");
+//        File clusterDir = new File(basedir, "cassandra");
+//
+//        FileUtil.purge(clusterDir, false);
+//
+//        int numNodes = 2;
+//
+//        DeploymentOptions deploymentOptions = new DeploymentOptions();
+//        deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
+//        deploymentOptions.setNumNodes(numNodes);
+//        deploymentOptions.setLoggingLevel("DEBUG");
+//
+//        BootstrapDeployer deployer = new BootstrapDeployer();
+//        deployer.setDeploymentOptions(deploymentOptions);
+//        deployer.deploy();
 
         List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
         ClusterInitService initService = new ClusterInitService();
 
         initService.waitForClusterToStart(hosts);
         initService.waitForSchemaAgreement("rhq", hosts);
+    }
+
+    @AfterClass
+    @ShutdownCluster
+    public void shutdownCluster() throws Exception {
+//        File basedir = new File("target");
+//        File clusterDir = new File(basedir, "cassandra");
+//        killNode(new File(clusterDir, "node0"));
+//        killNode(new File(clusterDir, "node1"));
+    }
+
+    private void killNode(File nodeDir) throws Exception {
+        long pid = getPid(nodeDir);
+        CLibrary.kill((int) pid, 9);
+    }
+
+    private long getPid(File nodeDir) throws IOException {
+        File binDir = new File(nodeDir, "bin");
+        StringWriter writer = new StringWriter();
+        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
+
+        return Long.parseLong(writer.getBuffer().toString());
     }
 
     @BeforeMethod

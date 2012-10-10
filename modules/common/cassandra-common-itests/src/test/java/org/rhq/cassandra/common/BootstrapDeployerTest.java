@@ -34,9 +34,9 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import org.rhq.cassandra.BootstrapDeployer;
 import org.rhq.cassandra.CassandraException;
-import org.rhq.cassandra.bundle.DeploymentOptions;
-import org.rhq.cassandra.bundle.EmbeddedDeployer;
+import org.rhq.cassandra.DeploymentOptions;
 
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -57,7 +57,7 @@ public class BootstrapDeployerTest {
         deploymentOptions.setNumNodes(numNodes);
         deploymentOptions.setLoggingLevel("DEBUG");
 
-        EmbeddedDeployer deployer = new EmbeddedDeployer();
+        BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);
         deployer.deploy();
 

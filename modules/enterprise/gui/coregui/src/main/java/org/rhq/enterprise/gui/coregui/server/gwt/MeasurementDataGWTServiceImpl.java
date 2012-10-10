@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -31,6 +32,7 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -39,6 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
@@ -59,6 +62,19 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
     private MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
+
+    private CallTimeDataManagerLocal calltimeManager = LookupUtil.getCallTimeDataManager();
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForContext(EntityContext context,
+        CallTimeDataCriteria criteria) {
+        try {
+            PageList<CallTimeDataComposite> value = calltimeManager.findCallTimeDataForContext(getSessionSubject(),
+                context, criteria);
+            return SerialUtility.prepare(value, "MeasurementDataService.findCallTimeDataForContext");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType)
         throws RuntimeException {

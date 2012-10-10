@@ -110,7 +110,12 @@ public enum IconEnum {
     METRIC("subsystems/monitor/Edit_Metric.png", "subsystems/monitor/Edit_Metric.png"),
     PLUGIN("global/Plugin_16.png", "global/Plugin_24.png"),
     ALERT_FLAG_BLUE("subsystems/alert/Flag_blue_16.png", "subsystems/alert/Flag_blue_24.png"),
-    CONTENT("subsystems/content/Content_16.png", "subsystems/content/Content_24.png", "subsystems/content/Content_grey_16.png",null);
+    CONTENT("subsystems/content/Content_16.png", "subsystems/content/Content_24.png", "subsystems/content/Content_grey_16.png",null),
+
+    /////////////////////////////
+    //  Resource Specific Tabs
+    /////////////////////////////
+    CALLTIME("global/Recent_16.png", "global/Recent_24.png");
 
     IconEnum(String icon16x16Path ){
         this.icon16x16Path = icon16x16Path;

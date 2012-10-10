@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -44,6 +46,8 @@ import org.rhq.core.domain.util.PageList;
  */
 @RemoteServiceRelativePath("MeasurementDataGWTService")
 public interface MeasurementDataGWTService extends RemoteService {
+
+    PageList<CallTimeDataComposite> findCallTimeDataForContext(EntityContext context, CallTimeDataCriteria criteria);
 
     List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType)
         throws RuntimeException;

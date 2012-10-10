@@ -26,6 +26,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -46,6 +47,9 @@ public interface CallTimeDataManagerLocal {
 
     PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, long beginTime, long endTime, PageControl pageControl);
+
+    PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
+        CallTimeDataCriteria criteria);
 
     PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context, long beginTime,
         long endTime, String destination, PageControl pageControl);

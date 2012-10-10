@@ -334,5 +334,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1.1-20121031.024335-6.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.1.5/cassandra-thrift-1.1.5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/hectorclient/hector-core/1.1-1/hector-core-1.1-1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -94,14 +94,12 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("takeKeyspaceSnapshot")) {
             return takeSnapshot(parameters);
-        }
-
-        if (name.equals("setLog4jLevel")) {
+        } else if (name.equals("setLog4jLevel")) {
             return setLog4jLevel(parameters);
-        }
-
-        if (name.equals("repair")) {
-            return repair(parameters);
+        } else if (name.equals("repair")) {
+            return repairKeyspace(parameters);
+        } else if (name.equals("compact")) {
+            return compactKeyspace(parameters);
         }
 
         return super.invokeOperation(name, parameters);
@@ -131,7 +129,7 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
         return new OperationResult();
     }
 
-    private OperationResult repair(Configuration params) {
+    private OperationResult repairKeyspace(Configuration params) {
         String keyspace = params.getSimpleValue("keyspace");
         EmsBean emsBean = getEmsBean();
         EmsOperation operation = emsBean.getOperation("forceTableRepair", String.class, boolean.class, String[].class);
@@ -140,6 +138,17 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
 
         return new OperationResult();
     }
+
+    private OperationResult compactKeyspace(Configuration params) {
+        String keyspace = params.getSimpleValue("keyspace");
+        EmsBean emsBean = getEmsBean();
+        EmsOperation operation = emsBean.getOperation("forceTableCompaction", String.class, String[].class);
+
+        operation.invoke(keyspace, new String[] {});
+
+        return new OperationResult();
+    }
+
 
     @Override
     public Configuration loadResourceConfiguration() {

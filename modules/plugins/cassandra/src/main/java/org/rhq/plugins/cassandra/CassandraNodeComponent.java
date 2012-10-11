@@ -82,11 +82,15 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+
         if (name.equals("shutdown")) {
             return shutdown(parameters);
         } else if (name.equals("start")) {
             return start(parameters);
+        } else if (name.equals("restart")) {
+            return restart(parameters);
         }
+
         return null;
     }
 
@@ -127,7 +131,9 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return new OperationResult("Successfully shut down Cassandra daemon with pid " + pid);
         } catch (SigarException e) {
             log.warn("Failed to shut down Cassandra node with pid " + pid, e);
-            return new OperationResult("Failed to shut down Cassandra node with pid " + pid + ": " + e.getMessage());
+            OperationResult failure = new OperationResult("Failed to shut down Cassandra node with pid " + pid);
+            failure.setErrorMessage(ThrowableUtil.getAllMessages(e));
+            return failure;
         }
     }
 
@@ -149,6 +155,16 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             failure.setErrorMessage(ThrowableUtil.getAllMessages(results.getError()));
             return failure;
         }
+    }
+
+    private OperationResult restart(Configuration params) {
+        OperationResult result = shutdown(params);
+
+        if (result.getErrorMessage() == null) {
+            result = start(params);
+        }
+
+        return result;
     }
 
     private String getStartScript() {

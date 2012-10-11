@@ -52,7 +52,7 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         Method method = invokedMethod.getTestMethod().getConstructorOrMethod().getMethod();
         if (method.isAnnotationPresent(DeployCluster.class)) {
             try {
-                deployCluster();
+                deployCluster(method.getAnnotation(DeployCluster.class));
             } catch (CassandraException e) {
                 log.warn("Failed to deploy cluster", e);
             }
@@ -71,13 +71,13 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         }
     }
 
-    private void deployCluster() throws CassandraException {
+    private void deployCluster(DeployCluster annotation) throws CassandraException {
         File basedir = new File("target");
         File clusterDir = new File(basedir, "cassandra");
 
         FileUtil.purge(clusterDir, false);
 
-        int numNodes = 2;
+        int numNodes = annotation.numNodes();
 
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());

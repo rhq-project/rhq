@@ -25,18 +25,21 @@
 
 package org.rhq.enterprise.server.cassandra;
 
+import static org.rhq.core.domain.cloud.Server.OperationMode;
 import static org.rhq.core.domain.cloud.Server.OperationMode.MAINTENANCE;
 import static org.rhq.core.domain.cloud.Server.OperationMode.NORMAL;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransportException;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import org.rhq.cassandra.ClusterInitService;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -57,29 +60,25 @@ public class CassandraClusterHeartBeatJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+        ClusterInitService clusterInitService = new ClusterInitService();
         Server rhqServer = getRhqServer();
         JobDataMap dataMap = context.getMergedJobDataMap();
         String hosts = (String) dataMap.get(KEY_CASSANDRA_HOSTS);
         int timeout =  Integer.parseInt((String) dataMap.get(KEY_CONNECTION_TIMEOUT));
+        List<CassandraHost> cassandraHosts = new ArrayList<CassandraHost>();
 
         for (String s : hosts.split(",")) {
             String[] params = s.split(":");
-            CassandraHost host = new CassandraHost(params[0], Integer.parseInt(params[1]));
-            TSocket socket = new TSocket(host.getHost(), host.getPort(), timeout);
-            try {
-                socket.open();
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully connected to cassandra node [" + host + "]");
-                }
-                if (rhqServer.getOperationMode() != NORMAL) {
-                    changeServerMode(rhqServer, NORMAL);
-                }
-                return;
-            } catch (TTransportException e) {
-                String msg = "Unable to open thrift connection to cassandra node [" + host + "]";
-                logException(msg, e);
-            }
+            cassandraHosts.add(new CassandraHost(params[0], Integer.parseInt(params[1])));
+
         }
+        if (clusterInitService.ping(cassandraHosts, 1)) {
+            if (rhqServer.getOperationMode() != NORMAL) {
+                changeServerMode(rhqServer, NORMAL);
+            }
+            return;
+        }
+
         if (log.isWarnEnabled()) {
             log.warn(rhqServer + " is unable to connect to any Cassandra node. Server will go into maintenance mode.");
         }
@@ -91,7 +90,7 @@ public class CassandraClusterHeartBeatJob implements Job {
         return serverManager.getServer();
     }
 
-    private void changeServerMode(Server rhqServer, Server.OperationMode mode) {
+    private void changeServerMode(Server rhqServer, OperationMode mode) {
         if (rhqServer.getOperationMode() == mode) {
             return;
         }

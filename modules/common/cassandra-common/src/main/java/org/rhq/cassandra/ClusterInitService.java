@@ -51,6 +51,47 @@ public class ClusterInitService {
     private final Log log = LogFactory.getLog(ClusterInitService.class);
 
     /**
+     * Attempts to establish a Thrift RPC connection to the hosts for the number specified.
+     * In other words, if there are four hosts and <code>numHosts</code> is two, this
+     * method will immediately return after making two successful connections.
+     *
+     * @param hosts The cluster nodes to which a connection should be made
+     * @param numHosts The number of hosts to which a successful connection has to be made
+     *                 before returning.
+     * @return true if connections are made to the number of specified hosts, false
+     * otherwise.
+     */
+    public boolean ping(List<CassandraHost> hosts, int numHosts) {
+        long sleep = 100;
+        int timeout = 50;
+        int connections = 0;
+
+        for (CassandraHost host : hosts) {
+            TSocket socket = new TSocket(host.getHost(), host.getPort(), timeout);
+            try {
+                socket.open();
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully connected to cassandra node [" + host + "]");
+                }
+                ++connections;
+                socket.close();
+                if (connections == numHosts) {
+                    return true;
+                }
+            } catch (TTransportException e) {
+                String msg = "Unable to open thrift connection to cassandra node [" + host + "]";
+                logException(msg, e);
+            }
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * This method attempts to establish a Thrift RPC connection to each host. If the
      * connection fails, the host is retried after going through the other, remaining
      * hosts.
@@ -58,8 +99,24 @@ public class ClusterInitService {
      * @param hosts The cluster nodes to which a connection should be made
      */
     public void waitForClusterToStart(List<CassandraHost> hosts) {
+        waitForClusterToStart(hosts, hosts.size());
+    }
+
+    /**
+     * This method attempts to establish a Thrift RPC connection to each host for the
+     * number specified. In other words, if there are four hosts and <code>numHosts</code>
+     * is 2, this method will block only until it can connect to two of the hosts. If the
+     * connection fails, the host is retried after going through the other, remaining
+     * hosts.
+     *
+     * @param hosts The cluster nodes to which a connection should be made
+     * @param numHosts The number of hosts to which a successful connection has to be made
+     *                 before returning.
+     */
+    public void waitForClusterToStart(List<CassandraHost> hosts, int numHosts) {
         long sleep = 100;
         int timeout = 50;
+        int connections = 0;
         Queue<CassandraHost> queue = new LinkedList<CassandraHost>(hosts);
         CassandraHost host = queue.poll();
 
@@ -69,6 +126,11 @@ public class ClusterInitService {
                 socket.open();
                 if (log.isDebugEnabled()) {
                     log.debug("Successfully connected to cassandra node [" + host + "]");
+                }
+                ++connections;
+                socket.close();
+                if (connections == numHosts) {
+                    return;
                 }
             } catch (TTransportException e) {
                 queue.offer(host);

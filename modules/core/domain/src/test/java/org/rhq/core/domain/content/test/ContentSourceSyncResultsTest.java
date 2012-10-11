@@ -74,7 +74,7 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             em.persist(results);
             cs.addSyncResult(results);
             em.flush();
-            em.close();
+            //em.close();
             em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
@@ -100,7 +100,7 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             em.persist(results);
             cs.addSyncResult(results);
             em.flush();
-            em.close();
+            //em.close();
             em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());

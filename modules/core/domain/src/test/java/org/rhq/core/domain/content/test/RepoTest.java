@@ -39,8 +39,6 @@ public class RepoTest extends AbstractEJB3Test {
             repo.setSyncSchedule("0 0 5 * * ?");
             em.persist(repo);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             Repo lookedUp = em.find(Repo.class, repo.getId());
             assert lookedUp != null;

@@ -49,6 +49,7 @@ public class BundleTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testBundleVersionRepo() throws Throwable {
+
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
@@ -89,14 +90,14 @@ public class BundleTest extends AbstractEJB3Test {
             q = em.createNamedQuery(BundleVersionRepo.QUERY_FIND_BY_REPO_ID_NO_FETCH);
             q.setParameter("id", repo1.getId());
             assert q.getResultList().size() == 1;
-            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion().equals(
-                bundleVersion);
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion()
+                .equals(bundleVersion);
             assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getRepo().equals(repo1);
 
             q.setParameter("id", repo2.getId());
             assert q.getResultList().size() == 1;
-            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion().equals(
-                bundleVersion);
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion()
+                .equals(bundleVersion);
             assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getRepo().equals(repo2);
 
             q = em.createNamedQuery(BundleVersionRepo.QUERY_FIND_BY_BUNDLE_VERSION_ID_NO_FETCH);
@@ -167,19 +168,17 @@ public class BundleTest extends AbstractEJB3Test {
             assert bvFind.hashCode() == bv.hashCode();
 
             // clean up - delete our test entity
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             q = em.createNamedQuery(BundleVersion.QUERY_FIND_BY_NAME);
             q.setParameter("name", bv.getName());
             BundleVersion doomed = (BundleVersion) q.getSingleResult();
             doomed = em.getReference(BundleVersion.class, doomed.getId());
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
-            em.close();
+            em.clear();
 
             // make sure we didn't delete the bundle - it should not be cascade deleted
-            em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", bundle.getName());
             assert q.getResultList().size() == 1;
@@ -194,7 +193,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "didn't clean up test bundle";
             assert em.find(BundleType.class, bundleType.getId()) == null : "didn't clean up bundle type";
 
-            em.close();
+            em.clear();
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -356,19 +355,17 @@ public class BundleTest extends AbstractEJB3Test {
             assert bFind.hashCode() == b.hashCode();
 
             // clean up - delete our test entity
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", b.getName());
             Bundle doomed = (Bundle) q.getSingleResult();
             doomed = em.getReference(Bundle.class, doomed.getId());
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
-            em.close();
+            em.clear();
 
             // make sure we didn't delete the bundle type - it should not be cascade deleted
-            em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bFind.getBundleType().getName());
             assert q.getResultList().size() == 1;
@@ -377,14 +374,14 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "didn't clean up test bundle type";
 
             deleteResourceType(em, bundleType.getResourceType());
-            em.close();
+            em.clear();
 
             // make sure we didn't cascade delete the repo, it must also be deleted manually
-            em = getEntityManager();
             q = em.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
             q.setParameter("name", bFind.getRepo().getName());
             assert q.getResultList().size() == 1 : "didn't clean up test repo";
-            em.close();
+            em.clear();
+
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
@@ -424,9 +421,8 @@ public class BundleTest extends AbstractEJB3Test {
             assert btFind.hashCode() == bt.hashCode();
 
             // clean up - delete our test entity
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bt.getName());
             BundleType doomed = (BundleType) q.getSingleResult();
@@ -435,7 +431,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "didn't remove the entity";
 
             deleteResourceType(em, bt.getResourceType());
-            em.close();
+            em.clear();
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;

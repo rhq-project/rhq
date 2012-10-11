@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -62,6 +63,7 @@ public class ResourceTest extends AbstractEJB3Test {
 
             for (int i = 0; i < count; i++) {
                 Resource newResource = new Resource("testCreateAlotOfResources" + i, "res" + i, theResourceType);
+                newResource.setUuid("" + new Random().nextInt());
                 newResource.setAgent(theAgent);
                 em.persist(newResource);
                 resources.add(newResource);
@@ -111,6 +113,7 @@ public class ResourceTest extends AbstractEJB3Test {
 
             for (int i = 0; i < count; i++) {
                 Resource newResource = new Resource("testCreateAlotOfResources" + i, "res" + i, theResourceType);
+                newResource.setUuid("" + new Random().nextInt());
                 newResource.setAgent(theAgent);
                 em.persist(newResource);
                 resources.add(newResource);

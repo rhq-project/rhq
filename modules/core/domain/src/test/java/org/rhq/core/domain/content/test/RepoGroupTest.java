@@ -71,8 +71,6 @@ public class RepoGroupTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;
@@ -120,8 +118,6 @@ public class RepoGroupTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;
@@ -170,8 +166,6 @@ public class RepoGroupTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;

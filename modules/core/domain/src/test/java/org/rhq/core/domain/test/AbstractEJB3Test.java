@@ -1,140 +1,192 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
 package org.rhq.core.domain.test;
 
-import static org.rhq.test.JPAUtils.lookupEntityManager;
-import static org.rhq.test.JPAUtils.lookupTransactionManager;
-
 import java.io.File;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.Properties;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
 import javax.transaction.TransactionManager;
 
-import org.hibernate.Session;
-import org.hibernate.jdbc.Work;
 import org.testng.AssertJUnit;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
 
-import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
-import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
-import org.rhq.test.JPAUtils;
+import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.test.TransactionCallback;
 
-public abstract class AbstractEJB3Test extends AssertJUnit {
+public abstract class AbstractEJB3Test extends Arquillian {
 
-    @BeforeSuite(groups = "integration.ejb3")
-    public static void startupEmbeddedJboss() {
-        System.out.println("Starting ejb3...");
-        String classesDir = System.getProperty("ejbjarDirectory", "target/classes");
-        System.out.println("Loading EJB3 classes from directory: " + classesDir);
-        try {
-            EJB3StandaloneBootstrap.boot(null);
-            EJB3StandaloneBootstrap.scanClasspath(classesDir);
+    protected static final String JNDI_RHQDS = "java:jboss/datasources/RHQDS";
 
-            System.err.println("...... embedded-jboss-beans deployed....");
+    @PersistenceContext
+    protected EntityManager em;
 
-            // Add all EJBs found in the archive that has this file
-            EJB3StandaloneDeployer deployer = new EJB3StandaloneDeployer();
+    @ArquillianResource
+    protected InitialContext initialContext;
 
-            File deployment = new File(classesDir);
-            if (!deployment.exists()) {
-                System.err.println("Deployment directory does not exist: " + deployment.getAbsolutePath());
-            }
+    @Deployment
+    protected static JavaArchive getBaseDeployment() {
 
-            URL archive = deployment.toURI().toURL();
-            deployer.getArchives().add(archive);
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar") //
+            .addAsManifestResource("jbossas-ds.xml") //
+            .addAsManifestResource("test-persistence.xml", "persistence.xml") //
+            // don't need CDI bean injection 
+            // .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
+            .addClass(TransactionCallback.class) //
+            .addClass(AbstractEJB3Test.class);
 
-            System.err.println("...... deploying MM ejb3.....");
-            System.err.println("...... ejb3 deployed....");
+        // non-domain classes in use by domain test classes
+        jar.addClass(ThrowableUtil.class) //
+            .addClass(MessageDigestGenerator.class) //
+            .addClass(StreamUtil.class);
 
-            // Deploy everything we got
-            deployer.setKernel(EJB3StandaloneBootstrap.getKernel());
-            deployer.create();
-            System.err.println("...... deployer created....");
+        jar = addClasses(jar, new File("target/classes/org"), null);
 
-            deployer.start();
-            System.err.println("...... deployer started....");
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
+        return jar;
     }
 
-    @AfterSuite(groups = "integration.ejb3")
-    public static void shutdownEmbeddedJboss() {
-        EJB3StandaloneBootstrap.shutdown();
+    public static JavaArchive addClasses(JavaArchive archive, File dir, String packageName) {
+
+        packageName = (null == packageName) ? "" + dir.getName() : packageName + "." + dir.getName();
+
+        for (File file : dir.listFiles()) {
+            String fileName = file.getName();
+            if (file.isDirectory()) {
+                archive = addClasses(archive, file, packageName);
+            } else if (fileName.endsWith(".class")) {
+                int dot = fileName.indexOf('.');
+                try {
+                    Class<?> clazz = Class.forName(packageName + "." + fileName.substring(0, dot));
+                    archive.addClasses(clazz);
+                } catch (Exception e) {
+                    System.out.println("WARN: Could not add class:" + e);
+                }
+            }
+        }
+
+        return archive;
+    }
+
+    protected void startTransaction() throws Exception {
+        getTransactionManager().begin();
+    }
+
+    protected void rollbackTransaction() throws Exception {
+        getTransactionManager().rollback();
+    }
+
+    protected InitialContext getInitialContext() {
+        // may be null if not yet injected (as of 1.0.1.Final, only injected inside @Test)
+        if (null != initialContext) {
+            return initialContext;
+        }
+
+        InitialContext result = null;
+
+        try {
+            Properties jndiProperties = new Properties();
+            jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.as.naming.InitialContextFactory");
+            result = new InitialContext(jndiProperties);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get InitialContext", e);
+        }
+
+        return result;
     }
 
     public TransactionManager getTransactionManager() {
-        return lookupTransactionManager();
-    }
+        TransactionManager result = null;
 
-    public EntityManager getEntityManager() {
-        return lookupEntityManager();
-    }
-
-    public boolean isPostgres(EntityManager em) throws Exception {
-        Session session = (Session) em.getDelegate();
-        ConnectionMetaData metaData = new ConnectionMetaData();
-        session.doWork(metaData);
-
-        return metaData.getDbProductName().indexOf("postgres") > -1;
-    }
-
-    private static class ConnectionMetaData implements Work {
-        private String dbProductName;
-
-        @Override
-        public void execute(Connection conn) throws SQLException {
-            dbProductName = conn.getMetaData().getDatabaseProductName().toLowerCase();
-        }
-
-        String getDbProductName() {
-            return dbProductName;
-        }
-    }
-
-    public InitialContext getInitialContext() {
-        Hashtable<String, String> env = new Hashtable<String, String>();
-        env.put("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory");
-        env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
         try {
-            return new InitialContext(env);
-        } catch (NamingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load initial context", e);
+            result = (TransactionManager) getInitialContext().lookup("java:jboss/TransactionManager");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get TransactionManager", e);
         }
+
+        return result;
+    }
+
+    protected EntityManager getEntityManager() {
+        // may be null if not yet injected (as of 1.0.1.Final, only injected inside @Test)
+        if (null != em) {
+            return em;
+        }
+
+        EntityManager result = null;
+
+        try {
+            EntityManagerFactory emf = (EntityManagerFactory) getInitialContext().lookup(
+                "java:jboss/RHQEntityManagerFactory");
+            result = emf.createEntityManager();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get EntityManagerFactory", e);
+        }
+
+        return result;
+    }
+
+    protected void executeInTransaction(TransactionCallback callback) {
+        try {
+            startTransaction();
+            callback.execute();
+
+        } catch (Throwable t) {
+            RuntimeException re = new RuntimeException(ThrowableUtil.getAllMessages(t));
+            re.printStackTrace();
+            throw re;
+
+        } finally {
+            try {
+                rollbackTransaction();
+            } catch (Exception e) {
+                System.out.println("Failed to rollback transaction: " + e);
+            }
+        }
+    }
+
+    /* The old AbstractEJB3Test impl extended AssertJUnit. Continue to support the used methods
+     * with various call-thru methods. 
+     */
+
+    protected void assertNotNull(String msg, Object o) {
+        AssertJUnit.assertNotNull(msg, o);
+    }
+
+    protected void assertNull(String msg, Object o) {
+        AssertJUnit.assertNull(msg, o);
+    }
+
+    protected void assertFalse(String msg, boolean b) {
+        AssertJUnit.assertFalse(msg, b);
+    }
+
+    protected void assertTrue(String msg, boolean b) {
+        AssertJUnit.assertTrue(msg, b);
+    }
+
+    protected void assertEquals(String msg, int expected, int actual) {
+        AssertJUnit.assertEquals(expected, actual);
+    }
+
+    protected void assertEquals(String msg, String expected, String actual) {
+        AssertJUnit.assertEquals(expected, actual);
+    }
+
+    protected void fail(String message) {
+        AssertJUnit.fail(message);
     }
 
     private final long DEFAULT_OFFSET = 50;
@@ -147,10 +199,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public Date getAnotherDate(long offset) {
         referenceTime += offset;
         return new Date(referenceTime);
-    }
-
-    protected void executeInTransaction(TransactionCallback callback) {
-        JPAUtils.executeInTransaction(callback);
     }
 
 }

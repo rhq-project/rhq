@@ -71,7 +71,7 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
+            //em.close();
             em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
@@ -120,7 +120,7 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
+            //em.close();
             em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
@@ -170,7 +170,7 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
+            //em.close();
             em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());

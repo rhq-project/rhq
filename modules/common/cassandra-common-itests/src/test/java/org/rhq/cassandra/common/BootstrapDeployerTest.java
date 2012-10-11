@@ -25,6 +25,7 @@
 
 package org.rhq.cassandra.common;
 
+import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -32,21 +33,28 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import org.rhq.cassandra.BootstrapDeployer;
+import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraException;
+import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.ShutdownCluster;
 
+import me.prettyprint.cassandra.service.CassandraHost;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * @author John Sanda
  */
+@Listeners({CassandraClusterManager.class})
 public class BootstrapDeployerTest {
 
     @Test
+    @ShutdownCluster
     public void installSchema() throws CassandraException {
         File basedir = new File("target");
         File clusterDir = new File(basedir, "cassandra");
@@ -66,12 +74,12 @@ public class BootstrapDeployerTest {
         assertTrue(installedMarker.exists(), "Cluster is not installed. The installer file marker " +
                 installedMarker.getPath() + " does not exist.");
 
-        // wait a little bit to give subsequent nodes to start and allow for schema
-        // changes to propagate.
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-        }
+        List<CassandraHost> cassandraHosts = asList(new CassandraHost("127.0.0.1", 9160),
+            new CassandraHost("127.0.0.2", 9160));
+
+        ClusterInitService clusterInitService = new ClusterInitService();
+        clusterInitService.waitForClusterToStart(cassandraHosts);
+        clusterInitService.waitForSchemaAgreement("rhq", cassandraHosts);
 
         // now verify that the schema versions are the same on both nodes
         Cluster cluster = HFactory.getOrCreateCluster("test", "127.0.0.1");

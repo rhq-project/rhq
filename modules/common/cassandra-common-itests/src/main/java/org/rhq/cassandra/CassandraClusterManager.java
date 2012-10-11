@@ -87,12 +87,6 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);
         deployer.deploy();
-
-//        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
-//        ClusterInitService initService = new ClusterInitService();
-//
-//        initService.waitForClusterToStart(hosts);
-//        initService.waitForSchemaAgreement("rhq", hosts);
     }
 
     private void shutdownCluster() throws Exception {

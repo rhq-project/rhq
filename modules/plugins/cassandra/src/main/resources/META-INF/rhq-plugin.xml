@@ -52,13 +52,19 @@
 
     <operation name="shutdown" description="Shuts down the Cassandra daemon">
       <results>
-        <c:simple-property name="shutdownResult" description="Results of Cassandra daemon shutdown"/>
+        <c:simple-property name="shutdownResult" description="Shutdown the Cassandra daemon"/>
       </results>
     </operation>
 
     <operation name="start" description="Starts the Cassandra daemon">
       <results>
-        <c:simple-property name="startResult" description="Results of Cassandra daemon start up"/>
+        <c:simple-property name="startResult" description="Start the Cassandra daemon"/>
+      </results>
+    </operation>
+
+    <operation name="restart" description="Restarts the Cassandra daemon">
+      <results>
+        <c:simple-property name="startResult" description="Restart the Cassandra daemon"/>
       </results>
     </operation>
 
@@ -123,9 +129,11 @@
 
     <service name="StorageService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.cassandra.StorageServiceComponent">
+             class="org.rhq.plugins.cassandra.StorageServiceComponent"
+             singleton="true">
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
+        <c:simple-property name="nameTemplate" type="string" description="The keyspace name" readOnly="true" default="Storage Service"/>
       </plugin-configuration>
 
       <operation name="startRPCServer" description="Start the Thrift server"/>
@@ -145,7 +153,7 @@
           <c:simple-property name="keyspaceName" required="true" type="string"/>
         </parameters>
       </operation>
-      
+
       <operation name="setLog4jLevel"
                  description="Sets the logging level for classes under the clas qualifier.">
         <parameters>
@@ -165,7 +173,7 @@
         </parameters>
       </operation>
 
-      <operation name="repair"
+      <operation name="repair" displayName="Repair Keyspace"
                  description="Cassandra compares data on this node with the versions on other replicas to update any
                  out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
                  operation. All data for each column that is being repaired is read. Unless you are not performing any
@@ -173,7 +181,17 @@
                  The frequency that this should be run should be less than the gc_grace_period for each column family.
                  The current implementation runs repair on all column families in the specified keyspace.">
         <parameters>
-          <c:simple-property name="keyspace" required="true" type="string"/>
+          <c:simple-property name="keyspace" required="true" type="string">
+            <c:option-source target="resource" expression="type=^Keyspace$"/>
+          </c:simple-property>
+        </parameters>
+      </operation>
+      <operation name="compact" displayName="Compact Keyspace"
+                 description="Forces major compaction of a single keyspace.">
+        <parameters>
+          <c:simple-property name="keyspace" required="true" type="string">
+            <c:option-source target="resource" expression="type=^Keyspace$"/>
+          </c:simple-property>
         </parameters>
       </operation>
 
@@ -224,7 +242,7 @@
                            type="string"
                            default="org.apache.cassandra.db:type=Commitlog"/>
       </plugin-configuration>
-      
+
       <metric property="TotalCommitLogSize"
               measurementType="trendsup"
               displayType="summary"

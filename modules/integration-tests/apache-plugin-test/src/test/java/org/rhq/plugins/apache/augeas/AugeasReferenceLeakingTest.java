@@ -21,7 +21,6 @@ package org.rhq.plugins.apache.augeas;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,8 +53,8 @@ import org.rhq.plugins.apache.PluginLocation;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
-import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
+import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 
@@ -104,6 +103,9 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
 
                 allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(with(any(AvailabilityReport.class)));
                 allowing(ss.getDiscoveryServerService()).postProcessNewlyCommittedResources(with(any(Set.class)));
+
+                allowing(ss.getDiscoveryServerService()).setResourceEnablement(with(any(int.class)),
+                    with(any(boolean.class)));
 
                 ignoring(ss.getBundleServerService());
                 ignoring(ss.getConfigurationServerService());

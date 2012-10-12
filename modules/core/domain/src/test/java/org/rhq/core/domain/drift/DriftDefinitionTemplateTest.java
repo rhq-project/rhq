@@ -45,7 +45,11 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
     @BeforeMethod(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void init() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -57,7 +61,11 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
     @AfterClass(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void cleanUp() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -99,7 +107,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 em.persist(template);
@@ -130,7 +138,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 em.persist(template);
@@ -169,7 +177,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 resourceType.addDriftDefinitionTemplate(template);
@@ -202,7 +210,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 
@@ -237,7 +245,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 
@@ -274,7 +282,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 

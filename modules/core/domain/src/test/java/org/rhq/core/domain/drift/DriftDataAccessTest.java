@@ -31,7 +31,11 @@ public class DriftDataAccessTest extends AbstractEJB3Test {
 
     @BeforeMethod(groups = "drift.ejb")
     public final void initDB() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -41,7 +45,11 @@ public class DriftDataAccessTest extends AbstractEJB3Test {
 
     @AfterGroups(groups = "drift.ejb")
     public void resetDB() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();

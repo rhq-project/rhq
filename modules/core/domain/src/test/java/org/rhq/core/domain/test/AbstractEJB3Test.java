@@ -22,6 +22,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
+import org.rhq.core.domain.drift.DriftDataAccessTest;
 import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -60,7 +61,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
             // add CDI injection (needed by arquillian injection)
             .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
             // add necessary classes
+            // TODO: Why are these needed here and not taken care of in the domain call addition below  
             .addClass(TransactionCallback.class) //
+            .addClass(DriftDataAccessTest.class) //
             .addClass(AbstractEJB3Test.class);
 
         // non-domain classes in use by domain test classes
@@ -100,15 +103,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * <p>DO NOT OVERRIDE.</p>
      * <p>DO NOT DEFINE AN @BeforeMethod</p>
      * 
-     * Instead, override {@link #beforeMethod()}.
+     * Instead, override {@link #beforeMethod()}.  If you must override, for example, if you
+     * need to use special attributes on your annotation, then ensure you protect the code with
+     * and {@link #inContainer()} call.
      */
     @BeforeMethod
     protected void __beforeMethod() throws Exception {
-        // If the injection is done we're running in the container. Note that Arquillian
-        // calls the testng BeforeMethod twice (as of 1.0.2.Final, once out of container and
-        // once in container. In general the expectation is to execute it one time, and
-        // doing it in container allows for the expected injections and context.
-        if (null != initialContext) {
+        // Note that Arquillian calls the testng BeforeMethod twice (as of 1.0.2.Final, once 
+        // out of container and once in container. In general the expectation is to execute it 
+        // one time, and doing it in container allows for the expected injections and context.
+        if (inContainer()) {
             beforeMethod();
         }
     }
@@ -123,6 +127,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
     protected void __afterMethod() throws Exception {
         // currently no special handling necessary
         afterMethod();
+    }
+
+    protected boolean inContainer() {
+        // If the injection is done we're running in the container. 
+        return (null != initialContext);
     }
 
     /**
@@ -141,6 +150,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     protected void startTransaction() throws Exception {
         getTransactionManager().begin();
+    }
+
+    protected void commitTransaction() throws Exception {
+        getTransactionManager().commit();
     }
 
     protected void rollbackTransaction() throws Exception {
@@ -203,7 +216,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
         return result;
     }
 
+    /**
+     * Equivalent to <pre>executeInTransaction(true, callback)</pre>.
+     * @param callback
+     */
     protected void executeInTransaction(TransactionCallback callback) {
+        executeInTransaction(true, callback);
+    }
+
+    protected void executeInTransaction(boolean rollback, TransactionCallback callback) {
         try {
             startTransaction();
             callback.execute();
@@ -215,9 +236,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
         } finally {
             try {
-                rollbackTransaction();
+                if (!rollback) {
+                    commitTransaction();
+                } else {
+                    rollbackTransaction();
+                }
             } catch (Exception e) {
-                System.out.println("Failed to rollback transaction: " + e);
+                System.out.println("Failed to " + (rollback ? "rollback" : "commit") + " transaction: " + e);
             }
         }
     }

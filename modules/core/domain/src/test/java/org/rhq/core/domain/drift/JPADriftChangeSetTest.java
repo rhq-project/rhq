@@ -57,7 +57,11 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     @BeforeMethod(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void init() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -124,7 +128,7 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void saveAndLoadInitialChangeSet() {
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();

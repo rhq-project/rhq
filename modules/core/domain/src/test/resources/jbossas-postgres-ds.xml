@@ -12,10 +12,9 @@
     enabled="true"
     use-java-context="true">
 
-    <xa-datasource-property name="DatabaseName">${rhq.server.database.db-name:rhq}</xa-datasource-property>
-    <xa-datasource-property name="PortNumber">${rhq.server.database.port:5432}</xa-datasource-property>
-    <xa-datasource-property name="ServerName">${rhq.server.database.server-name:127.0.0.1}
-    </xa-datasource-property>
+    <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
+    <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
+    <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
     <driver>postgres</driver>
     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
     <xa-pool>

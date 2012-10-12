@@ -236,6 +236,13 @@
            version is changed the versions of each of these should be validated and updated as needed. -->
       
       <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-dist</artifactId>
+        <version>${jboss.version}</version>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
         <groupId>jboss</groupId>
         <artifactId>jboss-cache</artifactId>
         <version>${jboss-cache.version}</version>

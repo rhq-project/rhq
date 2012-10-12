@@ -10,8 +10,7 @@
     default="true">
   
     <configuration>
-      <!-- TODO: Get rid of this hardcoded path -->
-      <property name="jbossHome">/VirtualMachines/home/app/jboss-as-7.1.1.Final</property>
+      <property name="jbossHome">${jboss.unzip.location}</property>
     </configuration>
   </container>
 </arquillian>

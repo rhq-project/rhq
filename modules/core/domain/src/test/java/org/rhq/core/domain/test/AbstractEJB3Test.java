@@ -16,7 +16,9 @@ import org.testng.AssertJUnit;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 import org.rhq.core.util.MessageDigestGenerator;
@@ -37,11 +39,23 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @Deployment
     protected static JavaArchive getBaseDeployment() {
 
+        String dialect = System.getProperty("hibernate.dialect");
+        if (dialect == null) {
+            System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
+            dialect = "postgres";
+        }
+
+        String dataSourceXml;
+        if (dialect.toLowerCase().contains("postgres")) {
+            dataSourceXml = "jbossas-postgres-ds.xml";
+        } else {
+            dataSourceXml = "jbossas-oracle-ds.xml";
+        }
+
         JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar") //
-            .addAsManifestResource("jbossas-ds.xml") //
+            .addAsManifestResource(dataSourceXml)
             .addAsManifestResource("test-persistence.xml", "persistence.xml") //
-            // don't need CDI bean injection 
-            // .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
+            .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
             .addClass(TransactionCallback.class) //
             .addClass(AbstractEJB3Test.class);
 
@@ -144,7 +158,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             callback.execute();
 
         } catch (Throwable t) {
-            RuntimeException re = new RuntimeException(ThrowableUtil.getAllMessages(t));
+            RuntimeException re = new RuntimeException(ThrowableUtil.getAllMessages(t), t);
             re.printStackTrace();
             throw re;
 

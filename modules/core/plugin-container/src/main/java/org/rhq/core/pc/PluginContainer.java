@@ -500,7 +500,7 @@ public class PluginContainer {
         // so we do not do it. We'll just log a warning and let the thread keep going.
         Lock readLock = rwLock.readLock();
         try {
-            if (!readLock.tryLock(60L, TimeUnit.SECONDS)) {
+            if (!readLock.tryLock(2L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
                 //noinspection ThrowableInstanceNeverThrown
                 log.warn(msg, new Throwable(msg));
@@ -520,7 +520,7 @@ public class PluginContainer {
         // so we do not do it. We'll just log a warning and let the thread keep going.
         Lock writeLock = rwLock.writeLock();
         try {
-            if (!writeLock.tryLock(60L, TimeUnit.SECONDS)) {
+            if (!writeLock.tryLock(2L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
                 //noinspection ThrowableInstanceNeverThrown
                 log.warn(msg, new Throwable(msg));

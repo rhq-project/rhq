@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="test"
+        displayName="Test"
+        description="a test plugin"
+        package="org.rhq.plugins.test.upgrade.v1"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Test Server"
+           discovery="DiscoveryComponentV1"
+           class="ResourceComponentV1">
+   </server>
+
+</plugin>

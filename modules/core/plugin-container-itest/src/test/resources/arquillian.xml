@@ -14,6 +14,14 @@
       </configuration>
     </container>
 
+    <container qualifier="resource-upgrade">
+      <configuration>
+        <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
+        <property name="insideAgent">true</property>
+        <property name="startManagementBean">false</property>
+      </configuration>    
+    </container>
+    
     <container qualifier="connected-pc" default="true">
       <configuration>
         <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>

@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -63,6 +64,22 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
 
         return config;
     }
+
+    @Override
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+        if (name.equals("repair")) {
+            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
+            return this.getParentKeyspace().repairKeyspace(columnFamilyName);
+        } else if (name.equals("compact")) {
+            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
+            return this.getParentKeyspace().compactKeyspace(columnFamilyName);
+        }
+
+        OperationResult failedOperation = new OperationResult();
+        failedOperation.setErrorMessage("Operation not implemented.");
+
+        return failedOperation;
+    };
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -95,10 +112,9 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
     }
 
     private ColumnFamilyDefinition getColumnFamilyDefinition() {
-        ResourceContext<?> context = getResourceContext();
-        Configuration pluginConfig = context.getPluginConfiguration();
+        Configuration pluginConfig = this.getResourceContext().getPluginConfiguration();
         String cfName = pluginConfig.getSimpleValue("name");
-        KeyspaceComponent<?> keyspaceComponent = (KeyspaceComponent<?>) context.getParentResourceComponent();
+        KeyspaceComponent<?> keyspaceComponent = this.getParentKeyspace();
 
         for (ColumnFamilyDefinition cfDef : keyspaceComponent.getKeyspaceDefinition().getCfDefs()) {
             if (cfName.equals(cfDef.getName())) {
@@ -107,5 +123,9 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
         }
 
         return null;
+    }
+
+    private KeyspaceComponent<?> getParentKeyspace() {
+        return (KeyspaceComponent<?>) this.getResourceContext().getParentResourceComponent();
     }
 }

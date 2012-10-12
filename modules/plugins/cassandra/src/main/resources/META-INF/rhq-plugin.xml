@@ -88,9 +88,11 @@
 
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent">
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true">
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageProxy"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Storage Proxy"/>
       </plugin-configuration>
 
       <metric property="TotalReadLatencyMicros"
@@ -133,7 +135,7 @@
              singleton="true">
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
-        <c:simple-property name="nameTemplate" type="string" description="The keyspace name" readOnly="true" default="Storage Service"/>
+        <c:simple-property name="nameTemplate" type="string" readOnly="true" default="Storage Service"/>
       </plugin-configuration>
 
       <operation name="startRPCServer" description="Start the Thrift server"/>
@@ -169,28 +171,6 @@
               <c:option name="TRACE" value="TRACE"/>
               <c:option name="OFF" value="OFF"/>
             </c:property-options>
-          </c:simple-property>
-        </parameters>
-      </operation>
-
-      <operation name="repair" displayName="Repair Keyspace"
-                 description="Cassandra compares data on this node with the versions on other replicas to update any
-                 out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
-                 operation. All data for each column that is being repaired is read. Unless you are not performing any
-                 deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
-                 The frequency that this should be run should be less than the gc_grace_period for each column family.
-                 The current implementation runs repair on all column families in the specified keyspace.">
-        <parameters>
-          <c:simple-property name="keyspace" required="true" type="string">
-            <c:option-source target="resource" expression="type=^Keyspace$"/>
-          </c:simple-property>
-        </parameters>
-      </operation>
-      <operation name="compact" displayName="Compact Keyspace"
-                 description="Forces major compaction of a single keyspace.">
-        <parameters>
-          <c:simple-property name="keyspace" required="true" type="string">
-            <c:option-source target="resource" expression="type=^Keyspace$"/>
           </c:simple-property>
         </parameters>
       </operation>
@@ -235,31 +215,72 @@
 
     <service name="CommitLog"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent">
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true">
       <plugin-configuration>
-        <c:simple-property name="objectName"
-                           readOnly="true"
-                           type="string"
-                           default="org.apache.cassandra.db:type=Commitlog"/>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Commitlog"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
       </plugin-configuration>
 
       <metric property="TotalCommitLogSize"
               measurementType="trendsup"
               displayType="summary"
-              description="The size of all commit log segments"/>
+              description="Size of all commit log segments"/>
       <metric property="PendingTasks"
               measurementType="dynamic"
               displayType="detail"
-              description="The number of tasks waiting to be executed"/>
+              description="Number of tasks waiting to be executed"/>
       <metric property="CompletedTasks"
               measurementType="trendsup"
               displayType="detail"
-              description="The number of completed tasks"/>
+              description="Number of completed tasks"/>
+    </service>
+
+    <service name="CompactionManager"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=CompactionManager"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Compaction Manager" />
+      </plugin-configuration>
+
+      <metric property="CompletedTasks"
+              measurementType="trendsup"
+              displayType="summary"
+              description="Number of completed compactions since server [re]start"/>
+      <metric property="PendingTasks"
+              measurementType="dynamic"
+              displayType="detail"
+              description="Number of tasks waiting to be executed"/>
+      <metric property="TotalBytesCompacted"
+              measurementType="trendsup"
+              displayType="detail"
+              description="Total number of bytes compacted since server [re]start"/>
+      <metric property="TotalCompactionsCompleted"
+              measurementType="trendsup"
+              displayType="detail"
+              description="Total number of compactions since server [re]start"/>
     </service>
 
     <service name="Keyspace"
              discovery="org.rhq.plugins.cassandra.KeyspaceDiscoveryComponent"
              class="org.rhq.plugins.cassandra.KeyspaceComponent">
+
+      <operation name="repair" displayName="Repair Keyspace"
+                 description="Cassandra compares data on this node with the versions on other replicas to update any
+                 out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                 operation. All data for each column that is being repaired is read. Unless you are not performing any
+                 deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                 The frequency that this should be run should be less than the gc_grace_period for each column family.
+                 This runs a repair on all column families in this keyspace." />
+      <operation name="compact" displayName="Compact Keyspace"
+                 description="Forces major compaction of the keyspace. Though major compaction can free disk space
+                 used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                 run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                 manually run major compactions on a routine basis. So while read performance will be good immediately
+                 following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+
       <resource-configuration>
         <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
         <c:simple-property name="replicationFactor" type="integer" readOnly="true"/>
@@ -281,6 +302,24 @@
           <c:simple-property name="name" type="string" description="The column family name"/>
         </plugin-configuration>
 
+        <operation name="repair" displayName="Repair Column Family"
+                   description="Cassandra compares data on this node with the versions on other replicas to update any
+                   out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                   operation. All data for each column that is being repaired is read. Unless you are not performing any
+                   deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                   The frequency that this should be run should be less than the gc_grace_period for the column family." />
+        <operation name="compact" displayName="Compact Column Family"
+                   description="Forces major compaction of this column family. Though major compaction can free disk space
+                   used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                   run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                   manually run major compactions on a routine basis. So while read performance will be good immediately
+                   following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+
+        <metric property="CompressionRatio"
+                displayName="Compression Ratio"
+                measurementType="dynamic"
+                displayType="detail"
+                description="Compression Ratio"/>
         <metric property="TotalReadLatencyMicros"
                 displayName="Total Read Latency (in micro seconds)"
                 measurementType="trendsup"

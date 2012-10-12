@@ -19,8 +19,8 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.test.TransactionCallback;
 
 public class DriftFileTest extends DriftDataAccessTest {
 

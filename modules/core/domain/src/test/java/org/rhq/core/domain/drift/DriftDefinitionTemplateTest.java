@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.test.TransactionCallback;
+import org.rhq.core.domain.util.TransactionCallback;
 
 public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 

@@ -43,11 +43,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.test.TransactionCallback;
 
 public class ConfigurationTest extends AbstractEJB3Test {
+
 
     @Test(groups = "integration.ejb3")
     public void testPersistConfigurationUpdateHistory() throws Exception {

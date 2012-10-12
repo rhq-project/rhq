@@ -12,6 +12,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeMethod;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -21,10 +22,10 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
+import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.test.TransactionCallback;
 
 public abstract class AbstractEJB3Test extends Arquillian {
 
@@ -52,10 +53,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
             dataSourceXml = "jbossas-oracle-ds.xml";
         }
 
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar") //
-            .addAsManifestResource(dataSourceXml)
-            .addAsManifestResource("test-persistence.xml", "persistence.xml") //
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar")
+            .addAsManifestResource("jbossas-ds.xml")
+            // add the test persistence context
+            .addAsManifestResource("test-persistence.xml", "persistence.xml")
+            // add CDI injection (needed by arquillian injection)
             .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
+            // add necessary classes
             .addClass(TransactionCallback.class) //
             .addClass(AbstractEJB3Test.class);
 
@@ -64,6 +68,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addClass(MessageDigestGenerator.class) //
             .addClass(StreamUtil.class);
 
+        // domain classes
         jar = addClasses(jar, new File("target/classes/org"), null);
 
         return jar;
@@ -89,6 +94,49 @@ public abstract class AbstractEJB3Test extends Arquillian {
         }
 
         return archive;
+    }
+
+    /**
+     * <p>DO NOT OVERRIDE.</p>
+     * <p>DO NOT DEFINE AN @BeforeMethod</p>
+     * 
+     * Instead, override {@link #beforeMethod()}.
+     */
+    @BeforeMethod
+    protected void __beforeMethod() throws Exception {
+        // If the injection is done we're running in the container. Note that Arquillian
+        // calls the testng BeforeMethod twice (as of 1.0.2.Final, once out of container and
+        // once in container. In general the expectation is to execute it one time, and
+        // doing it in container allows for the expected injections and context.
+        if (null != initialContext) {
+            beforeMethod();
+        }
+    }
+
+    /**
+     * <p>DO NOT OVERRIDE.</p>
+     * <p>DO NOT DEFINE AN @AfterMethod</p>
+     * 
+     * Instead, override {@link #afterMethod()}.
+     */
+    @BeforeMethod
+    protected void __afterMethod() throws Exception {
+        // currently no special handling necessary
+        afterMethod();
+    }
+
+    /**
+     * Override Point!  Do not implement a @BeforeMethod, instead override this method. 
+     */
+    protected void beforeMethod() throws Exception {
+        // do nothing if we're not overridden
+    }
+
+    /**
+     * Override Point!  Do not implement an @AfterMethod, instead override this method. 
+     */
+    protected void afterMethod() throws Exception {
+        // do nothing if we're not overridden
     }
 
     protected void startTransaction() throws Exception {
@@ -124,6 +172,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
         try {
             result = (TransactionManager) getInitialContext().lookup("java:jboss/TransactionManager");
+            if (null == result) {
+                result = (TransactionManager) getInitialContext().lookup("TransactionManager");
+            }
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to get TransactionManager", e);

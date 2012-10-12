@@ -25,7 +25,7 @@ import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.test.TransactionCallback;
+import org.rhq.core.domain.util.TransactionCallback;
 
 public class DriftDataAccessTest extends AbstractEJB3Test {
 

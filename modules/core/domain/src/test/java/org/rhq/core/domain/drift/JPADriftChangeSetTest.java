@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.test.TransactionCallback;
+import org.rhq.core.domain.util.TransactionCallback;
 
 public class JPADriftChangeSetTest extends DriftDataAccessTest {
 

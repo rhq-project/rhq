@@ -47,8 +47,8 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.test.TransactionCallback;
 
 /**
  * Use this to explicitly test any of our named queries with any set of parameters. Useful to make sure these run on

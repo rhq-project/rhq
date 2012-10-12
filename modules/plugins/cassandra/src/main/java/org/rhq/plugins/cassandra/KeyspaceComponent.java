@@ -30,6 +30,8 @@ import java.util.Map;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 
 import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -40,13 +42,20 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
  */
 public class KeyspaceComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet,
-    JMXComponent<T> {
+    JMXComponent<T>, OperationFacet {
+
+    private static final String STORAGE_SERVICE_BEAN = "org.apache.cassandra.db:type=StorageService";
+
+    private static final String COMPACT_OPERATION = "forceTableCompaction";
+    private static final String REPAIR_OPERATION = "forceTableRepair";
 
     private ResourceContext<T> context;
 
@@ -61,7 +70,7 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
 
     @Override
     public AvailabilityType getAvailability() {
-        return AvailabilityType.UP;
+        return context.getParentResourceComponent().getAvailability();
     }
 
     @Override
@@ -93,12 +102,81 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
         return config;
     }
 
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+    }
+
+    @Override
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+        if (name.equals("repair")) {
+            return repairKeyspace();
+        } else if (name.equals("compact")) {
+            return compactKeyspace();
+        }
+
+        OperationResult failedOperation = new OperationResult();
+        failedOperation.setErrorMessage("Operation not implemented.");
+
+        return failedOperation;
+    }
+
+    public OperationResult repairKeyspace(String... columnFamilies) {
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class, String[].class);
+
+        String keyspace = context.getResourceKey();
+        if (columnFamilies == null) {
+            columnFamilies = new String[] {};
+        }
+        operation.invoke(keyspace, true, columnFamilies);
+
+        return new OperationResult();
+    }
+
+    public OperationResult compactKeyspace(String... columnFamilies) {
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsOperation operation = emsBean.getOperation(COMPACT_OPERATION, String.class, String[].class);
+
+        String keyspace = context.getResourceKey();
+        if (columnFamilies == null) {
+            columnFamilies = new String[] {};
+        }
+        operation.invoke(keyspace, new String[] {});
+
+        return new OperationResult();
+    }
+
     public KeyspaceDefinition getKeyspaceDefinition() {
         return CassandraUtil.getKeyspaceDefinition(context.getResourceKey());
     }
 
-    @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+    /**
+     * Loads the bean with the given object name.
+     *
+     * Subclasses are free to override this method in order to load the bean.
+     *
+     * @param objectName the name of the bean to load
+     * @return the bean that is loaded
+     */
+    protected EmsBean loadBean(String objectName) {
+        EmsConnection emsConnection = getEmsConnection();
+
+        if (emsConnection != null) {
+            EmsBean bean = emsConnection.getBean(objectName);
+            if (bean == null) {
+                // In some cases, this resource component may have been discovered by some means other than querying its
+                // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
+                // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
+                // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
+                // bean before giving up.
+                emsConnection.queryBeans(objectName);
+                bean = emsConnection.getBean(objectName);
+            }
+
+            return bean;
+        }
+
+        return null;
     }
 
 }

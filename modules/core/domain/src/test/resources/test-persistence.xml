@@ -34,12 +34,6 @@
         name="jboss.entity.manager.factory.jndi.name"
         value="java:jboss/RHQEntityManagerFactory" />
 
-      <property
-        name="jboss.entity.manager.jndi.name"
-        value="java:jboss/RHQEntityManager" />
-      <property
-        name="jboss.entity.manager.factory.jndi.name"
-        value="java:jboss/RHQEntityManagerFactory" />
 
       <!--
         <property name="hibernate.show_sql" value="true" />

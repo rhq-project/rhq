@@ -61,6 +61,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
 
     public ResourceGraphPortlet(String locatorId) {
         super(locatorId);
+        setChartHeight("100%");
         setOverflow(Overflow.HIDDEN);
     }
 

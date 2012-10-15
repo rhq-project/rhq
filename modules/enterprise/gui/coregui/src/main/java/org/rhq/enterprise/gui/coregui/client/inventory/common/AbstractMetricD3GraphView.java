@@ -48,6 +48,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
+    private String chartHeight;
+    private String svgText;
+
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
     }
@@ -150,7 +153,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:100%;\"></svg></div>");
+            chartHeight = (chartHeight != null) ? chartHeight : "100%";
+            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:"+ chartHeight +";\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);
@@ -159,6 +163,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                 // @todo: drawIE8Charts()
             }else {
                 drawJsniCharts();
+                //svgText = graph.getContents(); //just gets the  div and svg tags nothing below
+                //Log.debug("svgText set by JSNI: "+ svgText);
             }
         }
 
@@ -179,6 +185,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         return liveGraph;
     }
 
+    public void setChartHeight(String height) {
+        this.chartHeight = height;
+    }
+
     protected boolean supportsLiveGraphViewDialog() {
         return false;
     }
@@ -195,6 +205,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     @Override
     public void hide() {
         super.hide();
+    }
+
+    public void setSvgText(String svgText) {
+        this.svgText = svgText;
     }
 
     public String getYAxisTitle(){
@@ -223,6 +237,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
+        var chartHandle = "#rChart-"+chartId;
         var chartSelection = "#rChart-"+chartId + " svg";
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
@@ -256,6 +271,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .call(chart);
 
             $wnd.nv.utils.windowResize(chart.update);
+
+            //var aChart = $doc.getElementById(chartHandle);
+            //console.log(" *** rChart id: "+ aChart.innerHTML.toString());
+
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::setSvgText(Ljava/lang/String;)("<h>Hi Mike</h>");
 
             return chart;
         });

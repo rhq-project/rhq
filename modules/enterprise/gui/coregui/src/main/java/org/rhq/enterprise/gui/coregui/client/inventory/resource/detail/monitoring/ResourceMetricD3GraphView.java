@@ -49,6 +49,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView {
 
     public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);
+        setChartHeight("150px");
     }
 
 
@@ -56,6 +57,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView {
                                      List<MeasurementDataNumericHighLowComposite> data) {
 
         super(locatorId, resourceId, def, data);
+        setChartHeight("150px");
     }
 
 

@@ -71,9 +71,17 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
      */
     public static final String PLUGIN_CONFIG_ADDRESS = "address";
     /**
+     * Plugin property name for the connector type the connector is bound to.
+     */
+    public static final String PLUGIN_CONFIG_CONNECTOR = "connector";
+    /**
      * Plugin property name for the protocol handler. This prefix is used in the associated GlobalRequestProcessor object name.
      */
     public static final String PLUGIN_CONFIG_HANDLER = "handler";
+    /**
+     * Plugin property name for the name.
+     */
+    public static final String PLUGIN_CONFIG_NAME = "name";
     /**
      * Plugin property name for the port the connector is listening on.
      */
@@ -110,8 +118,8 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     @Override
     public void start(ResourceContext<TomcatServerComponent<?>> context) {
         if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_HANDLER).getStringValue())) {
-            throw new InvalidPluginConfigurationException(
-                "The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configuration for conflicts: "
+        	throw new InvalidPluginConfigurationException(
+        			"The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configuration for conflicts: "
                     + context.getResourceKey());
         }
 
@@ -123,12 +131,12 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
         getEmsConnection(); // reload the EMS connection
 
         for (MeasurementScheduleRequest request : requests) {
-            String name = request.getName();
-            name = switchConnectorThreadpoolName(name);
-            name = getAttributeName(name);
+            String req = request.getName();
+            req = switchConnectorThreadpoolName(req);
+            req = getAttributeName(req);
 
-            String beanName = name.substring(0, name.lastIndexOf(':'));
-            String attributeName = name.substring(name.lastIndexOf(':') + 1);
+            String beanName = req.substring(0, req.lastIndexOf(':'));
+            String attributeName = req.substring(req.lastIndexOf(':') + 1);
 
             try {
                 // Bean is cached by EMS, so no problem with getting the bean from the connection on each call
@@ -145,7 +153,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
                 report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
             } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + name + "]", e);
+                log.error("Failed to obtain measurement [" + req + "]", e);
             }
         }
     }
@@ -158,46 +166,46 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
      *
      * See BZ 795531.
      *
-     * @param name the metric property name that may need to be switched if it is a threadpool metric
+     * @param property the metric property name that may need to be switched if it is a threadpool metric
      * @return the name for the metric property, switched to use the shared executor name if appropriate
      */
-    private String switchConnectorThreadpoolName(String name) {
+    private String switchConnectorThreadpoolName(String property) {
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String sharedExecutorName = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_SHARED_EXECUTOR, "");
         if (sharedExecutorName == null || sharedExecutorName.trim().isEmpty()) {
-            return name; // there is nothing special to do if the connector isn't using a shared executor for its threadpool
+            return property; // there is nothing special to do if the connector isn't using a shared executor for its threadpool
         }
 
-        // 1) Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy
+        // 1) Catalina:type=ThreadPool,name=%name%:currentThreadsBusy
         //    will be replaced with:
         //    Catalina:type=Executor,name=<name of shared executor>:activeCount
         //
-        // 2) Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount
+        // 2) Catalina:type=ThreadPool,name=%name%:currentThreadCount
         //    will be replaced with:
         //    Catalina:type=Executor,name=<name of shared executor>:poolSize
         //
-        // 3) Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads
+        // 3) Catalina:type=ThreadPool,name=%name%:maxThreads
         //    will be replaced with
         //    Catalina:type=Executor,name=<name of shared executor>:maxThreads
-        final String NON_SHARED_THREADS_ACTIVE = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy";
-        final String NON_SHARED_THREADS_ALLOCATED = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount";
-        final String NON_SHARED_THREADS_MAX = "Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads";
+        final String NON_SHARED_THREADS_ACTIVE = "Catalina:type=ThreadPool,name=%name%:currentThreadsBusy";
+        final String NON_SHARED_THREADS_ALLOCATED = "Catalina:type=ThreadPool,name=%name%:currentThreadCount";
+        final String NON_SHARED_THREADS_MAX = "Catalina:type=ThreadPool,name=%name%:maxThreads";
         final String SHARED_THREADS_ACTIVE = "Catalina:type=Executor,name=XXX:activeCount";
         final String SHARED_THREADS_ALLOCATED = "Catalina:type=Executor,name=XXX:poolSize";
         final String SHARED_THREADS_MAX = "Catalina:type=Executor,name=XXX:maxThreads";
 
-        if (name.equals(NON_SHARED_THREADS_ACTIVE)) {
-            name = SHARED_THREADS_ACTIVE;
-        } else if (name.equals(NON_SHARED_THREADS_ALLOCATED)) {
-            name = SHARED_THREADS_ALLOCATED;
-        } else if (name.equals(NON_SHARED_THREADS_MAX)) {
-            name = SHARED_THREADS_MAX;
+        if (property.equals(NON_SHARED_THREADS_ACTIVE)) {
+            property = SHARED_THREADS_ACTIVE;
+        } else if (property.equals(NON_SHARED_THREADS_ALLOCATED)) {
+            property = SHARED_THREADS_ALLOCATED;
+        } else if (property.equals(NON_SHARED_THREADS_MAX)) {
+            property = SHARED_THREADS_MAX;
         } else {
-            return name; // this isn't one of the names we need to switch, immediate return the original name as-is
+            return property; // this isn't one of the names we need to switch, immediate return the original name as-is
         }
 
-        name = name.replace("XXX", sharedExecutorName);
-        return name;
+        property = property.replace("XXX", sharedExecutorName);
+        return property;
     }
 
     /**
@@ -218,42 +226,15 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     }
 
     private String getGlobalRequestProcessorName() {
-        String name = "Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%";
-
-        return replaceGlobalRequestProcessorNameProps(name);
+        return replaceGlobalRequestProcessorNameProps("Catalina:type=GlobalRequestProcessor,name=%name%");
     }
 
-    private String replaceGlobalRequestProcessorNameProps(String name) {
-        String result = name;
+    private String replaceGlobalRequestProcessorNameProps(String property) {
 
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String port = pluginConfiguration.getSimple(PLUGIN_CONFIG_PORT).getStringValue();
-        String handler = pluginConfiguration.getSimple(PLUGIN_CONFIG_HANDLER).getStringValue();
-        String address = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_ADDRESS, "");
+        String name = pluginConfiguration.getSimple(PLUGIN_CONFIG_NAME).getStringValue();
 
-        if (!"".equals(address)) {
-            StringBuilder sb = new StringBuilder("-");
-            sb.append(address);
-            // if it's a host name, add the IP portion that Tomcat expects
-            if (!address.contains(".")) {
-                String ip;
-
-                try {
-                    ip = InetAddress.getByName(address).getHostAddress();
-                    sb.append("%2F");
-                    sb.append(ip);
-                    address = sb.toString();
-                } catch (UnknownHostException e) {
-                    log.debug("Failed to resolve host [" + address + "]. Can not get objectName for property: " + name);
-                }
-            } else {
-                address = sb.toString();
-            }
-        }
-
-        result = result.replace("%port%", port);
-        result = result.replace("%address%", address);
-        result = result.replace("%handler%", handler);
+        String result = property.replace("%name%", name);
 
         return result;
     }
@@ -272,7 +253,6 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
             }
         }
         if ((null == protocol) || protocol.toUpperCase().contains("AJP")) {
-            // remove HTTP only properties
             for (PropertyDefinition propDef : configDef.getPropertiesInGroup("HTTP")) {
                 report.getConfiguration().remove(propDef.getName());
             }

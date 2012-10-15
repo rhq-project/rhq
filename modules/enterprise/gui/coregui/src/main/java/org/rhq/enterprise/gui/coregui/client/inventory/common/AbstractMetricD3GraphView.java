@@ -154,7 +154,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             title.setWidth100();
             addMember(title);
             chartHeight = (chartHeight != null) ? chartHeight : "100%";
-            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg style=\"height:"+ chartHeight +";\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+ chartHeight +";\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);

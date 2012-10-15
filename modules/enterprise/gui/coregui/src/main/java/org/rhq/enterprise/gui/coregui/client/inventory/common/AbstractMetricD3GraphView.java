@@ -238,7 +238,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         console.log("Draw nvd3 charts");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
         var chartHandle = "#rChart-"+chartId;
-        var chartSelection = "#rChart-"+chartId + " svg";
+        var chartSelection = chartHandle + " svg";
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
         var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();

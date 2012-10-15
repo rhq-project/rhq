@@ -55,6 +55,7 @@ import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
@@ -94,6 +95,8 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
@@ -152,13 +155,16 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     // use a new transaction when putting things on the JMS queue. see 
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public void addChangeSet(Subject subject, int resourceId, long zipSize, InputStream zipStream) throws Exception {
-
+        authorizeOrFail(subject, resourceId, "Can not update drifts");
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         MessageProducer producer = session.createProducer(changesetQueue);
@@ -173,7 +179,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(REQUIRES_NEW)
     public void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
         InputStream zipStream) throws Exception {
-
+        authorizeOrFail(subject, resourceId, "Can not update drifts");
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         MessageProducer producer = session.createProducer(fileQueue);
@@ -187,6 +193,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(NOT_SUPPORTED)
     public void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception {
+        authorizeOrFail(subject, resourceId, "Can not update drifts");
         saveChangeSetFiles(subject, changeSetFilesZip);
 
         AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
@@ -308,6 +315,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef) {
         switch (context.getType()) {
         case Resource:
+            authorizeOrFail(subject, context, "Can not update drifts");
             int resourceId = context.getResourceId();
             Resource resource = entityManager.find(Resource.class, resourceId);
             if (null == resource) {
@@ -336,9 +344,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public void deleteDriftDefinition(Subject subject, EntityContext entityContext, String driftDefName) {
-
         switch (entityContext.getType()) {
         case Resource:
+            authorizeOrFail(subject, entityContext, "Can not delete drifts");
             int resourceId = entityContext.getResourceId();
             DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
             criteria.addFilterName(driftDefName);
@@ -392,6 +400,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId) {
+        authorizeOrFail(subject, resourceId, "Can not delete drifts");
         DriftDefinition doomed = entityManager.getReference(DriftDefinition.class, driftDefId);
         doomed.getResource().setAgentSynchronizationNeeded();
         entityManager.remove(doomed);
@@ -482,6 +491,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+        authorizeOrFail(subject, resourceId, "Can not update/create drifts");
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
 
@@ -505,6 +515,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     private void updateCompliance(Subject subject, DriftDefinition definition, DriftChangeSetSummary changeSetSummary) {
+        authorizeOrFail(subject, definition.getResource().getId(), "Can not update drifts");
         boolean updateNeeded = false;
 
         if (changeSetSummary.isInitialChangeSet()) {
@@ -546,6 +557,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
+        authorizeOrFail(subject, resourceId, "Can not delete drifts");
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         driftServerPlugin.purgeByDriftDefinitionName(subject, resourceId, driftDefName);
     }
@@ -561,6 +573,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(NOT_SUPPORTED)
     public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
         DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
+        authorizeOrFail(subject, driftDef.getResource().getId(), "Can not update drifts");
 
         if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
             throw new IllegalArgumentException(("Cannot repin a definition that has been created from a pinned "
@@ -603,6 +616,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(NOT_SUPPORTED)
     public String persistSnapshot(Subject subject, DriftSnapshot snapshot,
         DriftChangeSet<? extends Drift<?, ?>> changeSet) {
+        authorizeOrFail(subject, changeSet.getResourceId(), "Can not update/create drifts");
         DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
         changeSetDTO.setCategory(changeSet.getCategory());
         changeSetDTO.setDriftHandlingMode(changeSet.getDriftHandlingMode());
@@ -712,11 +726,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public void updateDriftDefinition(Subject subject, DriftDefinition driftDefinition) {
+        authorizeOrFail(subject, driftDefinition.getResource().getId(), "Can not update drifts");
         entityManager.merge(driftDefinition);
     }
 
     @Override
     public void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef) {
+        authorizeOrFail(subject, entityContext.getResourceId(), "Can not update drifts");
+        
         // before we do anything, validate certain field values to prevent downstream errors
         validateDriftDefinition(driftDef);
 
@@ -950,6 +967,17 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftServerPluginManager pluginMgr = (DriftServerPluginManager) pc.getPluginManager();
 
         return pluginMgr.getDriftServerPluginComponent();
+    }
+    
+    private void authorizeOrFail(Subject subject, int resourceId, String message) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_DRIFT, resourceId)) {
+            throw new PermissionException(message + " - " + subject + " lacks "
+                + Permission.MANAGE_DRIFT + " for resource[id=" + resourceId + "]");
+        }
+    }
+    
+    private void authorizeOrFail(Subject subject, EntityContext context, String message) {
+        authorizeOrFail(subject, context.getResourceId(), message);
     }
 
 }

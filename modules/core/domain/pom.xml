@@ -225,6 +225,7 @@
           <artifactId>maven-antrun-plugin</artifactId>
           <executions>
             <execution>
+              <id>prepare AS container</id>
               <phase>process-test-resources</phase>
               <configuration>
                 <target>
@@ -391,6 +392,7 @@
                   <executions>
 
                      <execution>
+                        <id>deploy</id>
                         <phase>process-classes</phase>
                         <configuration>
                            <target>

@@ -54,8 +54,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             dataSourceXml = "jbossas-oracle-ds.xml";
         }
 
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar")
-            .addAsManifestResource("jbossas-ds.xml")
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar") //
+            .addAsManifestResource(dataSourceXml)
             // add the test persistence context
             .addAsManifestResource("test-persistence.xml", "persistence.xml")
             // add CDI injection (needed by arquillian injection)

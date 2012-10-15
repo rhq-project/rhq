@@ -92,7 +92,7 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-        if (name.equals("takeKeyspaceSnapshot")) {
+        if (name.equals("takeSnapshot")) {
             return takeSnapshot(parameters);
         } else if (name.equals("setLog4jLevel")) {
             return setLog4jLevel(parameters);
@@ -101,24 +101,25 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
         return super.invokeOperation(name, parameters);
     }
 
-    private OperationResult takeSnapshot(Configuration params) {
+    private OperationResult takeSnapshot(Configuration parameters) {
         EmsBean emsBean = getEmsBean();
         EmsOperation operation = emsBean.getOperation("takeSnapshot", String.class, String[].class);
+        String snapshotName = parameters.getSimpleValue("snapshotName");
+        if (snapshotName == null || snapshotName.trim().isEmpty()) {
+            snapshotName = System.currentTimeMillis() + "";
+        }
 
-        String snapshotName = params.getSimpleValue("snapshotName");
-        String keyspaceName = params.getSimpleValue("keyspaceName");
-
-        operation.invoke(snapshotName, new String[] {keyspaceName});
+        operation.invoke(snapshotName, new String[] {});
 
         return new OperationResult();
     }
 
-    private OperationResult setLog4jLevel(Configuration params) {
+    private OperationResult setLog4jLevel(Configuration parameters) {
         EmsBean emsBean = getEmsBean();
         EmsOperation operation = emsBean.getOperation("setLog4jLevel", String.class, String.class);
 
-        String classQualifier = params.getSimpleValue("classQualifier");
-        String level = params.getSimpleValue("level");
+        String classQualifier = parameters.getSimpleValue("classQualifier");
+        String level = parameters.getSimpleValue("level");
 
         operation.invoke(classQualifier, level);
 

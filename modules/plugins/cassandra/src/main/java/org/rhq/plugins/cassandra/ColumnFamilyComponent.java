@@ -52,14 +52,14 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
 
     @Override
     public Configuration loadResourceConfiguration() {
+        Configuration config = super.loadResourceConfiguration();
+
         if (log.isDebugEnabled()) {
             ResourceContext<?> context = getResourceContext();
             log.debug("Loading resource context for column family " + context.getResourceKey());
         }
 
         ColumnFamilyDefinition cfDef = getColumnFamilyDefinition();
-        Configuration config = new Configuration();
-
         config.put(new PropertySimple("gc_grace_seconds", cfDef.getGcGraceSeconds()));
 
         return config;
@@ -73,12 +73,12 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
         } else if (name.equals("compact")) {
             String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
             return this.getParentKeyspace().compactKeyspace(columnFamilyName);
+        } else if (name.equals("takeSnapshot")) {
+            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
+            return this.getParentKeyspace().takeSnapshot(parameters, columnFamilyName);
         }
 
-        OperationResult failedOperation = new OperationResult();
-        failedOperation.setErrorMessage("Operation not implemented.");
-
-        return failedOperation;
+        return super.invokeOperation(name, parameters);
     };
 
     @Override
@@ -109,6 +109,9 @@ public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?
             report.setErrorMessageFromThrowable(e);
             report.setStatus(FAILURE);
         }
+
+        report.getConfiguration().remove("gc_grace_seconds");
+        super.updateResourceConfiguration(report);
     }
 
     private ColumnFamilyDefinition getColumnFamilyDefinition() {

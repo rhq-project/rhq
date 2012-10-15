@@ -112,6 +112,8 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
             return repairKeyspace();
         } else if (name.equals("compact")) {
             return compactKeyspace();
+        } else if (name.equals("takeSnapshot")) {
+            return takeSnapshot(parameters);
         }
 
         OperationResult failedOperation = new OperationResult();
@@ -148,6 +150,29 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
 
     public KeyspaceDefinition getKeyspaceDefinition() {
         return CassandraUtil.getKeyspaceDefinition(context.getResourceKey());
+    }
+
+    public OperationResult takeSnapshot(Configuration parameters, String... columnFamilies) {
+        String keyspace = context.getResourceKey();
+        String snapshotName = parameters.getSimpleValue("snapshotName");
+        if (snapshotName == null || snapshotName.trim().isEmpty()) {
+            snapshotName = System.currentTimeMillis() + "";
+        }
+
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        if (columnFamilies == null || columnFamilies.length == 0) {
+            EmsOperation operation = emsBean.getOperation("takeSnapshot", String.class, String[].class);
+            operation.invoke(snapshotName, new String[] { keyspace });
+        } else {
+            EmsOperation operation = emsBean.getOperation("takeColumnFamilySnapshot", String.class, String.class,
+                String.class);
+
+            for (String columnFamily : columnFamilies) {
+                operation.invoke(keyspace, columnFamily, snapshotName);
+            }
+        }
+
+        return new OperationResult();
     }
 
     /**

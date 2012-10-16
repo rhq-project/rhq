@@ -25,104 +25,75 @@
   <server name="Cassandra Node"
           discovery="CassandraNodeDiscoveryComponent"
           class="CassandraNodeComponent">
+
+    <subcategories>
+      <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
+    </subcategories>
+
     <plugin-configuration>
-      <c:simple-property
-          name="connectorAddress"
-          displayName="Manager URL"
-          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."
-          default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"/>
-      <c:simple-property
-          name="type"
-          description="The type used to establish the EMS connection to the Cassandra node."
-          default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
-          readOnly="true"/>
+      <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"
+                         description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
+      <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
+                         description="The type used to establish the EMS connection to the Cassandra node."/>
       <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)"/>
       <c:simple-property name="principal" required="false" description="The login principal/username"/>
       <c:simple-property name="credentials" required="false" type="password" description="The login credentials/password"/>
       <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
       <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
-      <c:simple-property name="baseDir"
-                         displayName="Base Directory"
-                         description="The base directory from which the Cassandra Daemon was launched."
-                         required="false"/>
+      <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
     </plugin-configuration>
 
-    <process-scan name="CassandraDaemon"
-                  query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
+    <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
 
     <operation name="shutdown" description="Shuts down the Cassandra daemon">
       <results>
         <c:simple-property name="shutdownResult" description="Shutdown the Cassandra daemon"/>
       </results>
     </operation>
-
     <operation name="start" description="Starts the Cassandra daemon">
       <results>
         <c:simple-property name="startResult" description="Start the Cassandra daemon"/>
       </results>
     </operation>
-
     <operation name="restart" description="Restarts the Cassandra daemon">
       <results>
         <c:simple-property name="startResult" description="Restart the Cassandra daemon"/>
       </results>
     </operation>
 
-    <metric property="cluster"
-            dataType="trait"
-            description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another."
-            displayType="summary"/>
+    <metric property="cluster" dataType="trait" description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another." displayType="summary"/>
+
 
     <server name="Cassandra Server JVM"
-            description="The JVM of the Cassandra node"
-            sourcePlugin="JMX"
-            sourceType="JMX Server"
+            sourcePlugin="JMX" sourceType="JMX Server"
             discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
             class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
+            description="The JVM of the Cassandra node"
             singleton="true">
+
       <plugin-configuration>
-        <c:simple-property name="type" type="string" default="PARENT" readOnly="true"
-                           description="The EMS connection type for this JVM (cannot be modified)"/>
+        <c:simple-property name="type" type="string" default="PARENT" readOnly="true" description="The EMS connection type for this JVM (cannot be modified)"/>
       </plugin-configuration>
     </server>
+
 
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
              singleton="true">
+
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageProxy"/>
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Storage Proxy"/>
       </plugin-configuration>
 
-      <metric property="TotalReadLatencyMicros"
-              displayName="Total Read Latency (in micro seconds)"
-              measurementType="trendsup"
-              displayType="detail"
-              description="The latency all of read operations since execution start"/>
-      <metric property="TotalWriteLatencyMicros"
-              displayName="Total Write Latency (in micro seconds)"
-              measurementType="trendsup"
-              displayType="detail"
-              description="The latency of all write operations since execution start"/>
-      <metric property="ReadOperations"
-              measurementType="trendsup"
-              displayType="summary"
-              description="The total number of read operations since execution start"/>
-      <metric property="WriteOperations"
-              measurementType="trendsup"
-              displayType="summary"
-              description="The total number of write operations since execution start"/>
-      <metric property="RangeOperations"
-              measurementType="trendsup"
-              description="The total number of range operations since execution start"/>
-      <metric property="TotalRangeLatencyMicros"
-              displayName="Total Range Latency (in micro seconds)"
-              measurementType="trendsup"
-              description="The total latency of all range operations since execution start"/>
-      <metric property="TotalDiskSpaceUsed"
-              measurementType="dynamic"
-              displayType="summary"/>
+      <metric property="RangeOperations" measurementType="trendsup" description="The total number of range operations since execution start"/>
+      <metric property="ReadOperations" measurementType="trendsup" displayType="summary" description="The total number of read operations since execution start"/>
+      <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="summary"/>
+      <metric property="TotalRangeLatencyMicros" displayName="Total Range Latency (in micro seconds)" measurementType="trendsup" description="The total latency of all range operations since execution start"/>
+      <metric property="TotalReadLatencyMicros" displayName="Total Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="The latency all of read operations since execution start"/>
+      <metric property="TotalWriteLatencyMicros" displayName="Total Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="The latency of all write operations since execution start"/>
+      <metric property="WriteOperations" measurementType="trendsup" displayType="summary" description="The total number of write operations since execution start"/>
 
       <resource-configuration>
         <c:simple-property name="readOperations" type="long" readOnly="true"/>
@@ -133,20 +104,19 @@
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.cassandra.StorageServiceComponent"
              singleton="true">
+
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
         <c:simple-property name="nameTemplate" type="string" readOnly="true" default="Storage Service"/>
       </plugin-configuration>
 
       <operation name="startRPCServer" description="Start the Thrift server"/>
-
       <operation name="stopRPCServer" description="Stop the Thrift server"/>
-
       <operation name="takeSnapshot"
                  description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
-                             link of each SSTable file for each keyspace. Note that a column family can have multiple
-                             SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
-                             directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+                  link of each SSTable file for each keyspace. Note that a column family can have multiple
+                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
                              description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
@@ -172,107 +142,108 @@
         </parameters>
       </operation>
 
-      <metric property="Token"
-              dataType="trait"
-              description="A string representation of this node's token"
-              defaultOn="true"/>
-
-      <metric property="ReleaseVersion"
-              dataType="trait"
-              description="The Cassandra version"/>
-      <metric property="SchemaVersion"
-              dataType="trait"
+      <metric property="Token" dataType="trait" description="A string representation of this node's token" defaultOn="true"/>
+      <metric property="ReleaseVersion" dataType="trait" description="The Cassandra version"/>
+      <metric property="SchemaVersion" dataType="trait" displayType="summary"
               description="The current schema version for this node. The value is calculated as a checksum of all rows
-              in the system.schema_* column families. This value is used in an algorithm to compare schema versions
-              between nodes and apply updates as necessary. This value should be the same for all fully initialized
-              nodes in the cluster."
-              displayType="summary"/>
-      <metric property="ReleaseVersion"
-              dataType="trait"
-              description="The Cassandra version"/>
-      <metric property="Load"
-              dataType="measurement"
-              units="bytes"
-              displayType="summary"
-              description="The amount of load in disk usage on the node being queried"/>
-      <metric property="OperationMode"
-              dataType="trait"
-              description="The current operation mode"/>
+               in the system.schema_* column families. This value is used in an algorithm to compare schema versions
+               between nodes and apply updates as necessary. This value should be the same for all fully initialized
+               nodes in the cluster."/>
+      <metric property="ReleaseVersion" dataType="trait" description="The Cassandra version"/>
+      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="The amount of load in disk usage on the node being queried"/>
+      <metric property="OperationMode" dataType="trait" description="The current operation mode"/>
 
       <resource-configuration>
-        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true"
-                           description="The location of the saved caches directory"/>
-        <c:simple-property name="CommitLogLocation" type="string" readOnly="true"
-                           default="The location of the commit log directory"/>
+        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="The location of the saved caches directory"/>
+        <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="The location of the commit log directory"/>
         <c:list-property name="dataFileLocations" readOnly="true" description="A list of data file locations">
           <c:simple-property name="directory" type="string" readOnly="true"/>
         </c:list-property>
       </resource-configuration>
     </service>
 
+
     <service name="CommitLog"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
              singleton="true">
+
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Commitlog"/>
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
       </plugin-configuration>
 
-      <metric property="TotalCommitLogSize"
-              measurementType="trendsup"
-              displayType="summary"
-              description="Size of all commit log segments"/>
-      <metric property="PendingTasks"
-              measurementType="dynamic"
-              displayType="detail"
-              description="Number of tasks waiting to be executed"/>
-      <metric property="CompletedTasks"
-              measurementType="trendsup"
-              displayType="detail"
-              description="Number of completed tasks"/>
+      <metric property="TotalCommitLogSize" measurementType="trendsup" displayType="summary" description="Size of all commit log segments"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Number of tasks waiting to be executed"/>
+      <metric property="CompletedTasks" measurementType="trendsup" displayType="detail" description="Number of completed tasks"/>
     </service>
 
-     <service name="ClientRequestMetrics"
+
+    <service name="ReadTimeouts"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Client Request Metrics">
       <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=tobeadded"/>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=ReadTimeouts"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Read Timeouts" />
       </plugin-configuration>
-
-      <metric property="ReadTimeouts" measurementType="trendsup" displayType="summary" description="Size of all commit log segments"/>
-      <metric property="ReadUnavailables" measurementType="trendsup" displayType="summary" description="Number of tasks waiting to be executed"/>
-      <metric property="WriteTimeouts" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
-      <metric property="WriteUnavailables" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
+      <metric property="Count" displayName="Read Timeouts" measurementType="trendsup" displayType="summary" description="Number of read timeouts occurred for this node"/>
     </service>
+
+    <service name="ReadUnavailables"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=ReadUnavailables"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Read Unavailables" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Read Unavailable" measurementType="trendsup" displayType="summary" description="Number of read unavailable occurred for this node"/>
+    </service>
+
+    <service name="WriteTimeouts"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=WriteTimeouts"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Write Timeouts" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Write Timeouts" measurementType="trendsup" displayType="summary" description="Number of write timeouts occurred for this node"/>
+    </service>
+
+    <service name="WriteUnavailables"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=WriteUnavailables"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Write Unavailables" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Write Unavailables" measurementType="trendsup" displayType="summary" description="Number of write unavailables occurred for this node"/>
+    </service>
+
 
     <service name="CompactionManager"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
              singleton="true">
+
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=CompactionManager"/>
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Compaction Manager" />
       </plugin-configuration>
 
-      <metric property="CompletedTasks"
-              measurementType="trendsup"
-              displayType="summary"
-              description="Number of completed compactions since server [re]start"/>
-      <metric property="PendingTasks"
-              measurementType="dynamic"
-              displayType="detail"
-              description="Number of tasks waiting to be executed"/>
-      <metric property="TotalBytesCompacted"
-              measurementType="trendsup"
-              displayType="detail"
-              description="Total number of bytes compacted since server [re]start"/>
-      <metric property="TotalCompactionsCompleted"
-              measurementType="trendsup"
-              displayType="detail"
-              description="Total number of compactions since server [re]start"/>
+      <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed compactions since server [re]start"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Number of tasks waiting to be executed"/>
+      <metric property="TotalBytesCompacted" measurementType="trendsup" displayType="detail" description="Total number of bytes compacted since server [re]start"/>
+      <metric property="TotalCompactionsCompleted" measurementType="trendsup" displayType="detail" description="Total number of compactions since server [re]start"/>
     </service>
+
 
     <service name="Keyspace"
              discovery="org.rhq.plugins.cassandra.KeyspaceDiscoveryComponent"
@@ -291,7 +262,6 @@
                   run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
                   manually run major compactions on a routine basis. So while read performance will be good immediately
                   following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
-
       <operation name="takeSnapshot"
                  description="Takes a snapshot of this keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                   link of each SSTable file for the keyspace. Note that a column family can have multiple
@@ -319,6 +289,7 @@
       <service name="ColumnFamily"
                discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
                class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
+
         <plugin-configuration>
           <c:simple-property name="objectName" readOnly="true" type="string"/>
           <c:simple-property name="name" type="string" description="The column family name"/>
@@ -348,7 +319,7 @@
         </operation>
         <operation name="disableAutoCompaction"
                    description="Disable automatic compaction. Once you disable compaction, automatic minor compactions are no longer triggered frequently forcing you to
-                   manually run major compactions on a routine basis."/>
+                    manually run major compactions on a routine basis."/>
         <operation name="estimateKeys" description="Estimate keys">
           <results>
             <c:simple-property name="operationResult" description="Estimated Keys"/>
@@ -362,7 +333,6 @@
             <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
           </results>
         </operation>
-
 
         <metric property="CompressionRatio" measurementType="dynamic" displayType="detail" description="Compression Ratio"/>
         <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="detail" description="Disk space used by SSTables belonging to this CF"/>
@@ -383,15 +353,11 @@
         <metric property="UnleveledSSTables" measurementType="dynamic" displayType="detail" description="Number of SSTables in L0. Always return 0 if Leveled compaction is not enabled."/>
         <metric property="WriteCount" displayName="Write Count" measurementType="trendsup" displayType="summary" description="Number of write operations since execution start"/>
 
-        <metric property="" displayName="" measurementType="dynamic" displayType="detail" description=""/>
-
         <resource-configuration>
           <c:simple-property name="gc_grace_seconds" displayName="gc_grace_seconds" required="false" default="864000" type="integer"
-                             description="Specifies the time to wait before garbage collecting tombstones (deletion
-                             markers). The value, specified in seconds, defaults to 10 days and allows for a large
-                             amount of time for consistency to be achived prior to deletion. In a single node cluster
-                             this can be reduced to zero."/>
-
+                             description="Specifies the time to wait before garbage collecting tombstones (deletion markers). The value, specified in seconds,
+                              defaults to 10 days and allows for a large amount of time for consistency to be achived prior to deletion. In a single node cluster
+                              this can be reduced to zero."/>
           <c:simple-property name="CompactionStrategyClass" type="string" required="true" description="Compaction strategy class name."/>
           <c:simple-property name="CompressionParameters" type="string" required="true" description="Compression parameters"/>
           <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>
@@ -399,5 +365,6 @@
         </resource-configuration>
       </service>
     </service>
+
   </server>
 </plugin>

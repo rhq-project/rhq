@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import java.util.Iterator;
+import java.util.Set;
+
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 
@@ -35,14 +35,10 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.BoundedLinkedList;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -50,9 +46,11 @@ import java.util.Set;
  */
 public class LiveGraphD3View extends LocatableVLayout {
 
+    private static final int MAX_BARS_TO_KEEP = 60;
+    private static final int DATA_REFRESH_TIME = 2 * 1000;
     private int resourceId;
     private MeasurementDefinition definition;
-    private List<MeasurementData> data;
+    private BoundedLinkedList<MeasurementData> data;
 
     private Timer dataLoaderTimer;
 
@@ -63,8 +61,10 @@ public class LiveGraphD3View extends LocatableVLayout {
         this.definition = def;
         setHeight100();
         setWidth100();
-        data = new ArrayList<MeasurementData>();
+        // create a sliding window of MAX_BARS_TO_KEEP to live graph
+        data = new BoundedLinkedList<MeasurementData>(MAX_BARS_TO_KEEP);
     }
+
     public String getChartId(){
         return resourceId + "-" + definition.getId();
     }
@@ -111,8 +111,6 @@ public class LiveGraphD3View extends LocatableVLayout {
         addMember(graph);
         loadData();
 
-        //drawJsniCharts();
-
     }
 
 
@@ -138,22 +136,16 @@ public class LiveGraphD3View extends LocatableVLayout {
                             }
 
                             MeasurementDataNumeric measurementDataNumeric= (MeasurementDataNumeric) i.next();
-                            data.add(measurementDataNumeric);
-                            Log.debug("MeasurementData: "+measurementDataNumeric.getValue());
-                            Log.debug("MeasurementData time: "+measurementDataNumeric.getTimestamp());
+                            data.addLast(measurementDataNumeric);
 
                             drawJsniCharts();
 
-                            //handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
-                            //plot.redraw();
-                            //redraw();
-                            //markForRedraw();
                         }
                     });
             }
         };
 
-        dataLoaderTimer.scheduleRepeating(2000);
+        dataLoaderTimer.scheduleRepeating(DATA_REFRESH_TIME);
     }
 
     public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
@@ -199,7 +191,7 @@ public class LiveGraphD3View extends LocatableVLayout {
     }
 
     public String getJsonMetrics(){
-        Log.debug("getJsonMetrics size: "+data.size());
+        //Log.debug("getJsonMetrics size: "+data.size());
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementData measurement : data) {
             sb.append("{ x:"+measurement.getTimestamp()+",");
@@ -212,16 +204,14 @@ public class LiveGraphD3View extends LocatableVLayout {
 
 
     public native void drawJsniCharts() /*-{
-        console.log("Draw nvd3 live charts");
-        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getChartId()();
-        var chartHandle = "#liveChart-"+chartId;
-        var chartSelection = chartHandle + " svg";
-        var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisTitle()();
-        var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisUnits()();
-        var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getXAxisTitle()();
-        var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getJsonMetrics()());
-
-        var data = function() {
+        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getChartId()(),
+        chartHandle = "#liveChart-"+chartId,
+        chartSelection = chartHandle + " svg",
+        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisTitle()(),
+        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisUnits()(),
+        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getXAxisTitle()(),
+        json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getJsonMetrics()()),
+        data = function() {
             return [
                 {
                     values: json,
@@ -230,6 +220,7 @@ public class LiveGraphD3View extends LocatableVLayout {
                 }
             ];
         };
+
         $wnd.nv.addGraph(function() {
             var chart = $wnd.nv.models.multiBarChart()
                     .showControls(false)

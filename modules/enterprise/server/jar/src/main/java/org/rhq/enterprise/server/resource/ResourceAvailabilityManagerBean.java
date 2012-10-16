@@ -86,9 +86,10 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         }
     }
 
-    // TODO: I'm not sure this call is useful anymore, now that we get an entry in RHQ_RESOURCE_AVAIL when
-    // the resource is persisted. -Jay
-    //
+    // This is rarely needed now that we get an entry in RHQ_RESOURCE_AVAIL when the resource is persisted. But
+    // there are upgrade scenarios ( moving up to JON 3.1) where it can still get applied.  Once all customers
+    // are on 3.1 I believe this can go away (jshaughn)
+    // 
     public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
         // Hibernate didn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so we had to go native.
         Connection conn = null;
@@ -97,16 +98,16 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
             String query;
             if (dbType instanceof SQLServerDatabaseType) {
                 query = "" //
-                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( RESOURCE_ID ) " //
-                    + "     SELECT res.ID " //
+                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( RESOURCE_ID, AVAILABILITY_TYPE ) " //
+                    + "     SELECT res.ID, 2 " // set to UNKNOWN=2
                     + "       FROM RHQ_RESOURCE res " //
                     + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
                     + "      WHERE res.ID IN ( :resourceIds ) " //
                     + "        AND avail.ID IS NULL ";
             } else {
                 query = "" //
-                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID ) " //
-                    + "     SELECT %s, res.ID " //
+                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE ) " //
+                    + "     SELECT %s, res.ID, 2 " // set to UNKNOWN=2
                     + "       FROM RHQ_RESOURCE res " //
                     + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
                     + "      WHERE res.ID IN ( :resourceIds ) " //

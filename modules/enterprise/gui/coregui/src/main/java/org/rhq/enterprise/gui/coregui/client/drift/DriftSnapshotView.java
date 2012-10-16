@@ -211,7 +211,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
                 @Override
                 public boolean isEnabled(ListGridRecord[] selection) {
-                    return !pinnedToTemplate;
+                    return !pinnedToTemplate && super.isEnabled(selection);
                 }
             });
 

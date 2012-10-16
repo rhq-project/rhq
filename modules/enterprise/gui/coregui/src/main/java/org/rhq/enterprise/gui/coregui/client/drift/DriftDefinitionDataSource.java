@@ -91,6 +91,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
     private Set<Permission> globalPermissions;
+    private boolean hasWriteAccess;
 
     public DriftDefinitionDataSource() {
         this(EntityContext.forSubsystemView());
@@ -107,7 +108,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
      * 
      * @return list grid fields used to display the datasource data
      */
-    public ArrayList<ListGridField> getListGridFields() {
+    public ArrayList<ListGridField> getListGridFields(final boolean hasWriteAccess) {
+        this.hasWriteAccess = hasWriteAccess;
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
         ListGridField nameField = new ListGridField(ATTR_NAME, MSG.common_title_name());
@@ -133,7 +135,6 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         pinnedField.setHoverCustomizer(new HoverCustomizer() {
 
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-
                 return ImageManager.getPinnedIcon().equals(record.getAttribute(ATTR_IS_PINNED)) ? MSG
                     .view_drift_table_hover_defPinned() : MSG.view_drift_table_hover_defNotPinned();
             }
@@ -216,7 +217,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         templateField.setCanSortClientOnly(true);
         fields.add(templateField);
 
-        ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
+        ListGridField editField = new ListGridField(ATTR_EDIT, hasWriteAccess ? MSG.common_title_edit() : MSG.common_title_view_mode());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
         editField.setShowHover(true);
@@ -403,7 +404,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         return convert(from);
     }
 
-    public static ListGridRecord convert(DriftDefinitionComposite from) {
+    public ListGridRecord convert(DriftDefinitionComposite from) {
         DriftDefinition def = from.getDriftDefinition();
         DriftChangeSet<?> changeSet = from.getMostRecentChangeset();
         ListGridRecord record = new ListGridRecord();
@@ -422,7 +423,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_COMPLIANCE_ICON,
             ImageManager.getAvailabilityIcon(def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
         // fixed value, just the edit icon
-        record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
+        record.setAttribute(ATTR_EDIT, hasWriteAccess ? ImageManager.getEditIcon() : ImageManager.getViewIcon());
         record.setAttribute(ATTR_IS_PINNED,
             def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager.getUnpinnedIcon());
         record.setAttribute(ATTR_ATTACHED, def.isAttached() ? MSG.common_val_yes() : MSG.common_val_no());

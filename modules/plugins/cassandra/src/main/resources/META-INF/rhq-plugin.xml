@@ -87,16 +87,23 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Storage Proxy"/>
       </plugin-configuration>
 
-      <metric property="RangeOperations" measurementType="trendsup" description="The total number of range operations since execution start"/>
-      <metric property="ReadOperations" measurementType="trendsup" displayType="summary" description="The total number of read operations since execution start"/>
-      <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="summary"/>
-      <metric property="TotalRangeLatencyMicros" displayName="Total Range Latency (in micro seconds)" measurementType="trendsup" description="The total latency of all range operations since execution start"/>
-      <metric property="TotalReadLatencyMicros" displayName="Total Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="The latency all of read operations since execution start"/>
-      <metric property="TotalWriteLatencyMicros" displayName="Total Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="The latency of all write operations since execution start"/>
-      <metric property="WriteOperations" measurementType="trendsup" displayType="summary" description="The total number of write operations since execution start"/>
+      <metric property="HintsInProgress" measurementType="dynamic" displayType="summary" description="Hints in progress."/>
+      <metric property="RecentRangeLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Range Latency (microseconds)" description="Recent range latency in microseconds."/>
+      <metric property="RecentReadLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Read Latency (microseconds)" description="Recent read latency in microseconds."/>
+      <metric property="RecentWriteLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Write Latency (microseconds)" description="Recent write latency in microseconds."/>
+      <metric property="RangeOperations" measurementType="trendsup" displayType="summary" description="Total number of range operations since execution start"/>
+      <metric property="ReadOperations" measurementType="trendsup" displayType="summary" description="Total number of read operations since execution start"/>
+      <metric property="TotalHints" measurementType="trendsup" displayType="detail" description="Total hints."/>
+      <metric property="TotalRangeLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Range Latency (microseconds)" description="The total latency of all range operations since execution start"/>
+      <metric property="TotalReadLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Read Latency (microseconds)" description="The latency all of read operations since execution start"/>
+      <metric property="TotalWriteLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Write Latency (microseconds)" description="The latency of all write operations since execution start"/>
+      <metric property="WriteOperations" measurementType="trendsup" displayType="summary" description="Total number of write operations since execution start"/>
 
       <resource-configuration>
-        <c:simple-property name="readOperations" type="long" readOnly="true"/>
+        <c:simple-property name="HintedHandoffEnabled" type="boolean" required="true" description="Hinted Handoff Enabled"/>
+        <c:simple-property name="MaxHintsInProgress" type="long" required="true" description="Max Hints in Progress"/>
+        <c:simple-property name="MaxHintWindow" type="long" required="true" description="Max Hint Window"/>
+        <c:simple-property name="RPCTimeout" type="long" required="true" displayName="RPC Timeout" description="RPC Timeout"/>
       </resource-configuration>
     </service>
 
@@ -149,14 +156,14 @@
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
                between nodes and apply updates as necessary. This value should be the same for all fully initialized
                nodes in the cluster."/>
-      <metric property="ReleaseVersion" dataType="trait" description="The Cassandra version"/>
-      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="The amount of load in disk usage on the node being queried"/>
+      <metric property="ReleaseVersion" dataType="trait" description="Cassandra version"/>
+      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
       <metric property="OperationMode" dataType="trait" description="The current operation mode"/>
 
       <resource-configuration>
-        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="The location of the saved caches directory"/>
-        <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="The location of the commit log directory"/>
-        <c:list-property name="dataFileLocations" readOnly="true" description="A list of data file locations">
+        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="Location of the saved caches directory"/>
+        <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="Location of the commit log directory"/>
+        <c:list-property name="dataFileLocations" readOnly="true" description="List of data file locations">
           <c:simple-property name="directory" type="string" readOnly="true"/>
         </c:list-property>
       </resource-configuration>
@@ -238,10 +245,63 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Compaction Manager" />
       </plugin-configuration>
 
+      <operation name="stopCompaction" description="Stop all running compaction-like tasks having the provided type.">
+        <parameters>
+          <c:simple-property name="p1" displayName="Type" required="true" description="Type of compaction to stop">
+            <c:property-options>
+              <c:option value="COMPACTION"/>
+              <c:option value="VALIDATION"/>
+              <c:option value="CLEANUP"/>
+              <c:option value="SCRUB"/>
+              <c:option value="INDEX_BUILD"/>
+            </c:property-options>
+          </c:simple-property>
+        </parameters>
+      </operation>
+
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed compactions since server [re]start"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Number of tasks waiting to be executed"/>
       <metric property="TotalBytesCompacted" measurementType="trendsup" displayType="detail" description="Total number of bytes compacted since server [re]start"/>
       <metric property="TotalCompactionsCompleted" measurementType="trendsup" displayType="detail" description="Total number of compactions since server [re]start"/>
+    </service>
+
+
+    <service name="CacheService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Caches"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Cache Service" />
+      </plugin-configuration>
+
+      <operation name="saveCaches" description="Save row and key caches."/>
+      <operation name="invalidateKeyCache" description="Invalidate the key cache."/>
+      <operation name="invalidateRowCache" description="Invalidate the row cache."/>
+
+      <metric property="KeyCacheHits" measurementType="dynamic" displayType="detail" description="Number of key cache hits"/>
+      <metric property="RowCacheHists" measurementType="dynamic" displayType="detail" description="Number of row cache hits"/>
+
+      <metric property="KeyCacheRequests" measurementType="dynamic" displayType="detail" description="Number of key cache requests"/>
+      <metric property="RowCacheRequests" measurementType="dynamic" displayType="detail" description="Number of row cache requests"/>
+
+      <metric property="KeyCacheRecentHitRate" measurementType="dynamic" displayType="detail" description="Recent key cache hit rate"/>
+      <metric property="RowCacheRecentHitRate" measurementType="dynamic" displayType="detail" description="Recent row cache hit rate"/>
+
+      <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="detail" description="Key cache capacity in bytes"/>
+      <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="detail" description="Row cache capacity in bytes"/>
+
+      <metric property="KeyCacheSize" measurementType="dynamic" displayType="detail" description="Key cache size"/>
+      <metric property="RowCacheSize" measurementType="dynamic" displayType="detail" description="Row cache size"/>
+
+      <resource-configuration>
+        <c:simple-property name="KeyCacheCapacityInMB" type="long" required="true" displayName="Key Cache Capacity In MB" description="Key cache capacity in MB"/>
+        <c:simple-property name="RowCacheCapacityInMB" type="long" required="true" displayName="Row Cache Capacity In MB" description="Row cache capacity in MB"/>
+
+        <c:simple-property name="KeyCacheSavePeriodInSeconds" type="integer" required="true" description="Key cache save period in seconds"/>
+        <c:simple-property name="RowCacheSavePeriodInSeconds" type="integer" required="true" description="Row cache save period in seconds"/>
+      </resource-configuration>
     </service>
 
 

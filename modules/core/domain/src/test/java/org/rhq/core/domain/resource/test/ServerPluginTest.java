@@ -495,7 +495,7 @@ public class ServerPluginTest extends AbstractEJB3Test {
 
             // now stream the content into the plugin's table
             InitialContext context = getInitialContext();
-            DataSource ds = (DataSource) context.lookup("JNDI_RHQDS");
+            DataSource ds = (DataSource) context.lookup(JNDI_RHQDS);
             assert ds != null : "Could not get the data source!";
             conn = ds.getConnection();
             ps = conn.prepareStatement("UPDATE " + ServerPlugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
@@ -592,7 +592,7 @@ public class ServerPluginTest extends AbstractEJB3Test {
 
             // test that we can get a null content stream
             InitialContext context = getInitialContext();
-            DataSource ds = (DataSource) context.lookup("JNDI_RHQDS");
+            DataSource ds = (DataSource) context.lookup(JNDI_RHQDS);
             assert ds != null : "Could not get the data source!";
             conn = ds.getConnection();
             ps = conn.prepareStatement("SELECT PATH, CONTENT FROM " + ServerPlugin.TABLE_NAME + " WHERE ID = ?");

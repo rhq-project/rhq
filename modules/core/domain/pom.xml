@@ -95,26 +95,12 @@
       </dependency>
 
       <dependency>
-         <groupId>com.h2database</groupId>
-         <artifactId>h2</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>net.sourceforge.jtds</groupId>
          <artifactId>jtds</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
-  <dependency>
-    <groupId>org.jboss.as</groupId>
-    <artifactId>jboss-as-arquillian-container-managed</artifactId>
-    <version>${jboss.version}</version>
-    <scope>test</scope>
-  </dependency>
-        
   <dependency>
     <groupId>org.jboss.spec</groupId>
     <artifactId>jboss-javaee-6.0</artifactId>
@@ -124,14 +110,47 @@
   </dependency>
  
   <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+    <version>${jboss.version}</version>
+    <scope>test</scope>
+  </dependency>
+         
+  <dependency>
     <groupId>org.jboss.arquillian.testng</groupId>
-    <artifactId>arquillian-testng-container</artifactId>
-    <version>${arquillian.version}</version>    
+    <artifactId>arquillian-testng-container</artifactId>    
     <scope>test</scope>
   </dependency>
 
-    
-      
+  <dependency>
+    <groupId>org.jboss.shrinkwrap</groupId>
+    <artifactId>shrinkwrap-impl-base</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.arquillian.protocol</groupId>
+    <artifactId>arquillian-protocol-servlet</artifactId>
+    <scope>test</scope>
+  </dependency>              
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
@@ -329,8 +348,8 @@
                   <value>${rhq.test.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
-              <excludes>
-                <exclude>**/ResourceTypeTest.java</exclude>
+              <excludes>                
+                <exclude>**/ResourceTypeTest.java</exclude> <!-- TODO: this should be fixed up and reinstated -->
               </excludes>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>

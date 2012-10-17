@@ -1,4 +1,4 @@
-package org.rhq.core.domain.util;
+package org.rhq.core.domain.shared;
 
 public interface TransactionCallback {
 

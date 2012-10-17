@@ -1,8 +1,12 @@
 package org.rhq.core.domain.test;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -20,13 +24,19 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
-import org.rhq.core.domain.drift.DriftDataAccessTest;
-import org.rhq.core.domain.util.TransactionCallback;
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.test.AssertUtils;
+import org.rhq.test.MatchResult;
+import org.rhq.test.PropertyMatchException;
+import org.rhq.test.PropertyMatcher;
 
 public abstract class AbstractEJB3Test extends Arquillian {
 
@@ -38,9 +48,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @ArquillianResource
     protected InitialContext initialContext;
 
-    @Deployment
-    protected static JavaArchive getBaseDeployment() {
+    // We originally deployed the domain jar as a JavaArchive (JAR file). But this ran into problems because
+    // of the dependent 3rd party jars.  There isn't an obvious way to deploy the dependent jars of a jar.
+    // Also, AS7 makes it hard to put them in a globally accessibly /lib directory due to
+    // its classloader isolation and module approach. So, we now deploy an EnterpriseArchive (ear)
+    // where the domain jar is deployed as a module and the 3rd party libraries are put in the ear's /lib.
 
+    @Deployment
+    protected static EnterpriseArchive getBaseDeployment() {
+
+        // depending on the db in use, set up the necessary datasource 
         String dialect = System.getProperty("hibernate.dialect");
         if (dialect == null) {
             System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
@@ -54,27 +71,115 @@ public abstract class AbstractEJB3Test extends Arquillian {
             dataSourceXml = "jbossas-oracle-ds.xml";
         }
 
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "test-domain.jar") //
-            .addAsManifestResource(dataSourceXml)
-            // add the test persistence context
-            .addAsManifestResource("test-persistence.xml", "persistence.xml")
-            // add CDI injection (needed by arquillian injection)
-            .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
-            // add necessary classes
-            // TODO: Why are these needed here and not taken care of in the domain call addition below  
-            .addClass(TransactionCallback.class) //
-            .addClass(DriftDataAccessTest.class) //
-            .addClass(AbstractEJB3Test.class);
+        // Create the domain jar which will subsequently be packaged in the ear deployment   
+        JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "rhq-core-domain-ejb3.jar") //
+            .addAsManifestResource(dataSourceXml) // the datasource
+            .addAsManifestResource("ejb-jar.xml") // the empty ejb jar descriptor
+            .addAsManifestResource("test-persistence.xml", "persistence.xml") //  the test persistence context            
+            .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml") // add CDI injection (needed by arquillian injection)
+            );
 
-        // non-domain classes in use by domain test classes
-        jar.addClass(ThrowableUtil.class) //
+        // non-domain RHQ classes in use by domain test classes
+        ejbJar.addClass(ThrowableUtil.class) //
             .addClass(MessageDigestGenerator.class) //
-            .addClass(StreamUtil.class);
+            .addClass(StreamUtil.class) //
+            .addClass(AssertUtils.class) //
+            .addClasses(PropertyMatcher.class, MatchResult.class, PropertyMatchException.class);
 
         // domain classes
-        jar = addClasses(jar, new File("target/classes/org"), null);
+        ejbJar = addClasses(ejbJar, new File("target/classes/org"), null);
 
-        return jar;
+        JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
+        testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);
+
+        // create test ear
+        EnterpriseArchive ear = ShrinkWrap.create(EnterpriseArchive.class, "test-domain.ear") //
+            .addAsModule(ejbJar) // the domain jar under test
+            .addAsLibrary(testClassesJar) // the actual test classes
+            .setApplicationXML("application.xml"); // the application xml declaring the ejb jar
+
+        // Adding the 3rd party jars is not easy.  There were basically two approaches I could think of:
+        //
+        // 1) Use the MavenDependencyResolver to figure out and add all of the test deps and put them in lib
+        // 
+        // This immediately ran into trouble as there were way more jars sucked in than were actually necessary.
+        // Furthermore, it included arquillian, shrinkwrap, jboss, etc.. lots of jars that actually caused
+        // issues like locking and other horrible things due, I suppose, to just stepping all over the test env
+        // set up by Arquillian.  So, the next step was to try and start excluding the unwanted jars.  This was
+        // tedious and difficult and I didn't really get it close to working before giving up and going with
+        // option 2.
+        //
+        // 2) Use the MavenDependencyResolver to locate and pull just the artifacts we need.
+        //
+        // This is annoying because it's basically duplicating the same sort of effort that we already
+        // use maven to do for us. It involves running, failing on NoClassDefFound, fixing it, repeat. It
+        // does pull in necessary transitive deps but sometimes it pulls in unwanted transitive deps. So,
+        // we still end up having to do some exclusion filtering.  Since Shrinkwrap has weak and buggy         
+        // filtering, we have some homegrown filtering methods below. 
+        // TODO: Is there any way to not have to specify the versions for the transitive deps? This is brittle as is.
+
+        //load 3rd party deps explicitly
+        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        resolver.loadMetadataFromPom("pom.xml");
+        Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
+        dependencies
+            .addAll(resolver.artifact("commons-beanutils:commons-beanutils:1.8.2").resolveAs(JavaArchive.class));
+        dependencies.addAll(resolver.artifact("commons-codec:commons-codec").resolveAs(JavaArchive.class));
+        dependencies.addAll(resolver.artifact("commons-io:commons-io").resolveAs(JavaArchive.class));
+        dependencies.addAll(resolver.artifact("org.unitils:unitils-testng:3.1").resolveAs(JavaArchive.class));
+
+        String[] excludeFilters = { "testng.*jdk" };
+
+        dependencies = exclude(dependencies, excludeFilters);
+        ear = ear.addAsLibraries(dependencies);
+
+        System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
+
+        return ear;
+    }
+
+    /**
+     * @param dependencies The current set of deps - THIS IS FILTERED, not copied
+     * @param filters regex filters
+     * @return the filtered set of deps
+     */
+    public static Collection<JavaArchive> exclude(Collection<JavaArchive> dependencies, String... filters) {
+
+        for (String filter : filters) {
+            Pattern p = Pattern.compile(filter);
+
+            for (Iterator<JavaArchive> i = dependencies.iterator(); i.hasNext();) {
+                JavaArchive dependency = i.next();
+                if (p.matcher(dependency.getName()).find()) {
+                    i.remove();
+                }
+            }
+        }
+
+        return dependencies;
+    }
+
+    /**
+     * @param dependencies The current set of deps - this is not changed
+     * @param filters regex filters
+     * @return set set of JavaArchives in dependencies that matched an include filter
+     */
+    public static Collection<JavaArchive> include(Collection<JavaArchive> dependencies, String... filters) {
+
+        Collection<JavaArchive> result = new HashSet<JavaArchive>();
+
+        for (String filter : filters) {
+            Pattern p = Pattern.compile(filter);
+
+            for (Iterator<JavaArchive> i = dependencies.iterator(); i.hasNext();) {
+                JavaArchive dependency = i.next();
+                if (p.matcher(dependency.getName()).find()) {
+                    result.add(dependency);
+                }
+            }
+        }
+
+        return result;
     }
 
     public static JavaArchive addClasses(JavaArchive archive, File dir, String packageName) {
@@ -230,8 +335,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             callback.execute();
 
         } catch (Throwable t) {
+            rollback = true;
             RuntimeException re = new RuntimeException(ThrowableUtil.getAllMessages(t), t);
-            re.printStackTrace();
             throw re;
 
         } finally {
@@ -242,7 +347,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                     rollbackTransaction();
                 }
             } catch (Exception e) {
-                System.out.println("Failed to " + (rollback ? "rollback" : "commit") + " transaction: " + e);
+                throw new RuntimeException("Failed to " + (rollback ? "rollback" : "commit") + " transaction", e);
             }
         }
     }

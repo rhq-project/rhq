@@ -22,22 +22,12 @@
   */
 package org.rhq.core.domain.util;
 
-import org.rhq.core.domain.util.OSGiVersionComparator;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
-import junit.framework.TestCase;
 
-public class OSGiVersionComparatorTest extends TestCase {
-    public OSGiVersionComparatorTest(String arg0) {
-        super(arg0);
-    }
-
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+@Test
+public class OSGiVersionComparatorTest extends AssertJUnit {
 
     /*
      * Test method for 'net.hyperic.hq.ui.action.resource.common.patch.JBossONVersionComparator.compare(Object, Object)'

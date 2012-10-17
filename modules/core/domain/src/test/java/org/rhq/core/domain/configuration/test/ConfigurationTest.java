@@ -42,8 +42,8 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.core.domain.util.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 

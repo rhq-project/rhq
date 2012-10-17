@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.util.TransactionCallback;
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
 
 public class DriftFileTest extends DriftDataAccessTest {
@@ -180,7 +180,7 @@ public class DriftFileTest extends DriftDataAccessTest {
     }
 
     File workDir() throws URISyntaxException {
-        File dir = new File(new File(getClass().getResource(".").toURI()), "work");
+        File dir = new File(new File("target"), "work");
         dir.mkdir();
         return dir;
     }

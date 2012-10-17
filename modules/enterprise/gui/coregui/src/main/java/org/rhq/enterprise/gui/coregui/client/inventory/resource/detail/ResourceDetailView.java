@@ -209,7 +209,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_graphs()), null);
 
         monitorNewGraphs = new SubTab(monitoringTab.extendLocatorId("NewGraphs"), new ViewName("NewGraphs",
-                "NewGraphs"), null);
+                "d3 Graphs"), null);
 
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
             MSG.view_tabs_common_tables()), null);

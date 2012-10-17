@@ -133,12 +133,8 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
 
-                JPADriftChangeSet changeSet = new JPADriftChangeSet();
-                changeSet.setCategory(COVERAGE);
-                changeSet.setVersion(0);
-                changeSet.setDriftDefinition(definition);
+                JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, definition);
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
-                changeSet.setResource(resource);
 
                 em.persist(changeSet);
                 em.flush();

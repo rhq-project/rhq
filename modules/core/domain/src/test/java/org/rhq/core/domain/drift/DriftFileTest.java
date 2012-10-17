@@ -34,8 +34,7 @@ public class DriftFileTest extends DriftDataAccessTest {
         String hashId = digestGen.calcDigestString(content);
 
         // Create the initial driftFile
-        final JPADriftFileBits df1 = new JPADriftFileBits();
-        df1.setHashId(hashId);
+        final JPADriftFileBits df1 = new JPADriftFileBits(hashId);
         df1.setDataSize((long) content.length());
         EntityManager em = getEntityManager();
         Session session = (Session) em.getDelegate();
@@ -90,9 +89,9 @@ public class DriftFileTest extends DriftDataAccessTest {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
-            final JPADriftFileBits driftFile = new JPADriftFileBits();
+            String hashId = digestGen.calcDigestString(dataFile);
+            final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
             driftFile.setDataSize(dataFile.length());
-            driftFile.setHashId(digestGen.calcDigestString(dataFile));
             EntityManager em = getEntityManager();
             Session session = (Session) em.getDelegate();            
             driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
@@ -134,9 +133,9 @@ public class DriftFileTest extends DriftDataAccessTest {
 
         for (int driftFileNum = 0; driftFileNum < numDriftFiles; ++driftFileNum) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
-            final JPADriftFileBits driftFile = new JPADriftFileBits();
+            String hashId = digestGen.calcDigestString(dataFile);
+            final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
             driftFile.setDataSize(dataFile.length());
-            driftFile.setHashId(digestGen.calcDigestString(dataFile));
             EntityManager em = getEntityManager();
             Session session = (Session) em.getDelegate();
             driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),

@@ -25,9 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -44,13 +41,12 @@ import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationC
 import org.rhq.enterprise.server.perspective.activator.context.ResourceActivationContext;
 import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePluginMetadataManager;
 
-@Stateless
-// @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
 /**
  * @author Jay Shaughnessy
  * @author Ian Springer
  */
-public class PerspectiveManagerBean implements PerspectiveManagerLocal {
+//@Stateless
+public class PerspectiveManagerBean {//implements PerspectiveManagerLocal {
 
     // Map of sessionId to cached menu entry.  The cached menu is re-used for the same sessionId.
     // This should more appropriately use Subject as the key, but since Subject equality is
@@ -62,10 +58,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal {
 
     private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
 
-    @EJB
+    //@EJB
     private ServerManagerLocal serverManager;
 
-    @EJB
+    //@EJB
     private SubjectManagerLocal subjectManager;
 
     /* (non-Javadoc)

@@ -461,10 +461,6 @@
       <priority value="WARN"/>
    </category>
    
-   <category name="org.jboss.seam">
-      <priority value="WARN"/>
-   </category>
-   
    <!-- ================= -->
    <!-- The root category -->
    <!-- ================= -->

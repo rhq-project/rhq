@@ -21,25 +21,22 @@ package org.rhq.enterprise.gui.admin.plugin;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.core.domain.plugin.ServerPlugin;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
 import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeNode;
 import org.richfaces.model.TreeNodeImpl;
 
-@Scope(ScopeType.PAGE)
-@Name("pluginConfigUIBean")
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+
+//@Scope(ScopeType.PAGE)
+//@Name("pluginConfigUIBean")
 public class PluginConfigurationUIBean extends AbstractPluginConfigurationUIBean implements Serializable {
 
-    @RequestParameter
+    // @RequestParameter
     private String pluginName;
     private TreeNode root;
 
@@ -47,7 +44,7 @@ public class PluginConfigurationUIBean extends AbstractPluginConfigurationUIBean
         return root;
     }
 
-    @Create
+    // @Create
     public void init() {
         checkPermission();
         createTree();

@@ -27,8 +27,6 @@ import com.sun.facelets.Facelet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.seam.Component;
-
 import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
 import org.rhq.enterprise.server.RHQConstants;
@@ -70,7 +68,7 @@ public class ServerInfoUIBean {
     }
 
     public String getSeamVersion() {
-        return getManifestVersion(Component.class);
+        return ""; //getManifestVersion(Component.class);
     }
 
     public String getRichFacesVersion() {

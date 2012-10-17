@@ -18,17 +18,11 @@
  */
 package org.rhq.core.gui.model;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-
 import javax.faces.model.SelectItem;
 
 /**
  * @author Ian Springer
  */
-@Name("DefaultPageControlSettingsUIBean")
-@Scope(ScopeType.APPLICATION)
 public class DefaultPageControlSettingsUIBean {
     private static final int[] PAGE_SIZES = new int[] {15, 30, 45};
     private static final SelectItem[] PAGE_SIZE_SELECT_ITEMS = new SelectItem[PAGE_SIZES.length];

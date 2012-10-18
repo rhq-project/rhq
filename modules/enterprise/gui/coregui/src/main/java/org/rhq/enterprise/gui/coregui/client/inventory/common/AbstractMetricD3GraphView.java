@@ -27,9 +27,9 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -49,7 +49,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     private List<MeasurementDataNumericHighLowComposite> data;
 
     private String chartHeight;
-    private String svgText;
 
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
@@ -159,13 +158,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             graph.setHeight100();
             addMember(graph);
 
-            if(BrowserUtility.isBrowserIE8()){
-                // @todo: drawIE8Charts()
-            }else {
-                drawJsniCharts();
-                //svgText = graph.getContents(); //just gets the  div and svg tags nothing below
-                //Log.debug("svgText set by JSNI: "+ svgText);
-            }
+            drawJsniCharts();
+
         }
 
 
@@ -207,10 +201,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         super.hide();
     }
 
-    public void setSvgText(String svgText) {
-        this.svgText = svgText;
-    }
-
     public String getYAxisTitle(){
        return definition.getName();
     }
@@ -233,6 +223,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         sb.append("]");
         return sb.toString();
     }
+
 
     public native void drawJsniCharts() /*-{
         console.log("Draw nvd3 charts");
@@ -271,11 +262,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .call(chart);
 
             $wnd.nv.utils.windowResize(chart.update);
-
-            //var aChart = $doc.getElementById(chartHandle);
-            //console.log(" *** rChart id: "+ aChart.innerHTML.toString());
-
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::setSvgText(Ljava/lang/String;)("<h>Hi Mike</h>");
 
             return chart;
         });

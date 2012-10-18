@@ -217,8 +217,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     public String getJsonMetrics(){
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementDataNumericHighLowComposite measurement : data) {
-            sb.append("{ x:"+measurement.getTimestamp()+",");
-            sb.append(" y:"+MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
+            if(!Double.isNaN(measurement.getValue())){
+                sb.append("{ x:"+measurement.getTimestamp()+",");
+                sb.append(" y:"+MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
+            }
         }
         sb.setLength(sb.length()-1); // delete the last ','
         sb.append("]");

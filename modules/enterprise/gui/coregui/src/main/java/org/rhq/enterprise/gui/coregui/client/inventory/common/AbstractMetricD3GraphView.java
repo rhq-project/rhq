@@ -159,6 +159,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             addMember(graph);
 
             drawJsniCharts();
+            markForRedraw();
 
         }
 
@@ -205,7 +206,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
        return definition.getName();
     }
     public String getYAxisUnits(){
-       return definition.getUnits().getName();
+       return definition.getUnits().toString();
     }
 
     public String getXAxisTitle(){
@@ -217,16 +218,26 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             sb.append("{ x:"+measurement.getTimestamp()+",");
-            sb.append(" y:"+measurement.getValue()+"},");
+            sb.append(" y:"+MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
         }
         sb.setLength(sb.length()-1); // delete the last ','
         sb.append("]");
         return sb.toString();
     }
 
+    /**
+     * If there is more than 2 days time window then return true so we can show dates in axis labels.
+     * @param startTime
+     * @param endTime
+     * @return true if differnce between startTime and endTime is >= 2 days
+     */
+   public boolean shouldDisplayDateInXAxisLabel(Long startTime, Long endTime){
+       long timeThreshold = 2 * 24 * 60 * 1000; // 2 days
+       return endTime - startTime >= timeThreshold;
+   }
 
     public native void drawJsniCharts() /*-{
-        console.log("Draw nvd3 charts");
+        //console.log("Draw nvd3 charts");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
         var chartHandle = "#rChart-"+chartId;
         var chartSelection = chartHandle + " svg";
@@ -250,7 +261,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .tooltips(true);
 
             chart.xAxis.axisLabel(xAxisLabel)
-                    .tickFormat(function(d) { return $wnd.d3.time.format('%I %p')(new Date(d)) });
+                    .tickFormat(function(d) { return $wnd.d3.time.format('%a %I %p')(new Date(d)) });
 
             chart.yAxis
                     .axisLabel(yAxisUnits)

@@ -43,6 +43,7 @@ public class TimelineView extends LocatableVLayout {
 
     @Override
     protected void onDraw() {
+        //@todo: replace with GWT version
         final FullHTMLPane timelinePane = new FullHTMLPane(extendLocatorId("Timeline"),
             "/resource/common/monitor/events/EventsView.jsp?id=" + resourceComposite.getResource().getId());
 

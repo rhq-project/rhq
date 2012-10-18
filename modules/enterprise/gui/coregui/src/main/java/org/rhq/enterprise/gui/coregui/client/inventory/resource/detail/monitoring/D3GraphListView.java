@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -39,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferen
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * Build the View that shows the individual graph views.
@@ -49,10 +49,11 @@ public class D3GraphListView extends LocatableVLayout {
 
     private Resource resource;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
+    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
 
     public D3GraphListView(String locatorId, Resource resource) {
         super(locatorId);
-
+        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resource = resource;
         setOverflow(Overflow.AUTO);
     }
@@ -63,7 +64,7 @@ public class D3GraphListView extends LocatableVLayout {
 
         destroyMembers();
 
-        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
+        addMember(measurementRangeEditor);
 
         if (resource != null) {
             buildGraphs();
@@ -74,6 +75,9 @@ public class D3GraphListView extends LocatableVLayout {
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
     private void buildGraphs() {
+        List<Long> startEndList =  measurementRangeEditor.getBeginEndTimes();
+        final long startTime = startEndList.get(0);
+        final long endTime = startEndList.get(1);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -99,29 +103,36 @@ public class D3GraphListView extends LocatableVLayout {
                         measDefIdArray[i] = measurementDefinitions.get(i).getId();
                     }
 
-                    GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(), measDefIdArray,
-                        8, MeasurementUtils.UNIT_HOURS, 60,
-                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
-                                    caught);
-                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
-                            }
+                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray, startTime, endTime,60,
+                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
+                            {
+                                @Override
+                                public void onFailure(Throwable caught)
+                                {
+                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
+                                            caught);
+                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
+                                }
 
-                            @Override
-                            public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                if (result.isEmpty()) {
-                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
-                                } else {
-                                    loadingLabel.hide();
-                                    int i = 0;
-                                    for (List<MeasurementDataNumericHighLowComposite> data : result) {
-                                        buildIndividualGraph(measurementDefinitions.get(i++), data);
+
+                                @Override
+                                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
+                                {
+                                    if (result.isEmpty())
+                                    {
+                                        loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
+                                    }
+                                    else
+                                    {
+                                        loadingLabel.hide();
+                                        int i = 0;
+                                        for (List<MeasurementDataNumericHighLowComposite> data : result)
+                                        {
+                                            buildIndividualGraph(measurementDefinitions.get(i++), data);
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
 
                 }
             });

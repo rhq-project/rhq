@@ -50,10 +50,11 @@ public class D3GroupGraphListView extends LocatableVLayout {
 
     private ResourceGroup resourceGroup;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
+    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
 
     public D3GroupGraphListView(String locatorId, ResourceGroup resourceGroup) {
         super(locatorId);
-
+        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resourceGroup = resourceGroup;
         setOverflow(Overflow.AUTO);
     }
@@ -64,7 +65,7 @@ public class D3GroupGraphListView extends LocatableVLayout {
 
         destroyMembers();
 
-        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
+        addMember(measurementRangeEditor);
 
         if (resourceGroup != null) {
             buildGraphs();
@@ -75,6 +76,10 @@ public class D3GroupGraphListView extends LocatableVLayout {
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
     private void buildGraphs() {
+
+        List<Long> startEndList =  measurementRangeEditor.getBeginEndTimes();
+        final long startTime = startEndList.get(0);
+        final long endTime = startEndList.get(1);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -100,8 +105,7 @@ public class D3GroupGraphListView extends LocatableVLayout {
                         measDefIdArray[i] = measurementDefinitions.get(i).getId();
                     }
 
-                    GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(resourceGroup.getId(), measDefIdArray,
-                            8, MeasurementUtils.UNIT_HOURS, 60,
+                    GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(), measDefIdArray, startTime, endTime,60,
                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
                             {
                                 @Override

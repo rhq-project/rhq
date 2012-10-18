@@ -1,2 +1,0 @@
-#a testing crontab file
-0  0  1  1  * root echo "tmp"

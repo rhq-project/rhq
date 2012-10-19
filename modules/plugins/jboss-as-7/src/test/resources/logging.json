@@ -1,0 +1,15 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "autoflush" : true,
+    "encoding" : null,
+    "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+    "level" : "INFO",
+    "file" : {
+      "path" : "server.log",
+      "relative-to" : "jboss.server.log.dir"
+    },
+    "suffix" : ".yyyy-MM-dd"
+  },
+  "compensating-operation" : null
+}

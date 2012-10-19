@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="onewire"
+        displayName="Get data from Devices on the OneWire(r) bus"
+        description="Implementation of a OneWire adapter plus devices"
+        ampsVersion="2.0"
+        package="org.rhq.plugins.onewire"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="OneWireAdapter"
+           description="A single OneWire(r) adapter hosting many devices"
+           discovery="OneWireAdapterDiscovery"
+           class="OneWireAdapterComponent">
+           
+      <plugin-configuration>
+         <c:simple-property name="type" displayName="Adapter type" required="true" default="DS9490" readOnly="true"/>
+         <c:simple-property name="port" displayName="Adapter port" required="true" default="USB1"/>
+         </plugin-configuration>     
+           
+           
+      <service name="DS1820" 
+         description="DS1820 Thermometer chip"
+         class="DS1820Component"
+         discovery="DS1820Discovery"
+         >     
+         
+         <metric property="temperature" defaultOn="true" description="Temperature measured" 
+                 displayType="summary" units="celsius"/>
+         
+      </service>
+   </server>
+</plugin>

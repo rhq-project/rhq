@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Samba"
+        displayName="Samba"
+        description="Support for RHEL Samba service"
+        package="org.rhq.plugins.samba"
+        pluginLifecycleListener="org.rhq.plugins.augeas.AugeasPluginLifecycleListener"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <server name="Samba Server"
+            description="Configuration for Samba Server"
+            discovery="SambaServerDiscoveryComponent"
+            class="SambaServerComponent">
+
+       <plugin-configuration>
+
+          <c:group name="Augeas">
+           <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
+                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+
+           <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
+                              default="/etc/samba/smb.conf"
+                              description="the absolute path of the samba configuration"/>
+
+           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
+                              default="/files/etc/samba/smb.conf/target[.='global']"/>
+           </c:group>
+       </plugin-configuration>
+       
+
+       <operation name="join"
+                 displayName="Join Active Server Directory"
+                 description="Joins the Samba domain member to the Active Server Directory">
+       </operation>
+       
+       <operation name="disconnect"
+                  displayName="Disconnect Active Server Directory"
+                  description="Disconnects the Samba domain member to the Active Server Directory">
+       </operation>
+       
+       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allOutboundTotal" displayName="All Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpEstablished" displayName="State ESTABLISHED"/>
+       <metric property="NetworkStat.tcpSynSent" displayName="State SYN_SENT"/>
+       <metric property="NetworkStat.tcpSynRecv" displayName="State SYN_RECV"/>
+       <metric property="NetworkStat.tcpFinWait1" displayName="State FIN_WAIT1"/>
+       <metric property="NetworkStat.tcpFinWait2" displayName="State FIN_WAIT2"/>
+       <metric property="NetworkStat.tcpTimeWait" displayName="State TIME_WAIT"/>
+       <metric property="NetworkStat.tcpClose" displayName="State CLOSE"/>
+       <metric property="NetworkStat.tcpCloseWait" displayName="State CLOSE_WAIT"/>
+       <metric property="NetworkStat.tcpLastAck" displayName="State LAST_ACK"/>
+       <metric property="NetworkStat.tcpListen" displayName="State LISTEN"/>
+       <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
+       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
+       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
+
+      <resource-configuration>
+        <c:group name="Basic Configurations">
+
+            <c:simple-property name="workgroup" description="The workgroup your server will appear to be in when queried by clients" required="false"/>
+            <c:simple-property name="server string" description="Value that will display in the printer comment box in print manager" required="false"/>
+			<c:simple-property name="enableRecycleBin" type="boolean" description="Enable recycle bin for all the shares. Deleted files or directories will be copied to a .recycle under the tree."/>
+        </c:group>
+
+          <c:group name="Security">
+              <c:simple-property name="security" displayName="Authentication Mode" required="false" description="The type of authentication used by Samba">
+                  <c:property-options>
+                      <c:option value="user"/>
+                      <c:option value="ads"/>
+                  </c:property-options>
+              </c:simple-property>
+
+              <c:simple-property name="encrypt passwords" type="boolean" required="false" description="This option must be enabled if the clients are connecting from a Windows 98, Windows NT 4.0 with Service Pack 3, or other more recent versions of Microsoft Windows. The passwords are transfered between the server and the client in an encrypted format instead of in as a plain-text word that can be intercepted."/>
+
+          </c:group>
+
+          <c:group name="Printing">
+              <c:simple-property name="load printers" required="false" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default"/>
+              <c:simple-property name="cups options" required="false" description="Free form string of options passed to cups library"/>
+
+          </c:group>
+
+          <c:group name="Active Server Directory">
+              <c:simple-property name="realm" displayName="ADS Realm" required="false"/>
+              <c:simple-property name="controller" displayName="Domain Controller" required="false"/>
+              <c:simple-property name="username" displayName="ADS username" required="false"/>
+              <c:simple-property name="password" type="password" displayName="ADS password" required="false"/>
+              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID range" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
+              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID range" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
+              <c:simple-property name="template shell" required="false" displayName="Template Shell" default="/bin/bash" description="winbindd daemon uses this parameter to fill in the login shell for users"/>
+              <c:simple-property name="winbind enum users" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of user info"/>
+              <c:simple-property name="winbind enum groups" required="false" displayName="Group enumeration" type="boolean" description="Allow enumeration of group info"/>
+              <c:simple-property name="winbind separator" default="+" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
+          </c:group>
+
+      </resource-configuration>
+
+       <service name="Samba Share" description="a Samba share"
+                discovery="SambaShareDiscoveryComponent" class="SambaShareComponent"
+                createDeletePolicy="both">
+
+           <plugin-configuration>
+               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
+                                  description="the name of the Augeas lens to use for loading and updating this resource's configuration"/>
+
+               <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
+                                  default="/etc/samba/smb.conf"
+                                  description="the absolute path of the samba configuration"/>
+
+               <c:simple-property name="targetName" required="true" readOnly="true"/>
+           </plugin-configuration>
+
+           <resource-configuration>
+               <c:simple-property name="name" required="true" readOnly="true" description="Name of share"/>
+               <c:simple-property name="path" required="false" description="Directory to which the user of the service is to be given access"/>
+               <c:simple-property name="comment" required="false" description="Comment string to associate with the new share"/>
+               <c:simple-property name="browseable" type="boolean"  required="false" description="Controls whether this share is seen in the list of available shares"/>
+               <c:simple-property name="read only" type="boolean"  required="false" description="Users of service may not create or modify files"/>
+               <c:simple-property name="printable" type="boolean"  required="false" description="Clients may open, write to and submit spool files on the service directory "/>
+               <c:simple-property name="write list" required="false" description="List of users that are given read-write access to the service"/>
+               <c:simple-property name="guest ok" type="boolean"  required="false" description="No password is required to connect"/>
+               <c:simple-property name="share modes" required="false" description="Enables or disables the honoring of the share modes during a file open"/>
+               <c:simple-property name="valid users" required="false" description="List of users that should be allowed to login to this service"/>
+           </resource-configuration>
+       </service>
+   </server>
+
+</plugin>
+

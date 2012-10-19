@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE plugin [
+ <!ENTITY platformSubcategories '
+    <!-- comment this out while JBNADM-1785 is fixed
+     <subcategories>
+         <subcategory name="platformServices"/>
+      </subcategories>
+      -->
+'>
+ <!ENTITY platformOperations '
+      <operation name="discovery" displayName="Manual Autodiscovery" description="Run an immediate discovery to search for resources">
+         <parameters>
+            <c:simple-property name="detailedDiscovery" description="If true, search for detailed child resources in addition to parent servers." type="boolean"/>
+         </parameters>
+         <results>
+            <c:simple-property name="operationResult" type="longString"/>
+         </results>
+      </operation>
+      <operation name="viewProcessList" description="View running processes on this system">
+         <results>
+            <c:list-property name="processList">
+               <c:map-property name="process">
+                  <c:simple-property name="pid" type="integer" description="Process id"/>
+                  <c:simple-property name="name" description="Name of the process"/>
+                  <c:simple-property name="size" type="integer" units="bytes" description="Memory, in bytes, that this process is using."/>
+                  <c:simple-property name="userTime" type="integer" units="milliseconds" description="User time, in milliseconds, this process has been running."/>
+                  <c:simple-property name="kernelTime" type="integer" units="milliseconds" description="Kernel time, in milliseconds, this process has been running."/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+'>
+ <!ENTITY metrics '      
+      <metric displayName="Hostname"
+              property="Trait.hostname"
+              description="Name that this platform is known as"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true" />
+      <metric displayName="OS Name"
+              property="Trait.osname"
+              description="Name that the operating system is known as"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true" />
+      <metric displayName="OS Version"
+              property="Trait.osversion"
+              description="Version of the operating system"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true" />
+      <metric displayName="Architecture"
+              property="Trait.sysarch"
+              description="Hardware architecture of the platform"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true"/>
+'>
+ <!ENTITY nativeMetrics '      
+      <metric displayName="Free Memory"
+              property="Native.MemoryInfo.free"
+              defaultOn="true"
+              displayType="summary"
+              units="bytes"
+              description="The total free system memory"/>
+              
+      <metric displayName="Used Memory"
+              property="Native.MemoryInfo.used"
+              defaultOn="true"
+              displayType="summary"
+              units="bytes"
+              description="The total used system memory"/>
+              
+      <metric displayName="Total Memory"
+              property="Native.MemoryInfo.total"
+              defaultOn="true"
+              units="bytes"
+              description="The total system memory"/>
+              
+      <metric displayName="Free Swap Space"
+              property="Native.SwapInfo.free"
+              defaultOn="true"
+              units="bytes"
+              description="The total free system swap"/>
+              
+      <metric displayName="Used Swap Space"
+              property="Native.SwapInfo.used"
+              defaultOn="true"
+              displayType="summary"
+              units="bytes"
+              description="The total used system swap"/>
+              
+      <metric displayName="Total Swap Space"
+              property="Native.SwapInfo.total"
+              defaultOn="true"
+              units="bytes"
+              description="The total system swap"/>
+'>
+
+ <!ENTITY platformCpu '
+      <metric displayName="Idle" 
+               property="CpuPerc.idle" 
+               units="percentage" 
+               description="Idle percentage of all CPUs"/>
+      <metric displayName="System Load" 
+               property="CpuPerc.sys" 
+               displayType="summary" 
+               units="percentage" 
+               description="Percentage of all CPUs running in system mode"/>
+      <metric displayName="User Load" 
+               property="CpuPerc.user" 
+               displayType="summary" 
+               units="percentage" 
+               description="Percentage of all CPUs running in user mode"/>
+      <metric displayName="Wait Load" 
+               property="CpuPerc.wait" 
+               units="percentage" 
+               description="Percentage of all CPUs waiting on I/O"/>
+'>
+
+<!ENTITY cpuDetail '
+      <metric displayName="Vendor"
+              property="CpuTrait.vendor"
+              dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
+              description="Vendor of this CPU"/>
+      <metric displayName="CPU Model"
+              property="CpuTrait.model"
+              dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
+              description="Model of this CPU"/>
+      <metric displayName="CPU Speed"
+              property="CpuTrait.mhz"
+              dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
+              description="Speed of this CPU in Mhz"/>
+      <metric displayName="Cache size"
+              property="CpuTrait.cacheSize"
+              dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
+              description="Cache Size of this CPU"/>
+'>              
+]>
+
+<plugin name="Platforms"
+        displayName="Operating System Platforms"
+        package="org.rhq.plugins.platform"
+        description="Management and monitoring of operating system level functions"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <platform name="Windows"
+             class="WindowsPlatformComponent"
+             discovery="WindowsPlatformDiscoveryComponent"
+             description="Microsoft Windows Operating System">
+
+      &platformSubcategories;
+
+       <plugin-configuration>
+           <c:group name="Content">
+              <c:description>Settings to support content/package functionality</c:description>
+              <c:simple-property
+                  name="enableContentDiscovery" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, attempts will be made to discover installed packages on this platform">
+              </c:simple-property>
+           </c:group>
+           <c:group name="Event Logs">
+               <c:description>Tracking of events sent to the Windows Event Logs</c:description>
+               <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of Windows events into the event subsystem"/>
+               <c:simple-property name="regularExpression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
+               <c:simple-property name="minimumSeverity" default="Warning" description="The minimum severity event that will be collected">
+                   <c:property-options>
+                       <c:option value="Information"/>
+                       <c:option value="Warning" default="true"/>
+                       <c:option value="Error"/>
+                   </c:property-options>
+               </c:simple-property>
+           </c:group>
+       </plugin-configuration>
+
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+
+       <event name="Event Log" description="Windows event log" displayName="Event Log"/>
+
+       <content name="InstalledSoftware" displayName="Installed Software" category="deployable" description="Installed Windows Software">
+          <configuration>
+              <c:simple-property name="Publisher"/>
+              <c:simple-property name="Comments"/>
+              <c:simple-property name="Contact"/>
+              <c:simple-property name="HelpLink"/>
+              <c:simple-property name="HelpTelephone"/>
+              <c:simple-property name="InstallLocation"/>
+              <c:simple-property name="InstallSource"/>
+              <c:simple-property name="EstimatedSize" units="kilobytes"/>
+         </configuration>
+      </content>
+
+   </platform>
+
+   <platform name="Linux"
+             class="LinuxPlatformComponent"
+             discovery="LinuxPlatformDiscoveryComponent"
+             description="Linux Operating System">
+
+      &platformSubcategories;
+      
+      <plugin-configuration>
+         <c:group name="Content">
+            <c:description>Settings to support content/package functionality</c:description>
+            <c:simple-property
+                  name="enableContentDiscovery" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, attempts will be made to discover installed packages on this platform">
+            </c:simple-property>
+            <c:simple-property
+                  name="enableInternalYumServer" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, an internal yum server will be started in order to process yum content requests made on the local machine.">
+            </c:simple-property>
+            <c:simple-property
+                  name="yumPort" 
+                  displayName="Yum server port" 
+                  default="9080"
+                  required="true" 
+                  type="integer"
+                  description="The port the plugin will listen on in order to process yum requests. This is ignored if the internal yum server is not enabled.">
+               <c:constraint>
+                  <c:integer-constraint minimum="1" maximum="65535"/>
+               </c:constraint>
+            </c:simple-property>
+            <c:simple-property
+                  name="metadataCacheTimeout" 
+                  displayName="Metadata Cache Timeout" 
+                  default="1800"
+                  required="false" 
+                  type="integer"
+                  description="The time, in seconds, that the package metadata will always be considered valid. After the cache has lived this long or longer, the cache will be checked to see if it is stale, and if so, will be refreshed.">
+               <c:constraint>
+                  <c:integer-constraint minimum="0"/>
+               </c:constraint>
+            </c:simple-property>
+         </c:group>
+         <c:group name="Event Logs">
+            <c:description>Tracking of syslog events</c:description>
+            <c:list-property name="logs">
+               <c:map-property name="log">
+                  <c:simple-property name="logTrackingEnabled" summary="true" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
+                  <c:simple-property name="logTrackingIncludesPattern" displayName="Includes Pattern" required="false" description="A regular expression that is matched against a log message's detail text to determine if an Event should be fired for that log message. If not specified, no filtering of log messages will be done based on their detail."/>
+                  <c:simple-property name="logTrackingMinimumSeverity" displayName="Minimum Severity" required="false" default="Warning" description="The minimum severity of log messages that will be collected. If not specified, there is no minimum severity (i.e. all will be collected).">
+                     <c:property-options>
+                        <c:option value="Information"/>
+                        <c:option value="Warning" default="true"/>
+                        <c:option value="Error"/>
+                     </c:property-options>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingType" summary="true" required="true" default="file" description="Defines if the log messages are to be found by polling a file or listening to a TCP socket">
+                     <c:property-options>
+                        <c:option value="file" default="true"/>
+                        <c:option value="listener"/>
+                     </c:property-options>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingPort" summary="true" displayName="Syslog Listener Port" required="false" type="integer" default="514" description="Port that the syslog listener will run on if using listener style. If not defined, the default will be 514.">
+                     <c:constraint>
+                        <c:integer-constraint minimum="1" maximum="65535"/>
+                     </c:constraint>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingBindAddress" displayName="Syslog Listener Bind Address" required="false" type="string" default="127.0.0.1" description="Address that the syslog listener will bind to if using listener style"/>
+                  <c:simple-property name="logTrackingFilePath" summary="true" displayName="Syslog File Path" required="false" type="file" default="/var/log/messages" description="File path to watch for log events if using file style. If not defined, the default will be /var/log/messages"/>
+                  <c:simple-property name="logTrackingParserRegex" displayName="Message Parser Regular Expression" required="false" description="A regular expression used to parse the different pieces of the log messages. This regex must have 3 capturing groups - #1 is the timestamp, #2 is the severity and #3 is the message details text. If not defined, a best guess will be made to parse the log messages."/>
+                  <c:simple-property name="logTrackingDateTimeFormat" displayName="Date/Time Format" required="false" description="A regular expression that indicates how the message's date/timestamp is formatted. See the Javadoc on java.text.SimpleDateFormat for the syntax of this regex. If not defined, the date will not be parsed and the time the message was seen will be used."/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+      </plugin-configuration>
+      
+      &platformOperations;
+
+      <operation name="cleanYumMetadataCache" description="Deletes all cached package metadata" />
+
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+
+      <metric displayName="Distribution Name"
+              property="distro.name"
+              description="name of the Linux distribution"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true" />
+      <metric displayName="Distribution Version"
+              property="distro.version"
+              description="version of the Linux distribution"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true" />
+
+      <event name="Event Log" description="Syslog event logs" displayName="Event Log"/>
+
+
+      <content name="rpm" displayName="RPM File" category="deployable" description="Red Hat installable package">
+         <configuration>
+            <c:simple-property name="version" displayName="Version"/>
+            <c:simple-property name="build-date" displayName="Build Date"/>
+            <c:simple-property name="url" displayName="URL"/>   
+         </configuration>
+      </content>
+<!-- temporarily disable deb content
+      <content name="deb" displayName="DEB File" category="deployable" description="Debian installable package">
+         <configuration>
+            <c:simple-property name="Version"/>
+            <c:simple-property name="Filename"/>
+            <c:simple-property name="Architecture"/>
+         </configuration>
+      </content>
+-->
+
+   </platform>
+   
+   <platform name="Solaris"
+             class="PlatformComponent"
+             discovery="SolarisPlatformDiscoveryComponent"
+             description="SUN Solaris Operating System">
+      &platformSubcategories;
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+   </platform>
+   
+   <platform name="HP-UX"
+             class="PlatformComponent"
+             discovery="HpuxPlatformDiscoveryComponent"
+             description="Hewlett-Packard HP-UX Operating System">
+      &platformSubcategories;
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+   </platform>
+   
+   <platform name="AIX"
+             class="PlatformComponent"
+             discovery="AixPlatformDiscoveryComponent"
+             description="IBM AIX Operating System">
+      &platformSubcategories;
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+   </platform>
+   
+   <platform name="FreeBSD"
+             class="PlatformComponent"
+             discovery="BsdPlatformDiscoveryComponent"
+             description="FreeBSD Operating System">
+      &platformSubcategories;
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+   </platform>
+   
+   <platform name="Mac OS X"
+             class="PlatformComponent"
+             discovery="MacOSXPlatformDiscoveryComponent"
+             description="Mac OS X Operating System">
+      &platformSubcategories;
+      &platformOperations;
+      &nativeMetrics;
+      &platformCpu;
+      &metrics;
+   </platform>
+   
+   <platform name="Java"
+             class="PlatformComponent"
+             discovery="JavaPlatformDiscoveryComponent"
+             description="Platform with 100% Java capability but not natively supported">
+      &platformSubcategories;
+      &platformOperations;
+      &metrics;
+   </platform>
+
+   <service name="Network Adapter" discovery="NetworkAdapterDiscoveryComponent" class="NetworkAdapterComponent">
+            
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+      
+      <metric displayName="Inet4Address"
+              property="Trait.net4.address" dataType="trait" displayType="summary"
+              description="IP address of the network adaptor"/>
+
+      <metric property="Trait.interfaceFlags" displayName="Interface Flags" dataType="trait" displayType="summary"
+              description="Flag constants for network related ops"/>
+      
+      <metric property="rxBytes" displayName="Bytes Received" units="bytes" measurementType="trendsup" displayType="summary"
+              description="The total number of bytes received across this network interface since it started"/>
+      <metric property="rxPackets" displayName="Packets Received" measurementType="trendsup" displayType="summary"
+              description="The total number of packets received across this network interface since it started"/>
+
+      <metric property="txBytes" displayName="Bytes Transmitted" units="bytes" measurementType="trendsup" displayType="summary"
+              description="The total number of bytes transmitted across this network interface since it started"/>
+      <metric property="txPackets" displayName="Packets Transmitted" measurementType="trendsup" displayType="summary"
+              description="The total number of packets transmitted across this network interface since it started"/>
+
+      <metric property="rxErrors" displayName="Receive Errors" measurementType="trendsup"
+              description="'errors' statistic for received packets across this network interface since it started"/>
+      <metric property="rxDropped" displayName="Receive Packets Dropped" measurementType="trendsup"
+              description="'dropped' statistic for received packets across this network interface since it started"/>
+      <metric property="rxOverruns" displayName="Receive Overrurns" measurementType="trendsup"
+              description="'overruns' statistic for received packets across this network interface since it started"/>
+      <metric property="rxFrame" displayName="Receive Frame" measurementType="trendsup"
+              description="'frame' statistic for received packets across this network interface since it started"/>
+
+      <metric property="txErrors" displayName="Transmit Errors" measurementType="trendsup"
+              description="'errors' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txDropped" displayName="Transmit Packets Dropped" measurementType="trendsup"
+              description="'dropped' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txOverruns" displayName="Transmit Overruns" measurementType="trendsup"
+              description="'overruns' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txCollisions" displayName="Transmit Collisions" measurementType="trendsup"
+              description="'collisions' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txCarrier" displayName="Transmit Carrier" measurementType="trendsup"
+              description="'carrier' statistic for transmitted packets across this network interface since it started"/>
+
+   </service>
+
+   <service name="File System" discovery="FileSystemDiscoveryComponent" class="FileSystemComponent">
+
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+
+      <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"
+              description="The total free bytes on filesystem"/>
+      <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage" displayType="summary"
+              description="The percentage of disk used"/>
+      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" defaultOn="true"
+              description="The total size of the filesystem"/>
+      <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"
+              description="The filesystem's generic type name"/>
+      <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"
+              description="The filesystem's operating system-specific type name"/>
+      <metric property="fileSystem.devName" displayName="name" dataType="trait" defaultOn="true"
+              description="The name of this device"/>
+      <metric property="fileSystemUsage.freeFiles" displayName="Free Files"
+              description="The number of free file nodes on the filesystem"/>
+      <metric property="fileSystem.flags" displayName="Flags" dataType="trait" defaultOn="true"
+              description="The filesystem's flags"/>
+      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" defaultOn="true"
+              description="The total bytes used on the filesystem"/>
+      <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"
+              description="The number of physical disk reads"/>
+      <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"
+              description="The number of physical disk writes"/>
+      <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+              description="The number of physical disk bytes read"/>
+      <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+              description="The number of physical disk bytes written"/>
+      <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue" defaultOn="true"
+              description="The number of I/Os currently in progress"/>
+
+   </service>
+
+   <service name="CPU" discovery="CpuDiscoveryComponent" class="CpuComponent">
+
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <!--we know the CPU services are only natively supported - so not in Java platform-->
+      </runs-inside>
+
+      <metric displayName="Idle" property="CpuPerc.idle" units="percentage" description="Idle percentage of this CPU"/>
+      <metric displayName="System Load" property="CpuPerc.sys" displayType="summary" units="percentage" description="Percentage of this CPU running in system mode"/>
+      <metric displayName="User Load" property="CpuPerc.user" displayType="summary" units="percentage" description="Percentage of this CPU running in user mode"/>
+      <metric displayName="Wait Load" property="CpuPerc.wait" displayType="summary" units="percentage" description="Percentage of this CPU waiting on I/O"/>
+
+      <metric displayName="User Time" property="Cpu.user" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU user time"/>
+      <metric displayName="Nice Time" property="Cpu.nice" units="milliseconds" measurementType="trendsup"
+              description="The total system CPU nice time"/>
+      <metric displayName="System Time" property="Cpu.sys" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU kernel time"/>
+      <metric displayName="Idle Time" property="Cpu.idle" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU idle time"/>
+      <metric displayName="Wait Time" property="Cpu.wait" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU I/O wait time"/>
+
+      &cpuDetail;
+
+      <!-- TODO: see if SIGAR can give us this data
+      <metric displayName="Interrupt Time" property="irqTime" units="milliseconds" measurementType="trendsup" description="Time spent servicing interrupts"/>
+      <metric displayName="Soft Interrupt Time" property="softirqTime" units="milliseconds" measurementType="trendsup" description="Time spent service software interrupts"/>
+      <metric displayName="Context switches" property="contextSwitched" measurementType="trendsup" description="Count of context switches"/>
+      <metric displayName="Processes Created" property="processes" measurementType="trendsup" description="Count of processes created since system start"/>
+      <metric displayName="Running Processes" property="runningProcesses" description="Count of running processes"/>
+      <metric displayName="Blocked Processes" property="blockedProcesses" description="Count of processes waiting on I/O"/>
+      -->
+
+   </service>
+
+
+   <service name="Process" class="ProcessComponent" discovery="ProcessDiscoveryComponent" supportsManualAdd="true"
+           description="A generic process monitoring service to track native process information based on a pid file or process query">
+
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <!--we know the CPU services are only natively supported - so not in Java platform-->
+      </runs-inside>
+
+       <plugin-configuration>
+           <c:simple-property name="type" default="pidFile" description="Choice of using a pid file or a PIQL query to find the process to monitor">
+               <c:property-options>
+                   <c:option value="pidFile" default="true" name="Pid File"/>
+                   <c:option value="piql" name="Process Query"/>
+               </c:property-options>
+           </c:simple-property>
+           <c:simple-property name="pidFile" required="false" description="Fully qualified path to the pid file for the process to monitor"/>
+           <c:simple-property name="piql" required="false" description="Process Information Query Language for process to monitor"/>
+
+           <c:simple-property name="fullProcessTree" default="true" type="boolean" description="If true, the entire process tree will be monitored"/>
+       </plugin-configuration>
+
+       <metric displayName="User Time" property="Process.cpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+               description="The aggregate amount of CPU user time spent by all processes"/>
+       <metric displayName="Kernel Time" property="Process.cpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+               description="The aggregate amount of CPU kernel time spent by all processes"/>
+       <metric displayName="CPU Percentage" property="Process.cpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
+               description="The percentage of CPU currently being used by all processes"/>
+       <metric displayName="Physical Memory" property="Process.memory.resident" measurementType="dynamic" units="bytes" displayType="summary"
+               description="The aggregate amount of resident memory used by all processes"/>
+       <metric displayName="Virtual Memory" property="Process.memory.size" measurementType="dynamic" units="bytes" displayType="summary"
+               description="The aggregate amount of virtual memory used by all processes"/>
+       <metric displayName="Open File Descriptors" property="Process.fileDescriptor.total" measurementType="dynamic" displayType="summary"
+               description="The aggregate number of file descriptors open by all processes"/>
+
+   </service>
+
+   <help>
+      <![CDATA[
+         <p>This plugin handles interaction with the operating system and is the base on which other plugins run. It is
+         required for the operation of any other plugin and can not be disabled.</p>
+      ]]>
+   </help>
+
+</plugin>
